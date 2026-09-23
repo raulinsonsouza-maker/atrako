@@ -17,7 +17,8 @@ coverage/
 .git.legacy/
 Central (2).zip
 *.zip
-Symbius/
+# Only the PortableGit folder at repo root (NOT apps/**/symbius source)
+/Symbius/
 apps/*/node_modules/
 apps/*/.next/
 packages/*/node_modules/

@@ -1,0 +1,759 @@
+// CRM Multi-tenant – PostgreSQL. PgBouncer (url) / Postgres (directUrl) para migrations.
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "windows", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// --- Enums
+enum PlanTier {
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  TRIAL
+  CANCELLED
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  TENANT_ADMIN
+  TENANT_USER
+}
+
+enum LeadSource {
+  META
+  GOOGLE
+  WHATSAPP
+  MANUAL
+  OUTROS
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  WHATSAPP
+  NOTE
+  MEETING
+}
+
+enum ConversationChannel {
+  WHATSAPP
+}
+
+enum MessageDirection {
+  IN
+  OUT
+}
+
+enum IntegrationType {
+  META
+  GOOGLE_ADS
+  WHATSAPP
+}
+
+enum IntegrationStatus {
+  ACTIVE
+  ERROR
+  DISCONNECTED
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+// --- Multi-tenant e auth
+model Tenant {
+  id                    String    @id @default(uuid())
+  name                  String    @db.VarChar(255)
+  slug                  String    @unique @db.VarChar(100)
+  plan                  PlanTier  @default(STARTER)
+  stripeCustomerId      String?   @db.VarChar(255)
+  stripeSubscriptionId  String?   @db.VarChar(255)
+  status                TenantStatus @default(ACTIVE)
+  logoUrl               String?   @db.VarChar(500)
+  primaryColor          String?   @db.VarChar(20)
+  customDomain          String?   @db.VarChar(255)
+  config                Json?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  users            User[]
+  invites          Invite[]
+  pipelines        Pipeline[]
+  leadStages       LeadStage[]
+  leads            Lead[]
+  activities       Activity[]
+  integrations     Integration[]
+  campaigns        Campaign[]
+  conversations    Conversation[]
+  auditLogs        AuditLog[]
+  tasks            Task[]
+  messageTemplates MessageTemplate[]
+  opportunities    Opportunity[]
+  sales            Sale[]
+  userCalendarConnections UserCalendarConnection[]
+  calendarEventLinks      CalendarEventLink[]
+  financialCategories     FinancialCategory[]
+  transactions            Transaction[]
+  tags                    Tag[]
+  leadTags                LeadTag[]
+  customFields            CustomField[]
+  customFieldValues       CustomFieldValue[]
+  automationRules         AutomationRule[]
+  leadStageHistory        LeadStageHistory[]
+  permissions             Permission[]
+  lossReasons             LossReason[]
+}
+
+model User {
+  id            String    @id @default(uuid())
+  tenantId      String?
+  email         String    @db.VarChar(255)
+  name          String    @db.VarChar(255)
+  emailVerified DateTime?
+  image         String?   @db.VarChar(500)
+  role          UserRole  @default(TENANT_USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tenant        Tenant?    @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  accounts      Account[]
+  sessions      Session[]
+  leads         Lead[]     @relation("AssignedLeads")
+  activities    Activity[]
+  tasks         Task[]     @relation("AssignedTasks")
+  opportunities Opportunity[] @relation("AssignedOpportunities")
+  sales         Sale[]     @relation("AssignedSales")
+  calendarConnection UserCalendarConnection?
+  calendarEventLinks CalendarEventLink[]
+  transactions  Transaction[] @relation("CreatedTransactions")
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+}
+
+model Account {
+  id                    String   @id @default(uuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  password              String?  @db.Text
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?  @db.VarChar(45)
+  userAgent String?  @db.VarChar(500)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Invite {
+  id        String   @id @default(uuid())
+  tenantId  String
+  email     String   @db.VarChar(255)
+  role      UserRole
+  token     String   @unique @db.VarChar(64)
+  expiresAt DateTime
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+// Better-Auth: reset password, OAuth state, etc.
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String   @db.VarChar(500)
+  value      String   @db.Text
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+// --- CRM
+model Pipeline {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String   @db.VarChar(255)
+  isDefault Boolean  @default(false)
+
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  stages     LeadStage[]
+
+  @@index([tenantId])
+}
+
+model LeadStage {
+  id         String  @id @default(uuid())
+  tenantId   String
+  pipelineId String
+  name       String  @db.VarChar(100)
+  order      Int     @default(0)
+  color      String  @db.VarChar(20)
+  probability Int?   // 0-100, padrão por etapa para valor ponderado
+  isSystemStage Boolean @default(false) // Indica se é estágio fixo do sistema
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pipeline     Pipeline     @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  leads        Lead[]
+  opportunities Opportunity[]
+  leadStageHistory LeadStageHistory[]
+
+  @@index([tenantId])
+  @@index([pipelineId])
+}
+
+model Lead {
+  id           String      @id @default(uuid())
+  tenantId     String
+  source       LeadSource  @default(MANUAL)
+  status       LeadStatus  @default(NEW)
+  stageId      String?
+  assignedToId String?
+  name         String      @db.VarChar(255)
+  email        String      @db.VarChar(255)
+  phone        String?     @db.VarChar(50)
+  dealValue    Decimal?    @db.Decimal(12, 2)
+  lossReason   String?     @db.VarChar(500) // Mantido para compatibilidade
+  lossReasonId String?
+  campaign     String?     @db.VarChar(255)
+  ad           String?     @db.VarChar(255)
+  metadata     Json?
+  sourceId     String?     @db.VarChar(255)
+  deletedAt    DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  stage          LeadStage?     @relation(fields: [stageId], references: [id], onDelete: SetNull)
+  assignedTo     User?          @relation("AssignedLeads", fields: [assignedToId], references: [id], onDelete: SetNull)
+  activities     Activity[]
+  conversations  Conversation[]
+  tasks          Task[]
+  opportunities  Opportunity[]
+  sales          Sale[]
+  tags           LeadTag[]
+  customFieldValues CustomFieldValue[]
+  stageHistory   LeadStageHistory[]
+  lossReasonRef  LossReason?    @relation("LeadLossReason", fields: [lossReasonId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, stageId])
+  @@index([tenantId, source])
+  @@index([tenantId, campaign])
+  @@index([stageId])
+  @@index([assignedToId])
+  @@index([tenantId, sourceId])
+  @@index([tenantId, phone])
+}
+
+model Activity {
+  id        String       @id @default(uuid())
+  tenantId  String
+  leadId    String
+  userId    String?
+  type      ActivityType
+  content   String?      @db.Text
+  metadata  Json?
+  startAt   DateTime?
+  endAt     DateTime?
+  createdAt DateTime     @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  calendarEventLinks CalendarEventLink[]
+
+  @@index([leadId])
+  @@index([leadId, type])
+  @@index([tenantId, createdAt])
+}
+
+// --- Calendar (Google Calendar por usuário)
+model UserCalendarConnection {
+  id               String    @id @default(uuid())
+  tenantId         String
+  userId           String    @unique
+  calendarId       String    @db.VarChar(255)
+  accessToken      String?   @db.Text
+  refreshToken     String?   @db.Text
+  tokenExpiresAt   DateTime?
+  syncToken        String?   @db.Text
+  channelId        String?   @db.VarChar(255)
+  resourceId       String?   @db.VarChar(255)
+  channelExpiresAt DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([userId])
+}
+
+model CalendarEventLink {
+  id            String   @id @default(uuid())
+  tenantId      String
+  userId        String
+  activityId    String
+  calendarId    String   @db.VarChar(255)
+  googleEventId String   @db.VarChar(255)
+  status        String?  @db.VarChar(20)
+  lastSyncedAt  DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, activityId])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([googleEventId])
+}
+
+// --- Integrações
+model Integration {
+  id         String            @id @default(uuid())
+  tenantId   String
+  type       IntegrationType
+  credentials String?          @db.Text
+  config     Json?
+  status     IntegrationStatus @default(ACTIVE)
+  lastSyncAt DateTime?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaigns Campaign[]
+
+  @@unique([tenantId, type])
+  @@index([tenantId])
+}
+
+model Campaign {
+  id             String   @id @default(uuid())
+  tenantId       String
+  integrationId  String
+  externalId     String   @db.VarChar(255)
+  name           String   @db.VarChar(255)
+  platform       String   @db.VarChar(50)
+  status         String   @db.VarChar(50)
+  metadata       Json?
+  syncedAt       DateTime?
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([integrationId, externalId])
+}
+
+// --- WhatsApp / Conversas
+model Conversation {
+  id             String              @id @default(uuid())
+  tenantId       String
+  leadId         String
+  channel        ConversationChannel @default(WHATSAPP)
+  externalId     String?             @db.VarChar(255)
+  status         String              @db.VarChar(50)
+  lastMessageAt  DateTime?
+  metadata       Json?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead     Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([tenantId])
+  @@index([tenantId, leadId])
+  @@index([tenantId, lastMessageAt])
+}
+
+model Message {
+  id             String          @id @default(uuid())
+  conversationId String
+  direction      MessageDirection
+  content        String          @db.Text
+  metadata       Json?
+  createdAt      DateTime        @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([conversationId, createdAt])
+}
+
+// --- Oportunidades (negócios) e Vendas — gestão de receita
+model Opportunity {
+  id              String    @id @default(uuid())
+  tenantId        String
+  leadId          String
+  name            String    @db.VarChar(255)
+  value           Decimal   @db.Decimal(12, 2)
+  stageId         String
+  probability     Int?      // 0-100; null = usa padrão da etapa
+  assignedToId    String?
+  expectedCloseAt DateTime?
+  status          String    @db.VarChar(20) // OPEN | WON | LOST
+  lossReason      String?   @db.VarChar(500) // Mantido para compatibilidade
+  lossReasonId    String?
+  campaign        String?   @db.VarChar(255)
+  productOrService String?  @db.VarChar(255)
+  wonAt           DateTime?
+  lostAt          DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead       Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  stage      LeadStage  @relation(fields: [stageId], references: [id], onDelete: Restrict)
+  assignedTo User?      @relation("AssignedOpportunities", fields: [assignedToId], references: [id], onDelete: SetNull)
+  lossReasonRef LossReason? @relation("OpportunityLossReason", fields: [lossReasonId], references: [id], onDelete: SetNull)
+  sale       Sale?
+
+  @@index([tenantId])
+  @@index([leadId])
+  @@index([stageId])
+  @@index([tenantId, status])
+}
+
+model Sale {
+  id              String   @id @default(uuid())
+  tenantId        String
+  leadId          String
+  opportunityId   String   @unique
+  amount          Decimal  @db.Decimal(12, 2)
+  productOrService String? @db.VarChar(255)
+  soldAt          DateTime
+  assignedToId    String?
+  campaign        String?  @db.VarChar(255)
+  createdAt       DateTime @default(now())
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead        Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  opportunity Opportunity  @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  assignedTo  User?        @relation("AssignedSales", fields: [assignedToId], references: [id], onDelete: SetNull)
+  transaction Transaction?
+
+  @@index([tenantId])
+  @@index([leadId])
+  @@index([tenantId, soldAt])
+}
+
+// --- Tarefas e follow-up
+model Task {
+  id           String    @id @default(uuid())
+  tenantId     String
+  leadId       String
+  assignedToId String?
+  type         String    @db.VarChar(50) // manual | stage | no_reply
+  title        String    @db.VarChar(255)
+  dueAt        DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  tenant     Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead       Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  assignedTo User?  @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([leadId])
+  @@index([assignedToId])
+  @@index([tenantId, dueAt])
+}
+
+// --- Templates de mensagens (WhatsApp)
+model MessageTemplate {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String   @db.VarChar(100)
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+// --- Auditoria
+model AuditLog {
+  id         String   @id @default(uuid())
+  tenantId   String
+  userId     String?
+  action     String   @db.VarChar(50)
+  resource   String   @db.VarChar(50)
+  resourceId String?
+  metadata   Json?
+  ip         String?  @db.VarChar(45)
+  createdAt  DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+  @@index([resource, resourceId])
+}
+
+// --- Financeiro
+model FinancialCategory {
+  id        String          @id @default(uuid())
+  tenantId  String
+  name      String          @db.VarChar(100)
+  type      TransactionType
+  color     String          @db.VarChar(20)
+  icon      String?         @db.VarChar(50)
+  isDefault Boolean         @default(false)
+  createdAt DateTime        @default(now())
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([tenantId])
+  @@index([tenantId, type])
+}
+
+model Transaction {
+  id          String            @id @default(uuid())
+  tenantId    String
+  type        TransactionType
+  status      TransactionStatus @default(PENDING)
+  categoryId  String?
+  description String            @db.VarChar(500)
+  amount      Decimal           @db.Decimal(12, 2)
+  date        DateTime
+  dueDate     DateTime?
+  paidAt      DateTime?
+  saleId      String?           @unique
+  notes       String?           @db.Text
+  createdById String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  tenant    Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category  FinancialCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  sale      Sale?              @relation(fields: [saleId], references: [id], onDelete: SetNull)
+  createdBy User?              @relation("CreatedTransactions", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([tenantId, type])
+  @@index([tenantId, date])
+  @@index([tenantId, status])
+  @@index([tenantId, type, status, date])
+  @@index([categoryId])
+}
+
+// --- Tags
+model Tag {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String   @db.VarChar(100)
+  color     String   @db.VarChar(20) // Cor em hex (ex: #FF5733)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leads  LeadTag[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+model LeadTag {
+  id        String   @id @default(uuid())
+  tenantId  String
+  leadId    String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([leadId, tagId])
+  @@index([tenantId])
+  @@index([leadId])
+  @@index([tagId])
+}
+
+// --- Campos Personalizados
+model CustomField {
+  id          String            @id @default(uuid())
+  tenantId    String
+  name        String            @db.VarChar(255)
+  type        CustomFieldType
+  required    Boolean           @default(false)
+  options     String?           @db.Text // JSON array para SELECT/RADIO/CHECKBOX
+  order       Int               @default(0)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  tenant Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  values CustomFieldValue[]
+
+  @@index([tenantId])
+  @@index([tenantId, order])
+}
+
+enum CustomFieldType {
+  TEXT
+  TEXTAREA
+  NUMBER
+  DATE
+  SELECT
+  RADIO
+  CHECKBOX
+  EMAIL
+  PHONE
+  URL
+}
+
+model CustomFieldValue {
+  id            String      @id @default(uuid())
+  tenantId      String
+  leadId        String
+  customFieldId String
+  value         String?     @db.Text
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead        Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  customField CustomField @relation(fields: [customFieldId], references: [id], onDelete: Cascade)
+
+  @@unique([leadId, customFieldId])
+  @@index([tenantId])
+  @@index([leadId])
+  @@index([customFieldId])
+}
+
+// --- Automações
+model AutomationRule {
+  id          String            @id @default(uuid())
+  tenantId    String
+  name        String            @db.VarChar(255)
+  enabled     Boolean           @default(true)
+  trigger     AutomationTrigger
+  triggerConfig Json?           // Configuração específica do trigger (ex: stageId, source, etc.)
+  actions     Json              // Array de actions a executar
+  order       Int               @default(0)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, enabled])
+  @@index([tenantId, trigger])
+}
+
+// --- Histórico de Mudanças de Stage (para cálculo de tempo médio)
+model LeadStageHistory {
+  id        String   @id @default(uuid())
+  tenantId  String
+  leadId    String
+  stageId   String?
+  previousStageId String?
+  enteredAt DateTime @default(now())
+  leftAt    DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  stage  LeadStage? @relation(fields: [stageId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([leadId])
+  @@index([stageId])
+  @@index([tenantId, leadId, enteredAt])
+}
+
+// --- Permissões Granulares
+model Permission {
+  id          String   @id @default(uuid())
+  tenantId    String
+  role        UserRole
+  resource    String   @db.VarChar(50) // lead, opportunity, sale, etc.
+  action      String   @db.VarChar(50) // create, read, update, delete, assign, etc.
+  allowed     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, role, resource, action])
+  @@index([tenantId])
+  @@index([tenantId, role])
+}
+
+enum AutomationTrigger {
+  LEAD_CREATED
+  LEAD_STAGE_CHANGED
+  LEAD_STATUS_CHANGED
+  LEAD_ASSIGNED
+  LEAD_NO_REPLY
+  TASK_OVERDUE
+  OPPORTUNITY_CREATED
+  OPPORTUNITY_WON
+  OPPORTUNITY_LOST
+}
+
+// --- Motivos de Perda
+model LossReason {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String   @db.VarChar(255)
+  isDefault Boolean  @default(false) // Indica se é um motivo padrão do sistema
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leads  Lead[]       @relation("LeadLossReason")
+  opportunities Opportunity[] @relation("OpportunityLossReason")
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@index([tenantId, order])
+}

@@ -1,0 +1,188 @@
+/* Configurações Globais da Tela */
+body {
+    background-color: #f3f4f6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Estrutura Externa do iPhone (Proporções Modernas) */
+.iphone-container {
+    width: 402px;
+    height: 874px;
+    background-color: #000000;
+    border-radius: 54px;
+    padding: 12px;
+    box-shadow: 0px 25px 50px -12px rgba(0, 0, 0, 0.25);
+    box-sizing: border-box;
+}
+
+/* Tela interna */
+.iphone-screen {
+    width: 100%;
+    height: 100%;
+    background-color: #121212;
+    border-radius: 42px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Barra do Topo (Status & Entalhe Central) */
+.top-bar {
+    height: 44px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 32px;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 10;
+}
+.island {
+    width: 85px;
+    height: 13px;
+    background-color: #000000;
+    border-radius: 20px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.status-icons {
+    display: flex;
+    gap: 6px;
+    font-size: 12px;
+}
+
+/* Cabeçalho do Chat */
+.chat-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 24px;
+    border-bottom: 1px solid #262626;
+}
+.profile-pic {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7);
+    border-radius: 50%;
+    margin-right: 12px;
+}
+.profile-info {
+    display: flex;
+    flex-direction: column;
+}
+.username {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 14px;
+}
+.subtitle {
+    color: #a3a3a3;
+    font-size: 12px;
+}
+
+/* Área de Mensagens */
+.chat-body {
+    flex: 1;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+.direct-label {
+    text-align: center;
+    color: #525252;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+}
+
+/* Balões de Mensagem genéricos */
+.msg {
+    max-width: 80%;
+    padding: 14px 16px;
+    border-radius: 22px;
+    font-size: 14px;
+    line-height: 1.4;
+    margin-bottom: 12px;
+    word-wrap: break-word;
+}
+.msg p {
+    margin: 0 0 8px 0;
+}
+.msg p:last-child {
+    margin-bottom: 0;
+}
+
+/* Balão Recebido (Cinza Escuro) */
+.bubble-received {
+    background-color: #262626;
+    color: #ffffff;
+    align-self: flex-start;
+}
+
+/* Balão Enviado (Azul) */
+.bubble-sent {
+    background-color: #0095f6;
+    color: #ffffff;
+    align-self: flex-end;
+    border-radius: 22px 22px 4px 22px;
+}
+
+/* Botões interativos da automação */
+.btn-action, .btn-link {
+    width: 80%;
+    padding: 12px;
+    border-radius: 22px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: background 0.2s;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+/* Botão de Opção (Borda Cinza) */
+.btn-action {
+    background-color: transparent;
+    border: 1px solid #3f3f46;
+    color: #ffffff;
+    align-self: flex-start;
+}
+.btn-action:hover {
+    background-color: #262626;
+}
+
+/* Botão de Link (Texto Azul com borda sutil) */
+.btn-link {
+    background-color: transparent;
+    border: 1px solid #262626;
+    color: #38bdf8;
+    align-self: flex-start;
+}
+.btn-link:hover {
+    background-color: #1e1e1e;
+}
+
+/* Barra inferior física do iOS */
+.home-indicator-bar {
+    height: 34px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.home-indicator {
+    width: 140px;
+    height: 5px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    opacity: 0.8;
+}

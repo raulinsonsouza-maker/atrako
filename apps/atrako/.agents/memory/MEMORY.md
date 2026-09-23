@@ -1,0 +1,22 @@
+- [Replit deployment count constraint](replit-deployment-constraint.md) — `.replit` holds ONE `[deployment]`; agent can't create a 2nd (scheduled) deployment by code, only the UI can.
+- [Viewer-triggered sync pattern](viewer-triggered-sync.md) — background fire-and-forget sync on dashboard mount, throttled via an atomic DB claim; replaces a cron that can't run.
+- [Daily sync scheduling](daily-sync-scheduling.md) — prod trigger is cron-job.org POSTing /api/sync/daily-global; once-a-day check must be calendar-day BRT (rolling 20h drifted); lock 3h; Telegram lives in runDailySync.
+- [CRM incremental sync leaves leads sparse](crm-incremental-stale-attribution.md) — CV attributes origem/mídia async after creation; incremental window never re-fetches old leads → empty dadosCv; manual "Atualizar agora" now does full re-sync.
+- [CRM lead attribution](crm-lead-attribution.md) — Meta hierarchy (campaign→adset→ad) comes from MetaLeadIndividual; recent leads losing it = Page-access gap in form sync, not token expiry; spend keeps flowing regardless.
+- [CRM per-lead attribution limits](crm-lead-attribution.md) — Meta lead campaign/adset/ad is real (lead-form match); Google per-lead campaign/keyword is impossible (CVCRM API has no gclid/UTM/keyword).
+- [CRM filters live in per-env DB](crm-filter-config-prod.md) — attribution filters are CrmConfig.credenciais data, not code; publish ships code only, prod DB is separate; edit filters in prod via admin panel.
+- [Meta leads sync T4 per-ad fallback](meta-leads-sync-t4.md) — /{form_id}/leads needs Page token; /{ad_id}/leads works with only ads_read+leads_retrieval; T4 added to metaLeadsSync.ts.
+- [IG API v22.0 demographics migration](ig-api-v22-demographics.md) — audience_gender_age/city depreciados; novo endpoint requer metric_type=total_value e dimension_values vem como [age, gender] não [gender, age].
+- [Google Ads PMax attribution window](google-ads-pmax-lookback.md) — PMax 30-day click attribution window; incremental sync must look back 30 days or conversions are consistently ~16% understated.
+- [Instagram views replace impressions](ig-impressions-v22.md) — `impressions` was removed in Graph API v22; use `views` with total_value and treat empty API data as unavailable, never zero.
+- [IG reach metric deduplication](ig-reach-total-value.md) — use metric_type=total_value for reach (not sum of period=day); daily sum overcounts 3×+; follower_count limited to last 30 days so novosSeguidores must not overwrite DB with 0 for old months.
+- [LinkedIn Ads integration](linkedin-ads-integration.md) — versioned REST headers, OAuth tokens in ConexaoIntegracao, HMAC-signed state (no admin token in URLs), leads = oneClickLeads.
+- [Telegram daily summaries](telegram-summaries.md) — lib/telegram/ + telegramAtivo field; date math uses BRT (UTC-3) offset; parse_mode HTML avoids MarkdownV2 escaping; ATTEMPT_LOCK_MS was 30min, now 6min.
+- [Conta Hotel analysis pilot](hotel-analysis-pilot.md) — conversational analyst stays dev-only/internal; OpenAI receives controlled intents and aggregate tenant-scoped tool outputs, never raw free text.
+- [Prisma shadow migration gap](prisma-shadow-history-gap.md) — old LinkedIn migration breaks shadow replay before new SQL; don't rewrite applied history, sync dev cautiously with db push.
+- [Managed Clerk with Next.js](managed-clerk-nextjs.md) — managed setup exposes CLERK_PUBLISHABLE_KEY server-side; pass it explicitly to Next middleware and the client provider.
+- [Analyst time-series granularity](analyst-time-series-granularity.md) — “mês a mês” must survive planning, tools, and payload compaction; never answer it with an accumulated total.
+- [Analyst winner eligibility](analyst-winner-eligibility.md) — CPC/CTR never make a business winner when the configured objective has zero positive outcomes.
+- [Meta financial balance semantics](meta-financial-balance.md) — Gestão must show Meta API/cache balance, never orçamento−gasto; failed or unparseable responses preserve the last valid value.
+- [Paid-media health freshness](paid-media-health-freshness.md) — health must use persisted fact dates, not a generic sync-attempt timestamp; confirmed risks outrank missing coverage.
+- [Public client analysis boundary](public-client-analysis-boundary.md) — direct Meta, Google, Social and creative analysis is public; cross-client and operational surfaces remain authenticated.

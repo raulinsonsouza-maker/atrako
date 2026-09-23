@@ -1,0 +1,341 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Conta Hotel
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+Analista IA
+
+
+Últimos 7 dias: 04 de set. de 2026 a 10 de set. de 2026
+Análise
+Criativos
+Social Media
+Faturamento
+
+R$ 103.222,55
+
+7 dias selecionados
+
+▲ 106.2% vs. anterior
+Investimento
+
+R$ 8.161,28
+
+Mídia total no período
+
+▲ 456.3% vs. anterior
+Vendas
+
+20
+
+Canal meta
+
+▲ 100.0% vs. anterior
+ROAS
+
+12,65x
+
+Receita por real investido
+
+▼ 62.9% vs. anterior
+Custo por venda
+
+R$ 408,06
+
+Investimento ÷ vendas
+
+▲ 178.1% vs. anterior
+Performance de receita semanal
+Agrupado por semana · Linha = faturamento (eixo esq.) · Barras = investimento (eixo dir.)
+
+Diário
+Semanal
+Investimento em mídia (barras)
+Faturamento gerado (linha)
+20 vendas no período
+31/08-06/09
+07/09-13/09
+R$ 0k
+R$ 15k
+R$ 30k
+R$ 45k
+R$ 60k
+R$ 0k
+R$ 2k
+R$ 3k
+R$ 5k
+R$ 6k
+Melhor semana de receita
+
+R$ 56.077,16
+
+31/08-06/09
+
+Melhor ROAS semanal
+
+13,83x
+
+31/08-06/09
+
+Pico de vendas semanais
+
+12
+
+31/08-06/09
+
+Funil & Eficiência
+Conversão, custo e saúde financeira da operação.
+
+Ticket médio por venda
+
+R$ 5.161,13
+
+Faturamento ÷ número de vendas no período
+
+Conversão lead → venda
+
+12,58%
+
+De cada 100 leads, 12.6 viraram reservas
+
+CTR — taxa de clique
+
+2,66%
+
+% das impressões que geraram um clique no anúncio
+
+Investimento / Faturamento
+
+✓ Dentro da meta
+7,9%
+
+Meta: manter abaixo de 10% do faturamento
+
+Leads via Site
+
+158
+
+Clicaram no anúncio e preencheram no site
+
+Leads Instantâneos
+
+1
+
+Formulário nativo dentro do Meta/Facebook
+
+Conversas Iniciadas
+
+117
+
+Contatos via WhatsApp ou Messenger direto
+
+Receita por Lead
+
+R$ 649,20
+
+Faturamento ÷ total de leads gerados
+
+Resultado comercialSemana a semana
+Foco em receita, vendas e eficiência para o resort.
+
+2 semanas
+Métrica	
+Semana
+31/08-06/09
+Atual
+07/09-13/09
+Investimento
+
+R$ 4.053,35
+R$ 4.107,93
+Leads
+
+59
+100
+Vendas
+
+12
+8
+Faturamento
+
+R$ 56.077,16
+R$ 47.145,39
+ROAS
+
+13,83x
+11,48x
+Invest./Faturamento
+
+7,2%
+8,7%
+CPL
+
+R$ 68,70
+R$ 41,08
+Custo por venda
+
+R$ 337,78
+R$ 513,49
+Ticket médio
+
+R$ 4.673,10
+R$ 5.893,17
+Campanhas
+Clique em uma campanha para ver conjuntos e criativos.
+
+9 campanhas
+#1
+30/04 - [IN] [RA] [VENDAS] [INSTITUCIONAL CONTÍNUA]
+
+Vendas
+Ativa	7
+dias
+R$ 1.809,22
+▲ 645.5%
+77.057	1.414	
+5
+R$ 361,84	R$ 20.979,00	R$ 4.195,80	11,60x	8,62%	
+#2
+11/02 [IN] [RA] [RMKT - INITIATE CHECKOUT - COMPRA] - VOLTEI10
+
+Vendas
+—	7
+dias
+R$ 1.668,28
+▲ 546.4%
+55.381	1.101	
+10
+R$ 166,83	R$ 59.339,99	R$ 5.934,00	35,57x	2,81%	
+#3
+24/07 - [IN] [RA] [ESTADOS PRÓXIMOS]
+
+Leads
+Ativa	5
+dias
+R$ 1.654,06
+▲ 334.8%
+188.700	2.785	
+9
+R$ 183,78	—	—	—	—	
+#4
+23/09 [IN] [A] [CONVERSÃO] - DIAS DA SEMANA
+
+Vendas
+Ativa	7
+dias
+R$ 1.643,39
+▲ 568.4%
+50.618	964	
+4
+R$ 410,85	R$ 17.309,16	R$ 4.327,29	10,53x	9,49%	
+#5
+22/04 - [IN] [RA] [ALCANCE]
+
+Conversas
+Ativa	7
+dias
+R$ 396,87
+▲ 455.4%
+60.504	3.009	
+2
+conv.
+R$ 198,43	—	—	—	—	
+#6
+23/06 [IN] [A] [ENGAJAMENTO] [SÃO PAULO]
+
+Visitas ao Perfil
+Ativa	7
+dias
+R$ 364,82
+▲ 414.0%
+51.082	3.803	
+3.837
+vis.
+R$ 0,10	—	—	—	—	
+#7
+06/08 [IN] [RA] [LEADS] [LP DE EVENTOS]
+
+Leads
+—	7
+dias
+R$ 360,91
+▲ 449.1%
+17.110	290	
+20
+R$ 18,05	—	—	—	—	
+#8
+05/08 - [IN] [RA] [SETEMBRO ITALIANO]
+
+Vendas
+—	3
+dias
+R$ 263,73
+▲ 100.0%
+7.973	175	
+1
+R$ 263,73	R$ 5.594,40	R$ 5.594,40	21,21x	4,71%	
+#9
+28/07 - [IN] [RA] [DIAS DA SEMANA] [AGOSTO]
+
+Sem veiculação	—	R$ 0,00
+Sem veiculação
+0	0	—	—	—	—	—	—	
+Total
+
+R$ 8.161,28	508.425	13.541	3.888	R$ 2,10	R$ 103.222,55	R$ 5.161,13	12,65x	7,91%	
+Acompanhamento financeiro · Plano x Real
+Status de investimento no ano atual (planejado versus realizado em todos os canais)
+
+Orçado
+R$ 360.000,00
+Realizado
+R$ 156.379,49
+JAN.
+FEV.
+MAR.
+ABR.
+MAI.
+JUN.
+JUL.
+AGO.
+SET.
+OUT.
+NOV.
+DEZ.
+R$ 0,00
+R$9.000,00
+R$18.000,00
+R$27.000,00
+R$36.000,00
+OrcadoRealizado
+
+Ritmo do mês · Setembro — dia 10 de 30
+
+▼ 18.4% abaixo do ritmo
+Orçado no mês
+
+R$ 30.000,00
+
+Realizado até hoje
+
+R$ 8.161,28
+
+Ritmo esperado (dia 10)
+
+R$ 10.000,00
+
+Diferença do ritmo
+
+R$ -1.838,72
+
+27% realizado do mês
+|
+Ritmo esperado: 33%
+|
+73% restante para fechar o mês
+R$ 15k

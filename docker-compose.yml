@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: atrako
+      POSTGRES_PASSWORD: atrako
+      POSTGRES_DB: atrako
+    ports:
+      - "5432:5432"
+    volumes:
+      - atrako_pg:/var/lib/postgresql/data
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/atrako/Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: postgresql://atrako:atrako@postgres:5432/atrako?schema=public
+      ATRAKO_EVENTS_TOKEN: dev-local-token
+      ATRAKO_CONNECTIONS_TOKEN: dev-local-token
+      ATRAKO_CONNECTIONS_SECRET: atrako-local-connections-secret-32b
+      NODE_ENV: production
+    depends_on:
+      - postgres
+
+volumes:
+  atrako_pg:

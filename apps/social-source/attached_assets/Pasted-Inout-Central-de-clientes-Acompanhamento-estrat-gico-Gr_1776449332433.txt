@@ -1,0 +1,208 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Granarolo
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+Saldo Google
+R$ ••••••
+
+
+Mês atual: 01 de abr. de 2026 a 17 de abr. de 2026
+Análise
+Criativos
+Investimento Google
+
+R$ 2.740,36
+
+17 dias selecionados
+
+Compras no Site
+
+169
+
+Pedidos atribuídos às campanhas Google no período
+
+Custo por Compra
+
+R$ 16,22
+
+Investimento ÷ compras atribuídas
+
+ROAS
+
+4,00x
+
+Retorno sobre investimento em anúncios (receita ÷ custo)
+
+Faturamento (Valor Conv.)
+
+R$ 10.960,68
+
+Receita de compras atribuída às campanhas Google no período
+
+Ticket Médio
+
+R$ 64,86
+
+Valor médio por pedido (faturamento ÷ compras)
+
+Performance Google
+Investimento e compras por semana
+
+30/03-05/04
+06/04-12/04
+13/04-19/04
+0
+350
+700
+1050
+1400
+0
+20
+40
+60
+80
+InvestimentoFaturamentoComprasCPL
+
+Resultado GoogleSemana a semana
+Mês atual
+Visão comparativa com leitura rápida das principais métricas por semana.
+
+3 semanas
+Atual: 13/04-19/04
+Métrica	
+Semana
+30/03-05/04
+Semana
+06/04-12/04
+Atual
+13/04-19/04
+INVESTIMENTO
+
+Valor investido em mídia na semana.
+
+R$ 1.029,88
+R$ 1.213,25
+R$ 497,23
+IMPRESSÕES
+
+Volume total de entregas dos anúncios.
+
+17.940
+51.562
+30.170
+CLIQUES
+
+Cliques nos anúncios (no Google Ads, “interações” pode incluir outros tipos).
+
+828
+964
+490
+CTR (%)
+
+Taxa de clique sobre impressões.
+
+4,615%
+1,87%
+1,624%
+COMPRAS
+
+Compras no site atribuídas ao período (pedidos confirmados).
+
+32
+78
+59
+TAXA COMPRA
+
+Percentual de compras sobre os cliques gerados.
+
+3,865%
+8,091%
+12,041%
+CPC
+
+Custo médio por clique gerado.
+
+R$ 1,24
+R$ 1,26
+R$ 1,01
+CUSTO / COMPRA
+
+Investimento ÷ compras no site da semana (custo de aquisição por pedido).
+
+R$ 32,18
+R$ 15,55
+R$ 8,43
+Google Ads
+
+Campanhas · Análise por período
+
+#1
+Rede de Pesquisa - Granarolo
+
+Search
+R$ 515,85	5.236	243	4,64%	R$ 2,12	5	R$ 103,17
+[IN] - [RA] - [SEARCH] - Institucional Marca - Fundo de Funil
+
+Brand
+R$ 252,64	852	253	29,69%	R$ 1,00	228	R$ 1,11
+[IN][J][SEARCH] - Mais Vendidos
+
+Search
+R$ 148,37	874	48	5,49%	R$ 3,09	6	R$ 24,73
+Acompanhamento financeiro · Plano x Real
+Status de investimento no ano atual (planejado versus realizado em todos os canais)
+
+Orçado
+R$ 72.000,00
+Realizado
+R$ 9.660,25
+JAN.
+FEV.
+MAR.
+ABR.
+MAI.
+JUN.
+JUL.
+AGO.
+SET.
+OUT.
+NOV.
+DEZ.
+R$ 0,00
+R$1.500,00
+R$3.000,00
+R$4.500,00
+R$6.000,00
+OrcadoRealizado
+
+Ritmo do mês · Abril — dia 17 de 30
+
+▼ 19.4% abaixo do ritmo
+Orçado no mês
+
+R$ 6.000,00
+
+Realizado até hoje
+
+R$ 2.740,36
+
+Ritmo esperado (dia 17)
+
+R$ 3.400,00
+
+Diferença do ritmo
+
+R$ -659,64
+
+46% realizado do mês
+|
+Ritmo esperado: 57%
+|
+54% restante para fechar o mês
+…20

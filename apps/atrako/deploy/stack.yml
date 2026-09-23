@@ -1,0 +1,112 @@
+# Docker Swarm stack — Atrako (atrako.com.br)
+# Na VPS:
+#   cd /opt/apps/atrako
+#   set -a && source .env && set +a
+#   docker stack deploy -c stack.yml atrako
+
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-atrako}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-atrako}
+    volumes:
+      - atrako_pgdata:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  web:
+    image: atrako-web:latest
+    environment:
+      NODE_ENV: production
+      PORT: "5000"
+      DATABASE_URL: ${DATABASE_URL}
+      SOCIAL_DATABASE_URL: ${SOCIAL_DATABASE_URL}
+      ATRAKO_CONNECTIONS_SECRET: ${ATRAKO_CONNECTIONS_SECRET}
+      ATRAKO_CONNECTIONS_TOKEN: ${ATRAKO_CONNECTIONS_TOKEN}
+      ATRAKO_EVENTS_TOKEN: ${ATRAKO_EVENTS_TOKEN}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-https://atrako.com.br}
+      APP_URL: ${APP_URL:-https://atrako.com.br}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://atrako.com.br}
+      META_APP_ID: ${META_APP_ID:-}
+      META_APP_SECRET: ${META_APP_SECRET:-}
+      META_LOGIN_CONFIG_ID: ${META_LOGIN_CONFIG_ID:-}
+      MP_CLIENT_ID: ${MP_CLIENT_ID:-}
+      MP_CLIENT_SECRET: ${MP_CLIENT_SECRET:-}
+      ML_CLIENT_ID: ${ML_CLIENT_ID:-}
+      ML_CLIENT_SECRET: ${ML_CLIENT_SECRET:-}
+    networks:
+      - internal
+      - traefik_proxy
+    depends_on:
+      - db
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-fsS",
+          "-o",
+          "/dev/null",
+          "--max-time",
+          "4",
+          "http://127.0.0.1:5000/api/health",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 120s
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 1536M
+        reservations:
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik_proxy
+        - traefik.http.routers.atrako.rule=Host(`atrako.com.br`) || Host(`www.atrako.com.br`)
+        - traefik.http.routers.atrako.entrypoints=websecure
+        - traefik.http.routers.atrako.tls=true
+        - traefik.http.routers.atrako.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.atrako.service=atrako-web
+        - traefik.http.middlewares.atrako-https.redirectscheme.scheme=https
+        - traefik.http.middlewares.atrako-https.redirectscheme.permanent=true
+        - traefik.http.routers.atrako-http.rule=Host(`atrako.com.br`) || Host(`www.atrako.com.br`)
+        - traefik.http.routers.atrako-http.entrypoints=web
+        - traefik.http.routers.atrako-http.middlewares=atrako-https
+        - traefik.http.services.atrako-web.loadbalancer.server.port=5000
+
+networks:
+  internal:
+    driver: overlay
+  traefik_proxy:
+    external: true
+
+volumes:
+  atrako_pgdata:

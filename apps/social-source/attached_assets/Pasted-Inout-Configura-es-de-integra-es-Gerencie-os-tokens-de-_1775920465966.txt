@@ -1,0 +1,88 @@
+Inout
+Configurações de integrações
+Gerencie os tokens de API utilizados para sincronizar dados do Meta Ads e Google Ads.
+
+Meta Ads
+Token de acesso e conta padrão utilizados na sincronização da API de Marketing do Meta.
+
+Token de acesso (Meta)
+••••••••••••••••••••
+Por segurança, o valor atual não é exibido. Preencha apenas se quiser atualizar.
+
+ID da conta padrão (Meta Ads)
+act_123456789012345
+Google Ads
+Tokens utilizados para autenticar a API do Google Ads. Os IDs de cliente continuam sendo configurados por cliente.
+
+Developer token
+Cole o developer token do Google Ads
+Por segurança, o valor atual não é exibido. Preencha apenas se quiser atualizar.
+
+Refresh token
+Cole o refresh token do Google Ads
+Este token é utilizado junto do client ID e client secret configurados via variáveis de ambiente.
+
+Salvar alterações
+Importação de Leads — Inout
+Faça o upload de um arquivo CSV exportado da planilha de leads, ou sincronize diretamente da planilha do Google Sheets. Novos leads são criados; existentes são atualizados.
+
+Upload de arquivo CSV
+Selecione o arquivo .csv exportado da planilha de leads da InOut.
+
+Clique para selecionar o arquivo
+
+ou arraste e solte aqui · CSV
+
+Importar CSV
+URL do Google Sheets
+https://docs.google.com/spreadsheets/d/1K3RjX3a8MsItZ7KJB5Ns1z8cLKBTiO-OCAVR6cuzP9Y/edit?usp=sharing
+Cole o link de compartilhamento da planilha. URLs normais (/edit, /view) são convertidas automaticamente. Se deixar em branco, usa a planilha padrão da Inout.
+
+Sincronizar Google Sheets
+Importação concluídavia Google Sheets
+504
+
+Total
+
+0
+
+Criados
+
+0
+
+Atualizados
+
+504
+
+Falhas
+
+Todos os leads falharam — verifique se as colunas do CSV estão corretas.
+
+Colunas detectadas no arquivo:
+
+id, created_time, ad_id, ad_name, adset_id, adset_name, campaign_id, campaign_name, form_id, form_name, is_organic, platform, qual_sua_atual_faixa_de_faturamento?, qual_é_o_segmento_da_sua_empresa?, qual_o_site_da_sua_empresa?_, email, full_name, phone_number, company_name, lead_status
+
+Colunas obrigatórias: id, created_time
+
+20 erro(s) detalhados
+id=2642272532836931: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=1946895829242151: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=25372695939073960: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=1881161935877762: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=823585640789487: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=1359718352869540: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=976068948267143: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=1480225907127498: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=1942545989956248: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=906735522367070: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=858810647223716: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=2060458874516512: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=842699205524657: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=2658752064521923: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=1397521612415872: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=1273359264933709: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=1272255041071697: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=2468874703543434: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=2000427244017712: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+id=916131698054039: Invalid `prisma.metaLeadIndividual.create()` invocation: Foreign key constraint violated on the constraint: `MetaLeadIndividual_clienteId_fkey`
+R$ 0,00

@@ -1,0 +1,134 @@
+Inout
+Central de clientes
+Check-in estratégico
+
+Miguel Imóveis
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+Saldo META
+R$ 303,01
+
+Ano atual (YTD): 01 de jan. de 2026 a 30 de mar. de 2026
+Análise
+Criativos
+Análise de Criativos
+
+Criativos META
+Em Veiculação
+
+9
+
+CTR Médio
+
+0,84%
+
+Meta Custo/Conv.
+
+—
+
+Retenção Vídeo
+
+3,6%
+
+0
+Escalar
+0
+Otimizar
+8
+Em Validação
+1
+Pausar
+0 criativos estão dentro da meta de Custo/conv. — direcione o orçamento para eles.
+
+Performance por criativo
+
+Nome	Invest.	Impr.	Cliques	Conversas	Custo/conv.	CTR	CR	Status	Diagnóstico
+[ID:30856] VÍDEO SAN VITALE — v2
+[ID:30856] VÍDEO SAN VITALE — v2
+R$ 171,17	3.372	42	—	—	3.62%	—	
+Em Validação	
+—
+[ID:30856] VÍDEO SAN VITALE — v1
+[ID:30856] VÍDEO SAN VITALE — v1
+R$ 205,88	3.832	39	—	—	3.29%	—	
+Em Validação	
+—
+[ID: 29359] ÍTALO RESIDENCIAL CLUBE — v2
+[ID: 29359] ÍTALO RESIDENCIAL CLUBE — v2
+R$ 78,06	8.488	79	—	—	1.23%	—	
+Em Validação	
+Oportunidade: aumentar verba neste criativo
+[ID: 38715] CARROSSEL INDEPENDENCE TOWER — v1
+[ID: 38715] CARROSSEL INDEPENDENCE TOWER — v1
+R$ 194,36	23.425	182	—	—	1.08%	—	
+Em Validação	
+—
+[ID: 38715] CARROSSEL INDEPENDENCE TOWER — v2
+[ID: 38715] CARROSSEL INDEPENDENCE TOWER — v2
+R$ 82,31	9.081	62	—	—	0.96%	—	
+Em Validação	
+Oportunidade: aumentar verba neste criativo
+[ID: 29359] ÍTALO RESIDENCIAL CLUBE — v1
+[ID: 29359] ÍTALO RESIDENCIAL CLUBE — v1
+R$ 195,86	31.091	198	—	—	0.81%	—	
+Em Validação	
+—
+AD - VAGA PARA CORRETOR
+AD - VAGA PARA CORRETOR
+R$ 57,36	1.433	7	—	—	0.49%	—	
+Em Validação	
+—
+[ID: 22570] JD. DAS OLIVIERAS - CASA BAIXO PADRÃO — v1
+[ID: 22570] JD. DAS OLIVIERAS - CASA BAIXO PADRÃO — v1
+R$ 1,51	75	—	—	—	0.00%	—	
+Em Validação	
+—
+[ID: 22570] JD. DAS OLIVIERAS - CASA BAIXO PADRÃO — v2
+[ID: 22570] JD. DAS OLIVIERAS - CASA BAIXO PADRÃO — v2
+R$ 284,02	16.125	209	—	—	2.10%	—	
+Pausar	
+—
+Distribuição de Verba
+
+[ID: 22570] JD. DAS OLIVIERAS - CASA BAIXO PADRÃO — v2
+R$ 284,02
+22%
+[ID:30856] VÍDEO SAN VITALE — v1
+R$ 205,88
+16%
+[ID: 29359] ÍTALO RESIDENCIAL CLUBE — v1
+R$ 195,86
+15%
+[ID: 38715] CARROSSEL INDEPENDENCE TOWER — v1
+R$ 194,36
+15%
+[ID:30856] VÍDEO SAN VITALE — v2
+R$ 171,17
+13%
+[ID: 38715] CARROSSEL INDEPENDENCE TOWER — v2
+R$ 82,31
+6%
+[ID: 29359] ÍTALO RESIDENCIAL CLUBE — v2
+R$ 78,06
+6%
+AD - VAGA PARA CORRETOR
+R$ 57,36
+5%
+[ID: 22570] JD. DAS OLIVIERAS - CASA BAIXO PADRÃO — v1
+R$ 1,51
+0%
+Plano de Ação
+
+✕ Pausar
+
+
+✕
+[ID: 22570] JD. DAS OLIVIERAS - CASA BAIXO PADRÃO — v2
+
+R$ 284,02 investido sem conversas
+
+Sem resultado
+260

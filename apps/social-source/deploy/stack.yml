@@ -1,0 +1,131 @@
+# Docker Swarm stack — Symbius Central + Flow
+# Domínios: flow.symbius.com.br | central.symbius.com.br
+# NÃO altera stacks radar / hub / symbius (marketing).
+#
+# Uso na VPS:
+#   set -a && source /opt/apps/symbius-central/.env && set +a
+#   docker build -t symbius-central:latest .
+#   docker stack deploy -c deploy/stack.yml symbius-central
+
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-symbius}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-symbius_central}
+    volumes:
+      - symbius_central_pgdata:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  web:
+    image: symbius-central:latest
+    environment:
+      NODE_ENV: production
+      PORT: "5010"
+      DATABASE_URL: ${DATABASE_URL}
+      ADMIN_SECRET: ${ADMIN_SECRET}
+      SYNC_CRON_TOKEN: ${SYNC_CRON_TOKEN:-}
+      SYMBIUS_NEXTAUTH_SECRET: ${SYMBIUS_NEXTAUTH_SECRET}
+      APP_URL: ${APP_URL:-https://flow.symbius.com.br}
+      SYMBIUS_APP_URL: ${SYMBIUS_APP_URL:-https://flow.symbius.com.br}
+      SYMBIUS_FLOW_HOST: ${SYMBIUS_FLOW_HOST:-flow.symbius.com.br}
+      SYMBIUS_CENTRAL_HOST: ${SYMBIUS_CENTRAL_HOST:-central.symbius.com.br}
+      SYMBIUS_IG_APP_ID: ${SYMBIUS_IG_APP_ID:-}
+      SYMBIUS_IG_APP_SECRET: ${SYMBIUS_IG_APP_SECRET:-}
+      SYMBIUS_META_APP_ID: ${SYMBIUS_META_APP_ID:-}
+      SYMBIUS_META_APP_SECRET: ${SYMBIUS_META_APP_SECRET:-}
+      SYMBIUS_META_WEBHOOK_VERIFY_TOKEN: ${SYMBIUS_META_WEBHOOK_VERIFY_TOKEN:-}
+    networks:
+      - internal
+      - traefik_proxy
+    depends_on:
+      - db
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 1536M
+        reservations:
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik_proxy
+        # HTTPS — Flow
+        - traefik.http.routers.symbius-central-flow.rule=Host(`flow.symbius.com.br`)
+        - traefik.http.routers.symbius-central-flow.entrypoints=websecure
+        - traefik.http.routers.symbius-central-flow.tls=true
+        - traefik.http.routers.symbius-central-flow.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.symbius-central-flow.service=symbius-central-web
+        # HTTPS — Central
+        - traefik.http.routers.symbius-central-hub.rule=Host(`central.symbius.com.br`)
+        - traefik.http.routers.symbius-central-hub.entrypoints=websecure
+        - traefik.http.routers.symbius-central-hub.tls=true
+        - traefik.http.routers.symbius-central-hub.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.symbius-central-hub.service=symbius-central-web
+        # HTTP → HTTPS
+        - traefik.http.middlewares.symbius-central-https.redirectscheme.scheme=https
+        - traefik.http.middlewares.symbius-central-https.redirectscheme.permanent=true
+        - traefik.http.routers.symbius-central-flow-http.rule=Host(`flow.symbius.com.br`)
+        - traefik.http.routers.symbius-central-flow-http.entrypoints=web
+        - traefik.http.routers.symbius-central-flow-http.middlewares=symbius-central-https
+        - traefik.http.routers.symbius-central-hub-http.rule=Host(`central.symbius.com.br`)
+        - traefik.http.routers.symbius-central-hub-http.entrypoints=web
+        - traefik.http.routers.symbius-central-hub-http.middlewares=symbius-central-https
+        - traefik.http.services.symbius-central-web.loadbalancer.server.port=5010
+
+  scheduler:
+    image: curlimages/curl:8.5.0
+    networks:
+      - internal
+    environment:
+      CRON_SECRET: ${ADMIN_SECRET}
+      CRON_URL: http://web:5010/api/symbius/cron/process-scheduled
+    command:
+      - /bin/sh
+      - -c
+      - |
+        while true; do
+          curl -sf -X POST -H "x-cron-secret: $$CRON_SECRET" "$$CRON_URL" || true
+          sleep 60
+        done
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+
+networks:
+  internal:
+    driver: overlay
+  traefik_proxy:
+    external: true
+
+volumes:
+  symbius_central_pgdata:

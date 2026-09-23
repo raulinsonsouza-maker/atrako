@@ -1,0 +1,389 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Incorporadora
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+CRM
+
+
+Ano atual (YTD): 01 de jan. de 2026 a 12 de jun. de 2026
+CRM
+
+Negociações & Funil
+CV CRM
+
+Funil CRM
+Sync há 9 min
+0.2% conversão geral
+Leads no período
+
+650
+
+Fechamentos
+
+1
+
+Taxa de fechamento
+
+0.2%
+
+Leads
+
+0.6% do total
+4
+Atendimento
+
+84% do total
+543
+Visitas
+
+3% do total
+18
+Reservas
+
+0.2% do total
+1
++ 84 leads perdidos / cancelados (não exibidos no funil)
+
+CRM
+
+Análise de Origem
+Valor Vendido
+
+—
+
+0 unidades vendidas
+Leads CRM
+
+420
+
+0.0% conv. geral
+
+Em aberto
+
+379
+
+41 perdidos · 10%
+
+Canais de Origem
+
+Canal	Leads	Vendas	Conv%	Qualif.
+Meta
+333	—	—	1.9
+Google
+87	—	—	1.6
+Clique em um canal para filtrar as negociações
+
+CPL Real por Canal
+
+Meta — Custo por Lead / Venda
+
+CPL Real
+
+R$ 71,29
+
+333 leads CRM
+
+R$ 23.739,94 investidos· plataforma: R$ 65,22
+
+Google — Custo por Lead / Venda
+
+CPL Real
+
+R$ 150,75
+
+87 leads CRM
+
+R$ 13.115,07 investidos· plataforma: R$ 110,21
+
+CRM
+
+Qualidade dos Leads
+Leads em alerta
+
+70
+
+desistência, sem renda, sem contato
+
+Tags de alerta
+
+desistencia
+25
+nao quer mais receber contato
+14
+renda insuficiente
+13
+contato inexistente
+11
+nao quer imovel na planta
+5
+busca outra metragem
+3
+CRM × Meta
+
+Por Criativo
+300 formulários Meta
+de 364 totais (82% sincronizados)
+Criativo (Anúncio)	Conjunto	Leads	Visitou	Em aberto	Ganhos	Conv%	Valor
+AD03 - Estático Mirante 4
+35 - 60 | Águas Claras + Taguatinga | Lookalike LP e Compradores
+133
+2	124	—	0%	—
+AD04 - Estático Mirante 5
+35 - 60 | Águas Claras + Taguatinga | Lookalike compradores (3%)
+71
+1	67	—	0%	—
+AD00 - Vídeo Mirante 1
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+48
+2	44	—	0%	—
+AD02 - Estático Mirante 3
+35 - 60 | Águas Claras + Taguatinga | Lookalike LP e Compradores
+23
+—	22	—	0%	—
+AD05 - Estático FORMATO NOVO
+35 - 60 | Águas Claras + Taguatinga | Lookalike compradores (3%)
+11
+1	8	—	0%	—
+AD08 - NOVO ESTÁTICO
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+4
+—	3	—	0%	—
+AD07 - Estático FORMATO NOVO
+35 - 60 | Águas Claras + Taguatinga | Lookalike compradores (3%)
+3
+—	3	—	0%	—
+AD014 - VÍDEO - SILÊNCIO LUXUOSO
+35 - 60 | Águas Claras + Taguatinga | Lookalike compradores (3%)
+2
+—	2	—	0%	—
+AD11 - Vídeo Mirante 2 (IA)
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+2
+1	1	—	0%	—
+AD015 - VÍDEO NARA - 2
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+1
+—	1	—	0%	—
+AD09 - NOVO ESTÁTICO
+35 - 60 | Águas Claras + Taguatinga | Lookalike LP e Compradores
+1
+—	0	—	0%	—
+AD06 - Estático FORMATO NOVO
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+1
+—	1	—	0%	—
+Leads contados pelo data de preenchimento do formulário Meta (MetaLeadForms), não pela data de entrada no CRM. O total pode ser menor que o Meta Ads Manager quando o sync ainda não capturou os leads mais recentes — o saldo restante aparece no total do tab META. Métricas CRM (Visitou, Em aberto, Ganhos) via cruzamento por e-mail e telefone com os registros do CRM.
+
+CRM
+
+Negociações
+Buscar por nome, e-mail ou telefone…
+650 negociações · página 1 de 44· clique para ver detalhes
+
+Status	Etapa	Contato	Origem	Qualificação	Entrada	Fechamento	Valor
+Em andamento	
+Em Atendimento
+Mylena Alessandrina
+
+alessandrinamylena@gmail.com
+
+Meta
+
+CRM
+Facebook Ads
+
+—
+12/06/26	—	—
+Em andamento	
+Em Atendimento
+Eneas Portugal
+
+eneas.portugal@gmail.com
+
+Meta
+
+CRM
+Facebook Ads
+
+—
+10/06/26	—	—
+Em andamento	
+Visita Realizada
+fernandoprthomsen e Karine.
+
+forthomsen@gmail.com
+
+Meta
+
+CRM
+Facebook Ads
+
+—
+10/06/26	—	—
+Em andamento	
+Em Atendimento
+Pedro Barcelos
+
+pbaarcelos22@gmail.com
+
+Outro
+
+Não Definido
+
+—
+09/06/26	—	—
+Em andamento	
+Visita Agendada
+Tedi Biffi
+
+gutobiffi@icloud.com
+
+Meta
+
+CRM
+Facebook Ads
+
+—
+09/06/26	—	—
+Em andamento	
+Em Atendimento
+Marcella
+
+cellaoliveira21@icloud.com
+
+Google
+
+CRM
+Google
+
+—
+08/06/26	—	—
+Em andamento	
+Em Atendimento
+Cristina De Jesus
+
+pedrosocristina9@gmail.com
+
+Indicação
+
+linktr.ee
+
+—
+07/06/26	—	—
+Em andamento	
+Em Atendimento
+Helio ferreira
+
+heliofs1982@hotmail.com
+
+Google
+
+CRM
+Google
+
+—
+07/06/26	—	—
+Em andamento	
+Em Atendimento
+Quênia Aparecida
+
+queniafrutodedeus@gmail.com
+
+Outro
+
+#digitalthauanna
+
+—
+07/06/26	—	—
+Em andamento	
+Em Atendimento
+Claudia nascimento
+
+claudiaaguiar1407@gmail.com
+
+Outro
+
+#digitalthauanna
+
+—
+07/06/26	—	—
+Em andamento	
+Em Atendimento
+Amanda Pessoa
+
+amanda.larysse@hotmail.com
+
+Outro
+
+#digitalthauanna
+
+—
+06/06/26	—	—
+Em andamento	
+Em Atendimento
+Edina
+
+edina_duarte@hotmail.com
+
+Google
+
+CRM
+Google
+
+—
+06/06/26	—	—
+Em andamento	
+Em Atendimento
+Joseilson Pereira Araujo
+
+joseilsonp.a@gmail.com
+
+Google
+
+CRM
+Google
+
+—
+05/06/26	—	—
+Em andamento	
+Em Atendimento
+Paula Machado Oliveira Balestrini
+
+paula94oliveira@gmail.com
+
+Google
+
+CRM
+Google
+
+—
+05/06/26	—	—
+Em andamento	
+Em Atendimento
+DAYANA LUSTOSA DA SILVA BRASIL
+
+dayanalustosa@gmail.com
+
+Google
+
+CRM
+Google
+
+—
+05/06/26	—	—
+
+1
+2
+3
+4
+5
+…
+44
+
+R$ 0,00

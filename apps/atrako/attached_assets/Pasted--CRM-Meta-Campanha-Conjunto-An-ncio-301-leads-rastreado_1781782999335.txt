@@ -1,0 +1,78 @@
+
+CRM × Meta
+
+Campanha → Conjunto → Anúncio
+301 leads rastreados
+Campanha / Conjunto / Anúncio	Leads	Visitas	Atend.	Vendas	Valor	Invest.	CPL	Conv%
+
+[IN] [P] [FORM] - ESCALA DE MENSAGENS (FASE 1)
+190	5	170	—	—	R$ 7.918,55	R$ 41,68	0%
+
+[IN] [P] [FORM] - Remarketing | Lookalike Compradores e Interesses
+111	2	102	—	—	R$ 9.260,51	R$ 83,43	0%
+Baseado nos identificadores de campanha/conjunto/anúncio gravados em cada lead pelo formulário do Meta. Clique no nome para filtrar a lista de leads abaixo; use as setas para abrir conjuntos e anúncios. Atend. = em atendimento · CPL = investimento ÷ leads rastreados.
+
+CRM × Meta
+
+Por Criativo
+Criativo (Anúncio)	Campanha	Conjunto	Leads	Visitou	Em aberto	Ganhos	Invest.	Cliques	CPL	Conv%
+AD03 - Estático Mirante 4
+[IN] [P] [FORM] - Remarketing | Lookalike Compradores e Interesses
+35 - 60 | Águas Claras + Taguatinga | Lookalike LP e Compradores
+134
+2	123	—	R$ 2.039,02	986	R$ 15,22	0%
+AD04 - Estático Mirante 5
+[IN] [P] [FORM] - Remarketing | Lookalike Compradores e Interesses
+35 - 60 | Águas Claras + Taguatinga | Lookalike compradores (3%)
+71
+1	67	—	R$ 3.328,58	2.638	R$ 46,88	0%
+AD00 - Vídeo Mirante 1
+[IN] [P] [FORM] - ESCALA DE MENSAGENS (FASE 1)
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+48
+2	43	—	R$ 764,32	662	R$ 15,92	0%
+AD02 - Estático Mirante 3
+[IN] [P] [FORM] - Remarketing | Lookalike Compradores e Interesses
+35 - 60 | Águas Claras + Taguatinga | Lookalike LP e Compradores
+23
+—	20	—	R$ 2.220,41	1.373	R$ 96,54	0%
+AD05 - Estático FORMATO NOVO
+[IN] [P] [FORM] - Remarketing | Lookalike Compradores e Interesses
+35 - 60 | Águas Claras + Taguatinga | Lookalike compradores (3%)
+11
+1	8	—	R$ 194,98	85	R$ 17,73	0%
+AD08 - NOVO ESTÁTICO
+[IN] [P] [FORM] - ESCALA DE MENSAGENS (FASE 1)
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+4
+—	3	—	R$ 269,59	245	R$ 67,40	0%
+AD07 - Estático FORMATO NOVO
+[IN] [P] [FORM] - Remarketing | Lookalike Compradores e Interesses
+35 - 60 | Águas Claras + Taguatinga | Lookalike compradores (3%)
+3
+—	3	—	—	—	—	0%
+AD014 - VÍDEO - SILÊNCIO LUXUOSO
+[IN] [P] [FORM] - Remarketing | Lookalike Compradores e Interesses
+35 - 60 | Águas Claras + Taguatinga | Lookalike compradores (3%)
+2
+—	2	—	R$ 889,67	249	R$ 444,84	0%
+AD11 - Vídeo Mirante 2 (IA)
+[IN] [P] [FORM] - ESCALA DE MENSAGENS (FASE 1)
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+2
+1	1	—	R$ 194,60	131	R$ 97,30	0%
+AD015 - VÍDEO NARA - 2
+[IN] [P] [FORM] - ESCALA DE MENSAGENS (FASE 1)
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+1
+—	1	—	R$ 77,13	32	R$ 77,13	0%
+AD09 - NOVO ESTÁTICO
+[IN] [P] [FORM] - Remarketing | Lookalike Compradores e Interesses
+35 - 60 | Águas Claras + Taguatinga | Lookalike LP e Compradores
+1
+—	0	—	R$ 122,97	49	R$ 122,97	0%
+AD06 - Estático FORMATO NOVO
+[IN] [P] [FORM] - ESCALA DE MENSAGENS (FASE 1)
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+1
+—	1	—	—	—	—	0%

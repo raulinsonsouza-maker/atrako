@@ -1,0 +1,92 @@
+/* Sistema dark + accent terracotta (Claude Amber) sobre DarkGradientBg */
+:root {
+  --color-cream: #f5f4ef;
+  --color-cream-deep: #ebe8e1;
+  --color-white: #ffffff;
+  --color-border: rgb(255 255 255 / 0.1);
+  --color-muted-ui: #8a8880;
+  --color-accent: #c96442;
+  --color-accent-deep: #e07a55;
+  --color-lavender: #9c87f6;
+  --color-ink: #f5f4ef;
+  --color-ink-soft: #d4d2cb;
+
+  --color-yellow: var(--color-accent);
+  --color-gold: var(--color-accent);
+  --color-gray: #9a9890;
+  --color-charcoal: #161616;
+  --color-navy: #1c1c1c;
+  --color-void: #000000;
+  --color-black: #000000;
+
+  --font-display: var(--font-inter), system-ui, sans-serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.0625rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-overlay: 0 16px 40px rgb(0 0 0 / 0.45);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 140ms;
+  --dur-normal: 240ms;
+
+  --danger: #f07167;
+  --success: #5cb88a;
+
+  --bg: transparent;
+  --bg-elevated: rgb(22 22 22 / 0.88);
+  --bg-muted: rgb(38 38 38 / 0.7);
+  --ink: var(--color-ink);
+  --ink-soft: var(--color-ink-soft);
+  --muted: var(--color-gray);
+  --accent: var(--color-accent);
+  --accent-ink: #ffffff;
+  --border: var(--color-border);
+  --focus-ring: var(--color-accent);
+  --link: var(--color-accent-deep);
+  --link-hover: #f0a080;
+}
+
+[data-theme="admin"],
+[data-theme="members"],
+[data-theme="marketing"],
+[data-theme="checkout"] {
+  --bg: transparent;
+  --bg-elevated: rgb(22 22 22 / 0.88);
+  --bg-muted: rgb(38 38 38 / 0.7);
+  --ink: var(--color-ink);
+  --ink-soft: var(--color-ink-soft);
+  --muted: var(--color-gray);
+  --accent: var(--color-accent);
+  --accent-ink: #ffffff;
+  --border: var(--color-border);
+  --focus-ring: var(--color-accent);
+  --link: var(--color-accent-deep);
+  --link-hover: #f0a080;
+}

@@ -1,0 +1,167 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Incorporadora
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+CRM
+Saldo Google
+R$ ••••••
+
+
+
+Mês atual: 01 de jun. de 2026 a 18 de jun. de 2026
+Análise
+Criativos
+Investimento Google
+
+R$ 2.058,22
+
+18 dias selecionados
+
+Conversões (Google Ads)
+
+12
+
+Total do período (métrica principal do relatório de campanhas)
+
+Custo / conversão
+
+R$ 171,52
+
+Investimento ÷ conversões
+
+CPM Google
+
+R$ 244,13
+
+Custo por mil impressões
+
+Performance Google
+Investimento e conversões por semana
+
+Diário
+Semanal
+01/06-07/06
+08/06-14/06
+15/06-21/06
+0
+300
+600
+900
+1200
+0
+2
+4
+6
+8
+InvestimentoConversõesCPL
+Resultado GoogleSemana a semana
+Mês atual
+Visão comparativa com leitura rápida das principais métricas por semana.
+
+3 semanas
+Atual: 15/06-21/06
+Métrica	
+Semana
+01/06-07/06
+Semana
+08/06-14/06
+Atual
+15/06-21/06
+INVESTIMENTO
+
+Valor investido em mídia na semana.
+
+R$ 762,79
+R$ 1.031,06
+R$ 264,37
+IMPRESSÕES
+
+Volume total de entregas dos anúncios.
+
+3.210
+3.764
+1.457
+CLIQUES
+
+Cliques nos anúncios (no Google Ads, “interações” pode incluir outros tipos).
+
+171
+196
+64
+CTR (%)
+
+Taxa de clique sobre impressões.
+
+5,327%
+5,207%
+4,393%
+CONVERSÕES
+
+Total de conversões atribuídas (alinhado ao relatório de campanhas do Google Ads).
+
+7
+4
+1
+TAXA CONV.
+
+Conversões em relação aos cliques (taxa de conversão aproximada).
+
+4,094%
+2,041%
+1,563%
+CPC
+
+Custo médio por clique gerado.
+
+R$ 4,46
+R$ 5,26
+R$ 4,13
+CUSTO / CONV.
+
+Investimento ÷ conversões da semana (equivalente ao custo por conversão do Google).
+
+R$ 108,97
+R$ 257,77
+R$ 264,37
+Google Ads
+
+Campanhas · Análise por período
+
+#1
+Search
+[IN] [P] [SEARCH] LEADS
+
+Ativa	R$ 2.058,21	8.431	431	5,11%	R$ 4,78	12,0	R$ 171,52	R$ 12,00	0,01x
+Total · 1 campanhas	R$ 2.058,21	8.431	431	5,11%	R$ 4,78	12,0	R$ 171,52	R$ 12,00	0,01x
+Acompanhamento financeiro · Plano x Real
+Status de investimento no ano atual (planejado versus realizado em todos os canais)
+
+Orçado
+R$ 0,00
+Realizado
+R$ 13.600,60
+JAN.
+FEV.
+MAR.
+ABR.
+MAI.
+JUN.
+JUL.
+AGO.
+SET.
+OUT.
+NOV.
+DEZ.
+R$ 0,00
+R$ 950,00
+R$1.900,00
+R$2.850,00
+R$3.800,00
+OrcadoRealizado
+R$ 950,00

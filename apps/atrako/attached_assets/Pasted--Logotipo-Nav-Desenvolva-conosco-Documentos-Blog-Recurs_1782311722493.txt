@@ -1,0 +1,141 @@
+
+Logotipo Nav
+Desenvolva conosco
+Documentos
+Blog
+Recursos
+Centrais para desenvolvedores
+Meus apps
+Documentação
+Visão geral
+Compartilhamento no feed
+Esta página foi traduzida do inglês para outro idioma usando IA. O conteúdo traduzido por IA pode conter erros, omissões ou divergências de sentido. Como a tradução automática pode ser imprecisa ou pouco clara, consulte o conteúdo original em inglês desta página para validar as orientações corretas.
+Isso foi útil?
+Compartilhamento no feed
+Updated: 4 de mar de 2026
+Com o recurso Compartilhar no Feed, você pode permitir que os usuários do seu app compartilhem conteúdo nos respectivos Feeds do Instagram.
+
+Visão geral
+Ao usar os intents implícitos do Android e os links universais ou a interação de documentos do iOS, o seu aplicativo pode transferir fotos e vídeos para o aplicativo do Instagram. O aplicativo do Instagram receberá o conteúdo e fará o carregamento no Compositor do Feed para que o usuário possa publicá-lo no próprio Feed do Instagram.
+Desenvolvedores do Android
+As implementações do Android usam intents implícitos com o EXTRA_STREAM extra para solicitar que o usuário selecione o aplicativo do Instagram. Quando selecionado, o intent iniciará o aplicativo do Instagram e transferirá o conteúdo para ele. Depois disso, o conteúdo será carregado pelo aplicativo do Instagram no Compositor do Feed.
+Em geral, o fluxo de compartilhamento deve incluir estas ações:
+Instanciar um intent implícito com o conteúdo que você quer transferir para o app do Instagram.
+Iniciar uma atividade e verificar se ela pode resolver o intent implícito.
+Resolver a atividade, se ele puder.
+Conteúdo compartilhável
+Você pode transferir o seguinte conteúdo para o app do Instagram:
+Conteúdo	Tipos de arquivo	Descrição
+Ativo de imagem
+JPEG, GIF ou PNG
+-
+Ativo de arquivo
+MKV, MP4
+Duração mínima: 3 segundos/Duração máxima: 10 minutos/Dimensões mínimas: 640 x 640 pixels
+Como compartilhar um ativo de imagem
+String type = "image/*";
+String filename = "/myPhoto.jpg";
+String mediaPath = Environment.getExternalStorageDirectory() + filename;
+
+createInstagramIntent(type, mediaPath);
+
+private void createInstagramIntent(String type, String mediaPath){
+
+    // Create the new Intent using the 'Send' action.
+    Intent share = new Intent(Intent.ACTION_SEND);
+
+    // Set the MIME type
+    share.setType(type);
+
+    // Create the URI from the media
+    File media = new File(mediaPath);
+    Uri uri = Uri.fromFile(media);
+
+    // Add the URI to the Intent.
+    share.putExtra(Intent.EXTRA_STREAM, uri);
+
+    // Broadcast the Intent.
+    startActivity(Intent.createChooser(share, "Share to"));
+}
+Como compartilhar um ativo de vídeo
+String type = "video/*";
+String filename = "/myVideo.mp4";
+String mediaPath = Environment.getExternalStorageDirectory() + filename;
+
+createInstagramIntent(type, mediaPath);
+
+private void createInstagramIntent(String type, String mediaPath){
+
+    // Create the new Intent using the 'Send' action.
+    Intent share = new Intent(Intent.ACTION_SEND);
+
+    // Set the MIME type
+    share.setType(type);
+
+    // Create the URI from the media
+    File media = new File(mediaPath);
+    Uri uri = Uri.fromFile(media);
+
+    // Add the URI to the Intent.
+    share.putExtra(Intent.EXTRA_STREAM, uri);
+
+    // Broadcast the Intent.
+    startActivity(Intent.createChooser(share, "Share to"));
+}
+Desenvolvedores do iOS
+As implementações do iOS podem usar links universais para iniciar o aplicativo do Instagram e transferir um conteúdo para ele ou solicitar alguma ação específica.
+Links universais
+Use os links universais⁠ listados na tabela a seguir para executar ações no app do Instagram.
+Link universal	Ação
+https://www.instagram.com
+Inicia o aplicativo do Instagram.
+https://www.instagram.com/create/story
+Inicia o aplicativo do Instagram com a visualização de câmera ou a biblioteca de fotos em dispositivos sem câmera.
+https://www.instagram.com/p/{media_id}
+Inicia o aplicativo do Instagram e carrega a publicação que corresponde ao valor do ID especificado (int).
+https://www.instagram.com/{username}
+Inicia o aplicativo do Instagram e carrega o usuário do Instagram que corresponde ao valor do nome de usuário especificado (string).
+https://www.instagram.com/explore/locations/{location_id}
+Inicia o aplicativo do Instagram e carrega o feed de localização que corresponde ao valor do ID especificado (int).
+https://www.instagram.com/explore/tags/{tag_name}
+Inicia o aplicativo do Instagram e carrega a página da hashtag que corresponde ao valor do nome especificado (string).
+Exemplo de código em Objective-C
+Este exemplo de código em Objective-C inicia o aplicativo do Instagram com a visualização de câmera.
+NSURL *instagramURL = [NSURL URLWithString:@"https://www.instagram.com/create/story"];
+if ([[UIApplication sharedApplication] canOpenURL:instagramURL]) {
+    [[UIApplication sharedApplication] openURL:instagramURL];
+}
+Interação de documentos
+Caso seu app crie fotos e você queira que os usuários as compartilhem no Instagram, use a API de Interação de Documentos⁠ para abrir sua foto no fluxo de compartilhamento do Instagram.
+Primeiro, salve o arquivo em formato PNG ou JPEG (preferencial) e use a extensão de nome de arquivo .ig. Com as APIs de Interação de Documentos do iOS, você pode acionar a foto que será aberta pelo Instagram. O identificador do nosso UTI de interação de documentos é com.instagram.photo. Ele está em conformidade com os UTIs public/jpeg e public/png. Para saber mais, consulte os artigos na documentação da Apple: Previewing and Opening Files⁠ e UIDocumentInteractionController Class Reference⁠.
+Como alternativa, para mostrar somente o Instagram na lista de aplicativos (em vez do Instagram e outros aplicativos em conformidade com public/jpeg), especifique a classe de extensão igo, que é do tipo com.instagram.exclusivegram.
+Quando acionado, o Instagram mostrará imediatamente ao usuário nossa tela de filtro. A imagem é pré-carregada e dimensionada de acordo com o Instagram. Para melhorar os resultados, o Instagram prefere abrir uma imagem quadrada em JPEG que tenha 640 x 640 pixels. Se a imagem for maior, ela será redimensionada dinamicamente.
+Você achou esta página útil?
+Ícone de polegar para cima
+Ícone de polegar para baixo
+Meta
+FacebookInstagramXLinkedInYouTube
+Desenvolva com a Meta
+IA
+Meta Horizon
+Tecnologias sociais
+Notícias
+Meta for Developers
+Blog
+Casos de sucesso
+Suporte
+Suporte ao desenvolvedor
+Ferramenta de bug
+Status da plataforma
+Fórum da Comunidade de Desenvolvedores
+Relatar um incidente
+Quem somos
+Sobre
+Carreiras
+Termos e políticas
+Iniciativas de plataforma responsável
+Termos da plataforma
+Políticas do Desenvolvedor
+Política de Privacidade
+Cookies
+Português (Brasil)

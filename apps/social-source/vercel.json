@@ -1,0 +1,26 @@
+{
+  "crons": [
+    {
+      "path": "/api/sync/meta",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/sync/google-ads",
+      "schedule": "20 8 * * *"
+    },
+    {
+      "path": "/api/sync/analytics",
+      "schedule": "40 8 * * *"
+    },
+    {
+      "path": "/api/gestao/alertas",
+      "schedule": "0 9 * * *"
+    }
+  ],
+  "functions": {
+    "app/api/sync/meta/route.ts": { "maxDuration": 300 },
+    "app/api/sync/google-ads/route.ts": { "maxDuration": 300 },
+    "app/api/sync/analytics/route.ts": { "maxDuration": 300 },
+    "app/api/admin/sync-all/route.ts": { "maxDuration": 300 }
+  }
+}

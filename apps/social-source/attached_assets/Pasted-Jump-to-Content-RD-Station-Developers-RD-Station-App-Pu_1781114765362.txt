@@ -1,0 +1,306 @@
+Jump to Content
+RD Station Developers
+RD Station
+App Publisher
+App Store
+Blog
+Suporte
+Status
+Acesse sua conta
+Home
+Guias
+Recipes
+API
+Changelog
+MCPs e Conectores IA
+
+Search
+CTRL-K
+JUMP TO
+CTRL-/
+Introdução
+Boas vindas
+Suporte
+Integrações multiproduto
+Webhook Service
+
+Boas Práticas
+Exemplos de casos de uso
+RD Station Marketing API
+Introdução e requisitos
+Guia de uso
+
+Autenticação
+
+[Vídeo] Como configurar a Autenticação OAuth na sua aplicação e boas práticas
+Passo 1: Como criar um aplicativo na App Store e gerar as Credenciais (client_id e client_secret)
+Passo 2: Como utilizar as Credenciais para gerar o code
+Passo 3: Como obter os tokens (access_token e refresh_token)
+post
+Passo 4: Como utilizar o refresh_token para atualizar o access_token
+post
+Como criar um fluxo de verificação e renovação do token
+Como utilizar o access_token para autorizar suas requisições
+Como revogar o acesso de um token
+post
+Erros relacionados à Autenticação
+FAQ de Autenticação
+Contatos
+
+Campos personalizados
+
+Funis de Contatos
+
+Segmentações
+
+Fluxos de automação
+
+Email
+
+Landing Pages
+
+Pop-ups
+
+Formulários
+
+Análise
+
+Campanhas
+
+Evento de Conversão Padrão
+
+Eventos de Qualificação do Contato
+
+Eventos de E-commerce
+
+Eventos de E-commerce (Descontinuados)
+
+
+Eventos de Chat
+
+Eventos de Chamada
+
+Eventos de Mídia
+
+Batch de Eventos
+
+Evento de Conversão via API Key
+
+Catálogo de produtos
+
+RD Station CRM API v1
+Introdução e requisitos
+Guia de uso
+
+Anotações
+
+Campanhas
+
+Contatos
+
+Campos personalizados
+
+Motivos de perda
+
+Funis de vendas
+
+Produtos na negociação
+
+Fontes
+
+Etapas do funil de vendas
+
+Negociações
+
+Empresas
+
+Produtos
+
+Tarefas
+
+Equipes
+
+Token de autenticação
+
+Usuários
+
+Webhooks
+
+RD Station CRM API v2
+Autenticação
+
+Introdução
+Bases legais
+Filtrando com RDQL
+Casos de uso
+Campanhas
+
+Contatos
+
+Campos personalizados
+
+Produtos na negociação
+
+Negociações
+
+Anexos
+
+Motivos de perda
+
+Anotações
+
+Empresas
+
+Produtos
+
+Funis de vendas
+
+Segmentos
+
+Etapas do funil de vendas
+
+Fontes
+
+Equipes
+
+Tarefas
+
+Usuários
+
+Eventos de webhook
+
+Propostas
+
+Webhooks
+
+RD Station Conversas API v2
+Introdução
+Autenticação
+Criptografia
+Contatos
+
+Campos personalizados
+
+Funcionários
+
+Flows
+
+Mensagens
+
+Jobs
+
+Relatórios
+
+Templates
+
+Carteiras
+
+WhatsApp
+
+Workflows
+
+Analytics
+
+Campanhas
+
+
+Passo 2: Como utilizar as Credenciais para gerar o code
+###[Passo 2 de 4]
+
+No passo anterior, você criou o aplicativo na App Store e obteve as credenciais. Neste passo, vamos utilizar as credenciais client_id e redirect_uri para obter o code.
+
+O objetivo dessa etapa é autorizar o aplicativo (criado no passo 1) a se conectar com a conta desejada do RD Station Marketing.
+
+1. Compondo a URL de autorização
+Você deve substituir os parâmetros client_id e redirect_uri da URL de autorização indicada abaixo, pelas credenciais obtidas no passo anterior:
+
+URL de autorização
+
+https://api.rd.services/auth/dialog?client_id=client_id&redirect_uri=redirect_uri&state=state
+💡
+O parâmetro redirect_uri deve ser substituído pela URL de Callback cadastrada no aplicativo criado no passo 1.
+Se você estiver realizando esse passo manualmente, você pode substituir os parâmetros utilizando o Gerador de URL de autorização abaixo para criar sua URL:
+
+Gerador de URL de autorização
+
+Campo	Valor	Descrição
+Client Id:	
+75c26241-e955-4f1e-8235-3ada34a94776
+client_id do aplicativo
+Redirect Uri:	
+https://central-inout.replit.app/api/auth/rd-station/callback
+redirect_uri do aplicativo (callback)
+State:	
+insira aqui o state
+(Opcional) Param extra para a URL de callback
+URL de autenticação:
+https://api.rd.services/auth/dialog?client_id=75c26241-e955-4f1e-8235-3ada34a94776&redirect_uri=https%3A%2F%2Fcentral-inout.replit.app%2Fapi%2Fauth%2Frd-station%2Fcallback&state=
+Atenção: Certifique-se de que a sua url de callback foi inserida por completo (exatamente como foi cadastrada no aplicativo), pois aqui é feita uma comparação de strings entre a url de callback inserida na sua app e a redirect uri.
+
+📘
+O parâmetro "state" é usado como um mecanismo de segurança para garantir a integridade da resposta de autenticação ao usar o OAuth e prevenir ataques CSRF.
+Ele é determinado ao configurar a URL de autorização e, ao gerar o code, o servidor retorna esse parâmetro na resposta, permitindo comparar esse valor recebido com o valor originalmente gerado.
+
+Exemplo de URL de autorização
+Veja um exemplo de como ficaria a URL de autorização após substituir o client_id e redirect_uri pelas credenciais geradas por um aplicativo.
+
+Credenciais de exemplo:
+
+Campo
+
+Valor
+
+client_id	68956445-3421-4a0f-a0dd-3142a97621f4
+client_secret	81f840006c994d71a87d0b4fa6e2f0a2
+url_callback	https://www.rdstation.com/contato
+URL de autorização atualizada com as credenciais:
+
+URL de autorização atualizada
+
+https://api.rd.services/auth/dialog?client_id=68956445-3421-4a0f-a0dd-3142a97621f4&redirect_uri=https://www.rdstation.com/contato
+2. Autorizando o aplicativo
+Após gerar a URL de autorização, é necessário acessá-la para obter o code.
+
+Ao acessar/ser redirecionado para a URL de autorização, o usuário poderá selecionar qual conta do RD Station Marketing deseja integrar e será exibida a caixa de permissões para confirmar a autorização, conforme mostrado a imagem abaixo:
+
+
+Se o redirecionamento for feito corretamente, o code será retornado em uma URL com a estrutura similar:
+
+URL com o code
+
+https://yourapp.org/auth/callback?code={code}
+❗️
+As atualizações no Aplicativo levam até 1 hora para serem refletidas.
+Se a URL de Callback for atualizada e estiver ocorrendo um erro ao tentar gerar o code, é necessário aguardar esse tempo para utilizá-la.
+
+Se você estiver criando um aplicativo privado (para uso interno):
+Pode realizar essa etapa acessando a URL de autorização pela barra de endereço do seu navegador para ser redirecionado para a sua conta do RD Station Marketing, autorizar a conexão e obter o code.
+
+Se você estiver criando um aplicativo público (para os seus clientes):
+Sua aplicação precisa redirecionar o navegador do usuário para a URL de autorização que você construiu. Para isso, pode exibir um botão que diz: "Conectar Nome do app" com a URL de autorização para que o usuário seja ser redirecionado para a conta do RD Station Marketing e obtenha o code.
+
+🚧
+Esse processo só precisa ser feito uma vez
+O code expira em seu primeiro uso ou após 60 minutos, pois a sua única função no processo de Autenticação é solicitar o access_token e refresh_token.
+
+Após utilizá-lo para gerar os tokens ele não será mais necessário para a utilização da API.
+
+Ainda ficou com dúvida? Leia a nossa receita (:
+
+Gerando sua URL de autenticação
+Open Recipe
+
+Updated 8 months ago
+
+Próximo passo:
+Agora que você tem ocode, você pode seguir para o próximo passo para utilizá-lo para obter oaccess_tokene orefresh_token:
+
+Passo 3: Como obter os tokens (access_token e refresh_token)
+Did this page help you?
+1. Compondo a URL de autorização
+Gerador de URL de autorização
+Exemplo de URL de autorização
+2. Autorizando o aplicativo
+Se você estiver criando um aplicativo privado (para uso interno):
+Se você estiver criando um aplicativo público (para os seus clientes):
+ Português (Brasil)

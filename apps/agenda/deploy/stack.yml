@@ -1,0 +1,91 @@
+# Docker Swarm stack — Book Symbius
+# Na VPS:
+#   cd /opt/apps/book
+#   set -a && source .env && set +a
+#   docker build -t book-web:latest .
+#   docker stack deploy -c deploy/stack.yml book
+
+version: "3.8"
+
+services:
+  web:
+    image: book-web:latest
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+      DATABASE_URL: ${DATABASE_URL:-file:/data/book.db}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-https://book.symbius.com.br}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://book.symbius.com.br}
+      EMAIL_FROM: ${EMAIL_FROM:-Book Symbius <agendamento@book.symbius.com.br>}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      CRON_SECRET: ${CRON_SECRET:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://book.symbius.com.br/api/google/callback}
+      MERCADOPAGO_CLIENT_ID: ${MERCADOPAGO_CLIENT_ID:-}
+      MERCADOPAGO_CLIENT_SECRET: ${MERCADOPAGO_CLIENT_SECRET:-}
+      MERCADOPAGO_REDIRECT_URI: ${MERCADOPAGO_REDIRECT_URI:-https://book.symbius.com.br/api/mercadopago/callback}
+      PLATFORM_MERCADOPAGO_REDIRECT_URI: ${PLATFORM_MERCADOPAGO_REDIRECT_URI:-https://book.symbius.com.br/api/admin/mercadopago/callback}
+      PLATFORM_MERCADOPAGO_ACCESS_TOKEN: ${PLATFORM_MERCADOPAGO_ACCESS_TOKEN:-}
+      PLATFORM_MERCADOPAGO_PUBLIC_KEY: ${PLATFORM_MERCADOPAGO_PUBLIC_KEY:-}
+      PLATFORM_BILLING_ENABLED: ${PLATFORM_BILLING_ENABLED:-false}
+      PLATFORM_SECRETS_KEY: ${PLATFORM_SECRETS_KEY:-}
+      WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+      WHATSAPP_WABA_ID: ${WHATSAPP_WABA_ID:-}
+      WHATSAPP_WEBHOOK_VERIFY_TOKEN: ${WHATSAPP_WEBHOOK_VERIFY_TOKEN:-}
+      WHATSAPP_TEMPLATE_PRO_INVITE: ${WHATSAPP_TEMPLATE_PRO_INVITE:-}
+    volumes:
+      - book_data:/data
+      - book_uploads:/app/public/uploads
+      - book_intake:/app/uploads
+    networks:
+      - traefik_proxy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-fsS",
+          "-o",
+          "/dev/null",
+          "--max-time",
+          "4",
+          "http://127.0.0.1:3000/api/health",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 90s
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik_proxy
+        - traefik.http.routers.book.rule=Host(`book.symbius.com.br`)
+        - traefik.http.routers.book.entrypoints=websecure
+        - traefik.http.routers.book.tls=true
+        - traefik.http.routers.book.tls.certresolver=letsencryptresolver
+        - traefik.http.services.book.loadbalancer.server.port=3000
+        - traefik.http.routers.book-http.rule=Host(`book.symbius.com.br`)
+        - traefik.http.routers.book-http.entrypoints=web
+        - traefik.http.routers.book-http.middlewares=book-https-redirect
+        - traefik.http.middlewares.book-https-redirect.redirectscheme.scheme=https
+        - traefik.http.middlewares.book-https-redirect.redirectscheme.permanent=true
+
+networks:
+  traefik_proxy:
+    external: true
+
+volumes:
+  book_data:
+  book_uploads:
+  book_intake:

@@ -1,0 +1,371 @@
+Acompanhamento estratégico
+
+Incorporadora de São Paulo
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+CRM
+
+Ano atual (YTD): 01 de jan. de 2026 a 24 de jun. de 2026
+CRM
+
+Funil & Leads
+Leads no período
+
+663
+
+Fechamentos
+
+5
+
+Taxa de fechamento
+
+0.8%
+
+663
+
+leads
+
+Leads
+4
+0.6%
+Atendimento
+542
+82%
+Visitas
+15
+2%
+Reservas
+1
+0.2%
+Vendas
+4
+0.6%
+Perdidos
+97
+15%
+Leads
+
+4 leads · 0.6%
+Novo Lead
+
+0.6%
+4
+Atendimento
+
+542 leads · 82%
+Aguardando Atendimento Corretor
+
+5%
+31
+Em Atendimento
+
+77%
+510
+Simulação
+
+0.2%
+1
+Visitas
+
+15 leads · 2%
+Visita Realizada
+
+0.3%
+2
+Visita Agendada
+
+2%
+12
+Reagendar Visita
+
+0.2%
+1
+Reservas
+
+1 lead · 0.2%
+Com Reserva
+
+0.2%
+1
+Vendas
+
+4 leads · 0.6%
+Venda Realizada
+
+R$ 13,4M
+0.6%
+4
+Perdidos
+
+97 leads · 15%
+Perdido
+
+15%
+97
+CRM · Investimento
+
+Custo por Etapa Física
+Visitas
+15
+
+negociações com visita
+
+Vendas
+5
+
+negócios ganhos
+
+Custo / Visita
+R$ 2.633,00
+
+investimento ÷ visitas
+
+Custo / Venda
+R$ 7.898,00
+
+investimento ÷ vendas
+
+CRM
+
+Análise de Origem
+Meta
+Leads no CRM
+
+345
+
+
+345
+
+Leads
+
+
+300
+
+Atend.
+
+
+6
+
+Visitas
+
+
+2
+
+Vendas
+
+2 vendas (1%)
+300 em atend.
+43 perdidos (12%)
+Valor Vendido
+
+R$ 6.720.000,00
+
+CPL Real · CRM
+
+vs R$ 70,00 plataforma
+
+R$ 74,05
+
+Investimento
+
+R$ 25.548,62
+
+CAC Real
+
+R$ 12.774,31
+
+Google
+Leads no CRM
+
+182
+
+
+182
+
+Leads
+
+
+147
+
+Atend.
+
+
+4
+
+Visitas
+
+
+3
+
+Vendas
+
+3 vendas (2%)
+147 em atend.
+32 perdidos (18%)
+Valor Vendido
+
+R$ 6.720.000,00
+
+CPL Real · CRM
+
+vs R$ 115,22 plataforma
+
+R$ 76,60
+
+Investimento
+
+R$ 13.941,11
+
+CAC Real
+
+R$ 4.647,04
+
+Outros canais
+
+Canal	Leads	Ganhos	Conv%	Qualif.
+Orgânico
+1	—	—	—
+Indicação
+66	—	—	2.2
+Direto
+11	—	—	3.0
+Outro
+58	—	—	2.5
+CRM × Meta
+
+Campanha → Conjunto → Anúncio
+2 vendas
+· R$ 6.720.000,00
+Campanha / Conjunto / Anúncio	Leads	Visitas	Atend.	Vendas	Valor	Invest.	CPL	Conv%
+
+[IN] [P] [FORM] - ESCALA DE MENSAGENS (FASE 1)
+202	5	175	—	—	—	—	0%
+
+[IN] [P] [FORM] - Remarketing | Lookalike Compradores e Interesses
+122	1	109	1	R$ 3.360.000,00	—	—	1%
+
+[IN] [P] [FORM] - SEGMENTAÇÃO
+3	—	1	1	R$ 3.360.000,00	—	—	33%
+CRM
+
+Detalhamento dos Leads
+Buscar por nome, e-mail ou telefone…
+Etapa	Contato	Origem	Entrada	Valor
+Em Atendimento
+Manoel
+
+mfnm2008@hotmail.com
+
+Google
+20/06/26	—
+Em Atendimento
+EILANE LIMA NASCIMENTO
+
+lanelima2007@gmail.com
+
+Google
+20/06/26	—
+Em Atendimento
+MILTON PASSARO NOGUEIRA
+
+miltonpn1971@gmail.com
+
+Google
+17/06/26	—
+Venda Realizada
+Rafael
+
+rfnms.17@gmail.com
+
+Google
+17/06/26	R$ 3.360.000,00
+Em Atendimento
+Ze silva
+
+zesilva@gmail.com
+
+Outro
+16/06/26	—
+Em Atendimento
+MATHEUS CARRIJO
+
+mthcarrijo@gmail.com
+
+Google
+16/06/26	—
+Em Atendimento
+Ana Paula Leao
+
+apvsantos@gmail.com
+
+Direto
+16/06/26	—
+Em Atendimento
+Gabrielle
+
+gabriellefms@gmail.com
+
+Indicação
+16/06/26	—
+Perdido
+josé Augusto assunção oliveira
+
+gutoassuncaooliveira@gmail.com
+
+Google
+16/06/26	—
+Em Atendimento
+Sara
+
+financeiro.vds@gmail.com
+
+Google
+15/06/26	—
+Em Atendimento
+Matheus
+
+matheush.silva1703@gmail.com
+
+Outro
+14/06/26	—
+Em Atendimento
+Thayna sampaio
+
+thaynaalmeida2203@gmail.com
+
+Outro
+12/06/26	—
+Em Atendimento
+Mylena Alessandrina
+
+alessandrinamylena@gmail.com
+
+Meta
+12/06/26	—
+Em Atendimento
+Eneas Portugal
+
+eneas.portugal@gmail.com
+
+Meta
+10/06/26	—
+Em Atendimento
+fernandoprthomsen e Karine.
+
+forthomsen@gmail.com
+
+Meta
+10/06/26	—
+
+1
+2
+3
+4
+5
+…
+45
+
+3

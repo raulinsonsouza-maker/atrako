@@ -1,0 +1,332 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Academy Americana
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+
+Atualizado hoje
+
+Mês atual: 01 de mai. de 2026 a 12 de mai. de 2026
+Análise
+Criativos
+Lead Scoring
+Meta Lead Ads · Qualificação
+
+Lead Scoring — Academy Americana
+semanal
+mensal
+Total de Leads
+20
+
+formulários preenchidos
+
+Qualificados
+19
+
+com graduação
+
+Taxa Qualif.
+95.0%
+
+dos leads qualificados
+
+CPL Médio
+R$ 30.07
+
+custo por lead
+
+Custo/Qualificado
+R$ 31.65
+
+investimento / qualificado
+
+Não qualificados
+1
+
+sem graduação
+
+Qualificação
+
+Qualificados vs Não qualificados
+
+Qualificado
+19 leads
+95%
+
+Não qualificado
+1 leads
+5%
+Critério de qualificação
+
+Formação acadêmica dos leads
+0
+4
+8
+12
+16
+Mestre/Doutor
+Mestrando
+Grad. Completa
+Graduando
+<test lead: dummydata for GRAUACADÊMICO>
+
+Origem
+
+Análise por Campanha
+Clique em uma campanha para expandir conjuntos e anúncios · Qualif. estimado nos conjuntos/anúncios é proporcional aos leads
+
+Campanha / Conjunto / Anúncio	Invest.	Leads	Qualif.	CPL	CTR
+#1
+[IN] [C] CADASTRO - NOVO FORM.
+
+R$ 498,94	16
+10 qualif.
+10
+100.0%
+R$ 31,18	2,70%
+#1
+Lal - Brasil | Homens e Mulheres
+R$ 256,46	12	8
+est. · 66.7%
+R$ 21,37	2,92%
+#2
+Lal - ADS NOVO
+R$ 242,48	4	3
+est. · 75.0%
+R$ 60,62	2,46%
+#2
+30/04 - [IN] [RA] [LEADS] [MEIO DE FUNIL]
+
+R$ 321,89	12
+9 qualif.
+9
+100.0%
+R$ 26,82	1,53%
+#1
+[PUBLICO QUE ENGAJOU]
+R$ 321,89	12	9
+est. · 75.0%
+R$ 26,82	1,53%
+#1
+[ANUNCIO 01] [DEPOIMENTO]
+R$ 200,05	6	5
+est.
+R$ 33,34	1,44%
+#2
+[ANUNCIO 02] [DEPOIMENTO]
+R$ 121,84	6	5
+est.
+R$ 20,31	1,72%
+#3
+[IN] [C] INSTAGRAM - ACADEMY AMERICANA
+
+R$ 110,24	—	—	—	1,68%
+#1
+Centro - Sul e Sudeste | Homens e Mulheres
+R$ 110,24	—	—	—	1,68%
+#1
+AD 7 - POST NOVO
+R$ 57,06	—	—	—	1,82%
+#2
+AD 6 - POST NOVO
+R$ 26,60	—	—	—	2,00%
+#3
+AD - 8 VÍDEO I.A
+R$ 19,04	—	—	—	0,85%
+#4
+AD 5 - POST NOVO
+R$ 7,42	—	—	—	2,01%
+#5
+AD 1
+R$ 0,12	—	—	—	—
+#4
+—
+
+—	1	—	—	—
+Origem
+
+Leads por Formulário
+Formulário	Leads	Qualif.	Taxa
+Cadastro | V3
+20	19	95.0%
+Todos os Leads
+
+Lista detalhada
+20 leads
+Data	Nome	Status	Formação	Formulário	Campanha	Conjunto	Anúncio
+12/05/26	
+—
++5591982338723
+Qualificado	Mestrando	
+Cadastro | V3
+[IN] [C] CADASTRO - NOVO FORM.
+—
+—
+11/05/26	
+—
++5569993166246
+Qualificado	Grad. Completa	
+Cadastro | V3
+30/04 - [IN] [RA] [LEADS] [MEIO DE FUNIL]
+—
+—
+09/05/26	
+—
++5511950408570
+Qualificado	Grad. Completa	
+Cadastro | V3
+[IN] [C] CADASTRO - NOVO FORM.
+—
+—
+07/05/26	
+—
++5543984017412
+Qualificado	Grad. Completa	
+Cadastro | V3
+[IN] [C] CADASTRO - NOVO FORM.
+—
+—
+06/05/26	
+—
++5535999117171
+Qualificado	Grad. Completa	
+Cadastro | V3
+30/04 - [IN] [RA] [LEADS] [MEIO DE FUNIL]
+—
+—
+05/05/26	
+—
++5581988445544
+Qualificado	Grad. Completa	
+Cadastro | V3
+[IN] [C] CADASTRO - NOVO FORM.
+—
+—
+05/05/26	
+—
++5528999073993
+Qualificado	Mestre/Doutor	
+Cadastro | V3
+[IN] [C] CADASTRO - NOVO FORM.
+—
+—
+04/05/26	
+—
++5585991018679
+Qualificado	Mestre/Doutor	
+Cadastro | V3
+30/04 - [IN] [RA] [LEADS] [MEIO DE FUNIL]
+—
+—
+04/05/26	
+—
++554792367595
+Qualificado	Grad. Completa	
+Cadastro | V3
+[IN] [C] CADASTRO - NOVO FORM.
+—
+—
+03/05/26	
+—
++5548999057513
+Qualificado	Grad. Completa	
+Cadastro | V3
+[IN] [C] CADASTRO - NOVO FORM.
+—
+—
+03/05/26	
+—
++5547997164889
+Qualificado	Grad. Completa	
+Cadastro | V3
+[IN] [C] CADASTRO - NOVO FORM.
+—
+—
+03/05/26	
+—
++5569992112707
+Qualificado	Graduando	
+Cadastro | V3
+30/04 - [IN] [RA] [LEADS] [MEIO DE FUNIL]
+—
+—
+03/05/26	
+—
++552134433349
+Qualificado	Grad. Completa	
+Cadastro | V3
+30/04 - [IN] [RA] [LEADS] [MEIO DE FUNIL]
+—
+—
+02/05/26	
+—
++5554993562276
+Qualificado	Graduando	
+Cadastro | V3
+[IN] [C] CADASTRO - NOVO FORM.
+—
+—
+01/05/26	
+—
++5511959838552
+Qualificado	Grad. Completa	
+Cadastro | V3
+30/04 - [IN] [RA] [LEADS] [MEIO DE FUNIL]
+—
+—
+01/05/26	
+—
++5521969450086
+Qualificado	Grad. Completa	
+Cadastro | V3
+[IN] [C] CADASTRO - NOVO FORM.
+—
+—
+01/05/26	
+—
++5519984421172
+Qualificado	Grad. Completa	
+Cadastro | V3
+30/04 - [IN] [RA] [LEADS] [MEIO DE FUNIL]
+—
+—
+01/05/26	
+—
++5511995240535
+Qualificado	Grad. Completa	
+Cadastro | V3
+30/04 - [IN] [RA] [LEADS] [MEIO DE FUNIL]
+—
+—
+01/05/26	
+—
++5569992405590
+Qualificado	Grad. Completa	
+Cadastro | V3
+30/04 - [IN] [RA] [LEADS] [MEIO DE FUNIL]
+—
+—
+30/04/26	
+—
+<test lead: dummy data for TELEFONE>
+Não qualificado	<test lead: dummy data for GRAU ACADÊMICO>	
+Cadastro | V3
+—
+—
+—
+Critérios de qualificação MQL
+
+Qualificado
+
+Lead tem graduação (cursando ou completa, em qualquer nível)
+
+Não qualificado
+
+Lead não informou ou não possui nenhuma graduação
+
+Mestre/Doutor

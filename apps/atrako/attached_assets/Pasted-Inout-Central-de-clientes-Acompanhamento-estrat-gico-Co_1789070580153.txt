@@ -1,0 +1,140 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Conta Hotel
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+InPilot
+
+
+Mês atual: 01 de set. de 2026 a 10 de set. de 2026
+InPilot · Hotel intelligence
+
+Conversas
+
+
+Análise · Meta · Google Ads · Receita e ROAS
+
+Atualizada 10 de set.
+
+
+
+Análise · Meta · Google Ads · Receita e ROAS
+
+Atualizada 10 de set.
+
+
+
+Análise · Meta · Google Ads · CRM
+
+Atualizada 10 de set.
+
+
+
+Análise · Meta · Google Ads · Campanhas
+
+Atualizada 10 de set.
+
+
+
+Análise · Campanhas
+
+Atualizada 10 de set.
+
+
+
+Análise de desempenho
+
+Atualizada 10 de set.
+
+
+
+Análise · Receita e ROAS
+
+Atualizada 10 de set.
+
+
+
+Análise de desempenho
+
+Atualizada 10 de set.
+
+
+
+Análise · Meta
+
+Atualizada 10 de set.
+
+
+
+Análise · Campanhas
+
+Atualizada 09 de set.
+
+
+IP
+Análise · Meta · Google Ads · Receita e ROAS
+
+Analista de contas · evidência antes de opinião
+
+Você
+17:00
+Como estamos com as campanhas essa semana ?
+InPilot
+17:00
+Nas campanhas da Meta entre 7 e 10 de setembro, houve 10 compras atribuídas, 23% menos que as 13 do período anterior (3 a 6 de setembro). O investimento subiu 18%, de R$ 4.053 para R$ 4.782. O valor atribuído caiu 11%, de R$ 62.100 para R$ 55.266. O CPA (custo por compra) aumentou 53%, de R$ 312 para R$ 478, e o ROAS caiu 25%, de 15,3 para 11,6. O CPC subiu de R$ 0,57 para R$ 0,66, enquanto o CTR melhorou levemente, de 2,59% para 2,68%. O CPL diminuiu 38%, de R$ 62 para R$ 39, com leads subindo de 65 para 123.
+
+No Google Ads, não há dados disponíveis para este período.
+
+Em resumo, as campanhas da Meta tiveram aumento de investimento e cliques, mas redução em compras, valor atribuído e eficiência (ROAS e CPA). O volume de leads dobrou, com CPL menor, indicando mais geração de interesse, porém sem refletir em mais vendas. O Google Ads não apresentou registros neste período.
+
+Visão geral de mídia · 07 de set.—10 de set.
+Você
+17:01
+qual a campanha que vendeu mais ? nessa semana
+InPilot
+17:01
+•
+A campanha da Meta que vendeu mais entre 7 e 10 de setembro teve 4 compras atribuídas em 7 de setembro e outras 4 em 8 de setembro, sendo as maiores quantidades diárias no período.
+•
+Em 6 de setembro, a campanha com maior vendas teve 6 compras, mas no período solicitado (7 a 10) o máximo diário foi 4 compras.
+•
+No total do período, as compras foram distribuídas em dias com 4, 4, 0 e 2 compras, sem uma única campanha com mais de 4 compras em um dia.
+Visão geral de mídia · 07 de set.—10 de set.
+Você
+17:01
+qual foi a campanha ?
+InPilot
+17:01
+•
+A campanha da Meta com maior número de compras entre 7 e 10 de setembro foi "11/02 [IN] [RA] [RMKT - INITIATE CHECKOUT - COMPRA] - VOLTEI10", com 6 compras.
+•
+Essa campanha teve investimento de R$ 883,34 e ROAS de 43,27 no período.
+•
+A lista de campanhas com compras atingiu o limite seguro, com outras 7 campanhas não detalhadas aqui.
+Performance de campanhas Meta · 07 de set.—10 de set.
+Você
+17:02
+o que voce acha que devemos fazer para vender mais ?
+InPilot
+17:02
+Para aumentar as vendas, o foco deve ser na campanha "11/02 [IN] [RA] [RMKT - INITIATE CHECKOUT - COMPRA] - VOLTEI10", que gerou 6 compras com ROAS de 43,27 e CPA de R$ 147,22 entre 7 e 10 de setembro. Essa campanha tem eficiência superior às demais, com custo por compra significativamente menor e retorno financeiro mais expressivo.
+
+Outras campanhas com compras tiveram desempenho inferior em ROAS e CPA, como "05/08 - [IN] [RA] [SETEMBRO ITALIANO]" (1 compra, ROAS 18,79, CPA R$ 320,50) e "30/04 - [IN] [RA] [VENDAS] [INSTITUCIONAL CONTÍNUA]" (2 compras, ROAS 7,42, CPA R$ 549,65).
+
+Recomendo priorizar a análise detalhada da campanha "VOLTEI10" para entender os elementos que geram essa eficiência (criativos, segmentação, oferta) e testar sua replicação em outras campanhas similares, mantendo controle rigoroso de CPA e ROAS para validar escalabilidade.
+
+Além disso, monitorar o aumento do CPA geral e a queda no número total de compras da Meta, apesar do aumento do investimento, indica necessidade de ajustes finos nas campanhas menos eficientes antes de ampliar orçamento.
+
+Não há dados recentes do Google Ads para complementar a análise, portanto, a recomendação é focar na otimização da Meta, principal fonte de vendas e receita atribuída no período.
+
+Performance de campanhas Meta · 07 de set.—10 de set.
+Visão geral de mídia · 07 de set.—10 de set.
+Pergunte sobre receita, campanhas, CRM ou eficiência…
+
+
+R$ 0k

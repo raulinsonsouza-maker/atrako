@@ -1,0 +1,70 @@
+@import "../styles/design-system/tokens.css";
+@import "../styles/design-system/typography.css";
+@import "../styles/design-system/components.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    @apply min-h-screen antialiased text-[var(--foreground)];
+    font-family: var(--font-sans);
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.44;
+    letter-spacing: -0.374px;
+    background: var(--canvas-parchment);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--muted-foreground);
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0.65;
+  }
+
+  a {
+    color: inherit;
+  }
+}
+
+@keyframes atrako-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer utilities {
+  .atrako-fade-up {
+    animation: atrako-fade-up 0.45s ease-out both;
+  }
+}

@@ -1,0 +1,107 @@
+
+Logotipo Nav
+Desenvolva conosco
+Documentos
+Blog
+Recursos
+Centrais para desenvolvedores
+Meus apps
+Documentação
+Visão geral
+Colaboradores
+Esta página foi traduzida do inglês para outro idioma usando IA. O conteúdo traduzido por IA pode conter erros, omissões ou divergências de sentido. Como a tradução automática pode ser imprecisa ou pouco clara, consulte o conteúdo original em inglês desta página para validar as orientações corretas.
+Isso foi útil?
+Colaboradores
+Updated: 18 de ago de 2025
+Representa a lista de usuários que são adicionados como colaboradores em um objeto de mídia do Instagram.
+Disponível para a API do Instagram com Login do Facebook.
+Criação
+Esta operação não é compatível.
+Leitura
+Obtenha a lista de usuários colaboradores e o status dos respectivos convites em um objeto de mídia do Instagram.
+GET /<IG_MEDIA_ID>
+Limitações
+É possível adicionar até 5 contas do Instagram como colaboradores.
+Somente usuários do Instagram que habilitaram a marcação como colaborador serão retornados na resposta.
+A marcação de colaboradores pode ser feita em imagens, reels e carrosséis no Feed. Os Stories não são compatíveis.
+Requisitos
+Tipo	Descrição
+Tokens de acesso
+Usuário: o usuário precisa ter criado o objeto de mídia do Instagram
+Permissões
+instagram_basic
+pages_read_engagement
+Caso uma função na Página tenha sido concedida ao usuário do app por meio do Gerenciador de Negócios, você também precisará obter uma destas permissões:
+ads_management
+ads_read
+Sintaxe da solicitação
+GET https://graph.facebook.com/<API_VERSION>/<IG_MEDIA_ID>/collaborators&<USER_ACCESS_TOKEN>
+Exemplo de resposta
+{
+  "data": [
+    {
+      "id": "90010775360791",
+      "username": "realtest1",
+      "invite_status": "Accpeted"
+    },
+    {
+      "id": "17841449208283139",
+      "username": "realtest2",
+      "invite_status": "Pending"
+    }
+  ]
+}
+Parâmetros de caminho
+Espaço reservado	Valor
+<API_VERSION>
+A versão da API.
+<IG_MEDIA_ID>
+Obrigatório. A identificação referente à mídia do usuário do app no Instagram.
+Parâmetros da string de consulta
+Chave	Espaço reservado	Valor
+access_token
+<USER_ACCESS_TOKEN>
+Obrigatório. O token de acesso do usuário do app.
+Campos de resposta
+Nome do campo	Descrição
+id
+O ID no escopo do app da conta do Instagram do possível colaborador
+invite_status
+O status do convite enviado ao possível colaborador. Pode ser:
+Accepted
+Pending
+username
+O nome de usuário do perfil do Instagram do possível colaborador
+Atualização
+Esta operação não é compatível.
+Exclusão
+Esta operação não é compatível.
+Você achou esta página útil?
+Ícone de polegar para cima
+Ícone de polegar para baixo
+Meta
+FacebookInstagramXLinkedInYouTube
+Desenvolva com a Meta
+IA
+Meta Horizon
+Tecnologias sociais
+Notícias
+Meta for Developers
+Blog
+Casos de sucesso
+Suporte
+Suporte ao desenvolvedor
+Ferramenta de bug
+Status da plataforma
+Fórum da Comunidade de Desenvolvedores
+Relatar um incidente
+Quem somos
+Sobre
+Carreiras
+Termos e políticas
+Iniciativas de plataforma responsável
+Termos da plataforma
+Políticas do Desenvolvedor
+Política de Privacidade
+Cookies
+Português (Brasil)

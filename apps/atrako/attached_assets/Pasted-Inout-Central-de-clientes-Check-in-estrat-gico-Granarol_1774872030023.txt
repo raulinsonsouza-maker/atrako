@@ -1,0 +1,175 @@
+Inout
+Central de clientes
+Check-in estratégico
+
+Granarolo
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+Saldo META
+R$ 10,39
+
+Mês atual: 01 de mar. de 2026 a 30 de mar. de 2026
+Análise
+Criativos
+Investimento
+
+R$ 1.176,25
+
+30 dias selecionados
+
+Compras
+
+51
+
+Compras no site atribuídas ao período
+
+Custo / Compra
+
+R$ 23,06
+
+Investimento ÷ compras no site
+
+CPM
+
+R$ 20,04
+
+Custo por mil impressões
+
+Volume geral de performance
+Investimento e compras por semana
+
+23/02-01/03
+02/03-08/03
+09/03-15/03
+16/03-22/03
+23/03-29/03
+0
+150
+300
+450
+600
+0
+8
+16
+24
+32
+InvestimentoComprasCusto/Compra
+
+Resultado METASemana a semana
+Mês atual
+Visão comparativa com leitura rápida das principais métricas por semana.
+
+5 semanas
+Atual: 23/03-29/03
+Métrica	
+Semana
+23/02-01/03
+Semana
+02/03-08/03
+Semana
+09/03-15/03
+Semana
+16/03-22/03
+Atual
+23/03-29/03
+INVESTIMENTO
+
+Valor investido em mídia na semana.
+
+R$ 30,42
+R$ 202,79
+R$ 295,69
+R$ 419,23
+R$ 228,12
+IMPRESSÕES
+
+Volume total de entregas dos anúncios.
+
+2.038
+11.172
+14.280
+20.434
+10.760
+CLIQUES
+
+Interações geradas pelos anúncios.
+
+57
+191
+358
+458
+186
+CTR (%)
+
+Taxa de clique sobre impressões.
+
+2,797%
+1,71%
+2,507%
+2,241%
+1,729%
+COMPRAS
+
+Compras no site atribuídas ao período (objetivo principal das campanhas).
+
+1
+8
+14
+16
+12
+TAXA COMPRA
+
+Percentual de compras sobre os cliques gerados.
+
+1,754%
+4,188%
+3,911%
+3,493%
+6,452%
+CPC
+
+Custo médio por clique gerado.
+
+R$ 0,53
+R$ 1,06
+R$ 0,83
+R$ 0,92
+R$ 1,23
+CUSTO / COMPRA
+
+Investimento ÷ compras no site da semana.
+
+R$ 30,42
+R$ 25,35
+R$ 21,12
+R$ 26,20
+R$ 19,01
+Acompanhamento financeiro · Plano x Real
+Status de investimento no ano atual (planejado versus realizado em todos os canais)
+
+Orçado
+R$ 12.000,00
+Realizado
+R$ 2.811,32
+JAN.
+FEV.
+MAR.
+ABR.
+MAI.
+JUN.
+JUL.
+AGO.
+SET.
+OUT.
+NOV.
+DEZ.
+R$ 0,00
+R$ 300,00
+R$ 600,00
+R$ 900,00
+R$ 1.200,00
+OrcadoRealizado
+R$ 300,00

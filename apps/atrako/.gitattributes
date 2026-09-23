@@ -1,0 +1,4 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+# Prisma emits intentional whitespace in generated TypeScript declarations.
+/lib/generated/prisma/** whitespace=-trailing-space

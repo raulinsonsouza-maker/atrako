@@ -1,0 +1,271 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Incorporadora
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+CRM
+
+
+Mês atual: 01 de jun. de 2026 a 18 de jun. de 2026
+CRM
+
+Funil & Leads
+Leads no período
+
+19
+
+Fechamentos
+
+0
+
+Taxa de fechamento
+
+0.0%
+
+19
+
+leads
+
+Atendimento
+15
+79%
+Visitas
+1
+5%
+Perdidos
+3
+16%
+Atendimento
+
+15 leads · 79%
+Em Atendimento
+
+79%
+15
+Visitas
+
+1 lead · 5%
+Visita Agendada
+
+5%
+1
+Perdidos
+
+3 leads · 16%
+Perdido
+
+16%
+3
+CRM
+
+Análise de Origem
+Meta
+9 forms
+Leads no CRM
+
+6
+
+
+6
+
+Leads
+
+
+5
+
+Atend.
+
+
+1
+
+Visitas
+
+
+—
+
+Vendas
+
+5 em atend.
+1 perdido (17%)
+
+2 duplicados
+CPL Real · CRM
+
+vs R$ 519,02 plataforma
+
+R$ 692,03
+
+Investimento
+
+R$ 4.152,15
+
+Google
+Leads no CRM
+
+13
+
+
+13
+
+Leads
+
+
+11
+
+Atend.
+
+
+—
+
+Visitas
+
+
+—
+
+Vendas
+
+11 em atend.
+2 perdidos (15%)
+CPL Real · CRM
+
+vs R$ 171,52 plataforma
+
+R$ 158,32
+
+Investimento
+
+R$ 2.058,22
+
+CRM × Meta
+
+Campanha → Conjunto → Anúncio
+Campanha / Conjunto / Anúncio	Leads	Visitas	Atend.	Vendas	Valor	Invest.	CPL	Conv%
+
+[IN] [P] [FORM] - ESCALA DE MENSAGENS (FASE 1)
+3	1	3	—	—	R$ 708,01	R$ 236,00	0%
+
+[IN] [P] [FORM] - Remarketing | Lookalike Compradores e Interesses
+2	—	2	—	—	R$ 1.772,88	R$ 886,44	0%
+
+[IN] [P] [FORM] - SEGMENTAÇÃO
+1	—	—	—	—	R$ 735,41	R$ 735,41	0%
+CRM
+
+Detalhamento dos Leads
+Buscar por nome, e-mail ou telefone…
+Etapa	Contato	Origem	Entrada	Valor
+Em Atendimento
+MILTON PASSARO NOGUEIRA
+
+miltonpn1971@gmail.com
+
+Google
+17/06/26	—
+Em Atendimento
+Rafael
+
+rfnms.17@gmail.com
+
+Google
+17/06/26	—
+Em Atendimento
+MATHEUS CARRIJO
+
+mthcarrijo@gmail.com
+
+Google
+16/06/26	—
+Perdido
+josé Augusto assunção oliveira
+
+gutoassuncaooliveira@gmail.com
+
+Google
+16/06/26	—
+Em Atendimento
+Sara
+
+financeiro.vds@gmail.com
+
+Google
+15/06/26	—
+Em Atendimento
+Mylena Alessandrina
+
+alessandrinamylena@gmail.com
+
+Meta
+12/06/26	—
+Visita Agendada
+Eneas Portugal
+
+eneas.portugal@gmail.com
+
+Meta
+10/06/26	—
+Em Atendimento
+fernandoprthomsen e Karine.
+
+forthomsen@gmail.com
+
+Meta
+10/06/26	—
+Em Atendimento
+Tedi Biffi
+
+gutobiffi@icloud.com
+
+Meta
+09/06/26	—
+Em Atendimento
+Marcella
+
+cellaoliveira21@icloud.com
+
+Google
+08/06/26	—
+Em Atendimento
+Helio ferreira
+
+heliofs1982@hotmail.com
+
+Google
+07/06/26	—
+Em Atendimento
+Edina
+
+edina_duarte@hotmail.com
+
+Google
+06/06/26	—
+Em Atendimento
+Joseilson Pereira Araujo
+
+joseilsonp.a@gmail.com
+
+Google
+05/06/26	—
+Em Atendimento
+Paula Machado Oliveira Balestrini
+
+paula94oliveira@gmail.com
+
+Google
+05/06/26	—
+Em Atendimento
+DAYANA LUSTOSA DA SILVA BRASIL
+
+dayanalustosa@gmail.com
+
+Google
+05/06/26	—
+
+1
+2
+
+R$ 950,00

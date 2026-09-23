@@ -1,0 +1,304 @@
+Hoje vocês têm uma visão mais ou menos assim:
+
+Visão geral da conta no período
+Alcance geral: 34.873
+Pessoas engajadas: 72
+Taxa de engajamento: 0,21%
+
+Eu adicionaria uma segunda camada:
+
+Resumo das publicações do período
+Somente conteúdos publicados entre 01/06 e 30/06
+
+Essa camada ajudaria muito na análise de social media, porque responderia uma pergunta diferente:
+
+“O que os conteúdos publicados neste mês entregaram?”
+
+Enquanto o card do topo responde:
+
+“Como o perfil performou no período como um todo?”
+
+A API de insights da conta permite buscar métricas como reach, accounts_engaged, total_interactions, likes, comments, shares, saves, views e usar parâmetros de período como day, week, days_28, month, lifetime e total_over_range, além de since e until. Isso reforça a necessidade de separar claramente métricas de conta e métricas de mídia/publicação.
+
+Como eu incluiria no dashboard
+
+Logo abaixo dos cards principais, eu criaria uma nova seção chamada:
+
+Publicações do período
+
+Subtítulo:
+
+Desempenho acumulado dos conteúdos publicados no período selecionado.
+
+E nela colocaria cards específicos, por exemplo:
+
+Publicações no período
+4
+Alcance acumulado das publicações
+746
+Visualizações acumuladas
+575
+Interações totais
+26
+Taxa de interação por alcance
+3,48%
+Média de alcance por publicação
+186,5
+Fórmulas recomendadas
+1. Publicações no período
+Quantidade de posts, Reels e carrosséis publicados dentro do intervalo selecionado.
+
+Exemplo:
+
+01/06/2026 a 30/06/2026 = 4 publicações
+2. Alcance acumulado das publicações
+
+Aqui eu evitaria chamar de “alcance total”, porque pode confundir com alcance único da conta.
+
+Nome melhor:
+
+Alcance acumulado das publicações
+
+Fórmula:
+
+Soma do alcance individual de cada publicação feita no período.
+
+Exemplo:
+
+Post 1: 145
+Post 2: 126
+Reel 1: 300 de alcance
+Reel 2: 175 de alcance
+
+Alcance acumulado das publicações = 746
+
+Esse número pode contar a mesma pessoa mais de uma vez, porque se a mesma conta viu dois posts diferentes, ela entra no alcance de cada publicação.
+
+Por isso, o subtexto do card deveria ser claro:
+
+Soma do alcance individual dos conteúdos publicados no período. Pode incluir a mesma conta em mais de uma publicação.
+3. Visualizações acumuladas
+
+Para Reels, vídeos e demais formatos onde vocês puxam views, eu criaria:
+
+Visualizações acumuladas
+
+Fórmula:
+
+Soma das visualizações dos conteúdos publicados no período.
+
+Exemplo:
+
+Reel 1: 353 visualizações
+Reel 2: 222 visualizações
+
+Visualizações acumuladas = 575
+
+A Meta documenta views entre as métricas disponíveis em insights da conta, junto com métricas de alcance e interação.
+
+4. Interações totais das publicações
+
+Aqui eu recomendo não chamar de “engajamento total” sem explicar, porque “pessoas engajadas” é outra coisa.
+
+Nome melhor:
+
+Interações totais
+
+Fórmula:
+
+Curtidas + comentários + salvos + compartilhamentos
+
+Exemplo:
+
+Curtidas: 24
+Comentários: 0
+Salvos: 0
+Compartilhamentos: 2
+
+Interações totais = 26
+
+A documentação de Media Insights da Meta lista métricas como comments, likes, views e total_interactions; no caso de total_interactions, a descrição considera likes, saves, comments e shares, com ajustes para ações removidas, dependendo do tipo de mídia.
+
+Minha recomendação prática: se a API retornar total_interactions de forma consistente para todos os formatos, use esse campo. Se não retornar para algum formato, calculem manualmente:
+
+total_interactions = likes + comments + saves + shares
+
+Mas escolham uma regra padrão para o dashboard inteiro.
+
+5. Taxa de interação por alcance
+
+Para essa nova seção, eu não usaria o mesmo nome “taxa de engajamento” do topo, porque o topo está usando:
+
+Contas engajadas / alcance da conta
+
+Na seção de publicações, a melhor métrica seria:
+
+Taxa de interação por alcance
+
+Fórmula:
+
+Interações totais das publicações / alcance acumulado das publicações
+
+Exemplo:
+
+Interações totais = 26
+Alcance acumulado das publicações = 746
+
+Taxa de interação por alcance = 26 / 746 = 3,48%
+
+Essa métrica responde:
+
+“A cada 100 alcances acumulados nas publicações do mês, quantas interações foram geradas?”
+
+É uma métrica boa para avaliar qualidade do conteúdo publicado.
+
+Estrutura ideal dos cards
+
+Eu faria assim:
+
+Card	Nome no dashboard	Fórmula	Observação
+1	Publicações no período	Contagem de mídias publicadas	Posts, Reels, carrosséis
+2	Alcance acumulado das publicações	Soma do alcance individual	Não é alcance único
+3	Visualizações acumuladas	Soma de views	Principalmente útil para Reels
+4	Interações totais	Likes + comentários + salvos + compartilhamentos	Melhor que chamar de engajamento
+5	Taxa de interação por alcance	Interações totais / alcance acumulado	Métrica de eficiência
+6	Média de alcance por publicação	Alcance acumulado / nº de publicações	Boa para comparar meses
+Como ficaria no dash
+
+Eu organizaria o dashboard em três níveis:
+
+1. Visão geral da conta
+
+Aqui ficam os dados amplos:
+
+Seguidores
+Alcance da conta
+Contas engajadas
+Taxa de engajamento da conta
+Visitas no perfil
+Novos seguidores
+
+Depois:
+
+2. Resumo das publicações do período
+
+Aqui entram os novos cards:
+
+Publicações no período
+Alcance acumulado das publicações
+Visualizações acumuladas
+Interações totais
+Taxa de interação por alcance
+Média de alcance por publicação
+
+Depois:
+
+3. Ranking de conteúdos
+
+Aqui ficam as tabelas:
+
+Melhores Reels
+Melhores posts/carrosséis
+Stories, se vocês forem incluir
+Colunas que eu colocaria na tabela de publicações
+
+Na tabela atual, eu adicionaria ou padronizaria estas colunas:
+
+Coluna	Função
+Publicação	Thumbnail + legenda resumida
+Tipo	Reel, carrossel, foto, story
+Data	Data de publicação
+Alcance	Contas alcançadas pela publicação
+Visualizações	Views, principalmente para Reels/vídeos
+Curtidas	Likes
+Comentários	Comments
+Salvos	Saves
+Compartilhamentos	Shares
+Interações totais	Likes + comentários + salvos + compartilhamentos
+Taxa de interação	Interações totais / alcance
+Peso no mês	Quanto aquela publicação representou do total de interações do período
+
+Essa última coluna, “peso no mês”, é interessante para análise estratégica.
+
+Exemplo:
+
+Post X gerou 12 interações.
+Total do mês: 26 interações.
+
+Peso no mês = 46,15%
+
+Isso ajuda a mostrar para o cliente quais conteúdos realmente puxaram o resultado.
+
+Ponto técnico mais importante
+
+Vocês precisam decidir uma coisa com quem desenvolveu o dashboard:
+
+Vocês querem medir “publicações feitas no mês” ou “performance no mês”?
+
+Porque são coisas diferentes.
+
+Opção 1: Publicações feitas no mês
+
+Filtro:
+
+Mostrar apenas conteúdos publicados entre 01/06 e 30/06.
+
+Nesse caso, o dashboard mostra a performance acumulada desses conteúdos.
+
+Problema: se vocês olharem o dashboard em julho, agosto ou setembro, essas publicações podem ter continuado recebendo alcance e interações depois de junho. Então o número muda com o tempo.
+
+Opção 2: Performance dentro do mês
+
+Filtro:
+
+Mostrar apenas o que esses conteúdos geraram entre 01/06 e 30/06.
+
+Esse é o jeito mais correto para relatório mensal.
+
+Mas, tecnicamente, para ficar histórico e confiável, o ideal é salvar snapshots diários dos dados.
+
+Exemplo de tabela interna:
+
+data
+media_id
+alcance
+visualizações
+curtidas
+comentários
+salvos
+compartilhamentos
+interações_totais
+
+Assim vocês conseguem fechar o relatório de junho e manter o número congelado, mesmo que o post continue performando depois.
+
+Minha recomendação objetiva
+
+Eu criaria essa nova seção, sim, com este nome:
+
+Resumo das publicações do período
+
+E usaria estes cards:
+
+Publicações no período
+Alcance acumulado das publicações
+Visualizações acumuladas
+Interações totais
+Taxa de interação por alcance
+Média de alcance por publicação
+
+Mas eu evitaria chamar esse alcance de “alcance total”, porque o cliente pode comparar com o alcance geral da conta e achar que tem erro.
+
+O nome certo é:
+
+Alcance acumulado das publicações
+
+E o texto explicativo deveria ser:
+
+Soma do alcance individual dos conteúdos publicados no período. Esse número não representa contas únicas, pois uma mesma conta pode ser alcançada por mais de uma publicação.
+
+Essa estrutura deixa o dashboard muito mais útil para análise mensal, porque separa bem:
+
+Alcance da conta = distribuição geral do perfil
+Alcance acumulado das publicações = entrega dos conteúdos publicados no mês
+Interações totais = resposta gerada pelos conteúdos
+Taxa de interação = eficiência criativa dos posts

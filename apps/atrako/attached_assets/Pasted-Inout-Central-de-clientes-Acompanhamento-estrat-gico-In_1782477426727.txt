@@ -1,0 +1,242 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Inout
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+CRM
+
+
+Mês atual: 01 de jun. de 2026 a 26 de jun. de 2026
+Leads no período
+
+41
+
+Fechamentos
+
+0
+
+Taxa de fechamento
+
+0.0%
+
+41
+
+leads
+
+Leads
+17
+41%
+Atendimento
+1
+2%
+Perdidos
+23
+56%
+Distribuição por grupo
+41 leads
+41%
+56%
+Leads
+17
+Atendimento
+1
+Perdidos
+23
+Leads
+
+17 leads · 41%
+Oportunidade
+
+7%
+3
+Agendado (SQL)
+
+12%
+5
+Tentativa de Contato
+
+20%
+8
+Conectados
+
+2%
+1
+Atendimento
+
+1 lead · 2%
+Pré-Qualificação
+
+2%
+1
+Perdidos
+
+23 leads · 56%
+Descartado
+
+56%
+23
+CRM
+
+Análise de Origem
+Meta
+28 forms
+Leads no CRM
+
+23
+
+
+23
+
+Leads
+
+
+8
+
+Atend.
+
+
+—
+
+Visitas
+
+
+—
+
+Vendas
+
+8 em atend.
+15 perdidos (65%)
+
+1 duplicado
+CPL Real · CRM
+
+vs R$ 142,26 plataforma
+
+R$ 173,19
+
+Investimento
+
+R$ 3.983,27
+
+CRM · Meta
+
+Análise Detalhada do Meta
+Campanha / Conjunto / Anúncio	Leads	Visitas	Atend.	Vendas	Valor	Conv%
+
+28/05 - [IN] [RAUL] [NOVO TESTE - MAIOR DIRECIONAMENTO] - 4
+9	—	2	—	—	0%
+
+28/05 - [IN] [RAUL] [NOVO TESTE - MAIOR DIRECIONAMENTO] — 3
+6	—	1	—	—	0%
+
+28/05 - [IN] [RAUL] [NOVO TESTE - MAIOR DIRECIONAMENTO] — 2
+4	—	3	—	—	0%
+
+28/05 - [IN] [RAUL] [NOVO TESTE - MAIOR DIRECIONAMENTO] — 5
+2	—	2	—	—	0%
+
+28/05 - [IN] [RAUL] [NOVO TESTE - MAIOR DIRECIONAMENTO] — 1
+1	—	—	—	—	0%
+
+28/05 - [IN] [RAUL] [NOVO TESTE - MAIOR DIRECIONAMENTO] — 6
+1	—	—	—	—	0%
+CRM
+
+Detalhamento dos Leads
+Buscar por nome, e-mail ou telefone…
+Etapa	Contato	Origem	Entrada	Valor
+Tentativa de Contato
+DN_SEAWAY*
+
+vadoputaria@gmail.com
+
+Meta
+25/06/26	—
+Tentativa de Contato
+Rafael
+
+rafael@femaienpreendimentos.com.br
+
+Meta
+25/06/26	—
+Pré-Qualificação
+Sara Barbosa
+
+sara.barbosa.1117@gmail.com
+
+Orgânico
+24/06/26	—
+Descartado
+Maristelinha pimentel
+
+estelapimentel@gmail.com
+
+Meta
+24/06/26	—
+Tentativa de Contato
+Wilson
+
+wjunior2018jr@gmail.com
+
+Orgânico
+24/06/26	—
+Tentativa de Contato
+Neto Tristao
+
+neto@altusempreendimentos.com.br
+
+Meta
+24/06/26	—
+Agendado (SQL)
+Ângelo Joaquini Neto
+
+angelojoaquinineto@gmail.com
+
+Meta
+23/06/26	—
+Tentativa de Contato
+Fortunato Dias
+
+fortunatodias91@gmail.com
+
+Direto
+22/06/26	—
+Conectados
+Laiane Ribeiro
+
+lsribeiro@nortisinc.com.br
+
+Direto
+22/06/26	—
+Agendado (SQL)
+Henrique Pinheiro
+
+soil.engconsult@gmail.com
+
+Meta
+22/06/26	—
+Descartado
+Fernanda Duque
+
+fduque242@gmail.com
+
+Direto
+21/06/26	—
+Tentativa de Contato
+carol Migliano Boris
+
+l7montini@gmail.com
+
+Meta
+20/06/26	—
+
+1
+2
+3
+
+3

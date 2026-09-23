@@ -1,0 +1,84 @@
+Inout
+Configurações de integrações
+Gerencie os tokens de API utilizados para sincronizar dados do Meta Ads e Google Ads.
+
+Meta Ads
+Token de acesso e conta padrão utilizados na sincronização da API de Marketing do Meta.
+
+Token de acesso (Meta)
+••••••••••••••••••••
+Por segurança, o valor atual não é exibido. Preencha apenas se quiser atualizar.
+
+ID da conta padrão (Meta Ads)
+act_123456789012345
+Google Ads
+Credenciais OAuth e tokens para autenticar a API do Google Ads. Os IDs de conta continuam sendo configurados por cliente.
+
+Client ID
+••••••••••••••••••••
+Por segurança, o valor atual não é exibido. Preencha apenas se quiser atualizar.
+
+Client Secret
+••••••••••••••••••••
+Por segurança, o valor atual não é exibido. Preencha apenas se quiser atualizar.
+
+Developer token
+••••••••••••••••••••
+Por segurança, o valor atual não é exibido. Preencha apenas se quiser atualizar.
+
+Refresh token
+••••••••••••••••••••
+Por segurança, o valor atual não é exibido. Preencha apenas se quiser atualizar.
+
+Login Customer ID (MCC)
+3830547260
+ID da conta MCC (gerenciadora). Necessário quando o acesso é feito via conta mãe.Atual: 3830547260
+
+Conexões de Integração
+BMs (Meta) e MCCs (Google Ads) com credenciais próprias. Clientes sem vínculo usam as credenciais globais acima.
+
+Nova conexão
+Nenhuma conexão cadastrada — todos os clientes usam as credenciais globais.
+
+Alertas automáticos
+Configure como o sistema deve notificar a equipe quando houver contas com saldo baixo ou anomalias de gasto. O endpoint /api/gestao/alertas pode ser chamado por um agendador diário (cron).
+
+Destino das notificações
+E-mail de destino e URL de webhook (Slack, Google Chat, Zapier, etc.).
+
+E-mail de notificação
+equipe@empresa.com.br
+URL do webhook
+https://hooks.slack.com/services/...
+Compatível com Slack Incoming Webhooks, Google Chat, Discord e qualquer serviço que aceite JSON.
+
+Configuração SMTP (e-mail)
+Servidor de envio de e-mail. Obrigatório para envio de alertas por e-mail.
+
+Host SMTP
+smtp.gmail.com
+Porta
+587
+Usuário SMTP
+remetente@empresa.com.br
+Senha SMTP
+Senha ou app password
+Por segurança, o valor atual não é exibido. Preencha apenas se quiser atualizar.
+
+E-mail remetente (From)
+Alertas Inout <alertas@empresa.com.br>
+Limiares de alerta
+Defina quando o sistema deve disparar cada tipo de alerta. Os padrões são 7 dias de saldo restante e 2 dias sem gasto.
+
+Saldo mínimo (dias restantes)
+7
+Atual: 7 dias
+
+Gap de gasto (dias sem gasto)
+2
+Atual: 2 dia(s)
+
+Salvar alterações
+Dispare um alerta agora para testar as configurações.
+
+Disparar alerta agora

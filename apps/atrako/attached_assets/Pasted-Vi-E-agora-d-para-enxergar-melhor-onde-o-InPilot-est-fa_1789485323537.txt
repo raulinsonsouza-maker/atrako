@@ -1,0 +1,317 @@
+Vi. E agora dá para enxergar melhor **onde o InPilot está falhando**. O problema é mais sério do que apenas “melhorar o prompt”: há problemas de **raciocínio, seleção de métricas e principalmente interpretação temporal**.
+
+### 1. O maior problema: ele está inventando uma comparação errada
+
+Na resposta:
+
+> “Métrica Jan-Set 2026 (acumulado) | Período Anterior (Abr-Dez 2025)”
+
+e depois:
+
+> “Investimento: R$ 481,89 (set/2026) | R$ 601,70 (ago/2025)”
+
+Isso está claramente inconsistente com o próprio restante da análise. O período anterior mencionado antes era **19–31 de agosto de 2026**, não agosto de 2025. 
+
+Esse tipo de erro é **inadmissível em um agente de análise**, porque pode levar o gestor a tomar decisão errada.
+
+Eu colocaria uma regra rígida:
+
+> **Nunca inferir ou alterar ano, período ou janela temporal. Toda comparação deve utilizar exclusivamente os períodos explicitamente retornados pela fonte de dados. Se os períodos não forem comparáveis, informar que não são comparáveis.**
+
+---
+
+# 2. Ele não entendeu a pergunta "mês a mês"
+
+Quando você perguntou:
+
+> “Como vem sendo o desempenho mês a mês no ano?”
+
+Ele respondeu com **Jan–Set acumulado**. 
+
+E quando você insistiu:
+
+> “me dê um detalhamento mês a mês desse ano”
+
+ele novamente entregou **acumulado Jan–Set**. 
+
+Isso mostra uma deficiência importante do agente:
+
+### Ele está respondendo à intenção errada.
+
+"Mês a mês" significa:
+
+| Mês       | Investimento | Leads | CPL | Cliques | CTR |
+| --------- | -----------: | ----: | --: | ------: | --: |
+| Janeiro   |          ... |   ... | ... |     ... | ... |
+| Fevereiro |          ... |   ... | ... |     ... | ... |
+| Março     |          ... |   ... | ... |     ... | ... |
+| ...       |          ... |   ... | ... |     ... | ... |
+| Setembro  |          ... |   ... | ... |     ... | ... |
+
+E depois:
+
+**Tendência:** melhorando / piorando / estável.
+
+---
+
+# 3. O agente está confundindo "melhor criativo" com "menor CPC"
+
+Essa resposta é um ótimo exemplo:
+
+> “o criativo com melhor desempenho ... foi o Anuncio_01, em termos de CPC” 
+
+Mas esse criativo:
+
+**não gerou nenhum lead.**
+
+Então chamar de **“melhor criativo”** é conceitualmente errado.
+
+Ele deveria responder:
+
+> **Não existe evidência suficiente para afirmar qual foi o melhor criativo em geração de leads neste período, porque os criativos não geraram leads.**
+>
+> Pelo critério de tráfego, o Anuncio_01 teve o menor CPC entre os criativos com entrega, mas isso não significa que seja o melhor criativo para o objetivo da campanha.
+
+Isso é uma diferença enorme.
+
+### Regra que eu colocaria:
+
+**Nunca definir "melhor" usando uma métrica intermediária quando existe uma métrica de negócio disponível.**
+
+Hierarquia:
+
+**Venda/receita**
+→ ROAS / CPA
+→ Lead / CPL
+→ Conversão
+→ CTR / CPC
+→ Impressões
+
+Se não houver resultado final suficiente, o agente precisa dizer:
+
+> **“Não há evidência suficiente para determinar o melhor.”**
+
+Em vez de inventar um vencedor.
+
+---
+
+# 4. Ele olha CTR/CPC demais
+
+Na análise diária:
+
+> CPC melhorou
+> CTR subiu
+> mas zero leads.
+
+E conclui:
+
+> “a eficiência do clique aumentou”
+
+Isso é tecnicamente verdadeiro, mas **estrategicamente secundário**.
+
+Você não está tentando comprar cliques.
+
+Está tentando gerar **leads**.
+
+Então a primeira conclusão deveria ser:
+
+> **A campanha não gerou nenhum lead apesar de ter recebido R$38,93 e 6 cliques. Não há evidência de eficiência de aquisição nesse dia.**
+
+Depois, como diagnóstico secundário:
+
+> CTR melhorou e CPC caiu, mas essas melhorias não produziram conversão.
+
+O agente precisa parar de tratar **CPC barato como vitória**.
+
+---
+
+# 5. Ele está recomendando coisas genéricas demais
+
+Veja:
+
+> “revisar segmentação e criativos”
+
+> “testar variações de anúncios”
+
+> “avaliar a jornada do usuário”
+
+Isso poderia ser resposta para **qualquer conta de Meta Ads**.
+
+Um bom agente precisa chegar mais perto de:
+
+> **O principal problema está no fundo do funil: houve 62 cliques no período e zero leads. Antes de trocar criativos, precisamos verificar se o evento de conversão está disparando corretamente e se a landing page/formulário está recebendo esses usuários.**
+
+Porque existe uma pergunta anterior:
+
+### **Zero leads significa que não houve leads ou que o tracking não está registrando leads?**
+
+O agente deveria investigar isso antes de recomendar trocar anúncio.
+
+---
+
+# 6. Tem uma contradição importante no próprio histórico
+
+Ele diz:
+
+> “não houve geração de leads”
+
+mas depois encontra:
+
+> “um criativo específico ... gerou 14 leads”
+
+
+
+E depois:
+
+> “a geração de leads foi de 124 no período”
+
+
+
+Isso não é necessariamente errado porque podem ser **janelas diferentes**.
+
+O problema é que o agente não explica isso.
+
+Ele precisa sempre dizer:
+
+> **“No período de 1–13/09: 0 leads.”**
+>
+> **“No acumulado de 1/1–15/9: 124 leads.”**
+>
+> **“Portanto, não há contradição: os 124 leads ocorreram anteriormente no ano, não no período atual.”**
+
+Isso evita uma leitura errada.
+
+---
+
+# O que eu faria no InPilot
+
+Eu mudaria a arquitetura do agente.
+
+Não deixaria o LLM simplesmente receber um monte de métricas e “analisar”.
+
+Criaria **4 camadas**:
+
+### CAMADA 1 — DADOS
+
+O sistema fornece:
+
+```text
+periodo_atual
+periodo_comparacao
+investimento
+impressoes
+cliques
+ctr
+cpc
+conversoes
+leads
+compras
+receita
+cpa
+cpl
+roas
+campanhas
+criativos
+```
+
+### CAMADA 2 — CÁLCULOS
+
+O próprio sistema calcula:
+
+```text
+variação_investimento
+variação_leads
+variação_receita
+variação_cpa
+variação_roas
+```
+
+Não deixe o LLM fazer contas que o backend pode fazer.
+
+### CAMADA 3 — DIAGNÓSTICO
+
+A IA recebe os números já calculados e responde:
+
+```text
+ESCALA
+EFICIÊNCIA
+CONVERSÃO
+RECEITA
+TRACKING
+CRIATIVOS
+CAMPANHAS
+```
+
+### CAMADA 4 — DECISÃO
+
+Finalmente:
+
+```text
+PRINCIPAL PROBLEMA
+PRINCIPAL OPORTUNIDADE
+AÇÃO RECOMENDADA
+MÉTRICA A MONITORAR
+NÍVEL DE CONFIANÇA
+```
+
+---
+
+# E criaria uma regra de ouro
+
+Eu colocaria isso literalmente no prompt:
+
+> **Você não deve encontrar uma explicação para todos os dados. Seu trabalho é identificar o que os dados permitem afirmar com segurança. Quando os dados não permitem uma conclusão, diga explicitamente que não há evidência suficiente. Nunca transforme uma métrica intermediária em indicador de sucesso quando o objetivo de negócio não foi atingido.**
+
+Isso sozinho já melhora bastante o agente.
+
+---
+
+## O formato final que eu quero que o InPilot entregue
+
+Por exemplo, para a Be Blue:
+
+### **Diagnóstico da conta — 1 a 13/09**
+
+**🟡 ATENÇÃO**
+
+A Meta investiu **R$481,89**, gerou **62 cliques**, mas **0 leads**. Em relação ao período anterior, o investimento caiu 20%, os cliques caíram 53% e o CPC aumentou 72%. 
+
+**O problema principal não é o volume de cliques isoladamente. É a ausência de conversão após o clique.**
+
+### O que sabemos
+
+* Investimento: **R$481,89**
+* Cliques: **62**
+* CTR: **0,23%**
+* CPC: **R$7,77**
+* Leads: **0**
+
+### Diagnóstico
+
+**Escala:** ↓
+**Custo do tráfego:** ↓
+**Conversão:** 🔴
+**Resultado final:** 🔴
+
+O tráfego está ficando mais caro e, até o momento, não está gerando leads.
+
+### Antes de alterar a estratégia
+
+1. Validar se o evento de lead está disparando corretamente.
+2. Verificar se os 62 cliques estão chegando à landing page.
+3. Verificar taxa de conversão da página/formulário.
+4. Só depois avaliar troca de criativos/segmentação.
+
+### Decisão
+
+**Não recomendo aumentar orçamento neste momento.**
+
+Também **não há evidência suficiente para declarar um “melhor criativo” por performance de negócio**, já que não houve leads no período.
+
+---
+
+**Isso é o padrão que eu buscaria para o InPilot.**
+
+O seu agente já tem uma coisa boa: ele consegue acessar os dados e cruzar Meta/Google. O que falta agora é transformar isso em uma **camada de inteligência decisória**, com regras rígidas para **período, causalidade, hierarquia de métricas, amostra e confiança**.
+
+E, sinceramente, **eu não tentaria resolver isso só com um prompt gigante**. Parte dessas regras deveria ficar no código/backend do InPilot e o LLM ficar responsável principalmente pela **interpretação e comunicação do diagnóstico**.

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 628">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#3b1f2b"/>
+      <stop offset="1" stop-color="#b7791f"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="628" fill="url(#bg2)"/>
+  <circle cx="925" cy="168" r="190" fill="#fff" fill-opacity=".08"/>
+  <path d="M720 520V175h285v345M770 520V230h185v290" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="4"/>
+  <g fill="#fff" fill-opacity=".18">
+    <rect x="805" y="265" width="48" height="58"/><rect x="875" y="265" width="48" height="58"/>
+    <rect x="805" y="348" width="48" height="58"/><rect x="875" y="348" width="48" height="58"/>
+  </g>
+  <text x="92" y="170" fill="#fbd38d" font-family="Arial, sans-serif" font-size="28" font-weight="700">NOVO MOEMA</text>
+  <text x="92" y="245" fill="#fff" font-family="Arial, sans-serif" font-size="54" font-weight="700">Seu novo endereço</text>
+  <text x="92" y="310" fill="#fff" font-family="Arial, sans-serif" font-size="54" font-weight="700">começa aqui.</text>
+  <text x="92" y="380" fill="#fff3d6" font-family="Arial, sans-serif" font-size="25">Plantas inteligentes de 2 e 3 dormitórios</text>
+  <rect x="92" y="430" width="270" height="58" rx="29" fill="#fff"/>
+  <text x="132" y="468" fill="#744210" font-family="Arial, sans-serif" font-size="23" font-weight="700">CONHEÇA O DECORADO</text>
+  <text x="92" y="560" fill="#fff" fill-opacity=".75" font-family="Arial, sans-serif" font-size="20">INCORPORADORA DE SÃO PAULO • DEMONSTRAÇÃO</text>
+</svg>

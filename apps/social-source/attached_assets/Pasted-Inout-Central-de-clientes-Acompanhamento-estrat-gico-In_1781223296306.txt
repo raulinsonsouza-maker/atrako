@@ -1,0 +1,234 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Incorporadora
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+CRM
+Saldo META
+R$ ••••••
+
+
+
+Ano atual (YTD): 01 de jan. de 2026 a 11 de jun. de 2026
+Análise
+Criativos
+Investimento
+
+R$ 23.643,76
+
+162 dias selecionados
+
+Leads
+
+363
+
+Total do período
+
+CPL
+
+R$ 59,96
+
+Custo por lead
+
+CPM
+
+R$ 16,04
+
+Custo por mil impressões
+
+Volume geral de performance
+Investimento e leads por mês
+
+Fev/26
+Mar/26
+Abr/26
+Mai/26
+Jun/26
+0
+1500
+3000
+4500
+6000
+0
+150
+300
+450
+600
+InvestimentoLeadsCPL
+
+Resultado METAMês a mês
+Ano atual (YTD)
+Visão comparativa com leitura rápida das principais métricas por mês.
+
+5 meses
+Atual: Jun/26
+Métrica	
+Mês
+Fev/26
+Mês
+Mar/26
+Mês
+Abr/26
+Mês
+Mai/26
+Atual
+Jun/26
+INVESTIMENTO
+
+Valor investido em mídia na semana.
+
+R$ 4.264,76
+R$ 5.721,14
+R$ 5.070,80
+R$ 5.615,38
+R$ 2.971,68
+IMPRESSÕES
+
+Volume total de entregas dos anúncios.
+
+232.854
+400.342
+310.327
+357.795
+172.974
+CLIQUES
+
+Interações geradas pelos anúncios.
+
+2.000
+2.778
+2.262
+3.544
+1.505
+CTR (%)
+
+Taxa de clique sobre impressões.
+
+0,859%
+0,694%
+0,729%
+0,991%
+0,87%
+LEADS
+
+Conversões atribuídas ao período.
+
+118
+113
+91
+35
+6
+TAXA CONV.
+
+Percentual de leads sobre cliques.
+
+5,90%
+4,068%
+4,023%
+0,988%
+0,399%
+CPC
+
+Custo médio por clique gerado.
+
+R$ 2,13
+R$ 2,06
+R$ 2,24
+R$ 1,58
+R$ 1,97
+CPL
+
+Custo médio por lead da semana.
+
+R$ 36,14
+R$ 50,63
+R$ 55,72
+R$ 160,44
+R$ 495,28
+Campanhas
+Clique em uma campanha para ver conjuntos e criativos.
+
+5 campanhas
+#1
+[IN] [P] [FORM] - ESCALA DE MENSAGENS (FASE 1)
+
+Leads
+Ativa	109
+dias
+R$ 10.253,97	838.128	5.657	
+235
+R$ 43,63	
+#2
+[IN] [P] [FORM] - Remarketing | Lookalike Compradores e Interesses
+
+Leads
+Ativa	103
+dias
+R$ 9.521,29	442.342	4.430	
+125
+R$ 76,17	
+#3
+[IN] [P] [FORM] - SEGMENTAÇÃO
+
+Conversas
+Ativa	11
+dias
+R$ 1.991,74	84.871	669	
+30
+conv.
+R$ 66,39	
+#4
+05/03 [IN] [P] [ENGAJ] - Visita decorado | Geolocalização
+
+Conversas
+—	39
+dias
+R$ 1.495,77	58.048	330	
+70
+conv.
+R$ 21,37	
+#5
+[IN] [P] [TRÁFEGO] - POSTAGENS
+
+Visitas ao Perfil
+Ativa	20
+dias
+R$ 380,99	50.903	1.003	
+1.055
+vis.
+R$ 0,36	
+Total
+
+R$ 23.643,76	1.474.292	12.089	1.515	R$ 15,61	
+Acompanhamento financeiro · Plano x Real
+Status de investimento no ano atual (planejado versus realizado em todos os canais)
+
+Orçado
+R$ 0,00
+Realizado
+R$ 23.643,76
+JAN.
+FEV.
+MAR.
+ABR.
+MAI.
+JUN.
+JUL.
+AGO.
+SET.
+OUT.
+NOV.
+DEZ.
+R$ 0,00
+R$1.500,00
+R$3.000,00
+R$4.500,00
+R$6.000,00
+OrcadoRealizado
+
+R$ 1.500,00

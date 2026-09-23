@@ -1,0 +1,102 @@
+
+Meus apps
+Ações necessárias
+Documentos
+Ferramentas
+Suporte
+Entrada da pesquisa
+​
+Pesquisar...
+Facebook
+Casos de uso
+Personalizar
+Personalizar caso de uso
+Personalize as configurações e permissões de casos de uso para que seu app funcione do jeito que você quer.
+Alterar caso de uso
+​
+Capturar e gerenciar leads de anúncios
+​
+Permissões e recursos
+Chamadas da API
+​
+Status
+Ação
+Business Asset User Profile Access
+O recurso Acesso ao perfil do usuário de ativo comercial permite que o aplicativo leia os Campos do usuário de usuários que interagem com seus ativos comerciais como ID, ids_for_business, nome e foto.
+…
+Descrição completa
+Encontrado em 5 casos de uso
+Marketing API Access Tier
+O recurso Nível de acesso à API de Marketing permite que seu app acesse maiores limitações de volume, gerenciamento ilimitado de contas de anúncios, maiores limitações de usuários do sistema e a API do Gerenciador de Negócios.
+…
+Descrição completa
+Encontrado em 3 casos de uso
+23.8 mil
+Acesso limitado
+ads_management
+Com a permissão ads_management , seu aplicativo pode ler e gerenciar a conta de anúncios que possui ou à qual teve ou que tenha recebido acesso pelo proprietário da conta de anúncios.
+…
+Descrição completa
+Encontrado em 4 casos de uso
+40.2 mil
+Pronto para teste
+ads_read
+Com a permissão ads_read , seu aplicativo pode acessar a API de Informações de Anúncios a fim de extrair informações de relatórios de anúncios de contas de anúncios que você possui ou para as quais tenha recebido acesso pelo proprietário ou proprietários de outras contas de anúncios por meio dessa permissão. Essas permissões também concedem ao seu aplicativo acesso à API do lado do servidor para que os anunciantes possam enviar eventos da web dos seus respectivos servidores diretamente para o Facebook.
+…
+Descrição completa
+Encontrado em 4 casos de uso
+40.2 mil
+Pronto para teste
+business_management
+Com a permissão business_management , seu aplicativo pode ler e escrever com a API do Gerenciador de Negócios.
+…
+Descrição completa
+Encontrado em 5 casos de uso
+29.7 mil
+Pronto para teste
+email
+A permissão email possibilita que o aplicativo leia o endereço de email principal de uma pessoa.
+…
+Descrição completa
+Encontrado em 6 casos de uso
+leads_retrieval
+Com a permissão leads_retrieval , seu aplicativo pode recuperar e ler todas as informações capturadas por um formulário de anúncio de cadastro associado a um anúncio criado no Gerenciador de Anúncios ou na API de Marketing.
+…
+Descrição completa
+7.6 mil
+Pronto para teste
+pages_manage_ads
+Com a permissão pages_manage_ads , seu aplicativo pode gerenciar anúncios associados à Página.
+…
+Descrição completa
+Encontrado em 2 casos de uso
+9.7 mil
+Pronto para teste
+pages_manage_metadata
+Com a permissão pages_manage_metadata , seu aplicativo pode inscrever e receber webhooks sobre atividade na Página, bem como atualizar configurações nela.
+…
+Descrição completa
+Encontrado em 2 casos de uso
+2.2 mil
+Pronto para teste
+pages_read_engagement
+Com a permissão pages_read_engagement , seu aplicativo pode ler conteúdo (publicações, fotos, vídeos e eventos) publicados pela Página, ler dados de seguidores (incluindo nome e PSID) e foto do perfil, bem como ler metadados e outras informações sobre a Página.
+…
+Descrição completa
+Encontrado em 5 casos de uso
+15.6 mil
+Pronto para teste
+pages_show_list
+Com a permissão pages_show_list , o aplicativo pode acessar a lista de Páginas que uma pessoa gerencia.
+…
+Descrição completa
+Encontrado em 5 casos de uso
+2.7 mil
+Pronto para teste
+public_profile
+A permissão public_profile possibilita que um app leia os Campos de Perfil Público Padrão no nó do Usuário . Essa permissão é concedida automaticamente a todos os apps.
+…
+Descrição completa
+Encontrado em 7 casos de uso
+0
+Pronto para teste

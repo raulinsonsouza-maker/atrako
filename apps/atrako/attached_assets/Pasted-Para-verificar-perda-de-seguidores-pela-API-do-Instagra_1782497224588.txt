@@ -1,0 +1,110 @@
+Para verificar **perda de seguidores** pela API do Instagram Graph da Meta, existe uma limitação importante:
+
+**A API não fornece diretamente quem deixou de seguir nem a quantidade de unfollows em um período.**
+
+O que ela fornece é:
+
+1. Número atual de seguidores (`followers_count`)
+2. Métricas agregadas de crescimento de audiência (dependendo do tipo de conta e permissões)
+
+### Método mais comum
+
+Você salva diariamente o valor de `followers_count` e calcula a diferença.
+
+Exemplo:
+
+**Ontem**
+
+```json
+{
+  "followers_count": 10500
+}
+```
+
+**Hoje**
+
+```json
+{
+  "followers_count": 10480
+}
+```
+
+Resultado:
+
+```text
+Perda de seguidores = -20
+```
+
+### Endpoint para obter seguidores atuais
+
+```http
+GET https://graph.facebook.com/v23.0/{ig-user-id}
+    ?fields=followers_count
+    &access_token={access-token}
+```
+
+Resposta:
+
+```json
+{
+  "followers_count": 10480,
+  "id": "1784XXXXXXXXXXX"
+}
+```
+
+### Se quiser crescimento diário
+
+Para contas profissionais você pode consultar insights de audiência.
+
+Exemplo:
+
+```http
+GET https://graph.facebook.com/v23.0/{ig-user-id}/insights
+?metric=follows_and_unfollows
+&period=day
+&metric_type=total_value
+&access_token={access-token}
+```
+
+A Meta adicionou métricas de seguidores em versões mais recentes da API, mas a disponibilidade depende do tipo da conta, permissões aprovadas e versão da API.
+
+As métricas que podem aparecer incluem:
+
+* follows
+* unfollows
+* net_follows
+* follows_and_unfollows
+
+### O que eu faria no dashboard
+
+Criaria uma tabela:
+
+```sql
+instagram_followers_history
+
+id
+profile_id
+followers_count
+captured_at
+```
+
+Executaria diariamente:
+
+```http
+GET /{ig-user-id}?fields=followers_count
+```
+
+E calcularia:
+
+```sql
+followers_lost =
+CASE
+  WHEN today < yesterday
+  THEN yesterday - today
+  ELSE 0
+END
+```
+
+Isso é exatamente como ferramentas como [Hootsuite](https://www.hootsuite.com?utm_source=chatgpt.com), [Metricool](https://metricool.com?utm_source=chatgpt.com) e [Iconosquare](https://www.iconosquare.com?utm_source=chatgpt.com) fazem quando a API não entrega o dado histórico de unfollow.
+
+Se você me mostrar a chamada que está usando hoje (endpoint + versão da API), eu posso dizer exatamente quais métricas de seguidores estão disponíveis para a sua implementação.

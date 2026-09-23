@@ -1,0 +1,119 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Conta Hotel
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+Analista IA
+
+
+Mês atual: 01 de set. de 2026 a 09 de set. de 2026
+Hotel intelligence
+
+Conversas
+
+Dados do período selecionado
+
+Análise · Campanhas
+
+Atualizada 09 de set.
+
+
+Análise · Campanhas
+
+Evidência antes de opinião
+
+Sessão persistente
+Você
+14:53
+analise fatos, interpretação e próximos passos sobre performance de campanhas. Use somente fontes estruturadas, declare limitações e não use dados pessoais.
+Analista
+14:53
+Fatos observados
+1. Período analisado: 2026-09-01 a 2026-09-09, sem dados estruturados disponíveis para o período anterior 2026-08-01 a 2026-08-09, o que limita comparações diretas.
+
+2. Canal geral:
+
+•
+Investimento total: R$ 6.921,94
+•
+Leads gerados: 165
+•
+Resultados (conversões atribuídas): 22
+•
+Valor atribuído (soma das plataformas): R$ 113.231,36
+•
+CTR médio: 2,68%
+•
+CPC médio: R$ 0,59
+•
+Custo por resultado: R$ 314,63
+•
+ROAS geral: 16,36
+3. Meta (Facebook/Instagram):
+
+•
+5 campanhas principais com resultados diversos.
+•
+Campanha com melhor ROAS: "11/02 [IN] [RA] [RMKT - INITIATE CHECKOUT - COMPRA] - VOLTEI10" com ROAS 42,98, custo R$ 1.473,23, 34 leads e 11 compras.
+•
+Campanhas com ROAS entre 13,7 e 35,0, mas com baixo volume de compras (1 a 5).
+•
+Uma campanha com 0 compras e 9 leads, custo R$ 1.335,61.
+4. Google Ads:
+
+•
+Sem dados disponíveis para o período, indicando ausência de investimento ou dados não reportados.
+5. Resultados diários indicam que alguns dias tiveram leads e resultados sem investimento, possivelmente devido a janelas de atribuição ou conversões tardias.
+
+Interpretação
+•
+A ausência de dados anteriores impede análise de tendência ou comparação de performance.
+•
+Meta é a principal fonte de resultados e receita atribuída, com campanhas de remarketing apresentando melhor ROAS.
+•
+O ROAS geral elevado (16,36) indica boa eficiência do investimento, porém o custo por resultado (R$ 314,63) é relativamente alto para leads, sugerindo que o objetivo principal (leads) pode não estar sendo atingido com custo ideal.
+•
+Google Ads não contribuiu no período, o que pode indicar oportunidade não explorada ou problema de tracking.
+•
+Resultados diários sem investimento indicam necessidade de validação da origem dessas conversões para evitar interpretações errôneas.
+Recomendações priorizadas
+1. Validar dados do período anterior (2026-08-01 a 2026-08-09) para permitir comparação e análise de evolução (Impacto alto, Confiança alta, Esforço médio).
+
+2. Revisar e validar a origem dos resultados em dias sem investimento para confirmar se são conversões orgânicas, tardias ou atribuídas incorretamente (Impacto médio, Confiança média, Esforço baixo).
+
+3. Avaliar possibilidade de ativar ou corrigir campanhas no Google Ads para diversificar canais e potencialmente aumentar volume de leads com custo competitivo (Impacto alto, Confiança média, Esforço médio).
+
+4. Analisar detalhadamente o custo por lead e custo por resultado nas campanhas Meta para identificar oportunidades de otimização, preferencialmente via ferramenta da plataforma antes de sugerir mudanças em criativos ou segmentação (Impacto alto, Confiança alta, Esforço médio).
+
+5. Monitorar a distribuição dos resultados ao longo dos dias, considerando pelo menos quatro semanas completas para análise de sazonalidade e ajuste de alocação (Impacto médio, Confiança alta, Esforço baixo).
+
+Limitações:
+
+•
+Ausência de dados estruturados do período anterior impede análise de variação e tendência.
+•
+Dados combinam definições diferentes de resultados e valores atribuídos entre plataformas, não representando receita financeira unificada.
+•
+Não há informações sobre segmento do cliente, o que limita contextualização do custo e valor dos leads.
+Se desejar, posso ajudar a detalhar análises específicas ou preparar consultas para plataformas específicas.
+
+Performance de campanhas Meta · 31 de ago.—08 de set.
+Performance de campanhas Google · 31 de ago.—08 de set.
+Visão geral de mídia · 31 de ago.—08 de set.
+3 fontes consultadas
+3928 tokens
+O que mudou em relação ao período anterior?
+Quais campanhas mais contribuíram para a receita?
+Onde está a maior perda do funil?
+Como está o ROAS e a eficiência?
+Pergunte sobre receita, campanhas, CRM ou eficiência…
+
+
+Enter envia · Shift + Enter quebra linha · análise limitada ao período e canal selecionados
+
+R$ 0k

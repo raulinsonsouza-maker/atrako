@@ -1,0 +1,87 @@
+Aqui está o inventário completo de tudo que trazemos e como cada campo se chama:
+
+Campos padrão do RD Station (bulk sync)
+Chegam na primeira sincronização via segmentação, todos os contatos:
+
+Campo no banco	Origem na API do RD	Descrição
+uuid	uuid	ID único do contato
+email	email	E-mail
+name	name	Nome completo
+company	company	Empresa
+job_title	job_title	Cargo
+city	city	Cidade
+state	state	Estado (campo nativo, nem sempre preenchido)
+country	country	País
+mobile_phone	mobile_phone	Celular
+personal_phone	personal_phone	Telefone fixo
+website	website	Site
+linkedin	linkedin	LinkedIn
+lifecycle_stage	lifecycle_stage	Estágio no funil (Lead, MQL, SQL…)
+opportunity	opportunity	É oportunidade? (boolean)
+tags	tags[].name	Tags do contato
+interest	interest	Score de interesse nativo do RD
+fit_score	fit_score	Score de fit nativo do RD
+created_at_rd	created_at	Data de criação no RD
+updated_at_rd	updated_at	Data da última atualização
+Campos personalizados (cf_*) — enriquecimento individual
+Chegam no enriquecimento via GET /platform/contacts/{uuid}. Tudo que começa com cf_ é capturado automaticamente e salvo no JSONB cf_data. Os que usamos ativamente:
+
+Faturamento (até 35 pts no score)
+Chave em cf_data	Formulário de origem
+cf_faturamento_medio_mensal	Campo padrão de faturamento
+cf_faturamento_medio_mensal_0	Variante de outro formulário
+cf_faturamento_medio_mensal_opcoes	Variante com opções
+cf_faturamento_leadster	Leadster
+cf_v_faturamento_agencia	Formulário de agências
+Segmento / Tipo de empresa (até 25 pts)
+Chave em cf_data	Observação
+cf_setor_da_empresa	Campo mais comum
+cf_mercado	Variante
+cf_27_06_2025_segmento_da_empresa_imovel	Formulário imobiliário
+Investimento em marketing (até 20 pts)
+Chave em cf_data	Observação
+cf_budget_mensal_para_marketing_total_nao_apenas_midia	Budget declarado
+cf_investe_em_marketing_0	Sim/Não com detalhe
+cf_investe_em_marketing	Sim/Não simples
+Etapa / Funil no CRM
+Chave em cf_data	Observação
+cf_etapa_atual	Etapa atual no CRM
+cf_etapaatual	Variante sem espaço
+cf_funilatual	Funil atual (Inbound, Outbound…)
+cf_plug_funnel_stage	Via integração Plug CRM
+Origem do lead
+Chave em cf_data	Observação
+cf_origem	Campo manual de origem
+cf_plug_opportunity_origin	Via Plug CRM
+_origem_primeira_conversao	Decodificado por nós do traffic_source do primeiro evento
+Outros campos de negócio
+Chave em cf_data	Observação
+cf_nome_da_empresa	Nome da empresa (quando company vem vazio)
+cf_site_da_empresa	Site da empresa
+cf_cargo_inout / cf_qual_o_seu_cargo / cf_qual_e_o_seu_cargo	Cargo (3 variantes de formulários diferentes)
+cf_motivodescarte	Motivo de descarte no CRM
+cf_plug_opportunity_value	Valor da oportunidade via Plug CRM
+cf_dadoscoletados / cf_dados_coletados	Bloco de dados concatenados (usado como fallback para extrair telefone)
+Campos calculados/enriquecidos por nós (prefixo _)
+Não existem no RD — criamos durante o enriquecimento e salvamos no mesmo cf_data:
+
+Chave em cf_data	Como é gerado
+_mobile_phone	Celular do endpoint individual (mais completo que o bulk)
+_personal_phone	Telefone fixo do endpoint individual
+_evento_principal	Identificador da conversão mais recente (/events?event_type=CONVERSION)
+_eventos	Todos os eventos de conversão concatenados com /
+_origem_primeira_conversao	traffic_source do evento mais antigo, decodificado para label legível
+Campos calculados pela nossa API (não ficam no banco)
+Gerados em tempo de leitura pelo scoreContact() e retornados pelo endpoint /api/rdstation/contacts:
+
+Campo na resposta da API	Descrição
+score	Pontuação 0–100
+score_label	cold / warm / hot / burning
+score_breakdown.faturamento	Pontos de faturamento (0–35)
+score_breakdown.segmento	Pontos de segmento (0–25)
+score_breakdown.investimento	Pontos de investimento (0–20)
+score_breakdown.perfil	Pontos de completude (0–20)
+revenue_tier	Tier A–E baseado no faturamento
+tipo_empresa	Normalizado: Imobiliárias, Incorporadoras, Construtoras, Corretores ou valor bruto
+estado_ddd	Estado inferido pelo DDD do telefone (ex: SP, RJ)
+telefone	Melhor telefone disponível (prioridade: _mobile_phone → _personal_phone → cf_dadoscoletados → bulk)

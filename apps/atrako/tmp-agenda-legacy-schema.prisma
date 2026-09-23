@@ -1,0 +1,743 @@
+﻿generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  MEMBER
+  PROFESSIONAL
+}
+
+enum BusinessMode {
+  SOLO
+  SALON
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+}
+
+enum PaymentProvider {
+  CAKTO
+  MERCADO_PAGO
+  ASAAS
+}
+
+enum PaymentMethod {
+  PIX
+  CARD
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum CustomFieldType {
+  TEXT
+  NUMBER
+  SELECT
+  TEXTAREA
+  PHONE
+  CPF
+}
+
+enum CheckoutOrderStatus {
+  PENDING_PAYMENT
+  PAID
+  CANCELLED
+  EXPIRED
+}
+
+enum ProductKind {
+  SIMPLE
+  INTAKE
+}
+
+enum IntakeSubmissionStatus {
+  DRAFT
+  SUBMITTED
+  PAID
+}
+
+enum IntakeReviewStatus {
+  NEW
+  IN_REVIEW
+  COMPLETED
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  SUSPENDED
+  CANCELED
+}
+
+enum PlanInterval {
+  MONTH
+  SEMESTER
+}
+
+model User {
+  id                  String               @id @default(cuid())
+  name                String
+  email               String               @unique
+  /** Celular em E.164 (ex.: +5511999999999). */
+  phone               String?
+  passwordHash        String?
+  googleId            String?              @unique
+  isPlatformAdmin     Boolean              @default(false)
+  /** Exige trocar a senha no pr├│ximo acesso (ex.: senha inicial do profissional). */
+  mustChangePassword  Boolean              @default(false)
+  disabledAt          DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  memberships         Membership[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Organization {
+  id                 String        @id @default(cuid())
+  name               String
+  slug               String        @unique
+  timezone           String        @default("America/Sao_Paulo")
+  description        String?
+  logoUrl            String?
+  accentColor        String        @default("#0a0a0a")
+  businessMode       BusinessMode  @default(SOLO)
+  caktoClientId      String?
+  caktoClientSecret  String?
+  caktoSdkClientId   String?
+  caktoOfferId       String?
+  paymentProvider    PaymentProvider @default(CAKTO)
+  mercadoPagoAccessToken String?
+  mercadoPagoPublicKey   String?
+  mercadoPagoRefreshToken String?
+  mercadoPagoTokenExpiry DateTime?
+  mercadoPagoUserId      String?
+  mercadoPagoConnectedAt DateTime?
+  asaasApiKey            String?
+  asaasAccountEmail      String?
+  asaasWalletId          String?
+  asaasWebhookToken      String?
+  asaasConnectedAt       DateTime?
+  googleAccessToken  String?
+  googleRefreshToken String?
+  googleTokenExpiry  DateTime?
+  googleEmail        String?
+  googleCalendarId   String?       @default("primary")
+  notifyClientConfirmation Boolean @default(true)
+  notifyClientReminder     Boolean @default(true)
+  notifyClientFeedback     Boolean @default(false)
+  notifyProNewBooking      Boolean @default(true)
+  notifyProCancellation    Boolean @default(false)
+  notifyProReschedule      Boolean @default(false)
+  reminderHoursBefore      Int     @default(24)
+  /** M├íximo de parcelas no cart├úo (Mercado Pago e Asaas). 1 = s├│ ├á vista. */
+  cardMaxInstallments      Int     @default(12)
+  /** E-mails padr├úo da equipe para avisos de intake (JSON array). */
+  intakeNotifyEmails       String?
+  /** Enviar e-mail de aviso ├á equipe quando intake ├® pago. */
+  intakeEmailAlerts        Boolean @default(true)
+  /** Null = wizard de primeiro acesso ainda n├úo conclu├¡do. */
+  onboardingCompletedAt    DateTime?
+  subscriptionStatus       SubscriptionStatus @default(TRIALING)
+  /** Canal WhatsApp da plataforma liberado para esta org. */
+  whatsappEnabled          Boolean @default(true)
+  /** Nota interna (s├│ gerencial). */
+  internalNote             String?
+  /** Meta Pixel ID (s├│ d├¡gitos). */
+  metaPixelId              String?
+  /** Token da Conversions API (nunca expor ao client). */
+  metaCapiAccessToken      String?
+  /** Google Ads send_to completo, ex.: AW-123456789/AbCdEfGh. */
+  googleAdsSendTo          String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  memberships        Membership[]
+  bookingPages       BookingPage[]
+  services           Service[]
+  products           Product[]
+  bookingEventLogs   BookingEventLog[]
+  professionals      Professional[]
+  subscription       Subscription?
+  platformPayments   PlatformPayment[]
+  intakeSubmissions  IntakeSubmission[]
+  customers          Customer[]
+  whatsappMessages   WhatsAppMessageLog[]
+  otpChallenges      OtpChallenge[]
+}
+
+model Membership {
+  id             String         @id @default(cuid())
+  role           MembershipRole @default(MEMBER)
+  userId         String
+  organizationId String
+  createdAt      DateTime       @default(now())
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  professional   Professional?
+
+  @@unique([userId, organizationId])
+}
+
+model Professional {
+  id                 String      @id @default(cuid())
+  organizationId     String
+  membershipId       String      @unique
+  displayName        String
+  /** Celular em E.164 (ex.: +5511999999999) para convite WhatsApp. */
+  phone              String?
+  photoUrl           String?
+  isActive           Boolean     @default(true)
+  sortOrder          Int         @default(0)
+  /** Comiss├úo interna (n├úo aparece para o cliente). */
+  commissionEnabled  Boolean     @default(false)
+  /** Percentual 0ÔÇô100 quando commissionEnabled. */
+  commissionPercent  Int         @default(50)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  membership         Membership   @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  services           ProfessionalService[]
+  availability       AvailabilityRule[]
+  exceptions         AvailabilityException[]
+  bookings           Booking[]
+  slotHolds          SlotHold[]
+
+  @@index([organizationId, isActive, sortOrder])
+}
+
+model ProfessionalService {
+  id             String       @id @default(cuid())
+  professionalId String
+  serviceId      String
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  service        Service       @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([professionalId, serviceId])
+  @@index([serviceId])
+}
+
+model BookingPage {
+  id             String              @id @default(cuid())
+  organizationId String
+  title          String
+  slug           String
+  description    String?
+  logoUrl        String?
+  coverImageUrl  String?
+  accentColor    String              @default("#0a0a0a")
+  websiteUrl     String?
+  instagram      String?
+  timezone       String              @default("America/Sao_Paulo")
+  slotStepMinutes Int                @default(0)
+  funnelConfig    String?
+  isActive       Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  pageServices   BookingPageService[]
+  availability   AvailabilityRule[]
+  exceptions     AvailabilityException[]
+  bookings       Booking[]
+  slotHolds      SlotHold[]
+
+  @@unique([organizationId, slug])
+}
+
+model BookingPageService {
+  id            String      @id @default(cuid())
+  bookingPageId String
+  serviceId     String
+  sortOrder     Int         @default(0)
+  bookingPage   BookingPage @relation(fields: [bookingPageId], references: [id], onDelete: Cascade)
+  service       Service     @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingPageId, serviceId])
+  @@index([serviceId])
+  @@index([bookingPageId, sortOrder])
+}
+
+model Service {
+  id              String        @id @default(cuid())
+  organizationId  String
+  title           String
+  description     String?
+  imageUrl        String?
+  durationMinutes Int           @default(30)
+  priceCents      Int           @default(0)
+  caktoOfferId    String?
+  bufferBefore    Int           @default(0)
+  bufferAfter     Int           @default(0)
+  isActive        Boolean       @default(true)
+  sortOrder       Int           @default(0)
+  /** Produto INTAKE vinculado ÔÇö funil pula hor├írio e abre wizard. */
+  intakeProductId String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  intakeProduct   Product?      @relation("ServiceIntakeProduct", fields: [intakeProductId], references: [id], onDelete: SetNull)
+  customFields    CustomField[]
+  bookings        Booking[]
+  slotHolds       SlotHold[]
+  professionals   ProfessionalService[]
+  pages           BookingPageService[]
+
+  @@index([organizationId, isActive, sortOrder])
+}
+
+model AvailabilityRule {
+  id             String        @id @default(cuid())
+  bookingPageId  String?
+  professionalId String?
+  dayOfWeek      Int
+  startTime      String
+  endTime        String
+  bookingPage    BookingPage?  @relation(fields: [bookingPageId], references: [id], onDelete: Cascade)
+  professional   Professional? @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([bookingPageId, dayOfWeek])
+  @@index([professionalId, dayOfWeek])
+}
+
+model AvailabilityException {
+  id             String        @id @default(cuid())
+  bookingPageId  String?
+  professionalId String?
+  date           String
+  isBlocked      Boolean       @default(true)
+  startTime      String?
+  endTime        String?
+  bookingPage    BookingPage?  @relation(fields: [bookingPageId], references: [id], onDelete: Cascade)
+  professional   Professional? @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([bookingPageId, date])
+  @@index([professionalId, date])
+}
+
+model CustomField {
+  id         String          @id @default(cuid())
+  serviceId  String
+  label      String
+  type       CustomFieldType @default(TEXT)
+  required   Boolean         @default(false)
+  options    String?
+  sortOrder  Int             @default(0)
+  service    Service         @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  bookingPageId   String
+  serviceId       String
+  professionalId  String?
+  customerId      String?
+  status          BookingStatus @default(PENDING_PAYMENT)
+  startAt         DateTime
+  endAt           DateTime
+  timezone        String
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  customerCpf     String?
+  customAnswers   String?
+  holdExpiresAt   DateTime?
+  confirmedAt     DateTime?
+  cancelledAt     DateTime?
+  googleEventId   String?
+  googleMeetLink  String?
+  manageToken     String?       @unique
+  reminderSentAt  DateTime?
+  feedbackSentAt  DateTime?
+  pixReminderSentAt DateTime?
+  gclid           String?
+  fbclid          String?
+  fbc             String?
+  fbp             String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  bookingPage     BookingPage   @relation(fields: [bookingPageId], references: [id], onDelete: Cascade)
+  service         Service       @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  professional    Professional? @relation(fields: [professionalId], references: [id], onDelete: SetNull)
+  customer        Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  payment         Payment?
+  slotHold        SlotHold?
+  eventLogs       BookingEventLog[]
+  whatsappMessages WhatsAppMessageLog[]
+
+  @@index([bookingPageId, startAt])
+  @@index([professionalId, startAt])
+  @@index([status, holdExpiresAt])
+  @@index([customerEmail])
+  @@index([customerPhone])
+  @@index([customerId, startAt])
+  @@index([status, startAt])
+}
+
+model BookingEventLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  bookingId      String?
+  type           String
+  dedupeKey      String
+  payload        String?
+  createdAt      DateTime @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking        Booking?     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, type, dedupeKey])
+  @@index([organizationId, createdAt])
+  @@index([type, createdAt])
+}
+
+model Product {
+  id                 String         @id @default(cuid())
+  organizationId     String
+  title              String
+  description        String?
+  priceCents         Int            @default(0)
+  caktoOfferId       String?
+  formConfig         String?
+  productKind        ProductKind    @default(SIMPLE)
+  intakeTemplateKey  String?
+  /** E-mails da equipe para aviso de intake (JSON array). */
+  notifyEmails       String?
+  intakeEmailAlerts  Boolean        @default(true)
+  isActive           Boolean        @default(true)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  organization       Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  checkoutLinks      CheckoutLink[]
+  orders             CheckoutOrder[]
+  intakeServices     Service[]      @relation("ServiceIntakeProduct")
+
+  @@index([organizationId, isActive])
+}
+
+model CheckoutLink {
+  id          String          @id @default(cuid())
+  productId   String
+  slug        String          @unique
+  title       String?
+  logoUrl     String?
+  accentColor String?
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  product     Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orders      CheckoutOrder[]
+
+  @@index([productId, isActive])
+}
+
+model CheckoutOrder {
+  id              String              @id @default(cuid())
+  checkoutLinkId  String
+  productId       String
+  status          CheckoutOrderStatus @default(PENDING_PAYMENT)
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  customerCpf     String?
+  customAnswers   String?
+  holdExpiresAt   DateTime?
+  paidAt          DateTime?
+  confirmedAt     DateTime?
+  gclid           String?
+  fbclid          String?
+  fbc             String?
+  fbp             String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  checkoutLink    CheckoutLink        @relation(fields: [checkoutLinkId], references: [id], onDelete: Cascade)
+  product         Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  payment         Payment?
+  intakeSubmission IntakeSubmission?
+
+  @@index([checkoutLinkId, status])
+  @@index([productId, status])
+  @@index([customerEmail])
+  @@index([status, holdExpiresAt])
+}
+
+model IntakeSubmission {
+  id               String                 @id @default(cuid())
+  organizationId   String
+  checkoutOrderId  String                 @unique
+  templateKey      String
+  status           IntakeSubmissionStatus @default(DRAFT)
+  reviewStatus     IntakeReviewStatus     @default(NEW)
+  data             String
+  submittedAt      DateTime?
+  viewedAt         DateTime?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  organization     Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  checkoutOrder    CheckoutOrder          @relation(fields: [checkoutOrderId], references: [id], onDelete: Cascade)
+  attachments      IntakeAttachment[]
+
+  @@index([organizationId, status])
+  @@index([organizationId, createdAt])
+}
+
+model IntakeAttachment {
+  id                 String           @id @default(cuid())
+  intakeSubmissionId String
+  fieldKey           String
+  partnerIndex       Int?
+  fileName           String
+  mimeType           String
+  sizeBytes          Int
+  storagePath        String
+  createdAt          DateTime         @default(now())
+  intakeSubmission   IntakeSubmission @relation(fields: [intakeSubmissionId], references: [id], onDelete: Cascade)
+
+  @@unique([intakeSubmissionId, fieldKey])
+  @@index([intakeSubmissionId])
+}
+
+model Payment {
+  id               String        @id @default(cuid())
+  bookingId        String?       @unique
+  checkoutOrderId  String?       @unique
+  method           PaymentMethod
+  status           PaymentStatus @default(PENDING)
+  amountCents      Int
+  currency         String        @default("BRL")
+  provider         PaymentProvider @default(CAKTO)
+  caktoPaymentId   String?
+  idempotencyKey   String        @unique
+  pixQrCode        String?
+  pixQrCodeBase64  String?
+  pixExpiresAt     DateTime?
+  rawResponse      String?
+  paidAt           DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  booking          Booking?      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  checkoutOrder    CheckoutOrder? @relation(fields: [checkoutOrderId], references: [id], onDelete: Cascade)
+}
+
+model SlotHold {
+  id             String        @id @default(cuid())
+  bookingPageId  String
+  serviceId      String
+  professionalId String?
+  bookingId      String?       @unique
+  startAt        DateTime
+  endAt          DateTime
+  expiresAt      DateTime
+  createdAt      DateTime      @default(now())
+  bookingPage    BookingPage   @relation(fields: [bookingPageId], references: [id], onDelete: Cascade)
+  service        Service       @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  professional   Professional? @relation(fields: [professionalId], references: [id], onDelete: SetNull)
+  booking        Booking?      @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([bookingPageId, startAt, expiresAt])
+  @@index([professionalId, startAt, expiresAt])
+}
+
+model Plan {
+  id                    String        @id @default(cuid())
+  name                  String
+  slug                  String        @unique
+  priceCents            Int
+  currency              String        @default("BRL")
+  interval              PlanInterval  @default(MONTH)
+  trialDays             Int           @default(14)
+  isActive              Boolean       @default(true)
+  mpPreapprovalPlanId   String?
+  /** Franquia mensal de msgs WhatsApp (Utility/Auth) da plataforma. */
+  whatsappQuotaMonthly  Int           @default(200)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  subscriptions         Subscription[]
+}
+
+model Subscription {
+  id               String             @id @default(cuid())
+  organizationId   String             @unique
+  planId           String?
+  status           SubscriptionStatus @default(TRIALING)
+  mpPreapprovalId  String?
+  /** Checkout Preference id (pagamento ├║nico semestral). */
+  mpPreferenceId   String?
+  trialEndsAt      DateTime?
+  currentPeriodEnd DateTime?
+  canceledAt       DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  plan             Plan?              @relation(fields: [planId], references: [id], onDelete: SetNull)
+}
+
+model PlatformConfig {
+  id                  String   @id @default("singleton")
+  defaultTrialDays    Int      @default(14)
+  supportEmail        String?
+  billingBlockMessage String?
+  updatedAt           DateTime @updatedAt
+}
+
+/** Credenciais Mercado Pago da plataforma (cobran├ºa SaaS + app OAuth dos sal├Áes). */
+model PlatformMercadoPagoConfig {
+  id                    String    @id @default("singleton")
+  /** Liga cobran├ºa de assinatura no onboarding. */
+  billingEnabled        Boolean   @default(false)
+  /** Client ID do app MP (Developers). Tamb├®m usado no OAuth dos sal├Áes. */
+  clientId              String?
+  clientSecretEncrypted String?
+  accessTokenEncrypted  String?
+  publicKey             String?
+  refreshTokenEncrypted String?
+  tokenExpiry           DateTime?
+  userId                String?
+  nickname              String?
+  connectedAt           DateTime?
+  lastError             String?
+  updatedAt             DateTime  @updatedAt
+}
+
+/** Credenciais e templates do canal WhatsApp ├║nico da plataforma. */
+model PlatformWhatsAppConfig {
+  id                    String    @id @default("singleton")
+  enabled               Boolean   @default(false)
+  phoneNumberId         String?
+  wabaId                String?
+  /** Token criptografado (AES); vazio = usar env WHATSAPP_ACCESS_TOKEN. */
+  accessTokenEncrypted  String?
+  displayNumber         String?
+  templateOtpName       String    @default("book_auth_otp")
+  templateReminderName  String    @default("book_booking_reminder")
+  templateConfirmName   String?
+  webhookVerifyToken    String?
+  defaultButtonBaseUrl  String?
+  lastError             String?
+  lastTestAt            DateTime?
+  updatedAt             DateTime  @updatedAt
+}
+
+model PlatformPayment {
+  id             String       @id @default(cuid())
+  organizationId String
+  amountCents    Int
+  status         String
+  mpPaymentId    String?
+  description    String?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+}
+
+model PlatformAuditLog {
+  id         String   @id @default(cuid())
+  actorUserId String?
+  action     String
+  targetType String
+  targetId   String?
+  meta       String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([targetType, targetId])
+}
+
+model Customer {
+  id             String       @id @default(cuid())
+  organizationId String
+  phoneE164      String
+  name           String
+  email          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  bookings       Booking[]
+  sessions       CustomerSession[]
+  whatsappMessages WhatsAppMessageLog[]
+
+  @@unique([organizationId, phoneE164])
+  @@index([organizationId, phoneE164])
+}
+
+model CustomerSession {
+  id         String   @id @default(cuid())
+  customerId String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([expiresAt])
+}
+
+model OtpChallenge {
+  id             String       @id @default(cuid())
+  organizationId String
+  phoneE164      String
+  codeHash       String
+  expiresAt      DateTime
+  attempts       Int          @default(0)
+  consumedAt     DateTime?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, phoneE164])
+  @@index([expiresAt])
+}
+
+enum WhatsAppMessageCategory {
+  AUTH
+  UTILITY
+  MARKETING
+  OTHER
+}
+
+model WhatsAppMessageLog {
+  id             String                   @id @default(cuid())
+  organizationId String?
+  bookingId      String?
+  customerId     String?
+  category       WhatsAppMessageCategory
+  templateName   String
+  toPhoneE164    String
+  status         String                   @default("queued")
+  metaMessageId  String?
+  billable       Boolean                  @default(true)
+  error          String?
+  createdAt      DateTime                 @default(now())
+  organization   Organization?            @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  booking        Booking?                 @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  customer       Customer?                @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([metaMessageId])
+}

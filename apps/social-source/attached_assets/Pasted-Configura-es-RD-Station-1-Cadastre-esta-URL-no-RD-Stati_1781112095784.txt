@@ -1,0 +1,786 @@
+Configurações — RD Station
+
+1
+Cadastre esta URL no RD Station App Store
+No RD Station App Store, ao criar ou editar o app, localize o campo "URL de Callback" (ou Redirect URI) e cole exatamente esta URL — sem espaços extras:
+
+https://rd-lead-score.replit.app/api/auth/callback
+Copiar
+⚠️ Não coloque o Client Secret neste campo. O campo "URL de Callback" aceita somente URLs que começam com https://.
+
+2
+Cole as credenciais do app
+Client ID
+c43d45cb-0a80-40cf-8b75-873b93e8128a
+Atual: c43d45cb…
+
+Client Secret
+Deixe vazio para manter o atual
+
+Secret já configurado — preencha só para alterar
+
+Fechar
+Salvar
+Inout
+
+Última sincronização
+10 de jun. de 2026, 12:39
+11.305 contatos na base
+Desconectar
+
+Lead Scoring
+
+Classificação de Leads
+
+Ano atual (YTD): 01 de jan. de 2026 a 10 de jun. de 2026
+Total de Leads
+1.872
+Score Médio
+25
+/100
+Leads Quentes
+4
+0.2% · score ≥76
+Leads Frios
+1806
+96.5% · score ≤50
+Score por Tipo de Empresa
+jan. de 26
+fev. de 26
+mar. de 26
+abr. de 26
+mai. de 26
+jun. de 26
+0
+200
+400
+600
+800
+Classificação por Faturamento
+
+A
+Acima de R$ 1M/mês
+165 (8.8%)
+
+B
+R$ 300k – R$ 1M/mês
+135 (7.2%)
+
+C
+R$ 100k – R$ 300k/mês
+56 (3%)
+
+D
+R$ 50k – R$ 100k/mês
+522 (27.9%)
+
+E
+Abaixo de R$ 50k / Não declarado
+994 (53.1%)
+Canais de Origem
+Clique em um canal para filtrar a tabela
+
+
+Busca Paga | Facebook Ads
+757
+40.4%
+·
+s:28
+
+Meta_ADS
+558
+29.8%
+·
+s:22
+
+Organico
+99
+5.3%
+·
+s:35
+
+Driva
+92
+4.9%
+·
+s:38
+
+Social | Facebook
+37
+2%
+·
+s:29
+
+Busca Orgânica | Google
+36
+1.9%
+·
+s:22
+
+Tráfego Direto
+24
+1.3%
+·
+s:25
+
+Social | Instagram
+19
+1%
+·
+s:16
+
+Busca Paga | ig
+12
+0.6%
+·
+s:31
+
+Busca Paga | Google
+10
+0.5%
+·
+s:28
+
+Site
+8
+0.4%
+·
+s:43
+
+Prospecção Ativa
+8
+0.4%
+·
+s:38
+
+Searching
+7
+0.4%
+·
+s:38
+
+Referência | inoutdigital.com.br
+6
+0.3%
+·
+s:23
+
+Social | Twitter
+3
+0.2%
+·
+s:61
+
+Referência | br.search.yahoo.com
+2
+0.1%
+·
+s:34
+
+Busca Paga | Facebook
+2
+0.1%
+·
+s:15
+
+Paragon
+2
+0.1%
+·
+s:16
+
+Busca Orgânica | Bing
+2
+0.1%
+·
+s:39
+
+Social Selling
+1
+0.1%
+·
+s:16
+
+Referência | rdstation.com
+1
+0.1%
+·
+s:13
+
+Referência | gad_source=5&gad_campaignid=23704186981&gclid=eaiaiqobchmi5rkn1ejgkwmv6gviab2xzhcaeaayasabeglxv_d_bwe
+1
+0.1%
+·
+s:13
+
+Referência | linktr.ee
+1
+0.1%
+·
+s:49
+
+Referência | paragoneducacao.com.br
+1
+0.1%
+·
+s:48
+
+Indicacao
+1
+0.1%
+·
+s:16
+
+Referência | l.wl.co
+1
+0.1%
+·
+s:13
+
+Referência | paragon.ticto.club
+1
+0.1%
+·
+s:48
+
+Referência | app.rdstation.com.br
+1
+0.1%
+·
+s:71
+179 leads (9.6%) sem origem registrada
+
+Distribuição por Estado
+Identificado pelo DDD · clique para filtrar
+
+
+SP
+São Paulo
+625
+35.3%
+·
+s:26
+
+MG
+Minas Gerais
+136
+7.7%
+·
+s:28
+
+SC
+Santa Catarina
+122
+6.9%
+·
+s:26
+
+RJ
+Rio de Janeiro
+109
+6.2%
+·
+s:25
+
+MA
+Maranhão
+103
+5.8%
+·
+s:13
+
+RS
+Rio Grande do Sul
+99
+5.6%
+·
+s:26
+
+PR
+Paraná
+98
+5.5%
+·
+s:26
+
+BA
+Bahia
+66
+3.7%
+·
+s:28
+
+DF
+Distrito Federal
+55
+3.1%
+·
+s:26
+
+GO
+Goiás
+53
+3%
+·
+s:23
+
+PE
+Pernambuco
+45
+2.5%
+·
+s:31
+
+ES
+Espírito Santo
+44
+2.5%
+·
+s:27
+
+CE
+Ceará
+41
+2.3%
+·
+s:26
+
+PA
+Pará
+30
+1.7%
+·
+s:30
+
+RN
+Rio Grande do Norte
+27
+1.5%
+·
+s:30
+
+MT
+Mato Grosso
+22
+1.2%
+·
+s:23
+
+PB
+Paraíba
+18
+1%
+·
+s:26
+
+MS
+Mato Grosso do Sul
+16
+0.9%
+·
+s:28
+
+AM
+Amazonas
+13
+0.7%
+·
+s:26
+
+AL
+Alagoas
+13
+0.7%
+·
+s:23
+
+RO
+Rondônia
+11
+0.6%
+·
+s:26
+
+PI
+Piauí
+8
+0.5%
+·
+s:25
+
+TO
+Tocantins
+7
+0.4%
+·
+s:29
+
+SE
+Sergipe
+6
+0.3%
+·
+s:31
+
+AC
+Acre
+2
+0.1%
+·
+s:20
+
+RR
+Roraima
+2
+0.1%
+·
+s:15
+
+AP
+Amapá
+1
+0.1%
+·
+s:28
+100 leads sem telefone identificado
+
+Fonte de Conversão Detalhada
+1.717 de 1.872 leads identificados
+Formulário ou página onde o lead converteu · clique para filtrar
+
+Buscar fonte de conversão…
+
+IN - Formulário Imobiliário - 2026
+503
+29.3%
+·
+s:20
+
+IN - Formulário Agente de I.A | CORRETORES
+430
+25%
+·
+s:25
+
+IN - Formulário Agente de I.A
+259
+15.1%
+·
+s:27
+
+IntegracaoExact
+114
+6.6%
+·
+s:37
+
+New Form
+102
+5.9%
+·
+s:48
+
+formulario-de-contato
+100
+5.8%
+·
+s:41
+
+botao-whatsapp-2025-site-d74ff2bf3a1ef55ce73a
+87
+5.1%
+·
+s:17
+
+/trabalhe-conosco/
+26
+1.5%
+·
+s:9
+
+IN - Formulário Construtoras sem lógica NOVO
+25
+1.5%
+·
+s:34
+
+[IN] [RAUL] [ALTA QUALIFICAÇÃO] [IMOBILIÁRIO] [V2]
+18
+1%
+·
+s:12
+
+formulario-home-news
+16
+0.9%
+·
+s:11
+
+formulario-de-contato-pagina-construtoras-incorporadoras
+13
+0.8%
+·
+s:52
+
+[IN] [RAUL] [ALTA QUALIFICAÇÃO] [IMOBILIÁRIO]
+7
+0.4%
+·
+s:12
+
+in-playbook-mercado-imobiliario
+4
+0.2%
+·
+s:49
+
+Form construtora
+3
+0.2%
+·
+s:67
+
+Form imob 2
+3
+0.2%
+·
+s:43
+
+blog-form
+3
+0.2%
+·
+s:10
+
+teste-conexao-api
+1
+0.1%
+·
+s:9
+
+nova-landing-page
+1
+0.1%
+·
+s:52
+
+Paragon Mentoria Agências - APLICAÇÃO DIRETA
+1
+0.1%
+·
+s:48
+
+Form LP Raio X Comercial
+1
+0.1%
+·
+s:16
+Leads
+Buscar nome, email, empresa…
+Tipo
+Estágio
+09/06/2026	
+Charles
+formateconstrucoes@hotmail.com.br
+—	Construtoras	—	Descartado	38
+09/06/2026	
+lisandra
+lisandra@engenhariaramosjunior.com.br
+—	Construtoras	—	Descartado	38
+09/06/2026	
+Comercial
+bianca@engenhariaramosjunior.com.br
+—	Construtoras	—	Descartado	38
+09/06/2026	
+Diogo
+compras@emplanej.com.br
+—	Construtoras	—	Descartado	38
+09/06/2026	
+Erika
+erika.cirilo@emplanej.com.br
+—	Construtoras	—	Descartado	38
+09/06/2026	
+José
+jose@emplanej.com.br
+—	Construtoras	—	Descartado	38
+09/06/2026	
+Roberto
+roberto.branco@emplanej.com.br
+—	Construtoras	—	Descartado	38
+08/06/2026	
+Telefone
+aluguel@begimoveis.com.br
+—	Construtoras	—	Descartado	38
+08/06/2026	
+Telefone
+atendimento@begimoveis.com.br
+—	Construtoras	—	Descartado	38
+08/06/2026	
+BAUHAUS ENGENHARIA E CONSTRUCOES LTDA
+bauhaus@bauhausbrasil.com.br
+—	Construtoras	—	Descartado	38
+08/06/2026	
+BATESTAL IMOVEIS LTDA
+financeiro@batestal.com.br
+—	Construtoras	—	Descartado	38
+08/06/2026	
+Telefone
+contato@ampeng.com.br
+—	Construtoras	—	Descartado	38
+08/06/2026	
+Telefone
+amgengenharia@amgeng.com.br
+—	Construtoras	—	Descartado	38
+08/06/2026	
+Juliana
+juliana@rochavaz.eng.br
+—	Construtoras	—	Descartado	38
+08/06/2026	
+Maria Luiza
+marialuisa@rochavaz.eng.br
+—	Construtoras	—	Descartado	38
+08/06/2026	
+Dienis
+dienis.santos@dinamicavendas.com.br
+—	Construtoras	—	Descartado	38
+08/06/2026	
+LILIANE BARBOSA S. FIGUEIREDO
+liliane.barbosa@dinamicainc.com.br
+—	Construtoras	—	Descartado	38
+08/06/2026	
+entrar em contato
+contato@constelempreendimentos.com.br
+—	Construtoras	—	Descartado	38
+08/06/2026	
+BERTOLINI ENGENHARIA LTDA
+pa.tetzlaff@bol.com.br
+—	Construtoras	—	Descartado	38
+08/06/2026	
+Telefone
+adm@bertoliniengenharia.com.br
+—	Construtoras	—	Descartado	38
+08/06/2026	
+Maicon Santos
+maicon@basesul.com.br
+—	Construtoras	—	Descartado	38
+08/06/2026	
+Theo Torin
+theoescrita@gmail.com
+—	—	—	—	9
+08/06/2026	
+Alan Kauê
+designer@avivaurbanismo.com.br
+Aviva	Incorporadoras	Tier A	—	81
+08/06/2026	
+Daniel
+daniel@grupobonadia.com.br
+—	—	—	—	9
+07/06/2026	
+Alex Rabelo Machado
+alexrabelomachado@gmail.com
+—	—	—	—	9
+06/06/2026	
+Vitória Vilela Borges
+vitoriavilelaborges3@gmail.com
+Autônomo	N/A	—	Descartado	24
+06/06/2026	
+Paula
+anapaulaalberoni@yahoo.com.br
+Vendas de consórcio	N/A	—	Descartado	19
+06/06/2026	
+Pedro Rinzler
+pedro.rinzler@gmail.com
+—	—	—	—	9
+05/06/2026	
+Ricardo Leite Ribeiro
+rleiteribeiro@gmail.com
+—	—	—	—	9
+05/06/2026	
+Ysvahsha
+ywyahausbsb@hmail.com
+—	N/A	—	Descartado	16
+05/06/2026	
+Daniel Lima
+danielfraiha@gmail.com
+—	N/A	—	Descartado	16
+05/06/2026	
+Gui
+gui.celentano@gmail.com
+—	—	—	—	9
+05/06/2026	
+Matheus Teixeira
+matheusadmunb@gmail.com
+—	—	—	—	9
+03/06/2026	
+Rogerio Floria
+rogerio.floria@cintelinteligencia.com.br
+Cintel	—	—	—	12
+03/06/2026	
+Fernando Moliterno
+fernando@moliterno.com.br
+—	—	—	—	9
+03/06/2026	
+Luiz Flávio
+luizflavio.gestao@gmail.com
+—	—	—	—	9
+03/06/2026	
+BEATRIZ
+beatriz@acinco.eng.br
+—	Construtoras	—	Descartado	38
+03/06/2026	
+Erick Viana Machado
+marketing@megasulimoveis.com.br
+Mega Sul Imobiliária LTDA	N/A	Tier A	Descartado	59
+03/06/2026	
+Arthur Sacramento
+arthursacramentocorretor@gmail.com
+Sacramento Imóveis	N/A	Tier B	Descartado	49
+03/06/2026	
+Eduardo Calzzetta Paganelli
+eduardo.paganelli@maximoaldana.com.br
+—	Construtoras	—	Descartado	38
+02/06/2026	
+.
+financeiro@pinheirodesa.com
+—	Construtoras	—	Descartado	34
+02/06/2026	
+Leandro
+leandro@pinheirodesa.com
+—	Construtoras	—	Descartado	38
+02/06/2026	
+Palvarez
+palvarez@maraey.com
+—	Construtoras	—	Descartado	38
+01/06/2026	
+Renildo Bizarria
+renildo@ecomax.eco.br
+—	Construtoras	—	Descartado	38
+01/06/2026	
+Vinícius Laurentino
+vinicius.ramos@ecomax.eco.br
+—	Construtoras	—	Descartado	38
+01/06/2026	
+Incorporadora
+atendimento@dcasaincorporadora.com.br
+—	Construtoras	—	Descartado	38
+01/06/2026	
+Elisabete de Cassia Groh Morais
+bethe.morais@dcasaincorporadora.com.br
+—	Construtoras	—	Descartado	38
+01/06/2026	
+Rebeca
+r.peres@corporeincorporadora.com.br
+—	Construtoras	—	Descartado	38
+01/06/2026	
+Nícolas Tagliatti
+tagliattiimoveis@gmail.com
+—	N/A	—	Descartado	16
+01/06/2026	
+Tiago
+marketing@unenco.com.br
+—	Construtoras	—	Descartado	38
+1–50 de 1.872 leads
+
+Pág. 1 / 38
+
+0

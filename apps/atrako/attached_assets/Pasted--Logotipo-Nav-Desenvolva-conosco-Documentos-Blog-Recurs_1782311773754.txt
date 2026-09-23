@@ -1,0 +1,89 @@
+
+Logotipo Nav
+Desenvolva conosco
+Documentos
+Blog
+Recursos
+Centrais para desenvolvedores
+Meus apps
+Documentação
+Visão geral
+Derivadas
+Esta página foi traduzida do inglês para outro idioma usando IA. O conteúdo traduzido por IA pode conter erros, omissões ou divergências de sentido. Como a tradução automática pode ser imprecisa ou pouco clara, consulte o conteúdo original em inglês desta página para validar as orientações corretas.
+Isso foi útil?
+Derivadas
+Updated: 21 de jan de 2025
+Representa uma coleção de objetos de mídia do Instagram em um álbum de mídia do Instagram.
+Requisitos
+API do Instagram com o Login do Instagram	API do Instagram com o Login do Facebook
+Tokens de acesso
+Token de acesso do usuário do Instagram
+Token de acesso do usuário do Facebook
+URL de hospedagem
+graph.instagram.com
+graph.facebook.com
+Tipo de login
+Login de Empresa no Instagram
+Login do Facebook para Empresas
+Permissões
+instagram_business_basic
+instagram_basic
+pages_read_engagement
+Caso uma função tenha sido concedida ao usuário do app por meio do Gerenciador de Negócios na Página conectada ao usuário do Instagram em questão, você precisará obter uma das seguintes permissões:
+ads_management
+ads_read
+Criação
+Esta operação não é compatível.
+Leitura
+Como obter objetos derivados de mídia
+GET /<IG_MEDIA_ID>/children
+Retorna uma lista de objetos de mídia do Instagram em um objeto de álbum de mídia do Instagram.
+Limitações
+Alguns campos, como permalink, não podem ser usados em fotos dentro de álbuns (derivados).
+Exemplo de solicitação
+GET graph.facebook.com
+  /17896450804038745/children
+Exemplo de resposta
+{
+  "data": [
+    {
+      "id": "17880997618081620"
+    },
+    {
+      "id": "17871527143187462"
+    }
+  ]
+}
+Atualização
+Esta operação não é compatível.
+Exclusão
+Esta operação não é compatível.
+Você achou esta página útil?
+Ícone de polegar para cima
+Ícone de polegar para baixo
+Meta
+FacebookInstagramXLinkedInYouTube
+Desenvolva com a Meta
+IA
+Meta Horizon
+Tecnologias sociais
+Notícias
+Meta for Developers
+Blog
+Casos de sucesso
+Suporte
+Suporte ao desenvolvedor
+Ferramenta de bug
+Status da plataforma
+Fórum da Comunidade de Desenvolvedores
+Relatar um incidente
+Quem somos
+Sobre
+Carreiras
+Termos e políticas
+Iniciativas de plataforma responsável
+Termos da plataforma
+Políticas do Desenvolvedor
+Política de Privacidade
+Cookies
+Português (Brasil)

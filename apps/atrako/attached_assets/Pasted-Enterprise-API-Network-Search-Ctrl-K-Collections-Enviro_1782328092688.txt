@@ -1,0 +1,1471 @@
+Enterprise
+API Network
+Search
+(
+Ctrl+K
+)
+
+
+
+
+Collections
+
+Environments
+
+Specs
+
+Flows
+Environment
+Instagram API Documentation
+Instagram-API
+Language
+Postman CLI
+Instagram API Documentation
+This collection will allow you to connect to Instagram's Graph API, which allows Instagram Professionals - Businesses and Creators - to manage their presence on the platform. This guide will help you to generate tokens, publish content, gather insights and manage an Instagram profile.
+
+The API is built on top of Facebook's Graph API, we recommend giving this guide a look before getting started.
+
+Before You Start
+To interact with the API, you must first have a Facebook App. You can create one following this guide, for the purposes of the guide, we recommend using a Business App.
+
+After creating the app, you must generate a User Access Token with it. This token will allow you to manage permissions and objects you manage, you can generate it with this guide. Afterwards, make sure to select the Instagram environment in Postman and paste the resulting token under the user_access_token variable.
+
+Authorization
+Bearer Token
+Token
+{{user_access_token}}
+Instagram API with Facebook Login
+The Instagram API with Facebook Login allows Instagram Professionals — Businesses and Creators — to use your app to manage their presence on Instagram. The API can be used to get and publish their media, manage and reply to comments on their media, identify media where they have been @mentioned by other Instagram users, find hashtagged media, and get basic metadata and metrics about other Instagram Businesses and Creators.
+
+The permission model for the API requires a Page to be linked with a Professional Instagram Account before starting. Linking process can be found here.
+
+Limitations
+The Instagram API with Facebook Login cannot access Instagram consumer accounts (i.e., non-Business or non-Creator Instagram accounts).
+﻿Content Publishing is available to all Instagram Professional accounts, except Stories, which are only available to business accounts.
+﻿Ordering results is not supported
+All endpoints support cursor-based pagination, but the User Insights edge is the only endpoint that supports time-based pagination
+Access Token Permissions needed
+These are the permissions needed for the requests in this collection:
+
+pages_show_list
+instagram_basic
+instagram_content_publish
+pages_read_engagement
+instagram_manage_comments
+Authorization
+Bearer Token
+This folder is using an authorization helper from collection Instagram API
+Token
+An access token is a string that identifies a user, app or IG User and is used by an app to make Graph API calls. This section will cover the basics of tokens used for the Instagram API. Make sure the Instagram environment is active and the user_access_token variable has a value.
+
+Authorization
+Bearer Token
+This folder is using an authorization helper from collection Instagram API
+GET
+Get Access Tokens of Pages You Manage
+https://graph.facebook.com/{{api_version}}/me/accounts?fields=name,access_token,tasks,instagram_business_account&access_token={{user_access_token}}
+This request uses a User Access Token to get a list of all the pages managed by a User. Make sure to choose one page from the list, copy the ID into the page_id variable, the access_token field into the page_access_token variable of the environment and the instagram_business_account field into the ig_user_id variable.
+
+This new access token is a Page Access Token, which acts on behalf of a Page that is linked to an Instagram profile.
+
+More available fields can be found here.
+
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Query Params
+fields
+name,access_token,tasks,instagram_business_account
+access_token
+{{user_access_token}}
+Example
+Get Access Tokens of Pages You Manage
+Request
+View More
+Postman CLI
+postman request 'https://graph.facebook.com/{{api_version}}/me/accounts?fields=name%2Caccess_token%2Ctasks%2Cinstagram_business_account&access_token={{user_access_token}}' \
+  --header 'User-Agent: Postman/InstagramCollection'
+200 OK
+Response
+Body
+Headers (0)
+View More
+json
+{
+    "data": [
+        {
+            "name": "{page_name}",
+            "access_token": "{page_access_token}",
+            "instagram_business_account": {
+                "id": "{ig_user_id}"
+            },
+            "id": "{page_id}",
+            "tasks": [
+                "ANALYZE",
+                "ADVERTISE",
+                "MESSAGING",
+                "MODERATE",
+                "CREATE_CONTENT",
+                "MANAGE"
+            ]
+        }
+        //...
+    ]
+}
+GET
+Get Specific Page Access Token
+https://graph.facebook.com/{{api_version}}/{{page_id}}?fields=name,access_token,instagram_business_account&access_token={{user_access_token}}
+If you already have the page_id available, you can query directly this endpoint to get the specific Page Access Token you need and avoid having to search for it on the list.
+
+More available fields can be found here.
+
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Query Params
+fields
+name,access_token,instagram_business_account
+access_token
+{{user_access_token}}
+Example
+Get Specific Page Access Token
+Request
+View More
+Postman CLI
+postman request 'https://graph.facebook.com/{{api_version}}/{{page_id}}?fields=name%2Caccess_token%2Cinstagram_business_account&access_token={{user_access_token}}' \
+  --header 'User-Agent: Postman/InstagramCollection'
+200 OK
+Response
+Body
+Headers (0)
+json
+{
+  "name": "{page_name}",
+  "access_token": "{page_access_token}",
+  "instagram_business_account": {
+    "id": "{ig_user_id}"
+  },
+  "id": "{page_id}"
+}
+Reels Publishing
+This section allows developers to upload and publish a Reel into an Instagram User from a server.
+
+For this section, you'll need to introduce a video link into the video_url variable. It needs to follow these specifications:
+
+Container: MOV or MP4 (PMEG-4 Part 14)
+Audio codec: AAC, 48khz
+Video codec: HEVC or H.264
+Frame rate: 23-60 FPS
+Picture size:
+
+Maximum 1920 horizontal pixels
+Recommended aspect ratio 9:16
+Video bitrate: 25 Mbps maximum
+Audio bitrate: 128 kbps
+Duration 15 minutes maximum, 3 seconds minimum
+File size: 1 GB maximum
+More information about Reels Publishing can be found here.
+
+Authorization
+Bearer Token
+This folder is using an authorization helper from collection Instagram API
+POST
+Upload a Reel to an IG Container
+https://graph.facebook.com/{{api_version}}/{{ig_user_id}}/media?media_type=REELS&video_url={{video_url}}&caption=Hello World!&share_to_feed=false&access_token={{page_access_token}}
+This request will create an IG Container to hold the Reel. It will return a container_id that will be automatically placed into the ig_container_id variable. The media_type parameter will determine the type of video published, in this case REELS. It is important that the link in the video_url variable is accessible publicly as we will cURL the video from the server.
+
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Query Params
+media_type
+REELS
+video_url
+{{video_url}}
+caption
+Hello World!
+share_to_feed
+false
+If set to true, the reel will appear in both the Feed and Reels tab. If it's set to false, it will only appear in the Reels tab.
+
+access_token
+{{page_access_token}}
+Example
+Upload a Reel to an IG Container
+Request
+View More
+Postman CLI
+postman request POST 'https://graph.facebook.com/{{api_version}}/{{ig_user_id}}/media?media_type=REELS&video_url={{video_url}}&caption=Hello%20World!&share_to_feed=false&access_token={{page_access_token}}' \
+  --header 'User-Agent: Postman/InstagramCollection'
+200 OK
+Response
+Body
+Headers (0)
+json
+{
+    "id": "18270815569115548"//IG Container ID
+}
+GET
+Get IG Container Status
+https://graph.facebook.com/{{api_version}}/{{ig_container_id}}?fields=status_code,status&access_token={{page_access_token}}
+After generating the IG Container, this request will allow you to monitor the status of the upload. Once the status_code is FINISHED, you'll be able to publish the Reel in the next request.
+
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Query Params
+fields
+status_code,status
+access_token
+{{page_access_token}}
+Example
+Get IG Container Status
+Request
+View More
+Postman CLI
+postman request 'https://graph.facebook.com/{{api_version}}/{{ig_container_id}}?fields=status_code%2Cstatus&access_token={{page_access_token}}' \
+  --header 'User-Agent: Postman/InstagramCollection'
+200 OK
+Response
+Body
+Headers (0)
+View More
+json
+{
+    "status_code": "FINISHED",
+    "status": "Finished: Media has been uploaded and it is ready to be published.",
+    "id": "18270815569115548" //IG Container ID
+}
+POST
+Publish Reel
+https://graph.facebook.com/{{api_version}}/{{ig_user_id}}/media_publish?creation_id={{ig_container_id}}&access_token={{page_access_token}}
+This request finalizes the Reels Publishing process and posts the Reel into a User's profile.
+
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Query Params
+creation_id
+{{ig_container_id}}
+access_token
+{{page_access_token}}
+Example
+Publish Reel
+Request
+View More
+Postman CLI
+postman request POST 'https://graph.facebook.com/{{api_version}}/{{ig_user_id}}/media_publish?creation_id={{ig_container_id}}&access_token={{page_access_token}}' \
+  --header 'User-Agent: Postman/InstagramCollection'
+200 OK
+Response
+Body
+Headers (0)
+json
+{
+    "id": "90011803596441"//IG Media ID
+}
+Instagram API with Instagram Login
+The Instagram API with Instagram Login allows Instagram professionals   — businesses and creators — to use your app to manage their presence on Instagram.
+
+Limitations
+This API setup cannot access ads or tagging.
+Access Token Permissions needed
+These are the permissions needed for the requests in this collection:
+
+instagram_business_basic
+instagram_business_manage_messages
+instagram_business_manage_comments
+instagram_business_content_publish
+Authorization
+Bearer Token
+This folder is using an authorization helper from collection Instagram API
+Send API
+The Send API enables your app users to send and receive messages between their Instagram professional account and their customers, potential customers, and followers.
+
+An Instagram user sends a message
+Conversations only begin when an Instagram user sends a message to your app user through your app user's Instagram Feed, posts, story mentions, and other channels.
+
+Instagram Inbox
+An Instagram professional account has a messaging inbox that allows the user to organize messages and control message notifications however when using the API the behavior will be a little different.
+
+General – Only after your app user to respond to a message, using your app, is the conversation moved to the General folder, regardless of the inbox settings.
+Primary – All new conversations from followers will initially appear in the Primary folder.
+Requests – All new conversations from Instagram users who aren't followers of your app user will appear in the Requests folder.
+﻿Learn more about the Instagram Inbox.﻿
+
+Before You Start
+You will need:
+
+An access token requested by the IG professional account who can send message to a user on the platform
+The instagram_business_manage_messages permission
+The message recipient user must have sent a message to your IG professional account
+Environment
+This collection has a corresponding Instagram Platform API Postman environment which you must select when using the collection. Set current values for the variables defined in this environment if you wish to perform the queries in the collection.
+
+Access tokens
+The API supports both user and system user access tokens. You can get access tokens 3 different ways:
+
+﻿Facebook login for your app
+﻿App Dashboard﻿
+﻿Graph API Explorer﻿
+Limitations
+Your app user must own any media or posts to be used in the message.
+Group messaging is not supported. An Instagram professional account can only converse with one customer per conversation.
+Messages in the Requests folder that have not been active for 30 days will not be returned in API calls.
+Only the URL for the shared media or post is included in the webhooks notification when a customer sends a message with a share.
+Your app testers must have a role on your app, grant your app access to all the required permissions, and have a role on the Instagram professional account that owns the app.
+Authorization
+Bearer Token
+This folder is using an authorization helper from collection Instagram API
+Templates
+Generic Template
+The generic template allows you to send a structured message that includes an image, text and buttons. A generic template with multiple templates described in the elements array will send a horizontally scrollable carousel of items, each composed of an image, text and buttons.
+
+Button Template
+The button template sends a text message with up to three attached buttons. This template is useful for offering the message recipient options to choose from, such as predetermined responses to a question, or actions to take.
+
+Authorization
+Bearer Token
+This folder is using an authorization helper from collection Instagram API
+POST
+Generic Template
+https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages
+﻿
+
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Example
+Generic Template
+Request
+View More
+Postman CLI
+postman request POST 'https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages' \
+  --body '{
+  "recipient":{
+    "id":"{{ig_scoped_id}}"
+  },
+  "message":{
+    "attachment":{
+      "type":"template",
+      "payload":{
+        "template_type":"generic",
+        "elements":[
+           {
+            "title":"Welcome!",
+            "image_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRN2z0ERwXQUqH29urPuzWueLXKhJAY6SMyAA&s",
+            "subtitle":"We have the right hat for everyone.",
+            "default_action": {
+              "type": "web_url",
+              "url": "https://www.originalcoastclothing.com",
+            },
+            "buttons":[
+              {
+                "type":"web_url",
+                "url":"https://www.originalcoastclothing.com",
+                "title":"View Website"
+              },{
+                "type":"postback",
+                "title":"Start Chatting",
+                "payload":"DEVELOPER_DEFINED_PAYLOAD"
+              }              
+            ]      
+          }
+        ]
+      }
+    }
+  }
+}'
+200 OK
+Response
+Body
+Headers (20)
+View More
+json
+{
+  "recipient_id": "20802401916297",
+  "message_id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjEyNTAyNDAyNjQwOTMwOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1ODE4NzUxOTk3OTcyODI5MjozMjM4NzQ4MDk1NTU2NDIxMjIzNDE1NjY3NTg0NzY4NDA5NgZDZD"
+}
+POST
+Button Template
+https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages
+﻿
+
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Body
+raw (json)
+View More
+json
+{
+    "recipient": {
+        "id": {{ig_scoped_id}}
+    },
+    "message": {
+        "attachment": {
+            "type": "template",
+            "payload": {
+  "template_type":"button",
+  "text":"<MESSAGE_TEXT>",
+  "buttons":[
+    <BUTTON_OBJECT>, 
+    <BUTTON_OBJECT>, 
+    ...
+  ]
+}
+    }
+}
+Example
+Button Template
+Request
+View More
+Postman CLI
+postman request POST 'https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages' \
+  --body '{
+    "recipient": {
+        "id": {{ig_scoped_id}}
+    },
+    "message": {
+        "attachment": {
+            "type": "template",
+            "payload": {
+                "template_type": "button",
+                "text": "What do you want to do next?",
+                "buttons": [
+                    {
+                        "type": "web_url",
+                        "url": "https://www.messenger.com",
+                        "title": "Visit Messenger"
+                    }
+                ]
+            }
+        }
+    }
+}'
+200 OK
+Response
+Body
+Headers (20)
+View More
+json
+{
+  "recipient_id": "20802401916297",
+  "message_id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjEyNTAyNDAyNjQwOTMwOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1ODE4NzUxOTk3OTcyODI5MjozMjM4NzQ4ODk0Njg5MDkwMzc2NTc5NDI0MzU4NjU1NTkwNAZDZD"
+}
+POST
+Text Message
+https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages
+Instagram Messages API
+This endpoint allows you to send a message to a user on Instagram.
+
+Request
+Request Body
+recipient.id (string, required): The Instagram user ID of the recipient.
+message.text (string, required): The text of the message to be sent.
+Example:
+
+JSON
+{
+  "recipient": {
+    "id": "{{instagram_scoped_id}}"
+  },
+  "message": {
+    "text": "Hello World!"
+  }
+}
+Response
+Example response
+
+JSON
+{
+  "recipient_id": "IGSID",
+  "message_id": "MESSAGE-ID"
+}
+message_id (string): The ID of the sent message.
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Body
+raw (json)
+json
+{
+    "recipient": {
+        "id": "{{ig_scoped_id}}"
+    },
+    "message": {
+        "text": "Hello World!"
+    }
+}
+Example
+Text Message
+Request
+View More
+Postman CLI
+postman request POST 'https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages' \
+  --body '{
+    "recipient": {
+        "id": "{{ig_scoped_id}}"
+    },
+    "message": {
+        "text": "Hello World!"
+    }
+}'
+200 OK
+Response
+Body
+Headers (0)
+View More
+json
+{
+  "data": [
+    {
+      "name": "Customer intake flow",
+      "eligible_platforms": [
+        "INSTAGRAM"
+      ],
+      "welcome_message_flow": "[{\"message\":{\"text\":\"Learn more about our summer sale!\",\"quick_replies\":[{\"title\":\"I am interested!\",\"content_type\":\"text\",\"payload\":\"summer-sale-interest\"},{\"title\":\"I have another quest...\",\"content_type\":\"text\",\"payload\":\"another-question\"}]}}]",
+      "last_update_time": "2025-08-14T19:06:34+0000",
+      "is_used_in_ad": false,
+      "id": "<flow_id_1>"
+    },
+    {
+      "name": "New customer welcome flow",
+      "eligible_platforms": [
+        "INSTAGRAM"
+      ],
+      "welcome_message_flow": "[{\"message\":{\"text\":\"Welcome to our community!\"}}]",
+      "last_update_time": "2024-10-10T20:44:04+0000",
+      "is_used_in_ad": false,
+      "id": "<flow_id_2>"
+    }
+  ],
+  "paging": {
+    "cursors": {
+      "before": "<before_cursor_hash>",
+      "after": "<after_cursor_hash>"
+    }
+  }
+}
+POST
+Media Message (Photo or GIF)
+https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages
+Instagram Messages API
+This API endpoint allows you to send messages on Instagram.
+
+Request
+Endpoint
+POST https://graph.instagram.com/{{api-version}}/me/messages
+
+Request Body
+Type: JSON
+Parameter	Type	Description
+recipient.id
+String
+The Instagram user ID of the recipient
+message.attachment.type
+String
+The type of attachment (e.g. image, video)
+message.attachment.payload.url
+String
+The URL of the attachment (e.g. image, video)
+Example
+JSON
+{
+    "recipient": {
+        "id": "{{instagram_scoped_id}}"
+    },
+    "message": {
+        "attachment": {
+            "type": "image",
+            "payload": {
+                "url": "https://www.example.com/image.jpg"
+            }
+        }
+    }
+}
+## Response
+The response of this request is a JSON object with the following schema:
+```json
+{
+  "recipient_id": "IGSID",
+  "message_id": "MESSAGE-ID"
+}
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Body
+raw (json)
+View More
+json
+{
+  "recipient":{
+    "id": "{{ig_scoped_id}}"
+  },
+  "message":{
+    "attachment":{
+      "type":"image", 
+      "payload":{
+        "url":"MEDIA_URL"        
+      }
+    }
+  }
+}
+Example
+Media Message (Photo or GIF)
+Request
+View More
+Postman CLI
+postman request POST 'https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages' \
+  --body '{
+  "recipient":{
+    "id": "{{ig_scoped_id}}"
+  },
+  "message":{
+    "attachment":{
+      "type":"image", 
+      "payload":{
+        "url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRN2z0ERwXQUqH29urPuzWueLXKhJAY6SMyAA&s"        
+      }
+    }
+  }
+}'
+200 OK
+Response
+Body
+Headers (0)
+View More
+json
+{
+  "recipient_id": "20802401916297",
+  "message_id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjEyNTAyNDAyNjQwOTMwOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1ODE4NzUxOTk3OTcyODI5MjozMjM4NzQ2NjQ4NTM0NDQxNTQ2NDg4Mzg5ODkxOTQxOTkwNAZDZD"
+}
+POST
+Media Message (Audio)
+https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages
+POST /{{api-version}}/me/messages
+This endpoint is used to send a message to the authenticated user on Instagram.
+
+Request Body
+recipient (object, required): The recipient of the message.
+id (string, required): The Instagram user ID of the recipient.
+message (object, required): The message content.
+attachment (object, required): The attachment included in the message.
+type (string, required): The type of attachment, e.g. "audio".
+payload (object, required): The payload of the attachment.
+url (string, required): The URL of the audio or video file to be sent as the attachment.
+Response (JSON Schema)
+JSON
+{
+  "recipient_id": "IGSID",
+  "message_id": "MESSAGE-ID"
+}
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Body
+raw (json)
+View More
+json
+{
+  "recipient":{
+    "id": "{{ig_scoped_id}}"
+  },
+  "message": {
+    "attachment": {
+      "type": "audio",
+      "payload": {
+        "url": "ACTUAL_AUDIO_FILE_URL"
+      }
+    }
+  }
+}
+POST
+Media Message (Video)
+https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages
+POST /{{api-version}}/me/messages
+This endpoint is used to send a message to the authenticated user on Instagram.
+
+Request Body
+recipient (object, required): The recipient of the message.
+id (string, required): The Instagram user ID of the recipient.
+message (object, required): The message content.
+attachment (object, required): The attachment included in the message.
+type (string, required): The type of attachment, e.g. "audio".
+payload (object, required): The payload of the attachment.
+url (string, required): The URL of the audio or video file to be sent as the attachment.
+Response (JSON Schema)
+JSON
+{
+  "recipient_id": "IGSID",
+  "message_id": "MESSAGE-ID"
+}
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Body
+raw (json)
+View More
+json
+{
+  "recipient":{
+    "id": "{{ig_scoped_id}}"
+  },
+  "message": {
+    "attachment": {
+      "type": "video",
+      "payload": {
+        "url": "ACTUAL_VIDEO_FILE_URL"
+      }
+    }
+  }
+}
+POST
+Send a Sticker
+https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages
+Instagram Messages
+This endpoint allows you to send messages on Instagram.
+
+Request Body
+recipient (object, required): The recipient of the message.
+id (string, required): The Instagram ID of the recipient.
+message (object, required): The message content.
+attachment (object, required): The attachment included in the message.
+type (string, required): The type of attachment, e.g., "like_heart".
+Response
+The response for this request is not specified. However, you can use the following JSON schema as a reference:
+
+JSON
+{
+  "recipient_id": "IGSID",
+  "message_id": "MESSAGE-ID"
+}
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Body
+raw (json)
+json
+{
+  "recipient":{
+    "id": "{{ig_scoped_id}}"
+  },
+  "message": {
+    "attachment": {
+      "type":"like_heart"
+    }
+  }
+}
+Example
+Send a Sticker
+Request
+View More
+Postman CLI
+postman request POST 'https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages' \
+  --body '{
+  "recipient":{
+    "id": "{{ig_scoped_id}}"
+  },
+  "message": {
+    "attachment": {
+      "type":"like_heart"
+    }
+  }
+}'
+200 OK
+Response
+Body
+Headers (0)
+json
+{
+  "flow_id": "1234567890"
+}
+POST
+React or Unreact to a message
+https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages
+POST /{{api-version}}/me/messages
+This endpoint is used to send a message reaction to a specific Instagram user.
+
+Request Body
+recipient (object, required): The recipient of the message.
+id (string, required): The Instagram user ID of the recipient.
+sender_action (string, required): The action to be taken by the sender.
+payload (object, required): Additional payload for the message reaction.
+message_id (string, required): The ID of the message to react to.
+reaction (string, required): The type of reaction to be sent.
+Response
+The response for this request will be a JSON object with the relevant message reaction details.
+
+JSON
+{
+  "recipient_id": "IGSID"
+}
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Body
+raw (json)
+json
+{
+  "recipient":{
+    "id": "{{ig_scoped_id}}"
+  },
+  "sender_action": "react",
+  "payload": {
+    "message_id": "MESSAGE_ID",
+    "reaction": "love"
+  }
+}
+POST
+Quick replies
+https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages
+Quick Replies
+| A Quick Reply is a preset button that allows a user to quickly reply to a prompt or question within a conversation. When a quick reply is tapped, the buttons are dismissed, and the title of the tapped button is posted to the conversation as a message. A messages event will be sent to your webhook that contains the button title and an optional payload. | 
+
+
+﻿
+ |
+
+
+You can have a maximum of 13 buttons that may contain:
+
+Plain text of up to 20 characters (will be truncated if more than 20)
+Phone number of the recipient, pre-filled with the phone number from the user's profile information
+Email of the recipient, pre-filled with the email from the user's profile information
+If you include a phone number or email as a quick reply option, the quick reply button is pre-filled with the phone number or email from the user's profile information. If the user has not supplied a phone number or email in their profile, this quick reply option is not shown.
+
+An Instagram webhook event notification is sent to your webhook server. The webhook notification contains the button title and an optional payload you set that can include information about the button selected.
+
+Before you start
+This guide assumes you have set up your webhooks server to receive notifications and subscribed your app to Instagram messages and messaging_postbacks events.
+
+You will need:
+
+The ID for the Instagram Professional account (IG_ID)
+The Instagram-scoped ID (IGSID) for the person to whom you are sending the message
+Host URL
+https://graph.instagram.com
+
+Limitations
+This feature is currently not available on desktop.
+
+A maximum of 13 quick replies are supported
+A quick reply can contain up to 20 characters before it is truncated
+Only plain text is supported except for pre-filled email or phone number quick replies
+If no email or phone number are supplied by the user, these quick replies are not displayed
+User information, such as email or phone number, is only sent to your app if the user selects an email or phone number quick reply button
+Send Quick Replies
+To send a set of quick replies, send a POST request to the //messages endpoint with the following properties:
+
+recipient.id set to the Instagram-scoped ID for the person receiving the quick replies.
+message object with:
+text set to the text that will prompt a person to click a quick reply
+quick_replies array containing an object for each quick reply:
+content_type set to
+title set to the quick reply text
+payload set to the content you would like to receive about the quick reply in the webhook notification
+Sample Request
+Formatted for readability.
+
+Plain Text
+curl -X POST -H "Content-Type: application/json" -d '{
+  "recipient":{
+    "id":"<IGSID>"
+  },
+  "message":{
+    "text": "<THE_PROMPT_OR_QUESTION>",
+    "quick_replies":[
+      {
+        "content_type":"text",
+        "title":"<BUTTON_OPTION_TEXT1>",
+        "payload":"      },{
+        "content_type":"text",
+        "title":"<BUTTON_OPTION_TEXT2>",
+        "payload":"      },{
+        "content_type":"user_phone_number",
+        "title":"<PREFILLED_PHONE_NUMBER_IF_AVAILABLE>",
+        "payload":"<POSTBACK_PHONE_NUMBER_PAYLOAD>"
+      },{
+        "content_type":"user_email",
+        "title":"<PREFILLED_EMAIL_IF_AVAILABLE>",
+        "payload":"<POSTBACK_EMAIL_PAYLOAD>"
+      }
+    ]
+  }
+}&#x27; "https://graph.instagram.com/<API_VERSION>/me/messages?access_token=<INSTAGRAM_ACCESS_TOKEN>" 
+Webhook Event
+When a quick reply is selected, a notification will be sent to your webhook server that contains the following:
+
+The ID for the Instagram Professional account that owns the quick replies
+The time the notification was sent
+The Instagram-scoped ID for the person who sent the quick reply
+The payload for the specific quick reply that was selected
+The ID for the message
+The text, email, or phone number of the selected quick reply
+Note: If a user has not supplied their email or phone number in their profile information,
+
+Sample Notification
+Plain Text
+{
+  "object": "instagram",
+  "entry": [
+    {
+      "id": "<IGID>",
+      "time": 1502905976963,
+      "messaging": [
+        {
+          "sender": {
+            "id": "<IGSID>"
+          },
+          "recipient": {
+            "id": "<IGID>"
+          },
+          "timestamp": 1502905976377,
+          "message": {
+            "quick_reply": {
+              "payload": "<POSTBACK_OF_BUTTON_SELECTED>"
+            },
+            "mid": "<MESSAGE_ID>",
+            "text": "<PHONE_NUMBER_EMAIL_OR_TEXT_OF_BUTTON_SELECTED>"
+          }
+        }
+      ]
+    }
+  ]
+}
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Body
+raw (json)
+View More
+json
+{
+  "recipient":{
+    "id":"{{ig_scoped_id}}"
+  },
+  "messaging_type": "RESPONSE",
+  "message":{
+    "text": "<SOME_TEXT>",
+    "quick_replies":[
+      {
+        "content_type":"text",
+        "title":"<TITLE_1>",
+        "payload":"<POSTBACK_PAYLOAD_1>"
+      },
+      {
+        "content_type":"text",
+        "title":"<TITLE_2>",
+        "payload":"<POSTBACK_PAYLOAD_2>"
+      }
+    ]
+  }
+}
+Example
+Quick replies
+Request
+View More
+Postman CLI
+postman request POST 'https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages' \
+  --body '{
+  "recipient":{
+    "id":"{{ig_scoped_id}}"
+  },
+  "messaging_type": "RESPONSE",
+  "message":{
+    "text": "<SOME_TEXT>",
+    "quick_replies":[
+      {
+        "content_type":"text",
+        "title":"<TITLE_1>",
+        "payload":"<POSTBACK_PAYLOAD_1>"
+      },
+      {
+        "content_type":"text",
+        "title":"<TITLE_2>",
+        "payload":"<POSTBACK_PAYLOAD_2>"
+      }
+    ]
+  }
+}'
+200 OK
+Response
+Body
+Headers (0)
+View More
+json
+{
+  "recipient_id": "48102409688037",
+  "message_id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjIzOTAyNDYxMzQ5Njk3OjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1ODE5ODkyMDA5ODI1NTA2NjozMjMwNTg3OTAwODc0MjEzNzUyODg5MTk4MDY1OTAzMjA2NAZDZD"
+}
+POST
+Private Replies
+https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages
+This documents shows you how to programmatically send a private reply to a person who commented on your app user's Instagram professional post, reel, story, Live, or ad post.
+
+How It Works
+Step 1. An Instagram user comments on your app user's Instagram professional post, reel, story, Live, or ad post.
+
+Step 2. A webhook event is triggered and Meta sends your server a notification with information about the comment including:
+
+| - Your app user's Instagram professional account ID
+    
+- The commenter's Instagram-scoped ID and username
+    
+- The comment's ID
+    
+- The media's ID, if the commenter included media in their comment
+    
+- The text of the comment, if applicable
+    
+
+Step 3. Your app uses the comment's ID to send a private response directly to the Instagram user. This reply appears in the person's Inbox, if the person follows the Instagram professional account, or to the Request folder, if they do not. | 
+
+
+﻿
+ |
+
+
+Step 4. Your app can send this private reply within 7 days of the creation time of the comment, excepting Instagram Live, where replies can only be sent during the live broadcast. The private reply message includes a link to the commented post.
+
+Requirements
+This guide assumes you have read the Instagram Platform Overview and implemented the needed components for using this API, such as a Meta login flow and a webhooks server to receive notifications.
+
+You need the following:
+
+﻿
+Instagram API with Instagram Login	Instagram API with Facebook Login
+Access Levels
+- Advanced Access
+    
+- Standard Access
+- Advanced Access
+    
+- Standard Access
+Access Tokens
+- Instagram User access token
+- Facebook Page access token
+Host URL
+graph.instagram.com
+graph.facebook.com
+Login Type
+Business Login for Instagram
+Facebook Login for Business
+﻿Permissions﻿
+- instagram_business_basic
+    
+- instagram_business_manage_comments
+- instagram_basic
+    
+- instagram_manage_comments
+    
+- pages_read_engagement
+    
+
+If the app user was granted a role on the Page connected to your app user's Instagram professional account via the Business Manager, your app will also need:
+
+- ads_management
+    
+- ads_read
+Webhooks
+- comments
+    
+- live_comments
+- comments
+    
+- live_comments
+Limitations
+Only one message can be sent to the commenter
+The message must be sent within 7 days of the comment was made on the post or reel
+For Instagram Live, private replies can only be sent during the live broadcast. Once the broadcast ends, private replies cannot be sent
+Follow-up messages can only be sent if the recipient responds, and must be sent within 24 hours of the response
+Send a Private Reply
+To send a private reply to a commenter on your app user's Instagram professional post, reel, or story, send a POST request to the /messages endpoint. The recipient parameter should contain the comment's ID and the message parameter should contain the text you wish to send.
+
+Sample request
+Formatted for readability.
+
+Plain Text
+curl -i -X POST "https://<HOST_URL>/<API_VERSION>/<APP_USERS_IG_ID>/messages"
+     -H "Content-Type: application/json" 
+     -H "Authorization: Bearer <ACCESS_TOKEN>" 
+     -d '{
+             "recipient":{ 
+                 "comment_id": "<COMMENT_ID>" 
+             },
+             "message": { 
+                 "text": "<COMMENT_TEXT>" 
+             }
+         }'
+On success, your app receives a JSON response with the recipient's Instagram-scoped ID and the ID for the message.
+
+Plain Text
+{
+  "recipient_id": "526...",   // The Instagram-scoped ID 
+  "message_id": "aWdfZ..."    // The ID for the private reply message
+}
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Body
+raw (json)
+json
+{
+    "recipient": {"comment_id": {{comment_id}}},
+    "message": {"text": "It is cool"}
+}
+Example
+Private Reply
+Request
+View More
+Postman CLI
+postman request POST 'https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages' \
+  --body '{
+    "recipient": {"comment_id": {{comment_id}}},
+    "message": {"text": "It is cool"}
+}'
+200 OK
+Response
+Body
+Headers (0)
+View More
+json
+{
+  "recipient_id": "48102409688037",
+  "message_id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjIzOTAyNDYxMzQ5Njk3OjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1ODE5ODkyMDA5ODI1NTA2NjozMjMwNTg4MTkxMDI4MjM4NTEyNzAwMjYyNTU5ODgxNjI1NgZDZD"
+}
+POST
+Send a message with an uploaded asset
+https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages
+POST /{{api_version}}/{{ig_user_id}}/messages
+This endpoint is used to send a message with an image attachment to a specified recipient on Instagram. The request requires the recipient's ID and the attachment ID of the image being sent.
+
+Please use the Attachment upload Api in this collection to upload a an image and get an attachment id and store the attachment_id in the Environment variable attachment_id of Instagram environment before this api is used
+
+Request Body
+The request body must be in JSON format and should contain the following structure:
+
+JSON
+{
+  "recipient": {
+    "id": "{{ig_scoped_id}}"
+  },
+  "message": {
+    "attachment": {
+      "type": "image",
+      "payload": {
+        "attachment_id": "{{attachment_id}}"
+      }
+    }
+  }
+}
+recipient: An object containing the recipient's information.
+id: (string) The unique identifier of the recipient (Instagram user) to whom the message will be sent.
+message: An object that encapsulates the message content.
+attachment: An object that specifies the type of attachment.
+type: (string) The type of the attachment, which in this case is "image".
+payload: An object containing the details of the attachment.
+attachment_id: (string) The unique identifier for the image attachment previously uploadedd using attachment upload api.
+Response
+Upon a successful request, the server responds with a status code of 200 and a JSON object containing the following fields:
+
+JSON
+{
+  "recipient_id": "{{ig_scoped_id}}",
+  "message_id": ""
+}
+recipient_id: (string) The unique ig scoped id of the recipient to whom the message was sent.
+message_id: (string) The unique identifier of the sent message.
+This response confirms that the message was successfully sent to the specified recipient.
+
+For more details on attachment upload api sending a message with an uploaded asset refer to developer documentation at: https://developers.facebook.com/docs/messenger-platform/reference/attachment-upload-api/﻿
+
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Body
+raw (json)
+View More
+json
+{
+  "recipient":{
+    "id": "{{ig_scoped_id}}"
+  },
+  "message": {
+      "attachment": {
+        "type": "image",
+        "payload": {
+          "attachment_id": "{{attachment_id}}"
+        }
+      }
+  }
+}
+POST
+Send a Published Post
+https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages
+Send Message with a published post
+To send a message that contains an app user's Instagram post, send a POST request to the //messages endpoint with the recipient parameter containing the Instagram-scoped ID () and the message parameter containing an attachment object with the type set to MEDIA_SHARE and payload containing the Meta ID for the post.
+
+The app user must own the post to be used in the message. Learn how to 
+
+﻿Learn how to fetch the media owned by the business.﻿
+
+HTTP Method
+POST
+
+Endpoint
+https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages
+
+Request Parameters
+Body
+The request body must be in JSON format and includes the following parameters:
+
+recipient (object): This object specifies the recipient of the message.
+id (string): The unique identifier of the recipient (Instagram user) to whom the message will be sent. This should be the {{ig_scoped_id}}.
+message (object): This object contains the message details.
+attachment (object): This object specifies the type of attachment included in the message.
+type (string): The type of the attachment. For this request, it should be set to "MEDIA_SHARE".
+payload (object): This object contains the details of the attachment.
+id (string): The unique identifier of the media post being shared. This should be the {{post_id}}.
+Example Request Body
+JSON
+{
+  "recipient": {
+    "id": "{{ig_scoped_id}}"
+  },
+  "message": {
+    "attachment": {
+      "type": "MEDIA_SHARE",
+      "payload": {
+        "id": "{{post_id}}"
+      }
+    }
+  }
+}
+Expected Response
+Upon a successful request, the API will return a response with the following structure:
+
+recipient_id (string): The ID of the recipient to whom the message was sent.
+message_id (string): The ID of the sent message.
+Example Response
+JSON
+{
+  "recipient_id": "{{ig_scoped_id}}",
+  "message_id": ""
+}
+Notes
+Ensure that the {{api_version}}, {{ig_user_id}}, {{ig_scoped_id}}, and {{post_id}} placeholders are replaced with valid values before making the request.
+A successful response will have a status code of 200.
+If the request fails, appropriate error messages will be returned based on the issue encountered.
+This API is useful for developers looking to integrate messaging capabilities within their applications, allowing for seamless communication with Instagram users.
+
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Body
+raw (json)
+View More
+json
+{
+  "recipient":{
+    "id": "{{ig_scoped_id}}"
+  },
+  "message": {
+      "attachment": {
+        "type": "MEDIA_SHARE",
+        "payload": {
+          "id": "{{post_id}}"
+        }
+      }
+  }
+}
+POST
+Send a message with HUMAN_AGENT tag
+https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/messages
+HUMAN_AGENT – When this tag is added to a message being sent to a person, it allows a human agent to respond to the person's message. Messages can be sent within 7 days of the person's message. Human agent support is for issues that cannot be resolved within the standard messaging window.
+
+Apps will need to apply for the Human Agent permission via the Developer App dashboard. Navigate to App dashboard -> App review -> Permissions & Features -> Human Agent. Apps that were previously approved for beta access to the Human Agent permission do not need to re-apply for access.
+Allowed Usages
+Human agent support for issues that cannot be resolved within the 24 hour standard messaging window, such as resolving issues outside normal business hours or issues requiring more than 24 hours to resolve
+Disallowed Usages (non-exhaustive)
+Automated messages
+Content unrelated to user inquiry
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Body
+raw (json)
+json
+{
+    "recipient": {
+        "id": "{{ig_scoped_id}}"
+    },
+    "message": {
+        "text": "Your doctor visit is scheduled"
+    },
+    "tag": "HUMAN_AGENT"
+}
+Welcome Message Flows API
+When creating ads that Click to Messenger or Click to Instagram Direct, you can connect a message flow from a messaging partner app. A message flow can include text, images, emoji, buttons, and other message types supported by the Messenger Send API or Instagram Messaging API.
+
+Before You Start
+You will need:
+
+An access token requested by the IG professional account who can send message to a user on the platform
+The instagram_business_manage_messages permission
+Environment
+This collection has a corresponding Instagram Platform API Postman environment which you must select when using the collection. Set current values for the variables defined in this environment if you wish to perform the queries in the collection.
+
+Access tokens
+The API supports both user and system user access tokens. You can get access tokens 3 different ways:
+
+﻿Facebook login for your app
+﻿App Dashboard﻿
+﻿Graph API Explorer﻿
+What to do after setting up the Welcome Message Flows
+Ads Manager experience
+Once welcome message flows have been successfully submitted over the API, they will show up in Ads Manager for messaging destinations within the Engagement and Sales objectives. The flows will show up in the Partner App option within the Message Template section of the Ad Creative.
+
+Example use
+In the Message Template section of the Ad Creative, select Partner App.
+
+
+﻿
+Select the appropriate messaging Partner App.
+
+
+﻿
+Select the Welcome Message Flow that you submitted via the API.
+
+
+﻿
+Preview your message flow.
+
+
+﻿
+Marketing API Experience
+Once welcome message flows have been successfully submitted over the API, the flow ID can be used to configure ads through the marketing API.
+
+In the ad creative, the flow ID can be set as follows:
+
+Plain Text
+{
+  "name": "creative",
+  "object_story_spec": {...},
+  "asset_feed_spec": {
+    "additional_data": {
+      "partner_app_welcome_message_flow_id": "<FLOW_ID_RETURNED_FROM_POST_REQUEST>"
+    }
+  }
+}
+For more information about messaging ads, please refer to Messaging Ads in the Marketing API documentation.
+
+Authorization
+Bearer Token
+This folder is using an authorization helper from collection Instagram API
+GET
+Get all flows
+https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/welcome_message_flows
+Use this request to get a list of Welcome Message Flows for the given instagram business user.
+
+On success, your app will receive a list of flows created for that particular app.
+
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Example
+Get all flows
+Request
+View More
+Postman CLI
+postman request 'https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/welcome_message_flows'
+200 OK
+Response
+Body
+Headers (0)
+View More
+json
+{
+  "data": [
+    {
+      "name": "Customer intake flow",
+      "eligible_platforms": [
+        "INSTAGRAM"
+      ],
+      "welcome_message_flow": "[{\"message\":{\"text\":\"Learn more about our summer sale!\",\"quick_replies\":[{\"title\":\"I am interested!\",\"content_type\":\"text\",\"payload\":\"summer-sale-interest\"},{\"title\":\"I have another quest...\",\"content_type\":\"text\",\"payload\":\"another-question\"}]}}]",
+      "last_update_time": "2025-08-14T19:06:34+0000",
+      "is_used_in_ad": false,
+      "id": "<flow_id_1>"
+    },
+    {
+      "name": "New customer welcome flow",
+      "eligible_platforms": [
+        "INSTAGRAM"
+      ],
+      "welcome_message_flow": "[{\"message\":{\"text\":\"Welcome to our community!\"}}]",
+      "last_update_time": "2024-10-10T20:44:04+0000",
+      "is_used_in_ad": false,
+      "id": "<flow_id_2>"
+    }
+  ],
+  "paging": {
+    "cursors": {
+      "before": "<before_cursor_hash>",
+      "after": "<after_cursor_hash>"
+    }
+  }
+}
+GET
+Get a specific flow
+https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/welcome_message_flows?flow_id={{flow_id}}
+Use this request to get a particular Welcome Message Flows for the given instagram business user, using the flow_id.
+
+On success, your app will receive the flow in JSON format.
+
+Authorization
+Bearer Token
+This request is using an authorization helper from collection Instagram API
+Query Params
+flow_id
+{{flow_id}}
+Example
+Get a specific flow
+Request
+View More
+Postman CLI
+postman request 'https://graph.instagram.com/{{api_version}}/{{ig_user_id}}/welcome_message_flows?flow_id={{flow_id}}'
+200 OK
+Response
+Body
+Headers (0)
+View More
+json
+{
+  "data": [
+    {
+      "name": "Customer intake flow - updated for Winter 2025",
+      "eligible_platforms": [
+        "INSTAGRAM"
+      ],
+      "welcome_message_flow": "[{\"message\":{\"text\":\"Learn more about our new winter sale!\",\"quick_replies\":[{\"title\":\"I am interested!\",\"content_type\":\"text\",\"payload\":\"winter-sale-interest\"},{\"title\":\"I have another quest...\",\"content_type\":\"text\",\"payload\":\"another-question\"}]}}]",
+      "last_update_time": "2025-08-14T19:11:44+0000",
+      "is_used_in_ad": false,
+      "id": "<flow_id_1>"
+    }
+  ],
+  "paging": {
+    "cursors": {
+      "before": "<before_cursor_hash>",
+      "after": "<after_cursor_hash>"
+    }
+  }
+}
+
+
+AI
+
+Sign in to use Postman Agent.
+Online
+
+0
+0

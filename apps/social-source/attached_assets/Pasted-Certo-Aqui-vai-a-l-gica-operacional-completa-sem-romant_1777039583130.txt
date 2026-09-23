@@ -1,0 +1,229 @@
+Certo. Aqui vai a **lógica operacional completa**, sem romantização. Isso é o que faria esse modelo funcionar de verdade.
+
+---
+
+# LÓGICA CENTRAL
+
+Você não vende tráfego.
+Você implanta um **sistema de geração + conversão forçada de demanda**.
+
+Objetivo:
+
+> Reduzir o tempo entre lead → visita → venda
+
+---
+
+# ESTRUTURA DO PROCESSO (FIM A FIM)
+
+## 1. FILTRO ANTES DE ENTRAR (CRÍTICO)
+
+Você só entra se o cliente passar nisso:
+
+* VGV ≥ R$ 50M
+* Estoque relevante (dor real)
+* Time comercial ativo (não pode estar morto)
+* Topa seguir processo (não é opcional)
+
+Se falhar em 1 desses → **não entra no modelo variável**
+
+---
+
+## 2. SETUP INICIAL (SEMANA 1–2)
+
+### Infra obrigatória:
+
+* CRM organizado (funil claro)
+* Integração leads → CRM (nada de WhatsApp solto)
+* Tracking de origem (UTM ou similar)
+
+### Definições:
+
+* SLA de atendimento:
+
+  * resposta ≤ 5 minutos
+  * mínimo 5 tentativas de contato
+* Pipeline:
+
+  * Lead → Qualificado → Agendado → Visitou → Proposta → Venda
+
+### Comercial:
+
+* Script padrão (WhatsApp + ligação)
+* Critério de qualificação claro
+
+---
+
+## 3. PRÉ-QUALIFICAÇÃO (SUA IA + PROCESSO)
+
+Antes de chegar no corretor:
+
+* IA faz:
+
+  * primeiro contato imediato
+  * perguntas-chave (renda, interesse, timing)
+  * classificação (quente / morno / frio)
+
+Entrega para o corretor:
+
+* lead já classificado
+* contexto completo
+
+👉 Você elimina lead lixo antes de contaminar o time
+
+---
+
+## 4. DISTRIBUIÇÃO CONTROLADA DE LEADS
+
+Nada de lead solto.
+
+Sistema:
+
+* Round robin OU ranking por performance
+
+Regra:
+
+* não respondeu rápido → perde lead
+* não atualizou CRM → perde lead
+
+👉 Aqui você começa a **forçar comportamento**
+
+---
+
+## 5. OPERAÇÃO DIÁRIA (SEU DIFERENCIAL REAL)
+
+Você não “acompanha”.
+Você **opera o comercial junto**.
+
+Todo dia:
+
+* Ver tempo de resposta
+* Ver leads sem contato
+* Ver leads parados
+* Cobrar corretor específico
+
+Ações:
+
+* puxar lead parado
+* redistribuir
+* ajustar abordagem
+
+👉 Isso é o que 99% não faz
+
+---
+
+## 6. GESTÃO DE FUNIL (ONDE O DINHEIRO ESTÁ)
+
+Você mede:
+
+* % contato realizado
+* % qualificação
+* % agendamento
+* % comparecimento
+* % fechamento
+
+E atua onde quebra.
+
+Exemplo:
+
+* muito lead, pouco agendamento → problema no script
+* muito agendamento, pouca visita → problema de confirmação
+* muita visita, pouca venda → problema do corretor
+
+👉 Você vira **gestor de conversão**, não mídia
+
+---
+
+## 7. RITUAL SEMANAL (NÃO É REUNIÃO GENÉRICA)
+
+Reunião com dados, não opinião:
+
+* Leads gerados
+* Leads atendidos
+* Taxas do funil
+* Gargalo da semana
+
+Saída da reunião:
+
+* ação clara (ex: mudar script, trocar corretor, ajustar campanha)
+
+---
+
+## 8. MODELO DE COBRANÇA (AMARRADO AO PROCESSO)
+
+### Base:
+
+* Fee fixo: R$ 7k – 12k
+
+### Variável:
+
+Escolher 1:
+
+**Opção A (mais simples)**
+
+* R$ por unidade vendida (ex: R$ 1k – 3k)
+
+**Opção B (mais agressiva)**
+
+* 0,3% – 1% do VGV vendido
+
+---
+
+## 9. TRAVAS CONTRATUAIS (OBRIGATÓRIO)
+
+Sem isso, quebra:
+
+* SLA obrigatório (tempo de resposta)
+* Acesso ao CRM
+* Regra de atribuição (ex: vendas em até 90 dias do lead)
+* Leads não atendidos podem ser redistribuídos
+
+---
+
+## 10. REGRA DE CORTE (PROTEÇÃO SUA)
+
+Se o cliente:
+
+* não segue SLA
+* não usa CRM direito
+* não executa processo
+
+→ você remove variável OU encerra contrato
+
+Sem isso, você vira refém.
+
+---
+
+# RESUMO DA LÓGICA
+
+Funciona quando:
+
+1. Você controla entrada (lead)
+2. Você controla meio (qualificação + distribuição)
+3. Você influencia fortemente o comercial
+4. Você mede tudo
+5. Você força execução
+
+---
+
+# VERDADE FINAL
+
+Se você fizer isso:
+
+→ você vira parte do motor de vendas
+→ consegue justificar variável
+→ consegue escalar receita
+
+Se você não fizer:
+
+→ vira tráfego gourmet
+→ depende de corretor
+→ variável vira loteria
+
+---
+
+Se quiser, próximo passo é montar:
+
+* um exemplo real com números (tipo um empreendimento de R$ 100M)
+* quanto você ganharia nesse modelo na prática
+
+Porque aí fica impossível você tomar decisão errada.

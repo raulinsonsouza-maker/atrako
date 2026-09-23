@@ -1,0 +1,192 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Incorporadora
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+CRM
+Saldo META
+R$ ••••••
+
+
+
+Mês atual: 01 de jun. de 2026 a 12 de jun. de 2026
+Análise
+Criativos
+Investimento
+
+R$ 3.201,19
+
+12 dias selecionados
+
+Leads
+
+8
+
+Total do período
+
+CPL
+
+R$ 381,87
+
+Custo por lead
+
+CPM
+
+R$ 16,65
+
+Custo por mil impressões
+
+Volume geral de performance
+Investimento e leads por semana
+
+Diário
+Semanal
+01/06-07/06
+08/06-14/06
+0
+600
+1200
+1800
+2400
+0
+300
+600
+900
+1200
+InvestimentoLeadsCPL
+
+Resultado METASemana a semana
+Mês atual
+Visão comparativa com leitura rápida das principais métricas por semana.
+
+2 semanas
+Atual: 08/06-14/06
+Métrica	
+Semana
+01/06-07/06
+Atual
+08/06-14/06
+INVESTIMENTO
+
+Valor investido em mídia na semana.
+
+R$ 2.269,35
+R$ 931,84
+IMPRESSÕES
+
+Volume total de entregas dos anúncios.
+
+115.783
+76.511
+CLIQUES
+
+Interações geradas pelos anúncios.
+
+1.091
+557
+CTR (%)
+
+Taxa de clique sobre impressões.
+
+0,942%
+0,728%
+LEADS
+
+Conversões atribuídas ao período.
+
+2
+6
+TAXA CONV.
+
+Percentual de leads sobre cliques.
+
+0,183%
+1,077%
+CPC
+
+Custo médio por clique gerado.
+
+R$ 2,08
+R$ 1,67
+CPL
+
+Custo médio por lead da semana.
+
+R$ 1.134,68
+R$ 155,31
+Campanhas
+Clique em uma campanha para ver conjuntos e criativos.
+
+4 campanhas
+#1
+[IN] [P] [FORM] - SEGMENTAÇÃO
+
+Conversas
+Ativa	8
+dias
+R$ 1.489,69	66.393	493	
+25
+R$ 59,59	
+#2
+[IN] [P] [FORM] - Remarketing | Lookalike Compradores e Interesses
+
+Conversas
+Ativa	12
+dias
+R$ 1.201,97	58.049	402	
+22
+R$ 54,64	
+#3
+[IN] [P] [FORM] - ESCALA DE MENSAGENS (FASE 1)
+
+Conversas
+Ativa	5
+dias
+R$ 363,32	47.116	350	
+25
+R$ 14,53	
+#4
+[IN] [P] [TRÁFEGO] - POSTAGENS
+
+Visitas ao Perfil
+Ativa	8
+dias
+R$ 146,21	20.736	403	
+430
+vis.
+R$ 0,34	
+Total
+
+R$ 3.201,19	192.294	1.648	502	R$ 6,38	
+Acompanhamento financeiro · Plano x Real
+Status de investimento no ano atual (planejado versus realizado em todos os canais)
+
+Orçado
+R$ 0,00
+Realizado
+R$ 24.106,42
+JAN.
+FEV.
+MAR.
+ABR.
+MAI.
+JUN.
+JUL.
+AGO.
+SET.
+OUT.
+NOV.
+DEZ.
+R$ 0,00
+R$ 1.500,00
+R$ 3.000,00
+R$ 4.500,00
+R$ 6.000,00
+OrcadoRealizado
+
+R$ 950,00

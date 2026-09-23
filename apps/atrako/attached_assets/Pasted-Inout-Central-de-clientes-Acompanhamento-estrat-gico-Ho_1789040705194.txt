@@ -1,0 +1,316 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Hotel Fazenda São João
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+
+
+Mês atual: 01 de set. de 2026 a 10 de set. de 2026
+Análise
+Criativos
+Social Media
+Faturamento
+
+R$ 109.245,35
+
+10 dias selecionados
+
+Investimento
+
+R$ 7.885,04
+
+Mídia total no período
+
+Vendas
+
+21
+
+Canal meta
+
+ROAS
+
+13,85x
+
+Receita por real investido
+
+Custo por venda
+
+R$ 375,48
+
+Investimento ÷ vendas
+
+Performance de receita diária
+Agrupado por dia · Linha = faturamento (eixo esq.) · Barras = investimento (eixo dir.)
+
+Diário
+Semanal
+Investimento em mídia (barras)
+Faturamento gerado (linha)
+21 vendas no período
+01/09
+02/09
+03/09
+04/09
+05/09
+06/09
+07/09
+08/09
+09/09
+10/09
+R$ 0k
+R$ 9k
+R$ 17k
+R$ 26k
+R$ 34k
+R$ 0k
+R$ 0k
+R$ 1k
+R$ 1k
+R$ 2k
+Maior receita diária
+
+R$ 32.743,90
+
+07/09
+
+Melhor ROAS diário
+
+36,96x
+
+07/09
+
+Pico de vendas diário
+
+6
+
+06/09
+
+Funil & Eficiência
+Conversão, custo e saúde financeira da operação.
+
+Ticket médio por venda
+
+R$ 5.202,16
+
+Faturamento ÷ número de vendas no período
+
+Conversão lead → venda
+
+12,07%
+
+De cada 100 leads, 12.1 viraram reservas
+
+CTR — taxa de clique
+
+2,69%
+
+% das impressões que geraram um clique no anúncio
+
+Investimento / Faturamento
+
+✓ Dentro da meta
+7,2%
+
+Meta: manter abaixo de 10% do faturamento
+
+Leads via Site
+
+173
+
+Clicaram no anúncio e preencheram no site
+
+Leads Instantâneos
+
+1
+
+Formulário nativo dentro do Meta/Facebook
+
+Conversas Iniciadas
+
+122
+
+Contatos via WhatsApp ou Messenger direto
+
+Receita por Lead
+
+R$ 627,85
+
+Faturamento ÷ total de leads gerados
+
+Resultado comercialDia a dia
+Foco em receita, vendas e eficiência para o resort.
+
+5 dias
+Métrica	
+Dia
+06/09
+Dia
+07/09
+Dia
+08/09
+Dia
+09/09
+Atual
+10/09
+Investimento
+
+R$ 917,07	R$ 885,95	R$ 1.312,55	R$ 1.704,49	R$ 211,50
+Leads
+
+17	19	41	38	3
+Vendas
+
+6	4	4	0	0
+Faturamento
+
+R$ 26.990,15	R$ 32.743,90	R$ 14.401,49	R$ 0,00	R$ 0,00
+ROAS
+
+29,43x	36,96x	10,97x	0,00x	0,00x
+Invest./Faturamento
+
+3,4%	2,7%	9,1%	0,0%	0,0%
+CPL
+
+R$ 53,95	R$ 46,63	R$ 32,01	R$ 44,86	R$ 70,50
+Custo por venda
+
+R$ 152,85	R$ 221,49	R$ 328,14	R$ 0,00	R$ 0,00
+Ticket médio
+
+R$ 4.498,36	R$ 8.185,98	R$ 3.600,37	R$ 0,00	R$ 0,00
+Campanhas
+Clique em uma campanha para ver conjuntos e criativos.
+
+8 campanhas
+#1
+30/04 - [IN] [RA] [VENDAS] [INSTITUCIONAL CONTÍNUA]
+
+Vendas
+Ativa	7
+dias
+R$ 1.810,69	77.084	1.414	
+5
+R$ 362,14	R$ 20.979,00	R$ 4.195,80	11,59x	8,63%	
+#2
+24/07 - [IN] [RA] [ESTADOS PRÓXIMOS]
+
+Leads
+Ativa	5
+dias
+R$ 1.655,65	188.872	2.795	
+11
+R$ 150,51	—	—	—	—	
+#3
+23/09 [IN] [A] [CONVERSÃO] - DIAS DA SEMANA
+
+Vendas
+Ativa	7
+dias
+R$ 1.644,65	50.646	964	
+5
+R$ 328,93	R$ 23.331,96	R$ 4.666,39	14,19x	7,05%	
+#4
+11/02 [IN] [RA] [RMKT - INITIATE CHECKOUT - COMPRA] - VOLTEI10
+
+Vendas
+Ativa	6
+dias
+R$ 1.386,30	41.926	895	
+10
+R$ 138,63	R$ 59.339,99	R$ 5.934,00	42,80x	2,34%	
+#5
+22/04 - [IN] [RA] [ALCANCE]
+
+Leads
+Ativa	7
+dias
+R$ 397,08	60.535	3.009	
+2
+R$ 198,54	—	—	—	—	
+#6
+23/06 [IN] [A] [ENGAJAMENTO] [SÃO PAULO]
+
+Visitas ao Perfil
+Ativa	7
+dias
+R$ 364,90	51.093	3.805	
+3.841
+vis.
+R$ 0,10	—	—	—	—	
+#7
+06/08 [IN] [RA] [LEADS] [LP DE EVENTOS]
+
+Leads
+Ativa	7
+dias
+R$ 361,65	17.121	290	
+24
+R$ 15,07	—	—	—	—	
+#8
+05/08 - [IN] [RA] [SETEMBRO ITALIANO]
+
+Vendas
+Ativa	3
+dias
+R$ 264,12	7.983	175	
+1
+R$ 264,12	R$ 5.594,40	R$ 5.594,40	21,18x	4,72%	
+Total
+
+R$ 7.885,04	495.260	13.347	3.899	R$ 2,02	R$ 109.245,35	R$ 5.202,16	13,85x	7,22%	
+Acompanhamento financeiro · Plano x Real
+Status de investimento no ano atual (planejado versus realizado em todos os canais)
+
+Orçado
+R$ 504.000,00
+Realizado
+R$ 296.607,81
+JAN.
+FEV.
+MAR.
+ABR.
+MAI.
+JUN.
+JUL.
+AGO.
+SET.
+OUT.
+NOV.
+DEZ.
+R$ 0,00
+R$15.000,00
+R$30.000,00
+R$45.000,00
+R$60.000,00
+OrcadoRealizado
+Ritmo do mês · Setembro — dia 10 de 30
+
+▼ 43.7% abaixo do ritmo
+Orçado no mês
+
+R$ 42.000,00
+
+Realizado até hoje
+
+R$ 7.885,04
+
+Ritmo esperado (dia 10)
+
+R$ 14.000,00
+
+Diferença do ritmo
+
+R$ -6.114,96
+
+19% realizado do mês
+|
+Ritmo esperado: 33%
+|
+81% restante para fechar o mês
+10/09

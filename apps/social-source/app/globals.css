@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0a0a0c;
+  --foreground: #f0f0f0;
+  --card: #14151a;
+  --card-hover: #1a1c22;
+  --card-foreground: #f0f0f0;
+  --primary: #ff6a00;
+  --primary-foreground: #fff7ed;
+  --primary-glow: rgba(255, 106, 0, 0.12);
+  /* Destaque laranja Inout: título "CLIENTES" e % conversão */
+  --highlight: #ff6a00;
+  --highlight-glow: rgba(255, 106, 0, 0.2);
+  --muted: #1e2228;
+  --muted-foreground: #888888;
+  --border: #252a32;
+  --accent: #dc2626;
+  --success: #22c55e;
+  /* Badges na paleta laranja Inout */
+  --badge-critical: #ea580c;
+  --badge-performance: #c2410c;
+  --badge-strategy: #f97316;
+  --badge-digital: #0ea5e9;
+}
+
+@layer base {
+  .font-display {
+    font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-[var(--background)] text-[var(--foreground)] antialiased;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    color: var(--foreground);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--muted-foreground);
+  }
+
+  /* Superfícies claras do Symbius: anula foreground claro em form controls */
+  .symbius-light input,
+  .symbius-light select,
+  .symbius-light textarea,
+  .symbius-app-shell input,
+  .symbius-app-shell select,
+  .symbius-app-shell textarea {
+    color: #18181b;
+    background-color: #ffffff;
+  }
+
+  .symbius-light input::placeholder,
+  .symbius-light textarea::placeholder,
+  .symbius-app-shell input::placeholder,
+  .symbius-app-shell textarea::placeholder {
+    color: #a1a1aa;
+  }
+
+  .symbius-light button,
+  .symbius-app-shell button {
+    color: inherit;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.8;
+  }
+
+  .symbius-light input[type="date"]::-webkit-calendar-picker-indicator,
+  .symbius-app-shell input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: none;
+    opacity: 0.7;
+  }
+}
+
+@keyframes inout-square {
+  0%, 100% { opacity: 0.12; transform: scale(0.65); }
+  50%       { opacity: 1;    transform: scale(1);    }
+}
+
+@layer utilities {
+  .card-hover {
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+      background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -12px var(--primary-glow),
+      0 0 0 1px var(--border);
+    border-color: color-mix(in srgb, var(--primary) 20%, var(--border));
+    background-color: var(--card-hover);
+  }
+}

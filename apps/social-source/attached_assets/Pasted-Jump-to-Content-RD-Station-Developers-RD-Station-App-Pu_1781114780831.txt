@@ -1,0 +1,324 @@
+Jump to Content
+RD Station Developers
+RD Station
+App Publisher
+App Store
+Blog
+Suporte
+Status
+Acesse sua conta
+Home
+Guias
+Recipes
+API
+Changelog
+MCPs e Conectores IA
+
+Search
+CTRL-K
+JUMP TO
+CTRL-/
+Introdução
+Boas vindas
+Suporte
+Integrações multiproduto
+Webhook Service
+
+Boas Práticas
+Exemplos de casos de uso
+RD Station Marketing API
+Introdução e requisitos
+Guia de uso
+
+Autenticação
+
+[Vídeo] Como configurar a Autenticação OAuth na sua aplicação e boas práticas
+Passo 1: Como criar um aplicativo na App Store e gerar as Credenciais (client_id e client_secret)
+Passo 2: Como utilizar as Credenciais para gerar o code
+Passo 3: Como obter os tokens (access_token e refresh_token)
+post
+Passo 4: Como utilizar o refresh_token para atualizar o access_token
+post
+Como criar um fluxo de verificação e renovação do token
+Como utilizar o access_token para autorizar suas requisições
+Como revogar o acesso de um token
+post
+Erros relacionados à Autenticação
+FAQ de Autenticação
+Contatos
+
+Campos personalizados
+
+Funis de Contatos
+
+Segmentações
+
+Fluxos de automação
+
+Email
+
+Landing Pages
+
+Pop-ups
+
+Formulários
+
+Análise
+
+Campanhas
+
+Evento de Conversão Padrão
+
+Eventos de Qualificação do Contato
+
+Eventos de E-commerce
+
+Eventos de E-commerce (Descontinuados)
+
+
+Eventos de Chat
+
+Eventos de Chamada
+
+Eventos de Mídia
+
+Batch de Eventos
+
+Evento de Conversão via API Key
+
+Catálogo de produtos
+
+RD Station CRM API v1
+Introdução e requisitos
+Guia de uso
+
+Anotações
+
+Campanhas
+
+Contatos
+
+Campos personalizados
+
+Motivos de perda
+
+Funis de vendas
+
+Produtos na negociação
+
+Fontes
+
+Etapas do funil de vendas
+
+Negociações
+
+Empresas
+
+Produtos
+
+Tarefas
+
+Equipes
+
+Token de autenticação
+
+Usuários
+
+Webhooks
+
+RD Station CRM API v2
+Autenticação
+
+Introdução
+Bases legais
+Filtrando com RDQL
+Casos de uso
+Campanhas
+
+Contatos
+
+Campos personalizados
+
+Produtos na negociação
+
+Negociações
+
+Anexos
+
+Motivos de perda
+
+Anotações
+
+Empresas
+
+Produtos
+
+Funis de vendas
+
+Segmentos
+
+Etapas do funil de vendas
+
+Fontes
+
+Equipes
+
+Tarefas
+
+Usuários
+
+Eventos de webhook
+
+Propostas
+
+Webhooks
+
+RD Station Conversas API v2
+Introdução
+Autenticação
+Criptografia
+Contatos
+
+Campos personalizados
+
+Funcionários
+
+Flows
+
+Mensagens
+
+Jobs
+
+Relatórios
+
+Templates
+
+Carteiras
+
+WhatsApp
+
+Workflows
+
+Analytics
+
+Campanhas
+
+
+Passo 3: Como obter os tokens (access_token e refresh_token)
+post
+https://api.rd.services/auth/token?token_by=code
+
+###[Passo 3 de 4]
+
+Recent Requests
+Log in to see full request history
+Time	Status	User Agent	
+Make a request to see history.
+
+Obtendo os tokens
+Uma vez recebido o parâmetro code, só falta obter o access_token e refresh_token.
+
+Para isso, você vai utilizar o client_id e client_secret obtidos ao criar o App (passo 1) e o code obtido no passo anterior no envio da sua requisição.
+
+❗️
+O code tem duração de 1 hora.
+Por isso, esse passo precisa ser realizado antes que ele expire. Se o code tiver expirado, você receberá o erro "EXPIRED_CODE_GRANT".
+
+Objetivo dos tokens recebidos neste passo
+O access_token é utilizado para autorizar suas requisições. Ele possui data de expiração pré-determinada definida pelo atributo expires_in em segundos, que é de 86400 segundos (24 Horas).
+O refresh_token é utilizado para obter um novoaccess_token quando ele expirar. O refresh_token não expira.
+👍
+Agora que você obteve os tokens, o CODE não é mais necessário.
+Apenas será necessário trabalhar com o refresh_token recebido nesta etapa, para gerar um novo access_token.
+
+Você pode utilizar o recurso de "Try It" desta página para obter os seus tokens ou se basear para desenvolver a sua aplicação!
+
+Body Params
+client_id
+string
+Defaults to CLIENT_ID
+client_id do aplicativo
+
+CLIENT_ID
+client_secret
+string
+Defaults to CLIENT_SECRET
+client_secret do aplicativo
+
+CLIENT_SECRET
+code
+string
+Defaults to CODE
+code recebido na URL de callback
+
+CODE
+Response
+
+200
+200
+
+Response body
+object
+access_token
+string
+expires_in
+integer
+Defaults to 0
+refresh_token
+string
+Updated 9 months ago
+
+Próximo passo:
+Agora que você tem o access_token e refresh_token, você já está autorizado para realizar a troca de mensagens via API.
+
+Siga para o próximo passo para saber como atualizar o access_token quando ele expirar:
+
+Passo 4: Como utilizar o refresh_token para atualizar o access_token
+Did this page help you?
+Language
+
+Shell
+
+Node
+
+Ruby
+
+PHP
+
+Python
+1
+curl --request POST \
+2
+     --url 'https://api.rd.services/auth/token?token_by=code' \
+3
+     --header 'accept: application/json' \
+4
+     --header 'content-type: application/json' \
+5
+     --data '
+6
+{
+7
+  "client_id": "CLIENT_ID",
+8
+  "client_secret": "CLIENT_SECRET",
+9
+  "code": "CODE"
+10
+}
+11
+'
+
+Try It!
+
+1
+{
+2
+  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ik5UZ3hRamM1UWpKR1FUUkNPRVE0UVRZeFJFVTBNRFEzUkRGRE9UVXdPVE5FTXpVM09UUXpRUSJ9.eyJpc3MiOiJodHRwczovL3Jkc3RhdGlvbi5hdXRoMC5jb20vIiwic3ViIjoidklUYjF2N0NoVmhmUVE2QUFTbDNLVUpYRUJTSVNCR2hAY2xpZW50cyIsImF1ZCI6Imh0dHBzOi8vYXBwLnJkc3RhdGlvbi5jb20uYnIvYXBpL3YyLyIsImV4cCI6MTUwNDI5NDQzMSwiaWF0IjoxNTA0MjA4MDMxLCJzY29wZSI6IiJ9.k7OSdhOlTgRBZmEhg_uXXaCofEq4iwDdBi6yuD8SxMF06nCA834KjIqWkmX-W-u84q8SEzGyhb_KT0zZlMvyGotoGPMry_vABXEIorC25zKCUE9BtMJpHJ_suFwQMqZQ8rK6JSnbkOKwLuuDq8_YnrutBURJiBSdSI9325MLw0DZdnw0IgXnNVCHRLdOMl4k_Ovk5Ke3yzESJvMxgJJ3UnojL0ckRExVPwxnbLCyJp1W_PsEe-FOcEl0kDEX-8JQ8MGATiB2vZOu5TJi4sbYCLzg3GInegGh9zvZQR1W4K3isDtOmlNRSYU9A5ez3dQ8HTZdCj9gT_aGWWskxWi6Cw",
+3
+  "expires_in": 86400,
+4
+  "refresh_token": "9YORmXHgOI32k-Y22tZWm-rsf--oFPr8JDCQIQhBEUY"
+5
+}
+ Português (Brasil)

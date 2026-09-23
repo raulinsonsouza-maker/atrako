@@ -1,0 +1,379 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Conta Hotel
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+Analista IA
+
+
+Últimos 90 dias: 12 de jun. de 2026 a 09 de set. de 2026
+Hotel intelligence
+
+Conversas
+
+Dados do período selecionado
+
+Análise · Campanhas
+
+Atualizada 09 de set.
+
+
+Análise · Campanhas
+
+Evidência antes de opinião
+
+Sessão persistente
+Você
+14:53
+analise fatos, interpretação e próximos passos sobre performance de campanhas. Use somente fontes estruturadas, declare limitações e não use dados pessoais.
+Analista
+14:53
+Fatos observados
+1. Período analisado: 2026-09-01 a 2026-09-09, sem dados estruturados disponíveis para o período anterior 2026-08-01 a 2026-08-09, o que limita comparações diretas.
+
+2. Canal geral:
+
+•
+Investimento total: R$ 6.921,94
+•
+Leads gerados: 165
+•
+Resultados (conversões atribuídas): 22
+•
+Valor atribuído (soma das plataformas): R$ 113.231,36
+•
+CTR médio: 2,68%
+•
+CPC médio: R$ 0,59
+•
+Custo por resultado: R$ 314,63
+•
+ROAS geral: 16,36
+3. Meta (Facebook/Instagram):
+
+•
+5 campanhas principais com resultados diversos.
+•
+Campanha com melhor ROAS: "11/02 [IN] [RA] [RMKT - INITIATE CHECKOUT - COMPRA] - VOLTEI10" com ROAS 42,98, custo R$ 1.473,23, 34 leads e 11 compras.
+•
+Campanhas com ROAS entre 13,7 e 35,0, mas com baixo volume de compras (1 a 5).
+•
+Uma campanha com 0 compras e 9 leads, custo R$ 1.335,61.
+4. Google Ads:
+
+•
+Sem dados disponíveis para o período, indicando ausência de investimento ou dados não reportados.
+5. Resultados diários indicam que alguns dias tiveram leads e resultados sem investimento, possivelmente devido a janelas de atribuição ou conversões tardias.
+
+Interpretação
+•
+A ausência de dados anteriores impede análise de tendência ou comparação de performance.
+•
+Meta é a principal fonte de resultados e receita atribuída, com campanhas de remarketing apresentando melhor ROAS.
+•
+O ROAS geral elevado (16,36) indica boa eficiência do investimento, porém o custo por resultado (R$ 314,63) é relativamente alto para leads, sugerindo que o objetivo principal (leads) pode não estar sendo atingido com custo ideal.
+•
+Google Ads não contribuiu no período, o que pode indicar oportunidade não explorada ou problema de tracking.
+•
+Resultados diários sem investimento indicam necessidade de validação da origem dessas conversões para evitar interpretações errôneas.
+Recomendações priorizadas
+1. Validar dados do período anterior (2026-08-01 a 2026-08-09) para permitir comparação e análise de evolução (Impacto alto, Confiança alta, Esforço médio).
+
+2. Revisar e validar a origem dos resultados em dias sem investimento para confirmar se são conversões orgânicas, tardias ou atribuídas incorretamente (Impacto médio, Confiança média, Esforço baixo).
+
+3. Avaliar possibilidade de ativar ou corrigir campanhas no Google Ads para diversificar canais e potencialmente aumentar volume de leads com custo competitivo (Impacto alto, Confiança média, Esforço médio).
+
+4. Analisar detalhadamente o custo por lead e custo por resultado nas campanhas Meta para identificar oportunidades de otimização, preferencialmente via ferramenta da plataforma antes de sugerir mudanças em criativos ou segmentação (Impacto alto, Confiança alta, Esforço médio).
+
+5. Monitorar a distribuição dos resultados ao longo dos dias, considerando pelo menos quatro semanas completas para análise de sazonalidade e ajuste de alocação (Impacto médio, Confiança alta, Esforço baixo).
+
+Limitações:
+
+•
+Ausência de dados estruturados do período anterior impede análise de variação e tendência.
+•
+Dados combinam definições diferentes de resultados e valores atribuídos entre plataformas, não representando receita financeira unificada.
+•
+Não há informações sobre segmento do cliente, o que limita contextualização do custo e valor dos leads.
+Se desejar, posso ajudar a detalhar análises específicas ou preparar consultas para plataformas específicas.
+
+Performance de campanhas Meta · 01 de set.—09 de set.
+Performance de campanhas Google · 01 de set.—09 de set.
+Visão geral de mídia · 01 de set.—09 de set.
+3 fontes consultadas
+3928 tokens
+Você
+14:56
+analise fatos, interpretação e próximos passos sobre performance de campanhas. Use somente fontes estruturadas, declare limitações e não use dados pessoais.
+Analista
+14:56
+Fatos observados
+1. Período analisado: 2026-09-01 a 2026-09-09, sem dados estruturados disponíveis para o período anterior 2026-08-01 a 2026-08-09, o que limita comparações diretas.
+
+2. Canal geral (dados agregados):
+
+•
+Investimento total: R$ 6.921,94
+•
+Leads gerados: 165
+•
+Resultados (conversões atribuídas): 22
+•
+Valor atribuído (soma das plataformas): R$ 113.231,36
+•
+CTR médio: 2,68%
+•
+CPC médio: R$ 0,59
+•
+Custo por resultado: R$ 314,63
+•
+ROAS geral: 16,36
+3. Meta (Facebook/Instagram):
+
+•
+5 campanhas principais analisadas.
+•
+Campanha com melhor ROAS: "11/02 [IN] [RA] [RMKT - INITIATE CHECKOUT - COMPRA] - VOLTEI10" com ROAS 42,98, custo R$ 1.473,23, 34 leads e 11 compras.
+•
+Outras campanhas com ROAS entre 13,7 e 35,0, porém com baixo volume de compras (1 a 5).
+•
+Uma campanha com 0 compras, 9 leads e custo R$ 1.335,61.
+•
+CPC médio nas campanhas Meta varia entre R$ 1,24 e R$ 1,65, custo por lead entre R$ 22,80 e R$ 43,33, custo por compra entre R$ 133,93 e R$ 306,20.
+4. Google Ads:
+
+•
+Sem dados ou investimento reportado no período.
+5. Resultados diários indicam que alguns dias (ex: 2026-09-01, 2026-09-02, 2026-09-03) apresentaram leads e resultados sem investimento, sugerindo conversões tardias, janelas de atribuição ou importações.
+
+Limitações:
+
+•
+Ausência de dados do período anterior impede análise de tendência e comparação.
+•
+Valor atribuído e resultados combinam definições distintas entre plataformas, não representando receita financeira unificada.
+•
+Segmento do cliente não informado, dificultando contextualização de custo e valor dos leads.
+•
+Dados do Google Ads ausentes, impossibilitando análise de performance neste canal.
+Interpretação
+•
+A Meta é a principal fonte de resultados e receita atribuída, com campanhas de remarketing apresentando o melhor ROAS, especialmente a campanha "VOLTEI10".
+•
+O ROAS geral elevado (16,36) indica boa eficiência do investimento em termos de valor atribuído versus custo.
+•
+O custo por resultado (R$ 314,63) é relativamente alto para o objetivo de leads, indicando que o custo para gerar conversões pode estar acima do ideal.
+•
+A ausência de dados do Google Ads pode indicar oportunidade não explorada ou problemas de tracking/reporting.
+•
+A ocorrência de resultados em dias sem investimento requer validação para evitar interpretações incorretas sobre origem das conversões.
+Recomendações priorizadas
+1. Validar e obter dados estruturados do período anterior (2026-08-01 a 2026-08-09) para permitir análise de evolução e comparação (Impacto alto, Confiança alta, Esforço médio).
+
+2. Investigar a origem dos resultados em dias sem investimento para confirmar se são conversões orgânicas, tardias ou atribuídas incorretamente, evitando decisões baseadas em dados inconsistentes (Impacto médio, Confiança média, Esforço baixo).
+
+3. Avaliar possibilidade de ativar ou corrigir campanhas no Google Ads para diversificar canais, aumentar volume de leads e reduzir custo por resultado, considerando análise detalhada da plataforma antes de ajustes (Impacto alto, Confiança média, Esforço médio).
+
+4. Analisar detalhadamente custo por lead e custo por resultado nas campanhas Meta, utilizando as ferramentas da plataforma para identificar oportunidades de otimização, antes de sugerir mudanças em criativos, segmentação ou orçamento (Impacto alto, Confiança alta, Esforço médio).
+
+5. Monitorar a distribuição dos resultados ao longo dos dias, com pelo menos quatro semanas completas para análise de sazonalidade e ajuste de alocação, evitando decisões prematuras (Impacto médio, Confiança alta, Esforço baixo).
+
+Se desejar, posso ajudar a preparar consultas específicas para plataformas ou detalhar análises adicionais.
+
+Performance de campanhas Meta · 01 de set.—09 de set.
+Performance de campanhas Google · 01 de set.—09 de set.
+Visão geral de mídia · 01 de set.—09 de set.
+3 fontes consultadas
+5797 tokens
+Você
+15:02
+Considere o contexto da conversa anterior. analise fatos, interpretação e próximos passos sobre os dados agregados disponíveis. Use somente fontes estruturadas, declare limitações e não use dados pessoais.
+Analista
+15:02
+Fatos observados
+1. Período analisado: 2026-09-01 a 2026-09-09, com dados estruturados disponíveis; não há dados do período anterior (2026-08-01 a 2026-08-09) para comparação.
+
+2. Dados agregados canal geral:
+
+•
+Impressões: 440.235
+•
+Cliques: 11.777
+•
+Leads: 165
+•
+Resultados (conversões atribuídas): 22
+•
+Investimento total: R$ 6.921,94
+•
+Valor atribuído (soma das plataformas): R$ 113.231,36
+•
+CTR médio: 2,68%
+•
+CPC médio: R$ 0,59
+•
+Custo por resultado: R$ 314,63
+•
+ROAS geral: 16,36
+3. Distribuição diária:
+
+•
+Dias 2026-09-01, 02 e 03 apresentaram leads e resultados sem investimento reportado, com valor atribuído significativo em 01 e 03 (R$ 3.986,01 e R$ 6.022,80).
+•
+Investimento concentrado entre 2026-09-04 e 09, variando de R$ 670,20 a R$ 1.669,67 por dia.
+•
+Resultados diários variam entre 0 e 6 conversões, com maior número em 06/09 (6 resultados).
+•
+Valor atribuído diário varia bastante, com picos em 07/09 (R$ 32.743,90) e 06/09 (R$ 26.990,15).
+4. Limitações:
+
+•
+Ausência de dados do período anterior impede análise de tendência e comparação.
+•
+Valor atribuído e resultados combinam definições distintas entre plataformas, não representando receita financeira unificada.
+•
+Dados diários indicam resultados em dias sem investimento, possivelmente por janelas de atribuição, conversões tardias ou importações, requerendo validação.
+•
+Segmento do cliente não informado, limitando contextualização do custo e valor dos leads.
+Interpretação
+•
+O canal geral apresenta boa eficiência em termos de ROAS (16,36), indicando que o valor atribuído é significativamente maior que o investimento.
+•
+O custo por resultado (R$ 314,63) é relativamente alto para o objetivo de leads, sugerindo que o custo para gerar conversões pode estar acima do ideal.
+•
+A presença de resultados e leads em dias sem investimento indica necessidade de validação da origem dessas conversões para evitar interpretações incorretas.
+•
+A concentração de investimento e resultados em determinados dias sugere que a performance pode estar influenciada por fatores externos ou pela programação das campanhas.
+•
+A ausência de dados do período anterior limita a avaliação de evolução da performance e sazonalidade.
+Recomendações priorizadas
+1. Validar a origem dos resultados em dias sem investimento (2026-09-01, 02 e 03) para confirmar se são conversões orgânicas, tardias ou atribuídas incorretamente, evitando decisões baseadas em dados inconsistentes.
+
+•
+Impacto: Médio
+•
+Confiança: Média
+•
+Esforço: Baixo
+2. Obter e validar dados estruturados do período anterior (2026-08-01 a 2026-08-09) para permitir análise de evolução, comparação e identificação de tendências.
+
+•
+Impacto: Alto
+•
+Confiança: Alta
+•
+Esforço: Médio
+3. Analisar detalhadamente o custo por lead e custo por resultado nas plataformas usadas, preferencialmente via ferramentas nativas, para identificar oportunidades de otimização antes de sugerir alterações em campanhas, criativos ou segmentação.
+
+•
+Impacto: Alto
+•
+Confiança: Alta
+•
+Esforço: Médio
+4. Monitorar a distribuição dos resultados e investimento ao longo de pelo menos quatro semanas completas para avaliar sazonalidade e ajustar alocação de recursos de forma mais eficiente.
+
+•
+Impacto: Médio
+•
+Confiança: Alta
+•
+Esforço: Baixo
+5. Avaliar possibilidade de diversificação de canais, especialmente considerando ausência de dados ou investimento em Google Ads, para potencialmente aumentar volume de leads com custo competitivo, após análise detalhada da plataforma.
+
+•
+Impacto: Alto
+•
+Confiança: Média
+•
+Esforço: Médio
+Se desejar, posso ajudar a detalhar análises específicas ou preparar consultas para plataformas específicas.
+
+Visão geral de mídia · 01 de set.—09 de set.
+1 fonte consultada
+6417 tokens
+Você
+15:30
+Analise os principais sinais e recomende próximos passos sobre performance de campanhas.
+Analista
+15:30
+Leitura executiva
+•
+O CPL médio nas campanhas Meta é de R$ 16,68, inferior ao CPL geral de R$ 54,28, indicando maior eficiência na geração de leads.
+•
+O investimento total no canal diminuiu, com redução de leads e aumento do CPL, sugerindo necessidade de ajuste na estratégia.
+O que os dados indicam
+•
+A campanha Meta "06/08 [IN] [RA] [LEADS] [LP DE EVENTOS]" gerou 23 leads com CPL de R$ 16,68, apresentando melhor desempenho entre as campanhas analisadas.
+•
+O canal geral teve investimento de R$ 30.613,92, 564 leads e CPL de R$ 54,28, com queda em volume e aumento no custo por lead em relação ao período anterior.
+Próximos passos
+•
+Monitorar o CPL das campanhas Meta, mantendo o limite máximo de R$ 20 para validar a eficiência do custo por lead.
+•
+Conduzir teste controlado entre campanhas Meta e outras fontes, comparando CPL e volume de leads para decisão sobre alocação futura de investimento.
+Performance de campanhas Meta · 12 de jun.—09 de set.
+Performance de campanhas Google · 12 de jun.—09 de set.
+Visão geral de mídia · 12 de jun.—09 de set.
+3 fontes consultadas
+9510 tokens
+Você
+15:31
+Analise os principais sinais e recomende próximos passos sobre resultados e valor atribuído, performance de campanhas.
+Analista
+15:31
+Leitura executiva
+•
+O canal geral investiu R$ 30.613,92, gerando 564 leads com CPL de R$ 54,28 no período analisado.
+•
+A campanha Meta "06/08 [IN] [RA] [LEADS] [LP DE EVENTOS]" apresentou o melhor CPL, R$ 16,68, com 23 leads e investimento de R$ 383,67.
+O que os dados indicam
+•
+O valor atribuído total no canal geral foi R$ 836.333,09, resultado das plataformas combinadas.
+•
+Campanhas Meta exibem variação no CPL, com algumas acima de R$ 40; a campanha "30/04 - [IN] [RA] [VENDAS]" alcançou ROAS de 30,13.
+Próximos passos
+•
+Testar controle entre campanhas Meta com CPL abaixo de R$ 20 e as demais, acompanhando leads gerados e CPL, para decisão de alocação.
+•
+Monitorar campanhas com ROAS superior a 30, avaliando custo por lead e receita atribuída para replicar estratégias eficazes.
+Visão geral de mídia · 12 de jun.—09 de set.
+Performance de campanhas Meta · 12 de jun.—09 de set.
+Performance de campanhas Google · 12 de jun.—09 de set.
+3 fontes consultadas
+9521 tokens
+Você
+15:32
+Continue a análise anterior. Analise os principais sinais e recomende próximos passos sobre funil agregado do CRM, resultados e valor atribuído.
+Analista
+15:32
+Leitura executiva
+•
+O funil agregado do CRM não registrou leads, negócios ou valores no período, indicando ausência de dados para análise de conversão pós-lead.
+•
+O canal geral gerou 564 leads com investimento de R$ 30.613,92, CPL de R$ 54,28, 149 resultados e valor atribuído de R$ 836.333,09.
+O que os dados indicam
+•
+A falta de dados no CRM impede avaliar a conversão dos leads em receita, limitando a visão do retorno financeiro final.
+•
+O valor atribuído não corresponde a receita financeira unificada, o que exige cautela na interpretação do ROAS de 27,32.
+Próximos passos
+•
+Validar a integração entre CRM e plataformas de mídia para garantir captura e atualização dos dados de leads e negócios, permitindo análise completa do funil.
+•
+Monitorar o custo por resultado em relação ao CPL, estabelecendo um limite baseado no CPL atual de R$ 54,28 para identificar desvios e ajustar a qualificação dos leads.
+Funil CRM · 12 de jun.—09 de set.
+Visão geral de mídia · 12 de jun.—09 de set.
+2 fontes consultadas
+7521 tokens
+Pergunte sobre receita, campanhas, CRM ou eficiência…
+
+
+Enter envia · Shift + Enter quebra linha · análise limitada ao período e canal selecionados
+
+R$ 0k

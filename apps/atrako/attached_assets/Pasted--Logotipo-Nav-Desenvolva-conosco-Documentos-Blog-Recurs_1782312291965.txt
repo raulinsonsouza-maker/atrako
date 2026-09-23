@@ -1,0 +1,139 @@
+
+Logotipo Nav
+Desenvolva conosco
+Documentos
+Blog
+Recursos
+Centrais para desenvolvedores
+Meus apps
+Documentação
+Visão geral
+Mídia mencionada
+Esta página foi traduzida do inglês para outro idioma usando IA. O conteúdo traduzido por IA pode conter erros, omissões ou divergências de sentido. Como a tradução automática pode ser imprecisa ou pouco clara, consulte o conteúdo original em inglês desta página para validar as orientações corretas.
+Isso foi útil?
+Mídia mencionada
+Updated: 21 de jan de 2025
+Retorna dados sobre uma mídia do Instagram em que um usuário foi @mencionado por outro usuário em uma legenda.
+Criação
+Esta operação não é compatível.
+Leitura
+GET /{ig-user-id}?fields=mentioned_media.media_id
+Retorna dados sobre uma mídia do Instagram em que um usuário foi @mencionado por outro usuário em uma legenda.
+Limitações
+As menções não são compatíveis com stories.
+Não há suporte para comentários em fotos em que você foi marcado.
+Os Webhooks não serão enviados se a mídia em que o comentário ou a @menção aparece tiver sido criada por uma conta definida como privada.
+Requisitos
+Tipo	Descrição
+Tokens de acesso
+Usuário
+Permissões
+instagram_basic
+instagram_manage_comments
+pages_read_engagement
+
+Caso uma função administrativa tenha sido concedida ao usuário do app por meio do Gerenciador de Negócios, você precisará obter uma das seguintes permissões:
+ads_management
+ads_read
+Tarefas
+MANAGE, CREATE_CONTENT ou MODERATE
+Sintaxe da solicitação
+GET https://graph.facebook.com/v25.0/{ig-user-id}
+  ?fields=mentioned_media.media_id({media-id}){{fields}}
+  &access_token={access-token}
+Parâmetros da string de consulta
+Parâmetro	Valor
+{access_token}
+Obrigatório.
+String
+O token de acesso do usuário do app.
+{fields}
+Lista separada por vírgulas
+Uma lista separada por vírgulas dos campos de mídia do Instagram que devem ser retornados. Se omitida, os campos padrão serão retornados.
+{media-id}
+Obrigatório.
+String
+O ID da mídia do Instagram em que o usuário foi @mencionado na legenda. O ID está incluído na carga de notificação do webhook.
+Campos
+Campo	Descrição
+caption
+String
+O texto da legenda. As legendas que @mencionam um usuário do Instagram não incluirão o símbolo @, a menos que o usuário do app tenha criado o objeto de mídia em que a legenda foi feita.
+comments
+Objeto
+Uma lista de comentários na mídia do Instagram. Caso a expansão de campo seja usada para obter o texto do comentário, os textos que @mencionam um usuário não incluirão o símbolo @, a menos que o usuário do app tenha criado o objeto de mídia do Instagram em que a legenda foi feita.
+comments_count
+String
+O número de comentários na mídia do Instagram.
+id
+Padrão
+String
+O ID da mídia do Instagram.
+like_count
+String
+Contagem de curtidas na mídia. Exclui curtidas na mídia derivada do álbum e curtidas em publicações promovidas que foram criadas a partir da mídia. Inclui respostas em comentários.
+Chamadas da versão 10.0 e anteriores: o valor será 0 caso o dono da mídia oculte⁠ o número de curtidas.
+Chamadas da v11.0 e posteriores: o campo será omitido se o dono da mídia tiver ocultado o número de curtidas. O valor será 0 se o dono da mídia tiver ocultado⁠ o número de curtidas.
+media_type
+String
+O tipo de mídia do Instagram: CAROUSEL_ALBUM, IMAGE, STORY ou VIDEO.
+media_url
+String
+A URL da mídia do Instagram publicada.
+owner
+String
+O número de identificação do usuário do Instagram que criou a mídia. Retornado somente se o usuário do app tiver criado o objeto de mídia. Caso contrário, o campo username será retornado.
+timestamp
+String
+A data de criação da mídia do Instagram formatada de acordo com a norma ISO 8601.
+username
+String
+O nome de usuário do usuário do Instagram que criou a mídia.
+Exemplo de solicitação
+curl -X GET \
+  'https://graph.facebook.com/v25.0/17841405309211844?fields=mentioned_media.media_id(17873440459141021){caption,media_type}&access_token=IGQVJ...'
+Exemplo de resposta
+{
+  "mentioned_media": {
+    "caption": "metricsaurus headquarters!",
+    "media_type": "IMAGE",
+    "id": "17873440459141021"
+  },
+  "id": "17841405309211844"
+}
+No exemplo acima, a API removeu o símbolo @ à esquerda da legenda original (@metricsaurus headquarters!), já que o usuário do app não criou a legenda.
+Paginação
+Caso você use a expansão de campo para acessar uma borda compatível com a paginação baseada em cursor, a resposta incluirá os cursores before e after se houver múltiplas páginas de dados. No entanto, ao contrário da paginação baseada em cursor padrão, a resposta não incluirá os campos previous ou next. Assim, você precisará usar os cursores before e after para criar manualmente as listas das strings de consulta previous e next e poder navegar pelas páginas do conjunto de dados retornado.
+Atualização
+Esta operação não é compatível.
+Exclusão
+Esta operação não é compatível.
+Você achou esta página útil?
+Ícone de polegar para cima
+Ícone de polegar para baixo
+Meta
+FacebookInstagramXLinkedInYouTube
+Desenvolva com a Meta
+IA
+Meta Horizon
+Tecnologias sociais
+Notícias
+Meta for Developers
+Blog
+Casos de sucesso
+Suporte
+Suporte ao desenvolvedor
+Ferramenta de bug
+Status da plataforma
+Fórum da Comunidade de Desenvolvedores
+Relatar um incidente
+Quem somos
+Sobre
+Carreiras
+Termos e políticas
+Iniciativas de plataforma responsável
+Termos da plataforma
+Políticas do Desenvolvedor
+Política de Privacidade
+Cookies
+Português (Brasil)

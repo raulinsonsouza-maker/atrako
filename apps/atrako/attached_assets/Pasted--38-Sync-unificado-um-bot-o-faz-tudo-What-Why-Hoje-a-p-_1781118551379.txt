@@ -1,0 +1,28 @@
+#38 - Sync unificado — um botão faz tudo
+What & Why
+Hoje a página Admin tem dois botões por cliente ("Sync" + "Leads") com ícones idênticos e sem explicação, e o "Atualizar todos" não inclui CRM nem Meta Leads. O objetivo é consolidar tudo num único fluxo: um botão por cliente que sincroniza Meta Ads + Google Ads + GA4 + Meta Leads (formulários) + CRM; e um "Atualizar todos" que faz o mesmo para toda a base.
+
+Done looks like
+Página Admin (/admin/clientes): cada cliente tem apenas um botão "Atualizar" com tooltip descritivo ("Atualiza anúncios, leads e CRM")
+O botão "Atualizar todos" no topo passa a incluir leads e CRM de todos os clientes
+O botão "Atualizar" no dashboard do cliente (/clientes/[id]) também inclui tudo — sem precisar de ação separada para leads ou CRM
+O sync automático ao abrir um cliente (background) também inclui CRM e leads
+Se um cliente não tem CRM configurado, o sync simplesmente ignora essa etapa sem erro
+Se um cliente não tem formulário de Lead Gen no Meta, o sync ignora sem erro
+Out of scope
+Remover os endpoints /api/admin/sync-leads e /api/admin/sync-all (mantidos para compatibilidade/CLI, mas não usados no UI)
+Alterar o mecanismo de throttle de 3h do background sync
+Alterar o sync do portal do cliente (portalMode) — continua igual
+Steps
+syncClienteCanais sempre inclui CRM e Meta Leads — Remover a condição shouldSyncLeads (ou torná-la sempre true) e aguardar o CRM sync em vez de fire-and-forget. Ambos devem retornar erro tratado (nunca quebrar o sync principal). Adicionar os campos crm e metaLeads no retorno da função.
+Endpoint sync-all usa syncClienteCanais — Refatorar /api/admin/sync-all/route.ts para iterar sobre clientes e chamar syncClienteCanais para cada um (em vez de chamar Meta/Google/Analytics separadamente), garantindo que CRM e Leads sejam incluídos no "Atualizar todos".
+Admin page: remover botão "Leads" — Excluir o botão "Leads" e a mutation syncLeadsMutation da página /admin/clientes. O botão "Sync" (renomeado para "Atualizar") passa a chamar /api/clientes/[id]/sync que agora inclui tudo. Adicionar title tooltip no botão explicando o que ele faz.
+Dashboard: chip "Atualizar agora" continua igual — Já chama /api/clientes/[id]/sync, que após o step 1 incluirá tudo. Nenhuma mudança de UI necessária aqui.
+Rótulo e feedback no Admin — Atualizar rótulo do botão de "Sync" para "Atualizar" e adicionar coluna ou chip discreto mostrando o ultimoSyncAt do cliente na tabela admin (data/hora do último sync bem-sucedido).
+Relevant files
+lib/sync/syncClienteCanais.ts
+app/api/admin/sync-all/route.ts
+app/api/clientes/[id]/sync/route.ts
+app/admin/clientes/page.tsx:1015-1045,1366-1385,1188-1195
+lib/sync/crmSync.ts
+lib/sync/metaLeadsSync.ts

@@ -1,0 +1,69 @@
+
+
+1/1
+
+Next.js 15.5.14 (outdated)
+Webpack
+Recoverable Error
+
+Hydration failed because the server rendered text didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+See more info here: https://nextjs.org/docs/messages/react-hydration-error
+
+
+  ...
+    <RedirectBoundary>
+      <RedirectErrorBoundary router={{...}}>
+        <InnerLayoutRouter url="/clientes/..." tree={[...]} cacheNode={{lazyData:null, ...}} segmentPath={[...]}>
+          <SegmentViewNode type="page" pagePath="clientes/[...">
+            <SegmentTrieNode>
+            <ClientPageRoot Component={function ClienteDetailPage} searchParams={{}} params={{id:"cmo03m..."}}>
+              <ClienteDetailPage params={Promise} searchParams={Promise}>
+                <ClienteDashboard id="cmo03mf4w0...">
+                  <main className="space-y-8 ...">
+                    <div>
+                    <section>
+                    <div className="flex flex-..." ref={{current:null}}>
+                      <div className="flex items...">
+                        <div className="ml-auto">
+                          <button onClick={function onClick} className="inline-fle...">
+                            <CalendarDays>
+                            <span className="min-w-0 tr...">
+                              <span className="sm:hidden">
++                               Últimos 7 dias
+-                               Mês atual
+                              ...
+                            ...
+                    ...
+          ...
+        ...
+app/clientes/[id]/ClienteDashboard.tsx (853:17) @ ClienteDashboard
+
+
+  851 |               <CalendarDays className="h-4 w-4 shrink-0 text-[var(--primary)]" />
+  852 |               <span className="min-w-0 truncate text-[var(--foreground)]">
+> 853 |                 <span className="sm:hidden">{topRangeLabelShort}</span>
+      |                 ^
+  854 |                 <span className="hidden sm:inline max-w-[280px] truncate">{topRangeLabelFull}</span>
+  855 |               </span>
+  856 |               <SlidersHorizontal className="h-3.5 w-3.5 shrink-0 text-[var(--muted-foreground)]" />
+Call Stack
+16
+
+Show 13 ignore-listed frame(s)
+span
+<anonymous>
+ClienteDashboard
+app/clientes/[id]/ClienteDashboard.tsx (853:17)
+ClienteDetailPage
+app/clientes/[id]/page.tsx (9:10)
+1
+2

@@ -1,0 +1,80 @@
+
+Logotipo Nav
+Desenvolva conosco
+Documentos
+Blog
+Recursos
+Centrais para desenvolvedores
+Meus apps
+Documentação
+Visão geral
+Hashtags pesquisadas recentemente
+Esta página foi traduzida do inglês para outro idioma usando IA. O conteúdo traduzido por IA pode conter erros, omissões ou divergências de sentido. Como a tradução automática pode ser imprecisa ou pouco clara, consulte o conteúdo original em inglês desta página para validar as orientações corretas.
+Isso foi útil?
+Hashtags pesquisadas recentemente
+Updated: 21 de jan de 2025
+Esta borda permite determinar as hashtags do Instagram pesquisadas por um usuário nos últimos 7 dias.
+Leitura
+GET /{ig-user-id}/recently_searched_hashtags
+Obtém as hashtags pesquisadas por um usuário do Instagram por meio do ponto de extremidade de Hashtags do Instagram nos últimos 7 dias.
+Os usuários do Instagram podem consultar no máximo 30 hashtags únicas em um período de 7 dias. As hashtags consultadas serão contabilizadas no limite do usuário no momento da consulta. Até 7 dias depois de uma hashtag inicial, as consultas subsequentes não serão incluídas no limite do usuário.
+Limitações
+Não há suporte para emojis nas consultas de hashtag.
+Por padrão, a API retorna 25 resultados por página. Entretanto, é possível usar o parâmetro limit e aumentar esse limite para 30 (limit=30).
+Requisitos
+Tipo	Descrição
+Recursos
+Instagram Public Content Access
+Permissões
+instagram_basic
+Se o token for de um usuário que recebeu uma função administrativa por meio do Gerenciador de Negócios, uma das permissões a seguir também será necessária: ads_management, ads_read ou pages_read_engagement.
+Tokens
+Um token de acesso de usuário do Facebook.
+Exemplo de solicitação
+GET graph.facebook.com/17841405309211844/recently_searched_hashtags?limit=30
+Exemplo de resposta
+{
+  "data": [
+    {
+      "id": "17841562906103814"
+    },
+    {
+      "id": "17841563587120501"
+    }
+  ]
+}
+Criação
+Esta operação não é compatível.
+Atualização
+Esta operação não é compatível.
+Exclusão
+Esta operação não é compatível.
+Você achou esta página útil?
+Ícone de polegar para cima
+Ícone de polegar para baixo
+Meta
+FacebookInstagramXLinkedInYouTube
+Desenvolva com a Meta
+IA
+Meta Horizon
+Tecnologias sociais
+Notícias
+Meta for Developers
+Blog
+Casos de sucesso
+Suporte
+Suporte ao desenvolvedor
+Ferramenta de bug
+Status da plataforma
+Fórum da Comunidade de Desenvolvedores
+Relatar um incidente
+Quem somos
+Sobre
+Carreiras
+Termos e políticas
+Iniciativas de plataforma responsável
+Termos da plataforma
+Políticas do Desenvolvedor
+Política de Privacidade
+Cookies
+Português (Brasil)

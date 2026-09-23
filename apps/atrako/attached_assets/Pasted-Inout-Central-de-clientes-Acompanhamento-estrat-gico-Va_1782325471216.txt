@@ -1,0 +1,313 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Varella Motos
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+Saldo Google
+R$ ••••••
+
+
+
+Mês atual: 01 de jun. de 2026 a 24 de jun. de 2026
+Análise
+Criativos
+Faturamento
+
+R$ 256.700,06
+
+24 dias selecionados
+
+Investimento
+
+R$ 8.792,69
+
+Valor investido total
+
+Compras
+
+213
+
+Canal google
+
+ROAS
+
+29,19x
+
+Receita por real investido
+
+CPA
+
+R$ 41,28
+
+Custo por compra
+
+Ticket médio
+
+R$ 1.205,16
+
+Valor médio por compra
+
+Performance de e-commerce
+Comparativo semanal entre investimento e faturamento, com destaque para compras.
+
+Diário
+Semanal
+Investimento
+Faturamento
+213 compras no período
+01/06-07/06
+08/06-14/06
+15/06-21/06
+22/06-28/06
+R$ 0
+R$ 25.000
+R$ 50.000
+R$ 75.000
+R$100.000
+Maior faturamento semanal
+
+R$ 89.595,48
+
+01/06-07/06
+
+Melhor ROAS semanal
+
+39,44x
+
+01/06-07/06
+
+Pico de compras
+
+69
+
+08/06-14/06
+
+Eficiência da mídia
+Funil de conversão: alcance, impressões, cliques, checkout e compras.
+
+Funil de mídia
+
+Alcance
+
+127.675
+
+Impressões
+
+441.975
+
+Cliques
+
+14.004
+
+Checkout iniciado
+
+213
+
+Compras
+
+213
+
+Cliques
+
+14.004
+
+Compras
+
+213
+
+Ticket médio
+
+R$ 1.205,16
+
+Taxa conv.
+
+1,52%
+
+Mix de canal · META
+Participação do canal no consolidado do período.
+
+Investimento
+
+R$ 4.377,83
+
+33,24%
+
+Compras
+
+76
+
+26,30%
+
+Faturamento
+
+R$ 143.287,63
+
+35,82%
+
+ROAS
+
+32,73x
+
+CPC
+
+R$ 0,23
+
+Mix de canal · Google
+Participação do canal no consolidado do período.
+
+Investimento
+
+R$ 8.792,69
+
+66,76%
+
+Compras
+
+213
+
+73,70%
+
+Faturamento
+
+R$ 256.700,06
+
+64,18%
+
+ROAS
+
+29,19x
+
+CPC
+
+R$ 0,63
+
+Resultado comercialSemana a semana
+Leitura focada em receita, compras e eficiência por semana.
+
+4 semanas
+Métrica	
+Semana
+01/06-07/06
+Semana
+08/06-14/06
+Semana
+15/06-21/06
+Atual
+22/06-28/06
+Investimento
+
+R$ 2.271,55	R$ 2.201,99	R$ 2.993,67	R$ 1.325,48
+Cliques
+
+3.793	3.861	4.428	1.922
+Compras
+
+55	69	60	29
+Faturamento
+
+R$ 89.595,48	R$ 75.482,01	R$ 65.143,63	R$ 26.478,94
+ROAS
+
+39,44x	34,28x	21,76x	19,98x
+CPA
+
+R$ 41,30	R$ 31,91	R$ 49,89	R$ 45,71
+Ticket médio
+
+R$ 1.629,01	R$ 1.093,94	R$ 1.085,73	R$ 913,07
+CTR
+
+3,42%	3,47%	2,95%	2,75%
+Taxa conv.
+
+1,45%	1,79%	1,36%	1,51%
+Google Ads
+
+Campanhas · Análise por período
+
+#1
+PMax
+[IN] [A] [PMAX] -Teste PMax
+
+Ativa	R$ 2.977,58	191.368	4.431	2,32%	R$ 0,67	71,2	R$ 41,82	R$ 88.552,08	29,74x
+PMax
+18/04 - [IN] [RA] [PMAX] - CATALOGO
+
+Ativa	R$ 2.390,52	125.273	3.626	2,89%	R$ 0,66	49,6	R$ 48,17	R$ 65.189,91	27,27x
+Shopping
+[SH] [PNEUS DE MOTO]
+
+Ativa	R$ 1.067,78	77.264	1.977	2,56%	R$ 0,54	34,3	R$ 31,10	R$ 36.488,18	34,17x
+PMax
+21/03 [IN] [M] [PMAX] Pneus específicos #2
+
+Ativa	R$ 963,08	22.026	1.767	8,02%	R$ 0,55	27,4	R$ 35,14	R$ 30.917,82	32,10x
+PMax
+14/08 [IN] [A] [PMAX] - Quadri
+
+Ativa	R$ 698,37	11.169	863	7,73%	R$ 0,81	14,0	R$ 49,97	R$ 16.319,86	23,37x
+PMax
+21/03 [IN] [M] [PMAX] Pneus específicos
+
+Ativa	R$ 691,05	14.840	1.335	9,00%	R$ 0,52	15,1	R$ 45,73	R$ 19.232,20	27,83x
+Search
+04/10 [IN] [A] [SEARCH] - Bateria e Pastilha
+
+Ativa	R$ 4,32	35	5	14,29%	R$ 0,86	0,0	—	—	—
+Total · 7 campanhas	R$ 8.792,70	441.975	14.004	3,17%	R$ 0,63	211,7	R$ 41,54	R$ 256.700,05	29,19x
+Acompanhamento financeiro · Plano x Real
+Status de investimento no ano atual (planejado versus realizado em todos os canais)
+
+Orçado
+R$ 144.000,00
+Realizado
+R$ 63.489,28
+JAN.
+FEV.
+MAR.
+ABR.
+MAI.
+JUN.
+JUL.
+AGO.
+SET.
+OUT.
+NOV.
+DEZ.
+R$ 0,00
+R$4.500,00
+R$9.000,00
+R$13.500,00
+R$18.000,00
+OrcadoRealizado
+
+Ritmo do mês · Junho — dia 24 de 30
+
+▼ 8.4% abaixo do ritmo
+Orçado no mês
+
+R$ 12.000,00
+
+Realizado até hoje
+
+R$ 8.792,69
+
+Ritmo esperado (dia 24)
+
+R$ 9.600,00
+
+Diferença do ritmo
+
+R$ -807,31
+
+73% realizado do mês
+|
+Ritmo esperado: 80%
+|
+27% restante para fechar o mês
+R$ 4.500,00

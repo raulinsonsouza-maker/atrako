@@ -1,0 +1,121 @@
+
+Logotipo Nav
+Desenvolva conosco
+Documentos
+Blog
+Recursos
+Centrais para desenvolvedores
+Meus apps
+Documentação
+Visão geral
+Comentários
+Esta página foi traduzida do inglês para outro idioma usando IA. O conteúdo traduzido por IA pode conter erros, omissões ou divergências de sentido. Como a tradução automática pode ser imprecisa ou pouco clara, consulte o conteúdo original em inglês desta página para validar as orientações corretas.
+Isso foi útil?
+Comentários
+Updated: 21 de jan de 2025
+Representa uma coleção de comentários do Instagram em um objeto de mídia do Instagram.
+Comentários não orgânicos
+Os comentários em anúncios que contêm mídia do Instagram (ou seja, comentários não orgânicos) são de um tipo diferente e não têm compatibilidade. Para obter comentários não orgânicos, use a API de Marketing e solicite o effective_instagram_media_id do anúncio. Depois, será possível consultar a borda /comments da identificação retornada para obter uma coleção de comentários do Instagram não orgânicos. Consulte o guia Moderação de posts da API de Marketing para ver mais informações.
+Requisitos
+API do Instagram com o Login do Instagram	API do Instagram com o Login do Facebook
+Tokens de acesso
+Token de acesso do usuário do Instagram
+Token de acesso do usuário do Facebook
+URL de hospedagem
+graph.instagram.com
+graph.facebook.com
+Tipo de login
+Login de Empresa no Instagram
+Login do Facebook para Empresas
+Permissões
+instagram_business_basic
+instagram_business_manage_comments
+instagram_basic
+instagram_manage_comments
+pages_read_engagement
+Caso uma função tenha sido concedida ao usuário do app por meio do Gerenciador de Negócios na Página conectada ao usuário do Instagram em questão, você precisará obter uma das seguintes permissões:
+ads_management
+ads_read
+Criação
+Como criar um comentário em um objeto de mídia
+POST /<IG_MEDIA_ID>/comments?message=<MESSAGE_CONTENT>
+Cria um comentário em um objeto de mídia do Instagram.
+Limitações
+Os comentários em mídias de vídeo ao vivo do Instagram não são compatíveis.
+Parâmetros da string de consulta
+Os parâmetros da string de consulta são opcionais, a menos que sejam indicados como obrigatórios.
+<MESSAGE_CONTENT> (obrigatório): o texto a ser incluído no comentário.
+Exemplo de solicitação
+POST graph.facebook.com
+  /17895695668004550/comments?message=This%20is%20awesome!
+Exemplo de resposta
+{
+  "id": "17870913679156914"
+}
+Leitura
+Como obter comentários em um objeto de mídia
+GET /<IG_MEDIA_ID>/comments
+Retorna uma lista de comentários do Instagram em um objeto de mídia do Instagram.
+Limitações
+As solicitações feitas com a versão 3.1 ou anteriores da API retornarão resultados em ordem cronológica. As solicitações feitas com a versão 3.2 ou superiores retornarão resultados em ordem cronológica inversa.
+A operação retorna somente os comentários do nível principal. As respostas aos comentários não serão incluídas, a menos que a expansão seja usada para solicitar o campo replies.
+Há um retorno máximo de 50 comentários por solicitação.
+Os comentários não podem ser filtrados por registro de data e hora.
+Permissões
+Um token de acesso do usuário que criou o objeto de mídia do Instagram com as permissões a seguir:
+instagram_basic
+instagram_manage_comments
+Se o token for de um usuário cuja função na Página foi concedida por meio do Gerenciador de Negócios, uma das seguintes permissões também será necessária:
+ads_management
+ads_read
+Exemplo de solicitação
+GET graph.facebook.com
+  /17895695668004550/comments
+Exemplo de resposta
+{
+  "data": [
+    {
+      "timestamp": "2017-08-31T19:16:02+0000",
+      "text": "This is awesome!",
+      "id": "17870913679156914"
+    },
+    {
+      "timestamp": "2017-08-31T18:10:30+0000",
+      "text": "*Sniff*",
+      "id": "17873440459141021"
+    }
+  ]
+}
+Atualização
+Esta operação não é compatível.
+Exclusão
+Esta operação não é compatível.
+Você achou esta página útil?
+Ícone de polegar para cima
+Ícone de polegar para baixo
+Meta
+FacebookInstagramXLinkedInYouTube
+Desenvolva com a Meta
+IA
+Meta Horizon
+Tecnologias sociais
+Notícias
+Meta for Developers
+Blog
+Casos de sucesso
+Suporte
+Suporte ao desenvolvedor
+Ferramenta de bug
+Status da plataforma
+Fórum da Comunidade de Desenvolvedores
+Relatar um incidente
+Quem somos
+Sobre
+Carreiras
+Termos e políticas
+Iniciativas de plataforma responsável
+Termos da plataforma
+Políticas do Desenvolvedor
+Política de Privacidade
+Cookies
+Português (Brasil)

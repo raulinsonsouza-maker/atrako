@@ -1,0 +1,128 @@
+Inout
+
+Central de controle
+Configurações
+Veja rapidamente o que está conectado, resolva pendências e mantenha o InPilot pronto para operar. Os detalhes técnicos aparecem apenas quando você precisar deles.
+
+Logs do sistema
+Meta Ads
+Pronto para sincronizar
+
+Google Ads
+Pronto para sincronizar
+
+LinkedIn
+Não conectado
+
+Alertas
+Ainda não configurado
+
+Telegram
+Canal configurado
+
+Usuários internos
+Crie acessos, escolha permissões e desative contas sem apagar o histórico.
+Uso e acesso do InPilot
+Escolha usuários e clientes autorizados e acompanhe o consumo da ferramenta.
+Meta
+Meta Ads
+Credenciais globais padrão. Clientes sem BM vinculada usam este token.
+
+Token de acesso (Meta)
+••••••••••••••••••••
+Por segurança, o valor atual não é exibido. Preencha apenas se quiser atualizar.
+
+ID da conta padrão (Meta Ads)
+act_123456789012345
+Business Managers (BMs) conectadas
+
+Adicionar BM
+Nenhuma BM cadastrada — usando credenciais globais acima.
+
+Google
+Google Ads
+Credenciais OAuth globais. Clientes sem MCC vinculado usam estas credenciais.
+
+Client ID
+••••••••••••••••••••
+Por segurança, o valor atual não é exibido. Preencha apenas se quiser atualizar.
+
+Client Secret
+••••••••••••••••••••
+Por segurança, o valor atual não é exibido. Preencha apenas se quiser atualizar.
+
+Developer token
+••••••••••••••••••••
+Por segurança, o valor atual não é exibido. Preencha apenas se quiser atualizar.
+
+Refresh token
+••••••••••••••••••••
+Por segurança, o valor atual não é exibido. Preencha apenas se quiser atualizar.
+
+Login Customer ID (MCC global)
+3830547260
+ID da conta MCC gerenciadora padrão. Atual: 3830547260
+
+MCCs (gerenciadoras) conectados
+
+Adicionar MCC
+Nenhum MCC cadastrado — usando credenciais globais acima.
+
+LinkedIn
+LinkedIn Ads
+Conexões autorizadas via OAuth do LinkedIn. Cada cliente com LinkedIn Ads é vinculado a uma conexão.
+
+Conexões LinkedIn
+
+Adicionar conexão
+Linkedin
+
+Aguardando autorização OAuth
+
+Conectar LinkedIn
+Editar
+Salvar credenciais
+Alertas automáticos
+Notificações de saldo baixo e anomalias de gasto.
+
+Configurar alertas
+E-mail
+
+Não configurado
+
+Webhook
+
+Não configurado
+
+Limiares
+
+Saldo mínimo: 7 dias · Gap de gasto: 2 dia(s)
+
+Dispare um alerta agora para testar as configurações.
+
+Disparar alerta agora
+Telegram
+Resumo diário no Telegram
+Após o sync diário das 05:00 BRT, envia automaticamente um resumo de cada cliente com Telegram ativo para o canal configurado.
+
+Bot Token
+••••••••••••••••••••
+Token do bot criado via @BotFather. Por segurança, o valor atual não é exibido.
+
+Channel ID
+-1003849847984
+ID ou @username do canal. Atual: -1003849847984
+
+Como configurar o bot (passo a passo)
+Enviar mensagem de teste
+Enviar todos os relatórios agora
+Salvar Telegram
+Status do sync global
+Último sync bem-sucedido
+
+15/09/2026, 08:26:48 (recente)
+
+Última tentativa
+
+15/09/2026, 08:20:27
+

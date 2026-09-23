@@ -1,0 +1,298 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Incorporadora
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+CRM
+
+
+Ano atual (YTD): 01 de jan. de 2026 a 23 de jun. de 2026
+CRM
+
+Funil & Leads
+Leads no período
+
+513
+
+Fechamentos
+
+0
+
+Taxa de fechamento
+
+0.0%
+
+513
+
+leads
+
+Leads
+4
+0.8%
+Atendimento
+427
+83%
+Visitas
+10
+2%
+Perdidos
+72
+14%
+Leads
+
+4 leads · 0.8%
+Novo Lead
+
+0.8%
+4
+Atendimento
+
+427 leads · 83%
+Aguardando Atendimento Corretor
+
+5%
+25
+Em Atendimento
+
+78%
+401
+Simulação
+
+0.2%
+1
+Visitas
+
+10 leads · 2%
+Visita Realizada
+
+0.2%
+1
+Visita Agendada
+
+2%
+9
+Perdidos
+
+72 leads · 14%
+Perdido
+
+14%
+72
+CRM
+
+Análise de Origem
+Meta
+347 forms
+Leads no CRM
+
+333
+
+
+333
+
+Leads
+
+
+292
+
+Atend.
+
+
+6
+
+Visitas
+
+
+—
+
+Vendas
+
+292 em atend.
+41 perdidos (12%)
+
+6 duplicados
+CPL Real · CRM
+
+vs R$ 70,00 plataforma
+
+R$ 76,72
+
+Investimento
+
+R$ 25.548,62
+
+Google
+Leads no CRM
+
+180
+
+
+180
+
+Leads
+
+
+149
+
+Atend.
+
+
+4
+
+Visitas
+
+
+—
+
+Vendas
+
+149 em atend.
+31 perdidos (17%)
+CPL Real · CRM
+
+vs R$ 115,22 plataforma
+
+R$ 77,45
+
+Investimento
+
+R$ 13.941,11
+
+CRM × Meta
+
+Campanha → Conjunto → Anúncio
+Campanha / Conjunto / Anúncio	Leads	Visitas	Atend.	Vendas	Valor	Invest.	CPL	Conv%
+
+[IN] [P] [FORM] - ESCALA DE MENSAGENS (FASE 1)
+193	5	168	—	—	R$ 8.264,98	R$ 42,82	0%
+
+[IN] [P] [FORM] - Remarketing | Lookalike Compradores e Interesses
+116	1	105	—	—	R$ 9.782,20	R$ 84,33	0%
+
+[IN] [P] [FORM] - SEGMENTAÇÃO
+3	—	2	—	—	R$ 1.071,62	R$ 357,21	0%
+CRM
+
+Detalhamento dos Leads
+Buscar por nome, e-mail ou telefone…
+Etapa	Contato	Origem	Entrada	Valor
+Em Atendimento
+Manoel
+
+mfnm2008@hotmail.com
+
+Google
+20/06/26	—
+Em Atendimento
+EILANE LIMA NASCIMENTO
+
+lanelima2007@gmail.com
+
+Google
+20/06/26	—
+Em Atendimento
+MILTON PASSARO NOGUEIRA
+
+miltonpn1971@gmail.com
+
+Google
+17/06/26	—
+Em Atendimento
+Rafael
+
+rfnms.17@gmail.com
+
+Google
+17/06/26	—
+Em Atendimento
+MATHEUS CARRIJO
+
+mthcarrijo@gmail.com
+
+Google
+16/06/26	—
+Perdido
+josé Augusto assunção oliveira
+
+gutoassuncaooliveira@gmail.com
+
+Google
+16/06/26	—
+Em Atendimento
+Sara
+
+financeiro.vds@gmail.com
+
+Google
+15/06/26	—
+Em Atendimento
+Mylena Alessandrina
+
+alessandrinamylena@gmail.com
+
+Meta
+12/06/26	—
+Em Atendimento
+Eneas Portugal
+
+eneas.portugal@gmail.com
+
+Meta
+10/06/26	—
+Em Atendimento
+fernandoprthomsen e Karine.
+
+forthomsen@gmail.com
+
+Meta
+10/06/26	—
+Em Atendimento
+Tedi Biffi
+
+gutobiffi@icloud.com
+
+Meta
+09/06/26	—
+Em Atendimento
+Marcella
+
+cellaoliveira21@icloud.com
+
+Google
+08/06/26	—
+Em Atendimento
+Helio ferreira
+
+heliofs1982@hotmail.com
+
+Google
+07/06/26	—
+Em Atendimento
+Edina
+
+edina_duarte@hotmail.com
+
+Google
+06/06/26	—
+Em Atendimento
+Joseilson Pereira Araujo
+
+joseilsonp.a@gmail.com
+
+Google
+05/06/26	—
+
+1
+2
+3
+4
+5
+…
+35
+
+R$ 0,00

@@ -1,0 +1,48 @@
+node_modules/
+.next/
+dist/
+build/
+.turbo/
+*.log
+.env
+.env.local
+.env.*.local
+apps/*/.env
+apps/*/.env.*
+!.env.example
+!**/.env.example
+.DS_Store
+*.tsbuildinfo
+coverage/
+.git.legacy/
+Central (2).zip
+*.zip
+Symbius/
+apps/*/node_modules/
+apps/*/.next/
+packages/*/node_modules/
+
+# Local / IDE / junk
+.cursor/
+_tmp_npm/
+_css_recon/
+archive/
+beefree-sdk-docs-main/
+atrako-web.tar
+*.tgz
+
+# Heavy generated (regenerate with prisma generate / db:generate)
+apps/atrako/lib/generated/
+apps/*/lib/generated/
+**/query_engine*
+**/*.node.tmp*
+
+# Oversized artifacts (GitHub 100MB limit)
+**/*.tar.gz
+**/deploy-artifact.tar.gz
+apps/commerce/Produtos/
+apps/commerce/deploy-artifact.tar.gz
+
+# Local IDE / Replit tooling (can contain false-positive secret patterns)
+**/.config/replit/
+**/.semgrep/

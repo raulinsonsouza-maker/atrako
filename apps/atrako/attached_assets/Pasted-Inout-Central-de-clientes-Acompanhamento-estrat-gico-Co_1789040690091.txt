@@ -1,0 +1,95 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Conta Hotel
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+Analista IA
+
+
+Mês atual: 01 de set. de 2026 a 10 de set. de 2026
+Hotel intelligence
+
+Conversas
+
+Dados do período selecionado
+
+Análise de desempenho
+
+Atualizada 10 de set.
+
+
+
+Análise · Meta
+
+Atualizada 10 de set.
+
+
+
+Análise · Campanhas
+
+Atualizada 09 de set.
+
+
+Análise de desempenho
+
+Evidência antes de opinião
+
+Sessão persistente
+Você
+08:40
+Como foi o desempenho de ontem?
+Analista
+08:40
+Leitura executiva
+•
+Em 09/09/2026, a Conta Hotel investiu R$ 1.704,47 em mídia paga, sem gerar vendas atribuídas.
+•
+O investimento gerou tráfego e 38 leads, mas nenhuma conversão em vendas.
+O que os dados indicam
+•
+O custo por lead foi de R$ 44,85, sem resultados de vendas, resultando em ROAS e CPA não calculáveis.
+•
+Não há dados anteriores para comparação, pois não houve investimento nem resultados em 09/08/2026.
+Próximos passos
+•
+Confirmar a correta atribuição das vendas no tracking para garantir dados precisos.
+•
+Monitorar a taxa de conversão de leads para vendas, buscando pelo menos uma conversão no próximo período para validar o funil.
+Visão geral de mídia · 09 de set.—09 de set.
+1 fonte consultada
+2614 tokens
+Você
+08:44
+Analise os principais sinais e recomende próximos passos sobre performance de campanhas.
+Analista
+08:44
+Leitura executiva
+•
+A conta gerou 22 vendas entre 01 e 10/09/2026, com investimento de R$ 8.161,28 e ROAS geral de 13,87.
+•
+A campanha de remarketing "VOLTEI10" teve 11 vendas, ROAS de 37,96 e CPA de R$ 151,66, destacando alta eficiência.
+O que os dados indicam
+•
+Campanhas não remarketing "SETEMBRO ITALIANO" e "DIAS DA SEMANA" geraram 1 e 5 vendas, com ROAS de 21,21 e 14,20, mas CPA mais alto (R$ 263,73 e R$ 328,68).
+•
+O custo médio por venda foi R$ 370,97, indicando custo relevante para aquisição.
+Próximos passos
+•
+Testar aumento controlado de verba nas campanhas não remarketing com ROAS acima de 14 para avaliar escalabilidade.
+•
+Monitorar conversão de leads em vendas, focando em campanhas com CPL próximo da média, para reduzir CPA.
+Performance de campanhas Meta · 01 de set.—10 de set.
+Visão geral de mídia · 01 de set.—10 de set.
+2 fontes consultadas
+5568 tokens
+Pergunte sobre receita, campanhas, CRM ou eficiência…
+
+
+Enter envia · Shift + Enter quebra linha · análise limitada ao período e canal selecionados
+
+R$ 0k

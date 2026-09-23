@@ -1,0 +1,247 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Incorporadora
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+CRM
+
+
+Mês atual: 01 de jun. de 2026 a 18 de jun. de 2026
+CRM
+
+Funil & Leads
+Leads no período
+
+19
+
+Fechamentos
+
+0
+
+Taxa de fechamento
+
+0.0%
+
+19
+
+leads
+
+Atendimento
+16
+84%
+Perdidos
+3
+16%
+Atendimento
+
+16 leads · 84%
+Em Atendimento
+
+84%
+16
+Perdidos
+
+3 leads · 16%
+Perdido
+
+16%
+3
+CRM
+
+Análise de Origem
+Meta
+
+6
+
+Leads
+
+
+5
+
+Atendimento
+
+
+—
+
+Visitas
+
+
+—
+
+Vendas
+
+1 perdidos (17%)
+Investimento
+
+R$ 4.060,11
+
+CPL real · CRM
+
+R$ 676,69
+
+CPL plataforma
+
+R$ 507,51
+
+Google
+Qualif. 2.0
+
+13
+
+Leads
+
+
+11
+
+Atendimento
+
+
+—
+
+Visitas
+
+
+—
+
+Vendas
+
+2 perdidos (15%)
+Investimento
+
+R$ 2.005,02
+
+CPL real · CRM
+
+R$ 154,23
+
+CPL plataforma
+
+R$ 167,09
+
+CRM × Meta
+
+Campanha → Conjunto → Anúncio
+Nenhum lead com rastreamento de campanha Meta no período selecionado.
+
+Os IDs de campanha são gravados no momento da entrada do lead via formulário Meta. Tente um período mais amplo.
+
+CRM
+
+Detalhamento dos Leads
+Buscar por nome, e-mail ou telefone…
+Etapa	Contato	Origem	Entrada	Valor
+Em Atendimento
+MILTON PASSARO NOGUEIRA
+
+miltonpn1971@gmail.com
+
+Google
+17/06/26	—
+Em Atendimento
+Rafael
+
+rfnms.17@gmail.com
+
+Google
+17/06/26	—
+Em Atendimento
+MATHEUS CARRIJO
+
+mthcarrijo@gmail.com
+
+Google
+16/06/26	—
+Perdido
+josé Augusto assunção oliveira
+
+gutoassuncaooliveira@gmail.com
+
+Google
+16/06/26	—
+Em Atendimento
+Sara
+
+financeiro.vds@gmail.com
+
+Google
+15/06/26	—
+Em Atendimento
+Mylena Alessandrina
+
+alessandrinamylena@gmail.com
+
+Meta
+12/06/26	—
+Em Atendimento
+Eneas Portugal
+
+eneas.portugal@gmail.com
+
+Meta
+10/06/26	—
+Em Atendimento
+fernandoprthomsen e Karine.
+
+forthomsen@gmail.com
+
+Meta
+10/06/26	—
+Em Atendimento
+Tedi Biffi
+
+gutobiffi@icloud.com
+
+Meta
+09/06/26	—
+Em Atendimento
+Marcella
+
+cellaoliveira21@icloud.com
+
+Google
+08/06/26	—
+Em Atendimento
+Helio ferreira
+
+heliofs1982@hotmail.com
+
+Google
+07/06/26	—
+Em Atendimento
+Edina
+
+edina_duarte@hotmail.com
+
+Google
+06/06/26	—
+Em Atendimento
+Joseilson Pereira Araujo
+
+joseilsonp.a@gmail.com
+
+Google
+05/06/26	—
+Em Atendimento
+Paula Machado Oliveira Balestrini
+
+paula94oliveira@gmail.com
+
+Google
+05/06/26	—
+Em Atendimento
+DAYANA LUSTOSA DA SILVA BRASIL
+
+dayanalustosa@gmail.com
+
+Google
+05/06/26	—
+
+1
+2
+
+3

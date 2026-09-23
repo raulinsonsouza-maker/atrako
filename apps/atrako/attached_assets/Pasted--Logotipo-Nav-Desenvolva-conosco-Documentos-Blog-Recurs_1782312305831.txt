@@ -1,0 +1,117 @@
+
+Logotipo Nav
+Desenvolva conosco
+Documentos
+Blog
+Recursos
+Centrais para desenvolvedores
+Meus apps
+Documentação
+Visão geral
+Autorização do Oauth
+Esta página foi traduzida do inglês para outro idioma usando IA. O conteúdo traduzido por IA pode conter erros, omissões ou divergências de sentido. Como a tradução automática pode ser imprecisa ou pouco clara, consulte o conteúdo original em inglês desta página para validar as orientações corretas.
+Isso foi útil?
+Autorização do Oauth
+Updated: 17 de jul de 2025
+Esse ponto de extremidade retorna a janela de autorização que os usuários do app utilizam para autenticar a própria identidade e conceder ao seu app permissões e tokens de acesso do usuário do Instagram.
+Criação
+Esta operação não é compatível.
+Leitura
+GET /oauth/authorize
+Obtenha a janela de autorização.
+Requisitos
+Nenhum.
+Sintaxe da solicitação
+GET https://api.instagram.com/oauth/authorize
+  ?client_id=<APP_ID>,
+  &redirect_uri=<REDIRECT_URI>,
+  &response_type=code,
+  &scope=<PERMISSIONS_APP_NEEDS>
+Parâmetros da string de consulta
+Amplie a solicitação com os parâmetros de consulta a seguir.
+Chave	Exemplo de valor	Descrição
+client_id
+Obrigatório.
+String numérica
+990602627938098
+ID do app do Instagram exibido no Painel de Apps da Meta
+redirect_uri
+Obrigatório.
+String
+https://socialsizzle.herokuapp.com/auth/
+Um URI para onde redirecionaremos os usuários após a identificação. Isso deve corresponder exatamente a um dos URIs de base na sua lista de URIs OAuth válidos. Tenha em mente que o Painel de Apps pode adicionar uma barra à direita no final dos seus URIs. Por isso, é recomendado consultar a lista para fins de verificação.
+response_type
+Obrigatório.
+String
+code
+Configure esse valor para code.
+scope
+Obrigatório.
+Lista separada por vírgulas
+instagram_basic ou instagram_business_basic
+Uma lista separada por vírgulas ou uma lista separada por espaços em formato URL das permissões a serem solicitadas do usuário do app. O instagram_basic ou o instagram_business_basic é obrigatório.
+state
+String
+1
+Um valor opcional que indica um estado específico do servidor. Por exemplo, use isso para se proteger de problemas relacionados a CSRF. Incluiremos esse parâmetro e o valor correspondente ao redirecionar o usuário de volta para você.
+Resposta
+A janela de autorização que será exibida ao usuário do app. Depois que o usuário fizer a autenticação, a janela redirecionará para o redirect_uri e incluirá um código de autenticação, que poderá ser trocado por um token de acesso do usuário do Instagram de curta duração.
+Observe que #_ é anexado ao final do URI de redirecionamento, mas não faz parte do código. Por isso, exclua-o antes de fazer a troca por um token de curta duração.
+Exemplo de HTTP
+https://api.instagram.com/oauth/authorize
+  ?client_id=990602627938098
+  &redirect_uri=https://socialsizzle.herokuapp.com/auth/
+  &scope=instagram_business_basic
+  &response_type=code
+Autorização bem-sucedida
+Se a autenticação for bem-sucedida, a janela de autorização redirecionará o usuário até seu redirect_uri e incluirá um código de autorização. Capture o código para você possa trocá-lo por um token de acesso de curta duração.
+Os códigos são válidos por 1 hora e só podem ser usados uma vez.
+Exemplo de redirecionamento de autorização bem-sucedida
+https://socialsizzle.herokuapp.com/auth?code=AQBx-hBsH3...
+Autorização cancelada
+Caso o usuário cancele o fluxo de autorização, ele será redirecionado para seu redirect_uri, e os seguintes parâmetros de erro serão anexados. Em caso de falha, é sua responsabilidade reconhecer o erro e exibir uma mensagem adequada para os usuários.
+Parâmetro	Valor
+error
+access_denied
+error_reason
+user_denied
+error_description
+The+user+denied+your+request
+Exemplo de redirecionamento de autenticação cancelada
+https://socialsizzle.herokuapp.com/auth/
+  ?error=access_denied
+  &error_reason=user_denied
+  &error_description=The+user+denied+your+request
+Atualização
+Esta operação não é compatível.
+Exclusão
+Esta operação não é compatível.
+Você achou esta página útil?
+Ícone de polegar para cima
+Ícone de polegar para baixo
+Meta
+FacebookInstagramXLinkedInYouTube
+Desenvolva com a Meta
+IA
+Meta Horizon
+Tecnologias sociais
+Notícias
+Meta for Developers
+Blog
+Casos de sucesso
+Suporte
+Suporte ao desenvolvedor
+Ferramenta de bug
+Status da plataforma
+Fórum da Comunidade de Desenvolvedores
+Relatar um incidente
+Quem somos
+Sobre
+Carreiras
+Termos e políticas
+Iniciativas de plataforma responsável
+Termos da plataforma
+Políticas do Desenvolvedor
+Política de Privacidade
+Cookies
+Português (Brasil)

@@ -1,0 +1,318 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "CRM API",
+    "version": "1.0.0",
+    "description": "API REST para integração com o sistema CRM"
+  },
+  "servers": [
+    {
+      "url": "https://seu-dominio.com",
+      "description": "Servidor de produção"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Servidor de desenvolvimento"
+    }
+  ],
+  "paths": {
+    "/api/webhooks/leads": {
+      "post": {
+        "summary": "Criar lead via webhook",
+        "description": "Cria um novo lead no sistema. Requer API Key para autenticação.",
+        "tags": ["Leads"],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email"],
+                "properties": {
+                  "apiKey": {
+                    "type": "string",
+                    "description": "API Key (alternativa ao header X-Api-Key)"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Nome do lead",
+                    "example": "João Silva"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "E-mail do lead",
+                    "example": "joao@exemplo.com"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "description": "Telefone do lead (apenas números)",
+                    "example": "11999999999"
+                  },
+                  "origin": {
+                    "type": "string",
+                    "enum": ["META", "GOOGLE", "WHATSAPP", "MANUAL", "OUTROS"],
+                    "description": "Origem do lead"
+                  },
+                  "campaign": {
+                    "type": "string",
+                    "description": "Nome da campanha",
+                    "example": "black-friday"
+                  },
+                  "ad": {
+                    "type": "string",
+                    "description": "Nome do anúncio",
+                    "example": "anuncio-1"
+                  },
+                  "utm_source": {
+                    "type": "string",
+                    "description": "Parâmetro UTM source"
+                  },
+                  "utm_medium": {
+                    "type": "string",
+                    "description": "Parâmetro UTM medium"
+                  },
+                  "utm_campaign": {
+                    "type": "string",
+                    "description": "Parâmetro UTM campaign"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Lead criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "phone": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": ["META", "GOOGLE", "WHATSAPP", "MANUAL", "OUTROS"]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": ["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "NEGOTIATION", "WON", "LOST"]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "name obrigatório"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado - API Key inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "ApiKey inválido"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/webhooks/whatsapp": {
+      "post": {
+        "summary": "Webhook WhatsApp (Evolution API)",
+        "description": "Recebe mensagens do WhatsApp via Evolution API",
+        "tags": ["WhatsApp"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "instance": {
+                    "type": "string",
+                    "description": "Nome da instância Evolution API"
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "object",
+                        "properties": {
+                          "remoteJid": {
+                            "type": "string",
+                            "example": "5511999999999@s.whatsapp.net"
+                          }
+                        }
+                      },
+                      "message": {
+                        "type": "object",
+                        "properties": {
+                          "conversation": {
+                            "type": "string",
+                            "description": "Texto da mensagem"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mensagem processada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/invites/accept": {
+      "post": {
+        "summary": "Aceitar convite",
+        "description": "Aceita um convite e cria conta de usuário",
+        "tags": ["Usuários"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["token", "name", "password"],
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "description": "Token do convite"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Nome do usuário"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "minLength": 8,
+                    "description": "Senha (mínimo 8 caracteres)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Convite aceito com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Api-Key",
+        "description": "API Key para autenticação de webhooks. Configure em Configurações > Webhooks e Automações."
+      },
+      "SessionAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Autenticação via sessão (cookies). Faça login em /api/auth/login primeiro."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Leads",
+      "description": "Endpoints relacionados a leads"
+    },
+    {
+      "name": "WhatsApp",
+      "description": "Endpoints relacionados ao WhatsApp"
+    },
+    {
+      "name": "Usuários",
+      "description": "Endpoints relacionados a usuários"
+    }
+  ]
+}

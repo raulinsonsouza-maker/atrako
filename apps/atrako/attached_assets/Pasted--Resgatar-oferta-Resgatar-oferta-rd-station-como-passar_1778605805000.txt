@@ -1,0 +1,2948 @@
+
+
+
+
+Resgatar oferta
+
+
+
+
+Resgatar oferta
+rd station como passar utm correta de camapanha criativo para cadastrar no rd
+
+Para o RD Station Marketing captar corretamente as UTMs da campanha, conjunto e criativo (Meta Ads ou Google Ads), você precisa garantir 2 coisas:
+
+Os parâmetros UTM na URL do anúncio
+
+O formulário/landing page integrado corretamente ao RD
+
+Padrão recomendado de UTM
+Meta Ads
+Use este modelo na URL do anúncio:
+
+https://seudominio.com.br/pagina?utm_source=facebook&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}&utm_term={{adset.name}}
+O que cada campo salva no RD
+UTM	O que vai aparecer
+utm_source	facebook
+utm_medium	paid_social
+utm_campaign	nome da campanha
+utm_content	nome do criativo/anúncio
+utm_term	nome do conjunto
+Tokens dinâmicos da Meta
+A Meta for Developers permite usar parâmetros dinâmicos:
+
+Token	Retorna
+{{campaign.name}}	Nome da campanha
+{{adset.name}}	Nome do conjunto
+{{ad.name}}	Nome do anúncio/criativo
+{{placement}}	Posicionamento
+{{site_source_name}}	facebook / instagram
+Modelo mais profissional (recomendado)
+https://seudominio.com.br/?utm_source={{site_source_name}}&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_term={{adset.name}}&utm_content={{ad.name}}
+Assim o RD vai registrar:
+
+facebook ou instagram
+
+campanha
+
+conjunto
+
+criativo exato
+
+Google Ads
+No Google Ads o ideal é:
+
+?utm_source=google&utm_medium=cpc&utm_campaign={campaignid}&utm_content={creative}&utm_term={keyword}
+Ou usando nomes:
+
+?utm_source=google&utm_medium=cpc&utm_campaign={campaignname}&utm_content={creative}&utm_term={keyword}
+Como visualizar no RD
+No lead do RD:
+
+Primeira conversão
+
+Última conversão
+
+Origem
+
+Campanha
+
+Conteúdo do anúncio
+
+As UTMs aparecem automaticamente se:
+
+✅ O lead converter na mesma sessão
+✅ O formulário do RD estiver instalado corretamente
+✅ Não houver redirecionamento removendo parâmetros
+
+Muito importante no RD
+Se usar:
+
+Elementor
+
+Formulário próprio
+
+API
+
+WhatsApp
+
+Webhook
+
+Você precisa enviar manualmente os UTMs escondidos (hidden fields).
+
+Campos hidden comuns:
+
+utm_source
+utm_medium
+utm_campaign
+utm_content
+utm_term
+Script para capturar UTM automaticamente
+Exemplo:
+
+const urlParams = new URLSearchParams(window.location.search);
+
+document.querySelector('[name="utm_source"]').value = urlParams.get('utm_source') || '';
+document.querySelector('[name="utm_medium"]').value = urlParams.get('utm_medium') || '';
+document.querySelector('[name="utm_campaign"]').value = urlParams.get('utm_campaign') || '';
+document.querySelector('[name="utm_content"]').value = urlParams.get('utm_content') || '';
+document.querySelector('[name="utm_term"]').value = urlParams.get('utm_term') || '';
+Estrutura que recomendo para gestão de tráfego
+Meta
+utm_source=facebook
+utm_medium=paid_social
+utm_campaign=nome_campanha
+utm_term=nome_conjunto
+utm_content=nome_criativo
+Google
+utm_source=google
+utm_medium=cpc
+utm_campaign=nome_campanha
+utm_term=palavra_chave
+utm_content=criativo
+Melhor prática para organização
+Padronize os nomes:
+
+Campanha
+[IN] [LEADS] [IMOB] Habitare
+Conjunto
+Interesses Engenharia
+Criativo
+Video_Render_01
+Assim no RD você consegue identificar exatamente:
+
+campanha vencedora
+
+público
+
+criativo
+
+origem do lead
+
+Documentação oficial:
+
+Documentação RD Station UTM Tracking
+
+Meta URL Parameters Docs
+
+Google Ads ValueTrack Parameters
+
+
+api meta graph o que eu consigo trazer de informações de leads converrtidos em form nativo meta
+
+Com a API da Meta Graph API você consegue puxar praticamente todos os dados dos leads gerados em formulários nativos do Meta Lead Ads.
+
+A API usada é a:
+
+Marketing API - Lead Ads
+
+O que você consegue trazer
+Dados do Lead
+Endpoint:
+
+/{lead-id}
+Exemplo de retorno:
+
+{
+  "id": "123456789",
+  "created_time": "2026-05-11T12:00:00+0000",
+  "ad_id": "111111111",
+  "adgroup_id": "222222222",
+  "campaign_id": "333333333",
+  "form_id": "444444444",
+  "platform": "facebook",
+  "field_data": [
+    {
+      "name": "full_name",
+      "values": ["João Silva"]
+    },
+    {
+      "name": "email",
+      "values": ["joao@email.com"]
+    },
+    {
+      "name": "phone_number",
+      "values": ["11999999999"]
+    }
+  ]
+}
+Informações disponíveis
+Dados pessoais preenchidos
+Você consegue:
+
+Nome
+
+Email
+
+Telefone
+
+Cidade
+
+Estado
+
+País
+
+Empresa
+
+Cargo
+
+CEP
+
+Perguntas personalizadas do formulário
+
+Tudo depende do que existe no formulário.
+
+Dados da campanha
+Você consegue identificar:
+
+Campo	Informação
+campaign_id	campanha
+adgroup_id	conjunto
+ad_id	anúncio/criativo
+form_id	formulário
+created_time	data do lead
+platform	facebook ou instagram
+Depois você pode consultar:
+
+/{campaign-id}
+/{adset-id}
+/{ad-id}
+para trazer:
+
+nome da campanha
+
+nome do conjunto
+
+nome do criativo
+
+Você NÃO recebe automaticamente
+A Meta NÃO envia:
+
+UTM automaticamente
+
+gclid
+
+fbclid completo estruturado
+
+sessão do site
+
+página visitada
+
+comportamento do usuário
+
+Porque o lead foi gerado dentro do Facebook/Instagram.
+
+O que normalmente as empresas fazem
+Fluxo ideal
+Lead entra no formulário Meta
+
+Webhook dispara
+
+Sua API recebe:
+
+dados do lead
+
+ids da campanha
+
+criativo
+
+Sua plataforma consulta:
+
+nome da campanha
+
+nome do anúncio
+
+Salva no CRM/RD/ERP
+
+Webhook em tempo real
+A melhor forma é:
+
+Webhooks da Meta
+Meta Webhooks Docs
+
+Você recebe instantaneamente:
+
+{
+  "entry": [
+    {
+      "changes": [
+        {
+          "field": "leadgen",
+          "value": {
+            "leadgen_id": "123",
+            "form_id": "456",
+            "ad_id": "789",
+            "created_time": 1710000000
+          }
+        }
+      ]
+    }
+  ]
+}
+Depois consulta:
+
+/123?fields=field_data,ad_id,campaign_id,adgroup_id
+Dá para identificar criativo?
+Sim.
+
+Você consegue:
+
+Informação	Possível?
+campanha	✅
+conjunto	✅
+anúncio/criativo	✅
+formulário	✅
+página	✅
+instagram/facebook	✅
+Dá para puxar imagem/vídeo do anúncio?
+Sim.
+
+Consultando o anúncio:
+
+/{ad-id}?fields=name,creative
+Depois:
+
+/{creative-id}
+Você consegue:
+
+imagem
+
+thumbnail
+
+texto
+
+headline
+
+CTA
+
+vídeo
+
+Dá para saber qual posicionamento converteu?
+Parcialmente.
+
+Você consegue:
+
+facebook
+
+instagram
+
+messenger
+
+Mas não recebe granularidade completa do placement no lead.
+
+Para isso normalmente cruza:
+
+Insights API
+
+Ads API
+
+O que é muito usado em CRM
+As empresas normalmente salvam:
+
+lead_id
+nome
+telefone
+email
+campaign_id
+campaign_name
+adset_id
+adset_name
+ad_id
+ad_name
+form_name
+created_time
+platform
+Permissões necessárias
+Seu app precisa:
+
+Permissão	Necessária
+leads_retrieval	✅
+pages_manage_ads	✅
+pages_read_engagement	✅
+ads_management	opcional
+Limitações importantes
+Expiração
+Leads podem expirar dependendo da política da Meta.
+
+Token
+Precisa:
+
+Page Access Token
+ou
+
+System User Token
+
+Revisão da Meta
+Para produção real normalmente precisa:
+
+App Review
+
+Business Verification
+
+O que você consegue montar
+Com isso você pode criar:
+
+integração RD Station
+
+CRM próprio
+
+automação WhatsApp
+
+distribuição de leads
+
+dashboards
+
+BI de campanhas
+
+qualificação automática
+
+webhook em tempo real
+
+envio para vendedores
+
+scoring
+
+Documentação oficial
+Meta Lead Ads API
+
+Meta Webhooks
+
+Meta Marketing API
+
+
+onde eu vejo essas permissões?
+
+Você vê e configura essas permissões dentro do Meta for Developers no seu App.
+
+Caminho completo
+1. Acesse seu App
+Entre em:
+
+Meta for Developers Dashboard
+
+Selecione o aplicativo.
+
+2. Vá em App Review → Permissions and Features
+Menu lateral:
+
+App Review
+→ Permissions and Features
+Ali aparecem todas as permissões disponíveis.
+
+Principais permissões para Lead Ads
+Permissão	Função
+leads_retrieval	Ler leads dos formulários
+pages_manage_ads	Gerenciar anúncios da página
+pages_read_engagement	Ler dados da página
+ads_management	Ler campanhas/anúncios
+business_management	Alguns cenários de BM
+Como saber se já tem acesso
+Na lista vai aparecer:
+
+Standard Access
+
+Advanced Access
+
+Exemplo:
+
+leads_retrieval
+Status: Advanced Access Approved
+ou
+
+Available for Request
+Onde solicitar permissão
+Na própria linha da permissão:
+
+Request Advanced Access
+Muito importante para Lead Ads
+A permissão crítica é:
+
+leads_retrieval
+Sem ela você NÃO consegue:
+
+puxar leads
+
+usar webhook de lead
+
+consultar formulário
+
+Como testar rapidamente
+Use o:
+
+Graph API Explorer
+
+Teste:
+
+/me/accounts
+Depois pegue o Page Token.
+
+Como ver permissões do token
+Use:
+
+/debug_token?input_token=SEU_TOKEN
+ou:
+
+Access Token Debugger
+
+Ali mostra:
+
+permissões ativas
+
+expiração
+
+app associado
+
+tipo do token
+
+Para produção real você precisa
+1. Business Verification
+No:
+
+Meta Business Settings
+
+2. App Review aprovado
+Principalmente:
+
+leads_retrieval
+
+Onde configurar webhook de leads
+Dentro do App:
+
+Products
+→ Webhooks
+→ Page
+→ leadgen
+Fluxo correto normalmente
+App Meta
+↓
+
+Permissões aprovadas
+↓
+
+Webhook configurado
+↓
+
+Página conectada
+↓
+
+Token válido
+↓
+
+Recebe leads em tempo real
+Dica importante
+Mesmo com a permissão aprovada:
+
+Você também precisa a página conceder acesso ao app.
+
+Na página Facebook:
+
+Configurações da Página
+→ Integrações comerciais
+ou
+
+Lead Access Manager
+Ferramenta MUITO importante
+Lead Access Manager
+Meta Lead Access Manager
+
+Ali você define:
+
+quem pode acessar leads
+
+quais CRMs/apps têm acesso
+
+páginas autorizadas
+
+Sem isso a API pode retornar vazio mesmo com token válido.
+
+
+d3d3eedf-06cf-49af-ab3a-230a13ec8ffc.png
+onde?
+
+Você está em Configurações do app > Avançado.
+As permissões não ficam aí.
+
+No seu menu lateral esquerdo, faça assim:
+
+Casos de uso
+→ API de Marketing
+Se ainda não adicionou:
+
+Adicionar produto
+→ Marketing API
+Depois vá em:
+
+Ações necessárias
+ou
+
+App Review
+→ Permissões e recursos
+Dependendo da versão do painel da Meta, o nome muda.
+
+No layout novo da Meta
+Hoje geralmente fica em:
+
+Casos de uso
+→ Personalizar
+→ Permissões
+ou:
+
+Ações necessárias
+O que você deve procurar
+Procure estas permissões:
+
+leads_retrieval
+pages_manage_ads
+pages_read_engagement
+ads_management
+Se não aparecer nada
+Provavelmente seu app ainda NÃO possui:
+
+Caso de uso "Marketing API"
+
+Então faça:
+
+1. Clique em “Casos de uso”
+(menu esquerdo)
+
+2. Adicione:
+API de Marketing
+Depois disso vai liberar
+Permissões
+
+Tokens
+
+Webhooks
+
+Lead Ads API
+
+Para Lead Ads especificamente
+Você também precisa adicionar:
+
+Webhooks
+em:
+
+Adicionar produto
+→ Webhooks
+O caminho mais importante para você agora
+Faça exatamente:
+
+Casos de uso
+→ API de Marketing
+→ Configurar
+Depois a Meta já começa a pedir:
+
+permissões
+
+acesso avançado
+
+business verification
+
+Outro detalhe importante
+Seu app está como:
+
+Não publicado
+(vi no canto esquerdo da imagem)
+
+Isso é normal para desenvolvimento.
+Mas para produção e clientes reais depois precisará:
+
+Publicar app
+após aprovação das permissões.
+
+
+veja
+Meus apps
+Ações necessárias
+Documentos
+Ferramentas
+Suporte
+Entrada da pesquisa
+​
+Pesquisar...
+Facebook
+Casos de uso
+Personalizar
+Personalizar caso de uso
+Personalize as configurações e permissões de casos de uso para que seu app funcione do jeito que você quer.
+Alterar caso de uso
+​
+Capturar e gerenciar leads de anúncios
+​
+Permissões e recursos
+Chamadas da API
+​
+Status
+Ação
+Business Asset User Profile Access
+O recurso Acesso ao perfil do usuário de ativo comercial permite que o aplicativo leia os Campos do usuário de usuários que interagem com seus ativos comerciais como ID, ids_for_business, nome e foto.
+…
+Descrição completa
+Encontrado em 3 casos de uso
+
+
+Marketing API Access Tier
+O recurso Nível de acesso à API de Marketing permite que seu app acesse maiores limitações de volume, gerenciamento ilimitado de contas de anúncios, maiores limitações de usuários do sistema e a API do Gerenciador de Negócios.
+…
+Descrição completa
+Encontrado em 3 casos de uso
+4.5 mil
+Acesso limitado
+ads_management
+Com a permissão ads_management , seu aplicativo pode ler e gerenciar a conta de anúncios que possui ou à qual teve ou que tenha recebido acesso pelo proprietário da conta de anúncios.
+…
+Descrição completa
+Encontrado em 3 casos de uso
+7.7 mil
+Pronto para teste
+ads_read
+Com a permissão ads_read , seu aplicativo pode acessar a API de Informações de Anúncios a fim de extrair informações de relatórios de anúncios de contas de anúncios que você possui ou para as quais tenha recebido acesso pelo proprietário ou proprietários de outras contas de anúncios por meio dessa permissão. Essas permissões também concedem ao seu aplicativo acesso à API do lado do servidor para que os anunciantes possam enviar eventos da web dos seus respectivos servidores diretamente para o Facebook.
+…
+Descrição completa
+Encontrado em 3 casos de uso
+7.7 mil
+Pronto para teste
+business_management
+Com a permissão business_management , seu aplicativo pode ler e escrever com a API do Gerenciador de Negócios.
+…
+Descrição completa
+Encontrado em 3 casos de uso
+5.8 mil
+Pronto para teste
+email
+A permissão email possibilita que o aplicativo leia o endereço de email principal de uma pessoa.
+…
+Descrição completa
+Encontrado em 4 casos de uso
+
+
+leads_retrieval
+Com a permissão leads_retrieval , seu aplicativo pode recuperar e ler todas as informações capturadas por um formulário de anúncio de cadastro associado a um anúncio criado no Gerenciador de Anúncios ou na API de Marketing.
+…
+Descrição completa
+10
+Pronto para teste
+pages_manage_ads
+Com a permissão pages_manage_ads , seu aplicativo pode gerenciar anúncios associados à Página.
+…
+Descrição completa
+Encontrado em 2 casos de uso
+0
+Pronto para teste
+pages_manage_metadata
+Com a permissão pages_manage_metadata , seu aplicativo pode inscrever e receber webhooks sobre atividade na Página, bem como atualizar configurações nela.
+…
+Descrição completa
+
+
+pages_read_engagement
+Com a permissão pages_read_engagement , seu aplicativo pode ler conteúdo (publicações, fotos, vídeos e eventos) publicados pela Página, ler dados de seguidores (incluindo nome e PSID) e foto do perfil, bem como ler metadados e outras informações sobre a Página.
+…
+Descrição completa
+Encontrado em 3 casos de uso
+36
+Pronto para teste
+pages_show_list
+Com a permissão pages_show_list , o aplicativo pode acessar a lista de Páginas que uma pessoa gerencia.
+…
+Descrição completa
+Encontrado em 3 casos de uso
+1
+Pronto para teste
+public_profile
+A permissão public_profile possibilita que um app leia os Campos de Perfil Público Padrão no nó do Usuário . Essa permissão é concedida automaticamente a todos os apps.
+…
+Descrição completa
+Encontrado em 5 casos de uso
+1
+Pronto para teste
+
+Perfeito. Seu app já está praticamente configurado corretamente.
+O principal aqui é entender o status de cada permissão.
+
+O que significa “Pronto para teste”
+Quando aparece:
+
+Pronto para teste
+significa:
+
+✅ A permissão já está habilitada no modo desenvolvimento
+✅ Você já pode testar na sua própria conta/página
+❌ Ainda NÃO está aprovada para produção pública
+
+O mais importante: você JÁ tem o leads_retrieval
+Vi aqui:
+
+leads_retrieval
+→ Pronto para teste
+Isso significa que você já consegue:
+
+puxar leads
+
+testar webhook
+
+integrar CRM
+
+usar Graph API
+
+DESDE QUE:
+
+você seja admin da página
+
+o app esteja vinculado
+
+o token tenha a permissão
+
+Próximo passo agora
+Gerar token correto
+Vá em:
+
+Graph API Explorer
+
+Configure assim
+1. Selecione seu app
+No topo direito.
+
+2. Clique:
+Generate Access Token
+3. Marque estas permissões
+leads_retrieval
+pages_manage_ads
+pages_read_engagement
+pages_show_list
+ads_management
+business_management
+Depois teste
+Buscar páginas
+/me/accounts
+Se retornar suas páginas → OK.
+
+Depois pegue o Page Token
+Na resposta do /me/accounts vai aparecer:
+
+{
+  "access_token": "...",
+  "id": "PAGE_ID",
+  "name": "Minha Página"
+}
+Esse é o token importante.
+
+Agora teste Lead Ads
+Listar formulários
+/PAGE_ID/leadgen_forms
+Depois listar leads
+/FORM_ID/leads
+ou
+
+/LEAD_ID
+Se der erro de permissão
+Normalmente é porque falta:
+
+Lead Access Manager
+Acesse:
+
+Lead Access Manager
+
+E adicione:
+
+você
+
+seu app
+
+sua BM
+
+Para webhook em tempo real
+Agora você já pode configurar:
+
+Produtos
+→ Webhooks
+→ Página
+→ leadgen
+Seu app está em modo DEV
+Então atualmente:
+
+✅ Você consegue testar
+✅ Funciona nas páginas/admins do app
+❌ Não funciona publicamente ainda
+
+Para clientes reais depois:
+
+Business Verification
+
+Advanced Access
+
+Publicar App
+
+Resumo do seu cenário
+Item	Status
+leads_retrieval	✅ OK
+ads_management	✅ OK
+pages permissions	✅ OK
+Marketing API	✅ OK
+Pode testar Lead Ads	✅ SIM
+Pode usar webhook	✅ SIM
+Produção pública	⚠️ Ainda não
+
+o token está funcionando legal 
+
+Perfeito. Então você já está com a parte mais difícil pronta.
+Agora você consegue montar integração completa de Lead Ads.
+
+Próximos testes recomendados
+1. Validar páginas acessíveis
+Teste:
+
+/me/accounts
+Se retornar suas páginas com access_token, está correto.
+
+2. Listar formulários da página
+/PAGE_ID/leadgen_forms
+Vai retornar:
+
+nome do formulário
+
+id
+
+status
+
+3. Puxar leads do formulário
+/FORM_ID/leads
+4. Buscar detalhes completos do lead
+/LEAD_ID
+ou:
+
+/LEAD_ID?fields=field_data,ad_id,campaign_id,adgroup_id,created_time,form_id
+O que você vai conseguir salvar
+Dados do lead
+nome
+
+telefone
+
+email
+
+perguntas customizadas
+
+Dados da campanha
+campanha
+
+conjunto
+
+criativo
+
+formulário
+
+facebook/instagram
+
+O mais profissional agora
+Você provavelmente vai querer:
+
+Webhook em tempo real
+Porque sem webhook você precisa ficar consultando API.
+
+Fluxo ideal
+Meta envia lead
+↓
+
+Webhook recebe
+↓
+
+Sua API consulta lead completo
+↓
+
+Envia para:
+RD Station
+
+CRM
+
+WhatsApp
+
+Kommo
+
+PipeRun
+
+planilha
+
+vendedor
+
+Próxima configuração recomendada
+Adicionar Webhooks
+No app:
+
+Produtos
+→ Adicionar produto
+→ Webhooks
+Depois:
+
+Página
+→ leadgen
+Outra dica MUITO importante
+Troque depois o token temporário por:
+
+Long-Lived Token
+ou
+
+System User Token
+Porque o token do Explorer expira rápido.
+
+Melhor opção para produção
+System User Token
+Dentro do:
+
+Meta Business Settings
+
+Caminho:
+
+Usuários
+→ Usuários do sistema
+Esse token:
+
+não expira rápido
+
+serve para automação
+
+webhook
+
+CRM
+
+integrações SaaS
+
+Você já consegue criar agora
+✅ Integração RD
+✅ Distribuição automática de leads
+✅ CRM próprio
+✅ Dashboard
+✅ Automação WhatsApp
+✅ Captura de criativo/campanha
+✅ Webhook tempo real
+✅ BI de campanhas Meta
+
+Próxima etapa mais importante
+Eu recomendaria agora:
+
+Configurar webhook
+
+Criar endpoint
+
+Salvar lead + campanha + criativo
+
+Enviar para RD/API
+
+Porque aí sua estrutura fica profissional de verdade.
+
+
+onde eu faço esse teste?
+
+Você faz os testes no:
+
+Graph API Explorer
+
+Passo a passo
+1. Abra o Graph API Explorer
+Vai abrir uma tela com:
+
+método GET
+
+campo da URL da API
+
+botão “Enviar”
+
+2. Selecione seu app
+No canto superior direito.
+
+Escolha:
+
+Dash-Inout
+(seu app da imagem)
+
+3. Gerar token
+Clique:
+
+Generate Access Token
+4. Marque permissões
+Selecione:
+
+leads_retrieval
+ads_management
+pages_manage_ads
+pages_read_engagement
+pages_show_list
+business_management
+Clique em continuar.
+
+5. Primeiro teste
+No campo da API coloque:
+
+/me/accounts
+Clique em:
+
+Submit
+Resultado esperado
+Você verá algo assim:
+
+{
+  "data": [
+    {
+      "name": "Minha Página",
+      "id": "123456",
+      "access_token": "EAAB..."
+    }
+  ]
+}
+6. Testar formulários
+Copie o PAGE_ID.
+
+Depois teste:
+
+/PAGE_ID/leadgen_forms
+Exemplo:
+
+/123456789/leadgen_forms
+7. Testar leads
+Pegue o FORM_ID retornado.
+
+Depois:
+
+/FORM_ID/leads
+8. Ver lead completo
+Pegue um LEAD_ID.
+
+Teste:
+
+/LEAD_ID?fields=field_data,ad_id,campaign_id,adgroup_id,created_time
+Você vai começar a ver
+✅ Nome
+✅ Telefone
+✅ Email
+✅ Perguntas customizadas
+✅ Campaign ID
+✅ Ad ID
+✅ Adset ID
+
+Dica importante
+Se aparecer:
+
+Unsupported get request
+ou
+
+Permissions error
+Normalmente é:
+
+falta permissão no token
+
+página não vinculada
+
+Lead Access Manager não liberado
+
+Ferramenta alternativa melhor ainda
+Você também pode usar:
+
+Meta API Explorer Tool
+
+com:
+
+GET
+e trocar endpoints rapidamente.
+
+
+6890cac6-5682-4b80-9a1c-3412d6a032c7.png
+
+Perfeito, você já está no lugar certo.
+Agora faça exatamente isso na tela que você abriu:
+
+1. Clique em “Adicionar uma permissão”
+No canto direito inferior da imagem.
+
+2. Adicione estas permissões
+Procure e selecione:
+
+leads_retrieval
+pages_show_list
+pages_read_engagement
+pages_manage_ads
+ads_management
+business_management
+3. Depois clique
+Generate Access Token
+A Meta vai abrir popup de autorização.
+
+Aceite tudo.
+
+4. Agora teste primeiro endpoint
+No campo da URL troque:
+
+/me?fields=id,name
+por:
+
+/me/accounts
+Depois clique:
+
+Enviar
+Resultado esperado
+Você verá algo parecido:
+
+{
+  "data": [
+    {
+      "name": "Minha Página",
+      "id": "123456789",
+      "access_token": "EAAB..."
+    }
+  ]
+}
+5. Depois testar formulários
+Copie o ID da página.
+
+Troque a URL por:
+
+/PAGE_ID/leadgen_forms
+Exemplo:
+
+/123456789/leadgen_forms
+Clique em enviar.
+
+6. Depois testar leads
+Pegue um FORM_ID.
+
+Teste:
+
+/FORM_ID/leads
+7. Ver dados completos do lead
+Pegue um LEAD_ID.
+
+Teste:
+
+/LEAD_ID?fields=field_data,ad_id,campaign_id,adgroup_id,created_time
+Se não aparecer leads
+Faça um lead teste aqui:
+
+Meta Lead Ads Testing Tool
+
+Você consegue:
+
+selecionar página
+
+selecionar formulário
+
+gerar lead fake
+
+Aí a API já retorna dados.
+
+
+veja 
+Meus apps
+Ações necessárias
+Documentos
+Ferramentas
+Suporte
+Entrada da pesquisa
+​
+Pesquisar...
+Facebook
+Explorador da Graph API
+
+Favorites
+
+GET
+← graph.
+.facebook.com/
+
+v25.0
+/
+me/accounts
+Remover
+
+Enviar
+Edge: me/accounts
+
++
+Procure um campo
+{
+  "data": [
+    {
+      "access_token": "EAAVwjSbof3cBRdZBYUFv89nOX9clFTTtJ7XWMjIYGth7EoQi52PagAIZAZAMeLSQeFBPOBQJASm3RxZBIZA1dwtdTfyI3WOF3leOTzEvMO60yVk05dGJupy8duiqHRZBKeWh3isAkfLF6jwOG8kxNqLV7BMGix08ROoJ6ziza4FSXNKGRDvo97t2wjZB5X0yVMFZCCQ0wdNsU2SxMYkTptncUDAjGZCJyg6tT9xGgK4u71a0ZD",
+      "category": "Educação",
+      "category_list": [
+        {
+          "id": "2250",
+          "name": "Educação"
+        }
+      ],
+      "name": "Deivede Barros",
+      "id": "947139651825200",
+      "tasks": [
+        "MODERATE",
+        "MESSAGING",
+        "ANALYZE",
+        "ADVERTISE",
+        "CREATE_CONTENT"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRWyPtBFOhJcBhemtkyRE608cgn3nWVKrMjbZBuwxpA3DICZA1WfxPz9gwjSz7KM987IxQeHiIrX40FZBKTpl2v6xjhVTtxBUYTeydvFjtRWes8pBZCgUB6OxJskyM3LfqIU6Kbizm70bXvY95P3BdMpxxSZBIv1J3evwRFTRkdba6c4uE75Gp0Qcr7H5bN4Q4ZBikzgxWbia3cMFx7QtKadpaWZCbr45p0ZD",
+      "category": "Escola",
+      "category_list": [
+        {
+          "id": "2601",
+          "name": "Instituição de ensino"
+        }
+      ],
+      "name": "Academy Americana",
+      "id": "1045121138674171",
+      "tasks": [
+        "ADVERTISE",
+        "ANALYZE",
+        "CREATE_CONTENT",
+        "MESSAGING",
+        "MODERATE",
+        "VIEW_MONETIZATION_INSIGHTS",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRZARNhrUTZAtZAsIqOGhRJGiZAPsF6UJ2QZAmdP986Eka7Ix816SdROIEXLukJREv7QLHOlgwAXDmkRdVBytCrlPBZBmoGB5BhUoZAJJXtqrTU1OnBidjhIUDbfgDLJgDHE77472OmKfyBn2xAUTQFrn6tAuxMWGNvCOmnr6bLPTQRs7PEZCdoDRkuOZBQlmnQUW7Pwj9APDe5ve1GAnmKWYMsmiLO6h5TqQZD",
+      "category": "Imóvel",
+      "category_list": [
+        {
+          "id": "198327773511962",
+          "name": "Imóvel"
+        }
+      ],
+      "name": "Arboreto Mirante",
+      "id": "988247954365834",
+      "tasks": [
+        "ADVERTISE",
+        "ANALYZE",
+        "CREATE_CONTENT",
+        "MESSAGING",
+        "MODERATE",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRWfZAHdkvSVkrm8LO2pnFqCrLlOCCIr3ILCzEYNZCEsoesrq23Jx47ZCYBnjDsZCk4KTtkWMvLcsOzaXzKULpGY32lKHJ2nzQXk8ZBbx2QSCTeK42ZCH3LL7B2kAAlfM9hQozn4lBsPJkHcfLKEzXZBuXZBwiSUp3ZCSio7ChOOiuxm8FZC99pvdrW2c7eqVs0nwL0ZCAZC5OgbM4Dt95hb2frCtZAXNZBp8nAsnAZD",
+      "category": "Pousada",
+      "category_list": [
+        {
+          "id": "181803978524025",
+          "name": "Pousada"
+        }
+      ],
+      "name": "Pousada Tamara",
+      "id": "942985872222427",
+      "tasks": [
+        "ADVERTISE",
+        "ANALYZE",
+        "CREATE_CONTENT",
+        "MESSAGING",
+        "MODERATE",
+        "VIEW_MONETIZATION_INSIGHTS"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRfEcZBVZBnGZBTVH4zFbikM9V52yR0hCqy3aw7BaX6Pk7AKVhXTcyUn9epftZCZAZBrrbk397ZADS2qjdlrSbhGSWmZCxq2sbwQZCtnKTOAMsw2uLxDoXntqnMPz0Icln9jrEq3cVsIlj48ZBakbw5kLZB5HqC5jZBIfMkLo3DtSgGmtRZCGikKZAlgZBV9pWL6WF9LRI7EqFV80qonTZCm4n0kIo8OWJF9bSZAC4azYZD",
+      "category": "Pousada",
+      "category_list": [
+        {
+          "id": "181803978524025",
+          "name": "Pousada"
+        }
+      ],
+      "name": "Pousada Ilha Brazil",
+      "id": "859188910620059",
+      "tasks": [
+        "ADVERTISE",
+        "ANALYZE",
+        "CREATE_CONTENT",
+        "MESSAGING",
+        "MODERATE",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRc1ZAx8znxJBHKZCjv772ZCIgyJzhOxeVYxZCqAy9pm7ZBbEzNqt0etxSwO7smg8A3J2Bbjo04nVoocDSMlg056cBF3uUUSWjniSrcu8TWz2eQyzNhvlccfNqMn4aizJvPhjhbY5JZB17nS2gxfuaxjXvYQA1BWT48BPQdkv18ymyHig1FaAfgQ0DsrSwl6vfM5GbSgT2iW7YBpVCMVj2Ap0M5ZCKkEmpwZD",
+      "category": "Serviço financeiro",
+      "category_list": [
+        {
+          "id": "161516070564222",
+          "name": "Serviços financeiros"
+        }
+      ],
+      "name": "MepCred Soluções Financeiras",
+      "id": "652903971247338",
+      "tasks": [
+        "ADVERTISE",
+        "ANALYZE",
+        "CREATE_CONTENT",
+        "MESSAGING",
+        "MODERATE",
+        "MANAGE",
+        "MANAGE_LEADS",
+        "VIEW_MONETIZATION_INSIGHTS"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRZArpjbmimChDhKUR2Cr4PCQgcJgnnUTnL0BSZCBlEHAZAdbPqz3GE3ZC85Jxl5TrVIaSwn9Wl4mFMbydwXrDIICClJlphZAZBT3Qh76pwFSaD3fqz8FtP67uirvTeBiJPZB0ipgUyNWKBIxp4nnpFRFRqm491UtJsM3It5pkPsMSzmiYnJRBzFfkp0gZAXu5VfDIT7bnZBsjYXNudDUq7M0QvZCbqGDftHz8ZD",
+      "category": "Imobiliária",
+      "category_list": [
+        {
+          "id": "1695505857377984",
+          "name": "Imobiliária"
+        }
+      ],
+      "name": "Kairalla Imóveis ",
+      "id": "559431427259051",
+      "tasks": [
+        "MODERATE",
+        "MESSAGING",
+        "ANALYZE",
+        "ADVERTISE",
+        "CREATE_CONTENT",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRWWhSI05ZB5TeyvULYs1CQaw1dOXLdhpcawD3y8zpIaZCmcsxaVWZAM1LIxOs2O0O0VneiglXEkiDAWptStXqpRZBZCvZA7zzdPMZAxRc68qAtSOx0AIkLzTIZCxltgl7TJPJaQIhNOm6gMknrfYTZCUsPVCwFDMf72J17iogEXqJrVhNyfEpXXsIdA3si0YwKi4YQgLyijqxhAhtvZBACdydhaDT4tJoTxE0ZD",
+      "category": "Tutor/professor",
+      "category_list": [
+        {
+          "id": "145296352197250",
+          "name": "Tutor/Professor"
+        }
+      ],
+      "name": "Paragon Mentoria Agências",
+      "id": "615530824966485",
+      "tasks": [
+        "ADVERTISE",
+        "ANALYZE",
+        "CREATE_CONTENT",
+        "MESSAGING",
+        "MODERATE",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRZAO4f93lV0mLpy0XCbBYr9TqU1NskZAyLEodjW0o7BiZCqmZAISzvAaLAXulkxGBTFV9F5mYpNdFOdiUdmZClmcTcmfYYcN3bcmTiJHOSoBfOkBwleTvr6fcPgZB6rZAsQ1UqfG4a8W0qdy3gzZCwnMzqcmG6c5Q4ZCJ0BQQZCEn1w4YqF2zTBRiELNqbTzvbtkE7UrSPDiD2AQgSWAT1at2Sytfq6EM1uf0ZD",
+      "category": "Comercial e industrial",
+      "category_list": [
+        {
+          "id": "243290832429433",
+          "name": "Comercial e industrial"
+        }
+      ],
+      "name": "Comantec Hidráulica e Pneumática",
+      "id": "491963524007924",
+      "tasks": [
+        "ADVERTISE",
+        "ANALYZE",
+        "CREATE_CONTENT",
+        "MESSAGING",
+        "MODERATE",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRa3pfxRNujZCWqaREyTtAi1flXJnYuhGnV5yJ2jzEOYc5ZBNXdAZCb3c1SJFq9v6Skkbnu6sZCZClQ10qNpFUedZA9VKRl9UgIrfao6iLWvl1IVh3ZAVtEJccFdzBSIYmwOQo38xJ06bVNbHIBL2mSK9Q7kK06ZCIYOTZCAJGi6VU3wlMeWPmAAWZBemyvNsY1vbGP7ZC1WiYjHb9daWBeSJB17zAbpr9qwQDoZD",
+      "category": "Produto/serviço",
+      "category_list": [
+        {
+          "id": "2201",
+          "name": "Produto/serviço"
+        }
+      ],
+      "name": "Lubrasil Lubrificantes Ltda",
+      "id": "459639603896964",
+      "tasks": [
+        "MODERATE",
+        "MESSAGING",
+        "ANALYZE",
+        "ADVERTISE",
+        "CREATE_CONTENT",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRScL11HNdfZAiGXpAzHLSzfZCL9LEINZBAKauN1v8SnGPZAqKbTnlu7TuUqxErrDxLqFptmxnMD3KiSparHWyj3kGraGjvcMil81ZBGkf7AxpYbWHohwqNTMtqCLdNn6WXbT5T72KvIksZA8dUbe0z5rWswxJjMZAyUiWieZB7cO7OpniZAEpnPfpvuZBp1288i7FIZCDcs0ZC24O5fjpLZBw7SSEcIrW0ZA1QFz4ZD",
+      "category": "Dentista e consultório odontológico",
+      "category_list": [
+        {
+          "id": "174187662626299",
+          "name": "Dentista e consultório odontológico"
+        }
+      ],
+      "name": "Dr. Fernando Guena ",
+      "id": "433672963163188",
+      "tasks": [
+        "MODERATE",
+        "MESSAGING",
+        "ANALYZE",
+        "ADVERTISE",
+        "CREATE_CONTENT",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRTNMjpgoMZB1CxHJZCx9pUUmlooEmxNms9GPjd9yZAFPFAfjJb5eQ4jhlBvWIZA3p7OFBIdT7YBpvjWtTa4Maq6I8vlHyGLkAxv9preVJmqpybdZAVLFmWQZAJx7KKQzrcLKpviJSZBUQ22c9GKifhGdJVBGP1YEOvI7KdEbWahOQ8qZAAUaClBQtJwZCUXx11ZA79Fir5SuqAYvvpGDuGFWhCsNaZCCxkwy3YZD",
+      "category": "Agência de consultoria",
+      "category_list": [
+        {
+          "id": "2248",
+          "name": "Agência de consultoria"
+        }
+      ],
+      "name": "MI Assessoria",
+      "id": "344312768773693",
+      "tasks": [
+        "MODERATE",
+        "MESSAGING",
+        "ANALYZE",
+        "ADVERTISE",
+        "CREATE_CONTENT",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRa77V5N6zMCPZBRo4XsZCYykJ92vtOLTPUxtqExZBDgLcWb02eCq6XNnPWTpAcYPTRCoSZA7azsFZC64XzTV1fUkl6gk3PcvxQcOOMRSvpDQLwRpmUmJDLtT9JGVZChQcjZBy2fFE9wnwsGg72Iv0ic84K3rA2VemwgghkdldUM11GCl5oQZA762YXaNrLgXLS6xE6YWUGc5jqUwK7wpZBoUkZC0rHhdFDSE4ZD",
+      "category": "Serviço imobiliário",
+      "category_list": [
+        {
+          "id": "192625037432720",
+          "name": "Serviço imobiliário"
+        },
+        {
+          "id": "1695505857377984",
+          "name": "Imobiliária"
+        },
+        {
+          "id": "2025086974383657",
+          "name": "Serviço jurídico"
+        }
+      ],
+      "name": "Estate Brazil",
+      "id": "328968320301814",
+      "tasks": [
+        "MODERATE",
+        "MESSAGING",
+        "ANALYZE",
+        "ADVERTISE",
+        "CREATE_CONTENT",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRSYLDuwK5Q0EzOZBhRy3qwFLPwnn9TrDs6Cuw0h79mvkQMwKX3PWjn8Cvj0YdTm8G9WVgZAmM4gNJn54s6Pp42D6qfk0ZB3CZCYjNQVX0b0sifYPGNlQTOwsKpfYPJ9akkKWfDpxk0JwtOT7vIqisBQeeCAZAK3XR5Mq59Io4SNG5cTugUC7FNs5YElmmON1DEpy6b2Jf6upizJ73TTZAVHCXZAk1dxhgIZD",
+      "category": "Serviço agrícola",
+      "category_list": [
+        {
+          "id": "189323644423254",
+          "name": "Serviço agrícola"
+        }
+      ],
+      "name": "Nelore do Passos",
+      "id": "343118395554412",
+      "tasks": [
+        "ADVERTISE",
+        "ANALYZE",
+        "CREATE_CONTENT",
+        "MESSAGING",
+        "MODERATE",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRd47VKWeoI2KTYq4UjctPEyEl7qxDfKF51itSgd7CQyUxSEjVf3BR7lUogNLg55DAS5bFTmuljOVJ92emoUjbWFPB4OQWV9nPvz50zQQSHMYXR2VKEqKcINVVlzBv57ZBpWOEeJZCaZA1CqG0DCfxXernsqPAJ4zDA4g83CzZASI4dS0JtoxAY1L4xZCc5rPZBidesxryyDZBx6xEZAJ2Fex8m9SuD9efN4ZD",
+      "category": "Serviço de engenharia",
+      "category_list": [
+        {
+          "id": "400062273344681",
+          "name": "Serviço de engenharia"
+        },
+        {
+          "id": "2241",
+          "name": "Empresa industrial"
+        }
+      ],
+      "name": "KGF Soluções em Utilidades Industriais",
+      "id": "321845517680206",
+      "tasks": [
+        "MODERATE",
+        "MESSAGING",
+        "ANALYZE",
+        "ADVERTISE",
+        "CREATE_CONTENT",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRaqg3ErjseDoYra85QlssMnB1YUZBTAHHVrZAlEB6Be0BBlpq3VEr41Rari1aKpQQQbZAeHrv0KYlFMmIY6ZALwkTLrlZAeJtZCuyXOsm53J5jCCvSetnMaJyjUn4o38dmchxhGCZC5DOQLAVZBsJ1wor4JH1kKuZCGUFZB6BJ3OOF6tT6JBGrcdsN2N4tBSn2ZCaKa7RugARUn6vcptIF6fAKTODuUoSewZCwZDZD",
+      "category": "Imobiliária",
+      "category_list": [
+        {
+          "id": "1695505857377984",
+          "name": "Imobiliária"
+        }
+      ],
+      "name": "Canela Imobiliaria.",
+      "id": "239182035952405",
+      "tasks": [
+        "ADVERTISE",
+        "ANALYZE",
+        "CREATE_CONTENT",
+        "MESSAGING",
+        "MODERATE",
+        "VIEW_MONETIZATION_INSIGHTS"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRaHVIqWu3xTdUKEYnCVwM1UWoZBo4JwWCm0rVsswWYIRwb4iMwsqU9sZA5J6M3ZCoqAZBgrizbUSE987ZBJBjZAfGPhf5joFdan9X3oxbJrN1y6UfVbCTS8XL3wDdMMPZCV5P3gU8JDgUXwXwtZCx30BliPjZAt9Yjie1TpsLB1ZCZA1NWmneLMneeVN5P4jm5B2CHmxj1a0zsGjSxBLtVV35PdGz6DmJLefAZDZD",
+      "category": "Comercial e industrial",
+      "category_list": [
+        {
+          "id": "243290832429433",
+          "name": "Comercial e industrial"
+        }
+      ],
+      "name": "Aguado Ferramentas Piracicaba",
+      "id": "232475743275967",
+      "tasks": [
+        "ADVERTISE",
+        "ANALYZE",
+        "CREATE_CONTENT",
+        "MESSAGING",
+        "MODERATE",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRZAFKVGNJyGg58PNvwxS7azWpnImSnrx28ZCuXRtPQwAQROjZBWLUIItZBheNFo17Tj2oZB6XLzDdJXFN28QfLHYczeHZCqq2AQFKSlQZAZC4Acm3GNStjZCGScNELNMOdm3uS9oQWFobZCJzFguhkZBYh62rMZC3jcpKHz0xmRnfAt4ZCZAfMWIzEmUv0ArN2rZC11OL8cKMezqU6SF0W5ArRi1iNZBdU1UkoQkoQZDZD",
+      "category": "Empresa industrial",
+      "category_list": [
+        {
+          "id": "2241",
+          "name": "Empresa industrial"
+        }
+      ],
+      "name": "Rimep Motores",
+      "id": "120313721171498",
+      "tasks": [
+        "MODERATE",
+        "MESSAGING",
+        "ANALYZE",
+        "ADVERTISE",
+        "CREATE_CONTENT",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRRlFxuRLtLjc99sAK6EDKx3UO2L7HrwOO2ZBAZB092NjdDQy5p07hgWAWZAeOuW3EIyrMIrHx26odiJhrtMQFgDZBqV8vd5wSUl7xF8vNyPRS9wZC87V311mHMof7VeS99cTX5O8gyUjnk9vWtdxYlxdmLKjfuHHQl2N1vIEgC8VuZAfXnHlWCBbwKLtNdYG0r0GJBa6YOsnxT5S8kYPaNHYxykHi3owZDZD",
+      "category": "Fornecedor de equipamentos comerciais e industriais",
+      "category_list": [
+        {
+          "id": "165245226927543",
+          "name": "Fornecedor de equipamentos comerciais e industriais"
+        },
+        {
+          "id": "400062273344681",
+          "name": "Serviço de engenharia"
+        },
+        {
+          "id": "2248",
+          "name": "Agência de consultoria"
+        }
+      ],
+      "name": "Sammix - Engenharia",
+      "id": "105808645958025",
+      "tasks": [
+        "ADVERTISE",
+        "ANALYZE",
+        "CREATE_CONTENT",
+        "MESSAGING",
+        "MODERATE",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRVgGhzt164rYZBweEKsuGLKuwSGGUgqdZBS8NQbW60k5irynPIeLE5DZBgBw69ePh8SYPtuC4O9G8qAs3TcncNMYVKwCjq5vRz5CT1IX4Hmli7UHgWm6sznUe1OsJ0kQ7V9eW1GUsxSFq0gnAuNZCCIkcFZAvoJnnT23vQ0rp0hE6InvtoWyfHRUoaQJACbMupwRk0sidKQsioZCXATBj4tXPZArFM4h6pk",
+      "category": "Imóvel",
+      "category_list": [
+        {
+          "id": "198327773511962",
+          "name": "Imóvel"
+        }
+      ],
+      "name": "Parque dos Ipês",
+      "id": "122104664384003649",
+      "tasks": [
+        "ADVERTISE",
+        "ANALYZE",
+        "CREATE_CONTENT",
+        "MESSAGING",
+        "MODERATE",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRbMCt7UyQiymIgzaVZBiPIFgTNMVReUDU1WehEvov5uZA6ZAtrcLl24zkwrivWBsXjiyx3c1tusKT1F4ICsDgXI0X2eK7DpQPNZCuRlZBW1P07qlXbjnAeoraRhft0hCxpjl9SNeXMgoXrMweS7PHuG1GUtfGZBnTLOa0BnBH8X0eMyfk4d1WQcH79JVAoCPjbdzObmZCxTo0yPycP0u0ne4nbz994xYgZDZD",
+      "category": "Escola",
+      "category_list": [
+        {
+          "id": "2601",
+          "name": "Instituição de ensino"
+        }
+      ],
+      "name": "BeBlue School",
+      "id": "108503355635692",
+      "tasks": [
+        "ADVERTISE",
+        "ANALYZE",
+        "CREATE_CONTENT",
+        "MESSAGING",
+        "MODERATE",
+        "MANAGE_LEADS",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRbVvFg2DbwUSrJZCk3qkLUxqJIZCWGCosaqDZAIU36NVVgNpMYNYs2qKKDCxPMdihqDvFtZBvDlUlCMnthjZCdyS68OnrYOAxcyN8ZBk6uIyAdTFMCreiiamcucJQ1hfJI6s9zB6qMkJuC0h0fNnzFY0t0wsd6N3k4ny6DnQUNU6guMIkKqBWUWQVwzQ0cOdZCnrIFISgW9xrd9ZCPlOOv6VdcZAksFV5KwZDZD",
+      "category": "Dentista e consultório odontológico",
+      "category_list": [
+        {
+          "id": "174187662626299",
+          "name": "Dentista e consultório odontológico"
+        }
+      ],
+      "name": "Dr. Lucas Silveira",
+      "id": "111884035261423",
+      "tasks": [
+        "MODERATE",
+        "MESSAGING",
+        "ANALYZE",
+        "ADVERTISE",
+        "CREATE_CONTENT",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRYK1kfkNdos6ZAskUc7jJrl2ySxnANZBhJYxgTlyL7svsEsqhcFWjw1WbTwWkDiqEUbJPlAXriHkoHuYExokNJTx29xxWFfscrebZBujNvLDGHXbdDUzPPjsHqTbFj5IKOEu8XM0ACGGymmLmlQWWNJZAOXODcTHwJlf45fP7BofuqrUAGSDaPbfIUEbwxPByh6ZBMRmFBJVhUQf6WvkzrnYmycaMNgZDZD",
+      "category": "Construtora e incorporadora",
+      "category_list": [
+        {
+          "id": "162532913805106",
+          "name": "Construtora e incorporadora"
+        }
+      ],
+      "name": "Villa Suíça",
+      "id": "119130814478417",
+      "tasks": [
+        "ADVERTISE",
+        "ANALYZE",
+        "CREATE_CONTENT",
+        "MESSAGING",
+        "MODERATE",
+        "MANAGE_LEADS",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRanCGbZBB7sYuqttrkfzQ95a1rczWxs5MX2JN6pZBHFrZB08sUfpAicMrDNrrlfmMuq9pStsrEr31aaXkHIjMnVruO5UmoLB2RFo9iHvVmMUxMw9T1gkk2ZBLYLtvD52tSgrnv5ghzI7tYhJwE4ZCZBd6WgqGVXVk4emYgJzEgp0RuugQuMNV4bowjZCqVKp0CSJk9rOfcvrfl29gkdy5DLFVaF2ZA8ZBdQZDZD",
+      "category": "Dentista e consultório odontológico",
+      "category_list": [
+        {
+          "id": "174187662626299",
+          "name": "Dentista e consultório odontológico"
+        }
+      ],
+      "name": "Clínica Ortoestetica Piracicaba.",
+      "id": "113478871708786",
+      "tasks": [
+        "ADVERTISE",
+        "ANALYZE",
+        "CREATE_CONTENT",
+        "MESSAGING",
+        "MODERATE",
+        "MANAGE_LEADS",
+        "MANAGE"
+      ]
+    },
+    {
+      "access_token": "EAAVwjSbof3cBRXMx1CiVTjYrZCporkPXoiQbZAbi4rBFcZCaCMDvjKCbW75VbM0CLamAT9YnWIRnX04nB9KmOx0vZA6hVNCZCZAAIZAlanmJjrJD7D6XXSTLX6QGJzZCRBecmzNF6vkZBAVF7I2ZBTxGVZC5trhR1fc9RVfrfvLNnoZAcLswBMZB9ZATOAQMXVuST6ZBdUCZCp14f1O0LEUSAJegtRnUahoMvwvwk6oh3aZA1ZC9Dt5QZDZD",
+      "category": "Agente imobiliário",
+      "category_list": [
+        {
+          "id": "196739023685716",
+          "name": "Corretor de imóveis"
+        }
+      ],
+      "name": "corretora.danielatenani",
+      "id": "111331598560518",
+      "tasks": [
+        "ADVERTISE",
+        "ANALYZE",
+        "CREATE_CONTENT",
+        "MESSAGING",
+        "MODERATE",
+        "MANAGE"
+      ]
+    }
+  ],
+  "paging": {
+    "cursors": {
+      "before": "QVFIU2lObG0xcVFYVnZAzSTdiSTEtZA2tEd0s3UzFMSUhGUzJncjFkUUNoalU2RTl2a2NJMjdkNVNwby1mR2tPeUxDUnl6WkVFSXE1UUpvelFBTjBzUUZAVekJ3",
+      "after": "QVFIUzdyWW05aWdZAdllBYnh3WEpVb3p2ZAEpPNW1UemxLdjIyUEZAmSV90VFFwaGpJNjlZAOGZAob1o2SDhtNjNObFRzQXJIY0x5cFV5YU43YmEwelpMR3oyVUx3"
+    },
+    "next": "https://graph.facebook.com/v25.0/969550999230276/accounts?access_token=EAAVwjSbof3cBRfg8ZB8bZB7KJZCgZCJZAAnP3jC0D82QV7JAN9yVZCBZBTbGnz8QlQWwq5tBoZAbrNZBrivTkZBBC3FI0YZAFOAXEmYBZBQPkGpyJUZB5GofdmNv6fZB3LSCXZAK1zfkV6CCGb00uPDEbglriq2dnZASIfShufwZCDTiUYJPf54buquWs8piiKHjN4NI463PHOWgKa9w1gXtAP9Ve8vdPSMBqFKBHZCC9Mbiihwa8UFZAjkl2oC289lI4912pNZByNvq4ZBMhQaU3Q9dN4j6PIKtO8ioa&pretty=0&limit=25&after=QVFIUzdyWW05aWdZAdllBYnh3WEpVb3p2ZAEpPNW1UemxLdjIyUEZAmSV90VFFwaGpJNjlZAOGZAob1o2SDhtNjNObFRzQXJIY0x5cFV5YU43YmEwelpMR3oyVUx3"
+  }
+}
+Resposta recebida em 1860 ms
+
+Copiar informações de depuração
+
+Receber código
+
+Salvar sessão
+Token de acesso
+EAAVwjSbof3cBRfg8ZB8bZB7KJZCgZCJZAAnP3jC0D82QV7JAN9yVZCBZBTbGnz8QlQWwq5tBoZAbrNZBrivTkZBBC3FI0YZAFOAXEmYBZBQPkGpyJUZB5GofdmNv6fZB3LSCXZAK1zfkV6CCGb00uPDEbglriq2dnZASIfShufwZCDTiUYJPf54buquWs8piiKHjN4NI463PHOWgKa9w1gXtAP9Ve8vdPSMBqFKBHZCC9Mbiihwa8UFZAjkl2oC289lI4912pNZByNvq4ZBMhQaU3Q9dN4j6PIKtO8ioa
+
+Copy Token
+
+Generate Access Token
+App da Meta
+
+Dash-Inout
+Usuário ou Página
+
+Token do usuário
+Permissões 
+Reset
+
+Clear
+pages_show_list
+ads_management
+business_management
+leads_retrieval
+pages_read_engagement
+pages_manage_ads
+Adicionar uma permissão
+
+6 opções selecionadas
+Meta
+FacebookInstagramXLinkedInYouTube
+Desenvolva com a Meta
+IA
+Meta Horizon
+Tecnologias sociais
+Notícias
+Meta for Developers
+Blog
+Casos de sucesso
+Suporte
+Suporte ao desenvolvedor
+Ferramenta de bug
+Status da plataforma
+Fórum da Comunidade de Desenvolvedores
+Relatar um incidente
+Quem somos
+Sobre
+Carreiras
+Termos e políticas
+Iniciativas de plataforma responsável
+Termos da plataforma
+Políticas do Desenvolvedor
+Política de Privacidade
+Cookies
+Português (Brasil)
+Fechar pop-up e voltar
+Fechar pop-up e voltar
+4 resultados encontrados
+Fechar pop-up e voltar
+
+Perfeito. Está funcionando corretamente.
+Seu token já tem as permissões necessárias e a API está retornando as páginas normalmente.
+
+Agora você já pode puxar:
+
+formulários
+
+leads
+
+campanha
+
+criativo
+
+webhook
+
+Próximo teste agora
+Escolha uma página que tenha Lead Ads.
+
+Exemplo da sua lista:
+
+Villa Suíça
+id: 119130814478417
+Testar formulários da página
+Troque no endpoint:
+
+/119130814478417/leadgen_forms
+Clique em:
+
+Enviar
+Resultado esperado
+Vai retornar algo assim:
+
+{
+  "data": [
+    {
+      "id": "FORM_ID",
+      "name": "Nome do formulário"
+    }
+  ]
+}
+Depois puxar os leads
+Pegue o FORM_ID.
+
+Teste:
+
+/FORM_ID/leads
+Depois ver lead completo
+Pegue um LEAD_ID.
+
+Teste:
+
+/LEAD_ID?fields=field_data,ad_id,campaign_id,adgroup_id,created_time
+O que você vai receber
+Dados do lead
+field_data
+Com:
+
+nome
+
+telefone
+
+email
+
+perguntas do formulário
+
+Dados da campanha
+campaign_id
+adgroup_id
+ad_id
+Depois você consegue consultar
+Nome da campanha
+/CAMPAIGN_ID?fields=name
+Nome do conjunto
+/ADSET_ID?fields=name
+Nome do criativo
+/AD_ID?fields=name,creative
+Você já está praticamente pronto para:
+✅ integração RD
+✅ CRM próprio
+✅ webhook
+✅ automação WhatsApp
+✅ salvar campanha/criativo
+✅ distribuição de leads
+
+Próximo nível profissional
+Depois disso recomendo:
+
+1. Configurar webhook
+Produtos
+→ Webhooks
+→ Página
+→ leadgen
+2. Criar endpoint
+Exemplo:
+
+https://seudominio.com/webhook/meta
+3. Salvar automaticamente
+lead
+
+campanha
+
+conjunto
+
+criativo
+
+página
+
+data/hora
+
+Aí você terá um sistema igual SaaS de CRM de Lead Ads.
+
+
+
+Meus apps
+Ações necessárias
+Documentos
+Ferramentas
+Suporte
+Entrada da pesquisa
+​
+Pesquisar...
+Facebook
+Explorador da Graph API
+
+Favorites
+
+GET
+← graph.
+.facebook.com/
+
+v25.0
+/
+119130814478417/leadgen_forms
+Remover
+
+Enviar
+Edge: 119130814478417/leadgen_forms
+
++
+Procure um campo
+{
+  "error": {
+    "message": "(#190) This method must be called with a Page Access Token",
+    "type": "OAuthException",
+    "code": 190,
+    "fbtrace_id": "A6vLAjBaHGHdD7nc20NntEh"
+  }
+}
+Resposta recebida em 421 ms
+
+Copiar informações de depuração
+
+Receber código
+
+Salvar sessão
+Token de acesso
+EAAVwjSbof3cBRfg8ZB8bZB7KJZCgZCJZAAnP3jC0D82QV7JAN9yVZCBZBTbGnz8QlQWwq5tBoZAbrNZBrivTkZBBC3FI0YZAFOAXEmYBZBQPkGpyJUZB5GofdmNv6fZB3LSCXZAK1zfkV6CCGb00uPDEbglriq2dnZASIfShufwZCDTiUYJPf54buquWs8piiKHjN4NI463PHOWgKa9w1gXtAP9Ve8vdPSMBqFKBHZCC9Mbiihwa8UFZAjkl2oC289lI4912pNZByNvq4ZBMhQaU3Q9dN4j6PIKtO8ioa
+
+Copy Token
+
+Generate Access Token
+App da Meta
+
+Dash-Inout
+Usuário ou Página
+
+Token do usuário
+Permissões 
+Reset
+
+Clear
+pages_show_list
+ads_management
+business_management
+leads_retrieval
+pages_read_engagement
+pages_manage_ads
+Adicionar uma permissão
+
+6 opções selecionadas
+Meta
+FacebookInstagramXLinkedInYouTube
+Desenvolva com a Meta
+IA
+Meta Horizon
+Tecnologias sociais
+Notícias
+Meta for Developers
+Blog
+Casos de sucesso
+Suporte
+Suporte ao desenvolvedor
+Ferramenta de bug
+Status da plataforma
+Fórum da Comunidade de Desenvolvedores
+Relatar um incidente
+Quem somos
+Sobre
+Carreiras
+Termos e políticas
+Iniciativas de plataforma responsável
+Termos da plataforma
+Políticas do Desenvolvedor
+Política de Privacidade
+Cookies
+Português (Brasil)
+Fechar pop-up e voltar
+Fechar pop-up e voltar
+1 resultado encontrado
+Fechar pop-up e voltar
+
+Perfeito. O erro agora é exatamente este:
+
+(#190) This method must be called with a Page Access Token
+Ou seja:
+
+✅ Seu token está válido
+✅ Permissões estão corretas
+❌ Mas você está usando TOKEN DE USUÁRIO
+✅ Essa rota exige TOKEN DA PÁGINA
+
+Como resolver
+Na direita da tela, em:
+
+Usuário ou Página
+Você está usando:
+
+Token do usuário
+Troque para:
+
+Obter token de acesso da Página
+Faça exatamente isso
+1. Clique no dropdown
+Onde está:
+
+Token do usuário
+2. Escolha:
+Obter token de acesso da Página
+3. Selecione a página
+Escolha:
+
+Villa Suíça
+ou a página que deseja.
+
+4. O token vai mudar automaticamente
+Agora será um:
+
+✅ Page Access Token
+
+5. Rode novamente
+/119130814478417/leadgen_forms
+Agora deve funcionar
+E retornar:
+
+{
+  "data": [
+    {
+      "id": "FORM_ID",
+      "name": "Nome Form"
+    }
+  ]
+}
+Importante entender
+User Token
+Serve para:
+
+listar páginas
+
+login
+
+permissões
+
+Page Token
+Serve para:
+
+leadgen_forms
+
+leads
+
+webhooks página
+
+mensagens
+
+dados da página
+
+Fluxo correto sempre
+User Token
+↓
+
+/me/accounts
+↓
+
+Pega Page Token
+↓
+
+Usa Page Token nas rotas de lead
+Depois disso você já consegue
+Listar formulários
+/PAGE_ID/leadgen_forms
+Listar leads
+/FORM_ID/leads
+Lead completo
+/LEAD_ID
+
+
+Meus apps
+Ações necessárias
+Documentos
+Ferramentas
+Suporte
+Entrada da pesquisa
+​
+Pesquisar...
+Facebook
+Explorador da Graph API
+
+Favorites
+
+GET
+← graph.
+.facebook.com/
+
+v25.0
+/
+119130814478417/leadgen_forms
+Remover
+
+Enviar
+Edge: 119130814478417/leadgen_forms
+
++
+Procure um campo
+{
+  "data": [
+  ]
+}
+Resposta recebida em 597 ms
+
+Copiar informações de depuração
+
+Receber código
+
+Salvar sessão
+Token de acesso
+EAAVwjSbof3cBRUokbec33X2nhDZCOYbqMS9rWn3vYmEUhI0HpaULZAPVRaoJCo7plwK4j6X0DvmyTDhJe08ZAMNVQj9Jo0b7V3VhCbRFJ9j5Gqk9VwDC4DjAn94HzkqpN26bAIDRucFdlxuGtRK1es9m56UKCZBoD3ezASm0eAwRvMFYxOIBOW3WhzC5pe5IYToKb8Bqc5TeyhyrOxZC4Ca7HZBLWxz8UVgAZC1dQCCdwZDZD
+
+Copy Token
+
+Generate Access Token
+App da Meta
+
+Dash-Inout
+Usuário ou Página
+
+Villa Suíça
+Permissões 
+Reset
+
+Clear
+pages_show_list
+ads_management
+business_management
+leads_retrieval
+pages_read_engagement
+pages_manage_ads
+Adicionar uma permissão
+
+6 opções selecionadas
+Meta
+FacebookInstagramXLinkedInYouTube
+Desenvolva com a Meta
+IA
+Meta Horizon
+Tecnologias sociais
+Notícias
+Meta for Developers
+Blog
+Casos de sucesso
+Suporte
+Suporte ao desenvolvedor
+Ferramenta de bug
+Status da plataforma
+Fórum da Comunidade de Desenvolvedores
+Relatar um incidente
+Quem somos
+Sobre
+Carreiras
+Termos e políticas
+Iniciativas de plataforma responsável
+Termos da plataforma
+Políticas do Desenvolvedor
+Política de Privacidade
+Cookies
+Português (Brasil)
+Fechar pop-up e voltar
+Fechar pop-up e voltar
+1 resultado encontrado
+Fechar pop-up e voltar
+
+Agora está tudo certo tecnicamente.
+O retorno:
+
+{
+  "data": []
+}
+significa apenas:
+
+✅ O token está correto
+✅ O endpoint está funcionando
+✅ Você tem acesso à página
+❌ Mas essa página não possui formulários Lead Ads
+
+O que fazer agora
+Você precisa testar com:
+
+uma página que tenha formulário instantâneo
+ou
+
+criar um formulário teste
+
+Como descobrir qual página tem Lead Ads
+Na sua lista anterior, as melhores candidatas são páginas com:
+
+MANAGE_LEADS
+Vi estas:
+
+MepCred Soluções Financeiras
+
+BeBlue School
+
+Villa Suíça
+
+Clínica Ortoestetica Piracicaba
+
+Essas têm acesso a leads.
+
+Teste outra página
+Por exemplo:
+
+Clínica Ortoestetica
+ID:
+
+113478871708786
+Teste:
+
+/113478871708786/leadgen_forms
+OU criar formulário teste
+Mais garantido.
+
+Caminho
+No Meta Ads Manager:
+
+Biblioteca de Formulários
+→ Formulários Instantâneos
+ou dentro da campanha:
+
+Anúncio
+→ Formulário instantâneo
+Crie:
+
+nome
+
+nome
+
+telefone
+
+email
+
+Depois volte na API
+Teste novamente:
+
+/PAGE_ID/leadgen_forms
+Melhor ferramenta agora
+Use:
+
+Meta Lead Ads Testing Tool
+
+Ela permite:
+
+✅ escolher página
+✅ escolher formulário
+✅ criar lead fake
+✅ testar webhook
+✅ testar API
+
+Quando funcionar você verá
+{
+  "data": [
+    {
+      "id": "123456789",
+      "name": "Lead Form Teste"
+    }
+  ]
+}
+Depois disso
+Puxar leads
+/FORM_ID/leads
+Ver lead completo
+/LEAD_ID?fields=field_data,ad_id,campaign_id,adgroup_id
+Você já está 95% pronto da integração.
+
+
+inout tem 
+
+Então use a página da InOut que possui formulário Lead Ads.
+
+No endpoint, troque pelo ID da página da InOut.
+
+Exemplo:
+
+/PAGE_ID_DA_INOUT/leadgen_forms
+Como descobrir o ID correto da InOut
+Na resposta do /me/accounts, procure:
+
+"InOut"
+ou o nome completo da página.
+
+Copie o:
+
+"id"
+Depois rode
+/ID_DA_PAGINA/leadgen_forms
+Se a página realmente tiver formulários
+Você verá:
+
+{
+  "data": [
+    {
+      "id": "FORM_ID",
+      "name": "Nome Formulário"
+    }
+  ]
+}
+Depois teste os leads
+Pegue o FORM_ID:
+
+/FORM_ID/leads
+Se não retornar nada
+Pode ser um destes casos:
+
+Problema	Solução
+Formulário arquivado	Reativar
+Página errada	Validar ID
+Sem Lead Ads	Criar formulário
+Sem acesso lead manager	Liberar acesso
+Form criado em outra BM	Verificar BM
+Melhor jeito de validar rapidamente
+Abra:
+
+Meta Lead Ads Testing Tool
+
+Selecione:
+
+Página InOut
+
+Formulário
+
+Se aparecer ali, a API também vai enxergar.
+
+
+Você atingiu o limite do Free para chats com anexos
+Faça upgrade agora ou aguarde até 18:49 para continuar usando arquivos, ou continue o chat agora sem arquivos.
+
+Novo chat
+
+Aproveite a promoção gratuita
+
+
+beleza agora preciso saber exatamente o que a minha ia precisa desencolver para adicionar esse lead score no meu dash com a api meta graphh 
+
+
+Perfeito — agora você já está no nível de montar um sistema de Lead Scoring de verdade estilo SaaS/CRM, usando Meta Graph API + seu dashboard.
+
+Vou te explicar exatamente o que sua IA precisa desenvolver, separado em arquitetura + lógica + dados.
+
+🧠 O QUE SUA IA PRECISA FAZER PARA LEAD SCORING (META + DASH)
+1. 📥 CAPTURA DO LEAD (INPUT BRUTO)
+Sua IA primeiro precisa receber e salvar TODOS os dados do lead da Meta Graph API.
+
+📌 Dados obrigatórios do lead:
+Do endpoint:
+/{lead_id}?fields=field_data,ad_id,campaign_id,adgroup_id,created_time
+
+Você vai armazenar:
+
+Nome
+
+Email
+
+Telefone
+
+Respostas do formulário
+
+Data do lead
+
+campaign_id
+
+adset_id (adgroup)
+
+ad_id (criativo)
+
+form_id
+
+2. 🧩 ENRIQUECIMENTO (ENRICH DATA LAYER)
+Aqui começa o “cérebro” do scoring.
+
+Sua IA precisa transformar IDs em contexto humano:
+
+🔎 Consultas adicionais:
+/campaign_id?fields=name
+
+/adset_id?fields=name
+
+/ad_id?fields=name,creative
+
+Resultado enriquecido:
+Nome da campanha
+
+Nome do conjunto (público)
+
+Nome do criativo
+
+Tipo de criativo (vídeo, imagem, texto)
+
+Mensagem do anúncio
+
+3. 🧠 MOTOR DE LEAD SCORING (CORE DA IA)
+Agora entra a regra mais importante:
+
+Sua IA precisa gerar um score numérico (0 a 100).
+
+⚙️ MODELO DE SCORING RECOMENDADO
+🧍‍♂️ 1. DADOS DO LEAD (FIT SCORE)
+Peso: 0–40 pontos
+Exemplo:
+
+Critério	Regra	Pontos
+Nome completo	Sim	+5
+Telefone válido	Sim	+10
+Email válido	Sim	+10
+Respondeu perguntas-chave	Sim	+15
+🎯 2. INTENÇÃO (INTENT SCORE)
+Peso: 0–30 pontos
+Baseado nas respostas do formulário:
+
+Exemplo (Lead Ads):
+
+“quero orçamento” → +30
+
+“tenho interesse” → +20
+
+“só pesquisando” → +5
+
+sem resposta clara → +0
+
+📊 3. QUALIDADE DA ORIGEM (TRAFFIC SCORE)
+Peso: 0–20 pontos
+Baseado em:
+
+campaign_name
+
+adset_name
+
+ad_name
+
+Exemplo:
+
+Tipo de campanha	Score
+Conversão quente	+20
+Remarketing	+15
+Tráfego frio	+5
+🎨 4. QUALIDADE DO CRIATIVO (CREATIVE SCORE)
+Peso: 0–10 pontos
+Baseado em:
+
+Criativo com vídeo → +10
+
+Imagem → +7
+
+Texto simples → +5
+
+Se você tiver performance histórica:
+
+CTR alto → + bônus
+
+CPL baixo → + bônus
+
+🧮 RESULTADO FINAL
+Sua IA calcula:
+
+Lead Score = Fit + Intent + Traffic + Creative
+Exemplo:
+Fit: 35
+
+Intent: 25
+
+Traffic: 15
+
+Creative: 10
+
+👉 Total: 85 / 100 (Lead quente 🔥)
+
+🔥 CLASSIFICAÇÃO AUTOMÁTICA
+Sua IA deve classificar:
+
+Score	Categoria
+80–100	Quente 🔥
+50–79	Morno 🟡
+0–49	Frio ❄️
+🧠 4. IA INTELIGENTE (DIFERENCIAL REAL)
+Agora o nível avançado:
+
+Você pode usar IA para:
+
+🤖 1. Interpretar respostas abertas
+Ex:
+
+“quero visto urgente para EUA”
+
+IA entende:
+→ alta intenção migratória
+→ score aumenta automaticamente
+
+🤖 2. Detectar padrão de qualidade
+Ex:
+
+leads com Gmail → menor qualidade
+
+leads com empresa → maior valor
+
+leads com telefone inválido → penaliza
+
+🤖 3. Prever conversão (opcional avançado)
+Você pode treinar modelo simples:
+
+histórico de leads que converteram
+
+origem
+
+criativo
+
+resposta
+
+→ prever chance de venda (%)
+
+🧱 5. ARQUITETURA NO SEU DASH
+Fluxo ideal:
+Meta Lead Ads
+   ↓
+Webhook (ou polling API)
+   ↓
+Parser de lead
+   ↓
+Enrichment (campaign/ad/adset)
+   ↓
+Lead Scoring Engine (IA/regras)
+   ↓
+Banco de dados
+   ↓
+Dashboard
+📊 6. O QUE MOSTRAR NO SEU DASH
+Seu dashboard deve ter:
+
+🟢 Card do lead:
+Score
+
+Status (quente/morno/frio)
+
+Origem (campanha/conjunto/criativo)
+
+📈 Insights:
+CPL por score
+
+Campanhas que geram leads quentes
+
+Criativos vencedores
+
+⚡ Ações automáticas:
+Lead quente → envia para WhatsApp vendedor
+
+Lead morno → nutrição
+
+Lead frio → remarketing
+
+🔥 7. O GRANDE DIFERENCIAL (O QUE TE FAZ SAAS)
+Se você implementar isso:
+
+Você não terá só um CRM
+Você terá:
+
+🧠 “Sistema de inteligência de leads baseado em Meta Ads”
+
+🚀 RESUMO DO QUE SUA IA PRECISA TER
+Obrigatório:
+Receber lead da Meta Graph API
+
+Enriquecer campaign/adset/ad
+
+Armazenar dados estruturados
+
+Aplicar score baseado em regras
+
+Inteligência:
+interpretar respostas
+
+detectar intenção
+
+classificar qualidade
+
+Saída:
+score 0–100
+
+categoria (quente/morno/frio)
+
+ação recomendada
+
+Se quiser, no próximo passo posso te entregar:
+
+✅ modelo de banco de dados (SQL ou Mongo)
+✅ código do lead scoring (Node/Python)
+✅ arquitetura de webhook pronta
+✅ ou integração direta com RD Station + Meta
+
+Só me fala o stack que você está usando (Node, Python, n8n, etc).
+
+
+nao quero os criterios do lead score eu quero o que ela precisa ajustar para trazer esses leads do meta para meu painel 
+
+Entendi. Você não quer o “como calcular score” — você quer o que precisa ser ajustado tecnicamente para sua IA puxar os leads da Meta e jogar no seu dashboard corretamente.
+
+Vou direto no ponto.
+
+🧠 O QUE SUA IA PRECISA AJUSTAR PARA TRAZER LEADS DA META PRO SEU PAINEL
+Você basicamente precisa de 4 blocos funcionando perfeitamente:
+
+1. 🔌 CONEXÃO CORRETA COM A META (OBRIGATÓRIO)
+Sua IA não “puxa leads sozinha” — ela depende de:
+
+✅ Page Access Token (já vimos que você tem)
+Precisa ser token da PÁGINA
+
+Não pode ser user token
+
+✔ Você já resolveu isso
+
+⚠️ Mas precisa garantir também:
+✔ Permissões ativas no token:
+leads_retrieval (principal)
+
+pages_show_list
+
+pages_read_engagement
+
+⚠️ E o mais importante:
+👉 A página precisa estar LIBERADA no:
+
+Meta Business Suite → Lead Access Manager
+
+Se isso não estiver liberado:
+
+API retorna vazio
+
+webhook não dispara
+
+leads “não existem” na API
+
+2. 📡 VOCÊ PRECISA DECIDIR O MÉTODO DE CAPTURA
+Aqui é onde sua IA “nasce de verdade”.
+
+Você tem 2 formas:
+
+🥇 OPÇÃO RECOMENDADA: WEBHOOK (TEMPO REAL)
+📌 Fluxo correto:
+Meta Graph API envia evento →
+
+seu backend recebe →
+
+sua IA processa →
+
+seu dashboard atualiza
+
+🔥 O QUE VOCÊ PRECISA CONFIGURAR:
+1. Webhook no app Meta
+No seu app:
+
+Products → Webhooks
+
+Seleciona: Page
+
+Evento: leadgen
+
+2. Endpoint no seu servidor
+Exemplo:
+
+https://seu-dominio.com/webhook/meta
+Esse endpoint precisa:
+
+receber POST da Meta
+
+responder 200 rápido
+
+armazenar lead_id
+
+3. Verificação (obrigatório)
+Meta vai chamar:
+
+GET ?hub.challenge=
+Sua API precisa responder isso corretamente.
+
+🥈 OPÇÃO 2: POLLING (menos eficiente)
+Se não quiser webhook:
+
+Sua IA precisa rodar rotina:
+
+GET /FORM_ID/leads
+ou:
+
+GET /PAGE_ID/leadgen_forms
+→ depois /FORM_ID/leads
+⛔ Problema:
+
+atraso
+
+risco de perder lead
+
+mais custo de API
+
+3. 🧠 SUA IA PRECISA FAZER “ENRIQUECIMENTO DE DADOS”
+Quando o lead chega, ele NÃO vem completo.
+
+Ele só traz IDs:
+
+campaign_id
+
+adset_id
+
+ad_id
+
+Então sua IA precisa SEMPRE rodar isso:
+📌 1. Buscar nome da campanha
+/{campaign_id}?fields=name
+📌 2. Buscar conjunto
+/{adset_id}?fields=name
+📌 3. Buscar criativo
+/{ad_id}?fields=name,creative
+🔥 Isso é o que transforma “dado bruto” em inteligência
+Sem isso:
+→ seu dashboard só mostra números
+
+Com isso:
+→ você vê criativo, público e campanha real
+
+4. 🧱 ARQUITETURA QUE SUA IA PRECISA TER
+Aqui está o ponto mais importante:
+
+📊 PIPELINE REAL
+Meta Lead Ads
+   ↓
+Webhook (ou polling)
+   ↓
+Validação do lead
+   ↓
+Enrichment (campaign/ad/adset)
+   ↓
+Normalização do lead
+   ↓
+Envio para banco
+   ↓
+Dashboard
+5. 🗄️ SUA IA PRECISA SALVAR ISSO (MÍNIMO)
+Se não salvar isso, não existe dashboard útil:
+
+📌 Lead base:
+lead_id
+
+created_time
+
+form_id
+
+📌 Dados do usuário:
+nome
+
+email
+
+telefone
+
+📌 Marketing data:
+campaign_id + name
+
+adset_id + name
+
+ad_id + name
+
+📌 Origem:
+facebook / instagram
+
+placement (se disponível)
+
+6. ⚠️ ERRO QUE 90% ERRAM
+Você NÃO pode depender só de:
+
+/leadgen_forms
+Esse endpoint:
+
+❌ NÃO traz leads
+❌ só lista formulários
+
+Você precisa SEMPRE usar:
+
+/{form_id}/leads
+OU webhook leadgen
+7. 🔥 O QUE SUA IA PRECISA “DECIDIR”
+Ela precisa ter lógica:
+
+📌 Regra principal:
+“Lead só entra no dashboard se vier com campaign_id + ad_id válidos”
+
+📌 Regra de segurança:
+duplicado? ignora
+
+sem campaign_id? marca como “orgânico inválido”
+
+sem ad_id? não atribui criativo
+
+🚀 RESUMO FINAL (O ESSENCIAL)
+Sua IA precisa ter 4 coisas:
+
+1. Conexão correta
+Page Access Token
+
+leads_retrieval ativo
+
+página liberada no Meta Business
+
+2. Método de captura
+webhook (ideal)
+OU
+
+polling via /form_id/leads
+
+3. Enriquecimento obrigatório
+campaign_id → name
+
+adset_id → name
+
+ad_id → name + creative
+
+4. Pipeline interno
+receber lead
+
+normalizar dados
+
+salvar no banco
+
+enviar para dashboard
+
+💡 SE QUISER O PRÓXIMO PASSO
+Posso te montar:
+
+arquitetura pronta (Node + webhook + DB)
+
+schema do banco ideal pro seu dashboard
+
+fluxo completo tipo SaaS de CRM
+
+ou integração direta com RD Station + Meta ao mesmo tempo
+
+Só me fala:
+👉 você está usando Node, Python ou n8n no backend?
+
+

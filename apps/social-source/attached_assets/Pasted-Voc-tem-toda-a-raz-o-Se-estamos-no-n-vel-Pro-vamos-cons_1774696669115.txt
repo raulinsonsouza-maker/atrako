@@ -1,0 +1,87 @@
+Você tem toda a razão. Se estamos no nível Pro, vamos construir uma arquitetura de dados de nível sênior. Sem meias palavras e direto para a engenharia do dashboard.
+
+Para a sua IA analisar imagens e vídeos com precisão cirúrgica, você precisa entender uma regra imutável do tráfego pago: **O sucesso é universal, mas o diagnóstico é específico.** Tanto a imagem quanto o vídeo têm o mesmo objetivo (gerar Leads baratos). Portanto, a regra de "Pausar" ou "Escalar" é igual para ambos. A diferença está em **como a IA explica o porquê** um criativo falhou ou brilhou.
+
+Aqui está o escopo técnico completo e definitivo para você plugar no seu sistema.
+
+---
+
+### 1. Parâmetros de Entrada (Obrigatórios para a IA)
+A IA não pode adivinhar o que é bom. O seu sistema precisa ter campos para o cliente (ou gestor) preencher o "Norte" da campanha:
+* **CPL Alvo:** Qual o custo por lead ideal (ex: R$ 20,00).
+* **CPL Limite (Teto):** O máximo aceitável antes de dar prejuízo (ex: R$ 35,00). Geralmente calculado como $$CPL_{limite} = CPL_{alvo} \times 1.5$$
+
+---
+
+### 2. O Motor Matemático (Fórmulas para o Backend)
+
+Calcule estas métricas para **todos** os criativos. (Nota para o seu banco de dados: se a API não trouxer visualizações de vídeo, o valor deve ser zero para não quebrar a fórmula).
+
+**Métricas Universais (Fundo e Meio de Funil):**
+* **CPL Atual:** $$CPL = \frac{Gasto\_Total}{Leads\_Gerados}$$
+* **Taxa de Conversão da Página (CR):** $$CR = \frac{Leads\_Gerados}{Cliques\_no\_Link} \times 100$$
+* **Custo por Clique (CPC):** $$CPC = \frac{Gasto\_Total}{Cliques\_no\_Link}$$
+* **Custo por Mil Impressões (CPM):** $$CPM = \frac{Gasto\_Total}{Impressoes} \times 1000$$
+
+**Métricas Específicas de Diagnóstico (Topo de Funil):**
+* **Taxa de Clique Específica (CTR Link):** $$CTR = \frac{Cliques\_no\_Link}{Impressoes} \times 100$$ *(Mede a força da chamada para ação).*
+* **Hook Rate (Apenas Vídeo):** $$Hook = \frac{Visualizacoes\_3s}{Impressoes} \times 100$$ *(Mede o poder de prender a atenção no início).*
+* **Hold Rate (Apenas Vídeo):** $$Hold = \frac{Visualizacoes\_100\%}{Visualizacoes\_3s} \times 100$$ *(Mede a retenção de conteúdo).*
+
+---
+
+### 3. O Algoritmo de Tomada de Decisão (Status do Criativo)
+
+A IA deve rodar este algoritmo para definir se o criativo deve ser Escalar, Pausar ou Otimizar. **A regra baseia-se puramente em Custo e Significância Estatística (Gasto vs. CPL Alvo), ignorando se é imagem ou vídeo.**
+
+| Condição Lógica (Gasto e Leads) | Status Recomendado | O que significa na prática |
+| :--- | :--- | :--- |
+| Gasto < CPL Alvo **E** Leads = 0 | **Em Validação** | O Meta ainda não gastou o suficiente para achar o primeiro lead. Não mexa. |
+| Gasto > CPL Limite **E** Leads = 0 | **Pausar** | Queimou verba e não trouxe ninguém. O criativo é um fracasso absoluto. |
+| Leads > 0 **E** CPL Atual <= CPL Alvo | **Escalar** | O criativo está batendo a meta com lucro. Aumentar o orçamento. |
+| Leads > 0 **E** CPL Atual > CPL Alvo **E** CPL Atual < CPL Limite | **Otimizar** | Traz leads, mas está um pouco caro. Requer ajustes na página ou no público. |
+| Leads > 0 **E** CPL Atual >= CPL Limite | **Pausar** | Traz leads, mas está tão caro que dá prejuízo financeiro. Cortar. |
+
+---
+
+### 4. A Matriz de Inteligência: Alertas Direcionados (O Cérebro da IA)
+
+É aqui que o dashboard se torna "inteligente". Depois de definir o Status (acima), a IA cruza os dados secundários (CTR, Hook, CPM) para dizer ao cliente **o que fazer**. 
+
+Programe a sua IA para varrer estas condicionais e gerar os textos automaticamente:
+
+#### A. Diagnósticos Universais (Imagens e Vídeos)
+* **O Falso Positivo (Clickbait):**
+    * *Regra:* `SE CTR > 1.5%` **E** `CR < 5%` **E** `CPL > CPL Alvo`
+    * *Alerta da IA:* "Alto volume de cliques baratos, mas a página não converte. O criativo está gerando curiosidade, mas a oferta não está alinhada com a Landing Page."
+* **A Fadiga de Público:**
+    * *Regra:* `SE Frequência > 3.0` **E** `CPL > CPL Alvo`
+    * *Alerta da IA:* "O público esgotou. As mesmas pessoas estão vendo este criativo repetidas vezes e pararam de comprar. Troque a imagem/vídeo ou renove o público."
+* **Leilão Hostil:**
+    * *Regra:* `SE CPM > (CPM Médio da Conta * 1.5)`
+    * *Alerta da IA:* "O Meta está cobrando muito caro para exibir este criativo. A imagem/vídeo pode ter baixa qualidade (feedback negativo) ou o público está muito disputado."
+
+#### B. Diagnósticos Exclusivos para Vídeos (`Visualizacoes_3s > 0`)
+* **Falha no Gancho (Hook Ruim):**
+    * *Regra:* `SE Hook < 25%` **E** `CPL > CPL Limite`
+    * *Alerta da IA:* "As pessoas estão pulando o vídeo imediatamente. Refaça os primeiros 3 segundos do vídeo com uma promessa mais agressiva ou visual diferente."
+* **Conteúdo Maçante (Hold Ruim):**
+    * *Regra:* `SE Hook > 25%` **E** `Hold < 10%` **E** `CPL > CPL Limite`
+    * *Alerta da IA:* "Excelente gancho, mas as pessoas desistem no meio do vídeo. O roteiro perdeu o ritmo ou o CTA (chamada para ação) demorou muito para aparecer."
+
+#### C. Diagnósticos Exclusivos para Imagens Estáticas (`Visualizacoes_3s = 0`)
+* **Cegueira de Banner (Thumbstop Ruim):**
+    * *Regra:* `SE CTR < 0.6%` **E** `Impressões > 2000` **E** `CPL > CPL Limite`
+    * *Alerta da IA:* "A imagem não interrompe o scroll do usuário. O design está ignorável. Teste cores contrastantes, rostos humanos ou textos maiores na arte."
+
+---
+
+### 5. O Resumo da Ópera para o Desenvolvimento
+
+1.  **O Banco de Dados:** Consolida Impressões, Gasto, Cliques, Leads e Visualizações de Vídeo.
+2.  **O Processador (IA):** Calcula Fórmulas $\rightarrow$ Define Status pelo CPL $\rightarrow$ Vê se é Imagem ou Vídeo $\rightarrow$ Roda as regras de Diagnóstico $\rightarrow$ Gera o Alerta em texto.
+3.  **A Interface (O seu Dash):** Mostra os Cards com a distribuição de verba e a tabela exatamente com o Status e o Alerta que a IA determinou.
+
+Isso é uma arquitetura de análise de performance de nível profissional que funciona para dezenas de clientes simultaneamente, cobrindo todas as lacunas técnicas possíveis.
+
+**Gostaria que eu estruturasse toda essa árvore de decisões em formato JSON ou em um script Python/SQL para você copiar, colar e plugar direto no backend do seu sistema?**

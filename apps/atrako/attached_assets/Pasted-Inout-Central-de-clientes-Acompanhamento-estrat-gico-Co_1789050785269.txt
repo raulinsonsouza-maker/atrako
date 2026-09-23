@@ -1,0 +1,120 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Conta Hotel
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+Analista IA
+
+
+Ano atual (YTD): 01 de jan. de 2026 a 10 de set. de 2026
+Hotel intelligence
+
+Conversas
+
+Dados do período selecionado
+
+Análise · Meta · Google Ads · Campanhas
+
+Atualizada 10 de set.
+
+
+
+Análise · Campanhas
+
+Atualizada 10 de set.
+
+
+
+Análise de desempenho
+
+Atualizada 10 de set.
+
+
+
+Análise · Receita e ROAS
+
+Atualizada 10 de set.
+
+
+
+Análise de desempenho
+
+Atualizada 10 de set.
+
+
+
+Análise · Meta
+
+Atualizada 10 de set.
+
+
+
+Análise · Campanhas
+
+Atualizada 09 de set.
+
+
+Análise · Meta · Google Ads · Campanhas
+
+Evidência antes de opinião
+
+Sessão persistente
+Você
+11:32
+como está as camapnhas essa semana ?
+Analista
+11:32
+Leitura executiva
+•
+As campanhas da Meta tiveram queda de 38% nas compras e 24% no valor atribuído, com investimento 1,3% maior na semana recente.
+•
+Não houve campanhas ativas ou resultados no Google Ads no período analisado.
+O que os dados indicam
+•
+A campanha remarketing "VOLTEI10" manteve ROAS alto (45,79) e CPA de R$157,78, gerando 5 compras; porém, o total de compras caiu de 13 para 8.
+•
+O CPL geral melhorou 34%, mas o custo por compra aumentou 65%, indicando menor eficiência em vendas.
+Próximos passos
+•
+Investigar as causas da queda nas compras e no valor atribuído nas campanhas Meta para definir ações que recuperem volume sem perder eficiência, monitorando compras e CPA.
+•
+Revisar a estratégia no Google Ads para decidir sobre reativação ou manutenção da inatividade, considerando ausência de investimento e resultados recentes.
+Performance de campanhas Meta · 07 de set.—10 de set.
+Performance de campanhas Google · 07 de set.—10 de set.
+Visão geral de mídia · 07 de set.—10 de set.
+3 fontes consultadas
+9470 tokens
+Você
+11:32
+quais campanhas venderam essa semana ?
+Analista
+11:32
+Leitura executiva
+A campanha "VOLTEI10" (remarketing) vendeu 5 unidades nesta semana, mantendo o mesmo número de compras do período anterior.
+
+Outra campanha da Meta não gerou vendas nesta semana.
+
+O que os dados indicam
+"VOLTEI10" apresentou ROAS de 45,79 e CPA de R$157,78, com valor atribuído de R$36.126,06, aumento de 56% em relação ao período anterior.
+
+Campanhas sem vendas tiveram custo menor e não geraram receita atribuída.
+
+Próximos passos
+Monitorar compras e ROAS da campanha "VOLTEI10" na próxima semana, considerando sucesso se mantiver ou superar 5 compras e ROAS acima de 40.
+
+Acompanhar campanhas sem vendas para verificar necessidade de ajuste, com critério de sucesso ausência de compras por 2 semanas consecutivas.
+
+Performance de campanhas Meta · 07 de set.—10 de set.
+1 fonte consultada
+6149 tokens
+Pergunte sobre receita, campanhas, CRM ou eficiência…
+
+
+Enter envia · Shift + Enter quebra linha · análise limitada ao período e canal selecionados
+
+R$ 0k

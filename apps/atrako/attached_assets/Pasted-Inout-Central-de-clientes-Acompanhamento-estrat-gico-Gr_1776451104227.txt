@@ -1,0 +1,184 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Granarolo
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+Saldo Google
+R$ ••••••
+
+
+Mês atual: 01 de abr. de 2026 a 17 de abr. de 2026
+Análise
+Criativos
+Investimento Google
+
+R$ 2.771,04
+
+17 dias selecionados
+
+Compras no Site
+
+175
+
+Pedidos atribuídos às campanhas Google no período
+
+Custo por Compra
+
+R$ 15,83
+
+Investimento ÷ compras atribuídas
+
+ROAS
+
+4,01x
+
+Retorno sobre investimento em anúncios (receita ÷ custo)
+
+Faturamento (Valor Conv.)
+
+R$ 11.110,66
+
+Receita de compras atribuída às campanhas Google no período
+
+Ticket Médio
+
+R$ 63,49
+
+Valor médio por pedido (faturamento ÷ compras)
+
+Performance Google
+Investimento e compras por semana
+
+30/03-05/04
+06/04-12/04
+13/04-19/04
+0
+350
+700
+1050
+1400
+0
+25
+50
+75
+100
+InvestimentoFaturamentoComprasCPL
+
+Resultado GoogleSemana a semana
+Mês atual
+Visão comparativa com leitura rápida das principais métricas por semana.
+
+3 semanas
+Atual: 13/04-19/04
+Métrica	
+Semana
+30/03-05/04
+Semana
+06/04-12/04
+Atual
+13/04-19/04
+INVESTIMENTO
+
+Valor investido em mídia na semana.
+
+R$ 1.029,88
+R$ 1.213,25
+R$ 527,91
+IMPRESSÕES
+
+Volume total de entregas dos anúncios.
+
+17.940
+51.562
+33.237
+CLIQUES
+
+Cliques nos anúncios (no Google Ads, “interações” pode incluir outros tipos).
+
+828
+964
+539
+CTR (%)
+
+Taxa de clique sobre impressões.
+
+4,615%
+1,87%
+1,622%
+COMPRAS
+
+Compras no site atribuídas ao período (pedidos confirmados).
+
+32
+81
+62
+TAXA COMPRA
+
+Percentual de compras sobre os cliques gerados.
+
+3,865%
+8,402%
+11,503%
+CPC
+
+Custo médio por clique gerado.
+
+R$ 1,24
+R$ 1,26
+R$ 0,98
+CUSTO / COMPRA
+
+Investimento ÷ compras no site da semana (custo de aquisição por pedido).
+
+R$ 32,18
+R$ 14,98
+R$ 8,51
+Google Ads
+
+Campanhas · Análise por período
+
+#1
+Rede de Pesquisa - Granarolo
+
+Search
+R$ 515,85	5.236	243	4,64%	R$ 2,12	5	R$ 824,83	R$ 103,17	1,60x
+[IN] - [RA] - [SEARCH] - Institucional Marca - Fundo de Funil
+
+Brand
+R$ 256,44	882	262	29,71%	R$ 0,98	229	R$ 5.107,00	R$ 1,12	19,92x
+[IN][J][SEARCH] - Mais Vendidos
+
+Search
+R$ 148,37	874	48	5,49%	R$ 3,09	6	R$ 30,96	R$ 24,73	0,21x
+Acompanhamento financeiro · Plano x Real
+Status de investimento no ano atual (planejado versus realizado em todos os canais)
+
+Orçado
+R$ 0,00
+Realizado
+R$ 9.467,84
+JAN.
+FEV.
+MAR.
+ABR.
+MAI.
+JUN.
+JUL.
+AGO.
+SET.
+OUT.
+NOV.
+DEZ.
+R$ 0,00
+R$ 950,00
+R$1.900,00
+R$2.850,00
+R$3.800,00
+OrcadoRealizado
+
+350

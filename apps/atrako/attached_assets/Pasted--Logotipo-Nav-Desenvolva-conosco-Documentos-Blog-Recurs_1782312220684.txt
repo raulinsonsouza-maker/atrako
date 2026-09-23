@@ -1,0 +1,326 @@
+
+Logotipo Nav
+Desenvolva conosco
+Documentos
+Blog
+Recursos
+Centrais para desenvolvedores
+Meus apps
+Documentação
+Visão geral
+Mídia do Instagram
+Esta página foi traduzida do inglês para outro idioma usando IA. O conteúdo traduzido por IA pode conter erros, omissões ou divergências de sentido. Como a tradução automática pode ser imprecisa ou pouco clara, consulte o conteúdo original em inglês desta página para validar as orientações corretas.
+Isso foi útil?
+Mídia do Instagram
+Updated: 22 de abr de 2026
+Representa um álbum, uma foto ou um vídeo (carregado, ao vivo, story ou reel) do Instagram.
+Caso você esteja migrando dos pontos de extremidade de anúncios do Instagram da API de Marketing para os da plataforma do Instagram, note que alguns nomes de campo são diferentes.
+Apresentamos o seguinte campo:
+legacy_instagram_media_id
+Os seguintes campos do ponto de extremidade da API de Marketing de anúncios do Instagram não são compatíveis:
+filter_name
+location
+location_name
+latitude
+longitude
+Criação
+Esta operação não é compatível.
+Leitura
+GET /<IG_MEDIA_ID>
+Esta operação recupera campos e bordas em mídias do Instagram.
+Requisitos
+API do Instagram com o Login do Instagram	API do Instagram com o Login do Facebook
+Tokens de acesso
+Token de acesso do usuário do Instagram
+Token de acesso do usuário do Facebook
+URL de hospedagem
+graph.instagram.com
+graph.facebook.com
+Tipo de login
+Login de Empresa no Instagram
+Login do Facebook para Empresas
+Permissões
+instagram_business_basic
+instagram_basic
+pages_read_engagement
+Caso uma função tenha sido concedida ao usuário do app por meio do Gerenciador de Negócios na Página conectada à conta profissional do Instagram do usuário, seu app também precisará de uma destas permissões:
+ads_management
+ads_read
+Limitações
+Campos como comments_count e like_count retornam o engajamento apenas da mídia do Instagram e não incluem dados de outras plataformas. Por exemplo, comments_count retorna o número de comentários em uma foto, mas não comentários em anúncios que contêm essa foto. Use total_comments_count e total_like_count para obter contagens agregadas que incluem engajamento de mídia de anúncio, promovida ou turbinada. A contagem de posts cruzados do Facebook pode ser incluída quando o post é acessível pelo usuário da sessão.
+As legendas não incluirão o símbolo @, a menos que o usuário também possa executar tarefas equivalentes às de um administrador no app.
+Alguns campos, como permalink, não podem ser usados em fotos dentro de álbuns (derivados).
+A mídia do Instagram de vídeo ao vivo só pode ser lida durante a transmissão desse conteúdo.
+Essa API retorna apenas dados de mídia de propriedade de contas profissionais do Instagram. Ela não pode ser usada para consultar dados de mídia de propriedade de contas pessoais do Instagram.
+Os campos reposts_count, saved_count, shares_count, total_like_count, total_comments_count e total_views_count não estão disponíveis para mídias subordinadas em um carrossel e são retornados apenas para objetos de mídia de nível superior. O proprietário da mídia pode desabilitar a exibição de curtidas, comentários, visualizações, reposts e compartilhamentos. Nesses casos, os campos correspondentes não serão retornados.
+Sintaxe da solicitação
+GET https://<HOST_URL>/<API_VERSION>/<IG_MEDIA_ID> \
+  ?fields=<LIST_OF_FIELDS> \
+  &access_token=<ACCESS_TOKEN>
+Parâmetros de caminho
+Espaço reservado	Valor
+<API_VERSION>
+A versão mais recente é: v25.0
+A versão da API que seu app está usando. Caso não esteja especificado nas suas chamadas de API, esta será a versão mais recente no momento da criação do seu app da Meta; se essa opção não for mais válida, será a versão mais antiga disponível. Saiba mais sobre o controle de versões.
+<HOST_URL>
+O URL de hospedagem que seu app está usando para consultar o ponto de extremidade.
+<IG_MEDIA_ID>
+Obrigatório. A identificação da mídia que será publicada.
+Parâmetros da string de consulta
+Chave	Espaço reservado	Valor
+access_token
+<ACCESS_TOKEN>
+Obrigatório. O token de acesso do usuário do app no Facebook ou Instagram.
+fields
+<LIST_OF_FIELDS>
+Uma lista separada por vírgulas de campos que devem ser retornados.
+Campos
+É possível ler campos públicos por meio da expansão de campos.
+Campo	Descrição
+alt_text Público
+Texto que descreve as imagens para fins de acessibilidade.
+boost_ads_list
+Oferece uma visão geral de todas as informações de anúncios do Instagram associadas à mídia orgânica para anúncios com status ACTIVE. Inclui a identificação relativa e o status de veiculação do anúncio. Disponível apenas para a API do Instagram com o Login do Facebook.
+boost_eligibility_info
+O campo fornece informações sobre como turbinar a qualificação de uma mídia do Instagram como um anúncio e detalhes adicionais se ela não for qualificada. Disponível apenas para a API do Instagram com o Login do Facebook.
+caption Público
+Legenda. Exclui derivados de álbum. O símbolo @ será excluído, a menos que o usuário do app possa executar tarefas equivalentes às de um administrador na Página do Facebook conectada à conta do Instagram usada para criar a legenda. Disponível apenas para a API do Instagram com o Login do Facebook.
+comments_count Público
+Contagem de comentários na mídia. Exclui comentários na mídia derivada do álbum e na legenda da mídia. Inclui respostas em comentários.
+copyright_check_information.status
+Retorna os objetos status e matches_found.
+Objetos de status	Descrição
+status
+completed: o processo de detecção foi concluído.
+error: ocorreu um erro durante o processo de detecção.
+in_progress: o processo de detecção está em andamento.
+not_started: o processo de detecção não foi iniciado.
+matches_found
+Defina como um dos valores a seguir:
+false se o vídeo não violar direitos autorais.
+true se o vídeo violar direitos autorais.
+Caso o vídeo esteja violando direitos autorais, copyright_matches será retornado com uma matriz de objetos sobre o material protegido por direitos autorais (quando a violação ocorrer no vídeo) e as ações tomadas para mitigar a violação.
+Objetos de copyright_matches	Descrição
+author
+O autor do vídeo protegido por direitos autorais.
+content_title
+O nome do vídeo protegido por direitos autorais.
+matched_segments
+Uma matriz de objetos com os seguintes pares chave-valor:
+duration_in_seconds – o número de segundos em que o conteúdo viola direitos autorais
+segment_type – AUDIO ou VIDEO
+start_time_in_seconds – o tempo de início do vídeo
+owner_copyright_policy
+Objetos retornados:
+name: o nome da política do proprietário dos direitos autorais.
+actions: uma matriz de objetos action com as etapas de mitigação definidas pela política do proprietário dos direitos autorais. Pode incluir diferentes etapas de mitigação dependendo da localização.
+action: a ação de mitigação tomada em relação ao vídeo que viola os direitos autorais. Medidas de mitigação distintas podem ser tomadas para diferentes países. Pode ser um dos seguintes valores:
+BLOCK: o vídeo está bloqueado para os públicos listados na matriz geos.
+MUTE: o vídeo está silenciado para os públicos listados na matriz geos.
+id Público
+ID da mídia.
+is_comment_enabled
+Indica se os comentários estão habilitados ou desabilitados. Exclui derivados de álbum.
+is_shared_to_feed Público
+Somente no Reels. true indica que o reel pode aparecer nas abas Feed e Reels. false indica que o reel pode aparecer apenas na aba Reels.
+Nenhum desses valores garante que o reel aparecerá na aba Reels, porque ele pode não cumprir os requisitos de qualificação ou não ser selecionado pelo algoritmo. Consulte os critérios de qualificação nas especificações de reel.
+legacy_instagram_media_id
+O ID da mídia no Instagram que foi criado para pontos de extremidade da API de Marketing na versão 21.0 e anteriores.
+like_count
+Contagem de curtidas na mídia, incluindo respostas a comentários. Exclui curtidas na mídia derivada do álbum e em publicações promovidas que foram criadas a partir da mídia.
+Se for consultado indiretamente através de outro ponto de extremidade ou da expansão de campo, o campo like_count será omitido caso o proprietário da mídia tenha ocultado a contagem de curtidas.
+media_product_type Público
+Plataforma em que a mídia é publicada. Pode ser AD, FEED, STORY ou REELS. Disponível apenas para a API do Instagram com o Login do Facebook.
+media_type Público
+Tipo de mídia. Pode ser CAROUSEL_ALBUM, IMAGE ou VIDEO.
+media_url Público
+O URL da mídia.
+O campo media_url será omitido das respostas caso a mídia contenha material protegido por direitos autorais ou tenha sido sinalizada como uma violação desses direitos. Exemplos de materiais protegidos por direitos autorais incluem áudios em reels.
+owner Público
+Número de identificação do usuário do Instagram que criou a mídia. Retornado somente se o usuário do app que está fazendo a consulta também tiver criado a mídia. Caso contrário, o campo username é retornado.
+permalink Público
+URL permanente da mídia.
+shortcode Público
+Código curto da mídia.
+thumbnail_url Público
+URL de miniatura da mídia. Disponível apenas em mídias de VIDEO.
+timestamp Público
+Data de criação de acordo com a norma ISO 8601⁠ no formato UTC (o padrão é UTC ±00:00).
+username Público
+Nome de usuário da pessoa que criou a mídia.
+view_count Público
+Número de visualizações de reels do Instagram, incluindo métricas pagas e orgânicas. Para conteúdo com post cruzado no Facebook, isso retorna a soma das contagens de visualizações do Instagram e do Facebook, se o post do Facebook puder ser acessado pelo usuário da sessão.
+Disponível somente na API de Descoberta de Empresas.
+reposts_count Público
+O número de vezes em que a mídia foi repostada. Disponível para mídia de FEED e REELS. Não é acessível por meio dos pontos de extremidade da API de Hashtag. Disponível apenas para a API do Instagram com o Login do Facebook.
+saved_count
+O número de vezes em que a mídia foi salva. Disponível para mídia de FEED e REELS. Apenas o proprietário da mídia ou um colaborador aceito pode acessar. Não é possível acessá-lo por meio de pontos de extremidade da API de Descoberta de Empresas, Mídia marcada/mencionada ou API de Hashtag. Disponível apenas para a API do Instagram com o Login do Facebook.
+shares_count
+Número de vezes que a mídia foi compartilhada. Disponível para mídia de FEED e REELS. Não é possível acessá-las por meio de pontos de extremidade da API de descoberta de empresas ou de hashtags. Disponível apenas para a API do Instagram com o Login do Facebook.
+total_comments_count Público
+O total de comentários na mídia, em todas as plataformas, incluindo comentários em mídias promovidas/turbinadas associadas. Não é acessível por meio dos pontos de extremidade da API de Hashtag. Disponível apenas para a API do Instagram com o Login do Facebook.
+total_like_count Público
+O total de curtidas na mídia, em todas as plataformas, incluindo curtidas em mídias promovidas/turbinadas associadas. Não é acessível por meio dos pontos de extremidade da API de Hashtag. Disponível apenas para a API do Instagram com o Login do Facebook.
+total_views_count
+A contagem total de visualizações de conteúdo em vídeo em todas as plataformas, incluindo visualizações de mídias promovidas/turbinadas e de retomadas. Disponível somente para mídia de vídeo. Não é possível acessá-las por meio de pontos de extremidade da API de descoberta de empresas ou de hashtags. Para a Descoberta de empresas, use view_count. Disponível apenas para a API do Instagram com o Login do Facebook.
+Bordas
+Bordas públicas podem ser retornadas por meio da expansão de campos.
+Borda	Descrição
+children Público.
+Representa uma coleção de objetos de mídia do Instagram em um álbum de mídia do Instagram.
+collaborators
+Representa uma lista de usuários que são adicionados como colaboradores em um objeto de mídia do Instagram. Disponível apenas para a API do Instagram com o Login do Facebook.
+comments
+Representa uma coleção de comentários em um objeto de mídia do Instagram.
+insights
+Representa as métricas de interação social em um objeto de mídia do Instagram.
+Exemplo de cURL
+Exemplo de solicitação
+curl -X GET \
+  'https://graph.instagram.com/v25.0/17895695668004550?fields=id,media_type,media_url,owner,timestamp&access_token=IGQVJ...'
+Exemplo de resposta
+{
+  "id": "17918920912340654",
+  "media_type": "IMAGE",
+  "media_url": "https://sconten...",
+  "owner": {
+    "id": "17841405309211844"
+  },
+  "timestamp": "2019-09-26T22:36:43+0000"
+}
+Atualização
+POST /<IG_MEDIA_ID>
+Habilita ou desabilita comentários em uma mídia do Instagram.
+Requisitos
+API do Instagram com o Login do Instagram	API do Instagram com o Login do Facebook
+Tokens de acesso
+Token de acesso do usuário do Instagram
+Token de acesso do usuário do Facebook
+URL de hospedagem
+graph.instagram.com
+graph.facebook.com
+Tipo de login
+Login de Empresa no Instagram
+Login do Facebook para Empresas
+Permissões
+instagram_business_basic
+instagram_business_manage_comments
+instagram_basic
+instagram_manage_comments
+pages_read_engagement
+Caso uma função tenha sido concedida ao usuário do app por meio do Gerenciador de Negócios na Página conectada ao usuário do Instagram em questão, você precisará obter uma das seguintes permissões:
+ads_management
+ads_read
+Limitações
+Não é compatível com a mídia de vídeo ao vivo do Instagram.
+Sintaxe da solicitação
+POST https://<HOST_URL>/<API_VERSION>/<IG_MEDIA_ID>
+  ?comment_enabled=<BOOL>
+  &access_token=<ACCESS_TOKEN>
+Parâmetros de caminho
+Espaço reservado	Valor
+<API_VERSION>
+A versão mais recente é: v25.0
+A versão da API que seu app está usando. Caso não esteja especificado nas suas chamadas de API, esta será a versão mais recente no momento da criação do seu app da Meta; se essa opção não for mais válida, será a versão mais antiga disponível. Saiba mais sobre o controle de versões.
+<HOST_URL>
+O URL de hospedagem que seu app está usando para consultar o ponto de extremidade.
+<IG_MEDIA_ID>
+Obrigatório. A identificação da mídia que será publicada.
+Parâmetros da string de consulta
+Chave	Espaço reservado	Valor
+access_token
+<ACCESS_TOKEN>
+Obrigatório. O token de acesso do usuário do app.
+comment_enabled
+<BOOL>
+Obrigatório. Defina como true para habilitar ou false para desabilitar comentários.
+Exemplo de cURL
+Exemplo de solicitação
+curl -i -X POST \
+ "https://graph.instagram.com/v25.0/17918920912340654?comment_enabled=true&access_token=EAAOc..."
+Exemplo de resposta
+{
+  "success": true
+}
+Exclusão
+DELETE /<IG_MEDIA_ID>
+Exclua mídias do Instagram.
+Requisitos
+API do Instagram com o Login do Facebook
+Tokens de acesso
+Token de acesso do usuário do Facebook
+URL de hospedagem
+graph.facebook.com
+Tipo de login
+Login do Facebook para Empresas
+Permissões
+instagram_basic
+instagram_manage_contents
+Limitações
+Essa API só é compatível com a API do Instagram com o Login do Facebook. Há compatibilidade com posts sem anúncios, stories, reels e álbuns de carrossel inteiros. Para excluir mídias em álbuns de carrossel, o álbum inteiro deve ser excluído. Para isso, especifique a identificação de mídia do contêiner do carrossel. Não é possível excluir mídias individuais em um carrossel.
+Sintaxe da solicitação
+POST https://graph.facebook.com/<API_VERSION>/<IG_MEDIA_ID>
+  ?access_token=<ACCESS_TOKEN>
+Parâmetros de caminho
+Espaço reservado	Valor
+<API_VERSION>
+A versão mais recente é: v25.0
+A versão da API que seu app está usando. Caso não esteja especificado nas suas chamadas de API, esta será a versão mais recente no momento da criação do seu app da Meta; se essa opção não for mais válida, será a versão mais antiga disponível. Saiba mais sobre o controle de versões.
+<IG_MEDIA_ID>
+Obrigatório. A identificação da mídia que será publicada.
+Parâmetros da string de consulta
+Chave	Espaço reservado	Valor
+access_token
+<ACCESS_TOKEN>
+Obrigatório. O token de acesso do usuário do app.
+Exemplo de cURL
+Exemplo de solicitação
+curl -i -X DELETE \
+ "https://graph.facebook.com/v25.0/17918920912340654?comment_enabled=true&access_token=EAAOc..."
+Exemplo de resposta (sucesso)
+{
+  "success": true,
+  "deleted_id": "17918920912340654"
+}
+Exemplo de resposta (falha, tipo de mídia não compatível)
+{
+  "error": {
+   "message": "Fatal",
+   "type": "OAuthException",
+   "code": -1,
+   "error_subcode": 2207073,
+   "is_transient": false,
+   "error_user_title": "Media Type Not Supported",
+   "error_user_msg": "The media type is not supported for this endpoint",
+   "fbtrace_id": "Api-OlNdfcpOwIu6hNaT5Kw"
+  },
+}
+Você achou esta página útil?
+Ícone de polegar para cima
+Ícone de polegar para baixo
+Meta
+FacebookInstagramXLinkedInYouTube
+Desenvolva com a Meta
+IA
+Meta Horizon
+Tecnologias sociais
+Notícias
+Meta for Developers
+Blog
+Casos de sucesso
+Suporte
+Suporte ao desenvolvedor
+Ferramenta de bug
+Status da plataforma
+Fórum da Comunidade de Desenvolvedores
+Relatar um incidente
+Quem somos
+Sobre
+Carreiras
+Termos e políticas
+Iniciativas de plataforma responsável
+Termos da plataforma
+Políticas do Desenvolvedor
+Política de Privacidade
+Cookies
+Português (Brasil)

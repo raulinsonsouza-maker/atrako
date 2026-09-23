@@ -1,0 +1,128 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Conta Hotel
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+Analista IA
+
+
+Mês atual: 01 de set. de 2026 a 09 de set. de 2026
+Hotel intelligence
+
+Conversas
+
+Dados do período selecionado
+
+Análise · Meta
+
+Atualizada 09 de set.
+
+
+
+Análise · Campanhas
+
+Atualizada 09 de set.
+
+
+Análise · Meta
+
+Evidência antes de opinião
+
+Sessão persistente
+Você
+15:51
+Qual campanha da Meta teve o maior número de compras?
+Analista
+15:51
+•
+A campanha da Meta com maior número de compras foi "17/06 - [IN] [RA] [VENDAS] [FÉRIAS JULHO ATUALIZADA]".
+•
+Essa campanha gerou 54 compras com investimento de R$ 10.462,22.
+Performance de campanhas Meta · 12 de jun.—09 de set.
+1 fonte consultada
+3575 tokens
+Você
+15:51
+Responda objetivamente sobre resultados e valor atribuído. Priorize compras.
+Analista
+15:51
+•
+A campanha "17/06 - [IN] [RA] [VENDAS] [FÉRIAS JULHO ATUALIZADA]" gerou 54 compras.
+•
+O valor atribuído foi R$ 285.870,60, com investimento de R$ 10.462,22.
+Performance de campanhas Meta · 12 de jun.—09 de set.
+1 fonte consultada
+3786 tokens
+Você
+15:52
+Qual campanha teve o maior número de compras?
+Analista
+15:52
+•
+A campanha da Meta "17/06 - [IN] [RA] [VENDAS] [FÉRIAS JULHO ATUALIZADA]" teve o maior número de compras, totalizando 54.
+•
+Campanhas do Google não registraram compras no período analisado.
+Performance de campanhas Google · 12 de jun.—09 de set.
+Performance de campanhas Meta · 12 de jun.—09 de set.
+2 fontes consultadas
+4256 tokens
+Você
+15:52
+Qual campanha teve o maior número de compras?
+Analista
+15:52
+•
+A campanha da Meta "11/02 [IN] [RA] [RMKT - INITIATE CHECKOUT - COMPRA] - VOLTEI10" teve o maior número de compras, com 11 no período analisado.
+•
+As campanhas do Google não registraram compras no mesmo período.
+Performance de campanhas Google · 01 de set.—09 de set.
+Performance de campanhas Meta · 01 de set.—09 de set.
+2 fontes consultadas
+4397 tokens
+Você
+15:53
+Responda objetivamente sobre resultados e valor atribuído. Priorize compras.
+Analista
+15:53
+No período de 01 a 09 de setembro de 2026, o canal geral registrou 22 compras. O valor atribuído foi de R$ 113.231,36, com investimento de R$ 6.921,94. O custo por compra foi de R$ 314,63, e o ROAS alcançou 16,36.
+
+Visão geral de mídia · 01 de set.—09 de set.
+1 fonte consultada
+4213 tokens
+Você
+15:53
+Analise os principais sinais e recomende próximos passos sobre resultados e valor atribuído, performance de campanhas, eficiência de investimento. Priorize investimento.
+Analista
+15:53
+Leitura executiva
+•
+O canal geral gerou 22 compras com investimento de R$ 6.921,94 e ROAS de 16,36 entre 01 e 09 de setembro de 2026.
+•
+A campanha Meta "11/02 [IN] [RA] [RMKT - INITIATE CHECKOUT - COMPRA] - VOLTEI10" teve 11 compras, CPA de R$ 133,93 e ROAS de 42,98, destacando-se em eficiência.
+O que os dados indicam
+•
+Google não registrou compras no período, concentrando receita e volume na Meta.
+•
+Campanhas Meta apresentam CPA entre R$ 133,93 e R$ 306,20, com ROAS variando de 13,7 a 42,98, indicando diferenças significativas de desempenho.
+Próximos passos
+•
+Realizar teste controlado para aumento de investimento na campanha "11/02 [IN] [RA] [RMKT - INITIATE CHECKOUT - COMPRA] - VOLTEI10", acompanhando CPA e ROAS.
+•
+Monitorar campanhas Meta com CPA acima de R$ 280 para decidir ajustes ou realocação de orçamento conforme evolução da eficiência.
+Performance de campanhas Google · 01 de set.—09 de set.
+Visão geral de mídia · 01 de set.—09 de set.
+Performance de campanhas Meta · 01 de set.—09 de set.
+Performance de campanhas Meta · 01 de set.—09 de set.
+4 fontes consultadas
+11367 tokens
+Pergunte sobre receita, campanhas, CRM ou eficiência…
+
+
+Enter envia · Shift + Enter quebra linha · análise limitada ao período e canal selecionados
+
+R$ 0k

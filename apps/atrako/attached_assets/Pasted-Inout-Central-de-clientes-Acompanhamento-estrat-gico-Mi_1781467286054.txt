@@ -1,0 +1,261 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Mirante Incorporadora
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+CRM
+
+
+Mês atual: 01 de jun. de 2026 a 14 de jun. de 2026
+CRM
+
+Funil & Leads
+CV CRM
+
+Funil CRM
+Leads no período
+
+90
+
+Fechamentos
+
+0
+
+Taxa de fechamento
+
+0.0%
+
+Atendimento
+
+77 leads · 86%
+Em Atendimento
+
+86%
+77
+Visitas
+
+7 leads · 8%
+Visita Realizada
+
+3%
+3
+Visita Agendada
+
+4%
+4
+Perdidos
+
+6 leads · 7%
+Perdido
+
+7%
+6
+CRM
+
+Análise de Origem
+Valor Vendido
+
+—
+
+0 unidades vendidas
+Meta
+36
+
+Leads no CRM
+
+—
+
+Ganhos
+
+33 em aberto
+3 perdidos (8%)
+Investimento
+
+R$ 3.415,90
+
+CPL real · CRM
+
+R$ 94,89
+
+CPL plataforma
+
+R$ 426,99
+
+Google
+3
+
+Leads no CRM
+
+—
+
+Ganhos
+
+3 em aberto
+Investimento
+
+R$ 1.780,93
+
+CPL real · CRM
+
+R$ 593,64
+
+CPL plataforma
+
+R$ 161,90
+
+Outros canais
+
+Canal	Leads	Ganhos	Conv%	Qualif.
+Indicação
+2	—	—	—
+Direto
+2	—	—	—
+Outro
+47	—	—	2.0
+Fonte de Conversão
+
+61 de 90
+Buscar fonte de conversão…
+Painel Corretor
+60.7%
+37
+RdStation
+21.3%
+13
+Painel Gestor
+16.4%
+10
+Painel Imobiliária
+1.6%
+1
+CRM
+
+Por Portal de Entrada
+Meta
+
+· 36 leads
+· R$ 3.415,90 investidos
+Conversão / Portal CRM	Leads	Visitou	Em aberto	Ganhos	Conv%
+Painel Corretor
+30	—	28	—	0%
+RdStation
+5	2	4	—	0%
+Painel Gestor
+1	—	1	—	0%
+Google
+
+· 3 leads
+· R$ 1.780,93 investidos
+Conversão / Portal CRM	Leads	Visitou	Em aberto	Ganhos	Conv%
+RdStation
+3	—	3	—	0%
+"Portal de Entrada" = como o lead chegou ao CRM (ex: RdStation = integração via RD Station; Painel Corretor = cadastro pelo app do corretor). Não é o nome da campanha — nomes de campanha aparecem em "Por Criativo".
+
+CRM
+
+Detalhamento dos Leads
+Buscar por nome, e-mail ou telefone…
+Etapa	Contato	Origem	Entrada	Valor
+Em Atendimento
+Adriano Jerônimo e Alba
+
+Outro
+14/06/26	—
+Em Atendimento
+Thais Potencialize Mae do Marco
+
+Outro
+13/06/26	—
+Em Atendimento
+Fernando Nogueira Militar Potencialize
+
+Outro
+13/06/26	—
+Visita Realizada
+GLAUCIA ARAUJO
+
+Outro
+13/06/26	—
+Em Atendimento
+Lubiane
+
+Outro
+13/06/26	—
+Visita Agendada
+Marcelo Vinicius
+
+Indicação
+13/06/26	—
+Em Atendimento
+Thayna sampaio
+
+thaynaalmeida2203@gmail.com
+
+Outro
+12/06/26	—
+Em Atendimento
+Daniel Fampa Negreiros Lima
+
+dfampa@yahoo.com.br
+
+Meta
+12/06/26	—
+Em Atendimento
+Izabel Gaião
+
+izagaiao@hotmail.com
+
+Meta
+12/06/26	—
+Em Atendimento
+Mylena Alessandrina
+
+alessandrinamylena@gmail.com
+
+Meta
+12/06/26	—
+Visita Agendada
+Glênio Lead barraca
+
+Outro
+11/06/26	—
+Em Atendimento
+Ribamar
+
+Ribahardiimm@gmail.com
+
+Meta
+11/06/26	—
+Em Atendimento
+Eneas Portugal
+
+eneas.portugal@gmail.com
+
+Meta
+10/06/26	—
+Em Atendimento
+Ricardo
+
+Outro
+10/06/26	—
+Em Atendimento
+Jhonatan Portela
+
+jhonatan.portela@outlook.com
+
+Direto
+10/06/26	—
+
+1
+2
+3
+4
+5
+6
+
+85

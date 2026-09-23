@@ -1,0 +1,202 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Mirante Incorporadora
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+CRM
+Saldo Google
+R$ ••••••
+
+
+
+Ano atual (YTD): 01 de jan. de 2026 a 15 de jun. de 2026
+Análise
+Criativos
+Investimento Google
+
+R$ 8.362,93
+
+166 dias selecionados
+
+Conversões (Google Ads)
+
+83
+
+Total do período (métrica principal do relatório de campanhas)
+
+Custo / conversão
+
+R$ 100,76
+
+Investimento ÷ conversões
+
+CPM Google
+
+R$ 211,90
+
+Custo por mil impressões
+
+Performance Google
+Investimento e conversões por mês
+
+Mar/26
+Abr/26
+Mai/26
+Jun/26
+0
+900
+1800
+2700
+3600
+0
+45
+90
+135
+180
+InvestimentoConversõesCPL
+
+Resultado GoogleMês a mês
+Ano atual (YTD)
+Visão comparativa com leitura rápida das principais métricas por mês.
+
+4 meses
+Atual: Jun/26
+Métrica	
+Mês
+Mar/26
+Mês
+Abr/26
+Mês
+Mai/26
+Atual
+Jun/26
+INVESTIMENTO
+
+Valor investido em mídia na semana.
+
+R$ 1.676,34
+R$ 1.464,84
+R$ 3.410,15
+R$ 1.811,60
+IMPRESSÕES
+
+Volume total de entregas dos anúncios.
+
+9.359
+8.960
+14.088
+7.059
+CLIQUES
+
+Cliques nos anúncios (no Google Ads, “interações” pode incluir outros tipos).
+
+533
+605
+885
+371
+CTR (%)
+
+Taxa de clique sobre impressões.
+
+5,695%
+6,752%
+6,282%
+5,256%
+CONVERSÕES
+
+Total de conversões atribuídas (alinhado ao relatório de campanhas do Google Ads).
+
+31
+21
+20
+11
+TAXA CONV.
+
+Conversões em relação aos cliques (taxa de conversão aproximada).
+
+5,816%
+3,471%
+2,26%
+2,965%
+CPC
+
+Custo médio por clique gerado.
+
+R$ 3,15
+R$ 2,42
+R$ 3,85
+R$ 4,88
+CUSTO / CONV.
+
+Investimento ÷ conversões da semana (equivalente ao custo por conversão do Google).
+
+R$ 54,08
+R$ 69,75
+R$ 170,51
+R$ 164,69
+Google Ads
+
+Campanhas · Análise por período
+
+#1
+Search
+[IN] [P] [SEARCH] LEADS
+
+Ativa	R$ 8.362,92	39.466	2.394	6,07%	R$ 3,49	82,0	R$ 101,99	R$ 82,00	0,01x
+Total · 1 campanhas	R$ 8.362,92	39.466	2.394	6,07%	R$ 3,49	82,0	R$ 101,99	R$ 82,00	0,01x
+Acompanhamento financeiro · Plano x Real
+Status de investimento no ano atual (planejado versus realizado em todos os canais)
+
+Orçado
+R$ 36.000,00
+Realizado
+R$ 8.362,93
+JAN.
+FEV.
+MAR.
+ABR.
+MAI.
+JUN.
+JUL.
+AGO.
+SET.
+OUT.
+NOV.
+DEZ.
+R$ 0,00
+R$ 900,00
+R$1.800,00
+R$2.700,00
+R$3.600,00
+OrcadoRealizado
+
+Ritmo do mês · Junho — dia 15 de 30
+
+▲ 20.8% acima do ritmo
+Orçado no mês
+
+R$ 3.000,00
+
+Realizado até hoje
+
+R$ 1.811,60
+
+Ritmo esperado (dia 15)
+
+R$ 1.500,00
+
+Diferença do ritmo
+
++R$ 311,60
+
+60% realizado do mês
+|
+Ritmo esperado: 50%
+|
+40% restante para fechar o mês
+45

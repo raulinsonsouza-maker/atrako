@@ -1,0 +1,393 @@
+Suporte a múltiplas BMs (Meta) e MCCs (Google)
+
+Resposta direta à sua dúvida
+
+Hoje, não — o sistema não suporta múltiplos tokens Meta nem múltiplos logins OAuth Google em paralelo.
+
+
+
+
+
+
+
+Plataforma
+
+
+
+O que já funciona
+
+
+
+O que não funciona hoje
+
+
+
+
+
+Meta
+
+
+
+1 token global + ID da conta de anúncio por cliente (Conta.accountIdPlataforma)
+
+
+
+2+ tokens/BMs diferentes (Inout + Mata Sede + Bruno Reis)
+
+
+
+
+
+Google
+
+
+
+1 OAuth global + customer ID por cliente + MCC opcional por cliente (Conta.googleAdsLoginCustomerId)
+
+
+
+MCCs de contas Google diferentes com refresh tokens distintos
+
+O resultado final para o cliente (dashboard, sync, leads) já é por cliente — o que falta é escolher qual credencial usar em cada sync.
+
+Como funciona hoje (simplificado)
+
+flowchart LR
+  subgraph meta [Meta]
+    T1[Token global único]
+    T1 --> A1[Conta cliente A]
+    T1 --> A2[Conta cliente B]
+    T1 --> A3[Conta Mata Sede]
+  end
+
+  subgraph google [Google]
+    O1[OAuth global único]
+    O1 --> G1[Cliente + MCC opcional]
+    O1 --> G2[Cliente + MCC opcional]
+  end
+
+Arquivos centrais:
+
+
+
+
+
+Meta token: [lib/config/integrations.ts](lib/config/integrations.ts) → usado em [lib/sync/metaApiSync.ts](lib/sync/metaApiSync.ts), [lib/sync/metaLeadsSync.ts](lib/sync/metaLeadsSync.ts)
+
+
+
+Google OAuth: [lib/googleAds/googleAdsClient.ts](lib/googleAds/googleAdsClient.ts) → usado em [lib/sync/googleAdsApiSync.ts](lib/sync/googleAdsApiSync.ts)
+
+
+
+IDs por cliente: tabela Conta em [prisma/schema.prisma](prisma/schema.prisma)
+
+
+
+Caminho recomendado (você confirmou tokens separados)
+
+Introduzir o conceito de Conexão de Integração — um perfil reutilizável por BM/MCC, ao qual vários clientes podem apontar.
+
+flowchart TD
+  subgraph conexoes [Conexões cadastradas]
+    C1[Inout Principal - Meta]
+    C2[Bruno Reis - Meta]
+    C3[Mata Sede - Meta]
+    G1[Inout MCC - Google]
+    G2[Bruno Reis MCC - Google]
+  end
+
+  ClienteA[Cliente Inout] -->|Conta META| C1
+  ClienteB[Cliente Bruno Reis] -->|Conta META| C2
+  ClienteC[Cliente Mata Sede] -->|Conta META| C3
+
+  Sync[Sync diário] -->|resolve credencial da Conta| conexoes
+  Sync --> Dashboard[Dashboard do cliente - inalterado]
+
+1. Novo modelo Prisma: ConexaoIntegracao
+
+model ConexaoIntegracao {
+  id        String   @id @default(cuid())
+  nome      String   // ex: "Inout Principal", "Bruno Reis BM"
+  plataforma String  // "META" | "GOOGLE_ADS"
+  ativo     Boolean  @default(true)
+
+  // Meta
+  metaAccessToken String?
+
+  // Google Ads (conjunto OAuth completo por conexão)
+  googleClientId        String?
+  googleClientSecret    String?
+  googleDeveloperToken  String?
+  googleRefreshToken    String?
+  googleLoginCustomerId String?
+
+  contas    Conta[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+Alterar Conta:
+
+conexaoIntegracaoId String?
+conexaoIntegracao   ConexaoIntegracao? @relation(...)
+
+2. Camada de resolução de credenciais
+
+Criar [lib/config/resolveIntegracao.ts](lib/config/resolveIntegracao.ts) com funções:
+
+
+
+
+
+resolveMetaCredentials({ clienteId, conta? }) → { token, accountId }
+
+
+
+resolveGoogleAdsCredentials({ clienteId, conta? }) → { client, refreshToken, loginCustomerId, customerId }
+
+Ordem de fallback (compatível com produção atual):
+
+
+
+
+
+Conta.conexaoIntegracaoId → credenciais da conexão
+
+
+
+Config global em SystemConfig / .env (comportamento atual dos 35 clientes Inout)
+
+3. Refatorar pontos de sync e API
+
+Substituir leitura direta do token global por resolve*Credentials nos arquivos críticos (~15 arquivos Meta, ~5 Google):
+
+
+
+
+
+
+
+Prioridade
+
+
+
+Arquivo
+
+
+
+Motivo
+
+
+
+
+
+Alta
+
+
+
+[lib/sync/metaApiSync.ts](lib/sync/metaApiSync.ts)
+
+
+
+Sync de mídia Meta
+
+
+
+
+
+Alta
+
+
+
+[lib/sync/metaLeadsSync.ts](lib/sync/metaLeadsSync.ts)
+
+
+
+Sync de leads
+
+
+
+
+
+Alta
+
+
+
+[lib/sync/googleAdsApiSync.ts](lib/sync/googleAdsApiSync.ts)
+
+
+
+Sync Google Ads
+
+
+
+
+
+Alta
+
+
+
+[lib/sync/syncClienteCanais.ts](lib/sync/syncClienteCanais.ts)
+
+
+
+Orquestrador por cliente
+
+
+
+
+
+Média
+
+
+
+[lib/sync/importMetaClientes.ts](lib/sync/importMetaClientes.ts)
+
+
+
+Import por conexão
+
+
+
+
+
+Média
+
+
+
+[app/api/clientes/[id]/saldo/route.ts](app/api/clientes/[id]/saldo/route.ts), gestão, alertas
+
+
+
+Leituras em tempo real
+
+[lib/googleAds/googleAdsClient.ts](lib/googleAds/googleAdsClient.ts): aceitar credenciais opcionais no parâmetro em vez de sempre chamar getIntegrationsConfig().
+
+4. Admin UI
+
+Nova seção em [app/admin/configuracoes/page.tsx](app/admin/configuracoes/page.tsx) ou página dedicada /admin/conexoes:
+
+
+
+
+
+Listar conexões (Meta e Google)
+
+
+
+Criar/editar: nome, plataforma, credenciais (mascaradas na edição, igual ao fluxo atual)
+
+
+
+Botão "Testar conexão" (reutilizar lógica de [app/api/meta/diagnose/route.ts](app/api/meta/diagnose/route.ts))
+
+Modal de cliente em [app/admin/clientes/page.tsx](app/admin/clientes/page.tsx):
+
+
+
+
+
+Dropdown "Conexão Meta" (opcional — vazio = padrão global Inout)
+
+
+
+Dropdown "Conexão Google" (opcional)
+
+
+
+Manter campos atuais: ID conta Meta, ID Google Ads, MCC por cliente
+
+5. Migração dos dados existentes
+
+
+
+
+
+Sem migração obrigatória: clientes atuais sem conexaoIntegracaoId continuam usando o token global da Inout
+
+
+
+Opcional: criar conexão "Inout Principal" e vincular os 35 clientes em lote (script admin) para organização futura
+
+
+
+Cadastrar conexões "Bruno Reis" e "Mata Sede" com seus tokens/OAuth
+
+
+
+Ao criar/editar clientes dessas BMs, selecionar a conexão correta + ID da conta
+
+6. O que não muda para o cliente final
+
+
+
+
+
+Dashboard, gráficos, leads e portal continuam iguais
+
+
+
+Cada cliente segue com seu clienteId, Conta e dados em FatoMidiaDiario / MetaLeadIndividual
+
+
+
+A única diferença é interna: na hora do sync, o sistema usa o token certo para aquela conta
+
+
+
+Escopo e estimativa
+
+
+
+
+
+
+
+Fase
+
+
+
+Entrega
+
+
+
+
+
+Fase 1
+
+
+
+Schema + resolver + sync Meta/Google
+
+
+
+
+
+Fase 2
+
+
+
+Admin de conexões + dropdown no cliente
+
+
+
+
+
+Fase 3
+
+
+
+Import Meta por conexão + diagnóstico por conexão
+
+Risco principal: tokens sensíveis no banco — manter o mesmo padrão de segurança atual (SystemConfig: não exibir valor na API GET, só hasToken).
+
+
+
+Alternativa descartada (no seu caso)
+
+Unificar tudo em um único token Meta dando acesso cross-BM via parceria/atribuição no Business Manager. Você confirmou que não é viável — os tokens precisam ser separados.
+
+Alternativa parcial para Google (sem dev)
+
+Se Bruno Reis/Mata Sede estivessem na mesma conta Google que fez o OAuth atual, o campo MCC por cliente já resolveria. Como são logins separados, entra na mesma solução de ConexaoIntegracao.

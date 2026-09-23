@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 628">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#102a43"/>
+      <stop offset="1" stop-color="#2f855a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="628" fill="url(#bg)"/>
+  <g fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="4">
+    <path d="M690 520V145h250v375M735 520V210h160v310"/>
+    <path d="M760 250h45v45h-45zm70 0h45v45h-45zm-70 75h45v45h-45zm70 0h45v45h-45zm-70 75h45v45h-45zm70 0h45v45h-45z"/>
+  </g>
+  <text x="92" y="170" fill="#9ae6b4" font-family="Arial, sans-serif" font-size="28" font-weight="700">PARQUE VILA MARIANA</text>
+  <text x="92" y="245" fill="#fff" font-family="Arial, sans-serif" font-size="54" font-weight="700">More perto</text>
+  <text x="92" y="310" fill="#fff" font-family="Arial, sans-serif" font-size="54" font-weight="700">de tudo.</text>
+  <text x="92" y="380" fill="#d9f7e7" font-family="Arial, sans-serif" font-size="25">2 e 3 dormitórios • lazer completo</text>
+  <rect x="92" y="430" width="250" height="58" rx="29" fill="#fff"/>
+  <text x="132" y="468" fill="#22543d" font-family="Arial, sans-serif" font-size="23" font-weight="700">AGENDE SEU TOUR</text>
+  <text x="92" y="560" fill="#fff" fill-opacity=".75" font-family="Arial, sans-serif" font-size="20">INCORPORADORA DE SÃO PAULO • DEMONSTRAÇÃO</text>
+</svg>

@@ -1,0 +1,115 @@
+
+Logotipo Nav
+Desenvolva conosco
+Documentos
+Blog
+Recursos
+Centrais para desenvolvedores
+Meus apps
+Documentação
+Visão geral
+Tags
+Esta página foi traduzida do inglês para outro idioma usando IA. O conteúdo traduzido por IA pode conter erros, omissões ou divergências de sentido. Como a tradução automática pode ser imprecisa ou pouco clara, consulte o conteúdo original em inglês desta página para validar as orientações corretas.
+Isso foi útil?
+Tags
+Updated: 3 de mar de 2025
+Representa uma coleção de objetos de mídia do Instagram em que a conta profissional do Instagram do usuário do seu app foi marcada por outro usuário no Instagram.
+Criação
+Esta operação não é compatível.
+Leitura
+GET /<IG_USER_ID>/tags
+Retorna uma lista de objetos de mídia do Instagram em que um usuário do Instagram foi marcado por outro usuário no Instagram.
+Limitações
+Os objetos privados de mídia do Instagram não serão retornados.
+Requisitos
+Tipo	Descrição
+Tokens de acesso
+Usuário
+Recursos
+Não aplicável.
+Permissões
+instagram_basicinstagram_manage_commentspages_read_engagement
+
+Se o token for de um usuário que recebeu uma função administrativa por meio do Gerenciador de Negócios, uma das permissões a seguir também será necessária: ads_management ou ads_read.
+Tarefas
+O usuário do app precisa ser capaz de executar as tarefas apropriadas na Página com base nas permissões solicitadas pelo app.
+Sintaxe da solicitação
+GET https://graph.facebook.com/<IG_USER_ID>/tags
+  ?fields=<LIST_OF_FIELDS>
+  &access_token=<ACCESS_TOKEN>
+Parâmetros da string de consulta
+Inclua o parâmetro da string de consulta a seguir para ampliar a solicitação.
+Chave	Valor
+access_token
+Obrigatório.
+String
+O token de acesso do usuário do app do Instagram.
+fields
+Lista separada por vírgulas
+Uma lista separada por vírgulas dos campos e das bordas que devem ser incluídos na resposta. Se omitida, os campos-padrão serão retornados.
+Campos
+Use o parâmetro da string de consulta fields para especificar os campos que devem ser incluídos nos objetos de mídia do Instagram retornados.
+Bordas
+Use o parâmetro da string de consulta fields para especificar as bordas que devem ser incluídas nos objetos de mídia do Instagram retornados.
+Resposta
+Um objeto formatado em JSON que contém objetos de mídia do Instagram.
+{
+  "<FIELD>":"<VALUE>",
+  ...
+}
+Paginação
+Esta borda é compatível com a paginação baseada em cursor. Portanto, a resposta incluirá os cursores before e after se houver múltiplas páginas de dados. No entanto, ao contrário da paginação baseada em cursor padrão, a resposta não incluirá os campos previous ou next. Assim, você precisará usar os cursores before e after para criar manualmente as strings de consulta previous e next a fim de navegar pelas páginas do conjunto de dados retornado.
+Exemplo de solicitação
+GET graph.facebook.com/17841405822304914/tags
+    ?fields=id,username
+    &access_token=EAADd...
+Exemplo de resposta
+{
+  "data": [
+    {
+      "id": "18038...",
+      "username": "keldo..."
+    },
+    {
+      "id": "17930...",
+      "username": "ashla..."
+    },
+    {
+      "id": "17931...",
+      "username": "jaypo..."
+    }
+  ]
+}
+Atualização
+Esta operação não é compatível.
+Exclusão
+Esta operação não é compatível.
+Você achou esta página útil?
+Ícone de polegar para cima
+Ícone de polegar para baixo
+Meta
+FacebookInstagramXLinkedInYouTube
+Desenvolva com a Meta
+IA
+Meta Horizon
+Tecnologias sociais
+Notícias
+Meta for Developers
+Blog
+Casos de sucesso
+Suporte
+Suporte ao desenvolvedor
+Ferramenta de bug
+Status da plataforma
+Fórum da Comunidade de Desenvolvedores
+Relatar um incidente
+Quem somos
+Sobre
+Carreiras
+Termos e políticas
+Iniciativas de plataforma responsável
+Termos da plataforma
+Políticas do Desenvolvedor
+Política de Privacidade
+Cookies
+Português (Brasil)

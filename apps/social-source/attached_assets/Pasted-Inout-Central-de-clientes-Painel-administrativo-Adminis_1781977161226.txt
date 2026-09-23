@@ -1,0 +1,524 @@
+Inout
+Central de clientes
+Painel administrativo
+Administração de Clientes
+Cada cliente agora aponta para as contas Google Ads e Meta que alimentam o painel.
+
+Conexões
+Atualizar todos
+Novo cliente
+Total
+
+35
+
+Ativos
+
+35
+
+Churn
+
+0
+
+Clientes cadastrados (35)
+Ativos
+Churn
+0-
+09 - CONECT IMÓVEIS
+
+09-conect-imoveis · Ativo· sync 05/06 17:44
+
+Sem Google
+Meta: 4277096584964
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+AA
+Academy Americana
+
+academy-americana · Ativo
+
+Sem Google
+Meta: 873760468896822
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+BB
+Be Blue School
+
+be-blue-school · Ativo
+
+Sem Google
+Meta: 205900210846295
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+BS
+Brasília Swiss Park
+
+brasilia-swiss-park · Ativo· sync 05/06 17:45
+
+Google: 2496892998
+MCC: 4896650578
+Meta: 1198195726897101
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+C-
+CA - PIRACICABA
+
+ca-piracicaba · Ativo
+
+Sem Google
+Meta: 426398272197064
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+CB
+Casa Basca
+
+casa-basca · Ativo
+
+Sem Google
+Meta: 622407677384946
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+CE
+Clinica e Spa Vida Natural
+
+clinica-e-spa-vida-natural · Ativo
+
+Sem Google
+Meta: 1348043568686974
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+CI
+CONECT IMÓVEIS
+
+conect-imoveis · Ativo
+
+Sem Google
+Meta: 1489584878642833
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+CB
+Conta Backup - Inout Digital 2
+
+conta-backup-inout-digital-2 · Ativo· sync 19/06 08:30
+
+Google: 1840446897
+Meta: 705844230434128
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+CH
+Conta Hotel
+
+conta-hotel · Ativo
+
+Sem Google
+Meta: 320901911416777
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+D
+D'or
+
+d-or · Ativo
+
+Sem Google
+Meta: 4053286638277990
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+DF
+Dr. Fernando Guena
+
+dr-fernando-guena · Ativo
+
+Sem Google
+Meta: 885412763541613
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+EJ
+ESALQ Jr. Consultoria
+
+esalq-jr-consultoria · Ativo· sync 05/06 17:44
+
+Sem Google
+Meta: 237828749660910
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+FF
+Florien FitoAtivos
+
+florien-fitoativos · Ativo
+
+Sem Google
+Meta: 128916100945056
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+G
+Granarolo
+
+granarolo · Ativo
+
+Google: 5276735712
+Meta: 1308551370629138
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+I
+Incorporadora
+
+incorporadora · Ativo· sync 18/06 22:15
+
+Google: 5514231739
+Meta: 1198843318594099
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+JO
+JR Odontologia
+
+jr-odontologia · Ativo
+
+Sem Google
+Meta: 3470876133173056
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+KD
+Kombucha da Cá
+
+kombucha-da-ca · Ativo
+
+Sem Google
+Meta: 580391044023650
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+MI
+Marth Imobiliária
+
+marth-imobiliaria · Ativo
+
+Sem Google
+Meta: 112125599297171
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+MD
+Melaço de Cana
+
+melaco-de-cana · Ativo
+
+Google: 7337285470
+Meta: 355437085993604
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+OM
+Odonto Minas
+
+odonto-minas · Ativo
+
+Sem Google
+Meta: 426398272197064
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+O
+Ortoestética
+
+ortoestetica · Ativo
+
+Sem Google
+Meta: 303101929042696
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+PI
+Pousada Ilha Brazil
+
+pousada-ilha-brazil · Ativo
+
+Sem Google
+Meta: 1568139140850242
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+RS
+Raul Souza
+
+raul-souza · Ativo
+
+Sem Google
+Meta: 923092367075498
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+S+
+Sou + Charitas
+
+sou-charitas · Ativo
+
+Sem Google
+Meta: 456690009221165
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+S+
+Sou + Icaraí
+
+sou-icarai · Ativo
+
+Sem Google
+Meta: 256378515824636
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+S+
+Sou + Itacoa
+
+sou-itacoa · Ativo
+
+Sem Google
+Meta: 2636410279889512
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+S+
+Sou + Wellness
+
+sou-wellness · Ativo
+
+Sem Google
+Meta: 1181625082289286
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+SP
+Swiss Park AGV REAL
+
+swiss-park-agv-real · Ativo
+
+Google: 4147647506
+MCC: 4896650578
+Meta: 1051359931580682
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+SP
+Swiss Park Anápolis - NOVA
+
+swiss-park-anapolis-nova · Ativo
+
+Google: 3747511576
+MCC: 4896650578
+Meta: 448161170907452
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+SP
+Swiss Park Caieiras - NOVA
+
+swiss-park-caieiras-nova · Ativo
+
+Google: 5246049801
+MCC: 4896650578
+Meta: 1945969979179112
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+T
+Tertúlia
+
+tertulia · Ativo
+
+Sem Google
+Meta: 2260546050901858
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+VM
+Varella Motos
+
+varella-motos · Ativo
+
+Google: 7732511577
+Meta: 867689343316284
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+VB
+Vito Balducci
+
+vito-balducci · Ativo
+
+Sem Google
+Meta: 719954580443704
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+Y
+Yema
+
+yema · Ativo
+
+Sem Google
+Meta: 1961705977915455
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+Editar cliente · 09 - CONECT IMÓVEIS
+Configure os IDs de conta que alimentam o dashboard.
+
+
+Nome*
+09 - CONECT IMÓVEIS
+ID conta Google Ads
+299-043-1301
+Pode colar com ou sem hífens.
+
+MCC Google (login-customer-id)
+3830547260
+Ex.: 3830547260 ou 4896650578
+
+ID conta Meta Ads
+4277096584964
+Pode colar com ou sem act_.
+
+GA4 Property ID
+456789012
+ID numérico da propriedade GA4 (Admin > Propriedade).
+
+Logo do cliente
+Fazer upload do logo
+Segmento
+Selecionar ou digitar segmento...
+
+
+Orçamento mensal Google (R$)
+Orçamento mensal Meta (R$)
+Perfil de painel especial
+
+(padrão — detecta por slug/nome)
+Define o tipo de dashboard customizado. Imune a mudanças de nome ou slug.
+
+Squad
+
+(sem squad)
+Time interno responsável por este cliente. Usado para filtrar a Central de Clientes.
+
+
+Ativo
+
+Sincronizar após salvar
+
+Lead Scoring ativado
+Integração CRM
+
+Plataforma CRM
+Nenhum (sem integração CRM)
+Salvar CRM
+RD Station Marketing (Enriquecimento de Leads)
+
+Crie um app em app.rdstation.com.br → App Store → Meus Apps com a URL de callback:
+
+https://fac3f487-e57b-4da4-9b9b-eec08b66459e-00-3472vzv3ay6yd.riker.replit.dev/api/auth/rd-marketing/callback
+Usado para enriquecer leads com campos de qualificação (faturamento, segmento, cargo, investimento) vindos do Marketing.
+
+Client ID
+xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+Client Secret
+••••••••••••••••
+ID da Segmentação (fonte primária de leads)
+Ex: 1234567 (use Descobrir para buscar automaticamente)
+ID da segmentação RD que contém os leads a importar. Use "Descobrir" para listar as segmentações da conta.
+
+Autenticação OAuth
+
+Salve as credenciais acima e depois clique para autorizar.
+
+Conectar via RD Station Marketing
+
+Enriquecimento ativo
+Salvar Marketing
+Cancelar
+Salvar alterações

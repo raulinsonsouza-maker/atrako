@@ -1,0 +1,1035 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../lib/generated/prisma"
+  binaryTargets = ["native", "windows", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Cliente {
+  id                         String                  @id @default(cuid())
+  nome                       String
+  slug                       String                  @unique
+  logoUrl                    String?
+  ativo                      Boolean                 @default(true)
+  createdAt                  DateTime                @default(now())
+  updatedAt                  DateTime                @updatedAt
+  segmento                   String?
+  orcamentoMidiaGoogleMensal Decimal?                @db.Decimal(14, 2)
+  orcamentoMidiaMetaMensal   Decimal?                @db.Decimal(14, 2)
+  gestor                     String?
+  squad                      Int?
+  formaPagamentoMeta         String?
+  formaPagamentoGoogle       String?
+  portalToken                String?                 @unique @default(dbgenerated("(gen_random_uuid())::text"))
+  leadScoringEnabled         Boolean                 @default(false)
+  socialMediaAtivo           Boolean                 @default(false)
+  perfilPanel                String?
+  ultimoSyncAt               DateTime?
+  agregadosMensal            AgregadoMidiaMensal[]
+  agregadosSemanal           AgregadoMidiaSemanal[]
+  contas                     Conta[]
+  fatosAnalyticsDiario       FatoAnalyticsDiario[]
+  fatosAnalyticsPorCanal     FatoAnalyticsPorCanal[]
+  fatosMidia                 FatoMidiaDiario[]
+  googleAdsCampanhas         GoogleAdsCampanha[]
+  googleAdsCriativos         GoogleAdsCriativo[]
+  metas                      Meta[]
+  metaAdsCriativos           MetaAdsCriativo[]
+  metaLeadsIndividuais       MetaLeadIndividual[]
+  crmConfig                  CrmConfig?
+  leadsCrm                   LeadCrm[]
+  rdMarketingConfig          RdMarketingConfig?
+  pautasReuniao              PautaReuniao[]
+  instagramInsightsMensais   InstagramInsightMensal[]
+}
+
+model Conta {
+  id                       String                 @id @default(cuid())
+  clienteId                String
+  plataforma               String
+  accountIdPlataforma      String?
+  googleAdsLoginCustomerId String?
+  nomeConta                String?
+  conexaoIntegracaoId      String?
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
+  cliente                  Cliente                @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  conexaoIntegracao        ConexaoIntegracao?     @relation(fields: [conexaoIntegracaoId], references: [id])
+  fatosAnalyticsDiario     FatoAnalyticsDiario[]
+  fatosMidia               FatoMidiaDiario[]
+  googleAdsCampanhas       GoogleAdsCampanha[]
+  googleAdsCriativos       GoogleAdsCriativo[]
+  metaAdsCriativos         MetaAdsCriativo[]
+
+  @@unique([clienteId, plataforma])
+}
+
+model ConexaoIntegracao {
+  id                    String   @id @default(cuid())
+  nome                  String
+  plataforma            String
+  ativo                 Boolean  @default(true)
+  metaAccessToken       String?
+  googleClientId        String?
+  googleClientSecret    String?
+  googleDeveloperToken  String?
+  googleRefreshToken    String?
+  googleLoginCustomerId String?
+  contas                Conta[]
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model FatoMidiaDiario {
+  id                              String   @id @default(cuid())
+  clienteId                       String
+  contaId                         String?
+  data                            DateTime @db.Date
+  canal                           String
+  impressoes                      Int      @default(0)
+  cliques                         Int      @default(0)
+  leads                           Int      @default(0)
+  conversoes                      Int      @default(0)
+  investimento                    Decimal  @default(0) @db.Decimal(14, 2)
+  cpl                             Decimal? @db.Decimal(14, 2)
+  rawRowHash                      String?
+  createdAt                       DateTime @default(now())
+  updatedAt                       DateTime @updatedAt
+  contacts                        Int      @default(0)
+  costPerPurchase                 Decimal? @db.Decimal(14, 2)
+  messagingConversationsStarted   Int      @default(0)
+  onFacebookLeads                 Int      @default(0)
+  purchases                       Int      @default(0)
+  websiteLeads                    Int      @default(0)
+  websitePurchaseRoas             Decimal? @db.Decimal(14, 2)
+  websitePurchasesConversionValue Decimal  @default(0) @db.Decimal(14, 2)
+  alcance                         Int      @default(0)
+  checkoutIniciado                Int      @default(0)
+  profileVisits                   Int      @default(0)
+  addToCart                       Int      @default(0)
+  landingPageViews                Int      @default(0)
+  campaignName                    String   @default("")
+  campaignId                      String   @default("")
+  cliente                         Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  conta                           Conta?   @relation(fields: [contaId], references: [id])
+
+  @@unique([clienteId, data, canal, campaignName])
+  @@index([clienteId, data])
+  @@index([clienteId, canal, data])
+}
+
+model AgregadoMidiaSemanal {
+  id           String   @id @default(cuid())
+  clienteId    String
+  canal        String
+  ano          Int
+  semanaIso    Int
+  investimento Decimal  @default(0) @db.Decimal(14, 2)
+  impressoes   Int      @default(0)
+  cliques      Int      @default(0)
+  leads        Int      @default(0)
+  conversoes   Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  cliente      Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, canal, ano, semanaIso])
+  @@index([clienteId, ano, semanaIso])
+}
+
+model AgregadoMidiaMensal {
+  id           String   @id @default(cuid())
+  clienteId    String
+  canal        String
+  ano          Int
+  mes          Int
+  investimento Decimal  @default(0) @db.Decimal(14, 2)
+  impressoes   Int      @default(0)
+  cliques      Int      @default(0)
+  leads        Int      @default(0)
+  conversoes   Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  cliente      Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, canal, ano, mes])
+  @@index([clienteId, ano, mes])
+}
+
+model Meta {
+  id            String   @id @default(cuid())
+  clienteId     String
+  canal         String?
+  tipoMeta      String
+  periodicidade String
+  ano           Int
+  mes           Int?
+  valorMeta     Decimal  @db.Decimal(14, 2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  cliente       Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@index([clienteId])
+}
+
+model PautaReuniao {
+  id         String    @id @default(cuid())
+  clienteId  String
+  semanaIso  Int
+  ano        Int
+  titulo     String
+  descricao  String?
+  status     String    @default("ABERTA")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  dataFim    DateTime?
+  prioridade String    @default("MEDIA")
+  cliente    Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@index([clienteId, ano, semanaIso])
+  @@index([clienteId, status])
+}
+
+model GoogleAdsCriativo {
+  id                   String   @id @default(cuid())
+  clienteId            String
+  contaId              String?
+  adResourceName       String
+  campaignId           String?
+  campaignName         String?
+  adGroupId            String?
+  adGroupName          String?
+  headline1            String?
+  headline2            String?
+  description          String?
+  finalUrls            String?
+  data                 DateTime @db.Date
+  impressoes           Int      @default(0)
+  cliques              Int      @default(0)
+  custoMicros          BigInt   @default(0)
+  conversoes           Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  conversaoValorMicros BigInt   @default(0)
+  campaignStatus       String?
+  cliente              Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  conta                Conta?   @relation(fields: [contaId], references: [id])
+
+  @@unique([clienteId, adResourceName, data])
+  @@index([clienteId, data])
+}
+
+model GoogleAdsCampanha {
+  id                   String   @id @default(cuid())
+  clienteId            String
+  contaId              String?
+  campaignId           String
+  campaignName         String
+  campaignStatus       String?
+  campaignType         String?
+  data                 DateTime @db.Date
+  impressoes           Int      @default(0)
+  cliques              Int      @default(0)
+  custoMicros          BigInt   @default(0)
+  conversoes           Float    @default(0)
+  conversaoValorMicros BigInt   @default(0)
+  alcance              Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  cliente              Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  conta                Conta?   @relation(fields: [contaId], references: [id])
+
+  @@unique([clienteId, campaignId, data])
+  @@index([clienteId, data])
+}
+
+model MetaAdsCriativo {
+  id                              String   @id @default(cuid())
+  clienteId                       String
+  contaId                         String?
+  data                            DateTime @db.Date
+  adId                            String
+  creativeId                      String?
+  adName                          String
+  effectiveStatus                 String?
+  campaignObjective               String?
+  mediaType                       String
+  imageUrl                        String?
+  imageUrlFull                    String?
+  videoId                         String?
+  videoSourceUrl                  String?
+  videoPictureUrl                 String?
+  videoEmbedHtml                  String?
+  body                            String?
+  title                           String?
+  spend                           Decimal  @default(0) @db.Decimal(14, 2)
+  impressions                     Int      @default(0)
+  clicks                          Int      @default(0)
+  ctr                             Decimal? @db.Decimal(8, 4)
+  cpc                             Decimal? @db.Decimal(14, 2)
+  createdAt                       DateTime @default(now())
+  updatedAt                       DateTime @updatedAt
+  adsetId                         String?
+  adsetName                       String?
+  campaignId                      String?
+  campaignName                    String?
+  leads                           Int      @default(0)
+  purchases                       Int      @default(0)
+  websitePurchasesConversionValue Decimal  @default(0) @db.Decimal(14, 2)
+  messagingConversationsStarted   Int      @default(0)
+  cliente                         Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  conta                           Conta?   @relation(fields: [contaId], references: [id])
+
+  @@unique([clienteId, adId, data])
+  @@index([clienteId, data])
+  @@index([clienteId, adId, data])
+}
+
+model FatoAnalyticsDiario {
+  id                     String   @id @default(cuid())
+  clienteId              String
+  contaId                String?
+  data                   DateTime @db.Date
+  sessions               Int      @default(0)
+  activeUsers            Int      @default(0)
+  engagedSessions        Int      @default(0)
+  engagementRate         Decimal  @default(0) @db.Decimal(8, 6)
+  bounceRate             Decimal  @default(0) @db.Decimal(8, 6)
+  averageSessionDuration Int      @default(0)
+  newUsers               Int      @default(0)
+  screenPageViews        Int      @default(0)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  cliente                Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  conta                  Conta?   @relation(fields: [contaId], references: [id])
+
+  @@unique([clienteId, data])
+  @@index([clienteId, data])
+}
+
+model FatoAnalyticsPorCanal {
+  id          String   @id @default(cuid())
+  clienteId   String
+  data        DateTime @db.Date
+  canal       String
+  sessions    Int      @default(0)
+  activeUsers Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  cliente     Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, data, canal])
+  @@index([clienteId, data])
+}
+
+model SystemConfig {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
+
+model SyncState {
+  id        String    @id
+  attemptAt DateTime?
+  successAt DateTime?
+  updatedAt DateTime  @updatedAt
+}
+
+model Segmento {
+  id        String   @id @default(cuid())
+  nome      String   @unique
+  cor       String   @default("#6b7280")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MetaLeadIndividual {
+  id               String   @id @default(cuid())
+  clienteId        String
+  contaId          String?
+  metaLeadId       String
+  formId           String?
+  formName         String?
+  campaignId       String?
+  campaignName     String?
+  adId             String?
+  adName           String?
+  adsetId          String?
+  adsetName        String?
+  createdTime      DateTime
+  fullName         String?
+  nomeEmpresa      String?
+  telefone         String?
+  estado           String?
+  tipoEmpresa      String?
+  faixaFaturamento String?
+  emailLead        String?
+  platform         String?
+  statusCrm        String?
+  rawFieldData     Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  cliente          Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, metaLeadId])
+  @@index([clienteId, createdTime])
+  @@index([clienteId, tipoEmpresa])
+  @@index([clienteId, estado])
+  @@index([clienteId, platform])
+}
+
+enum CrmTipo {
+  CVCRM
+  RDSTATION_CRM
+  KOMMO
+  EXACT_SPOTTER
+}
+
+model CrmConfig {
+  id           String    @id @default(cuid())
+  clienteId    String    @unique
+  tipo         CrmTipo
+  dominio      String?
+  credenciais  Json
+  ativo        Boolean   @default(true)
+  ultimoSyncAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  cliente      Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  leads        LeadCrm[]
+}
+
+model LeadCrm {
+  id             String    @id @default(cuid())
+  clienteId      String
+  crmConfigId    String
+  crmLeadId      String
+  etapa          String
+  ordemEtapa     Int?
+  nome           String?
+  telefone       String?
+  email          String?
+  metaLeadId     String?
+  rdContactId    String?
+  fonte          String?
+  rating         Int?
+  status         String?
+  dataEntrada    DateTime
+  dataFechamento DateTime?
+  valor          Decimal?  @db.Decimal(14, 2)
+  dadosMarketing Json?
+  dadosCv        Json?
+  momentoLead    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  cliente        Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  crmConfig      CrmConfig @relation(fields: [crmConfigId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, crmLeadId])
+  @@index([clienteId, dataEntrada])
+  @@index([clienteId, etapa])
+  @@index([clienteId, metaLeadId])
+}
+
+model RdMarketingConfig {
+  id           String    @id @default(cuid())
+  clienteId    String    @unique
+  credenciais  Json      @default("{}")
+  ativo        Boolean   @default(true)
+  ultimoSyncAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  cliente      Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+}
+
+model InstagramInsightMensal {
+  id               String   @id @default(cuid())
+  clienteId        String
+  ano              Int
+  mes              Int
+  alcance          Int      @default(0)
+  engajamento      Int      @default(0)
+  novosSeguidores  Int      @default(0)
+  followersTotal   Int      @default(0)
+  syncedAt         DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  cliente          Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, ano, mes])
+  @@index([clienteId, ano, mes])
+}
+
+// ─── Symbius Flow (SaaS multi-tenant) ───────────────────────────────────────
+
+model Organization {
+  id               String   @id @default(cuid())
+  nome             String
+  slug             String   @unique
+  plan             String   @default("FREE")
+  status           String   @default("ACTIVE")
+  centralClienteId String?
+  onboardingDone   Boolean  @default(false)
+  maxIgAccounts    Int      @default(1)
+  maxFluxos        Int      @default(3)
+  maxMembers       Int      @default(1)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  members            OrganizationMember[]
+  subscription       Subscription?
+  igAccounts         IgAccount[]
+  contatos           IgContato[]
+  conversas          IgConversa[]
+  fluxos             IgFluxo[]
+  fluxoPastas        IgFluxoPasta[]
+  execucoes          IgFluxoExecucao[]
+  webhookEvents      IgWebhookEvent[]
+  orgSettings        IgOrgSettings?
+  snippets           IgSnippet[]
+  segmentos          IgSegmento[]
+  conversionEvents   IgConversionEvent[]
+  memberInvites      IgMemberInvite[]
+  scheduledMessages  IgScheduledMessage[]
+  tagDefinitions     IgTagDefinition[]
+  trackingIdentities TrackingIdentity[]
+  trackingVisitors   TrackingVisitor[]
+  trackingSessions   TrackingSession[]
+  trackingEvents     TrackingEvent[]
+  attributionOrders  AttributionOrder[]
+  adSpendDaily       AdSpendDaily[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String?
+  nome         String
+  igUserId     String?  @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships OrganizationMember[]
+}
+
+model OrganizationMember {
+  id             String    @id @default(cuid())
+  userId         String
+  organizationId String
+  role           String    @default("OWNER")
+  pinnedAt       DateTime?
+  createdAt      DateTime  @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+}
+
+model Subscription {
+  id             String    @id @default(cuid())
+  organizationId String    @unique
+  plan           String    @default("FREE")
+  expiresAt      DateTime?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model IgAccount {
+  id                  String    @id @default(cuid())
+  organizationId      String
+  pageId              String?
+  pageName            String?
+  accessToken         String
+  igUserId            String
+  igUsername          String?
+  igProfilePictureUrl String?
+  followersCount      Int?
+  scopes              String?
+  status              String    @default("CONNECTED")
+  webhookSubscribedAt DateTime?
+  messagesEnabled     Boolean   @default(false)
+  tokenExpiresAt      DateTime?
+  defaultReplyText    String?
+  iceBreakers         Json      @default("[]")
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contatos     IgContato[]
+  conversas    IgConversa[]
+  fluxos       IgFluxo[]
+
+  @@unique([organizationId, igUserId])
+  @@index([igUserId])
+}
+
+model IgOrgSettings {
+  id               String   @id @default(cuid())
+  organizationId   String   @unique
+  apiKey           String?
+  webhookUrl       String?
+  webhookEvents    String[] @default([])
+  googleSheetId    String?
+  googleSheetTab   String?
+  syncCentralCrm   Boolean  @default(false)
+  aiEnabled        Boolean  @default(false)
+  aiKnowledgeBase  String?
+  aiGoals          Json     @default("{}")
+  aiTone           String?
+  metaPixelId      String?
+  metaCapiToken    String?
+  ga4MeasurementId String?
+  ga4ApiSecret     String?
+  /// Shopify/Tray/Nuvemshop secrets + store URLs
+  ecommerceConnectors Json @default("{}")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model IgSnippet {
+  id             String   @id @default(cuid())
+  organizationId String
+  title          String
+  body           String
+  shortcut       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model IgTagDefinition {
+  id             String   @id @default(cuid())
+  organizationId String
+  nome           String
+  cor            String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, nome])
+  @@index([organizationId])
+}
+
+model IgSegmento {
+  id             String   @id @default(cuid())
+  organizationId String
+  nome           String
+  filters        Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model IgConversionEvent {
+  id             String   @id @default(cuid())
+  organizationId String
+  contatoId      String?
+  fluxoId        String?
+  tipo           String
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@index([tipo])
+}
+
+model IgMemberInvite {
+  id             String    @id @default(cuid())
+  organizationId String
+  email          String
+  role           String    @default("AGENT")
+  token          String    @unique
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([token])
+}
+
+model IgScheduledMessage {
+  id             String    @id @default(cuid())
+  organizationId String
+  conversaId     String
+  texto          String
+  scheduledAt    DateTime
+  sentAt         DateTime?
+  sentByUserId   String?
+  error          String?
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([scheduledAt, sentAt])
+  @@index([organizationId])
+}
+
+model IgContato {
+  id                 String    @id @default(cuid())
+  organizationId     String
+  igAccountId        String
+  igsid              String
+  nome               String?
+  username           String?
+  profilePictureUrl  String?
+  tags               String[]  @default([])
+  campos             Json      @default("{}")
+  phone              String?
+  botPaused          Boolean   @default(false)
+  lastInteractionAt  DateTime?
+  trackingIdentityId String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  igAccount        IgAccount         @relation(fields: [igAccountId], references: [id], onDelete: Cascade)
+  trackingIdentity TrackingIdentity? @relation(fields: [trackingIdentityId], references: [id], onDelete: SetNull)
+  conversas        IgConversa[]
+  execucoes        IgFluxoExecucao[]
+
+  @@unique([igAccountId, igsid])
+  @@index([organizationId])
+  @@index([trackingIdentityId])
+}
+
+model IgConversa {
+  id             String    @id @default(cuid())
+  organizationId String
+  igAccountId    String
+  contatoId      String
+  status         String    @default("OPEN")
+  handoffHuman   Boolean   @default(false)
+  assignedUserId String?
+  lastMessageAt  DateTime?
+  lastReadAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  igAccount    IgAccount    @relation(fields: [igAccountId], references: [id], onDelete: Cascade)
+  contato      IgContato    @relation(fields: [contatoId], references: [id], onDelete: Cascade)
+  mensagens    IgMensagem[]
+
+  @@index([organizationId, lastMessageAt])
+  @@index([igAccountId])
+}
+
+model IgMensagem {
+  id             String   @id @default(cuid())
+  conversaId     String
+  organizationId String
+  direction      String
+  mid            String?  @unique
+  texto          String?
+  attachments    Json?
+  isEcho         Boolean  @default(false)
+  sentByUserId   String?
+  tag            String?
+  createdAt      DateTime @default(now())
+
+  conversa IgConversa @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+
+  @@index([conversaId, createdAt])
+}
+
+model IgFluxoPasta {
+  id             String   @id @default(cuid())
+  organizationId String
+  nome           String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  fluxos       IgFluxo[]
+
+  @@index([organizationId])
+}
+
+model IgFluxo {
+  id             String   @id @default(cuid())
+  organizationId String
+  igAccountId    String?
+  pastaId        String?
+  nome           String
+  status         String   @default("DRAFT")
+  triggerType    String
+  triggerConfig  Json     @default("{}")
+  fluxoKind      String   @default("automation")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  igAccount    IgAccount?        @relation(fields: [igAccountId], references: [id], onDelete: SetNull)
+  pasta        IgFluxoPasta?     @relation(fields: [pastaId], references: [id], onDelete: SetNull)
+  nos          IgFluxoNo[]
+  execucoes    IgFluxoExecucao[]
+
+  @@index([organizationId, status])
+  @@index([pastaId])
+}
+
+model IgFluxoNo {
+  id      String   @id @default(cuid())
+  fluxoId String
+  tipo    String
+  config  Json     @default("{}")
+  posX    Float    @default(0)
+  posY    Float    @default(0)
+  nextIds String[] @default([])
+
+  fluxo IgFluxo @relation(fields: [fluxoId], references: [id], onDelete: Cascade)
+
+  @@index([fluxoId])
+}
+
+model IgFluxoExecucao {
+  id             String    @id @default(cuid())
+  organizationId String
+  fluxoId        String
+  contatoId      String
+  noAtualId      String?
+  status         String    @default("RUNNING")
+  scheduledAt    DateTime?
+  context        Json      @default("{}")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  fluxo        IgFluxo      @relation(fields: [fluxoId], references: [id], onDelete: Cascade)
+  contato      IgContato    @relation(fields: [contatoId], references: [id], onDelete: Cascade)
+
+  @@index([status, scheduledAt])
+  @@index([organizationId])
+}
+
+model IgWebhookEvent {
+  id             String   @id @default(cuid())
+  organizationId String?
+  igUserId       String?
+  payload        Json
+  processed      Boolean  @default(false)
+  error          String?
+  createdAt      DateTime @default(now())
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([processed, createdAt])
+  @@index([igUserId])
+}
+
+// ─── Symbius Attribution ────────────────────────────────────────────────────
+
+model TrackingIdentity {
+  id             String   @id @default(cuid())
+  organizationId String
+  stId           String
+  email          String?
+  phone          String?
+  name           String?
+  status         String   @default("active")
+  /// First-touch snapshot at lead creation (immutable)
+  leadSource     Json?
+  mergedIntoId   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  aliases      IdentityAlias[]
+  visitors     TrackingVisitor[]
+  events       TrackingEvent[]
+  orders       AttributionOrder[]
+  contatos     IgContato[]
+  mergedInto   TrackingIdentity?  @relation("IdentityMerge", fields: [mergedIntoId], references: [id], onDelete: SetNull)
+  mergedFrom   TrackingIdentity[] @relation("IdentityMerge")
+
+  @@unique([organizationId, stId])
+  @@index([organizationId, email])
+  @@index([organizationId, phone])
+  @@index([mergedIntoId])
+}
+
+model IdentityAlias {
+  id             String   @id @default(cuid())
+  organizationId String
+  identityId     String
+  type           String
+  value          String
+  createdAt      DateTime @default(now())
+
+  identity TrackingIdentity @relation(fields: [identityId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, type, value])
+  @@index([identityId])
+}
+
+model TrackingVisitor {
+  id             String   @id @default(cuid())
+  organizationId String
+  anonymousId    String
+  identityId     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  identity     TrackingIdentity? @relation(fields: [identityId], references: [id], onDelete: SetNull)
+  sessions     TrackingSession[]
+  events       TrackingEvent[]
+
+  @@unique([organizationId, anonymousId])
+  @@index([identityId])
+}
+
+model TrackingSession {
+  id             String   @id @default(cuid())
+  organizationId String
+  sessionId      String
+  visitorId      String
+  landingPage    String?
+  referrer       String?
+  utmSource      String?
+  utmMedium      String?
+  utmCampaign    String?
+  utmContent     String?
+  utmTerm        String?
+  fbclid         String?
+  gclid          String?
+  ttclid         String?
+  msclkid        String?
+  firstTouch     Json?
+  lastTouch      Json?
+  startedAt      DateTime @default(now())
+  lastSeenAt     DateTime @default(now())
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  visitor      TrackingVisitor @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  events       TrackingEvent[]
+
+  @@unique([organizationId, sessionId])
+  @@index([visitorId])
+  @@index([organizationId, startedAt])
+}
+
+model TrackingEvent {
+  id             String   @id @default(cuid())
+  organizationId String
+  eventId        String
+  name           String
+  visitorId      String?
+  sessionId      String?
+  identityId     String?
+  properties     Json     @default("{}")
+  context        Json     @default("{}")
+  occurredAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  visitor      TrackingVisitor?  @relation(fields: [visitorId], references: [id], onDelete: SetNull)
+  session      TrackingSession?  @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  identity     TrackingIdentity? @relation(fields: [identityId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, eventId])
+  @@index([organizationId, name, occurredAt])
+  @@index([identityId, occurredAt])
+  @@index([visitorId])
+}
+
+model AttributionOrder {
+  id                 String   @id @default(cuid())
+  organizationId     String
+  externalOrderId    String
+  identityId         String?
+  customerExternalId String?
+  value              Decimal  @db.Decimal(12, 2)
+  currency           String   @default("BRL")
+  status             String   @default("paid")
+  eventId            String?
+  rawPayload         Json     @default("{}")
+  occurredAt         DateTime @default(now())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  identity     TrackingIdentity?  @relation(fields: [identityId], references: [id], onDelete: SetNull)
+  items        AttributionOrderItem[]
+  attribution  OrderAttribution?
+
+  @@unique([organizationId, externalOrderId])
+  @@index([organizationId, occurredAt])
+  @@index([identityId])
+}
+
+model AttributionOrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  name      String?
+  quantity  Int     @default(1)
+  price     Decimal @db.Decimal(12, 2)
+
+  order AttributionOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model OrderAttribution {
+  id                   String  @id @default(cuid())
+  orderId              String  @unique
+  model                String  @default("first_touch")
+  leadSource           Json?
+  saleSource           Json?
+  firstTouch           Json?
+  lastTouch            Json?
+  attributedSource     String?
+  attributedMedium     String?
+  attributedCampaign   String?
+  attributedAdset      String?
+  attributedAd         String?
+  attributedContent    String?
+  attributedValue      Decimal @db.Decimal(12, 2)
+  linearShares         Json?
+
+  order AttributionOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model AdSpendDaily {
+  id             String   @id @default(cuid())
+  organizationId String
+  date           DateTime @db.Date
+  platform       String
+  campaignId     String   @default("")
+  campaignName   String?
+  adsetId        String   @default("")
+  adsetName      String?
+  adId           String   @default("")
+  adName         String?
+  spend          Decimal  @db.Decimal(12, 2)
+  currency       String   @default("BRL")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, date, platform, campaignId, adsetId, adId])
+  @@index([organizationId, date])
+}

@@ -1,0 +1,123 @@
+Inout
+
+Administração
+
+Uso do InPilot
+Volume, custos, latência e erros por cliente e usuário nos últimos 30 dias.
+
+Usuários
+Atualizar
+Rollout ativo
+
+Controle de acesso do InPilot
+Acesso efetivo exige o estado global, usuário permitido, usuário interno ativo e cliente ativo com InPilot ativado. O modo todos os clientes inclui automaticamente clientes atuais e novos. Para desligar, altere o estado e salve o rollout.
+
+Preparar desligamento
+Usuários internos permitidos
+Somente usuários ativos aparecem aqui (2 selecionado(s)).
+
+
+Administrador(ADMIN)
+
+Victor(ADMIN)
+Clientes permitidos
+
+Todos os clientes atuais e futuros
+Novos clientes já nascem com o switch individual ligado. Ele continua disponível para exceções.
+A lista abaixo está ignorada enquanto este modo estiver ativo.
+
+
+Be Blue Schoolswitch ativo
+
+Bildswitch ativo
+
+Canelaswitch ativo
+
+Casa ONswitch ativo
+
+Clinica e Spa Vida Naturalswitch ativo
+
+Construtora Lorenzettiswitch ativo
+
+D'orswitch ativo
+
+Dr. Fernando Guenaswitch ativo
+
+ESALQ Jr. Consultoriaswitch ativo
+
+Espaço Piracicaba - Self Storageswitch ativo
+
+Granaroloswitch ativo
+
+Guindaumecswitch ativo
+
+Hotel Fazenda São Joãoswitch ativo
+
+Incorporadora de São Pauloswitch ativo
+
+Inoutswitch ativo
+
+JR Odontologiaswitch ativo
+
+Kairalla Imóveisswitch ativo
+
+Kombucha da Cáswitch ativo
+
+Lazuliswitch ativo
+
+Marth Imobiliáriaswitch ativo
+
+Melaço de Canaswitch ativo
+
+MepCredswitch ativo
+
+Mirante Incorporadoraswitch ativo
+
+Ortoestéticaswitch ativo
+
+PR Compressoresswitch ativo
+
+Pousada Ilha Brazilswitch ativo
+
+Pousada Tamaraswitch ativo
+
+RPS Imobiliáriaswitch ativo
+
+SR Advogadosswitch ativo
+
+Sou + Charitasswitch ativo
+
+Sou + Icaraíswitch ativo
+
+Sou + Itacoaswitch ativo
+
+Sou + Wellnessswitch ativo
+
+Swiss Park - Anápolisswitch ativo
+
+Swiss Park - Bernswitch ativo
+
+Swiss Park - Brasíliaswitch ativo
+
+Swiss Park - Caieirasswitch ativo
+
+Swiss Park - Vernateswitch ativo
+
+Tertúliaswitch ativo
+
+Varella Motosswitch ativo
+
+Vito Balducciswitch ativo
+
+Vitta Piracicabaswitch ativo
+
+Wizie Petswitch ativo
+As alterações são auditadas, não ficam em cache e usam revisão 3.
+
+Salvar rollout
+Cliente	Usuário	Solicitações	Sucessos / erros	Tokens	Custo estimado	Latência média
+Be Blue School	Administrador
+—	4	4 / 0	26.236	US$ 0.0122	5.945 ms
+Granarolo	Administrador
+—	2	2 / 0	13.952	US$ 0.0063	5.113 ms
+7

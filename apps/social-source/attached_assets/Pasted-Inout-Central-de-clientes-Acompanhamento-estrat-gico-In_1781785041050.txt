@@ -1,0 +1,303 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Incorporadora
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+CRM
+
+
+Ano atual (YTD): 01 de jan. de 2026 a 18 de jun. de 2026
+CRM
+
+Funil & Leads
+Leads no período
+
+511
+
+Fechamentos
+
+0
+
+Taxa de fechamento
+
+0.0%
+
+511
+
+leads
+
+Leads
+4
+0.8%
+Atendimento
+431
+84%
+Visitas
+11
+2%
+Perdidos
+65
+13%
+Leads
+
+4 leads · 0.8%
+Novo Lead
+
+0.8%
+4
+Atendimento
+
+431 leads · 84%
+Aguardando Atendimento Corretor
+
+5%
+24
+Em Atendimento
+
+79%
+406
+Simulação
+
+0.2%
+1
+Visitas
+
+11 leads · 2%
+Visita Realizada
+
+0.2%
+1
+Visita Agendada
+
+2%
+10
+Perdidos
+
+65 leads · 13%
+Perdido
+
+13%
+65
+CRM
+
+Análise de Origem
+Meta
+Qualif. 1.9
+
+333
+
+Leads
+
+
+299
+
+Atendimento
+
+
+7
+
+Visitas
+
+
+—
+
+Vendas
+
+34 perdidos (10%)
+Investimento
+
+R$ 24.712,51
+
+CPL real · CRM
+
+R$ 74,21
+
+CPL plataforma
+
+R$ 67,71
+
+Google
+Qualif. 2.0
+
+178
+
+Leads
+
+
+147
+
+Atendimento
+
+
+4
+
+Visitas
+
+
+—
+
+Vendas
+
+31 perdidos (17%)
+Investimento
+
+R$ 13.516,95
+
+CPL real · CRM
+
+R$ 75,94
+
+CPL plataforma
+
+R$ 112,64
+
+CRM × Meta
+
+Campanha → Conjunto → Anúncio
+Campanha / Conjunto / Anúncio	Leads	Visitas	Atend.	Vendas	Valor	Invest.	CPL	Conv%
+
+[IN] [P] [FORM] - ESCALA DE MENSAGENS (FASE 1)
+190	5	170	—	—	R$ 7.954,28	R$ 41,86	0%
+
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+159	5	140	—	—	R$ 7.954,28	R$ 50,03	0%
+
+32-60 Águas Claras e Taguatinga | Interesses em empreendimentos e alto padrão
+22	—	21	—	—	—	—	0%
+
+35 - 60 | Águas Claras + Taguatinga | Geolocalização | Amplo
+9	—	9	—	—	—	—	0%
+
+[IN] [P] [FORM] - Remarketing | Lookalike Compradores e Interesses
+111	2	102	—	—	R$ 9.300,53	R$ 83,79	0%
+
+35 - 60 | Águas Claras + Taguatinga | Lookalike LP e Compradores
+61	—	55	—	—	R$ 4.643,12	R$ 76,12	0%
+
+35 - 60 | Águas Claras + Taguatinga | Lookalike compradores (3%)
+50	2	47	—	—	R$ 4.657,41	R$ 93,15	0%
+CRM
+
+Detalhamento dos Leads
+Buscar por nome, e-mail ou telefone…
+Etapa	Contato	Origem	Entrada	Valor
+Em Atendimento
+MILTON PASSARO NOGUEIRA
+
+miltonpn1971@gmail.com
+
+Google
+17/06/26	—
+Em Atendimento
+Rafael
+
+rfnms.17@gmail.com
+
+Google
+17/06/26	—
+Em Atendimento
+MATHEUS CARRIJO
+
+mthcarrijo@gmail.com
+
+Google
+16/06/26	—
+Perdido
+josé Augusto assunção oliveira
+
+gutoassuncaooliveira@gmail.com
+
+Google
+16/06/26	—
+Em Atendimento
+Sara
+
+financeiro.vds@gmail.com
+
+Google
+15/06/26	—
+Em Atendimento
+Mylena Alessandrina
+
+alessandrinamylena@gmail.com
+
+Meta
+12/06/26	—
+Em Atendimento
+Eneas Portugal
+
+eneas.portugal@gmail.com
+
+Meta
+10/06/26	—
+Em Atendimento
+fernandoprthomsen e Karine.
+
+forthomsen@gmail.com
+
+Meta
+10/06/26	—
+Em Atendimento
+Tedi Biffi
+
+gutobiffi@icloud.com
+
+Meta
+09/06/26	—
+Em Atendimento
+Marcella
+
+cellaoliveira21@icloud.com
+
+Google
+08/06/26	—
+Em Atendimento
+Helio ferreira
+
+heliofs1982@hotmail.com
+
+Google
+07/06/26	—
+Em Atendimento
+Edina
+
+edina_duarte@hotmail.com
+
+Google
+06/06/26	—
+Em Atendimento
+Joseilson Pereira Araujo
+
+joseilsonp.a@gmail.com
+
+Google
+05/06/26	—
+Em Atendimento
+Paula Machado Oliveira Balestrini
+
+paula94oliveira@gmail.com
+
+Google
+05/06/26	—
+Em Atendimento
+DAYANA LUSTOSA DA SILVA BRASIL
+
+dayanalustosa@gmail.com
+
+Google
+05/06/26	—
+
+1
+2
+3
+4
+5
+…
+35
+
+R$ 0,00

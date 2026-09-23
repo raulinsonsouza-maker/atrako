@@ -1,0 +1,316 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Incorporadora de São Paulo
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+CRM
+
+
+Mês atual: 01 de ago. de 2026 a 24 de ago. de 2026
+Leads no período
+
+460
+
+Fechamentos
+
+0
+
+Taxa de fechamento
+
+0.0%
+
+460
+
+leads
+
+Leads
+345
+75%
+Atendimento
+65
+14%
+Visitas
+50
+11%
+Distribuição por grupo
+460 leads
+75%
+14%
+Leads
+345
+Atendimento
+65
+Visitas
+50
+Leads
+
+345 leads · 75%
+Novo lead
+
+43%
+199
+Contato realizado
+
+19%
+88
+Lead qualificado
+
+13%
+58
+Atendimento
+
+65 leads · 14%
+Proposta enviada
+
+14%
+65
+Visitas
+
+50 leads · 11%
+Visita agendada
+
+11%
+50
+CRM
+
+Análise de Origem
+Meta
+262 forms
+Leads no CRM
+
+262
+
+
+262
+
+Leads
+
+
+262
+
+Atend.
+
+
+31
+
+Visitas
+
+
+—
+
+Vendas
+
+262 em atend.
+31 visitas (12%)
+CPL Real · CRM
+
+vs R$ 119,59 plataforma
+
+R$ 119,59
+
+Investimento
+
+R$ 31.333,52
+
+Google
+Leads no CRM
+
+198
+
+
+198
+
+Leads
+
+
+198
+
+Atend.
+
+
+19
+
+Visitas
+
+
+—
+
+Vendas
+
+198 em atend.
+19 visitas (10%)
+CPL Real · CRM
+
+vs R$ 118,50 plataforma
+
+R$ 118,50
+
+Investimento
+
+R$ 23.462,32
+
+Fonte de Conversão
+
+460 de 460
+Buscar fonte de conversão…
+Lançamento Parque Vila Mariana | Leads
+34.3%
+158
+Pesquisa | Apartamentos em São Paulo
+26.3%
+121
+Apartamentos Moema | Agende sua visita
+22.6%
+104
+Performance Max | Lançamentos SP
+16.7%
+77
+CRM
+
+Por Portal de Entrada
+Meta
+
+· 262 leads
+· R$ 31.333,52 investidos
+Conversão / Portal CRM	Leads	Visitou	Em aberto	Ganhos	Conv%
+Lançamento Parque Vila Mariana | Leads
+158	22	158	—	0%
+Apartamentos Moema | Agende sua visita
+104	9	104	—	0%
+Google
+
+· 198 leads
+· R$ 23.462,32 investidos
+Conversão / Portal CRM	Leads	Visitou	Em aberto	Ganhos	Conv%
+Pesquisa | Apartamentos em São Paulo
+121	8	121	—	0%
+Performance Max | Lançamentos SP
+77	11	77	—	0%
+"Portal de Entrada" = como o lead chegou ao CRM (ex: RdStation = integração via RD Station; Painel Corretor = cadastro pelo app do corretor). Não é o nome da campanha — nomes de campanha aparecem em CRM × Meta.
+
+CRM · Meta
+
+Análise Detalhada do Meta
+Campanha / Conjunto / Anúncio	Leads	Visitas	Atend.	Descartados	Vendas	Valor	Conv%
+
+Lançamento Parque Vila Mariana | Leads
+158	22	158	—	—	—	0%
+
+Apartamentos Moema | Agende sua visita
+104	9	104	—	—	—	0%
+CRM · Google
+
+Análise Detalhada do Google
+Campanha / Grupo de Anúncios	Leads	Visitas	Atend.	Vendas	Valor	Conv%
+Pesquisa | Apartamentos em São Paulo
+121	8	121	—	—	0%
+Apartamentos novos | São Paulo
+121	8	121	—	—	0%
+Performance Max | Lançamentos SP
+77	11	77	—	—	0%
+Sinais de intenção | Lançamentos
+77	11	77	—	—	0%
+CRM
+
+Detalhamento dos Leads
+Buscar por nome, e-mail ou telefone…
+Etapa	Contato	Origem	Entrada	Valor
+Visita agendada
+Contato Demo 4220
+
+lead.4220@demo.example.invalid
+
+Google
+24/08/26	—
+Proposta enviada
+Contato Demo 4211
+
+lead.4211@demo.example.invalid
+
+Meta
+24/08/26	—
+Visita agendada
+Contato Demo 4219
+
+lead.4219@demo.example.invalid
+
+Google
+24/08/26	—
+Proposta enviada
+Contato Demo 4210
+
+lead.4210@demo.example.invalid
+
+Meta
+24/08/26	—
+Visita agendada
+Contato Demo 4218
+
+lead.4218@demo.example.invalid
+
+Google
+24/08/26	—
+Proposta enviada
+Contato Demo 4209
+
+lead.4209@demo.example.invalid
+
+Meta
+24/08/26	—
+Visita agendada
+Contato Demo 4217
+
+lead.4217@demo.example.invalid
+
+Meta
+24/08/26	—
+Proposta enviada
+Contato Demo 4208
+
+lead.4208@demo.example.invalid
+
+Meta
+24/08/26	—
+Visita agendada
+Contato Demo 4216
+
+lead.4216@demo.example.invalid
+
+Meta
+24/08/26	—
+Proposta enviada
+Contato Demo 4207
+
+lead.4207@demo.example.invalid
+
+Meta
+24/08/26	—
+Lead qualificado
+Contato Demo 4224
+
+lead.4224@demo.example.invalid
+
+Google
+24/08/26	—
+Visita agendada
+Contato Demo 4215
+
+lead.4215@demo.example.invalid
+
+Meta
+24/08/26	—
+
+1
+2
+3
+4
+5
+…
+31
+
+R$ 0,00

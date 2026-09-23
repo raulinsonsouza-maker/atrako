@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Executivo de Aquisição - CMO</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        v4: {
+                            primary: '#e60000',   // Vermelho vivo
+                            secondary: '#15803d', // Verde escuro
+                            bg: '#000000',        // Preto puro
+                            card: '#161616',      // Cinza muito escuro
+                            border: '#333333'     // Bordas sutis
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #000000;
+            color: #f8fafc;
+        }
+        .exec-card {
+            background: #161616;
+            border: 1px solid #333333;
+        }
+        /* Custom scrollbar para áreas com muito texto se necessário */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        
+        /* Tabela hover effect */
+        .exec-table-row:hover { background-color: rgba(255, 255, 255, 0.02); }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 font-sans antialiased flex flex-col items-center justify-center">
+
+    <div id="dashboard-cmo" class="w-full max-w-6xl space-y-6 bg-black p-2 sm:p-6 rounded-2xl">
+        
+        <!-- Header -->
+        <header class="mb-6 border-b border-v4-border pb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <div class="flex items-center gap-3 mb-1">
+                    <span class="px-2 py-1 bg-v4-secondary/20 text-v4-secondary text-xs font-bold uppercase tracking-wider rounded border border-v4-secondary/30">Cenário: Escala Saudável</span>
+                </div>
+                <h1 class="text-3xl md:text-4xl font-bold text-white">
+                    Report Executivo: <span class="text-v4-primary">Aquisição Digital</span>
+                </h1>
+                <p class="text-slate-400 mt-2 text-sm md:text-base">Análise de Performance e Estratégia B2B • Período: 16 a 22/03 vs. Fev</p>
+            </div>
+            
+            <button onclick="exportarParaPNG()" class="flex items-center gap-2 bg-v4-card border border-v4-border hover:border-v4-primary hover:text-v4-primary text-white px-4 py-2 rounded-lg transition duration-200 text-sm font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                Exportar para PPT
+            </button>
+        </header>
+
+        <!-- KPIs Principais -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="exec-card p-5 rounded-xl border-l-2 border-l-slate-500">
+                <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Investimento Total</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-white">R$ 319<span class="text-lg text-slate-500">,64</span></h3>
+                <p class="text-v4-secondary text-xs mt-2 font-medium flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                    Acelerou vs Fev
+                </p>
+            </div>
+            <div class="exec-card p-5 rounded-xl border-l-2 border-l-v4-secondary">
+                <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Novas Conversões (Leads)</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-white">12,00</h3>
+                <p class="text-v4-secondary text-xs mt-2 font-medium flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                    Tração confirmada
+                </p>
+            </div>
+            <div class="exec-card p-5 rounded-xl border-l-2 border-l-v4-primary">
+                <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Custo por Aquisição (CPA)</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-white">R$ 26<span class="text-lg text-slate-500">,64</span></h3>
+                <p class="text-v4-secondary text-xs mt-2 font-medium flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Altamente Eficiente
+                </p>
+            </div>
+            <div class="exec-card p-5 rounded-xl border-l-2 border-l-v4-secondary">
+                <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Taxa de Conversão</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-white">11,32%</h3>
+                <p class="text-v4-secondary text-xs mt-2 font-medium flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    Acima do Mercado B2B
+                </p>
+            </div>
+        </div>
+
+        <!-- Visão Estratégica (Tradução CMO) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-8">
+            
+            <!-- Insight 1 -->
+            <div class="exec-card p-6 rounded-2xl relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition text-v4-primary">
+                    <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                </div>
+                <h4 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-v4-primary"></span>
+                    Independência da Marca
+                </h4>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                    <strong class="text-white">100% das conversões</strong> vieram de buscas genéricas (B2B). Fim da dependência de termos institucionais. Tráfego novo e qualificado.
+                </p>
+            </div>
+
+            <!-- Insight 2 -->
+            <div class="exec-card p-6 rounded-2xl relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition text-v4-secondary">
+                    <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <h4 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-v4-secondary"></span>
+                    Tração no Core Business
+                </h4>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                    'Distribuidora de Insumos' lidera com <strong class="text-white">8 leads</strong>. Termos amplos surpreenderam com CPA agressivo de apenas <strong class="text-white">R$ 12,45</strong>.
+                </p>
+            </div>
+
+            <!-- Insight 3 -->
+            <div class="exec-card p-6 rounded-2xl relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition text-slate-500">
+                    <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+                <h4 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+                    Ajuste de Inteligência
+                </h4>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                    Termos exatos consumiram verba sem gerar leads. O algoritmo precisa da <strong class="text-white">correspondência ampla</strong> para escalar o B2B.
+                </p>
+            </div>
+        </div>
+
+        <!-- Tabela de Palavras-Chave (NOVO) -->
+        <div class="exec-card p-6 rounded-2xl mt-6">
+            <h3 class="text-lg font-semibold text-white mb-1 flex items-center gap-2">
+                <svg class="w-5 h-5 text-v4-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                Análise de Palavras-chave: O que está trazendo receita?
+            </h3>
+            <p class="text-slate-500 text-xs mb-6">Detalhamento de performance por termo pesquisado. Note a concentração de resultados no topo.</p>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left whitespace-nowrap border-collapse">
+                    <thead>
+                        <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-v4-border">
+                            <th class="pb-3 px-2 font-medium">Palavra-chave / Tipo</th>
+                            <th class="pb-3 px-2 font-medium text-right">Cliques</th>
+                            <th class="pb-3 px-2 font-medium text-right">Impr.</th>
+                            <th class="pb-3 px-2 font-medium text-right">Custo (R$)</th>
+                            <th class="pb-3 px-2 font-medium text-right">Conversões</th>
+                            <th class="pb-3 px-2 font-medium text-right">Custo / Conv.</th>
+                            <th class="pb-3 px-2 font-medium text-right">Taxa Conv.</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        <!-- Top Performer 1 -->
+                        <tr class="exec-table-row border-b border-v4-border/50 transition-colors">
+                            <td class="py-3 px-2">
+                                <p class="text-white font-medium">Distribuidora de Insumos farmacêuticos</p>
+                                <p class="text-xs text-slate-500">Correspondência ampla</p>
+                            </td>
+                            <td class="py-3 px-2 text-right text-slate-300">80</td>
+                            <td class="py-3 px-2 text-right text-slate-300">603</td>
+                            <td class="py-3 px-2 text-right text-slate-300">239,02</td>
+                            <td class="py-3 px-2 text-right text-white font-bold">8,00</td>
+                            <td class="py-3 px-2 text-right text-v4-secondary font-semibold">29,88</td>
+                            <td class="py-3 px-2 text-right text-slate-300">10,00%</td>
+                        </tr>
+                        <!-- Top Performer 2 -->
+                        <tr class="exec-table-row border-b border-v4-border/50 transition-colors">
+                            <td class="py-3 px-2">
+                                <p class="text-white font-medium">insumos farmacêuticos</p>
+                                <p class="text-xs text-slate-500">Correspondência ampla</p>
+                            </td>
+                            <td class="py-3 px-2 text-right text-slate-300">15</td>
+                            <td class="py-3 px-2 text-right text-slate-300">129</td>
+                            <td class="py-3 px-2 text-right text-slate-300">49,80</td>
+                            <td class="py-3 px-2 text-right text-white font-bold">4,00</td>
+                            <td class="py-3 px-2 text-right text-v4-secondary font-semibold">12,45</td>
+                            <td class="py-3 px-2 text-right text-v4-secondary font-semibold">26,67%</td>
+                        </tr>
+                        <!-- Zeros (Dimmed) -->
+                        <tr class="exec-table-row border-b border-v4-border/20 transition-colors">
+                            <td class="py-2 px-2">
+                                <p class="text-slate-600">Ac Hialuronico</p>
+                                <p class="text-[10px] text-slate-700">Correspondência ampla</p>
+                            </td>
+                            <td class="py-2 px-2 text-right text-slate-600">0</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0,00</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0,00</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0,00</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0,00%</td>
+                        </tr>
+                        <tr class="exec-table-row border-b border-v4-border/20 transition-colors">
+                            <td class="py-2 px-2">
+                                <p class="text-slate-600">Arbutin Alfa</p>
+                                <p class="text-[10px] text-slate-700">Correspondência ampla</p>
+                            </td>
+                            <td class="py-2 px-2 text-right text-slate-600">0</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0,00</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0,00</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0,00</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0,00%</td>
+                        </tr>
+                        <tr class="exec-table-row border-b border-v4-border/20 transition-colors">
+                            <td class="py-2 px-2">
+                                <p class="text-slate-600">ativos cosméticos para indústria</p>
+                                <p class="text-[10px] text-slate-700">Correspondência ampla</p>
+                            </td>
+                            <td class="py-2 px-2 text-right text-slate-600">0</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0,00</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0,00</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0,00</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0,00%</td>
+                        </tr>
+                        <tr class="exec-table-row border-b border-v4-border/20 transition-colors">
+                            <td class="py-2 px-2">
+                                <p class="text-slate-600">ativos farmacêuticos <span class="text-[10px]">(Variações)</span></p>
+                                <p class="text-[10px] text-slate-700">Exata, Frase, Ampla</p>
+                            </td>
+                            <td class="py-2 px-2 text-right text-slate-600">0</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0,00</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0,00</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0,00</td>
+                            <td class="py-2 px-2 text-right text-slate-600">0,00%</td>
+                        </tr>
+                    </tbody>
+                    <!-- Totalizador -->
+                    <tfoot class="bg-[#1a1a1a] font-bold">
+                        <tr>
+                            <td class="py-4 px-2 text-white">Total</td>
+                            <td class="py-4 px-2 text-right text-white">106</td>
+                            <td class="py-4 px-2 text-right text-white">791</td>
+                            <td class="py-4 px-2 text-right text-white">R$ 319,64</td>
+                            <td class="py-4 px-2 text-right text-v4-secondary">12,00</td>
+                            <td class="py-4 px-2 text-right text-white">R$ 26,64</td>
+                            <td class="py-4 px-2 text-right text-white">11,32%</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Seção Inferior: Gráfico + Plano de Ação -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            
+            <!-- Gráfico de Eficiência -->
+            <div class="exec-card p-6 rounded-2xl">
+                <h3 class="text-lg font-semibold text-white mb-1">Top Performers: Custo vs Volume</h3>
+                <p class="text-slate-500 text-xs mb-6">Eficiência de aquisição das principais frentes B2B.</p>
+                <div class="relative h-[250px] w-full">
+                    <canvas id="cmoChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Plano de Ação -->
+            <div class="exec-card p-6 rounded-2xl border-t-4 border-t-v4-secondary">
+                <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-v4-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    Recomendações & Próximos Passos
+                </h3>
+                
+                <div class="space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="mt-1 bg-v4-secondary/20 p-1 rounded text-v4-secondary">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                        </div>
+                        <div>
+                            <h5 class="text-white font-medium text-sm">Acelerar Orçamento (+20%)</h5>
+                            <p class="text-slate-400 text-xs mt-1 leading-relaxed">CPA saudável (R$ 26) permite injetar <strong class="text-white">+20% de verba diária</strong>. Meta: 15-16 leads/semana.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start gap-3">
+                        <div class="mt-1 bg-slate-700/50 p-1 rounded text-slate-300">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div>
+                            <h5 class="text-white font-medium text-sm">Cortar Desperdício Estrutural</h5>
+                            <p class="text-slate-400 text-xs mt-1 leading-relaxed">Pausar lances em 'Correspondência Exata' e <strong class="text-white">realocar verba</strong> para as frentes amplas de maior conversão.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="mt-1 bg-v4-primary/20 p-1 rounded text-v4-primary">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <div>
+                            <h5 class="text-white font-medium text-sm">Mapeamento de Cauda Longa</h5>
+                            <p class="text-slate-400 text-xs mt-1 leading-relaxed">Auditar a aba de 'Termos de Pesquisa' para extrair novas frases B2B e <strong class="text-white">criar novos anúncios</strong> focados nelas.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function exportarParaPNG() {
+            const painel = document.getElementById('dashboard-cmo');
+            html2canvas(painel, {
+                backgroundColor: '#000000',
+                scale: 2,
+                windowWidth: 1200 // Força uma largura boa para apresentação
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'Report-Executivo-Ads.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('cmoChart').getContext('2d');
+
+            const data = {
+                labels: ['Distribuidora (Ampla)', 'Insumos (Ampla)'],
+                datasets: [
+                    {
+                        label: 'Volume de Leads',
+                        data: [8, 4],
+                        backgroundColor: '#e60000', // Vermelho V4 para volume
+                        borderRadius: 4,
+                        barPercentage: 0.6,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'CPA (R$)',
+                        data: [29.88, 12.45],
+                        backgroundColor: '#15803d', // Verde V4 para custo (eficiência)
+                        borderRadius: 4,
+                        barPercentage: 0.6,
+                        yAxisID: 'y'
+                    }
+                ]
+            };
+
+            const config = {
+                type: 'bar',
+                data: data,
+                options: {
+                    indexAxis: 'y', // Gráfico horizontal (melhor para ler nomes de campanhas)
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#cbd5e1', font: { family: "'Inter', sans-serif", size: 12 }, usePointStyle: true }
+                        },
+                        tooltip: {
+                            backgroundColor: '#161616',
+                            titleColor: '#fff',
+                            bodyColor: '#ccc',
+                            borderColor: '#333',
+                            borderWidth: 1,
+                            padding: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.dataset.label === 'CPA (R$)') {
+                                        return 'CPA: R$ ' + context.parsed.x.toFixed(2);
+                                    }
+                                    return context.dataset.label + ': ' + context.parsed.x;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#333', drawBorder: false },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        y: {
+                            grid: { display: false, drawBorder: false },
+                            ticks: { color: '#f8fafc', font: { family: "'Inter', sans-serif", weight: '500' } }
+                        }
+                    }
+                }
+            };
+
+            new Chart(ctx, config);
+        });
+    </script>
+</body>
+</html>

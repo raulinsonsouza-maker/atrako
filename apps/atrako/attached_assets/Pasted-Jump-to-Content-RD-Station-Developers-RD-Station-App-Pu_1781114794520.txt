@@ -1,0 +1,310 @@
+Jump to Content
+RD Station Developers
+RD Station
+App Publisher
+App Store
+Blog
+Suporte
+Status
+Acesse sua conta
+Home
+Guias
+Recipes
+API
+Changelog
+MCPs e Conectores IA
+
+Search
+CTRL-K
+JUMP TO
+CTRL-/
+Introdução
+Boas vindas
+Suporte
+Integrações multiproduto
+Webhook Service
+
+Boas Práticas
+Exemplos de casos de uso
+RD Station Marketing API
+Introdução e requisitos
+Guia de uso
+
+Autenticação
+
+[Vídeo] Como configurar a Autenticação OAuth na sua aplicação e boas práticas
+Passo 1: Como criar um aplicativo na App Store e gerar as Credenciais (client_id e client_secret)
+Passo 2: Como utilizar as Credenciais para gerar o code
+Passo 3: Como obter os tokens (access_token e refresh_token)
+post
+Passo 4: Como utilizar o refresh_token para atualizar o access_token
+post
+Como criar um fluxo de verificação e renovação do token
+Como utilizar o access_token para autorizar suas requisições
+Como revogar o acesso de um token
+post
+Erros relacionados à Autenticação
+FAQ de Autenticação
+Contatos
+
+Campos personalizados
+
+Funis de Contatos
+
+Segmentações
+
+Fluxos de automação
+
+Email
+
+Landing Pages
+
+Pop-ups
+
+Formulários
+
+Análise
+
+Campanhas
+
+Evento de Conversão Padrão
+
+Eventos de Qualificação do Contato
+
+Eventos de E-commerce
+
+Eventos de E-commerce (Descontinuados)
+
+
+Eventos de Chat
+
+Eventos de Chamada
+
+Eventos de Mídia
+
+Batch de Eventos
+
+Evento de Conversão via API Key
+
+Catálogo de produtos
+
+RD Station CRM API v1
+Introdução e requisitos
+Guia de uso
+
+Anotações
+
+Campanhas
+
+Contatos
+
+Campos personalizados
+
+Motivos de perda
+
+Funis de vendas
+
+Produtos na negociação
+
+Fontes
+
+Etapas do funil de vendas
+
+Negociações
+
+Empresas
+
+Produtos
+
+Tarefas
+
+Equipes
+
+Token de autenticação
+
+Usuários
+
+Webhooks
+
+RD Station CRM API v2
+Autenticação
+
+Introdução
+Bases legais
+Filtrando com RDQL
+Casos de uso
+Campanhas
+
+Contatos
+
+Campos personalizados
+
+Produtos na negociação
+
+Negociações
+
+Anexos
+
+Motivos de perda
+
+Anotações
+
+Empresas
+
+Produtos
+
+Funis de vendas
+
+Segmentos
+
+Etapas do funil de vendas
+
+Fontes
+
+Equipes
+
+Tarefas
+
+Usuários
+
+Eventos de webhook
+
+Propostas
+
+Webhooks
+
+RD Station Conversas API v2
+Introdução
+Autenticação
+Criptografia
+Contatos
+
+Campos personalizados
+
+Funcionários
+
+Flows
+
+Mensagens
+
+Jobs
+
+Relatórios
+
+Templates
+
+Carteiras
+
+WhatsApp
+
+Workflows
+
+Analytics
+
+Campanhas
+
+
+Como criar um fluxo de verificação e renovação do token
+O refresh_token deve ser utilizado para atualizar o access_token, no entanto, o access_token não deve ser atualizado em todas as requisições da sua aplicação, mas sim, somente quando ele expirar.
+
+Não é recomendado enviar o refresh_token em todas as requisições em termos de eficiência, consumo e infraestrutura da aplicação, pois o access_token só precisa ser atualizado a cada 24 horas.
+
+Enviar apenas o access_token, que é necessário para autorizar as requisições, melhora a eficiência das requisições, reduz o consumo de recursos, facilita a escalabilidade da infraestrutura e melhora a segurança geral da aplicação.
+
+Sendo assim, você pode armazenar o refresh_token em uma variável e criar uma função condicional para verificar se o access_token retornou “200” (ok!).
+
+Caso sim: a integração continua ocorrendo.
+Caso não: ou seja, se apontou algum erro, você cria uma função para criar um novo access_token (utilizando o refresh_token).
+Configure sua aplicação para verificar se o access_token é válido
+1) Crie uma variável para armazenar o refresh_token, que será atualizada conforme necessário e então, implemente uma função para verificar a validade do access_token:
+
+Faça uma solicitação à API, incluindo o access_token na autenticação.
+Verifique a resposta da API: se for 200 (ou qualquer status diferente de 401) o token ainda é válido; se for 401, o token expirou.
+2) Se o access_token estiver expirado, implemente uma função para renová-lo usando o refresh_token:
+
+Faça uma solicitação incluindo o refresh_token, o client_id e o client_secret.
+Obtenha um novo access_token
+3) Utilize a função de verificação da validade do access_token sempre que precisar fazer uma solicitação protegida à API.
+
+Se o token estiver válido, faça a solicitação normalmente.
+Se o token estiver expirado, chame a função de renovação do token para obter um novo access_token antes de fazer a solicitação.
+Fluxo de verificação e renovação do token
+Este é um exemplo básico para demonstrar o fluxo de verificação e renovação do token.
+
+Você precisará adaptá-lo às suas necessidades específicas, como as bibliotecas/frameworks que está usando e as etapas reais de autenticação e obtenção de tokens do provedor de serviços OAuth.
+
+Python
+
+import requests
+
+# Variáveis de configuração
+client_id = 'SEU_CLIENT_ID'
+client_secret = 'SEU_CLIENT_SECRET'
+token_url = 'https://api.rd.services/auth/token'
+api_url = 'https://api.rd.services/platform/contacts' # Exemplo de rota da API de Contatos. Pode ser substituída por qualquer rota. Se necessário, adicione o Body da requisição, conforme instruído na documentação dessa API.
+
+# Variável para armazenar o refresh token
+refresh_token = None
+
+def verificar_validade_token(access_token):
+    headers = {'Authorization': f'Bearer {access_token}'}
+    response = requests.get(api_url, headers=headers)
+    
+    if response.status_code == 200:
+        print('Token válido.')
+    elif response.status_code == 401:
+        print('Token expirado. Renovando...')
+        renovar_token()
+    else:
+        print('Erro na verificação do token.')
+        
+def renovar_token():
+    global refresh_token
+    
+    data = {
+        'grant_type': 'refresh_token',
+        'refresh_token': refresh_token,
+        'client_id': client_id,
+        'client_secret': client_secret
+    }
+    
+    response = requests.post(token_url, data=data)
+    
+    if response.status_code == 200:
+        token_data = response.json()
+        access_token = token_data['access_token']
+        refresh_token = token_data['refresh_token']  # Atualiza o refresh token, se um novo for fornecido
+        print('Token renovado com sucesso.')
+        print('Novo access token:', access_token)
+    else:
+        print('Erro na renovação do token.')
+
+# Exemplo de utilização
+
+# Etapa de autorização e obtenção do código de autorização
+# ...
+
+# Troca do código de autorização por tokens
+# ...
+
+# Armazena o refresh token
+refresh_token = 'SEU_REFRESH_TOKEN'
+
+# Faz a primeira verificação da validade do access token
+access_token = 'SEU_ACCESS_TOKEN'
+verificar_validade_token(access_token)
+
+# Exemplo de solicitação à API protegida
+# ...
+
+# A partir deste ponto, sempre que fizer uma solicitação à API protegida,
+# verifique a validade do access token usando a função verificar_validade_token(access_token).
+# Se o token estiver expirado, a função renovar_token() será chamada automaticamente para renová-lo.
+Updated 9 months ago
+
+Passo 4: Como utilizar o refresh_token para atualizar o access_token
+Como utilizar o access_token para autorizar suas requisições
+Did this page help you?
+Configure sua aplicação para verificar se o access_token é válido
+Fluxo de verificação e renovação do token
+ Português (Brasil)

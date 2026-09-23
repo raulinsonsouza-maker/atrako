@@ -1,0 +1,134 @@
+Inout
+Central de clientes
+Check-in estratégico
+
+Miguel Imoveis Anúncio
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+Saldo META
+R$ 103,19
+
+Mês atual: 01 de mar. de 2026 a 28 de mar. de 2026
+Análise
+Criativos
+Análise de Criativos
+
+Criativos META
+Investimento
+
+R$ 1.076,28
+
+Total de Leads
+
+1
+
+CPL Alvo
+
+R$ 154,29
+
+CPL Médio
+
+R$ 1.076,28
+
+1
+Escalar
+0
+Otimizar
+8
+Em Validação
+0
+Pausar
+"[ID:30856] VÍDEO SAN VITALE — v2" é o único dentro da meta — concentre o orçamento nele e contenha o restante.
+
+Performance por criativo
+
+Nome	Invest.	Impr.	Cliques	Leads	CPL	CTR	CR	Status	Diagnóstico
+[ID:30856] VÍDEO SAN VITALE — v2
+[ID:30856] VÍDEO SAN VITALE — v2
+R$ 154,29	2.907	32	1	R$ 154,29	3.54%	3.1%	
+Escalar	
+—
+[ID:30856] VÍDEO SAN VITALE — v1
+[ID:30856] VÍDEO SAN VITALE — v1
+R$ 173,69	3.068	33	—	—	3.46%	—	
+Em Validação	
+—
+[ID: 22570] JD. DAS OLIVIERAS - CASA BAIXO PADRÃO — v2
+[ID: 22570] JD. DAS OLIVIERAS - CASA BAIXO PADRÃO — v2
+R$ 231,17	13.437	157	—	—	1.99%	—	
+Em Validação	
+—
+[ID: 29359] ÍTALO RESIDENCIAL CLUBE — v2
+[ID: 29359] ÍTALO RESIDENCIAL CLUBE — v2
+R$ 72,08	7.724	73	—	—	1.23%	—	
+Em Validação	
+Oportunidade: aumentar verba neste criativo
+[ID: 38715] CARROSSEL INDEPENDENCE TOWER — v1
+[ID: 38715] CARROSSEL INDEPENDENCE TOWER — v1
+R$ 157,46	18.560	143	—	—	1.10%	—	
+Em Validação	
+—
+[ID: 38715] CARROSSEL INDEPENDENCE TOWER — v2
+[ID: 38715] CARROSSEL INDEPENDENCE TOWER — v2
+R$ 75,00	8.354	55	—	—	0.95%	—	
+Em Validação	
+Oportunidade: aumentar verba neste criativo
+[ID: 29359] ÍTALO RESIDENCIAL CLUBE — v1
+[ID: 29359] ÍTALO RESIDENCIAL CLUBE — v1
+R$ 156,15	22.528	132	—	—	0.75%	—	
+Em Validação	
+—
+AD - VAGA PARA CORRETOR
+AD - VAGA PARA CORRETOR
+R$ 55,84	1.395	7	—	—	0.50%	—	
+Em Validação	
+—
+[ID: 22570] JD. DAS OLIVIERAS - CASA BAIXO PADRÃO — v1
+[ID: 22570] JD. DAS OLIVIERAS - CASA BAIXO PADRÃO — v1
+R$ 0,60	61	—	—	—	0.00%	—	
+Em Validação	
+—
+Distribuição de Verba
+
+[ID: 22570] JD. DAS OLIVIERAS - CASA BAIXO PADRÃO — v2
+R$ 231,17
+21%
+[ID:30856] VÍDEO SAN VITALE — v1
+R$ 173,69
+16%
+[ID: 38715] CARROSSEL INDEPENDENCE TOWER — v1
+R$ 157,46
+15%
+[ID: 29359] ÍTALO RESIDENCIAL CLUBE — v1
+R$ 156,15
+15%
+[ID:30856] VÍDEO SAN VITALE — v2
+R$ 154,29
+14%
+[ID: 38715] CARROSSEL INDEPENDENCE TOWER — v2
+R$ 75,00
+7%
+[ID: 29359] ÍTALO RESIDENCIAL CLUBE — v2
+R$ 72,08
+7%
+AD - VAGA PARA CORRETOR
+R$ 55,84
+5%
+[ID: 22570] JD. DAS OLIVIERAS - CASA BAIXO PADRÃO — v1
+R$ 0,60
+0%
+Plano de Ação
+
+↑ Aumentar verba
+
+
+↑
+[ID:30856] VÍDEO SAN VITALE — v2
+
+CPL R$ 154,29 · 1 lead · CTR 3.54%
+
+Top performer
+R$ 3.500,00

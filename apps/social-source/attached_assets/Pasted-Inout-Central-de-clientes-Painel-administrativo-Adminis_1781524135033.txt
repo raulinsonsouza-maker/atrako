@@ -1,0 +1,602 @@
+Inout
+Central de clientes
+Painel administrativo
+Administração de Clientes
+Cada cliente agora aponta para as contas Google Ads e Meta que alimentam o painel.
+
+Atualizar todos
+Novo cliente
+Total
+
+42
+
+Ativos
+
+34
+
+Churn
+
+8
+
+Clientes cadastrados (34)
+Ativos
+Churn
+AA
+Academy Americana
+
+academy-americana · Ativo· sync 10/06 08:27
+
+Educação
+Squad 2
+Sem Google
+Meta: 873760468896822
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+BB
+Be Blue School
+
+be-blue-school · Ativo
+
+Educação
+Squad 2
+Google: 2265726531
+MCC: 3830547260
+Meta: 205900210846295
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+C
+Canela
+
+canela · Ativo· sync 11/06 10:40
+
+Imobiliária
+Squad 3
+Google: 6623541233
+Meta: 2470971359772923
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+CO
+Casa ON
+
+casa-on · Ativo· sync 11/06 15:44
+
+Imobiliária
+Squad 2
+Sem Google
+Meta: 384007103340495
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+CE
+Clinica e Spa Vida Natural
+
+clinica-e-spa-vida-natural · Ativo· sync 09/06 11:05
+
+Saúde e bem estar
+Squad 2
+Google: 9770000305
+Meta: 1348043568686974
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+D
+D'or
+
+d-or · Ativo· sync 12/06 14:39
+
+E-commerce
+Squad 2
+Google: 7289603198
+Meta: 4053286638277990
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+DF
+Dr. Fernando Guena
+
+dr-fernando-guena · Ativo
+
+Saúde e bem estar
+Squad 2
+Google: 8961375756
+Meta: 885412763541613
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+EJ
+ESALQ Jr. Consultoria
+
+esalq-jr-consultoria · Ativo· sync 10/06 16:17
+
+Educação
+Squad 2
+Google: 8459731272
+Meta: 237828749660910
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+G
+Granarolo
+
+granarolo · Ativo· sync há 17h
+
+E-commerce
+Squad 2
+Google: 5276735712
+Meta: 1308551370629138
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+HF
+Hotel Fazenda São João
+
+hotel-fazenda-sao-joao · Ativo· sync há 1h
+
+Hotelaria e turismo
+Squad 2
+Google: 3500506795
+Meta: 320901911416777
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+I
+Inout
+
+inout · Ativo· sync há 17h
+
+Marketing digital
+Squad 2
+Google: 1840446897
+Meta: 705844230434128
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+JO
+JR Odontologia
+
+jr-odontologia · Ativo· sync 11/06 10:45
+
+Saúde e bem estar
+Squad 3
+Google: 4187243231
+Meta: 3470876133173056
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+KI
+Kairalla Imóveis
+
+kairalla-imoveis · Ativo· sync 11/06 09:35
+
+Imobiliária
+Squad 3
+Google: 2853553843
+Meta: 1295561131556637
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+KD
+Kombucha da Cá
+
+kombucha-da-ca · Ativo· sync 10/06 15:34
+
+Indústria
+Squad 3
+Google: 3879886041
+Meta: 580391044023650
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+MI
+Marth Imobiliária
+
+marth-imobiliaria · Ativo
+
+Imobiliária
+Squad 3
+Google: 5133215672
+Meta: 112125599297171
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+MD
+Melaço de Cana
+
+melaco-de-cana · Ativo
+
+Indústria
+Squad 2
+Google: 7337285470
+Meta: 355437085993604
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+M
+MepCred
+
+mepcred · Ativo
+
+Financeira
+Squad 3
+Google: 1740072841
+Meta: 4037325476584764
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+MI
+Mirante Incorporadora
+
+mirante-incorporadora · Ativo· sync há 2min
+
+Construtora e incorporadora
+Squad 3
+Google: 5514231739
+Meta: 1198843318594099
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+O
+Ortoestética
+
+ortoestetica · Ativo· sync 11/06 14:38
+
+Saúde e bem estar
+Squad 3
+Sem Google
+Meta: 303101929042696
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+PI
+Pousada Ilha Brazil
+
+pousada-ilha-brazil · Ativo· sync 08/06 15:57
+
+Hotelaria e turismo
+Squad 2
+Sem Google
+Meta: 1568139140850242
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+PT
+Pousada Tamara
+
+pousada-tamara · Ativo· sync 08/06 15:57
+
+Squad 2
+Sem Google
+Meta: 1233955965229022
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+PC
+PR Compressores
+
+pr-compressores · Ativo· sync 11/06 09:35
+
+Serviços
+Squad 3
+Google: 3553857347
+Sem Meta
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+S+
+Sou + Charitas
+
+sou-charitas · Ativo
+
+Construtora e incorporadora
+Squad 2
+Google: 5220151031
+Meta: 456690009221165
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+S+
+Sou + Icaraí
+
+sou-icarai · Ativo
+
+Construtora e incorporadora
+Squad 2
+Google: 2035997294
+Meta: 256378515824636
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+S+
+Sou + Itacoa
+
+sou-itacoa · Ativo
+
+Construtora e incorporadora
+Squad 2
+Google: 7190022484
+Meta: 2636410279889512
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+S+
+Sou + Wellness
+
+sou-wellness · Ativo
+
+Construtora e incorporadora
+Squad 2
+Google: 6419320082
+Meta: 1181625082289286
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+SP
+Swiss Park - Anápolis
+
+swiss-park-anapolis · Ativo· sync 12/06 15:14
+
+Construtora e incorporadora
+Squad 2
+Google: 3747511576
+MCC: 4896650578
+Meta: 448161170907452
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+SP
+Swiss Park - Bern
+
+swiss-park-bern · Ativo· sync 12/06 15:14
+
+Construtora e incorporadora
+Squad 2
+Google: 4147647506
+MCC: 4896650578
+Meta: 1051359931580682
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+SP
+Swiss Park - Brasília
+
+swiss-park-brasilia · Ativo· sync 12/06 15:15
+
+Construtora e incorporadora
+Squad 2
+Google: 2496892998
+MCC: 4896650578
+Meta: 1198195726897101
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+SP
+Swiss Park - Caieiras
+
+swiss-park-caieiras · Ativo· sync 12/06 15:15
+
+Construtora e incorporadora
+Squad 2
+Google: 5246049801
+MCC: 4896650578
+Meta: 1945969979179112
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+T
+Tertúlia
+
+tertulia · Ativo
+
+Restaurante
+Squad 2
+Sem Google
+Meta: 2260546050901858
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+VM
+Varella Motos
+
+varella-motos · Ativo· sync há 17h
+
+E-commerce
+Squad 2
+Google: 7732511577
+Meta: 867689343316284
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+VB
+Vito Balducci
+
+vito-balducci · Ativo· sync 12/06 14:38
+
+E-commerce
+Squad 2
+Sem Google
+Meta: 719954580443704
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+WP
+Wizie Pet
+
+wizie-pet · Ativo· sync 08/06 09:51
+
+E-commerce
+Squad 3
+Sem Google
+Meta: 567110947452478
+Atualizar
+Link do Portal
+Novo link
+Editar
+Ver
+Editar cliente · Mirante Incorporadora
+Configure os IDs de conta que alimentam o dashboard.
+
+
+Nome*
+Mirante Incorporadora
+ID conta Google Ads
+5514231739
+Pode colar com ou sem hífens.
+
+MCC Google (login-customer-id)
+3830547260
+Ex.: 3830547260 ou 4896650578
+
+ID conta Meta Ads
+1198843318594099
+Pode colar com ou sem act_.
+
+GA4 Property ID
+456789012
+ID numérico da propriedade GA4 (Admin > Propriedade).
+
+Logo do cliente
+Fazer upload do logo
+Segmento
+Construtora e incorporadora
+
+
+Orçamento mensal Google (R$)
+3000
+Orçamento mensal Meta (R$)
+10000
+Perfil de painel especial
+
+Clínica & Saúde
+Define o tipo de dashboard customizado. Imune a mudanças de nome ou slug.
+
+Squad
+
+Squad 3
+Time interno responsável por este cliente. Usado para filtrar a Central de Clientes.
+
+
+Ativo
+
+Sincronizar após salvar
+
+Lead Scoring ativado
+Integração CRM
+
+Plataforma CRM
+CV CRM
+Domínio CV CRM
+https://miranteincorporacoes.cvcrm.com.br/
+Email
+contato@inoutdigital.com.br
+Token de API
+••••••••••••••••••••••••••••••••••••••••
+Filtro por tags (apenas leads com essas tags — separe por vírgula)
+arboreto_inout, form_meta_arboreto_inout, lp_arboreto_inout
+Tags ativas: arboreto_inoutform_meta_arboreto_inoutlp_arboreto_inout
+
+Filtros de atribuição — só contam leads cujos campos batem com estes valores. Vazio = sem filtro. Separe por vírgula.
+
+Mídia original (canal pago: Meta / Google)
+Facebook Ads, Google
+Origem do último (inclua "Busca Orgânica" p/ contar Google orgânico)
+Busca Compartilhada, Facebook, Google, Busca Orgânica
+Conversão original
+RdStation
+Conversão último
+RdStation
+
+Integração ativa
+Salvar CRM
+Testar conexão
+Remover CRM
+RD Station Marketing (Enriquecimento de Leads)
+
+Crie um app em app.rdstation.com.br → App Store → Meus Apps com a URL de callback:
+
+https://central-inout.replit.app/api/auth/rd-marketing/callback
+Usado para enriquecer leads com campos de qualificação (faturamento, segmento, cargo, investimento) vindos do Marketing.
+
+Client ID
+xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+Client Secret
+••••••••••••••••
+Autenticação OAuth
+
+Salve as credenciais acima e depois clique para autorizar.
+
+Conectar via RD Station Marketing
+
+Enriquecimento ativo
+Salvar Marketing
+Cancelar
+Salvar alterações
+85

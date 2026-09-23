@@ -1,0 +1,169 @@
+Perfeito — agora está no nível certo. Versão final **enxuta, progressiva e com filtro real** 👇
+
+---
+
+# 🔴 1. TELA DE ABERTURA
+
+**Título:**
+Diagnóstico de Crescimento para Construtoras
+
+**Descrição:**
+Este diagnóstico é voltado para construtoras e incorporadoras com operação ativa que buscam crescimento com previsibilidade.
+
+**Pergunta de entrada (obrigatória):**
+Você deseja receber um diagnóstico estratégico para sua construtora ou incorporadora?
+
+* Sim, quero avançar
+* Cliquei por engano
+
+---
+
+# 🧩 2. FORMULÁRIO (ORDEM ESTRATÉGICA)
+
+---
+
+## 1. PERFIL
+
+**Pergunta:**
+Qual o tipo da sua empresa?
+
+* Construtora
+* Incorporadora
+* Imobiliária
+* Outro
+
+---
+
+## 2. OPERAÇÃO (REFINADA)
+
+**Pergunta:**
+Sua empresa realiza vendas de forma ativa hoje?
+
+* Sim, com frequência
+* Sim, mas sem consistência
+* Ainda não temos vendas ativas
+
+---
+
+## 3. FATURAMENTO
+
+**Pergunta:**
+Qual o faturamento mensal atual?
+
+* Até R$150 mil
+* R$150 mil – R$300 mil
+* R$300 mil – R$1 milhão
+* Acima de R$1 milhão
+
+---
+
+## 4. OBJETIVO (CLARO E DIRETO)
+
+**Pergunta:**
+Qual seu foco principal hoje?
+
+* Estruturar processo de vendas
+* Gerar mais oportunidades
+* Escalar vendas com previsibilidade
+* Melhorar eficiência do que já funciona
+
+---
+
+## 5. MARKETING ATUAL
+
+**Pergunta:**
+Hoje você investe em marketing pago?
+
+* Sim, com resultado previsível
+* Sim, mas sem consistência
+* Não invisto atualmente
+
+---
+
+## 6. ESTRUTURA
+
+**Pergunta:**
+Você possui equipe para atender novos leads?
+
+* Sim, equipe estruturada
+* Sim, equipe pequena
+* Não tenho estrutura
+
+---
+
+## 7. INVESTIMENTO
+
+**Pergunta:**
+Qual seu investimento mensal disponível para marketing?
+
+* R$5 mil – R$10 mil
+* R$10 mil – R$20 mil
+* Acima de R$20 mil
+
+---
+
+## 8. URGÊNCIA
+
+**Pergunta:**
+Quando pretende iniciar um projeto de crescimento?
+
+* Imediatamente
+* Próximos 30 dias
+* Ainda avaliando
+
+---
+
+# 🚨 3. REGRA DE QUALIFICAÇÃO
+
+## ❌ BLOQUEIA
+
+* Faturamento até R$150 mil
+* Não possui vendas ativas
+* Sem investimento
+
+👉 não segue para agendamento
+
+---
+
+## ✅ QUALIFICADO
+
+* Faturamento acima de R$150 mil
+* Possui operação ativa
+* Tem investimento mínimo
+
+👉 segue para diagnóstico / call
+
+---
+
+# 🧾 4. TELA FINAL
+
+## ❌ Fora do perfil
+
+Hoje nossos projetos são voltados para empresas com operação ativa, faturamento acima de R$150 mil/mês e investimento em marketing.
+
+---
+
+## ✅ Dentro do perfil
+
+Sua empresa está dentro do perfil para avançarmos.
+
+👉 Agendar diagnóstico
+
+---
+
+# 🎯 RESUMO
+
+* filtro começa na primeira tela
+* perguntas aumentam consciência
+* elimina pequeno sem fricção
+* entrega dado limpo pro dashboard
+* comercial só fala com quem pode pagar
+
+---
+
+Se quiser, próximo passo é onde isso fica ainda mais forte:
+
+👉 transformar essas respostas em **score automático + prioridade de atendimento**
+👉 e ligar isso direto no seu dashboard
+
+Só falar 👍

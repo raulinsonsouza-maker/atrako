@@ -1,0 +1,180 @@
+
+Logotipo Nav
+Desenvolva conosco
+Documentos
+Blog
+Recursos
+Centrais para desenvolvedores
+Meus apps
+Documentação
+Visão geral
+Códigos de erro
+Esta página foi traduzida do inglês para outro idioma usando IA. O conteúdo traduzido por IA pode conter erros, omissões ou divergências de sentido. Como a tradução automática pode ser imprecisa ou pouco clara, consulte o conteúdo original em inglês desta página para validar as orientações corretas.
+Isso foi útil?
+Códigos de erro
+Updated: 23 de jul de 2024
+Este documento descreve as mensagens de erro que podem ser retornadas pela API do Instagram. Este exemplo de resposta traz um exemplo de código 3600 e subcódigo 2207004 com os subsequentes códigos de erros definidos.
+Exemplo de resposta
+{
+  "error":
+    {
+      "message": "The image size is too large.",
+      "type": "OAuthException",
+      "code": 36000,
+      "error_subcode": 2207004,
+      "is_transient": false,
+      "error_user_title": "Image size too large",
+      "error_user_msg": "The image is too large to download. It should be less than 8 MiB.",
+      "fbtrace_id": "A6LJylpZRKw2xKLFsAP-cJh"
+   }
+ }
+Códigos de erro definidos
+Código de status HTTP	Código	Subcódigo	Mensagem do usuário	Solução recomendada
+400
+-2
+2207003
+It takes too long to download the media.
+O download da mídia atingiu o tempo-limite. Tente novamente.
+400
+-2
+2207020
+The media you are trying to access has expired. Please try to upload again.
+Gere outro ID para o contêiner e use-o para tentar novamente.
+400
+-1
+2207001
+Erro do servidor do Instagram. Tente novamente.
+400
+-1
+2207032
+Create media fail, please try to re-create media
+Não foi possível criar o contêiner de mídia. Tente novamente.
+400
+-1
+2207053
+unknown upload error
+Houve um erro desconhecido durante o carregamento. Gere outro contêiner e use-o para tentar novamente. Em geral, esse problema afeta apenas carregamentos de vídeo.
+400
+1
+2207057
+Thumbnail offset must be greater than or equal to 0 and less than video duration, i.e. {video-length}
+O deslocamento escolhido para a miniatura de vídeo está fora dos limites de duração do vídeo. Adicione o deslocamento correto em milissegundos.
+400
+4
+2207051
+We restrict certain activity to protect our community. Tell us if you think we made a mistake.
+A ação de publicação foi considerada spam. Restringimos certas atividades para proteger nossa comunidade. Se você tiver certeza de que as ações não são spam, entre em contato com nossa equipe.
+400
+9
+2207042
+You reached maximum number of posts that is allowed to be published by Content Publishing API.
+O usuário do app atingiu o limite diário de publicações. Oriente o usuário a tentar novamente no dia seguinte.
+400
+24
+2207006
+The media with {media-id} cannot be found
+Ocorreu um possível erro de permissão ausente ou token expirado. Gere outro contêiner e use-o para tentar novamente.
+400
+24
+2207008
+The media builder with creation id = {creation-id} does not exist or has been expired.
+Ocorreu um erro temporário durante a publicação do contêiner. Nos próximos 30 segundos a 2 minutos, tente novamente uma ou duas vezes. Se isso não resolver o problema, gere outro ID para o contêiner e use-o para tentar novamente.
+400
+25
+2207050
+The Instagram account is restricted.
+A conta profissional do Instagram do usuário do app está inativa, restrita ou em ponto de verificação. Oriente o usuário a entrar no app do Instagram e concluir as ações necessárias para a reativação da conta.
+400
+100
+2207023
+The media type {media-type} is unknown.
+O tipo de mídia inserido não está entre os tipos de mídia esperados. Insira o tipo correto.
+400
+100
+2207028
+Your post won't work as a carousel. Carousels need at least 2 photos/videos and no more than 10 photos/videos.
+Tente novamente com um número de fotos ou vídeos dentro do limite.
+400
+100
+2207035
+Product tag positions should not be specified for video media.
+Os vídeos não são compatíveis com coordenadas X/Y. Não permita coordenadas X/Y em vídeos.
+400
+100
+2207036
+Product tag positions are required for photo media.
+As marcações de produto em imagens devem incluir coordenadas X/Y. Exija coordenadas X/Y para imagens.
+400
+100
+2207037
+We couldn't add all of your product tags. The product ID may be incorrect, the product may be deleted, or you may not have permission to tag the product.
+Um ou mais produtos usados para marcar o item são inválidos (excluídos, rejeitados, sem permissão de usuário, identificação do produto inválida, entre outros). Obtenha novamente os catálogos do usuário e os produtos qualificados e permita que o usuário use apenas as identificações desses produtos nas marcações.
+400
+100
+2207040
+Cannot use more than {max-tag-count} tags per created media.
+O usuário do app excedeu o limite de 20 @marcações. Oriente o usuário a usar menos @marcações.
+400
+352
+2207026
+The video format is not supported. Please check spec for supported {video} format
+O formato de vídeo não é compatível. Oriente o usuário do app a carregar um vídeo MOV ou MP4 (MPEG-4 Part 14). Saiba mais em Especificações de vídeo.
+400
+9004
+2207052
+The media could not be fetched from this uri: {uri}
+Não foi possível obter a mídia a partir do URI fornecido. Oriente o usuário do app a verificar se o URI é válido e tem acesso público.
+400
+9007
+2207027
+The media is not ready for publishing, please wait for a moment
+Verifique o status do contêiner e publique quando ele for FINISHED.
+400
+36000
+2207004
+The image is too large to download. It should be less than {size}.
+A imagem ultrapassou o limite máximo de tamanho de arquivo de 8 MiB. Oriente o usuário a tentar novamente com uma imagem menor.
+400
+36001
+2207005
+The image format {current-image-format} is not supported. Supported formats are: {format}.
+Ocorreu um possível erro de permissão ausente ou token expirado. Gere outro contêiner e use-o para tentar novamente.
+400
+36003
+2207009
+The submitted image with aspect ratio {submitted-ratio} cannot be published. Please submit an image with a valid aspect ratio.
+A taxa de proporção da imagem não está dentro do intervalo aceitável. Oriente o usuário a tentar novamente com uma imagem dentro da faixa de 4:5 a 1,91:1.
+400
+36004
+2207010
+The submitted image's caption was {submitted-caption-length} characters long. The maximum number of characters permitted for a caption is {maximum-caption-length}. Please submit media with a shorter caption.
+O usuário ultrapassou o número máximo de caracteres por legenda. Oriente o usuário a usar uma legenda menor. O limite máximo é de 2.200 caracteres, 30 hashtags e 20 @marcações.
+Você achou esta página útil?
+Ícone de polegar para cima
+Ícone de polegar para baixo
+Meta
+FacebookInstagramXLinkedInYouTube
+Desenvolva com a Meta
+IA
+Meta Horizon
+Tecnologias sociais
+Notícias
+Meta for Developers
+Blog
+Casos de sucesso
+Suporte
+Suporte ao desenvolvedor
+Ferramenta de bug
+Status da plataforma
+Fórum da Comunidade de Desenvolvedores
+Relatar um incidente
+Quem somos
+Sobre
+Carreiras
+Termos e políticas
+Iniciativas de plataforma responsável
+Termos da plataforma
+Políticas do Desenvolvedor
+Política de Privacidade
+Cookies
+Português (Brasil)

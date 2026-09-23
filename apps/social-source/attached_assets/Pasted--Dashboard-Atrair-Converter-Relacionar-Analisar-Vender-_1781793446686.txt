@@ -1,0 +1,155 @@
+ 
+Dashboard
+Atrair
+Converter
+Relacionar
+Analisar
+Vender
+
+
+
+
+
+TI
+Trafego1 Inout
+Mirante Incorporações
+
+
+
+
+
+
+
+
+Base de Leads 
+Leads
+Empresas
+Importações
+Exportações
+Buscar por Lead
+Ana Paula Leao
+Ana Paula Leao
+ Estágio do funil: Lead
+ Dono do Lead: Sem dono 
+d0
+Marcar uma venda  Desmarcar oportunidade
+Detalhes do Lead
+Email
+apvsantos@gmail.com
+
+Telefone fixo
++5561981796406
+
+Origem do Lead.  Saiba mais.
+Tráfego Direto
+
+ Procurar Lead no LinkedIn
+Procurar Lead no Google
+idpdv
+3
+
+Origem
+Tráfego Direto
+
+Em quanto tempo pretende adquirir um imóvel?
+Mais de 6 meses
+
+Quanto pretende investir no seu próximo imóvel?
+2Mi~3Mi
+
+[IN] Você está buscando imóvel para comprar em águas claras?
+Sim
+
+Proteção de dados
+Base legal para comunicação
+ Aceitou
+
+Tags
+lp_arboreto_inout ×
+
+Anotações
+Atividades do Lead
+Ecommerce 0 Conversões 1 Visitas 0 Emails 0 Fluxos de automação 2 Redes sociais 0 Propriedades do Lead 2 Proteção de dados 1
+Atualização de base legal
+
+16/06/2026 15:18 (GMT -03:00)
+Descrição: O Lead possui ou não base legal para comunicação
+Base Legal:
+Consentimento
+
+Status:
+Aceitou
+
+Identificador:
+79344bbe-b838-4e64-9c15-334eb812f0ea
+
+Origem:
+API de Contato
+
+Email do Lead:
+apvsantos@gmail.com
+
+
+Completou o fluxo de automação:
+
+16/06/2026 15:11 (GMT -03:00)
+[IN] [LP - ARBORETO - ENVIO DE LEADS CV]
+
+Foi marcado como oportunidade.
+
+16/06/2026 15:11 (GMT -03:00)
+Entrou no fluxo de automação:
+
+16/06/2026 15:11 (GMT -03:00)
+[IN] [LP - ARBORETO - ENVIO DE LEADS CV]
+
+Converteu no evento:
+
+16/06/2026 15:10 (GMT -03:00)
+in-arboreto-form-lp
+
+Origem: Tráfego Direto
+
+URL da Conversão:
+https://arboretomirante.com.br/#contato
+
+Domínio da Conversão:
+arboretomirante.com.br
+
+internal_source:
+6
+
+Nome:
+Ana Paula Leao
+
+Email:
+apvsantos@gmail.com
+
+Telefone:
++55 (61) 98179-6406
+
+[IN] Você está buscando imóvel para comprar em águas claras?:
+Sim
+
+Em quanto tempo pretende adquirir um imóvel?:
+Mais de 6 meses
+
+Quanto pretende investir no seu próximo imóvel?:
+2Mi~3Mi
+
+User Agent:
+Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Mobile/15E148 Safari
+
+Dispositivo:
+smartphone
+
+ID do Asset:
+8993855
+
+ID da Conversão:
+12470285236
+
+
+Teve seu estágio no funil alterado para 'Lead'.
+
+16/06/2026 15:10 (GMT -03:00)

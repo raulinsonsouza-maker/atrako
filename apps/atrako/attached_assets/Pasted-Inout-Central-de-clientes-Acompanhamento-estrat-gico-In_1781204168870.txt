@@ -1,0 +1,402 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Incorporadora
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+CRM
+
+
+Ano atual (YTD): 01 de jan. de 2026 a 11 de jun. de 2026
+CRM
+
+Negociações & Funil
+CV CRM
+
+Funil CRM
+Sync há 4 min
+0.8% conversão geral
+Leads no período
+
+1.938
+
+Vendas
+
+15
+
+Taxa de fechamento
+
+0.8%
+
+Leads
+
+0.2% do total
+4
+Atendimento
+
+82% do total
+1.591
+Visitas
+
+4% do total
+83
+Reservas
+
+0.1% do total
+2
+Vendas
+
+0.8% do total
+15
++ 243 leads perdidos / cancelados (não exibidos no funil)
+
+CRM
+
+Análise de Origem
+Valor Vendido
+
+—
+
+17 unidades vendidas
+Leads CRM
+
+1.938
+
+0.9% conv. geral
+
+Em aberto
+
+1678
+
+243 perdidos · 13%
+
+Canais de Origem
+
+Canal	Leads	Vendas	Conv%
+Meta
+135	—	—
+└
+✓ Campanha
+319	confirmados
+Google
+45	—	—
+Indicação
+31	—	—
+Direto
+7	—	—
+Outro
+1.720	17	1.0%
+Clique em um canal para filtrar as negociações
+
+Fonte de Conversão
+
+387 de 1.938
+Buscar fonte de conversão…
+RdStation
+44.4%
+172
+Painel Corretor
+20.9%
+81
+VIVA PARK
+18.6%
+72
+Painel Gestor
+14.5%
+56
+Painel PDV
+1.0%
+4
+Painel Imobiliária
+0.5%
+2
+CPL Real por Canal
+
+Meta — Custo por Lead / Venda
+
+CPL Real
+
+R$ 174,81
+
+135 leads CRM
+
+R$ 23.599,71 investidos· plataforma: R$ 65,01
+
+Google — Custo por Lead / Venda
+
+CPL Real
+
+R$ 0,00
+
+45 leads CRM
+
+R$ 0,00 investidos
+
+CRM
+
+Por Campanha
+Meta
+
+· 180 leads
+· R$ 23.599,71 investidos
+Campanha / Mídia	Leads	Visitou	Em aberto	Ganhos	Conv%
+RdStation
+140	3	136	—	0%
+Painel Corretor
+39	—	37	—	0%
+Painel Gestor
+1	—	1	—	0%
+CRM × Meta
+
+Por Criativo
+319 leads identificados
+via Meta Lead Forms
+Criativo (Anúncio)	Conjunto	Leads	Visitou	Em aberto	Ganhos	Conv%	Valor
+AD03 - Estático Mirante 4
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+143
+2	133	—	0%	—
+AD04 - Estático Mirante 5
+35 - 60 | Águas Claras + Taguatinga | Lookalike compradores (3%)
+75
+1	70	—	0%	—
+AD00 - Vídeo Mirante 1
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+50
+2	45	—	0%	—
+AD02 - Estático Mirante 3
+35 - 60 | Águas Claras + Taguatinga | Lookalike LP e Compradores
+23
+—	22	—	0%	—
+AD05 - Estático FORMATO NOVO
+35 - 60 | Águas Claras + Taguatinga | Lookalike compradores (3%)
+12
+1	9	—	0%	—
+AD08 - NOVO ESTÁTICO
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+4
+—	3	—	0%	—
+AD11 - Vídeo Mirante 2 (IA)
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+3
+1	2	—	0%	—
+AD07 - Estático FORMATO NOVO
+35 - 60 | Águas Claras + Taguatinga | Lookalike LP e Compradores
+3
+—	3	—	0%	—
+AD014 - VÍDEO - SILÊNCIO LUXUOSO
+35 - 60 | Águas Claras + Taguatinga | Lookalike compradores (3%)
+2
+—	2	—	0%	—
+AD06 - Estático FORMATO NOVO
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+1
+—	1	—	0%	—
+AD10 - NOVO ESTÁTICO
+35 - 60 | Águas Claras + Taguatinga | Lookalike LP e Compradores
+1
+—	1	—	0%	—
+AD09 - NOVO ESTÁTICO
+35 - 60 | Águas Claras + Taguatinga | Lookalike LP e Compradores
+1
+—	0	—	0%	—
+AD015 - VÍDEO NARA - 2
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+1
+—	1	—	0%	—
+Atribuição via cruzamento MetaLeadForms × CRM por e-mail e telefone. Leads sem correspondência no CRM não aparecem aqui.
+
+CRM
+
+Negociações
+Buscar por nome, e-mail ou telefone…
+1.938 negociações · página 1 de 130· clique para ver detalhes
+
+Status	Etapa	Contato	Origem	Qualificação	Entrada	Fechamento	Valor
+Em andamento	
+Em Atendimento
+Ribamar
+
+Ribahardiimm@gmail.com
+
+Meta
+
+CRM
+Facebook Ads
+
+—	11/06/26	—	—
+Em andamento	
+Em Atendimento
+Eneas Portugal
+
+eneas.portugal@gmail.com
+
+Meta
+
+CRM
+Facebook Ads
+
+—	10/06/26	—	—
+Em andamento	
+Em Atendimento
+Ricardo
+
+Outro
+
+Outdoor
+
+—	10/06/26	—	—
+Em andamento	
+Em Atendimento
+Jhonatan Portela
+
+jhonatan.portela@outlook.com
+
+Direto
+
+Outdoor
+
+—	10/06/26	—	—
+Em andamento	
+Visita Realizada
+fernandoprthomsen e Karine.
+
+forthomsen@gmail.com
+
+Meta
+
+CRM
+Facebook Ads
+
+—	10/06/26	—	—
+Em andamento	
+Em Atendimento
+Marcos Oliveira
+
+marrecomarcos@hotmail.com
+
+Meta
+
+CRM
+Facebook Ads
+
+—	09/06/26	—	—
+Em andamento	
+Em Atendimento
+Pedro Barcelos
+
+pbaarcelos22@gmail.com
+
+Outro
+
+Não Definido
+
+—	09/06/26	—	—
+Em andamento	
+Visita Agendada
+Tedi Biffi
+
+gutobiffi@icloud.com
+
+Meta
+
+CRM
+Facebook Ads
+
+—	09/06/26	—	—
+Em andamento	
+Visita Realizada
+Welcylene Nobre
+
+nobre0708@hotmail.com
+
+Outro
+
+Painel PDV
+
+—	08/06/26	—	—
+Em andamento	
+Em Atendimento
+Clélia Maciel
+
+cleliamaciell@gmail.com
+
+Meta
+
+CRM
+Facebook Ads
+
+—	08/06/26	—	—
+Em andamento	
+Em Atendimento
+Leandro Rodrigues Tavares
+
+futebol.acfc@hotmail.com
+
+Meta
+
+CRM
+Facebook Ads
+
+—	08/06/26	—	—
+Em andamento	
+Em Atendimento
+Marcella
+
+cellaoliveira21@icloud.com
+
+Google
+
+CRM
+Google
+
+—	08/06/26	—	—
+Em andamento	
+Em Atendimento
+João Pedro
+
+joaopedrounb@gmail.com
+
+Direto
+
+Outdoor
+
+—	08/06/26	—	—
+Em andamento	
+Em Atendimento
+Edna Lustosa
+
+ednalustosa065@gmail.com
+
+Meta
+
+CRM
+Facebook Ads
+
+—	08/06/26	—	—
+Em andamento	
+Em Atendimento
+Carlos Souza
+
+carlossouza805@gmail.com
+
+Meta
+
+CRM
+Facebook Ads
+
+—	08/06/26	—	—
+
+1
+2
+3
+4
+5
+…
+130
+
+R$ 0,00

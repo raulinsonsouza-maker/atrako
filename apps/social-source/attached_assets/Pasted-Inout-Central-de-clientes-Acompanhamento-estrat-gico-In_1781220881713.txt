@@ -1,0 +1,178 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Incorporadora
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+CRM
+Saldo Google
+R$ ••••••
+
+
+
+Ano atual (YTD): 01 de jan. de 2026 a 11 de jun. de 2026
+Análise
+Criativos
+Investimento Google
+
+R$ 8.281,30
+
+162 dias selecionados
+
+Conversões (Google Ads)
+
+83
+
+Total do período (métrica principal do relatório de campanhas)
+
+Custo / conversão
+
+R$ 99,77
+
+Investimento ÷ conversões
+
+CPM Google
+
+R$ 208,60
+
+Custo por mil impressões
+
+Performance Google
+Investimento e conversões por mês
+
+Mar/26
+Abr/26
+Mai/26
+Jun/26
+0
+900
+1800
+2700
+3600
+0
+45
+90
+135
+180
+InvestimentoConversõesCPL
+
+Resultado GoogleMês a mês
+Ano atual (YTD)
+Visão comparativa com leitura rápida das principais métricas por mês.
+
+4 meses
+Atual: Jun/26
+Métrica	
+Mês
+Mar/26
+Mês
+Abr/26
+Mês
+Mai/26
+Atual
+Jun/26
+INVESTIMENTO
+
+Valor investido em mídia na semana.
+
+R$ 1.846,88
+R$ 1.464,84
+R$ 3.410,15
+R$ 1.559,43
+IMPRESSÕES
+
+Volume total de entregas dos anúncios.
+
+10.480
+8.960
+14.088
+6.172
+CLIQUES
+
+Cliques nos anúncios (no Google Ads, “interações” pode incluir outros tipos).
+
+579
+605
+885
+311
+CTR (%)
+
+Taxa de clique sobre impressões.
+
+5,525%
+6,752%
+6,282%
+5,039%
+CONVERSÕES
+
+Total de conversões atribuídas (alinhado ao relatório de campanhas do Google Ads).
+
+32
+21
+19
+11
+TAXA CONV.
+
+Conversões em relação aos cliques (taxa de conversão aproximada).
+
+5,527%
+3,471%
+2,147%
+3,537%
+CPC
+
+Custo médio por clique gerado.
+
+R$ 3,19
+R$ 2,42
+R$ 3,85
+R$ 5,01
+CUSTO / CONV.
+
+Investimento ÷ conversões da semana (equivalente ao custo por conversão do Google).
+
+R$ 57,71
+R$ 69,75
+R$ 179,48
+R$ 141,77
+Google Ads
+
+Campanhas · Análise por período
+
+#1
+Search
+[IN] [P] [SEARCH] LEADS
+
+Ativa	R$ 8.281,29	39.700	2.380	5,99%	R$ 3,48	82,0	R$ 100,99	R$ 82,00	0,01x
+Total · 1 campanhas	R$ 8.281,29	39.700	2.380	5,99%	R$ 3,48	82,0	R$ 100,99	R$ 82,00	0,01x
+Acompanhamento financeiro · Plano x Real
+Status de investimento no ano atual (planejado versus realizado em todos os canais)
+
+Orçado
+R$ 0,00
+Realizado
+R$ 8.281,30
+JAN.
+FEV.
+MAR.
+ABR.
+MAI.
+JUN.
+JUL.
+AGO.
+SET.
+OUT.
+NOV.
+DEZ.
+R$ 0,00
+R$ 900,00
+R$ 1.800,00
+R$ 2.700,00
+R$ 3.600,00
+OrcadoRealizado
+
+3.600,00

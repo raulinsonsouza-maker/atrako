@@ -1,0 +1,189 @@
+
+Logotipo Nav
+Desenvolva conosco
+Documentos
+Blog
+Recursos
+Centrais para desenvolvedores
+Meus apps
+Documentação
+Visão geral
+Comentário do Instagram
+Esta página foi traduzida do inglês para outro idioma usando IA. O conteúdo traduzido por IA pode conter erros, omissões ou divergências de sentido. Como a tradução automática pode ser imprecisa ou pouco clara, consulte o conteúdo original em inglês desta página para validar as orientações corretas.
+Isso foi útil?
+Comentário do Instagram
+Updated: 21 de jan de 2025
+Representa um comentário em um objeto de mídia do Instagram.
+Caso você esteja migrando dos pontos de extremidade de anúncios do Instagram da API de Marketing para os da plataforma do Instagram, saiba que os nomes de alguns campos são diferentes.
+Apresentamos os seguintes campos:
+legacy_instagram_comment_id
+Não há compatibilidade com os seguintes campos:
+comment_type
+mentioned_instagram_users
+Requisitos
+API do Instagram com o Login do Instagram	API do Instagram com o Login do Facebook
+Tokens de acesso
+Token de acesso do usuário do Instagram
+Token de acesso do usuário do Facebook
+URL de hospedagem
+graph.instagram.com
+graph.facebook.com
+Tipo de login
+Login de Empresa no Instagram
+Login do Facebook para Empresas
+Permissões
+instagram_business_basic
+instagram_business_manage_comments
+instagram_basic
+instagram_manage_comments
+pages_read_engagement
+Caso uma função tenha sido concedida ao usuário do app por meio do Gerenciador de Negócios na Página conectada ao usuário do Instagram em questão, você precisará obter uma das seguintes permissões:
+ads_management
+ads_read
+Criação
+Esta operação não é compatível.
+Leitura
+GET <HOST_URL>/<IG_COMMENT_ID>?fields=<LIST_OF_FIELDS>
+Essa operação obtém campos e bordas em um comentário do Instagram.
+Limitações
+Não é possível realizar solicitações em comentários descobertos por meio da API de Menções, a menos que o dono do comentário tenha feito a solicitação. Em vez disso, use o nó de comentário mencionado.
+Comentários em mídias com restrição de idade não serão retornados.
+Comentários criados por usuários do Instagram restringidos pelo usuário do app não serão retornados. Para que haver retorno, os usuários devem ser irrestritos, e os comentários, aprovados.
+Só será possível ler os comentários em mídias de vídeo ao vivo do Instagram durante a transmissão.
+Sintaxe da solicitação
+GET https://<HOST_URL>/<API_VERSION>/<IG_COMMENT_ID>
+  ?fields=<LIST_OF_FIELDS>
+  &access_token=<ACCESS_TOKEN>
+Parâmetros de caminho
+Espaço reservado	Valor
+<API_VERSION>
+A versão da API.
+<HOST_URL>
+A versão da API.
+<IG_COMMENT_ID>
+Obrigatório. A identificação do comentário do Instagram.
+Parâmetros da string de consulta
+Chave	Espaço reservado	Valor
+access_token
+<ACCESS_TOKEN>
+Obrigatório. O token de acesso do usuário do app.
+fields
+<LIST_OF_FIELDS>
+Uma lista separada por vírgulas dos campos que você quer retornar para cada comentário do Instagram no conjunto de resultados.
+Campos
+Nome do campo	Descrição
+from
+Um objeto contendo:
+id – o número de identificação no escopo do Instagram (IGSID, pelas iniciais em inglês) do usuário do Instagram que criou o comentário.
+username – o nome de usuário do criador do comentário do Instagram.
+hidden
+Indica se o comentário foi ocultado (true) ou não (false).
+id
+A identificação do comentário do Instagram.
+like_count
+O número de curtidas do comentário do Instagram.
+legacy_instagram_comment_id
+O ID do comentário no Instagram que foi criado para pontos de extremidade da API de Marketing na versão v21.0 e mais antigas.
+media
+Um objeto contendo:
+id – a identificação da mídia do Instagram na qual o comentário foi feito.
+media_product_type – a superfície de publicação da mídia do Instagram na qual o comentário foi feito (ou seja, o local onde a mídia do Instagram aparece).
+parent_id
+A identificação do comentário principal do Instagram caso o comentário tenha sido criado a partir de outro (ou seja, uma resposta a um comentário).
+replies
+Uma lista das respostas (comentários) ao comentário do Instagram.
+text
+O texto do comentário do Instagram.
+timestamp
+Um registro de data e hora formatado conforme a norma ISO 8601 que indica quando o comentário do Instagram foi criado.
+Exemplo: 2017-05-19T23:27:28+0000.
+user
+O número de identificação do usuário do Instagram que criou o comentário. Dado retornado somente se o usuário do app tiver criado o comentário do Instagram. Caso contrário, retornaremos username.
+username
+O nome de usuário do criador do comentário do Instagram.
+A partir de 27 de agosto de 2024, exigiremos as permissões instagram_manage_comments (caso seu app use o Login do Facebook) e instagram_business_manage_comments (caso seu app use o Login do Instagram) para acessar o campo username de um usuário do Instagram que comentou na mídia da conta profissional do Instagram de um usuário do app.
+Bordas
+Borda	Descrição
+replies
+Obtenha uma lista dos comentários em um comentário do Instagram. Crie um comentário em um comentário do Instagram.
+Resposta
+Um objeto formatado por JSON contendo os campos e as bordas solicitadas e padrão.
+{
+  "<FIELD>":"<VALUE>",
+  ...
+}
+Exemplo de cURL
+Solicitação
+curl -i -X GET \
+ "https://graph.instagram.com/v25.0/17881770991003328?fields=hidden%2Cmedia%2Ctimestamp&access_token=EAAOc..."
+Resposta
+{
+  "hidden": false,
+  "media": {
+    "id": "17856134461174448"
+  },
+  "timestamp": "2017-05-19T23:27:28+0000",
+  "id": "17881770991003328"
+}
+Atualização
+Como ocultar/reexibir um comentário
+POST <HOST_URL>/<IG_COMMENT_ID>?hide=<BOOLEAN>
+Parâmetros da string de consulta
+hide (obrigatório): defina como true para ocultar ou false para exibir o comentário.
+Limitações
+Os comentários feitos por donos de objetos de mídia nos próprios objetos serão exibidos, mesmo que os comentários sejam definidos como hide=true.
+Os comentários em mídias de vídeo ao vivo do Instagram não são compatíveis.
+Token de acesso
+Um token de acesso do usuário proprietário do objeto de mídia que recebeu o comentário.
+Exemplo de solicitação
+Como ocultar um comentário:
+POST graph.instagram.com
+  /17873440459141021?hide=true
+Exemplo de resposta
+{
+  "success": true
+}
+Exclusão
+Como excluir um comentário
+DELETE <HOST_URL>/<IG_COMMENT_ID>
+Token de acesso
+Um token de acesso do usuário que criou o comentário.
+Limitações
+Um comentário só poderá ser excluído pelo dono do objeto em que ele foi feito, mesmo que o usuário tentando fazer a exclusão seja o próprio autor do comentário.
+Os comentários em mídias de vídeo ao vivo do Instagram não são compatíveis.
+Exemplo de solicitação
+DELETE graph.instagram.com
+  /17873440459141021
+Exemplo de resposta
+{
+  "success": true
+}
+Você achou esta página útil?
+Ícone de polegar para cima
+Ícone de polegar para baixo
+Meta
+FacebookInstagramXLinkedInYouTube
+Desenvolva com a Meta
+IA
+Meta Horizon
+Tecnologias sociais
+Notícias
+Meta for Developers
+Blog
+Casos de sucesso
+Suporte
+Suporte ao desenvolvedor
+Ferramenta de bug
+Status da plataforma
+Fórum da Comunidade de Desenvolvedores
+Relatar um incidente
+Quem somos
+Sobre
+Carreiras
+Termos e políticas
+Iniciativas de plataforma responsável
+Termos da plataforma
+Políticas do Desenvolvedor
+Política de Privacidade
+Cookies
+Português (Brasil)

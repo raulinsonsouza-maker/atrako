@@ -1,0 +1,227 @@
+Inout
+Painel de Gestão
+Visão geral de todos os projetos · saldos em tempo real via Meta e Google Ads API
+
+Gestão de Projetos
+Clique em qualquer célula editável para alterar · Saldos via API
+
+Atualizar saldos
+Cliente	Squad	Status	Orç. Meta	Forma Pgto	Saldo Meta	Orç. Google	Forma Pgto Google	Saldo Google	Orç. Total
+09
+09 - CONECT IMÓVEIS
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 29,77	R$ 0,00	
+Nenhuma
+—	—
+AC
+Academy Americana
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 38,22	R$ 0,00	
+Nenhuma
+—	—
+BE
+Be Blue School
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 7,89	R$ 0,00	
+Nenhuma
+—	—
+BR
+Brasília Swiss Park
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 395,17	R$ 0,00	
+Nenhuma
+—	—
+CA
+CA - PIRACICABA
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 140,88	R$ 0,00	
+Nenhuma
+—	—
+CO
+CONECT IMÓVEIS
+—	Ativa	R$ 0,00	
+Nenhuma
+—	R$ 0,00	
+Nenhuma
+—	—
+CA
+Casa Basca
+—	Ativa	R$ 0,00	
+Nenhuma
+—	R$ 0,00	
+Nenhuma
+—	—
+CL
+Clinica e Spa Vida Natural
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 62,24	R$ 0,00	
+Nenhuma
+—	—
+CO
+Conta Backup - Inout Digital 2
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 1.996,48	R$ 0,00	
+Nenhuma
+—	—
+CO
+Conta Hotel
+—	Ativa	R$ 30.000,00	
+Nenhuma
+R$ 4.149,79	R$ 0,00	
+Nenhuma
+—	R$ 30.000,00
+D'
+D'or
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 17,47	R$ 0,00	
+Nenhuma
+—	—
+DR
+Dr. Fernando Guena
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 69,62	R$ 0,00	
+Nenhuma
+—	—
+ES
+ESALQ Jr. Consultoria
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 19,12	R$ 0,00	
+Nenhuma
+—	—
+FL
+Florien FitoAtivos
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 31,34	R$ 0,00	
+Nenhuma
+—	—
+GR
+Granarolo
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 15,34	R$ 0,00	
+Nenhuma
+—	—
+KO
+Kombucha da Cá
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 548,40	R$ 0,00	
+Nenhuma
+—	—
+ME
+Melaço de Cana
+—	Ativa	R$ 0,00	
+Nenhuma
+—	R$ 0,00	
+Nenhuma
+—	—
+OD
+Odonto Minas
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 126,58	R$ 0,00	
+Nenhuma
+—	—
+PO
+Pousada Ilha Brazil
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 31,35	R$ 0,00	
+Nenhuma
+—	—
+RA
+Raul Souza
+—	Ativa	R$ 0,00	
+Nenhuma
+—	R$ 0,00	
+Nenhuma
+—	—
+SO
+Sou + Charitas
+—	Ativa	R$ 0,00	
+Nenhuma
+—	R$ 0,00	
+Nenhuma
+—	—
+SO
+Sou + Icaraí
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 43,25	R$ 0,00	
+Nenhuma
+—	—
+SO
+Sou + Itacoa
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 46,97	R$ 0,00	
+Nenhuma
+—	—
+SO
+Sou + Wellness
+—	Ativa	R$ 0,00	
+Nenhuma
+—	R$ 0,00	
+Nenhuma
+—	—
+SW
+Swiss Park AGV REAL
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 1.251,23	R$ 0,00	
+Nenhuma
+—	—
+SW
+Swiss Park Anápolis - NOVA
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 2.723,92	R$ 0,00	
+Nenhuma
+—	—
+SW
+Swiss Park Caieiras - NOVA
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 1.687,34	R$ 0,00	
+Nenhuma
+—	—
+TE
+Tertúlia
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 15,49	R$ 0,00	
+Nenhuma
+—	—
+VA
+Varella Motos
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 439,71	R$ 0,00	
+Nenhuma
+—	—
+VI
+Vito Balducci
+—	Ativa	R$ 0,00	
+Nenhuma
+R$ 35,12	R$ 0,00	
+Nenhuma
+—	—
+YE
+Yema
+—	Ativa	R$ 0,00	
+Nenhuma
+—	R$ 0,00	
+Nenhuma
+—	—
+Totais (ativos)	R$ 30.000,00			R$ 0,00			R$ 30.000,00

@@ -1,0 +1,75 @@
+
+Logotipo Nav
+Desenvolva conosco
+Documentos
+Blog
+Recursos
+Centrais para desenvolvedores
+Meus apps
+Documentação
+Visão geral
+Página
+Esta página foi traduzida do inglês para outro idioma usando IA. O conteúdo traduzido por IA pode conter erros, omissões ou divergências de sentido. Como a tradução automática pode ser imprecisa ou pouco clara, consulte o conteúdo original em inglês desta página para validar as orientações corretas.
+Isso foi útil?
+Página
+Updated: 11 de jul de 2024
+Representa uma Página do Facebook.
+Este nó permite:
+obter o usuário do Instagram conectado a uma Página do Facebook.
+Disponível somente via Login do Facebook para Empresas.
+Criação
+Esta operação não é compatível.
+Leitura
+Como obter o usuário do Instagram de uma Página
+GET /<PAGE_ID>?fields=instagram_business_account
+Retorna o usuário do Instagram conectado à Página do Facebook.
+Permissões
+Um token de acesso de um usuário do Facebook com as seguintes permissões:
+instagram_basic
+pages_show_list
+Se o token for de um usuário cuja função na Página foi concedida por meio do Gerenciador de Negócios, uma das seguintes permissões também será necessária:
+ads_management
+ads_read
+Exemplo de solicitação
+GET graph.facebook.com
+  /134895793791914?fields=instagram_business_account
+Exemplo de resposta
+{
+  "instagram_business_account": {
+    "id": "17841405822304914"
+  },
+  "id": "134895793791914"
+}
+Atualização
+Esta operação não é compatível.
+Exclusão
+Esta operação não é compatível.
+Você achou esta página útil?
+Ícone de polegar para cima
+Ícone de polegar para baixo
+Meta
+FacebookInstagramXLinkedInYouTube
+Desenvolva com a Meta
+IA
+Meta Horizon
+Tecnologias sociais
+Notícias
+Meta for Developers
+Blog
+Casos de sucesso
+Suporte
+Suporte ao desenvolvedor
+Ferramenta de bug
+Status da plataforma
+Fórum da Comunidade de Desenvolvedores
+Relatar um incidente
+Quem somos
+Sobre
+Carreiras
+Termos e políticas
+Iniciativas de plataforma responsável
+Termos da plataforma
+Políticas do Desenvolvedor
+Política de Privacidade
+Cookies
+Português (Brasil)

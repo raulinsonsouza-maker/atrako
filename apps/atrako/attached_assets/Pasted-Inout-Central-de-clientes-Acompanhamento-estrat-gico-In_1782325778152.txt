@@ -1,0 +1,313 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Incorporadora de São Paulo
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+CRM
+
+
+Mês atual: 01 de jun. de 2026 a 24 de jun. de 2026
+Faturamento
+R$ 6.720.000,00
+
+valor total dos ganhos
+
+Vendas
+2
+
+negócios ganhos
+
+Custo / Venda
+R$ 3.638,00
+
+investimento ÷ vendas
+
+Visitas
+5
+
+negociações com visita
+
+Custo / Visita
+R$ 1.455,00
+
+investimento ÷ visitas
+
+Leads no período
+
+21
+
+Fechamentos
+
+2
+
+Taxa de fechamento
+
+9.5%
+
+21
+
+leads
+
+Atendimento
+11
+52%
+Visitas
+5
+24%
+Vendas
+2
+10%
+Perdidos
+3
+14%
+Atendimento
+
+11 leads · 52%
+Em Atendimento
+
+52%
+11
+Visitas
+
+5 leads · 24%
+Visita Agendada
+
+24%
+5
+Vendas
+
+2 leads · 10%
+Venda Realizada
+
+R$ 6,7M
+10%
+2
+Perdidos
+
+3 leads · 14%
+Perdido
+
+14%
+3
+CRM
+
+Análise de Origem
+Meta
+1 forms
+Leads no CRM
+
+6
+
+
+6
+
+Leads
+
+
+4
+
+Atend.
+
+
+1
+
+Visitas
+
+
+1
+
+Vendas
+
+1 venda (17%)
+4 em atend.
+1 visita (17%)
+1 perdido (17%)
+Valor Vendido
+
+R$ 3.360.000,00
+
+CPL Real · CRM
+
+vs R$ 103,76 plataforma
+
+R$ 812,76
+
+Investimento
+
+R$ 4.876,54
+
+CAC Real
+
+R$ 4.876,54
+
+Google
+Leads no CRM
+
+15
+
+
+15
+
+Leads
+
+
+12
+
+Atend.
+
+
+4
+
+Visitas
+
+
+1
+
+Vendas
+
+1 venda (7%)
+12 em atend.
+4 visitas (27%)
+2 perdidos (13%)
+Valor Vendido
+
+R$ 3.360.000,00
+
+CPL Real · CRM
+
+vs R$ 184,52 plataforma
+
+R$ 159,92
+
+Investimento
+
+R$ 2.398,73
+
+CAC Real
+
+R$ 2.398,73
+
+CRM · Meta
+
+Análise Detalhada do Meta
+1 venda
+· R$ 3.360.000,00
+Campanha / Conjunto / Anúncio	Leads	Visitas	Atend.	Vendas	Valor	Conv%
+
+[IN] [P] [FORM] - ESCALA DE MENSAGENS (FASE 1)
+3	—	2	1	R$ 3.360.000,00	33%
+
+[IN] [P] [FORM] - Remarketing | Lookalike Compradores e Interesses
+2	1	2	—	—	0%
+
+[IN] [P] [FORM] - SEGMENTAÇÃO
+1	—	—	—	—	0%
+CRM · Google
+
+Análise Detalhada do Google
+1 venda
+· R$ 3.360.000,00
+Campanha / Grupo de Anúncios	Leads	Visitas	Atend.	Vendas	Valor	Conv%
+[IN] [P] [SEARCH] LEADS
+15	4	12	1	R$ 3.360.000,00	7%
+Non-Branded | Lançamento Imobiliário DF
+15	4	12	1	R$ 3.360.000,00	7%
+CRM
+
+Detalhamento dos Leads
+Buscar por nome, e-mail ou telefone…
+Etapa	Contato	Origem	Entrada	Valor
+Em Atendimento
+Diego Pereira
+
+diego.pereira331@yahoo.com.br
+
+Google
+20/06/26	—
+Em Atendimento
+Larissa Ribeiro
+
+larissa.ribeiro450@outlook.com
+
+Google
+20/06/26	—
+Em Atendimento
+Felipe Melo
+
+felipe.melo419@yahoo.com.br
+
+Google
+17/06/26	—
+Venda Realizada
+Carlos Carvalho
+
+carlos.carvalho371@yahoo.com.br
+
+Google
+17/06/26	R$ 3.360.000,00
+Em Atendimento
+Isabela Costa
+
+isabela.costa236@gmail.com
+
+Google
+16/06/26	—
+Perdido
+Andre Goncalves
+
+andre.goncalves603@yahoo.com.br
+
+Google
+16/06/26	—
+Em Atendimento
+Camila Carvalho
+
+camila.carvalho376@gmail.com
+
+Google
+15/06/26	—
+Venda Realizada
+Marcos Pereira
+
+marcos.pereira319@yahoo.com.br
+
+Meta
+12/06/26	R$ 3.360.000,00
+Em Atendimento
+Amanda Alves
+
+amanda.alves292@gmail.com
+
+Meta
+10/06/26	—
+Em Atendimento
+Vanessa Rodrigues
+
+vanessa.rodrigues504@gmail.com
+
+Meta
+10/06/26	—
+Em Atendimento
+Gabriela Melo
+
+gabriela.melo428@gmail.com
+
+Meta
+09/06/26	—
+Em Atendimento
+Rafael Ferreira
+
+rafael.ferreira253@hotmail.com
+
+Google
+08/06/26	—
+
+1
+2
+
+6

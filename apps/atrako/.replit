@@ -1,0 +1,66 @@
+modules = ["nodejs-20", "python-3.11", "postgresql-16"]
+[agent]
+expertMode = true
+
+[nix]
+channel = "stable-25_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+waitForPort = 5000
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 5555
+externalPort = 3000
+
+[[ports]]
+localPort = 23636
+externalPort = 3001
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["npm", "run", "start"]
+build = ["npm", "run", "build"]
+
+[userenv]
+
+[userenv.shared]
+APP_URL = "https://central-inout.replit.app"
+
+[userenv.development]
+INTERNAL_AUTH_BOOTSTRAP = "true"
+INTERNAL_BOOTSTRAP_LEGACY_USER_ID = "cmu1gzspy0000d7zfii1c6w74"
+INTERNAL_BOOTSTRAP_USERNAME = "raul"
+
+[userenv.production]
+INTERNAL_AUTH_BOOTSTRAP = "true"
+INTERNAL_BOOTSTRAP_LEGACY_USER_ID = "cmu1zfvm40009s60zvgmyvw80"
+INTERNAL_BOOTSTRAP_USERNAME = "raul"
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 120000

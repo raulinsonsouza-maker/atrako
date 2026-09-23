@@ -1,0 +1,283 @@
+Jump to Content
+RD Station Developers
+RD Station
+App Publisher
+App Store
+Blog
+Suporte
+Status
+Acesse sua conta
+Home
+Guias
+Recipes
+API
+Changelog
+MCPs e Conectores IA
+
+Search
+CTRL-K
+JUMP TO
+CTRL-/
+Introdução
+Boas vindas
+Suporte
+Integrações multiproduto
+Webhook Service
+
+Boas Práticas
+Exemplos de casos de uso
+RD Station Marketing API
+Introdução e requisitos
+Guia de uso
+
+Autenticação
+
+[Vídeo] Como configurar a Autenticação OAuth na sua aplicação e boas práticas
+Passo 1: Como criar um aplicativo na App Store e gerar as Credenciais (client_id e client_secret)
+Passo 2: Como utilizar as Credenciais para gerar o code
+Passo 3: Como obter os tokens (access_token e refresh_token)
+post
+Passo 4: Como utilizar o refresh_token para atualizar o access_token
+post
+Como criar um fluxo de verificação e renovação do token
+Como utilizar o access_token para autorizar suas requisições
+Como revogar o acesso de um token
+post
+Erros relacionados à Autenticação
+FAQ de Autenticação
+Contatos
+
+Campos personalizados
+
+Funis de Contatos
+
+Segmentações
+
+Fluxos de automação
+
+Email
+
+Landing Pages
+
+Pop-ups
+
+Formulários
+
+Análise
+
+Campanhas
+
+Evento de Conversão Padrão
+
+Eventos de Qualificação do Contato
+
+Eventos de E-commerce
+
+Eventos de E-commerce (Descontinuados)
+
+
+Eventos de Chat
+
+Eventos de Chamada
+
+Eventos de Mídia
+
+Batch de Eventos
+
+Evento de Conversão via API Key
+
+Catálogo de produtos
+
+RD Station CRM API v1
+Introdução e requisitos
+Guia de uso
+
+Anotações
+
+Campanhas
+
+Contatos
+
+Campos personalizados
+
+Motivos de perda
+
+Funis de vendas
+
+Produtos na negociação
+
+Fontes
+
+Etapas do funil de vendas
+
+Negociações
+
+Empresas
+
+Produtos
+
+Tarefas
+
+Equipes
+
+Token de autenticação
+
+Usuários
+
+Webhooks
+
+RD Station CRM API v2
+Autenticação
+
+Introdução
+Bases legais
+Filtrando com RDQL
+Casos de uso
+Campanhas
+
+Contatos
+
+Campos personalizados
+
+Produtos na negociação
+
+Negociações
+
+Anexos
+
+Motivos de perda
+
+Anotações
+
+Empresas
+
+Produtos
+
+Funis de vendas
+
+Segmentos
+
+Etapas do funil de vendas
+
+Fontes
+
+Equipes
+
+Tarefas
+
+Usuários
+
+Eventos de webhook
+
+Propostas
+
+Webhooks
+
+RD Station Conversas API v2
+Introdução
+Autenticação
+Criptografia
+Contatos
+
+Campos personalizados
+
+Funcionários
+
+Flows
+
+Mensagens
+
+Jobs
+
+Relatórios
+
+Templates
+
+Carteiras
+
+WhatsApp
+
+Workflows
+
+Analytics
+
+Campanhas
+
+
+Como revogar o acesso de um token
+post
+https://api.rd.services/auth/revoke
+
+Recent Requests
+Log in to see full request history
+Time	Status	User Agent	
+Make a request to see history.
+0 Requests This Month
+
+Existem algumas razões pelas quais você pode precisar revogar o acesso de um aplicativo à conta de um usuário, por isso, o acesso dos clientes com Autenticação do tipo OAuth pode ser revogado sempre que necessário.
+
+Ao revogar o acesso, os tokens (access_token e refresh_token) se tornarão inválidos e resultarão em uma solicitação401 (Unauthorized).
+
+Para isso, você vai utilizar ovalor do token e o tipo do token no envio da sua requisição.
+
+Você pode utilizar o recurso de "Try It" desta página para revogar o acesso dos tokens ou se basear para desenvolver a sua aplicação!
+
+Form Data
+token
+string
+Defaults to TOKEN
+valor do token
+
+TOKEN
+token_type_hint
+string
+Defaults to TOKEN_TYPE
+O tipo de token que você está revogando (refresh_token ou access_token)
+
+TOKEN_TYPE
+Response
+
+200
+200
+
+Response body
+object
+Updated 9 months ago
+
+Como utilizar o access_token para autorizar suas requisições
+Erros relacionados à Autenticação
+Did this page help you?
+Language
+
+Shell
+
+Node
+
+Ruby
+
+PHP
+
+Python
+Credentials
+OAuth2
+Bearer
+token
+
+1
+curl --request POST \
+2
+     --url https://api.rd.services/auth/revoke \
+3
+     --header 'accept: application/json' \
+4
+     --header 'content-type: application/x-www-form-urlencoded' \
+5
+     --data token=TOKEN \
+6
+     --data token_type_hint=TOKEN_TYPE
+
+Try It!
+
+1
+{}
+ Português (Brasil)

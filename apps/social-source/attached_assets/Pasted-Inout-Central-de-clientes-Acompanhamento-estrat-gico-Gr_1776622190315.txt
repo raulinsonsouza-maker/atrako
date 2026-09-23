@@ -1,0 +1,159 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Granarolo
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+Saldo Google
+R$ ••••••
+
+
+Ontem: 18 de abr. de 2026 a 18 de abr. de 2026
+Análise
+Criativos
+Investimento Google
+
+R$ 203,34
+
+1 dias selecionados
+
+Compras no Site
+
+9
+
+Pedidos atribuídos às campanhas Google no período
+
+Custo por Compra
+
+R$ 22,59
+
+Investimento ÷ compras atribuídas
+
+ROAS
+
+0,93x
+
+Retorno sobre investimento em anúncios (receita ÷ custo)
+
+Faturamento (Valor Conv.)
+
+R$ 189,43
+
+Receita de compras atribuída às campanhas Google no período
+
+Ticket Médio
+
+R$ 21,05
+
+Valor médio por pedido (faturamento ÷ compras)
+
+Performance Google
+Investimento e compras por semana
+
+13/04-19/04
+0
+55
+110
+165
+220
+0
+6
+12
+18
+24
+InvestimentoFaturamentoComprasCPL
+
+Resultado GoogleSemana a semana
+Ontem
+Visão comparativa com leitura rápida das principais métricas por semana.
+
+1 semanas
+Atual: 13/04-19/04
+Métrica	
+Atual
+13/04-19/04
+INVESTIMENTO
+
+Valor investido em mídia na semana.
+
+R$ 203,34
+IMPRESSÕES
+
+Volume total de entregas dos anúncios.
+
+4.311
+CLIQUES
+
+Cliques nos anúncios (no Google Ads, “interações” pode incluir outros tipos).
+
+167
+CTR (%)
+
+Taxa de clique sobre impressões.
+
+3,874%
+COMPRAS
+
+Compras no site atribuídas ao período (pedidos confirmados).
+
+9
+TAXA COMPRA
+
+Percentual de compras sobre os cliques gerados.
+
+5,389%
+CPC
+
+Custo médio por clique gerado.
+
+R$ 1,22
+CUSTO / COMPRA
+
+Investimento ÷ compras no site da semana (custo de aquisição por pedido).
+
+R$ 22,59
+Google Ads
+
+Campanhas · Análise por período
+
+#1
+PMax
+[IN] - [RA] - [PMAX] - Catálogo
+
+Ativa	R$ 148,89	4.241	141	3,32%	R$ 1,06	2	R$ 59,95	R$ 59,12	0,40x
+Search
+[IN] - [RA] - [SEARCH] - Institucional Marca - Fundo de Funil
+
+Ativa	R$ 54,45	70	26	37,14%	R$ 2,09	6	R$ 8,44	R$ 130,32	2,39x
+Total · 2 campanhas	R$ 203,34	4.311	167	3,87%	R$ 1,22	9	R$ 22,75	R$ 189,43	0,93x
+Acompanhamento financeiro · Plano x Real
+Status de investimento no ano atual (planejado versus realizado em todos os canais)
+
+Orçado
+R$ 0,00
+Realizado
+R$ 9.702,92
+JAN.
+FEV.
+MAR.
+ABR.
+MAI.
+JUN.
+JUL.
+AGO.
+SET.
+OUT.
+NOV.
+DEZ.
+R$ 0,00
+R$ 950,00
+R$ 1.900,00
+R$ 2.850,00
+R$ 3.800,00
+OrcadoRealizado
+
+6

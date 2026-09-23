@@ -1,0 +1,131 @@
+# Atrako Design System — canon (Apple language)
+# Executable CSS lives in tokens.css / typography.css / components.css
+# UI primitives live in apps/atrako/components/ui/*
+version: alpha
+name: Apple-design-analysis
+description: Photography-first museum gallery language. Single Action Blue accent. UI chrome recedes.
+
+colors:
+  primary: "#0066cc"
+  primary-focus: "#0071e3"
+  primary-on-dark: "#2997ff"
+  ink: "#1d1d1f"
+  body: "#1d1d1f"
+  body-on-dark: "#ffffff"
+  body-muted: "#cccccc"
+  ink-muted-80: "#333333"
+  ink-muted-48: "#7a7a7a"
+  divider-soft: "#f0f0f0"
+  hairline: "#e0e0e0"
+  canvas: "#ffffff"
+  canvas-parchment: "#f5f5f7"
+  surface-pearl: "#fafafc"
+  surface-tile-1: "#272729"
+  surface-tile-2: "#2a2a2c"
+  surface-tile-3: "#252527"
+  surface-black: "#000000"
+  surface-chip-translucent: "#d2d2d7"
+  on-primary: "#ffffff"
+  on-dark: "#ffffff"
+
+typography:
+  hero-display: { fontSize: 56px, fontWeight: 600, lineHeight: 1.07, letterSpacing: -0.28px }
+  display-lg: { fontSize: 40px, fontWeight: 600, lineHeight: 1.1, letterSpacing: 0 }
+  display-md: { fontSize: 34px, fontWeight: 600, lineHeight: 1.47, letterSpacing: -0.374px }
+  lead: { fontSize: 28px, fontWeight: 400, lineHeight: 1.14, letterSpacing: 0.196px }
+  lead-airy: { fontSize: 24px, fontWeight: 300, lineHeight: 1.5, letterSpacing: 0 }
+  tagline: { fontSize: 21px, fontWeight: 600, lineHeight: 1.19, letterSpacing: 0.231px }
+  body-strong: { fontSize: 17px, fontWeight: 600, lineHeight: 1.24, letterSpacing: -0.374px }
+  body: { fontSize: 17px, fontWeight: 400, lineHeight: 1.47, letterSpacing: -0.374px }
+  dense-link: { fontSize: 17px, fontWeight: 400, lineHeight: 2.41, letterSpacing: 0 }
+  caption: { fontSize: 14px, fontWeight: 400, lineHeight: 1.43, letterSpacing: -0.224px }
+  caption-strong: { fontSize: 14px, fontWeight: 600, lineHeight: 1.29, letterSpacing: -0.224px }
+  button-large: { fontSize: 18px, fontWeight: 300, lineHeight: 1.0, letterSpacing: 0 }
+  button-utility: { fontSize: 14px, fontWeight: 400, lineHeight: 1.29, letterSpacing: -0.224px }
+  fine-print: { fontSize: 12px, fontWeight: 400, lineHeight: 1.0, letterSpacing: -0.12px }
+  micro-legal: { fontSize: 10px, fontWeight: 400, lineHeight: 1.3, letterSpacing: -0.08px }
+  # SaaS sidebar adaptation (not Apple horizontal nav 12px)
+  nav-link: { fontSize: 14px, fontWeight: 600, lineHeight: 1.29, letterSpacing: -0.224px }
+
+# Inter substitute: display tracking -0.01em extra; body line-height 1.44
+
+rounded:
+  none: 0px
+  xs: 5px
+  sm: 8px
+  md: 11px
+  lg: 18px
+  pill: 9999px
+  full: 9999px
+
+spacing:
+  xxs: 4px
+  xs: 8px
+  sm: 12px
+  md: 17px
+  lg: 24px
+  xl: 32px
+  xxl: 48px
+  section: 80px
+
+shadow:
+  product: "3px 5px 30px 0 rgba(0, 0, 0, 0.22)"
+
+frosted: "saturate(180%) blur(20px)"
+
+breakpoints:
+  phone-sm: 419px
+  phone: 640px
+  large-phone: 735px
+  tablet: 833px
+  tablet-landscape: 1023px
+  desktop-sm: 1068px
+  desktop: 1440px
+
+components:
+  button-primary: { file: components/ui/button.tsx, variant: primary }
+  button-secondary-pill: { file: components/ui/button.tsx, variant: secondary-pill }
+  button-dark-utility: { file: components/ui/button.tsx, variant: dark-utility }
+  button-pearl-capsule: { file: components/ui/button.tsx, variant: pearl }
+  button-store-hero: { file: components/ui/button.tsx, variant: store-hero }
+  button-icon-circular: { file: components/ui/icon-button.tsx }
+  text-link: { file: components/ui/text-link.tsx }
+  back-link: { file: components/ui/back-link.tsx, note: "Voltar canônico — ChevronLeft + rótulo; App shell" }
+  search-input: { file: components/ui/search-input.tsx, note: "Única busca — size toolbar|field; nunca input reinventado" }
+  product-tile: { file: components/ui/product-tile.tsx }
+  pipeline-column: { css: ".pipeline-column / .pipeline-lead-card", note: "CRM funil — coluna canvas + body parchment + card canvas/hairline" }
+  caixa-panel: { css: ".caixa-*", note: "Finance/Caixa — saldo tile escuro + KPIs canvas + extrato lista" }
+  criar-catalog: { css: ".criar-platform-* / .criar-recipe-* / .criar-filter-*", note: "Hub Criar — plataformas + receitas; badges DS" }
+  lp-phone-preview: { file: components/criar/LpPhonePreview.tsx, css: ".lp-preview / .lp-phone-*", note: "Preview iPhone da LP no Criar oferta + sucesso" }
+  panel-modal: { css: ".panel-modal-*", note: "Sheet lateral de detalhe (CRM lead) — mantém contexto da tela" }
+  store-utility-card: { file: components/ui/card.tsx }
+  sub-nav-frosted: { file: components/ui/sub-nav-frosted.tsx }
+  floating-sticky-bar: { file: components/ui/floating-sticky-bar.tsx }
+  configurator-option-chip: { file: components/ui/option-chip.tsx }
+  pill-select: { file: components/ui/pill-select.tsx, note: "Único select do produto — nunca <select> nativo; size toolbar|field" }
+  app-page: { file: components/layout/AppPage.tsx, note: "Shell de página AppShell — padding/título densos" }
+  footer: { file: components/ui/site-footer.tsx }
+  global-nav: { file: components/layout/AppSidebar.tsx, note: "SaaS rail — type-nav-link 14/600 + type-fine-print desc; pairs with type-tagline page titles" }
+
+rules:
+  do:
+    - Single accent Action Blue for all interactive
+    - Store / marketing headlines type-hero-display / type-display-lg with negative tracking
+    - App shell page titles type-tagline (21) — same scale as sidebar brand; never type-display-lg beside global-nav
+    - Body 17px type-body weight 400
+    - Alternate light/dark tiles for section rhythm
+    - CTA / buttons use radius-xs (~5px) — not pill; pill only for search, chips, pill-select
+    - shadow-product only on product imagery
+    - active scale 0.95 on buttons
+    - All dropdowns via pill-select (PillSelect) — toolbar h-9 or field h-11 w-full
+  dont:
+    - Second brand accent
+    - Shadows on cards buttons text
+    - Decorative gradients
+    - font-weight 500 / font-medium
+    - Round full-bleed tiles
+    - Pill-shaped CTAs / primary buttons (use radius-xs)
+    - Body line-height below 1.44 (Inter) / 1.47 (SF)
+    - primary-on-dark on light surfaces
+    - Marketing display scale (display-lg / lead) inside AppShell pages
+    - Native HTML select / option menus — browser chrome breaks the DS

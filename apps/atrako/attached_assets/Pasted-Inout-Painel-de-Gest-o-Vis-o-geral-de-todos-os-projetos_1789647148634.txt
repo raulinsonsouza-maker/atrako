@@ -1,0 +1,185 @@
+Inout
+
+Painel de Gestão
+Visão geral de todos os projetos · saldos em tempo real via Meta e Google Ads API
+
+Gestão
+Pace
+Gestão de Projetos
+Clique em qualquer célula editável para alterar · Saldos via API
+
+Squad
+Todos
+Squad 1
+Squad 2
+Atualizar saldos
+Status	Forma Pgto	Forma Pgto Google
+SW
+Swiss Park - Brasília
+Squad 1	Ativa	R$ 1.000,00	
+Cartão
+R$ 341,15	R$ 500,00	
+Cartão
+R$ 280,45	R$ 1.500,00
+BE
+Be Blue School
+Squad 1	Ativa	R$ 1.000,00	
+Boleto
+R$ 428,52	R$ 500,00	
+Nenhuma
+R$ 500,00	R$ 1.500,00
+PO
+Pousada Ilha Brazil
+Squad 1	Ativa	R$ 999,97	
+PIX
+R$ 431,18	R$ 0,00	
+Nenhuma
+—	R$ 999,97
+PO
+Pousada Tamara
+Squad 1	Ativa	R$ 1.000,00	
+PIX
+R$ 528,05	R$ 0,00	
+Nenhuma
+—	R$ 1.000,00
+DR
+Dr. Fernando Guena
+Squad 1	Ativa	R$ 1.500,00	
+PIX
+R$ 595,60	R$ 0,00	
+Nenhuma
+—	R$ 1.500,00
+TE
+Tertúlia
+Squad 1	Ativa	R$ 750,00	
+Boleto
+R$ 665,21	R$ 0,00	
+Nenhuma
+—	R$ 750,00
+D'
+D'or
+Squad 1	Ativa	R$ 1.000,00	
+Cartão
+R$ 1.000,00	R$ 0,00	
+Nenhuma
+—	R$ 1.000,00
+VI
+Vito Balducci
+Squad 1	Ativa	R$ 1.000,00	
+Boleto
+R$ 1.000,00	R$ 0,00	
+Nenhuma
+—	R$ 1.000,00
+ME
+Melaço de Cana
+Squad 1	Ativa	R$ 2.000,00	
+Boleto
+R$ 1.009,44	R$ 2.000,00	
+Cartão
+R$ 1.415,08	R$ 4.000,00
+SW
+Swiss Park - Bern
+Squad 1	Ativa	R$ 2.500,00	
+Cartão
+R$ 1.203,63	R$ 500,00	
+Cartão
+R$ 296,22	R$ 3.000,00
+SW
+Swiss Park - Caieiras
+Squad 1	Ativa	R$ 2.300,00	
+Cartão
+R$ 1.231,62	R$ 700,00	
+Cartão
+R$ 411,54	R$ 3.000,00
+ES
+ESALQ Jr. Consultoria
+Squad 1	Ativa	R$ 2.000,00	
+Boleto
+R$ 1.235,82	R$ 0,00	
+Nenhuma
+—	R$ 2.000,00
+SO
+Sou + Charitas
+Squad 1	Ativa	R$ 3.000,00	
+Boleto
+R$ 1.511,14	R$ 2.000,00	
+Nenhuma
+R$ 1.231,00	R$ 5.000,00
+CO
+Construtora Lorenzetti
+Squad 1	Ativa	R$ 3.000,00	
+Nenhuma
+R$ 1.880,48	R$ 0,00	
+Nenhuma
+—	R$ 3.000,00
+SO
+Sou + Itacoa
+Squad 1	Ativa	R$ 3.000,00	
+Boleto
+R$ 1.967,51	R$ 2.000,00	
+Nenhuma
+R$ 1.598,33	R$ 5.000,00
+GR
+Granarolo
+Squad 1	Ativa	R$ 4.500,00	
+Cartão
+R$ 2.491,91	R$ 4.500,00	
+Boleto
+R$ 2.519,19	R$ 9.000,00
+SO
+Sou + Wellness
+Squad 1	Ativa	R$ 3.000,00	
+Boleto
+R$ 2.537,62	R$ 2.000,00	
+Nenhuma
+R$ 1.061,02	R$ 5.000,00
+SW
+Swiss Park - Anápolis
+Squad 1	Ativa	R$ 5.000,00	
+Cartão
+R$ 2.610,44	R$ 1.000,00	
+Cartão
+R$ 502,63	R$ 6.000,00
+SO
+Sou + Icaraí
+Squad 1	Ativa	R$ 3.000,00	
+Boleto
+R$ 3.000,00	R$ 2.000,00	
+Nenhuma
+R$ 2.000,00	R$ 5.000,00
+CA
+Casa ON
+Squad 1	Ativa	R$ 6.500,00	
+Nenhuma
+R$ 4.714,48	R$ 0,00	
+Nenhuma
+—	R$ 6.500,00
+VA
+Varella Motos
+Squad 1	Ativa	R$ 13.000,00	
+Cartão
+R$ 6.213,21	R$ 12.000,00	
+Nenhuma
+R$ 7.246,20	R$ 25.000,00
+CL
+Clinica e Spa Vida Natural
+Squad 1	Ativa	R$ 10.000,00	
+Boleto
+R$ 7.072,03	R$ 2.000,00	
+Nenhuma
+R$ 1.749,40	R$ 12.000,00
+IN
+Inout
+Squad 1	Ativa	R$ 10.000,00	
+Cartão
+R$ 8.749,72	R$ 1.000,00	
+Nenhuma
+R$ 1.000,00	R$ 11.000,00
+HO
+Hotel Fazenda São João
+Squad 1	Ativa	R$ 42.000,00	
+Cartão
+R$ 23.677,13	R$ 0,00	
+Nenhuma
+—	R$ 42.000,00
+Totais (ativos)	R$ 123.049,97			R$ 32.700,00			R$ 155.749,97

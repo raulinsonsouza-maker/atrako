@@ -1,0 +1,449 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Incorporadora
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+CRM
+
+
+Ano atual (YTD): 01 de jan. de 2026 a 11 de jun. de 2026
+CRM
+
+Negociações & Funil
+CV CRM
+
+Funil CRM
+Sync há 2h
+0.0% conversão geral
+Leads no período
+
+174
+
+Fechamentos
+
+0
+
+Taxa de fechamento
+
+0.0%
+
+Leads
+
+2% do total
+4
+Atendimento
+
+93% do total
+161
+Visitas
+
+2% do total
+3
++ 6 leads perdidos / cancelados (não exibidos no funil)
+
+CRM
+
+Análise de Origem
+Valor Vendido
+
+—
+
+0 unidades vendidas
+Leads CRM
+
+174
+
+0.0% conv. geral
+
+Em aberto
+
+168
+
+6 perdidos · 3%
+
+Canais de Origem
+
+Canal	Leads	Vendas	Conv%	Qualif.
+Meta
+96	—	—	1.3
+Google
+45	—	—	4.0
+Indicação
+16	—	—	3.0
+Direto
+2	—	—	—
+Outro
+15	—	—	—
+Clique em um canal para filtrar as negociações
+
+Fonte de Conversão
+
+174 de 174
+Buscar fonte de conversão…
+RdStation
+98.9%
+172
+Painel Gestor
+0.6%
+1
+Painel Corretor
+0.6%
+1
+CPL Real por Canal
+
+Meta — Custo por Lead / Venda
+
+CPL Real
+
+R$ 245,86
+
+96 leads CRM
+
+R$ 23.602,09 investidos· plataforma: R$ 65,02
+
+Google — Custo por Lead / Venda
+
+CPL Real
+
+R$ 0,00
+
+45 leads CRM
+
+R$ 0,00 investidos
+
+CRM
+
+Por Portal de Entrada
+Meta
+
+· 96 leads
+· R$ 23.602,09 investidos
+Conversão / Portal CRM	Leads	Visitou	Em aberto	Ganhos	Conv%
+RdStation
+96	2	94	—	0%
+Google
+
+· 45 leads
+Conversão / Portal CRM	Leads	Visitou	Em aberto	Ganhos	Conv%
+RdStation
+44	1	42	—	0%
+Painel Corretor
+1	—	1	—	0%
+"Portal de Entrada" = como o lead chegou ao CRM (ex: RdStation = integração via RD Station; Painel Corretor = cadastro pelo app do corretor). Não é o nome da campanha — nomes de campanha aparecem em "Por Criativo".
+
+CRM
+
+Qualidade dos Leads
+Leads com tags
+
+174
+
+100% do total
+
+Leads em alerta
+
+39
+
+desistência, sem renda, sem contato
+
+Origens identificadas
+
+3
+
+categorias de origem por tag
+
+Tags de alerta
+
+desistencia
+14
+nao quer mais receber contato
+11
+renda insuficiente
+8
+contato inexistente
+6
+busca outra metragem
+1
+Tags de origem
+
+form_meta_arboreto_inout
+93
+lp_arboreto_inout
+86
+arboreto_inout
+1
+CRM × Meta
+
+Por Criativo
+334 formulários Meta
+de 363 totais (92% sincronizados)
+Criativo (Anúncio)	Conjunto	Leads	Visitou	Em aberto	Ganhos	Conv%	Valor
+AD03 - Estático Mirante 4
+35 - 60 | Águas Claras + Taguatinga | Lookalike LP e Compradores
+152
+2	132	—	0%	—
+AD04 - Estático Mirante 5
+35 - 60 | Águas Claras + Taguatinga | Lookalike compradores (3%)
+78
+1	70	—	0%	—
+AD00 - Vídeo Mirante 1
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+50
+2	44	—	0%	—
+AD02 - Estático Mirante 3
+35 - 60 | Águas Claras + Taguatinga | Lookalike LP e Compradores
+24
+—	22	—	0%	—
+AD05 - Estático FORMATO NOVO
+35 - 60 | Águas Claras + Taguatinga | Lookalike compradores (3%)
+12
+1	9	—	0%	—
+AD08 - NOVO ESTÁTICO
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+4
+—	3	—	0%	—
+AD11 - Vídeo Mirante 2 (IA)
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+4
+1	2	—	0%	—
+AD07 - Estático FORMATO NOVO
+35 - 60 | Águas Claras + Taguatinga | Lookalike compradores (3%)
+3
+—	3	—	0%	—
+AD014 - VÍDEO - SILÊNCIO LUXUOSO
+35 - 60 | Águas Claras + Taguatinga | Lookalike compradores (3%)
+2
+—	2	—	0%	—
+AD10 - NOVO ESTÁTICO
+35 - 60 | Águas Claras + Taguatinga | Lookalike LP e Compradores
+1
+—	1	—	0%	—
+AD015 - VÍDEO NARA - 2
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+1
+—	1	—	0%	—
+AD09 - NOVO ESTÁTICO
+35 - 60 | Águas Claras + Taguatinga | Lookalike LP e Compradores
+1
+—	0	—	0%	—
+AD06 - Estático FORMATO NOVO
+35 - 60 | Águas Claras + Taguatinga | Pub. e Pos. Advantage
+1
+—	1	—	0%	—
+(sem nome)
+—	
+1
+—	0	—	0%	—
+Leads contados pelo data de preenchimento do formulário Meta (MetaLeadForms), não pela data de entrada no CRM. O total pode ser menor que o Meta Ads Manager quando o sync ainda não capturou os leads mais recentes — o saldo restante aparece no total do tab META. Métricas CRM (Visitou, Em aberto, Ganhos) via cruzamento por e-mail e telefone com os registros do CRM.
+
+CRM
+
+Negociações
+Buscar por nome, e-mail ou telefone…
+174 negociações · página 1 de 12· clique para ver detalhes
+
+Status	Etapa	Contato	Origem	Qualificação	Entrada	Fechamento	Valor
+Em andamento	
+Em Atendimento
+Eneas Portugal
+
+eneas.portugal@gmail.com
+
+Meta
+
+CRM
+Facebook Ads
+
+—
+10/06/26	—	—
+Em andamento	
+Visita Realizada
+fernandoprthomsen e Karine.
+
+forthomsen@gmail.com
+
+Meta
+
+CRM
+Facebook Ads
+
+—
+10/06/26	—	—
+Em andamento	
+Em Atendimento
+Pedro Barcelos
+
+pbaarcelos22@gmail.com
+
+Outro
+
+Não Definido
+
+—
+09/06/26	—	—
+Em andamento	
+Visita Agendada
+Tedi Biffi
+
+gutobiffi@icloud.com
+
+Meta
+
+CRM
+Facebook Ads
+
+—
+09/06/26	—	—
+Em andamento	
+Em Atendimento
+Marcella
+
+cellaoliveira21@icloud.com
+
+Google
+
+CRM
+Google
+
+—
+08/06/26	—	—
+Em andamento	
+Em Atendimento
+Cristina De Jesus
+
+pedrosocristina9@gmail.com
+
+Indicação
+
+linktr.ee
+
+—
+07/06/26	—	—
+Em andamento	
+Em Atendimento
+Amanda Pessoa
+
+amanda.larysse@hotmail.com
+
+Outro
+
+#digitalthauanna
+
+—
+06/06/26	—	—
+Em andamento	
+Em Atendimento
+Edina
+
+edina_duarte@hotmail.com
+
+Google
+
+CRM
+Google
+
+—
+06/06/26	—	—
+Em andamento	
+Em Atendimento
+Paula Machado Oliveira Balestrini
+
+paula94oliveira@gmail.com
+
+Google
+
+CRM
+Google
+
+—
+05/06/26	—	—
+Perdido	
+Perdido
+Paula Tejando
+
+shamps@gmail.com
+
+Meta
+
+CRM
+Facebook Ads
+
+—
+02/06/26	10/06/26	—
+Em andamento	
+Em Atendimento
+Davi De Souza Magalhães
+
+davi.direito.20@gmail.com
+
+Outro
+
+#digitalthauanna
+
+—
+02/06/26	—	—
+Em andamento	
+Em Atendimento
+TENNILLE MARA LUCENA SILVA
+
+tennillelucena@gmail.com
+
+Google
+
+CRM
+Google
+
+—
+31/05/26	—	—
+Em andamento	
+Em Atendimento
+Micaella mourão M2
+
+micaella.advogada@gmail.com
+
+Outro
+
+Não Definido
+
+—
+31/05/26	—	—
+Em andamento	
+Em Atendimento
+Fernanda
+
+fer.leandra@gmail.com
+
+Google
+
+CRM
+Google
+
+—
+30/05/26	—	—
+Em andamento	
+Em Atendimento
+Aline Oliveira
+
+gestao@mistercryl.com.br
+
+Indicação
+
+linktr.ee
+
+—
+30/05/26	—	—
+
+1
+2
+3
+4
+5
+…
+12
+
+R$ 0,00

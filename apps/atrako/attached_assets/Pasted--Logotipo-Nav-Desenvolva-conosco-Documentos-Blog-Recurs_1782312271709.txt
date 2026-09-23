@@ -1,0 +1,93 @@
+
+Logotipo Nav
+Desenvolva conosco
+Documentos
+Blog
+Recursos
+Centrais para desenvolvedores
+Meus apps
+Documentação
+Visão geral
+Stories
+Esta página foi traduzida do inglês para outro idioma usando IA. O conteúdo traduzido por IA pode conter erros, omissões ou divergências de sentido. Como a tradução automática pode ser imprecisa ou pouco clara, consulte o conteúdo original em inglês desta página para validar as orientações corretas.
+Isso foi útil?
+Stories
+Updated: 21 de jan de 2025
+Representa uma coleção de objetos de story de mídia do Instagram em um usuário do Instagram.
+Criação
+Consulte a documentação sobre Mídia do usuário do Instagram para criar um story.
+Leitura
+Como obter stories
+GET /{ig-user-id}/stories
+Retorna uma lista de objetos de story de mídia do Instagram em um usuário do Instagram.
+Limitações
+As respostas não conterão stories de vídeo ao vivo.
+Os stories só ficam disponíveis por 24 horas.
+Novos stories criados quando um usuário recompartilha um story não serão retornados.
+Mesmo que existam várias opções, apenas uma legenda será retornada por story do Instagram.
+Permissões
+Um token de acesso de um usuário do Facebook com as seguintes permissões:
+instagram_basic
+pages_read_engagement
+Se o token for de um usuário cuja função na Página foi concedida por meio do Gerenciador de Negócios, uma das seguintes permissões também será necessária:
+ads_management
+ads_read
+Exemplo de solicitação
+GET graph.facebook.com
+  /17841405822304914/stories
+Exemplo de resposta
+{
+  "data": [
+    {
+      "id": "17861937508009798"
+    },
+    {
+      "id": "17862253585030136"
+    },
+    {
+      "id": "17856428680064034"
+    },
+    {
+      "id": "17862537148046301"
+    },
+    {
+      "id": "17852121721080875"
+    },
+    {
+      "id": "17862694123018235"
+    }
+  ]
+}
+Atualização
+Esta operação não é compatível.
+Exclusão
+Esta operação não é compatível.
+Você achou esta página útil?
+Ícone de polegar para cima
+Ícone de polegar para baixo
+Meta
+FacebookInstagramXLinkedInYouTube
+Desenvolva com a Meta
+IA
+Meta Horizon
+Tecnologias sociais
+Notícias
+Meta for Developers
+Blog
+Casos de sucesso
+Suporte
+Suporte ao desenvolvedor
+Ferramenta de bug
+Status da plataforma
+Fórum da Comunidade de Desenvolvedores
+Relatar um incidente
+Quem somos
+Sobre
+Carreiras
+Termos e políticas
+Iniciativas de plataforma responsável
+Termos da plataforma
+Políticas do Desenvolvedor
+Política de Privacidade
+Cookies
+Português (Brasil)

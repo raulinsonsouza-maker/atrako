@@ -1,0 +1,223 @@
+
+Logotipo Nav
+Desenvolva conosco
+Documentos
+Blog
+Recursos
+Centrais para desenvolvedores
+Meus apps
+Documentação
+Visão geral
+Etiquetas de produto de mídia do Instagram
+Esta página foi traduzida do inglês para outro idioma usando IA. O conteúdo traduzido por IA pode conter erros, omissões ou divergências de sentido. Como a tradução automática pode ser imprecisa ou pouco clara, consulte o conteúdo original em inglês desta página para validar as orientações corretas.
+Isso foi útil?
+Etiquetas de produto de mídia do Instagram
+Updated: 22 de abr de 2026
+Representa as etiquetas de produto em uma mídia do Instagram. Consulte o guia Marcação de produto para ver as informações completas de uso.
+Disponível para a API do Instagram com o Login do Facebook.
+Criação
+POST /<IG_MEDIA_ID>/product_tags
+Crie ou atualize etiquetas de produto em uma mídia do Instagram existente.
+Limitações
+Não há compatibilidade com contas de criador de conteúdo do Instagram.
+Não há suporte para Stories, Instagram TV, Live e Mentions.
+A marcação de mídia é aditiva até que o limite de marcações seja atingido (20 para publicações no feed, 30 para reels). Se a mídia em questão já foi marcada com um produto na solicitação, os valores x e y da marcação antiga serão atualizados para os novos, e não será adicionada uma nova marcação.
+Requisitos
+Tipo	Requisito
+Tokens de acesso
+Usuário
+Funções na empresa⁠
+O usuário do app precisa ter uma função de administrador no Gerenciador de Negócios⁠ da Loja do Instagram⁠ do usuário do Instagram.
+Loja do Instagram⁠
+O usuário do Instagram a quem pertence a mídia precisa ter uma Loja do Instagram⁠ aprovada com um catálogo que inclui produtos.
+Permissões
+ad_reads
+[catalog_management
+instagram_basic
+instagram_shopping_tag_products
+Caso uma função tenha sido concedida ao usuário do app por meio do Gerenciador de Negócios na Página conectada ao usuário do Instagram em questão, você também precisará da seguinte permissão:
+ads_management
+Sintaxe da solicitação
+POST https://graph.facebook.com/<API_VERSION>/<IG_MEDIA_ID>/product_tags
+  ?updated_tags=<LIST_OF_UPDATED_TAGS>
+  &access_token=<ACCESS_TOKEN>
+Parâmetros de caminho
+Espaço reservado	Valor
+<API_VERSION>
+Versão da API
+<IG_MEDIA_ID>
+Obrigatório. O ID da mídia do Instagram.
+Parâmetros da string de consulta
+Chave	Espaço reservado	Valor
+access_token
+<ACCESS_TOKEN>
+Obrigatório. Token de acesso do usuário do app.
+updated_tags
+<LIST_OF_UPDATED_TAGS>
+Obrigatório. Válido apenas para imagens e vídeos. Uma matriz de objetos especificando as etiquetas de produtos a serem incluídas na imagem ou no vídeo (no máximo 20 itens para publicações no Feed e 30 itens para reels; etiquetas e identificações de produto devem ser únicos). Cada objeto deve ter as seguintes informações:
+product_id (obrigatório). Identificação do produto.
+x (apenas em imagens) Um float opcional que indica a distância percentual da borda esquerda da imagem na mídia publicada. O valor precisa ser entre 0.0 e 1.0.
+y (apenas em imagens) Um float opcional que indica a distância percentual da borda superior da imagem na mídia publicada. O valor precisa ser entre 0.0 e 1.0.
+Por exemplo:
+[{product_id:'3231775643511089',x:0.5,y:0.8}]
+Resposta
+Um objeto que representa sucesso ou falha.
+{
+  "success": {success}
+}
+Conteúdo da resposta
+Propriedade	Valor
+success
+Retorna true se a atualização das etiquetas de produto da mídia do Instagram tiver sido concluída; se não, retorna false.
+Exemplo de cURL
+Solicitação
+curl -i -X POST \
+ "https://graph.facebook.com/v25.0/90010778325754/product_tags?updated_tags=%5B%0A%20%20%7B%0A%20%20%20%20product_id%3A'3859448974125379'%2C%0A%20%20%20%20x%3A%200.5%2C%0A%20%20%20%20y%3A%200.8%0A%20%20%7D%0A%5D&access_token=EAAOc..."
+Como referência, esta é a string da carga POST decodificada em HTML:
+https://graph.facebook.com/v25.0/90010778325754/product_tags?updated_tags=[
+  {
+    product_id:'3859448974125379',
+    x: 0.5,
+    y: 0.8
+  }
+]&access_token=EAAOc...
+Resposta
+{
+  "success": true
+}
+Leitura
+GET /<IG_MEDIA_ID>/product_tags
+Obtenha uma coleção de etiquetas de produto em uma mídia do Instagram. Consulte o guia Marcação de produto para ver todas as etapas do processo.
+Limitações
+Não há compatibilidade com contas de criador de conteúdo do Instagram.
+Não há compatibilidade com Stories, Instagram TV, Reels, Live nem Mentions.
+Requisitos
+Tipo	Requisito
+Tokens de acesso
+Usuário
+Funções na empresa⁠
+O usuário do app precisa ter uma função de administrador no Gerenciador de Negócios⁠ da Loja do Instagram⁠ do usuário do Instagram.
+Loja do Instagram⁠
+O usuário do Instagram a quem pertence a mídia precisa ter uma Loja do Instagram⁠ aprovada com um catálogo que inclui produtos.
+Permissões
+ad_reads
+catalog_management
+instagram_basic
+instagram_shopping_tag_products
+Caso uma função tenha sido concedida ao usuário do app por meio do Gerenciador de Negócios na Página conectada ao usuário do Instagram em questão, você precisará obter uma das seguintes permissões:
+ads_management
+Sintaxe da solicitação
+GET https://graph.facebook.com/<API_VERSION>/<IG_MEDIA_ID>/product_tags
+  ?access_token=<ACCESS_TOKEN>
+Parâmetros de caminho
+Espaço reservado	Valor
+<API_VERSION>
+Versão da API
+<IG_MEDIA_ID>
+Obrigatório. O ID da mídia do Instagram.
+Parâmetros da string de consulta
+Chave	Espaço reservado	Valor
+access_token
+<ACCESS_TOKEN>
+Obrigatório. Token de acesso do usuário do app.
+Resposta
+Um objeto formatado em JSON que contém uma matriz de etiquetas de produto em uma mídia do Instagram. As respostas podem incluir os seguintes campos:
+{
+  "data": [
+    {
+      "product_id": {product-id},
+      "merchant_id": {merchant-id},
+      "name": "{name}",
+      "price_string": "{price-string}",
+      "image_url": "{image-url}",
+      "review_status": "{review-status}",
+      "is_checkout": {is-checkout},
+      "stripped_price_string": "{stripped-price-string}",
+      "string_sale_price_string": "{string-sale-price-string}",
+      "x": {x},
+      "y": {y}
+    }
+  ]
+}
+Conteúdos de resposta
+Propriedade	Valor
+product_id
+Identificação do produto.
+merchant_id
+Identificação do comerciante.
+name
+Nome do produto.
+price_string
+String de preço.
+image_url
+URL da imagem do produto.
+review_status
+Status de análise do produto. Os valores podem ser os seguintes:
+approved: produto aprovado.
+rejected: produto rejeitado.
+pending: ainda em análise.
+outdated: produto aprovado, mas precisa de reaprovação devido a edições.
+"": sem status de análise.
+is_checkout
+true: o produto pode ser comprado diretamente no aplicativo do Instagram. Se false, o produto só pode ser comprado no site do comerciante.
+stripped_price_string
+Uma string curta com o preço do produto (valor exibido em espaços limitados, como $100 em vez de 100 USD).
+string_sale_price_string
+Preço de venda do produto.
+x
+Um float que indica a distância percentual da borda esquerda da imagem na mídia. Valor entre 0.0 e 1.0.
+y
+Um float que indica a distância percentual da borda superior da imagem na mídia. Valor entre 0.0 e 1.0.
+Exemplo de cURL
+Solicitação
+curl -i -X GET \
+ "https://graph.facebook.com/v25.0/90010778325754/product_tags?access_token=EAAOc..."
+Resposta
+{
+  "data": [
+    {
+      "product_id": 3231775643511089,
+      "merchant_id": 90010177253934,
+      "name": "Gummy Bears",
+      "price_string": "$3.50",
+      "image_url": "https://scont...",
+      "review_status": "approved",
+      "is_checkout": true,
+      "stripped_price_string": "$3.50",
+      "stripped_sale_price_string": "$3",
+      "x": 0.5,
+      "y": 0.80000001192093
+    }
+  ]
+}
+Atualização
+Consulte Criação.
+Você achou esta página útil?
+Ícone de polegar para cima
+Ícone de polegar para baixo
+Meta
+FacebookInstagramXLinkedInYouTube
+Desenvolva com a Meta
+IA
+Meta Horizon
+Tecnologias sociais
+Notícias
+Meta for Developers
+Blog
+Casos de sucesso
+Suporte
+Suporte ao desenvolvedor
+Ferramenta de bug
+Status da plataforma
+Fórum da Comunidade de Desenvolvedores
+Relatar um incidente
+Quem somos
+Sobre
+Carreiras
+Termos e políticas
+Iniciativas de plataforma responsável
+Termos da plataforma
+Políticas do Desenvolvedor
+Política de Privacidade
+Cookies
+Português (Brasil)

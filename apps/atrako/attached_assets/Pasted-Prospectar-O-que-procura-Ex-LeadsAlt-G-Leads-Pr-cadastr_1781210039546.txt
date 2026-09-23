@@ -1,0 +1,991 @@
+Prospectar
+
+O que procura? Ex: LeadsAlt + G
+Leads:
+Pré cadastro:
+Pessoas:
+Simulações:
+Reservas:
+Atendimentos:
+Empreendimentos:
+J
+Cadastros 
+Empreendimentos
+Comercial 
+Leads 
+Financeiro 
+Relacionamento 
+Relatórios
+ Início 
+Comercial 
+Leads
+Painel Gestor
+Acessado recentemente
+Visualizar
+perfil
+Base de
+conhecimento
+Nosso
+chat
+Sair do
+sistema
+Feito compor CV CRM
+Utilitários
+
+Acesse ao conteúdo explicativo, clicando aqui.
+Conexões e Benefícios
+Ganhe + indicando o CV
+Desenvolvedor
+Portal do Desenvolvedor
+Nosso atendimento
+Nosso Chat
+Base do Conhecimento
+Acessar Primeiros Passos
+Enviar uma Sugestão
+Acessar modo implantação
+Leads
+
+ Mais Itens
+ Gestão de Leads
+ Andamento dos leads
+ Distribuição dos leads
+Pergunte à IA
+Agenda Completa
+Minha Agenda
+ Filtrar Remover filtros
+Resultados encontrados: 664, página 1 de 23.
+1.938
+Todos
+138
+Sem Interação
+1
+Com Reserva
+1.676
+Em atendimento
+6
+Sem corretor
+4
+Novos
+1.680
+Ativos
+	Dados do contato	Score	Dados do Lead	Responsável	Situação	Opções
+ID
+Nome
+E-mail
+ Pesquisar email alternativo e associado
+E-mail Alternativo
+E-mail Associado
+Telefone
+ Pesquisar telefone alternativo e associado
+Telefone Alternativo
+Telefone Associado
+Código interno
+
+SLA Vencido:
+
+Faixas de Score:
+AplicativoAvendreBusca CompartilhadaBusca OrgânicaChat OnlineChatBotContakoCVCRMDisplayDesconhecidoEmailFacebookGoogleInstaPageInstagramLigaçãoLinkedInMídia PagaMódulo de AtendimentoNão DefinidoOutras publicidadesOutrosPainel ClientePainel CorretorPainel GestorPainel ImobiliáriaPainel PDVPhonetrackPinterestPortaisReferênciaRemarketingSocialTik TokTráfego DiretoTwitterVendas OnlineWebSiteWhatsapp
+ Selecionar todos(as) Origens
+Possibilidade da venda (De):
+
+Possibilidade da venda (Até):
+Sem EmpreendimentoTodosExceto
+ Selecionar todos(as) Empreendimento
+ Exceto Empreendimento
+ Sem Empreendimento
+
+
+Casa MirantePlantão de VendasStand de Vendas em Shopping
+Data de Cadastro (De)
+Data de Cadastro (Até)
+Data de descarte (De)
+Data de descarte (Até)
+Sem MídiaTodosExceto
+ Selecionar todos(as) Mídia
+ Exceto Mídia
+ Sem Mídia
+arboreto_inoutExcetoform_meta_arboreto_inoutlp_arboreto_inoutTodos
+ Selecionar todos(as) Tag
+ Exceto Tag
+AplicativoAvendreBusca CompartilhadaBusca OrgânicaChat OnlineChatBotContakoCVCRMDisplayDesconhecidoEmailFacebookGoogleInstaPageInstagramLigaçãoLinkedInMídia PagaMódulo de AtendimentoNão DefinidoOutras publicidadesOutrosPainel ClientePainel CorretorPainel GestorPainel ImobiliáriaPainel PDVPhonetrackPinterestPortaisReferênciaRemarketingSocialTik TokTráfego DiretoTwitterVendas OnlineWebSiteWhatsapp
+ Selecionar todos(as) Última origemTodosExceto
+ Selecionar todos(as) Primeira conversão
+ Exceto Primeira conversão
+TodosExceto
+ Selecionar todos(as) Última conversão
+ Exceto Última conversão
+TodosExceto
+ Selecionar todos(as) Região
+ Exceto Região
+Sem GestorTodos
+ Selecionar todos(as) Gestor
+ Sem Gestor
+Sem ImobiliáriaTodos
+ Selecionar todos(as) Imobiliária
+ Sem Imobiliária
+Sem corretorTodos
+ Selecionar todos(as) Corretor
+ Sem Corretor
+
+
+Categoria do Corretor:
+
+Nível do Corretor:
+
+Corretor Parceiro:
+
+Selecionar todas
+Novo Lead
+Aguardando Atendimento Corretor
+Em Atendimento
+Visita Agendada
+Reagendar Visita
+Visita Realizada
+Montagem de Pasta
+Simulação
+Com Reserva
+Venda Realizada
+Perdido
+Vencimento
+
+Bolsão:
+Sem Momento do LeadTodos
+ Selecionar todos(as) Momento do Lead
+ Sem Momento do Lead
+
+Tarefas do lead:
+Próxima ação (De)
+Próxima ação (Até)
+Data da Última Conversão (De)
+Data da Última Conversão (Até)
+Data da Última Alteração
+
+Vencido:
+
+Vencimentos nas próximas 24h:
+
+Pausado na roleta de vencimento:
+
+Possui interação:
+Data da última interação (De)
+Data da última interação (Até)
+Data da tarefa (De)
+Data da tarefa (Até)
+Dias sem contato
+
+Ordenar por:
+
+Ordenação:
+Buscar
+	
+#1319
+THIAGO VIEIRA LEITE DE FIGUEIREDO
+   
+--
+100%
+Cadastrado em 09/04/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Google
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+Ney Carvalho
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 63 dias
+RdStation
+4
+0
+Abrir
+Vencimento em 4 dias
+Próxima ação em 18 dias
+	
+#1198
+Ingryd Vitoria
+   
+--
+100%
+Cadastrado em 30/03/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+Ney Carvalho
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 72 dias
+RdStation
+3
+2
+Abrir
+Vencimento em 2 dias
+Próxima ação em 18 dias
+	
+#1204
+Vitória
+   
+--
+100%
+Cadastrado em 31/03/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Google
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+Ney Carvalho
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 72 dias
+RdStation
+3
+2
+Abrir
+Vencimento em 2 dias
+Próxima ação em 18 dias
+	
+#1316
+Sebastiao Cunha
+   
+--
+100%
+Cadastrado em 08/04/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+Ney Carvalho
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 63 dias
+RdStation
+5
+2
+Abrir
+Vencimento em 2 dias
+Próxima ação em 18 dias
+	
+#1317
+Phelipe Arantes dos Santos
+   
+--
+100%
+Cadastrado em 08/04/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+Ney Carvalho
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 63 dias
+RdStation
+4
+2
+Abrir
+Vencimento em 2 dias
+Próxima ação em 18 dias
+	
+#1395
+Anne gringa
+   
+--
+100%
+Cadastrado em 19/04/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+TELMA P. C. F. DO VALLE CORRETAGEM DE IMOVEIS – ME
+Sem Gestão de Time
+Bolsão de Leads
+Última conversão há 53 dias
+RdStation
+4
+0
+Abrir
+Vencimento em 4 dias
+Próxima ação em 18 dias
+	
+#1994
+fernandoprthomsen e Karine.
+   
+--
+100%
+Cadastrado em 10/06/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+TELMA P. C. F. DO VALLE CORRETAGEM DE IMOVEIS – ME
+Sem Gestão de Time
+Visita Realizada
+Última conversão há 1 dia
+RdStation
+1
+0
+Abrir
+Vencimento em 4 dias
+Próxima ação em 7 dias
+	
+#704
+Andre yrondona
+   
+--
+100%
+Cadastrado em 18/02/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+BR CORTEZ SEGMENTOS IMOBILIÁRIOS - ME
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+4
+0
+Abrir
+Vencimento em 4 dias
+Lead sem tarefa!
+	
+#696
+Tasso Cruz
+   
+--
+100%
+Cadastrado em 18/02/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+KARITAS GONDIM EMPREENDIMENTOS IMOBILIÁRIOS LTDA
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+12
+0
+Abrir
+Vencimento em 4 dias
+Próxima ação em 18 dias
+	
+#1979
+Cristina De Jesus
+   
+--
+100%
+Cadastrado em 07/06/2026
+Origem: Referência
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+linktr.ee
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+Lucijane Teresa Da Costa Correia
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 3 dias
+RdStation
+2
+0
+Abrir
+Vencimento em 4 dias
+Tarefa vencida há 1 dia
+	
+#887
+HIAGO
+   
+--
+100%
+Cadastrado em 05/03/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+ARBORETO MIRANTE
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+KARITAS GONDIM EMPREENDIMENTOS IMOBILIÁRIOS LTDA
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+3
+0
+Abrir
+Vencimento em 4 dias
+Próxima ação em 18 dias
+	
+#816
+Luiza Lima
+   
+--
+100%
+Cadastrado em 27/02/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+KARITAS GONDIM EMPREENDIMENTOS IMOBILIÁRIOS LTDA
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+5
+0
+Abrir
+Vencimento em 4 dias
+Próxima ação em 18 dias
+	
+#707
+Rafael
+   
+--
+100%
+Cadastrado em 18/02/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+KARITAS GONDIM EMPREENDIMENTOS IMOBILIÁRIOS LTDA
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+1
+0
+Abrir
+Vencimento em 4 dias
+Próxima ação em 18 dias
+	
+#1102
+Helena
+   
+1
+100%
+Cadastrado em 22/03/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+ARBORETO MIRANTE
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+KARITAS GONDIM EMPREENDIMENTOS IMOBILIÁRIOS LTDA
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+3
+0
+Abrir
+Vencimento em 4 dias
+Próxima ação em 18 dias
+	
+#1285
+@Nick°°°
+   
+--
+100%
+Cadastrado em 06/04/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+KARITAS GONDIM EMPREENDIMENTOS IMOBILIÁRIOS LTDA
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+2
+0
+Abrir
+Vencimento em 4 dias
+Próxima ação em 18 dias
+	
+#1044
+Sam Dornel
+   
+--
+100%
+Cadastrado em 18/03/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+ARBORETO MIRANTE
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+KARITAS GONDIM EMPREENDIMENTOS IMOBILIÁRIOS LTDA
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+4
+0
+Abrir
+Vencimento em 4 dias
+Próxima ação em 18 dias
+	
+#1140
+Erivan Pinheiro
+   
+--
+100%
+Cadastrado em 27/03/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+KARITAS GONDIM EMPREENDIMENTOS IMOBILIÁRIOS LTDA
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+4
+0
+Abrir
+Vencimento em 4 dias
+Próxima ação em 18 dias
+	
+#899
+Gláucia Oliveira Santos Marinho
+   
+--
+100%
+Cadastrado em 06/03/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+ARBORETO MIRANTE
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+KARITAS GONDIM EMPREENDIMENTOS IMOBILIÁRIOS LTDA
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+4
+0
+Abrir
+Vencimento em 4 dias
+Próxima ação em 18 dias
+	
+#1146
+Thaís
+   
+--
+100%
+Cadastrado em 28/03/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+KARITAS GONDIM EMPREENDIMENTOS IMOBILIÁRIOS LTDA
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+3
+0
+Abrir
+Vencimento em 4 dias
+Próxima ação em 18 dias
+	
+#1214
+Emerson Fernandes
+   
+1
+100%
+Cadastrado em 01/04/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+ARBORETO MIRANTE
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+Sem Corretor
+Sem Gestão de Time
+Perdido
+Última conversão há 1 dia
+RdStation
+Cancelado há 6 horas
+2
+0
+Abrir
+--
+	
+#858
+Lucas de França
+   
+--
+100%
+Cadastrado em 01/03/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+BR CORTEZ SEGMENTOS IMOBILIÁRIOS - ME
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+3
+0
+Abrir
+Vencimento em 4 dias
+Lead sem tarefa!
+	
+#939
+Anna Emanuella de Freitas Camargos
+   
+--
+100%
+Cadastrado em 08/03/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+ARBORETO MIRANTE
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+Marcus Vinicius Lima Santos
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+3
+0
+Abrir
+Vencimento em 4 dias
+Próxima ação em 18 dias
+	
+#1244
+Fernando Horta
+   
+1
+100%
+Cadastrado em 03/04/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+Marcus Vinicius Lima Santos
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+4
+0
+Abrir
+Vencimento em 4 dias
+Próxima ação em 18 dias
+	
+#1968
+Edina 
+   
+--
+100%
+Cadastrado em 06/06/2026
+Origem: Busca Orgânica
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Google
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+Sem Corretor
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 5 dias
+RdStation
+1
+0
+Abrir
+Vencimento em 4 dias
+Lead sem tarefa!
+	
+#780
+Duka Lima
+   
+--
+100%
+Cadastrado em 24/02/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+ARBORETO MIRANTE
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+BR CORTEZ SEGMENTOS IMOBILIÁRIOS - ME
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+5
+0
+Abrir
+Vencimento em 4 dias
+Lead sem tarefa!
+	
+#710
+Ludmilla
+   
+--
+100%
+Cadastrado em 19/02/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+BR CORTEZ SEGMENTOS IMOBILIÁRIOS - ME
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+3
+0
+Abrir
+Vencimento em 4 dias
+Lead sem tarefa!
+	
+#891
+Sidéria Neiva
+   
+--
+100%
+Cadastrado em 05/03/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+Ana Raquel Miranda Gomes
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+2
+0
+Abrir
+Vencimento em 4 dias
+Próxima ação em 18 dias
+	
+#864
+Michele Souza Pinheiro
+   
+--
+100%
+Cadastrado em 02/03/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+ARBORETO MIRANTE
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+BR CORTEZ SEGMENTOS IMOBILIÁRIOS - ME
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+4
+0
+Abrir
+Vencimento em 4 dias
+Lead sem tarefa!
+	
+#718
+Maira
+   
+--
+100%
+Cadastrado em 20/02/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+Sem empreendimento
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+Marcus Vinicius Lima Santos
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+3
+0
+Abrir
+Vencimento em 4 dias
+Próxima ação em 18 dias
+	
+#956
+Danusa Carvalho
+   
+--
+100%
+Cadastrado em 09/03/2026
+Origem: Busca Compartilhada
+Emp. / PDV
+ARBORETO MIRANTE
+Casa Mirante
+Facebook Ads
+Gestor / Imob. / Corretor / Gestão Time
+Sem Gestor
+BRASILIS IMOB E CONSULTORIA
+BR CORTEZ SEGMENTOS IMOBILIÁRIOS - ME
+Sem Gestão de Time
+Em Atendimento
+Última conversão há 1 dia
+RdStation
+3
+0
+Abrir
+Vencimento em 4 dias
+Lead sem tarefa!
+30
+Exibir
+123456Próxima →
+
+CVMagic
+Funcionalidades em linguagem natural
+Olá Júlia Karell
+Antes de iniciar sua jornada com o Magic Assistente v.1, vamos te apresentar um pouco sobre como ele funciona. São quatro etapas, objetivo, funcionalidades, filtros e limitações
+Vamos conhecer?
+Objetivo:
+Nosso Assistente foi criado para agilizar tarefas diárias de busca, reduzindo cliques e facilitando o uso da plataforma.
+Funcionalidades:
+Nesta primeira versão, focamos nas funcionalidades principais do CVCRM, como Leads, Pré-cadastro, Reservas, Atendimento e muito mais.
+Filtros:
+O Assistente possui conhecimento de diversos filtros nas listagens principais e secundárias do CV CRM. Você pode buscar por um filtro específico e combiná-lo com outros para refinar ainda mais os resultados, por exemplo: "traga os leads com origem facebook" ou "traga os contratos"
+Limitações:
+O Assistente não tem acesso à sua base de dados. Portanto, todas as perguntas devem ser feitas de forma individual por funcionalidade. Não é possível, por exemplo, solicitar relatórios complexos como “traga os corretores com mais vendas no imóvel X”.
+Esperamos que você aproveite o Magic Assistente. E lembre-se: ele está sempre aprendendo e evoluindo, então pode haver variações nas respostas dependendo da consulta. Estamos constantemente aprimorando suas funcionalidades. Divirta-se!
+Notificações
+
+Carregando ...
+Mural de Recados
+
+Carregando ...
+
+Feito com ❤️ por CV CRM
+
+Versão: 26.06.21
+
+Política de Privacidade
+Termos de Uso
+Olá, Júlia Karell
+Bem-vindo ao nosso Suporte ao Cliente do CV!
+
+Temos um conteúdo que pode ajudar você
+Acesse um conteúdo sobre a página acessada
+
+Suporte ao Cliente
+Chat de Suporte ao Cliente do CV
+
+Busque em nossa Base de Conhecimento
+Calculadora
+
+
+Financeira
+PRICE
+SAC
+
+Calcular Valor da Prestação
+Valor do Principal (valor financiado):
+Taxa de Juros:
+ 
+Mês(es)
+Tempo:
+ 
+Mês(es)
+Valor da primeira Prestação:
+
+
+
+Mês(es)
+Calcular

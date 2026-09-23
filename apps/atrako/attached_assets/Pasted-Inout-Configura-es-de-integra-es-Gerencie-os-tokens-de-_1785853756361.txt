@@ -1,0 +1,94 @@
+Inout
+Configurações de integrações
+Gerencie os tokens de API utilizados para sincronizar dados do Meta Ads e Google Ads.
+
+Logs do sistema
+Meta
+Meta Ads
+Credenciais globais padrão. Clientes sem BM vinculada usam este token.
+
+Token de acesso (Meta)
+••••••••••••••••••••
+Por segurança, o valor atual não é exibido. Preencha apenas se quiser atualizar.
+
+ID da conta padrão (Meta Ads)
+act_123456789012345
+Business Managers (BMs) conectadas
+
+Adicionar BM
+Nenhuma BM cadastrada — usando credenciais globais acima.
+
+Google
+Google Ads
+Credenciais OAuth globais. Clientes sem MCC vinculado usam estas credenciais.
+
+Client ID
+••••••••••••••••••••
+Por segurança, o valor atual não é exibido. Preencha apenas se quiser atualizar.
+
+Client Secret
+••••••••••••••••••••
+Por segurança, o valor atual não é exibido. Preencha apenas se quiser atualizar.
+
+Developer token
+••••••••••••••••••••
+Por segurança, o valor atual não é exibido. Preencha apenas se quiser atualizar.
+
+Refresh token
+••••••••••••••••••••
+Por segurança, o valor atual não é exibido. Preencha apenas se quiser atualizar.
+
+Login Customer ID (MCC global)
+3830547260
+ID da conta MCC gerenciadora padrão. Atual: 3830547260
+
+MCCs (gerenciadoras) conectados
+
+Adicionar MCC
+Nenhum MCC cadastrado — usando credenciais globais acima.
+
+Salvar credenciais
+Alertas automáticos
+Notificações de saldo baixo e anomalias de gasto.
+
+Configurar alertas
+E-mail
+
+Não configurado
+
+Webhook
+
+Não configurado
+
+Limiares
+
+Saldo mínimo: 7 dias · Gap de gasto: 2 dia(s)
+
+Dispare um alerta agora para testar as configurações.
+
+Disparar alerta agora
+Telegram
+Resumo diário no Telegram
+Após o sync diário das 05:00 BRT, envia automaticamente um resumo de cada cliente com Telegram ativo para o canal configurado.
+
+Bot Token
+••••••••••••••••••••
+Token do bot criado via @BotFather. Por segurança, o valor atual não é exibido.
+
+Channel ID
+-1003849847984
+ID ou @username do canal. Atual: -1003849847984
+
+Como configurar o bot (passo a passo)
+Enviar mensagem de teste
+Enviar todos os relatórios agora
+Salvar Telegram
+Status do sync global
+Último sync bem-sucedido
+
+04/08/2026, 01:41:58 (recente)
+
+Última tentativa
+
+04/08/2026, 00:08:36
+

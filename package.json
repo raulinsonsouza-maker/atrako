@@ -1,0 +1,23 @@
+{
+  "name": "atrako",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Atrako — SaaS único (um Next.js, um login, um deploy)",
+  "workspaces": [
+    "apps/atrako",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @atrako/shell",
+    "dev:atrako": "npm run dev -w @atrako/shell",
+    "build": "npm run build -w @atrako/shell",
+    "start": "npm run start -w @atrako/shell",
+    "build:packages": "npm run build -w @atrako/events -w @atrako/agent --if-present",
+    "db:generate": "npm run db:generate -w @atrako/shell",
+    "db:push": "npm run db:push -w @atrako/shell",
+    "compose:up": "docker compose up --build"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

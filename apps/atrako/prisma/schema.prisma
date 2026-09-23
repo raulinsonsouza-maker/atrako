@@ -1,0 +1,1777 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Tenant operacional do Atraco. `Cliente.id` === `workspaceId` nos contratos @atrako/events e @atrako/db.
+model Cliente {
+  id                         String                   @id @default(cuid())
+  nome                       String
+  slug                       String                   @unique
+  logoUrl                    String?
+  ativo                      Boolean                  @default(true)
+  createdAt                  DateTime                 @default(now())
+  updatedAt                  DateTime                 @updatedAt
+  segmento                   String?
+  orcamentoMidiaGoogleMensal Decimal?                 @db.Decimal(14, 2)
+  orcamentoMidiaMetaMensal   Decimal?                 @db.Decimal(14, 2)
+  gestor                     String?
+  squad                      Int?
+  formaPagamentoMeta         String?
+  formaPagamentoGoogle       String?
+  portalToken                String?                  @unique @default(dbgenerated("(gen_random_uuid())::text"))
+  leadScoringEnabled         Boolean                  @default(false)
+  socialMediaAtivo           Boolean                  @default(false)
+  telegramAtivo              Boolean                  @default(false)
+  inPilotEnabled             Boolean                  @default(true)
+  objetivoMidia              String                   @default("leads")
+  produtoServico              String?                  @db.VarChar(2000)
+  modeloNegocio               String?                  @db.VarChar(2000)
+  publicoAlvo                 String?                  @db.VarChar(2000)
+  objetivoProjeto             String?                  @db.VarChar(2000)
+  diferenciais                String?                  @db.VarChar(2000)
+  observacoesAnaliticas       String?                  @db.VarChar(2000)
+  perfilPanel                String?
+  ultimoSyncAt               DateTime?
+  agregadosMensal            AgregadoMidiaMensal[]
+  agregadosSemanal           AgregadoMidiaSemanal[]
+  contas                     Conta[]
+  fatosAnalyticsDiario       FatoAnalyticsDiario[]
+  fatosAnalyticsPorCanal     FatoAnalyticsPorCanal[]
+  fatosMidia                 FatoMidiaDiario[]
+  googleAdsCampanhas         GoogleAdsCampanha[]
+  googleAdsCriativos         GoogleAdsCriativo[]
+  linkedinAdsCampanhas       LinkedInAdsCampanha[]
+  metas                      Meta[]
+  metaAdsCriativos           MetaAdsCriativo[]
+  metaLeadsIndividuais       MetaLeadIndividual[]
+  crmConfig                  CrmConfig?
+  leadsCrm                   LeadCrm[]
+  rdMarketingConfig          RdMarketingConfig?
+  pautasReuniao              PautaReuniao[]
+  instagramInsightsMensais   InstagramInsightMensal[]
+  instagramInsightsDiarios   InstagramInsightDiario[]
+  analystConversations       AnalystConversation[]
+  atrakoEvents               AtrakoEvent[]
+  atrakoOutbox               AtrakoOutbox[]
+  oauthStates                OAuthState[]
+  workspaceConnections       WorkspaceConnection[]
+  ledgerEntries              WorkspaceLedgerEntry[]
+  workspaceSettings          WorkspaceSettings?
+  workspaceMembers           WorkspaceMember[]
+  workspaceInvites           WorkspaceInvite[]
+  nativeContacts             NativeContact[]
+  nativeLeads                NativeLead[]
+  crmPipelines               CrmPipeline[]
+  agendaServices             AgendaService[]
+  agendaBookings             AgendaBooking[]
+  agendaBookingPages         AgendaBookingPage[]
+  agendaProfessionals        AgendaProfessional[]
+  agendaCustomers            AgendaCustomer[]
+  agendaProducts             AgendaProduct[]
+  agendaIntakeSubmissions    AgendaIntakeSubmission[]
+  agendaBookingEventLogs     AgendaBookingEventLog[]
+  commerceProducts           CommerceProduct[]
+  commerceOrders             CommerceOrder[]
+  commerceOffers             CommerceOffer[]
+  commerceCoupons            CommerceCoupon[]
+  commerceEntitlements       CommerceEntitlement[]
+  captureForms               CaptureForm[]
+  marketplaceOrders          MarketplaceOrder[]
+  marketplaceSellerSnapshots MarketplaceSellerSnapshot[]
+  igAccountsNative           IgAccountNative[]
+  waConversations            WaConversation[]
+  waMessages                 WaMessage[]
+  waWebhookEvents            WaWebhookEvent[]
+  waTemplateRefs             WaTemplateRef[]
+  metaCampaignDrafts         MetaCampaignDraft[]
+  metaCampaigns              MetaCampaignBuilder[]
+  metaApiLogs                MetaApiLog[]
+}
+
+model AnalystConversation {
+  id          String        @id @default(cuid())
+  clienteId   String
+  actorKey    String        @db.VarChar(128)
+  ownerUserId String?
+  title       String        @default("Nova análise") @db.VarChar(120)
+  summary     String        @default("") @db.Text
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  cliente     Cliente       @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  ownerUser   InternalUser? @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
+  messages    AnalystMessage[]
+
+  @@index([clienteId, actorKey, updatedAt])
+  @@index([clienteId, ownerUserId, updatedAt])
+}
+
+model AnalystMessage {
+  id                  String              @id @default(cuid())
+  conversationId      String
+  role                String              @db.VarChar(16)
+  content             String              @db.Text
+  status              String              @default("COMPLETE") @db.VarChar(16)
+  sources             Json?
+  toolContext         Json?
+  model               String?             @db.VarChar(80)
+  promptTokens        Int?
+  completionTokens    Int?
+  totalTokens         Int?
+  estimatedCostMicros Int?
+  durationMs          Int?
+  clientRequestId     String?             @unique @db.VarChar(160)
+  createdAt           DateTime            @default(now())
+  conversation        AnalystConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+enum InternalRole {
+  ADMIN
+  ANALYST
+}
+
+model InternalUser {
+  id                    String            @id @default(cuid())
+  clerkUserId           String?           @unique
+  email                 String?           @unique
+  username              String?           @unique
+  passwordHash          String?
+  mustChangePassword    Boolean           @default(false)
+  failedLoginCount      Int               @default(0)
+  failureWindowStartedAt DateTime?
+  lockedUntil           DateTime?
+  passwordChangedAt     DateTime?
+  lastLoginAt           DateTime?
+  name                  String?
+  role                  InternalRole      @default(ANALYST)
+  active                Boolean           @default(true)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  analystConversations AnalystConversation[]
+  oauthStates           OAuthState[]
+  sessions              InternalSession[]
+  auditLogsAsActor      AuditLog[]        @relation("AuditActor")
+  auditLogsAsTarget     AuditLog[]        @relation("AuditTarget")
+
+  @@index([email, active])
+  @@index([username, active])
+}
+
+model InternalSession {
+  id                String       @id @default(cuid())
+  tokenHash         String       @unique
+  userId            String
+  createdAt         DateTime     @default(now())
+  lastSeenAt        DateTime     @default(now())
+  idleExpiresAt     DateTime
+  absoluteExpiresAt DateTime
+  revokedAt         DateTime?
+  user              InternalUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([idleExpiresAt])
+  @@index([absoluteExpiresAt])
+}
+
+model OAuthState {
+  id                       String       @id @default(cuid())
+  stateDigest              String       @unique
+  expiresAt                DateTime
+  consumedAt               DateTime?
+  provider                 String       @db.VarChar(32)
+  clienteId                String
+  initiatedByInternalUserId String
+  createdAt                DateTime     @default(now())
+  cliente                  Cliente      @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  initiatedByInternalUser  InternalUser @relation(fields: [initiatedByInternalUserId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([provider, clienteId])
+}
+
+model LoginThrottle {
+  id               String   @id @default(cuid())
+  bucketKeyHash    String   @unique
+  windowStartedAt  DateTime
+  attemptCount     Int      @default(0)
+  updatedAt        DateTime @updatedAt
+
+  @@index([windowStartedAt])
+}
+
+model AuditLog {
+  id                  String        @id @default(cuid())
+  actorClerkUserId    String?
+  targetClerkUserId   String?
+  actorInternalUserId String?
+  targetInternalUserId String?
+  action              String        @db.VarChar(80)
+  metadata            Json?
+  createdAt           DateTime      @default(now())
+  actorInternalUser   InternalUser? @relation("AuditActor", fields: [actorInternalUserId], references: [id], onDelete: SetNull)
+  targetInternalUser  InternalUser? @relation("AuditTarget", fields: [targetInternalUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([actorClerkUserId, createdAt])
+  @@index([targetClerkUserId, createdAt])
+  @@index([actorInternalUserId, createdAt])
+  @@index([targetInternalUserId, createdAt])
+}
+
+model Conta {
+  id                       String                @id @default(cuid())
+  clienteId                String
+  plataforma               String
+  accountIdPlataforma      String?
+  googleAdsLoginCustomerId String?
+  nomeConta                String?
+  conexaoIntegracaoId      String?
+  saldoAtual               Float?
+  saldoAtualizadoAt        DateTime?
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
+  cliente                  Cliente               @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  conexaoIntegracao        ConexaoIntegracao?    @relation(fields: [conexaoIntegracaoId], references: [id])
+  fatosAnalyticsDiario     FatoAnalyticsDiario[]
+  fatosMidia               FatoMidiaDiario[]
+  googleAdsCampanhas       GoogleAdsCampanha[]
+  googleAdsCriativos       GoogleAdsCriativo[]
+  linkedinAdsCampanhas     LinkedInAdsCampanha[]
+  metaAdsCriativos         MetaAdsCriativo[]
+
+  @@unique([clienteId, plataforma])
+}
+
+model ConexaoIntegracao {
+  id                            String    @id @default(cuid())
+  nome                          String
+  plataforma                    String
+  ativo                         Boolean   @default(true)
+  metaAccessToken               String?
+  googleClientId                String?
+  googleClientSecret            String?
+  googleDeveloperToken          String?
+  googleRefreshToken            String?
+  googleLoginCustomerId         String?
+  linkedinAccessToken           String?
+  linkedinRefreshToken          String?
+  linkedinTokenExpiresAt        DateTime?
+  linkedinRefreshTokenExpiresAt DateTime?
+  contas                        Conta[]
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime  @updatedAt
+}
+
+model FatoMidiaDiario {
+  id                              String   @id @default(cuid())
+  clienteId                       String
+  contaId                         String?
+  data                            DateTime @db.Date
+  canal                           String
+  impressoes                      Int      @default(0)
+  cliques                         Int      @default(0)
+  leads                           Int      @default(0)
+  conversoes                      Int      @default(0)
+  investimento                    Decimal  @default(0) @db.Decimal(14, 2)
+  cpl                             Decimal? @db.Decimal(14, 2)
+  rawRowHash                      String?
+  createdAt                       DateTime @default(now())
+  updatedAt                       DateTime @updatedAt
+  contacts                        Int      @default(0)
+  costPerPurchase                 Decimal? @db.Decimal(14, 2)
+  messagingConversationsStarted   Int      @default(0)
+  onFacebookLeads                 Int      @default(0)
+  purchases                       Int      @default(0)
+  websiteLeads                    Int      @default(0)
+  websitePurchaseRoas             Decimal? @db.Decimal(14, 2)
+  websitePurchasesConversionValue Decimal  @default(0) @db.Decimal(14, 2)
+  alcance                         Int      @default(0)
+  checkoutIniciado                Int      @default(0)
+  profileVisits                   Int      @default(0)
+  addToCart                       Int      @default(0)
+  landingPageViews                Int      @default(0)
+  campaignName                    String   @default("")
+  campaignId                      String   @default("")
+  cliente                         Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  conta                           Conta?   @relation(fields: [contaId], references: [id])
+
+  @@unique([clienteId, data, canal, campaignName])
+  @@index([clienteId, data])
+  @@index([clienteId, canal, data])
+}
+
+model AgregadoMidiaSemanal {
+  id           String   @id @default(cuid())
+  clienteId    String
+  canal        String
+  ano          Int
+  semanaIso    Int
+  investimento Decimal  @default(0) @db.Decimal(14, 2)
+  impressoes   Int      @default(0)
+  cliques      Int      @default(0)
+  leads        Int      @default(0)
+  conversoes   Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  cliente      Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, canal, ano, semanaIso])
+  @@index([clienteId, ano, semanaIso])
+}
+
+model AgregadoMidiaMensal {
+  id           String   @id @default(cuid())
+  clienteId    String
+  canal        String
+  ano          Int
+  mes          Int
+  investimento Decimal  @default(0) @db.Decimal(14, 2)
+  impressoes   Int      @default(0)
+  cliques      Int      @default(0)
+  leads        Int      @default(0)
+  conversoes   Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  cliente      Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, canal, ano, mes])
+  @@index([clienteId, ano, mes])
+}
+
+model Meta {
+  id            String   @id @default(cuid())
+  clienteId     String
+  canal         String?
+  tipoMeta      String
+  periodicidade String
+  ano           Int
+  mes           Int?
+  valorMeta     Decimal  @db.Decimal(14, 2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  cliente       Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@index([clienteId])
+}
+
+model PautaReuniao {
+  id         String    @id @default(cuid())
+  clienteId  String
+  semanaIso  Int
+  ano        Int
+  titulo     String
+  descricao  String?
+  status     String    @default("ABERTA")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  dataFim    DateTime?
+  prioridade String    @default("MEDIA")
+  cliente    Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@index([clienteId, ano, semanaIso])
+  @@index([clienteId, status])
+}
+
+model GoogleAdsCriativo {
+  id                   String   @id @default(cuid())
+  clienteId            String
+  contaId              String?
+  adResourceName       String
+  campaignId           String?
+  campaignName         String?
+  adGroupId            String?
+  adGroupName          String?
+  headline1            String?
+  headline2            String?
+  description          String?
+  finalUrls            String?
+  data                 DateTime @db.Date
+  impressoes           Int      @default(0)
+  cliques              Int      @default(0)
+  custoMicros          BigInt   @default(0)
+  conversoes           Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  conversaoValorMicros BigInt   @default(0)
+  campaignStatus       String?
+  cliente              Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  conta                Conta?   @relation(fields: [contaId], references: [id])
+
+  @@unique([clienteId, adResourceName, data])
+  @@index([clienteId, data])
+}
+
+model GoogleAdsCampanha {
+  id                   String   @id @default(cuid())
+  clienteId            String
+  contaId              String?
+  campaignId           String
+  campaignName         String
+  campaignStatus       String?
+  campaignType         String?
+  data                 DateTime @db.Date
+  impressoes           Int      @default(0)
+  cliques              Int      @default(0)
+  custoMicros          BigInt   @default(0)
+  conversoes           Float    @default(0)
+  conversaoValorMicros BigInt   @default(0)
+  alcance              Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  cliente              Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  conta                Conta?   @relation(fields: [contaId], references: [id])
+
+  @@unique([clienteId, campaignId, data])
+  @@index([clienteId, data])
+}
+
+model LinkedInAdsCampanha {
+  id             String   @id @default(cuid())
+  clienteId      String
+  contaId        String?
+  campaignId     String
+  campaignName   String
+  campaignStatus String?
+  campaignType   String?
+  data           DateTime @db.Date
+  impressoes     Int      @default(0)
+  cliques        Int      @default(0)
+  custo          Decimal  @default(0) @db.Decimal(14, 2)
+  conversoes     Float    @default(0)
+  leads          Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  cliente        Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  conta          Conta?   @relation(fields: [contaId], references: [id])
+
+  @@unique([clienteId, campaignId, data])
+  @@index([clienteId, data])
+}
+
+model MetaAdsCriativo {
+  id                              String   @id @default(cuid())
+  clienteId                       String
+  contaId                         String?
+  data                            DateTime @db.Date
+  adId                            String
+  creativeId                      String?
+  adName                          String
+  effectiveStatus                 String?
+  campaignObjective               String?
+  mediaType                       String
+  imageUrl                        String?
+  imageUrlFull                    String?
+  videoId                         String?
+  videoSourceUrl                  String?
+  videoPictureUrl                 String?
+  videoEmbedHtml                  String?
+  body                            String?
+  title                           String?
+  spend                           Decimal  @default(0) @db.Decimal(14, 2)
+  impressions                     Int      @default(0)
+  clicks                          Int      @default(0)
+  ctr                             Decimal? @db.Decimal(8, 4)
+  cpc                             Decimal? @db.Decimal(14, 2)
+  createdAt                       DateTime @default(now())
+  updatedAt                       DateTime @updatedAt
+  adsetId                         String?
+  adsetName                       String?
+  campaignId                      String?
+  campaignName                    String?
+  leads                           Int      @default(0)
+  purchases                       Int      @default(0)
+  websitePurchasesConversionValue Decimal  @default(0) @db.Decimal(14, 2)
+  messagingConversationsStarted   Int      @default(0)
+  cliente                         Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  conta                           Conta?   @relation(fields: [contaId], references: [id])
+
+  @@unique([clienteId, adId, data])
+  @@index([clienteId, data])
+  @@index([clienteId, adId, data])
+}
+
+model FatoAnalyticsDiario {
+  id                     String   @id @default(cuid())
+  clienteId              String
+  contaId                String?
+  data                   DateTime @db.Date
+  sessions               Int      @default(0)
+  activeUsers            Int      @default(0)
+  engagedSessions        Int      @default(0)
+  engagementRate         Decimal  @default(0) @db.Decimal(8, 6)
+  bounceRate             Decimal  @default(0) @db.Decimal(8, 6)
+  averageSessionDuration Int      @default(0)
+  newUsers               Int      @default(0)
+  screenPageViews        Int      @default(0)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  cliente                Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  conta                  Conta?   @relation(fields: [contaId], references: [id])
+
+  @@unique([clienteId, data])
+  @@index([clienteId, data])
+}
+
+model FatoAnalyticsPorCanal {
+  id          String   @id @default(cuid())
+  clienteId   String
+  data        DateTime @db.Date
+  canal       String
+  sessions    Int      @default(0)
+  activeUsers Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  cliente     Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, data, canal])
+  @@index([clienteId, data])
+}
+
+model SystemConfig {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
+
+model SyncState {
+  id        String    @id
+  attemptAt DateTime?
+  successAt DateTime?
+  updatedAt DateTime  @updatedAt
+}
+
+model SyncLog {
+  id        String   @id @default(cuid())
+  level     String // INFO | WARN | ERROR
+  message   String
+  context   Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([level, createdAt])
+}
+
+model Segmento {
+  id        String   @id @default(cuid())
+  nome      String   @unique
+  cor       String   @default("#6b7280")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MetaLeadIndividual {
+  id               String   @id @default(cuid())
+  clienteId        String
+  contaId          String?
+  metaLeadId       String
+  formId           String?
+  formName         String?
+  campaignId       String?
+  campaignName     String?
+  adId             String?
+  adName           String?
+  adsetId          String?
+  adsetName        String?
+  createdTime      DateTime
+  fullName         String?
+  nomeEmpresa      String?
+  telefone         String?
+  estado           String?
+  tipoEmpresa      String?
+  faixaFaturamento String?
+  emailLead        String?
+  platform         String?
+  statusCrm        String?
+  rawFieldData     Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  cliente          Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, metaLeadId])
+  @@index([clienteId, createdTime])
+  @@index([clienteId, tipoEmpresa])
+  @@index([clienteId, estado])
+  @@index([clienteId, platform])
+}
+
+enum CrmTipo {
+  CVCRM
+  RDSTATION_CRM
+  KOMMO
+  EXACT_SPOTTER
+  ATRAKO
+}
+
+model CrmConfig {
+  id           String    @id @default(cuid())
+  clienteId    String    @unique
+  tipo         CrmTipo
+  dominio      String?
+  credenciais  Json
+  ativo        Boolean   @default(true)
+  ultimoSyncAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  cliente      Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  leads        LeadCrm[]
+}
+
+model LeadCrm {
+  id             String    @id @default(cuid())
+  clienteId      String
+  crmConfigId    String
+  crmLeadId      String
+  etapa          String
+  ordemEtapa     Int?
+  nome           String?
+  telefone       String?
+  email          String?
+  metaLeadId     String?
+  rdContactId    String?
+  fonte          String?
+  rating         Int?
+  status         String?
+  dataEntrada    DateTime
+  dataFechamento DateTime?
+  valor          Decimal?  @db.Decimal(14, 2)
+  dadosMarketing Json?
+  dadosCv        Json?
+  momentoLead    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  cliente        Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  crmConfig      CrmConfig @relation(fields: [crmConfigId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, crmLeadId])
+  @@index([clienteId, dataEntrada])
+  @@index([clienteId, etapa])
+  @@index([clienteId, metaLeadId])
+}
+
+model RdMarketingConfig {
+  id           String    @id @default(cuid())
+  clienteId    String    @unique
+  credenciais  Json      @default("{}")
+  ativo        Boolean   @default(true)
+  ultimoSyncAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  cliente      Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+}
+
+model InstagramInsightMensal {
+  id              String   @id @default(cuid())
+  clienteId       String
+  ano             Int
+  mes             Int
+  alcance         Int      @default(0)
+  engajamento     Int      @default(0)
+  novosSeguidores Int      @default(0)
+  followersTotal  Int      @default(0)
+  impressoes      Int      @default(0)
+  publicacoes     Int      @default(0)
+  syncedAt        DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  cliente         Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, ano, mes])
+  @@index([clienteId, ano, mes])
+}
+
+model InstagramInsightDiario {
+  id              String   @id @default(cuid())
+  clienteId       String
+  data            DateTime @db.Date
+  novosSeguidores Int      @default(0)
+  followersTotal  Int      @default(0)
+  alcance         Int      @default(0)
+  impressoes      Int      @default(0)
+  engajamento     Int      @default(0)
+  syncedAt        DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  cliente         Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, data])
+  @@index([clienteId, data])
+}
+
+enum AtrakoEventStatus {
+  RECEIVED
+  PROCESSED
+  FAILED
+}
+
+/// Persistência local do bridge. `clienteId` armazena o workspaceId canônico (não há schema paralelo).
+model AtrakoEvent {
+  id             String            @id
+  clienteId      String
+  name           String            @db.VarChar(80)
+  version        Int               @default(1)
+  source         String            @db.VarChar(40)
+  idempotencyKey String            @db.VarChar(255)
+  occurredAt     DateTime
+  receivedAt     DateTime          @default(now())
+  status         AtrakoEventStatus @default(RECEIVED)
+  traceId        String?           @db.VarChar(80)
+  context        Json
+  payload        Json
+  cliente        Cliente           @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, idempotencyKey])
+  @@index([clienteId, name, occurredAt])
+  @@index([status, receivedAt])
+}
+
+model AtrakoOutbox {
+  id           String    @id @default(cuid())
+  clienteId    String
+  eventId      String    @unique
+  topic        String    @db.VarChar(120)
+  payload      Json
+  attempts     Int       @default(0)
+  availableAt  DateTime  @default(now())
+  publishedAt  DateTime?
+  failedAt     DateTime?
+  createdAt    DateTime  @default(now())
+  cliente      Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@index([publishedAt, availableAt])
+  @@index([clienteId, createdAt])
+}
+
+/// State temporário para OAuth do hub (MP, Instagram) — independente do OAuthState LinkedIn.
+model WorkspaceOAuthPending {
+  id           String   @id @default(cuid())
+  state        String   @unique
+  provider     String   @db.VarChar(40)
+  clienteId    String
+  codeVerifier String?
+  redirectUri  String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([expiresAt])
+  @@index([clienteId, provider])
+}
+
+/// Conexão única por workspace+provider (IG, MP, ads). Fonte de verdade do hub Atrako.
+model WorkspaceConnection {
+  id             String   @id @default(cuid())
+  clienteId      String
+  provider       String   @db.VarChar(40)
+  status         String   @default("ACTIVE") @db.VarChar(20)
+  label          String?  @db.VarChar(120)
+  credentialsEnc Json     @default("{}")
+  metadata       Json?
+  lastSyncedAt   DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  cliente        Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, provider])
+  @@index([clienteId, status])
+}
+
+/// Ledger financeiro unificado por workspace.
+model WorkspaceLedgerEntry {
+  id             String   @id @default(cuid())
+  clienteId      String
+  type           String   @db.VarChar(20)
+  amount         Decimal  @db.Decimal(14, 2)
+  currency       String   @default("BRL") @db.VarChar(8)
+  status         String   @default("CONFIRMED") @db.VarChar(20)
+  occurredAt     DateTime
+  source         String   @db.VarChar(40)
+  sourceRef      String?  @db.VarChar(120)
+  idempotencyKey String   @db.VarChar(255)
+  leadId         String?  @db.VarChar(120)
+  contact        String?  @db.VarChar(255)
+  provider       String?  @db.VarChar(40)
+  description    String?  @db.VarChar(500)
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  cliente        Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, idempotencyKey])
+  @@index([clienteId, occurredAt])
+  @@index([clienteId, source, occurredAt])
+  @@index([clienteId, type, status])
+}
+
+/// Preferências 1:1 do workspace (fonte única do Config).
+model WorkspaceSettings {
+  id              String   @id @default(cuid())
+  clienteId       String   @unique
+  timezone        String   @default("America/Sao_Paulo") @db.VarChar(64)
+  currency        String   @default("BRL") @db.VarChar(8)
+  locale          String   @default("pt-BR") @db.VarChar(16)
+  primaryColor    String?  @db.VarChar(32)
+  customDomain    String?  @db.VarChar(255)
+  /// SOLO = um profissional implícito; SALON = múltiplos profissionais
+  businessMode    String   @default("SOLO") @db.VarChar(16)
+  modulesEnabled  Json     @default("{\"crm\":true,\"agenda\":true,\"commerce\":true,\"social\":true,\"finance\":true,\"forms\":true,\"insights\":true}")
+  tracking        Json     @default("{}")
+  financePrefs    Json     @default("{}")
+  notifyPrefs     Json     @default("{}")
+  formsPrefs      Json     @default("{}")
+  agendaPrefs     Json     @default("{}")
+  onboardingStep  String   @default("empresa") @db.VarChar(40)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  cliente         Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+}
+
+enum WorkspaceMemberRole {
+  OWNER
+  ADMIN
+  OPERATOR
+  ANALYST
+}
+
+/// Membro SaaS do workspace (além do InternalUser de plataforma).
+model WorkspaceMember {
+  id           String              @id @default(cuid())
+  clienteId    String
+  email        String              @db.VarChar(255)
+  name         String?             @db.VarChar(120)
+  role         WorkspaceMemberRole @default(OPERATOR)
+  userId       String?
+  active       Boolean             @default(true)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  cliente      Cliente             @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, email])
+  @@index([clienteId, role])
+}
+
+model WorkspaceInvite {
+  id        String              @id @default(cuid())
+  clienteId String
+  email     String              @db.VarChar(255)
+  role      WorkspaceMemberRole @default(OPERATOR)
+  token     String              @unique @db.VarChar(64)
+  expiresAt DateTime
+  acceptedAt DateTime?
+  createdAt DateTime            @default(now())
+  cliente   Cliente             @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@index([clienteId, email])
+}
+
+model CrmPipeline {
+  id         String     @id @default(cuid())
+  clienteId  String
+  name       String     @db.VarChar(120)
+  isDefault  Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  cliente    Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  stages     CrmStage[]
+
+  @@index([clienteId])
+}
+
+model CrmStage {
+  id         String       @id @default(cuid())
+  pipelineId String
+  name       String       @db.VarChar(80)
+  order      Int          @default(0)
+  color      String?      @db.VarChar(32)
+  /// ENTRY = entrada do lead | WON = conversão/ganho | null = etapa livre
+  role       String?      @db.VarChar(16)
+  pipeline   CrmPipeline  @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  leads      NativeLead[]
+
+  @@index([pipelineId, order])
+  @@index([pipelineId, role])
+}
+
+model NativeContact {
+  id          String       @id @default(cuid())
+  clienteId   String
+  name        String       @db.VarChar(200)
+  email       String?      @db.VarChar(255)
+  phone       String?      @db.VarChar(40)
+  metadata    Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  cliente     Cliente      @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  leads       NativeLead[]
+  waConversations WaConversation[]
+  commerceOrders  CommerceOrder[]
+  marketplaceOrders MarketplaceOrder[]
+
+  @@index([clienteId, email])
+  @@index([clienteId, phone])
+}
+
+model NativeLead {
+  id          String         @id @default(cuid())
+  clienteId   String
+  contactId   String?
+  stageId     String?
+  status      String         @default("OPEN") @db.VarChar(40)
+  source      String?        @db.VarChar(80)
+  dealValue   Decimal?       @db.Decimal(14, 2)
+  metadata    Json?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  cliente     Cliente        @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  contact     NativeContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  stage       CrmStage?      @relation(fields: [stageId], references: [id], onDelete: SetNull)
+
+  @@index([clienteId, status])
+  @@index([clienteId, createdAt])
+}
+
+model AgendaService {
+  id              String                    @id @default(cuid())
+  clienteId       String
+  title           String                    @db.VarChar(200)
+  description     String?                   @db.Text
+  imageUrl        String?
+  durationMinutes Int                       @default(60)
+  priceCents      Int                       @default(0)
+  bufferBefore    Int                       @default(0)
+  bufferAfter     Int                       @default(0)
+  sortOrder       Int                       @default(0)
+  intakeProductId String?
+  active          Boolean                   @default(true)
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+  cliente         Cliente                   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  intakeProduct   AgendaProduct?            @relation("AgendaServiceIntake", fields: [intakeProductId], references: [id], onDelete: SetNull)
+  bookings        AgendaBooking[]
+  slotHolds       AgendaSlotHold[]
+  customFields    AgendaCustomField[]
+  professionals   AgendaProfessionalService[]
+  pages           AgendaBookingPageService[]
+
+  @@index([clienteId, active, sortOrder])
+}
+
+model AgendaBookingPage {
+  id              String                     @id @default(cuid())
+  clienteId       String
+  title           String                     @db.VarChar(200)
+  slug            String                     @db.VarChar(120)
+  description     String?                    @db.Text
+  logoUrl         String?
+  coverImageUrl   String?
+  accentColor     String?                    @db.VarChar(32)
+  websiteUrl      String?
+  instagram       String?
+  timezone        String                     @default("America/Sao_Paulo") @db.VarChar(64)
+  slotStepMinutes Int                        @default(0)
+  funnelConfig    Json?
+  isDefault       Boolean                    @default(false)
+  active          Boolean                    @default(true)
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+  cliente         Cliente                    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  pageServices    AgendaBookingPageService[]
+  availability    AgendaAvailabilityRule[]
+  exceptions      AgendaAvailabilityException[]
+  bookings        AgendaBooking[]
+  slotHolds       AgendaSlotHold[]
+
+  @@unique([clienteId, slug])
+  @@index([clienteId, active])
+}
+
+model AgendaBookingPageService {
+  id            String            @id @default(cuid())
+  bookingPageId String
+  serviceId     String
+  sortOrder     Int               @default(0)
+  bookingPage   AgendaBookingPage @relation(fields: [bookingPageId], references: [id], onDelete: Cascade)
+  service       AgendaService     @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingPageId, serviceId])
+  @@index([serviceId])
+  @@index([bookingPageId, sortOrder])
+}
+
+model AgendaProfessional {
+  id                String                     @id @default(cuid())
+  clienteId         String
+  workspaceMemberId String?
+  displayName       String                     @db.VarChar(200)
+  phone             String?                    @db.VarChar(40)
+  photoUrl          String?
+  isActive          Boolean                    @default(true)
+  sortOrder         Int                        @default(0)
+  commissionEnabled Boolean                    @default(false)
+  commissionPercent Int                        @default(50)
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+  cliente           Cliente                    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  services          AgendaProfessionalService[]
+  availability      AgendaAvailabilityRule[]
+  exceptions        AgendaAvailabilityException[]
+  bookings          AgendaBooking[]
+  slotHolds         AgendaSlotHold[]
+
+  @@index([clienteId, isActive, sortOrder])
+}
+
+model AgendaProfessionalService {
+  id             String             @id @default(cuid())
+  professionalId String
+  serviceId      String
+  professional   AgendaProfessional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  service        AgendaService      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([professionalId, serviceId])
+  @@index([serviceId])
+}
+
+model AgendaAvailabilityRule {
+  id             String              @id @default(cuid())
+  bookingPageId  String?
+  professionalId String?
+  dayOfWeek      Int
+  startTime      String              @db.VarChar(8)
+  endTime        String              @db.VarChar(8)
+  bookingPage    AgendaBookingPage?  @relation(fields: [bookingPageId], references: [id], onDelete: Cascade)
+  professional   AgendaProfessional? @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([bookingPageId, dayOfWeek])
+  @@index([professionalId, dayOfWeek])
+}
+
+model AgendaAvailabilityException {
+  id             String              @id @default(cuid())
+  bookingPageId  String?
+  professionalId String?
+  date           String              @db.VarChar(10)
+  isBlocked      Boolean             @default(true)
+  startTime      String?             @db.VarChar(8)
+  endTime        String?             @db.VarChar(8)
+  bookingPage    AgendaBookingPage?  @relation(fields: [bookingPageId], references: [id], onDelete: Cascade)
+  professional   AgendaProfessional? @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([bookingPageId, date])
+  @@index([professionalId, date])
+}
+
+model AgendaCustomField {
+  id        String        @id @default(cuid())
+  serviceId String
+  label     String        @db.VarChar(120)
+  type      String        @default("TEXT") @db.VarChar(20)
+  required  Boolean       @default(false)
+  options   Json?
+  sortOrder Int           @default(0)
+  service   AgendaService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId, sortOrder])
+}
+
+model AgendaCustomer {
+  id        String          @id @default(cuid())
+  clienteId String
+  phoneE164 String          @db.VarChar(40)
+  name      String          @db.VarChar(200)
+  email     String?         @db.VarChar(255)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  cliente   Cliente         @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  bookings  AgendaBooking[]
+
+  @@unique([clienteId, phoneE164])
+  @@index([clienteId, phoneE164])
+}
+
+model AgendaBooking {
+  id                String              @id @default(cuid())
+  clienteId         String
+  bookingPageId     String?
+  serviceId         String
+  professionalId    String?
+  customerId        String?
+  customerName      String              @db.VarChar(200)
+  customerEmail     String?             @db.VarChar(255)
+  customerPhone     String?             @db.VarChar(40)
+  customerCpf       String?             @db.VarChar(20)
+  startAt           DateTime
+  endAt             DateTime
+  timezone          String              @default("America/Sao_Paulo") @db.VarChar(64)
+  status            String              @default("CONFIRMED") @db.VarChar(40)
+  amountCents       Int                 @default(0)
+  customAnswers     Json?
+  holdExpiresAt     DateTime?
+  confirmedAt       DateTime?
+  cancelledAt       DateTime?
+  googleEventId     String?
+  googleMeetLink    String?
+  manageToken       String?             @unique @db.VarChar(64)
+  reminderSentAt    DateTime?
+  feedbackSentAt    DateTime?
+  pixReminderSentAt DateTime?
+  gclid             String?
+  fbclid            String?
+  fbc               String?
+  fbp               String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  cliente           Cliente             @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  bookingPage       AgendaBookingPage?  @relation(fields: [bookingPageId], references: [id], onDelete: SetNull)
+  service           AgendaService       @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  professional      AgendaProfessional? @relation(fields: [professionalId], references: [id], onDelete: SetNull)
+  customer          AgendaCustomer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  payment           AgendaPayment?
+  slotHold          AgendaSlotHold?
+  eventLogs         AgendaBookingEventLog[]
+
+  @@index([clienteId, startAt])
+  @@index([clienteId, status])
+  @@index([bookingPageId, startAt])
+  @@index([professionalId, startAt])
+  @@index([status, holdExpiresAt])
+}
+
+model AgendaBookingEventLog {
+  id        String         @id @default(cuid())
+  clienteId String
+  bookingId String?
+  type      String         @db.VarChar(80)
+  dedupeKey String         @db.VarChar(160)
+  payload   Json?
+  createdAt DateTime       @default(now())
+  cliente   Cliente        @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  booking   AgendaBooking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, type, dedupeKey])
+  @@index([clienteId, createdAt])
+}
+
+model AgendaSlotHold {
+  id             String              @id @default(cuid())
+  bookingPageId  String
+  serviceId      String
+  professionalId String?
+  bookingId      String?             @unique
+  startAt        DateTime
+  endAt          DateTime
+  expiresAt      DateTime
+  createdAt      DateTime            @default(now())
+  bookingPage    AgendaBookingPage   @relation(fields: [bookingPageId], references: [id], onDelete: Cascade)
+  service        AgendaService       @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  professional   AgendaProfessional? @relation(fields: [professionalId], references: [id], onDelete: SetNull)
+  booking        AgendaBooking?      @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([bookingPageId, startAt, expiresAt])
+  @@index([professionalId, startAt, expiresAt])
+}
+
+model AgendaPayment {
+  id              String               @id @default(cuid())
+  bookingId       String?              @unique
+  checkoutOrderId String?              @unique
+  method          String               @db.VarChar(16)
+  status          String               @default("PENDING") @db.VarChar(20)
+  amountCents     Int
+  currency        String               @default("BRL") @db.VarChar(8)
+  provider        String               @default("MERCADO_PAGO") @db.VarChar(32)
+  externalId      String?
+  idempotencyKey  String               @unique @db.VarChar(120)
+  pixQrCode       String?              @db.Text
+  pixQrCodeBase64 String?              @db.Text
+  pixExpiresAt    DateTime?
+  rawResponse     Json?
+  paidAt          DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  booking         AgendaBooking?       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  checkoutOrder   AgendaCheckoutOrder? @relation(fields: [checkoutOrderId], references: [id], onDelete: Cascade)
+}
+
+/** Produto de checkout da Agenda (SIMPLE ou INTAKE) — separado do CommerceProduct da Loja. */
+model AgendaProduct {
+  id                String               @id @default(cuid())
+  clienteId         String
+  title             String               @db.VarChar(200)
+  description       String?              @db.Text
+  priceCents        Int                  @default(0)
+  formConfig        Json?
+  productKind       String               @default("SIMPLE") @db.VarChar(20)
+  intakeTemplateKey String?              @db.VarChar(80)
+  notifyEmails      Json?
+  intakeEmailAlerts Boolean              @default(true)
+  isActive          Boolean              @default(true)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  cliente           Cliente              @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  checkoutLinks     AgendaCheckoutLink[]
+  orders            AgendaCheckoutOrder[]
+  intakeServices    AgendaService[]      @relation("AgendaServiceIntake")
+
+  @@index([clienteId, isActive])
+}
+
+model AgendaCheckoutLink {
+  id          String               @id @default(cuid())
+  productId   String
+  slug        String               @unique @db.VarChar(120)
+  title       String?              @db.VarChar(200)
+  logoUrl     String?
+  accentColor String?              @db.VarChar(32)
+  isActive    Boolean              @default(true)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  product     AgendaProduct        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orders      AgendaCheckoutOrder[]
+
+  @@index([productId, isActive])
+}
+
+model AgendaCheckoutOrder {
+  id             String                 @id @default(cuid())
+  checkoutLinkId String
+  productId      String
+  status         String                 @default("PENDING_PAYMENT") @db.VarChar(40)
+  customerName   String                 @db.VarChar(200)
+  customerEmail  String                 @db.VarChar(255)
+  customerPhone  String                 @db.VarChar(40)
+  customerCpf    String?                @db.VarChar(20)
+  customAnswers  Json?
+  holdExpiresAt  DateTime?
+  paidAt         DateTime?
+  confirmedAt    DateTime?
+  gclid          String?
+  fbclid         String?
+  fbc            String?
+  fbp            String?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  checkoutLink   AgendaCheckoutLink     @relation(fields: [checkoutLinkId], references: [id], onDelete: Cascade)
+  product        AgendaProduct          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  payment        AgendaPayment?
+  intakeSubmission AgendaIntakeSubmission?
+
+  @@index([checkoutLinkId, status])
+  @@index([productId, status])
+  @@index([status, holdExpiresAt])
+}
+
+model AgendaIntakeSubmission {
+  id              String                 @id @default(cuid())
+  clienteId       String
+  checkoutOrderId String                 @unique
+  templateKey     String                 @db.VarChar(80)
+  status          String                 @default("DRAFT") @db.VarChar(40)
+  reviewStatus    String                 @default("NEW") @db.VarChar(40)
+  data            Json
+  submittedAt     DateTime?
+  viewedAt        DateTime?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  cliente         Cliente                @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  checkoutOrder   AgendaCheckoutOrder    @relation(fields: [checkoutOrderId], references: [id], onDelete: Cascade)
+  attachments     AgendaIntakeAttachment[]
+
+  @@index([clienteId, status])
+  @@index([clienteId, reviewStatus, createdAt])
+}
+
+model AgendaIntakeAttachment {
+  id                 String                 @id @default(cuid())
+  intakeSubmissionId String
+  fieldKey           String                 @db.VarChar(80)
+  partnerIndex       Int?
+  fileName           String                 @db.VarChar(255)
+  mimeType           String                 @db.VarChar(120)
+  sizeBytes          Int
+  storagePath        String                 @db.VarChar(500)
+  createdAt          DateTime               @default(now())
+  intakeSubmission   AgendaIntakeSubmission @relation(fields: [intakeSubmissionId], references: [id], onDelete: Cascade)
+
+  @@unique([intakeSubmissionId, fieldKey])
+  @@index([intakeSubmissionId])
+}
+
+/** Formulário de captura (typeform) — publicado em /f/{slug}. */
+model CaptureForm {
+  id        String   @id @default(cuid())
+  clienteId String
+  name      String   @db.VarChar(200)
+  slug      String   @db.VarChar(120)
+  status    String   @default("PUBLISHED") @db.VarChar(20)
+  steps     Json
+  source    String?  @db.VarChar(64)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cliente   Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, slug])
+  @@index([clienteId, status])
+  @@index([slug])
+}
+
+model CommerceProduct {
+  id              String   @id @default(cuid())
+  clienteId       String
+  name            String   @db.VarChar(200)
+  slug            String   @db.VarChar(120)
+  description     String?  @db.Text
+  type            String   @default("FILE") @db.VarChar(20)
+  status          String   @default("PUBLISHED") @db.VarChar(20)
+  priceCents      Int      @default(0)
+  coverUrl        String?  @db.VarChar(500)
+  salesPage       Json?
+  maxInstallments Int?
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  cliente         Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  orders          CommerceOrder[]
+  orderItems      CommerceOrderItem[]
+  entitlements    CommerceEntitlement[]
+  offersAsTrigger CommerceOffer[] @relation("CommerceTriggerProduct")
+  offersAsOffered CommerceOffer[] @relation("CommerceOfferedProduct")
+  couponProducts  CommerceCouponProduct[]
+
+  @@unique([clienteId, slug])
+  @@index([clienteId, active])
+  @@index([clienteId, status])
+}
+
+model CommerceOffer {
+  id               String          @id @default(cuid())
+  clienteId        String
+  triggerProductId String
+  offeredProductId String
+  type             String          @db.VarChar(30)
+  discountPercent  Int             @default(0)
+  headline         String?         @db.VarChar(255)
+  description      String?         @db.Text
+  position         Int             @default(0)
+  active           Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  cliente          Cliente         @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  triggerProduct   CommerceProduct @relation("CommerceTriggerProduct", fields: [triggerProductId], references: [id], onDelete: Cascade)
+  offeredProduct   CommerceProduct @relation("CommerceOfferedProduct", fields: [offeredProductId], references: [id], onDelete: Cascade)
+
+  @@index([clienteId, active])
+  @@index([triggerProductId, type])
+}
+
+model CommerceCoupon {
+  id        String   @id @default(cuid())
+  clienteId String
+  code      String   @db.VarChar(64)
+  type      String   @db.VarChar(20)
+  value     Int
+  maxUses   Int?
+  usedCount Int      @default(0)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  cliente   Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  products  CommerceCouponProduct[]
+  orders    CommerceOrder[]
+
+  @@unique([clienteId, code])
+  @@index([clienteId, active])
+}
+
+model CommerceCouponProduct {
+  couponId  String
+  productId String
+  coupon    CommerceCoupon  @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  product   CommerceProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([couponId, productId])
+}
+
+model CommerceOrder {
+  id              String   @id @default(cuid())
+  clienteId       String
+  email           String   @db.VarChar(255)
+  name            String?  @db.VarChar(200)
+  cpf             String?  @db.VarChar(20)
+  phone           String?  @db.VarChar(40)
+  status          String   @default("PENDING") @db.VarChar(40)
+  subtotalCents   Int      @default(0)
+  discountCents   Int      @default(0)
+  totalCents      Int      @default(0)
+  couponId        String?
+  mpOrderId       String?  @db.VarChar(120)
+  mpPaymentId     String?  @db.VarChar(120)
+  pixQrCode       String?  @db.Text
+  pixQrCodeBase64 String?  @db.Text
+  pixCopyPaste    String?  @db.Text
+  eventId         String?  @db.VarChar(120)
+  fbp             String?  @db.VarChar(255)
+  fbc             String?  @db.VarChar(255)
+  fbclid          String?  @db.VarChar(255)
+  utmSource       String?  @db.VarChar(120)
+  utmMedium       String?  @db.VarChar(120)
+  utmCampaign     String?  @db.VarChar(120)
+  utmContent      String?  @db.VarChar(120)
+  utmTerm         String?  @db.VarChar(120)
+  parentOrderId   String?
+  termsAcceptedAt DateTime?
+  approvedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  /// legado: produto principal (primeiro item) para listagens simples
+  productId       String?
+  contactId       String?
+  cliente         Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  contact         NativeContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  coupon          CommerceCoupon? @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  product         CommerceProduct? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  items           CommerceOrderItem[]
+  entitlements    CommerceEntitlement[]
+  parent          CommerceOrder?  @relation("CommerceOrderUpsell", fields: [parentOrderId], references: [id])
+  children        CommerceOrder[] @relation("CommerceOrderUpsell")
+
+  @@index([clienteId, status])
+  @@index([clienteId, createdAt])
+  @@index([clienteId, contactId])
+  @@index([mpOrderId])
+  @@index([email])
+}
+
+model CommerceOrderItem {
+  id           String          @id @default(cuid())
+  orderId      String
+  productId    String
+  name         String          @db.VarChar(200)
+  priceCents   Int
+  quantity     Int             @default(1)
+  installments Int?
+  order        CommerceOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      CommerceProduct @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model CommerceEntitlement {
+  id        String          @id @default(cuid())
+  clienteId String
+  email     String          @db.VarChar(255)
+  productId String
+  orderId   String?
+  grantedAt DateTime        @default(now())
+  revokedAt DateTime?
+  cliente   Cliente         @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  product   CommerceProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order     CommerceOrder?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@unique([clienteId, email, productId])
+  @@index([clienteId, email])
+}
+
+/// Pedidos de marketplaces externos (ML, Shopee, Magalu…) — não misturar com CommerceOrder (checkout MP).
+model MarketplaceOrder {
+  id                String    @id @default(cuid())
+  clienteId         String
+  provider          String    @db.VarChar(40)
+  externalId        String    @db.VarChar(80)
+  status            String?   @db.VarChar(40)
+  totalCents        Int?
+  /// Soma das sale_fee (comissão ML) dos itens
+  saleFeeCents      Int?
+  /// Custo de frete para o vendedor (quando disponível)
+  shippingCostCents Int?
+  /// GMV − fees − frete (aproximação)
+  netCents          Int?
+  currency          String?   @default("BRL") @db.VarChar(8)
+  shippingId        String?   @db.VarChar(80)
+  shippingStatus    String?   @db.VarChar(40)
+  /// me2, custom, flex, fulfillment, etc.
+  shippingMode      String?   @db.VarChar(40)
+  logisticType      String?   @db.VarChar(40)
+  contactId         String?
+  leadId            String?
+  buyerName         String?   @db.VarChar(200)
+  buyerEmail        String?   @db.VarChar(255)
+  buyerPhone        String?   @db.VarChar(40)
+  rawPayload        Json?
+  occurredAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  cliente           Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  contact           NativeContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  items             MarketplaceOrderItem[]
+
+  @@unique([clienteId, provider, externalId])
+  @@index([clienteId, provider, occurredAt])
+  @@index([clienteId, createdAt])
+  @@index([clienteId, shippingId])
+}
+
+/// Snapshot de métricas do vendedor no marketplace (visitas + reputação).
+model MarketplaceSellerSnapshot {
+  id                   String   @id @default(cuid())
+  clienteId            String
+  provider             String   @db.VarChar(40)
+  meliUserId           String?  @db.VarChar(40)
+  nickname             String?  @db.VarChar(120)
+  reputationLevel      String?  @db.VarChar(40)
+  powerSellerStatus    String?  @db.VarChar(40)
+  transactionsTotal    Int?
+  ratingsPositive      Float?
+  ratingsNeutral       Float?
+  ratingsNegative      Float?
+  visitsLast30         Int?
+  rawPayload           Json?
+  capturedAt           DateTime @default(now())
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  cliente              Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, provider])
+  @@index([clienteId, capturedAt])
+}
+
+model MarketplaceOrderItem {
+  id              String          @id @default(cuid())
+  orderId         String
+  externalItemId  String?         @db.VarChar(80)
+  title           String          @db.VarChar(300)
+  quantity        Int             @default(1)
+  unitPriceCents  Int             @default(0)
+  lineTotalCents  Int             @default(0)
+  sku             String?         @db.VarChar(120)
+  createdAt       DateTime        @default(now())
+  order           MarketplaceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([externalItemId])
+}
+
+model IgAccountNative {
+  id          String   @id @default(cuid())
+  clienteId   String
+  igUserId    String   @db.VarChar(64)
+  username    String?  @db.VarChar(120)
+  status      String   @default("CONNECTED") @db.VarChar(40)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  cliente     Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, igUserId])
+  @@index([clienteId])
+}
+
+/// WhatsApp Cloud API — conversa por telefone E.164 no workspace.
+model WaConversation {
+  id              String         @id @default(cuid())
+  clienteId       String
+  contactId       String?
+  phone           String         @db.VarChar(32)
+  contactName     String?        @db.VarChar(200)
+  status          String         @default("OPEN") @db.VarChar(40)
+  windowExpiresAt DateTime?
+  lastMessageAt   DateTime?
+  handedOffAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  cliente         Cliente        @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  contact         NativeContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  messages        WaMessage[]
+
+  @@unique([clienteId, phone])
+  @@index([clienteId, status, lastMessageAt])
+  @@index([clienteId, lastMessageAt])
+}
+
+model WaMessage {
+  id             String         @id @default(cuid())
+  clienteId      String
+  conversationId String
+  direction      String         @db.VarChar(16)
+  type           String         @default("text") @db.VarChar(40)
+  body           String?        @db.Text
+  wamid          String?        @db.VarChar(128)
+  status         String?        @db.VarChar(40)
+  templateName   String?        @db.VarChar(120)
+  metadata       Json?
+  createdAt      DateTime       @default(now())
+  cliente        Cliente        @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  conversation   WaConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, wamid])
+  @@index([conversationId, createdAt])
+  @@index([clienteId, createdAt])
+}
+
+model WaWebhookEvent {
+  id          String    @id @default(cuid())
+  clienteId   String?
+  phoneNumberId String? @db.VarChar(64)
+  payload     Json
+  processed   Boolean   @default(false)
+  error       String?   @db.Text
+  createdAt   DateTime  @default(now())
+  processedAt DateTime?
+  cliente     Cliente?  @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+
+  @@index([processed, createdAt])
+  @@index([clienteId, createdAt])
+}
+
+model WaTemplateRef {
+  id        String   @id @default(cuid())
+  clienteId String
+  name      String   @db.VarChar(120)
+  language  String   @default("pt_BR") @db.VarChar(16)
+  status    String   @default("APPROVED") @db.VarChar(40)
+  category  String?  @db.VarChar(40)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cliente   Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, name, language])
+  @@index([clienteId, status])
+}
+
+/// Draft do wizard Criar → Campanha Meta (payload JSON do builder).
+model MetaCampaignDraft {
+  id                 String    @id @default(cuid())
+  clienteId          String
+  adAccountId        String    @db.VarChar(64)
+  name               String    @db.VarChar(255)
+  status             String    @default("DRAFT") @db.VarChar(20)
+  /// DRAFT | PUBLISHING | PARTIAL | PUBLISHED | FAILED
+  creationRequestId  String    @unique @db.VarChar(64)
+  payload            Json      @default("{}")
+  lastError          String?   @db.Text
+  sourceMetaCampaignId String? @db.VarChar(64)
+  publishedCampaignId String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  cliente            Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  publishedCampaign  MetaCampaignBuilder? @relation(fields: [publishedCampaignId], references: [id], onDelete: SetNull)
+
+  @@index([clienteId, createdAt])
+  @@index([clienteId, status])
+}
+
+/// Campanha Meta criada pelo builder (não confundir com model Meta = KPIs).
+model MetaCampaignBuilder {
+  id                   String   @id @default(cuid())
+  clienteId            String
+  adAccountId          String   @db.VarChar(64)
+  metaCampaignId       String   @db.VarChar(64)
+  name                 String   @db.VarChar(255)
+  objective            String   @db.VarChar(64)
+  specialAdCategories  Json     @default("[]")
+  buyingType           String   @default("AUCTION") @db.VarChar(32)
+  configuredStatus     String   @default("PAUSED") @db.VarChar(32)
+  effectiveStatus      String?  @db.VarChar(32)
+  draftId              String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  cliente              Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  drafts               MetaCampaignDraft[]
+  adSets               MetaBuilderAdSet[]
+
+  @@unique([clienteId, metaCampaignId])
+  @@index([clienteId, createdAt])
+}
+
+model MetaBuilderAdSet {
+  id                  String   @id @default(cuid())
+  campaignId          String
+  metaAdsetId         String   @db.VarChar(64)
+  name                String   @db.VarChar(255)
+  dailyBudget         Int?
+  lifetimeBudget      Int?
+  optimizationGoal    String?  @db.VarChar(64)
+  billingEvent        String?  @db.VarChar(64)
+  bidStrategy         String?  @db.VarChar(64)
+  targetingJson       Json     @default("{}")
+  promotedObjectJson  Json?
+  startTime           DateTime?
+  endTime             DateTime?
+  configuredStatus    String   @default("PAUSED") @db.VarChar(32)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  campaign            MetaCampaignBuilder @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  creatives           MetaBuilderCreative[]
+  ads                 MetaBuilderAd[]
+
+  @@unique([campaignId, metaAdsetId])
+  @@index([campaignId])
+}
+
+model MetaBuilderCreative {
+  id               String   @id @default(cuid())
+  adsetId          String
+  metaCreativeId   String?  @db.VarChar(64)
+  localKey         String   @db.VarChar(64)
+  name             String   @db.VarChar(255)
+  type             String   @db.VarChar(32)
+  imageHash        String?  @db.VarChar(128)
+  videoId          String?  @db.VarChar(64)
+  primaryText      String?  @db.Text
+  headline         String?  @db.VarChar(500)
+  description      String?  @db.VarChar(500)
+  cta              String?  @db.VarChar(64)
+  destinationUrl   String?  @db.VarChar(2000)
+  objectStorySpec  Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  adset            MetaBuilderAdSet @relation(fields: [adsetId], references: [id], onDelete: Cascade)
+  ads              MetaBuilderAd[]
+
+  @@index([adsetId])
+  @@unique([adsetId, localKey])
+}
+
+model MetaBuilderAd {
+  id               String   @id @default(cuid())
+  adsetId          String
+  creativeId       String?
+  metaAdId         String?  @db.VarChar(64)
+  localKey         String   @db.VarChar(64)
+  name             String   @db.VarChar(255)
+  configuredStatus String   @default("PAUSED") @db.VarChar(32)
+  effectiveStatus  String?  @db.VarChar(32)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  adset            MetaBuilderAdSet @relation(fields: [adsetId], references: [id], onDelete: Cascade)
+  creative         MetaBuilderCreative? @relation(fields: [creativeId], references: [id], onDelete: SetNull)
+
+  @@index([adsetId])
+  @@unique([adsetId, localKey])
+}
+
+model MetaApiLog {
+  id              String   @id @default(cuid())
+  clienteId       String
+  draftId         String?  @db.VarChar(64)
+  operation       String   @db.VarChar(64)
+  entityType      String   @db.VarChar(40)
+  entityId        String?  @db.VarChar(64)
+  requestPayload  Json?
+  responsePayload Json?
+  httpStatus      Int?
+  metaErrorCode   Int?
+  metaErrorSubcode Int?
+  metaErrorMessage String? @db.Text
+  createdAt       DateTime @default(now())
+  cliente         Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@index([clienteId, createdAt])
+  @@index([draftId, createdAt])
+}

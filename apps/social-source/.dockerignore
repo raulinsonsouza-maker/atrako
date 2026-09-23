@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.env
+.env.*
+deploy/vps.local.env
+*.md
+docs
+artifacts
+attached_assets
+.local
+.config
+terminals
+agent-transcripts
+**/*.ps1
+scripts/deploy-to-vps.ps1

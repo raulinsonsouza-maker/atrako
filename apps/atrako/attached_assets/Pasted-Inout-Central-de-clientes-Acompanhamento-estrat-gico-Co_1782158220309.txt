@@ -1,0 +1,256 @@
+Inout
+Central de clientes
+Acompanhamento estratégico
+
+Conta Backup - Inout Digital 2
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+CRM
+
+
+Mês atual: 01 de jun. de 2026 a 22 de jun. de 2026
+CRM
+
+Funil & Leads
+Leads no período
+
+33
+
+Fechamentos
+
+0
+
+Taxa de fechamento
+
+0.0%
+
+33
+
+leads
+
+Leads
+12
+36%
+Perdidos
+21
+64%
+Leads
+
+12 leads · 36%
+Oportunidade
+
+9%
+3
+Agendado (SQL)
+
+9%
+3
+Conectados
+
+6%
+2
+Tentativa de Contato
+
+9%
+3
+Entrada
+
+3%
+1
+Perdidos
+
+21 leads · 64%
+Descartado
+
+64%
+21
+CRM
+
+Análise de Origem
+Meta
+23 forms
+Leads no CRM
+
+18
+
+
+18
+
+Leads
+
+
+18
+
+Atend.
+
+
+—
+
+Visitas
+
+
+—
+
+Vendas
+
+18 em atend.
+
+1 duplicado
+CPL Real · CRM
+
+vs R$ 145,44 plataforma
+
+R$ 177,76
+
+Investimento
+
+R$ 3.199,59
+
+Outros canais
+
+Canal	Leads	Ganhos	Conv%	Qualif.
+Orgânico
+3	—	—	—
+Direto
+10	—	—	—
+Outro
+2	—	—	—
+CRM × Meta
+
+Campanha → Conjunto → Anúncio
+Campanha / Conjunto / Anúncio	Leads	Visitas	Atend.	Vendas	Valor	Invest.	CPL	Conv%
+
+28/05 - [IN] [RAUL] [NOVO TESTE - MAIOR DIRECIONAMENTO] - 4
+8	—	8	—	—	R$ 1.549,20	R$ 193,65	0%
+
+28/05 - [IN] [RAUL] [NOVO TESTE - MAIOR DIRECIONAMENTO] — 3
+4	—	4	—	—	R$ 362,27	R$ 90,57	0%
+
+28/05 - [IN] [RAUL] [NOVO TESTE - MAIOR DIRECIONAMENTO] — 2
+3	—	3	—	—	R$ 389,83	R$ 129,94	0%
+
+28/05 - [RAUL] [REMARKETING] [OTIMIZADA]
+1	—	1	—	—	R$ 505,11	R$ 505,11	0%
+
+28/05 - [IN] [RAUL] [NOVO TESTE - MAIOR DIRECIONAMENTO] — 1
+1	—	1	—	—	R$ 215,86	R$ 215,86	0%
+
+28/05 - [IN] [RAUL] [NOVO TESTE - MAIOR DIRECIONAMENTO] — 5
+1	—	1	—	—	R$ 172,33	R$ 172,33	0%
+CRM
+
+Detalhamento dos Leads
+Buscar por nome, e-mail ou telefone…
+Etapa	Contato	Origem	Entrada	Valor
+Entrada
+Laiane Ribeiro
+
+lsribeiro@nortisinc.com.br
+
+Direto
+22/06/26	—
+Conectados
+Henrique Pinheiro
+
+soil.engconsult@gmail.com
+
+Meta
+22/06/26	—
+Descartado
+Fernanda Duque
+
+fduque242@gmail.com
+
+Direto
+21/06/26	—
+Tentativa de Contato
+carol Migliano Boris
+
+l7montini@gmail.com
+
+Meta
+20/06/26	—
+Tentativa de Contato
+Rafael Junqueira
+
+Outro
+19/06/26	—
+Tentativa de Contato
+BRUNA QUARTAROLLO CABRINI
+
+quartarollobruna@gmail.com
+
+Orgânico
+15/06/26	—
+Descartado
+STEFANY CRISTINE SOARES DOS SANTOS
+
+stefanyragner.direcionalvendas@gmail.com
+
+Direto
+15/06/26	—
+Descartado
+Abraão Silveira
+
+silveiraabraao25@gmail.com
+
+Meta
+14/06/26	—
+Oportunidade
+Marco Junior
+
+marco.p.jr@hotmail.com
+
+Meta
+14/06/26	—
+Descartado
+Quattuor Construtora
+
+quattuorincorporacao@gmail.com
+
+Meta
+14/06/26	—
+Descartado
+Renan Junio da Silva
+
+silvalimaprojetos@gmail.com
+
+Meta
+14/06/26	—
+Agendado (SQL)
+Pedro Henrique Araújo de Oliveira
+
+phaocontatos2@gmail.com
+
+Direto
+14/06/26	—
+Agendado (SQL)
+Márcio Henrique
+
+marciohcsalim@gmail.com
+
+Direto
+13/06/26	—
+Descartado
+Edgar Depolito
+
+edgar.depolito@gmail.com
+
+Meta
+13/06/26	—
+Descartado
+Jairo Santos
+
+joaojairo@hotmail.com
+
+Meta
+13/06/26	—
+
+1
+2
+3
+
+R$ 0,00

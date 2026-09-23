@@ -1,0 +1,3470 @@
+FORMAT: 1A HOST: https://api.exactspotter.com/v3/
+API - Exact Spotter V2
+O objetivo deste documento é auxiliar os clientes da Exact Sales na execução de atividades oferecidas
+no sistema do Exact Spotter.
+A API do Exact Spotter disponibiliza um serviço para acessar e manipular dados sob o protocolo HTTP
+no padrão OData. Este protocolo permite que você realize filtros e ordenações utilizando "comandos"
+como select, filter, top, count, etc. Para mais informações, recomendamos este tutorial.
+Por padrão os registros serão retornados de 500 em 500, mas por meio do método $skip é possível
+fazer a paginação dos registros retornados.
+URL para as requisições: https://api.exactspotter.com/v3
+Autenticação: em todas as chamadas deverá ser informado no header o parâmetro com token da
+empresa (token_exact = token). O token deverá ser gerado no sistema Exact Spotter, em
+CONFIGURAÇÕES > INTEGRAÇÕES. Importante: Não compartilhe o token!
+Rate limit: todos os endpoints têm um limite de 30 requisições para cada intervalo de 20 segundos.
+Todos os campos data/hora estão no fuso horário UTC.
+Os dados enviados devem obedecer o padrão UTF-8.
+Quando o parâmetro estiver entre { }, o mesmo deverá ser enviado sem elas.
+ATENÇÃO ao ajuste nos endpoints abaixo da internacionalização dos telefones DDI + DDD sem o 0 e
+o número.
+Atividades - Atualizar [/tasksUpdate/{id}]
+Esta seção está atrelada a ação de atualizar uma atividade específica, passando o id da atividade
+como parâmetro na requisição da URL.
+Campos disponíveis para atualizar a atividade:
+leadId = identificador do lead,
+title = Nome da atividade,
+note = Anotações da atividade,
+dueDate = Data e hora da atividade, ex = 2019-12-10T14 =59 =39.000Z,
+sdrId = identificador do usuário responsável pela atividade
+contactId = Identificador do contato
+timeNotification = tempo para notificação da atividade,
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 1/100
+activityTypeId = Identificador do tipo de atividade
+Atualizar Atividade [PUT]
+Request (application/json)
+Headers token_exact: token
+Response 200
+ {
+ "leadId": 123456,
+ "title": "Nome da atividade",
+ "note": "Anotações da atividade",
+ "dueDate": "Data e hora da atividade, ex: 2019-12-10T14:59:39.000Z",
+ "sdrId": 123456,
+ "contactId": 102030,
+ "timeNotification": 5,
+ "activityTypeId": 1
+ }
+Atividades - Concluir [/ActivitiesDone/{id}]
+Esta seção está atrelada a ação de concluir uma atividade específica, passando o id da atividade
+como parâmetro na requisição da URL.
+Campos necessários para concluir a atividade:
+leadId = Identificação do lead;
+sdrEmail = E-mail do pré-vendedor;
+userEmail = E-mail do usuário
+Concluir Atividade [PUT]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+ {
+ "leadId": 123456,
+ "sdrEmail":"sdr@email.com.br",
+ "userEmail":"user@email.com.br"
+ }
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 2/100
+Atividades - Excluir [/tasksRemove/{id}]
+Esta seção está atrelada a exclusão de uma determinada atividade.
+Parâmetro obrigatório
+id = Identificador da atividade
+Remover atividade [DELETE]
+Request (application/json)
+Headers token_exact: token
+Response 204 (application/json)
+Atividades - Inserção [/taskAdd]
+Esta seção está atrelada a ação de inserir uma atividade.
+Campos para inserção da atividade:
+leadId = identificador do lead,
+title = Nome da atividade,
+note = Anotações da atividade,
+dueDate = Data e hora da atividade, ex = 2019-12-10T14 =59 =39.000Z,
+sdrId = identificador do usuário responsável pela atividade
+contactId = Identificador do contato
+timeNotification = tempo para notificação da atividade,
+activityTypeId = Identificador do tipo de atividade
+Inserir Atividade [POST]
+Request (application/json)
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 3/100
+ + Headers
+ token_exact: token
+
+ {
+ "leadId": 123456,
+ "title": "Nome da atividade",
+ "note": "Anotações da atividade",
+ "dueDate": "Data e hora da atividade, ex: 2019-12-10T14:59:39.000Z",
+ "sdrId": 123456,
+ "contactId": 102030,
+ "timeNotification": 5,
+ "activityTypeId": 1
+ }
+Response 200 (application/json)
+ {
+ "@odata.context": "https://api.exactspotter.com/v3/$metadata#Edm.Boolean",
+ "value": id da atividade
+ }
+Atividades - Listar tipo de atividades [/TasksType]
+Este endpoint lista todas os tipos de atividades da empresa. Utilize o protocolo OData para
+filtros/ordenação/etc.
+Campos exibidos na listagem:
+id = identificador do tipo de atividade;
+value = Descrição do tipo
+isCustom = true ou false. Identifica se o tipo da atividade foi cadastrado pela empresa.
+Listar Tipo de atividades [GET]
+Request (application/json)
+Headers
+ token_exact: token
+Response 200 (application/json)
+Body
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 4/100
+Atividades - Listagem [/Tasks]
+Este endpoint lista todas as atividades da empresa. Utilize o protocolo OData para
+filtros/ordenação/etc.
+Campos para inserção:
+LeadId (Optional, number) - Id do Lead.
+Listar Atividades [GET]
+Request (application/json)
+Headers
+ token_exact: token
+Response 200 (application/json)
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 5/100
+ {
+ "@odata.context": "https://api.exactspotter.com/v3/$metadata#Tasks",
+ "value": [
+ {
+ "id": 123,
+ "leadId": 123456,
+ "title": "Título da atividade",
+ "note": "Observação atividade",
+ "dueDate": "2022-02-24 18:00:00.0000000",
+ "activityTypeId": 3,
+ "timeNotification": 0,
+ "userEmail": "e-mail do usuário",
+ "status": "status da atividade",
+ "closedDate": "data de conclusão da atividade",
+ "createdAt": "2024-10-16T12:57:49.829893Z",
+ "updatedAt": "2024-10-16T12:59:44.3012712Z",
+ "contacts": [
+ {
+ "id": 123456,
+ "name": "Nome do contato 1",
+ "lastName": "Ulitmo nome do contato 1",
+ "email": "e-mail principal do primeiro contato"
+ },
+ {
+ "id": 123456,
+ "name": "Nome do contato 2",
+ "lastName": "Ultimo nome do contato 2",
+ "email": "e-mail principal do segundo contato"
+ }
+ ],
+ "sdr": {
+ "id": 123456,
+ "name": "Nome do pré-vendedor",
+ "lastName": "Sobrenome do pré-vendedor",
+ "email": "e-mail pré vendedor"
+ }
+ }
+] }
+Bonificação - Listagem [/bonus]
+A funcionalidade traz uma lista da bonificação recebida pelos pré-vendedores. Utilize o protocolo
+OData para filtros/ordenação/etc.
+Dados que serão exibidos na listagem:
+id = Identificação da bonificação;
+bonusDate = Data/hora no qual o pré-vendedor recebeu a bonificação;
+bonus = Valor da bonificação recebida;
+metricType = Indica qual tipo de bonificaçãoque foi recebida pelo pré-vendedor.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 6/100
+4 : para bonificação por venda;
+5 : para para bonificação por atingimento de meta;
+6: para bonificação por atingimento da super-meta;
+saleId = Id da venda em caso da bonificação recebida ser por venda ;
+sdr = Informações do pré-vendedor:
+Id = id do pré-vendedor;
+name = Nome do pré-vendedor;
+lastName = Sobrenome do pré-vendedor;
+email = E-mail do pré-vendedor;
+Listar Bonificação [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body
+{ "@odata.context": "https://api.exactspotter.com/v3/$metadata#Bonus", "value": [
+ {
+ "id": 1234,
+ "bonusDate": "2021-05-12T20:11:27.6558769Z",
+ "bonus": 50.0,
+ "metricType": 4,
+ "saleId": 123456,
+ "sdr": {
+ "id": 123,
+ "name": "Nome do pré-vendedor",
+ "lastName": "Sobrenome do pré-vendedor",
+ "email": "email pré-vendedor"
+ }
+ }
+ ]
+}
+Boxes - Atualização [/BoxesUpdate/{id}]
+Procedimento de atualização de um box é utilizado todas as vezes que se quer modificar algum valor
+já inserido anteriormente, enviando o id do box como parâmetro na URL de requisição. Neste caso há
+atualização apenas dos campos status e descrição. Somente boxes sem um Lead associado podem
+ser alterados com a finalidade de ocupá-los ou desocupá-los. Em suma, permite a alteração de boxes
+existentes para ocupá-los ou desocupá-los.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 7/100
+Campos utilizados:
+Status = Determina se o box está acessível ou ocupado;
+Description = Observações referente ao box.
+Parâmetro obrigatório:
+id = Identificador do box.
+Atualizar Box [PUT]
+Request (application/json)
+Headers token_exact: token
+Body
+ {
+ "status": "Ocupado",
+ "description": "Descrição"
+ }
+Response 200 (application/json)
+Body
+1
+Boxes - Exclusão [/BoxesRemove/{id}]
+Procedimento de exclusão é o responsável por deletar um box que foi criado anteriormente, enviando
+o id do box como parâmetro na URL da requisição. Somente boxes sem um Lead associado podem
+ser excluídos.
+Parâmetro obrigatório:
+id - Identificador do box.
+Excluir Box [DELETE]
+Request (application/json)
+Headers
+token_exact: token
+Response 204 (application/json)
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 8/100
+Boxes - Inserção [/BoxesAdd]
+Esta seção está atrelada a inserção de um box na empresa, fazendo referência aos dados que
+deverão ser inseridos no ato da criação. Em suma, trata-se da inserção de boxes para os vendedores.
+Campos utilizados para realizar a inserção:
+start = data e horário de início (YYYY-MM-dd HH:mm);
+end = data e horário de fim (YYYY-MM-dd HH:mm);
+salesRepEmail= e-mail do vendedor;
+status = status do box (available, busy);
+description = observações do box;
+address = endereço da reunião;
+typeMeeting = tipo de reunião (on site, web, call).
+Campos obrigatórios:
+start;
+end;
+salesRepEmail;
+status;
+Inserir Box [POST]
+Request (application/json)
+Headers token_exact: token
+Body
+ {
+ "start": "2021-02-15T10:00:00Z",
+ "end": "2021-02-15T22:30:00Z",
+ "salesRepEmail": "aferreira+vend@exactsales.com.br",
+ "status": "Busy",
+ "description": "Uma observação",
+ "address": null,
+ "typeMeeting": null
+ }
+Response 201 (application/json)
+Body
+{ "@odata.context": "https://api.exactspotter.com/v3/$metadata#Edm.Int32", "value": 341578 }
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 9/100
+Boxes - Listagem [/Boxes]
+A funcionalidade traz uma lista dos boxes existentes da empresa. Utilize o protocolo OData para
+filtros/ordenação/etc.
+Dados que serão exibidos na listagem:
+start = data e horário de início;
+end = data e horário de fim;
+salesRep = nome do vendedor;
+salesRepEmail = e-mail do vendedor;
+status = status do box (available, busy);
+description = observações do box;
+typeMeeting = tipo de reunião (on site, web, call);
+address = endereço da reunião;
+leadId = referente ao id do lead;
+id = identificador do box.
+Observações:
+Boxes com status "available" só serão retornados quando a configuração de agendamento for
+por Box;
+Listar [GET]
+Request (application/json)
+Headers
+ token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#Boxes", "value": [
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 10/100
+ {
+ "start": "2021-02-17T11:00:00Z",
+ "end": "2021-02-17T12:00:00Z",
+ "salesRep": "Vendedor",
+ "salesRepEmail": "ven@dor.com",
+ "status": "available",
+ "description": null,
+ "typeMeeting": "",
+ "address": null,
+ "leadId": 0,
+ "id": 341396
+ }
+ ]
+}
+Campos Personalizados Leads - Inserção [/CustomFieldsAdd]
+Esta seção está atrelada a inserção de um campo personalizado de leads referente a configuração do
+sistema.
+Campos utilizados para realizar a inserção:
+Campos gerais:
+name = Nome do campo personalizado;
+type = Tipo do campo:
+0 - Texto;
+1 - TextoLongo;
+2 - Número;
+3 - Escolha Única;
+4 - Escolha Múltipla;
+5 - Link.
+required = Informa se o campo personalizado é obrigatório ao cadastrar Lead;
+onlyApi = Parametrizado para API, não exibido no cadastro manual do Lead;
+maxLength = Informa o tamanho do campo;
+uniqueValue = Informa se o campo não vai aceitar respostas iguais;
+format = Informa se o campo vai ter alguma máscara.
+Campo de opções (options):
+value = Descrição da opção.
+Observações:
+Somente um campo personalizado poderá ser inserido por requisição.
+Inserir Campo Personalizado Leads [POST]
+Request (application/json)
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 11/100
+Headers token_exact: token
+Body { "name":"Campo personalizado multipla escolha", "type":4, "required":true,
+"onlyApi":false, "maxLength":99, "uniqueValue":false, "format":"999.999.999-99", "options":[ {
+"value":"Opção 1" }, { "value":"Opção 2" } ] }, { "name":"Campo personalizado texto", "type":0,
+"required":false, "onlyApi":false, "maxLength":999, "uniqueValue":false, "format":"999.999.999-
+51", "options":[] }
+Response 201 (application/json)
+Body
+{ "@odata.context": "https://api.exactspotter.com/v3/$metadata#CustomFieldsAdd", “Id”:
+“123456” }
+Campos Personalizados Organização - Inserção
+[/CustomFieldsAddOrganization]
+Esta seção está atrelada a inserção de um campo personalizado de organização referente a
+configuração do sistema.
+Campos utilizados para realizar a inserção:
+Campos gerais:
+name = Nome do campo personalizado;
+type = Tipo do campo:
+0 - Texto;
+1 - TextoLongo;
+2 - Número;
+3 - Escolha Única;
+4 - Escolha Múltipla;
+5 - Link.
+required = Informa se o campo personalizado é obrigatório ao cadastrar Empresa/Organização;
+maxLength = Informa o tamanho do campo;
+uniqueValue = Informa se o campo não vai aceitar respostas iguais;
+format = Informa se o campo vai ter alguma máscara.
+Campo de opções (options):
+value = Descrição da opção.
+Campos obrigatórios:
+name.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 12/100
+Observações:
+Somente um campo personalizado poderá ser inserido por requisição.
+Inserir Campo Personalizado Organização [POST]
+Request (application/json)
+Headers token_exact: token
+Body { "name":"Campo personalizado texto", "type":0, "required":false, "maxLength":999,
+"uniqueValue":false, "format":"999.999.999-99", "options":[] }, { "name":"Campo personalizado
+texto longo", "type":1, "required":false, "maxLength":999, "uniqueValue":false, "options":[] }, {
+"name":"Campo personalizado número", "type":2, "required":false, "uniqueValue":false,
+"options":[] }, { "name":"Campo personalizado escolha única", "type":3, "required":false,
+"options":[ { "value":"Opção 1" }, { "value":"Opção 2" } ] }, { "name":"Campo personalizado
+multipla escolha", "type":4, "required":true, "options":[ { "value":"Opção 1" }, { "value":"Opção 2"
+} ] }, { "name":"Campo personalizado link", "type":5, "required":true, "uniqueValue":true,
+"options":[] }
+Response 201 (application/json)
+Body
+{ "@odata.context":
+"https://api.exactspotter.com/v3/$metadata#CustomFieldsAddOrganization", “Id”: id do campo
+personalizado criado }
+Campos Personalizados Leads - Listagem [/CustomFields]
+Lista de campos personalizados cadastrados pela empresa nas configurações.
+Campos que serão exibidos na listagem:
+name = Nome do campo personalizado;
+key = Chave do campo personalizado;
+type = Tipo do campo:
+Texto;
+TextoLongo;
+Numero;
+EscolhaUnica;
+EscolhaMultipla;
+Link.
+required = Informa se o campo personalizado é de preenchimento obrigatório;
+maxLength = Informa o tamanho do campo;
+uniqueValue = Informa se o campo não vai aceitar respostas iguais;
+format = Informa se o campo vai ter alguma máscara;
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 13/100
+id = Id do campo personalizado.
+Campo de opções (options):
+id = id da opção;
+value = Valor da opção
+Listar [GET]
+Request (application/json)
+Headers
+ token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#CustomFields", "value": [ {
+"id": 123, "name": "Campo customizado A", "key": "_campocustomizadoa", "type":
+"EscolhaUnica", "required": true, "onlyApi": false, "maxLength": null, "uniqueValue": false,
+"format": null, "options": [ { "id": 123, "value": "Opção 1" }, { "id": 456, "value": "Opção 2" }, { "id":
+789, "value": "Opção 3" } ] }, { "id": 321, "name": "Campo customizado B", "key":
+"_campocustomizadob", "type": "Texto", "required": false, "onlyApi": true, "maxLength": null,
+"uniqueValue": false, "format": null, "options": [] } ] }
+Campos Personalizados Organizações - Listagem
+[/CustomFieldsOrganization]
+Lista de campos personalizados cadastrados pela empresa nas configurações.
+Campos que serão exibidos na listagem:
+name = Nome do campo personalizado;
+key = Chave do campo personalizado;
+type = Tipo do campo:
+Texto;
+TextoLongo;
+Numero;
+EscolhaUnica;
+EscolhaMultipla;
+Link.
+required = Informa se o campo personalizado é de preenchimento obrigatório;
+maxLength = Informa o tamanho do campo;
+uniqueValue = Informa se o campo não vai aceitar respostas iguais;
+format = Informa se o campo vai ter alguma máscara;
+id = Id do campo personalizado.
+Campo de opções (options):
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 14/100
+id = id da opção;
+value = Valor da opção
+Listar [GET]
+Request (application/json)
+Headers
+ token_exact: token
+Response 200 (application/json)
+Body { "@odata.context":
+"https://api.exactspotter.com/v3/$metadata#CustomFieldsOrganization", "value": [ { "id":
+123456, "name": "texto", "key": "_texto", "type": "Texto", "required": false, "maxLength": null,
+"uniqueValue": false, "format": "", "options": [] }, { "id": 321321, "name": "textolongo", "key":
+"_textolongo", "type": "Texto", "required": false, "maxLength": null, "uniqueValue": false, "format":
+"", "options": [] }, { "id": 12321, "name": "numero", "key": "_numero", "type": "Numero",
+"required": false, "maxLength": null, "uniqueValue": false, "format": null, "options": [] }, { "id":
+6542, "name": "escolhaunica", "key": "_escolhaunica", "type": "EscolhaUnica", "required": false,
+"maxLength": null, "uniqueValue": false, "format": null, "options": [ { "id": 6543, "value": "Opcao
+1" }, { "id": 6544, "value": "Opcao 2" }, { "id": 6545, "value": "Opcao 3" } ] }, { "id": 0001, "name":
+"multiplaescolha", "key": "_multiplaescolha", "type": "EscolhaMultipla", "required": false,
+"maxLength": null, "uniqueValue": false, "format": null, "options": [ { "id": 0002, "value": "Escolha
+A" }, { "id": 1000, "value": "Escolha B" }, { "id": 2223, "value": "Escolha C" } ] }, { "id": 202020,
+"name": "link", "key": "_link", "type": "Link", "required": false, "maxLength": null, "uniqueValue":
+false, "format": null, "options": [] } ] }
+Configurações de Agendamento - Listagem [/meetingsettings]
+Este endpoint retorna as configurações de reuniões de uma empresa, incluindo o intervalo de exibição
+dos boxes de reunião, se o horário comercial está habilitado e os detalhes do horário comercial tanto
+da empresa quanto dos usuários vendedores.
+Campos que serão exibidos na listagem:
+meetingBoxInterval = Intervalo de exibição de boxes de reunião, em minutos.
+businessHoursEnabled = Indica se a empresa utiliza horário comercial.
+companyBusinessHours = Lista com o horário comercial da empresa por dia da semana
+(exibido apenas se businessHoursEnabled for true).
+userBusinessHours = Lista com o horário comercial de cada usuário vendedor por dia da
+semana (exibido apenas se businessHoursEnabled for true).
+calendarType = Tipo de agenda usada (exibido apenas se businessHoursEnabled for true):
+0 - Nenhuma
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 15/100
+1 - Google
+2 - Office
+meetingInterval = Intervalo entre reuniões em minutos.
+defaultMeetingDuration = Duração padrão das reuniões em minutos.
+Listar Configuração de Agendamento [GET]
+Request
+Headers token_exact: token
+Response 200 (application/json)
+Body
+{ "meetingBoxInterval": 30, "businessHoursEnabled": true, "companyBusinessHours": [ { "day":
+"Monday", "startTime": "08:00", "endTime": "18:00" }, { "day": "Tuesday", "startTime": "08:00",
+"endTime": "18:00" }, { "day": "Wednesday", "startTime": "08:00", "endTime": "18:00" }, { "day":
+"Thursday", "startTime": "08:00", "endTime": "18:00" }, { "day": "Friday", "startTime": "08:00", "endTime":
+"18:00" } ], "userBusinessHours": [ { "userId": 123, "businessHours": [ { "day": "Monday", "startTime":
+"09:00", "endTime": "17:00" }, { "day": "Tuesday", "startTime": "09:00", "endTime": "17:00" }, { "day":
+"Wednesday", "startTime": "09:00", "endTime": "17:00" }, { "day": "Thursday", "startTime": "09:00",
+"endTime": "17:00" }, { "day": "Friday", "startTime": "09:00", "endTime": "17:00" } ] }, { "userId": 124,
+"businessHours": [ { "day": "Monday", "startTime": "10:00", "endTime": "18:00" }, { "day": "Tuesday",
+"startTime": "10:00", "endTime": "18:00" }, { "day": "Wednesday", "startTime": "10:00", "endTime":
+"18:00" }, { "day": "Thursday", "startTime": "10:00", "endTime": "18:00" }, { "day": "Friday", "startTime":
+"10:00", "endTime": "18:00" } ] } ], "calendarType": 1, "meetingInterval": 15, "defaultMeetingDuration":
+60 }
+Contatos - Atualização [/PersonsUpdate/{id}]
+Esta seção está atrelada a atualização de um contato referente a um lead que já esteja presente na
+base da Empresa Cliente Solicitante, passando o id deste contato como referência na parametrização
+da URL de requisição.
+Campos utilizados para realizar a atualização:
+email = E-mail principal do contato que será cadastrado;
+name = Nome do contato que será cadastrado;
+jobTitle = O cargo que este contato ocupa;
+ddiPhone1 = DDI do país;
+phone1 = Opção principal de telefone do contato; +ddiPhone2 = Segunda opção do DDI do
+país;
+phone2 = Segunda opção de telefone do contato;
+messagingPlatform = Plataforma principal de mensagens utilizada pelo contato;
+idMessagingPlataform = seu endereço principal na plataforma de mensagens;
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 16/100
+mainContact = Indica se é o contato principal do lead.Se o valor: TRUE, atribui o contato como
+principal do lead.Default : FALSE.
+Atualizar Contato [PUT]
+Request (application/json)
+Headers token_exact: token
+Body { "email": "teste2@teste.com", "name": "Teste 2", "jobTitle": "Teste", "ddiPhone1": "55",
+"phone1": "048991234567", "ddiPhone2": "55", "phone2": "04832321234", "messagingPlatform":
+"GoToMeeting", "idMessagingPlatform": "Skype", "mainContact": true }
+Response 200 (application/json)
+Contatos - Exclusão [/PersonsRemove/{id}]
+Esta seção está atrelada a exclusão de um contato referente a um lead, que se encontra na base da
+Empresa Cliente solicitante, passando o id deste como referência na parametrização da URL de
+requisição.
+Campos obrigatório:
+id = Identificador do contato.
+Excluir Contato [DELETE]
+Request (application/json)
+Headers token_exact: token
+Response 204 (application/json)
+Contatos - Inserção [/personsAdd]
+Esta seção está atrelada ao cadastramento de um contato referente a um lead.
+Campos utilizados para realizar a inserção:
+E-mail = Email do contato que será cadastrado;
+Name = Nome do contato que será cadastrado;
+leadId = Identificador do lead;
+jobTitle = O cargo que este contato ocupa;
+ddiPhone1 = Código da Discagem Direta Internacional;
+phone1 = Primeira opção de telefone do contato;
+ddiPhone2 = Código da Discagem Direta Internacional;
+phone2 = Segunda opção de telefone do contato;
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 17/100
+messagingPlatform = Plataforma de mensagens utilizada pelo contato;
+idMessagingPlataform = seu endereço na plataforma de mensagens;
+mainContact = Indica se é o contato principal do lead.Se o valor: TRUE, atribui o contato como
+principal do lead.Default : FALSE.
+Campos obrigatórios:
+leadId;
+Name.
+Inserir Contato [POST]
+Request (application/json)
+Headers token_exact: token
+Body {
+"email": "teste@teste.com", "name": "Teste Novo Contato Principal", "leadId": 247036, "jobTitle":
+"Teste", "ddiPhone1": "55", "phone1": "048991234567", "ddiPhone2": "55", "phone2":
+"04832321234", "messagingPlatform": "GoToMeeting", "idMessagingPlatform": "Skype",
+"mainContact": true }
+Response 201 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#Edm.Int32", "value":
+222043 }
+Contatos - Listagem [/Persons/{id}]
+Esta seção está atrelada a listagem da base ou lista de contatos de um lead, uma vez que seu id é
+informado no parâmetro da URL de requisição. Utilize o protocolo OData para filtros/ordenação/etc.
+Campo obrigatório:
+id = Identificador do lead.
+Campos mostrados na listagem:
+id = Identificação do contato;
+E-mail = Email do contato que será cadastrado;
+Name = Nome do contato que será cadastrado;
+leadId = Identificação do lead;
+jobTitle = O cargo que este contato ocupa;
+phone1 = Primeira opção de telefone do contato;
+phone2 = Segunda opção de telefone do contato;
+messagingPlatform = Plataforma de mensagens utilizada pelo contato;
+idMessagingPlataform = seu endereço na plataforma de mensagens;
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 18/100
+mainContact = Identifica se é o contato principal do lead (TRUE).
+Listar Contatos [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+ {
+ "@odata.context": "https://api.exactspotter.com/v3/$metadata#Persons",
+ "value": [
+ {
+ "id": 164590,
+"email": "contato1dolead2@teste.com.br",
+"name": "Contato 1 lead 2",
+"leadId": 198589,
+"jobTitle": "Testador 2",
+"phone1": "5548991234567",
+"phone2": "554832321234",
+"messagingPlatform": "Nenhum",
+"idMessagingPlatform": null,
+"mainContact": true
+ }
+ ]
+ }
+Dashboard - Atividades no Funil Gerencial [/FunnelActivity?
+dataInicial=YYYY-MM-DD&dataFinal=YYYY-MM-DD]
+Esta seção está atrelada à consulta das métricas de atividades no Funil Gerencial do Dashboard do
+Spotter, com base no período informado nos parâmetros da URL. O parâmetro de período (dataInicial
+e dataFinal) é obrigatório para a execução da consulta. O parâmetro funilId é opcional; caso não
+informado, serão utilizados os dados do funil configurado como padrão para a empresa. Utilize o
+protocolo OData para aplicação de filtros, ordenação e paginação conforme necessidade. A consulta
+não considera a regra de segmentação configurada nos cards do Dashboard, retornando dados brutos
+e consolidados para o período especificado.
+Parâmetros obrigatório
+dataInicial = Data inicial da consulta no formato YYYY-MM-DD;
+dataFinal = Data final da consulta no formato YYYY-MM-DD.
+Parâmetros opcionais
+funilId = Identificador do funil a ser utilizado na consulta.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 19/100
+Campos mostrados na listagem:
+converted = Quantidade de leads que ingressaram nesta etapa.
+discarded = Quantidade de leads descartados nesta etapa.
+conversionRate = Percentual de leads que avançaram para a próxima etapa, considerando
+apenas as conversões.
+name = Nome da etapa.
+questionnaire = Nome do questionário associado à etapa (aplicável para etapas de filtro ou
+feedback).
+previousGate = Gate correspondente à saída da etapa anterior e entrada nesta etapa.
+id = Identificador único da etapa.
+Listar atividades no funil (gerencial) [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+{ "@odata.context": "http://apiv3.exactspotter.com:81/api/v3/$metadata#FunnelActivity", "value": [ {
+"converted": 4, "discarded": 0, "conversionRate": 133, "name": "Vendidos", "questionnaire": null,
+"previousGate": "Vender", "id": 123 }, { "converted": 3, "discarded": 0, "conversionRate": 150,
+"name": "Qualificados", "questionnaire": "questionario de feed", "previousGate": "Filtrar", "id": 123 },
+{ "converted": 2, "discarded": 1, "conversionRate": 200, "name": "Filtro 2", "questionnaire": null,
+"previousGate": "Manualmente", "id": 123 }, { "converted": 14, "discarded": 1, "conversionRate": null,
+"name": "Entrada", "questionnaire": null, "previousGate": null, "id": 123 },
+ {
+ "converted": 1,
+ "discarded": 0,
+ "conversionRate": 7,
+ "name": "Filtro 1",
+ "questionnaire": "Nome questionário",
+ "previousGate": "Filtrar",
+ "id": 123
+ },
+
+ {
+ "converted": 2,
+ "discarded": 0,
+ "conversionRate": 100,
+ "name": "Agendados",
+ "questionnaire": null,
+ "previousGate": "Agendar",
+ "id": 123
+ }
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 20/100
+], "@odata.nextLink": "https://api.exactspotter.com/v3/FunnelActivity?datainicial=YYYY-MMDD&datafinal=YYYY-MM-DD&$skip=500" }
+Dashboard - Desempenho de vendas: Vendedores
+[/SellerPerformance?dataInicial=YYYY-MM-DD&dataFinal=YYYYMM-DD]
+Este endpoint retorna os dados estruturados do card Desempenho de Vendas – Vendedores,
+permitindo visualizar o valor total de produtos vendidos por cada vendedor dentro do período
+selecionado, comparando com a meta mensal atribuída a cada um. Utilize o protocolo OData para
+aplicar filtros, ordenações e paginação conforme necessário. A consulta não considera segmentações
+de leads configuradas no Dashboard, retornando os dados brutos e consolidados para o intervalo
+especificado. Caso o parâmetro de funil não seja informado, será utilizado o funil padrão da empresa.
+Parâmetros obrigatório
+dataInicial = Data inicial da consulta no formato YYYY-MM-DD;
+dataFinal = Data final da consulta no formato YYYY-MM-DD.
+Parâmetros opcionais
+funilId = Identificador do funil a ser utilizado na consulta.
+Campos mostrados na listagem
+name = Nome do vendedor;
+id = Identificador do vendedor;
+monthlyValues = Lista de objetos contendo os valores mensais de desempenho e meta;
+month = Mês de referência no formato Mês/Ano;
+value = Valor da venda realizada no mês e a meta correspondente (ex: "R$ 14,27 / R$
+100,00").
+Listar Desempenho de vendas: Vendedores [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+{ "@odata.context":"http://apiv3.exactspotter.com:81/api/v3/$metadata#SellerPerformance", "value":[ {
+"name": "Vendedor A", "id": 1234, "monthlyValues": [ { "month": "March/2025", "value": "R$ 14,27 / R$
+100,00" } ] }, { "name": "Vendedor B", "id": 1234, "monthlyValues": [] } ],
+"@odata.nextLink":"https://api.exactspotter.com/v3/SellerPerformance?datainicial=2025-03-
+01&datafinal=2025-03-31&$skip=500" }
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 21/100
+Dashboard - Desempenho de vendas: Pré-vendedores
+[/PreSalesPerformance?dataInicial=YYYY-MMDD&dataFinal=YYYY-MM-DD]
+Este endpoint fornece os dados estruturados do card Desempenho de Vendas – Pré-vendedores,
+permitindo visualizar o volume financeiro gerado a partir das oportunidades repassadas por cada prévendedor no período selecionado, comparando-o com a meta mensal estabelecida para cada um.
+Utilize o protocolo OData para aplicar filtros, ordenações e paginação conforme necessário. A consulta
+não considera segmentações de leads configuradas no Dashboard, retornando os dados brutos e
+consolidados para o intervalo especificado. Caso o parâmetro de funil não seja informado, será
+utilizado o funil padrão da empresa.
+Parâmetros obrigatório
+dataInicial = Data inicial da consulta no formato YYYY-MM-DD;
+dataFinal = Data final da consulta no formato YYYY-MM-DD.
+Parâmetros opcionais
+funilId = Identificador do funil a ser utilizado na consulta.
+Campos mostrados na listagem
+name = Nome do pré-vendedor;
+id = Identificador do pré-vendedor;
+monthlyValues = Lista de objetos contendo os valores mensais de desempenho e meta;
+month = Mês de referência no formato Mês/Ano;
+value = Valor da venda realizada no mês e a meta correspondente (ex: "R$ 14,27 / R$
+100,00").
+Listar Desempenho de vendas: Pré-vendedores [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+{ "@odata.context":"http://apiv3.exactspotter.com:81/api/v3/$metadata#PreSalesPerformance", "value":
+[ { "name": "PV A", "id": 1234, "monthlyValues": [] }, { "name": "PV B", "id": 1234, "monthlyValues": [ {
+"month": "March/2025", "value": "R$ 14,27 / R$ 100,00" } ] }, ],
+"@odata.nextLink":"https://api.exactspotter.com/v3/SellerPerformance?datainicial=2025-03-
+01&datafinal=2025-03-31&$skip=500" }
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 22/100
+Dashboard - Feedback de ligação enviados [/CallFeedbacksSent?
+dataInicial=YYYY-MM-DD&dataFinal=YYYY-MM-DD]
+Esta seção permite consultar os dados estruturados do card Feedbacks de ligação enviados do
+Dashboard, com base no período informado. O endpoint retorna os feedbacks registrados para
+ligações realizadas via Webphone, permitindo o acompanhamento da qualidade das chamadas a partir
+das avaliações feitas por gestores. Utilize o protocolo OData para aplicar filtros, ordenações e
+paginação conforme necessário. A consulta não considera segmentações de leads configuradas no
+Dashboard, retornando os dados brutos e consolidados para o intervalo especificado. Caso o
+parâmetro de funil não seja informado, será utilizado o funil padrão da empresa.
+Parâmetros obrigatório
+dataInicial = Data inicial da consulta no formato YYYY-MM-DD;
+dataFinal = Data final da consulta no formato YYYY-MM-DD.
+Parâmetros opcionais
+funilId = Identificador do funil a ser utilizado na consulta.
+Campos mostrados na listagem
+date = Data e hora em que o feedback foi enviado;
+callHistoryId = Identificador da ligação avaliada;
+leadId = Identificador do lead associado à ligação;
+lead = Nome do lead relacionado à ligação avaliada;
+read = Indica se o feedback já foi visualizado (true ou false);
+points = Nota geral atribuída ao feedback, calculada com base nas estrelas dos critérios;
+resolved = Indica se os apontamentos foram resolvidos (true ou false);
+userName = Nome do usuário que realizou a ligação;
+authorFeedbackId = Identificador do gestor que emitiu o feedback;
+id = Identificador único do feedback enviado;
+criteria = Lista de critérios avaliados individualmente na ligação:
+id = Identificador do critério avaliado;
+description = Descrição do critério;
+starCount = Quantidade de estrelas atribuída ao critério.
+Listar Feedback de ligações enviados [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 23/100
+{ "@odata.context": "http://apiv3.exactspotter.com:81/api/v3/$metadata#CallFeedbacksSent", "value": [
+{ "date": "2025-05-08T18:38:36.0311907Z", "callHistoryId": 123456, "leadId": 123456, "lead": "Nome do
+lead", "read": true, "points": 7.2, "resolved": false, "userName": "Nome do usário que fez a ligação",
+"authorFeedbackId": 1234, "id": 1234, "criteria": [ { "id": 123456, "starCount": 3, "description":
+"Apresentação" }, { "id": 123456, "starCount": 4, "description": "Investigação" }, { "id": 123456,
+"starCount": 4, "description": "Escalada de contato" }, { "id": 123456, "starCount": 3, "description":
+"Demonstração de capacidade" }, { "id": 123456, "starCount": 4, "description": "Obtenção de
+compromisso" } ] } ], "@odata.nextLink": "https://api.exactspotter.com/v3/CallFeedbacksSent?
+datainicial=2025-05-01&datafinal=2025-05-31&$skip=500" }
+Dashboard - Feedbacks de ligações solicitados
+[/CallFeedbackRequests?dataInicial=YYYY-MMDD&dataFinal=YYYY-MM-DD]
+Esta seção permite consultar os dados estruturados do card Feedbacks de ligação solicitados do
+Dashboard do Spotter, com base no período informado. O endpoint retorna os pedidos de avaliação
+feitos por usuários para ligações realizadas via Webphone, permitindo que gestores identifiquem quais
+chamadas foram sinalizadas para revisão e atribuição de feedback. Utilize o protocolo OData para
+aplicar filtros, ordenações e paginação conforme necessário. A consulta não considera segmentações
+de leads configuradas no Dashboard, retornando os dados brutos e consolidados para o intervalo
+especificado. Caso o parâmetro de funil não seja informado, será utilizado o funil padrão da empresa.
+Parâmetros obrigatório
+dataInicial = Data inicial da consulta no formato YYYY-MM-DD;
+dataFinal = Data final da consulta no formato YYYY-MM-DD.
+Parâmetros opcionais
+funilId = Identificador do funil a ser utilizado na consulta.
+Campos mostrados na listagem
+date = Data e hora em que a solicitação de feedback foi registrada;
+answered = Indica se o feedback já foi respondido (true) ou ainda está pendente (false);
+lead = Nome do lead associado à ligação cuja avaliação foi solicitada;
+leadId = Identificador do lead;
+userName = Nome do usuário que solicitou o feedback;
+callHistoryId = Identificador da ligação no histórico;
+callFeedbackId = Identificador do feedback (caso já tenha sido respondido). Se null, ainda não
+foi avaliado;
+id = Identificador único da solicitação de feedback.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 24/100
+Listar Feedbacks de ligações solicitados [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+{ "@odata.context": "http://apiv3.exactspotter.com:81/api/v3/$metadata#CallFeedbackRequests",
+"value": [ { "date": "2025-05-09T12:16:34.3992157Z", "answered": false, "lead": "Nome do Lead",
+"leadId": 123456, "userName": "Nome do usário", "callHistoryId": 123456, "callFeedbackId": null, "id":
+123 } ], "@odata.nextLink": "https://api.exactspotter.com/v3/CallFeedbackRequests?datainicial=2025-
+05-01&datafinal=2025-05-31&$skip=500" }
+Dashboard - Métricas de Pré-venda [/PreSalesMetrics?
+dataInicial=YYYY-MM-DD&dataFinal=YYYY-MM-DD]
+Esta seção está atrelada à consulta das métricas de pré-venda do Dashboard do Spotter, com base no
+período informado nos parâmetros da URL. O parâmetro de período (dataInicial e dataFinal) é
+obrigatório para a execução da consulta. O parâmetro funilId é opcional; caso não informado, serão
+utilizados os dados do funil configurado como padrão para a empresa. Utilize o protocolo OData para
+aplicação de filtros, ordenação e paginação conforme necessidade. A consulta não considera a regra
+de segmentação configurada nos cards do Dashboard, retornando dados brutos e consolidados para o
+período especificado.
+Parâmetros obrigatório
+dataInicial = Data inicial da consulta no formato YYYY-MM-DD;
+dataFinal = Data final da consulta no formato YYYY-MM-DD.
+Parâmetros opcionais
+funilId = Identificador do funil a ser utilizado na consulta.
+Campos mostrados na listagem:
+id = identificador do pré-vendedor;
+userName = nome do pré-vendedor;
+answeredCalls = quantidade de ligações atendidas;
+totalCalls = total de ligações;
+callDuration = tempo de ligação (em segundos);
+scheduledMeetings = quantidade de reuniões agendadas;
+rescheduledMeetings = quantidade de reuniões reagendads;
+sales = quantidade de vendas;
+canceledMeetings = quantidade de reuniões canceladas;
+expectedMeetings = quantidade de reuniões previstas;
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 25/100
+missedMeetings = quantidade de reuniões não ocorridas;
+receivedFeedbacks = quantidade de feedbacks recebidos;
+pendingFeedbacks = quantidade de feebacks pendentes;
+completedMeetings = quantidade de reuniões ocorridas;
+recoveryRegistration = quantidade de cadastros/recuperações.
+Listar Métricas da Pré-venda [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+ {
+"@odata.context": "http://apiv3.exactspotter.com:81/api/v3/$metadata#PreSalesMetrics", "value": [ {
+"userName": "PV A", "answeredCalls": 96, "totalCalls": 119, "callDuration": 20152,
+"scheduledMeetings": 50, "rescheduledMeetings": 9, "sales": 1, "canceledMeetings": 4,
+"expectedMeetings": 70, "missedMeetings": 0, "receivedFeedbacks": 40, "pendingFeedbacks": 4,
+"completedMeetings": 40, "recoveryRegistration": 49, "id": 123 }, { "userName": "PV B",
+"answeredCalls": 182, "totalCalls": 282, "callDuration": 26241, "scheduledMeetings": 28,
+"rescheduledMeetings": 7, "sales": 0, "canceledMeetings": 5, "expectedMeetings": 41,
+"missedMeetings": 3, "receivedFeedbacks": 9, "pendingFeedbacks": 9, "completedMeetings": 9,
+"recoveryRegistration": 147,, "id": 567 } ], "@odata.nextLink":
+"https://api.exactspotter.com/v3/PreSalesMetrics?datainicial=YYYY-MM-DD&datafinal=YYYY-MMDD&$skip=500" }
+Dashboard - Métricas da Venda [/SellersMetrics?
+dataInicial=YYYY-MM-DD&dataFinal=YYYY-MM-DD]
+Esta seção permite consultar os dados do card Métricas da Venda do Dashboard, com base no
+período informado. O endpoint retorna indicadores-chave de desempenho de cada vendedor ou prévendedor (no caso de usuários mistos), permitindo o acompanhamento completo das interações com
+leads ao longo do processo comercial. O parâmetro de período (dataInicial e dataFinal) é obrigatório
+para a execução da consulta. O parâmetro funilId é opcional; caso não informado, serão utilizados os
+dados do funil configurado como padrão para a empresa. Utilize o protocolo OData para aplicação de
+filtros, ordenação e paginação conforme necessidade. A consulta não considera a regra de
+segmentação configurada nos cards do Dashboard, retornando dados brutos e consolidados para o
+período especificado.
+Parâmetros obrigatório
+dataInicial = Data inicial da consulta no formato YYYY-MM-DD;
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 26/100
+dataFinal = Data final da consulta no formato YYYY-MM-DD.
+Parâmetros opcionais
+funilId = Identificador do funil a ser utilizado na consulta.
+Campos mostrados na listagem
+userName = Nome do vendedor ou pré-vendedor (no caso de usuários mistos);
+callDuration = Tempo total de voz das ligações realizadas no período, em segundos. Não
+considera tempo de toque;
+answeredCalls = Número de ligações realizadas no período, atendidas ou não;
+expectedMeetings = Total de reuniões previstas para o período, com base na data do box;
+scheduledMeetings = Total de reuniões agendadas no período selecionado;
+completedMeetings = Reuniões previstas no período que foram efetivamente realizadas e
+marcadas como ocorridas no feedback;
+rescheduledMeetings = Total de reuniões reagendadas, incluindo "no shows" e cancelamentos
+que foram recuperados;
+canceledMeetings = Total de reuniões canceladas em relação aos leads, dentro do período
+informado;
+missedMeetings = Reuniões que foram marcadas no feedback como não ocorridas;
+receivedFeedbacks = Quantidade de feedbacks respondidos no período para reuniões
+marcadas como ocorridas (independente da data da reunião);
+pendingFeedbacks = Total de feedbacks ainda não respondidos, referentes a reuniões
+previstas no período e iniciadas;
+sql = Total de reuniões aceitas como S.Q.L. (Sales Qualified Lead), se a funcionalidade estiver
+ativada;
+sales = Quantidade de vendas associadas ao vendedor no período analisado;
+id = Identificador do usuário.
+Listar métricas da venda [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+{ "@odata.context": "http://apiv3.exactspotter.com:81/api/v3/$metadata#SellersMetrics", "value": [ {
+"userName": "Nome do usuário vendedor", "callDuration": 44, "answeredCalls": 1, "expectedMeetings":
+4, "scheduledMeetings": 2, "completedMeetings": 2, "rescheduledMeetings": 1, "canceledMeetings": 1,
+"missedMeetings": 0, "receivedFeedbacks": 2, "pendingFeedbacks": 0, "sql": 2, "sales": 0, "id": 1234 } ],
+"@odata.nextLink": "https://api.exactspotter.com/v3/SellersMetrics?datainicial=2025-05-
+01&datafinal=2025-05-31&$skip=500" }
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 27/100
+Dashboard - Previsão de Negócios por Mês $
+[/MonthlyDealForecast?dataInicial=YYYY-MMDD&dataFinal=YYYY-MM-DD]
+Este endpoint retorna os dados estruturados do card Previsão de Negócios por Mês ($), facilitando a
+análise da expectativa de vendas por usuário e por mês, com base em leads/oportunidades que
+possuem Data de Fechamento e produtos com valores definidos. Utilize o protocolo OData para
+aplicação de filtros, ordenação e paginação conforme necessidade. A consulta não considera a regra
+de segmentação configurada nos cards do Dashboard, retornando dados brutos e consolidados para o
+período especificado.
+Parâmetros obrigatório
+dataInicial = Data inicial da consulta no formato YYYY-MM-DD;
+dataFinal = Data final da consulta no formato YYYY-MM-DD.
+Parâmetros opcionais
+funilId = Identificador do funil a ser utilizado na consulta.
+Campos mostrados na listagem
+userName = Nome do usuário responsável pelo lead;
+id = Identificador do usuário
+monthlyForecasts Lista contendo os valores de previsão por mês:
+periodName = Descrição do período em formato Mês/Ano;
+forecastValue = Valor previsto para o mês, considerando os produtos com valor definido.
+Listar Previsão de Negócios por Mês $ [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json) {
+"@odata.context":"http://apiv3.exactspotter.com:81/api/v3/$metadata#MonthlyDealForecast",
+"value":[ { "userName":"Nome do usuário", "id":1234, "monthlyForecasts":[ {
+"periodName":"April/2025", "forecastValue":"R$ 99.999,99" }, { "periodName":"May/2025",
+"forecastValue":"R$ 99.999,99" }, { "periodName":"June/2025", "forecastValue":"R$ 99.999,99" }
+ ]
+}
+], "@odata.nextLink":"https://api.exactspotter.com/v3/MonthlyDealForecast?datainicial=2025-06-
+01&datafinal=2025-06-30&$skip=500" }
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 28/100
+Dashboard - Previsão de Negócios por Qualificação #
+[/BusinessForecastByQualificationCount?dataInicial=YYYY-MMDD&dataFinal=YYYY-MM-DD&etapaId={id}]
+Este endpoint fornece os dados consolidados para o card Previsão de Negócios por Qualificação (#)
+no Dashboard do Spotter. O objetivo é apresentar a quantidade de produtos com previsão de venda,
+agrupada por usuário responsável e por qualificação do lead. Utilize o protocolo OData para aplicação
+de filtros, ordenação e paginação conforme necessidade. A consulta não considera a regra de
+segmentação configurada nos cards do Dashboard, retornando dados brutos e consolidados para o
+período especificado.
+Parâmetros obrigatório
+dataInicial = Data inicial da consulta no formato YYYY-MM-DD;
+dataFinal = Data final da consulta no formato YYYY-MM-DD;
+etapaId = ID da etapa do funil onde os leads devem estar posicionados para serem
+considerados.
+Campos mostrados na listagem
+name = Nome do usuário responsável pelos leads;
+id = ID do usuário no sistema;
+qualifications = Lista de qualificações com seus respectivos totais para o usuário;
+key = Nível de qualificação do lead (Very hot, Warm, Cold, etc.);
+value = Quantidade de produtos com previsão de venda naquela qualificação;
+Total = Soma total de previsões por usuário, independentemente da qualificação.
+Listar Previsão de Negócios por Qualificação # [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+{ "@odata.context":
+"http://apiv3.exactspotter.com:81/api/v3/$metadata#BusinessForecastByQualificationCount", "value": [
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 29/100
+ {
+ "name": "Nome do usuário",
+ "id": 123456,
+ "qualifications": [
+ {
+ "key": "Very hot",
+ "value": "1"
+ },
+ {
+ "key": "Frozen",
+ "value": "1"
+ },
+ {
+ "key": "Total",
+ "value": "2"
+ }
+ ]
+ }
+],
+"@odata.nextLink": "https://api.exactspotter.com/v3/BusinessForecastByQualificationCount?
+datainicial=2025-05-01&datafinal=2025-05-31&etapaid=17501&$skip=500"
+}
+Dashboard - Previsão de Negócios por Qualificação $
+[/BusinessForecastByQualificationValue?dataInicial=YYYY-MMDD&dataFinal=YYYY-MM-DD&etapaId={id}]
+Este endpoint fornece os dados consolidados do card Previsão de Negócios por Qualificação ($) do
+Dashboard do Spotter. O objetivo é apresentar o valor financeiro previsto de vendas, agrupado por
+usuário responsável e por nível de qualificação dos leads, considerando os produtos com previsão de
+fechamento no período selecionado. Utilize o protocolo OData. para aplicação de filtros, ordenação e
+paginação conforme necessidade. A consulta não considera a regra de segmentação configurada nos
+cards do Dashboard, retornando dados brutos e consolidados para o período especificado.
+Parâmetros obrigatório
+dataInicial = Data inicial da consulta no formato YYYY-MM-DD;
+dataFinal = Data final da consulta no formato YYYY-MM-DD;
+etapaId = ID da etapa do funil onde os leads devem estar posicionados para serem
+considerados.
+Campos mostrados na listagem
+name = Nome do usuário;
+id = Ientificador do usuário;
+qualifications = Lista com os totais de valores previstos de venda, agrupados por qualificação;
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 30/100
+key = Qualificação dos leads (Very hot, Warm, Cold, Frozen, etc.);
+value = Valor total previsto para aquela qualificação (exibido em formato monetário);
+Total = Soma geral dos valores previstos por usuário.
+Listar Previsão de Negócios por Qualificação $ [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+{ "@odata.context":
+"http://apiv3.exactspotter.com:81/api/v3/$metadata#BusinessForecastByQualificationValue", "value": [ {
+"name": "Nome do usário", "id": 1234, "qualifications": [ { "key": "Very hot", "value": "R$ 1.000,00" }, {
+"key": "Total", "value": "R$ 1.000,00" } ] }, { "name": "Nome do usuário", "id": 1234, "qualifications": [ {
+"key": "Very hot", "value": "R$ 5.000,00" }, { "key": "Total", "value": "R$ 5.000,00" } ] } ] } ],
+"@odata.nextLink": "https://api.exactspotter.com/v3/BusinessForecastByQualificationValue?
+datainicial=2025-06-01&datafinal=2025-06-30&etapaid=17501&$skip=500" }
+Dashboard - Produção da Pré-venda [/PreSalesProduction?
+dataInicial=YYYY-MM-DD&dataFinal=YYYY-MM-DD]
+Esta seção está atrelada à consulta das métricas de Produção de Pré-venda do Dashboard do Spotter,
+com base no período informado nos parâmetros da URL. O parâmetro de período (dataInicial e
+dataFinal) é obrigatório para a execução da consulta. O parâmetro funilId é opcional; caso não
+informado, serão utilizados os dados do funil configurado como padrão para a empresa. Utilize o
+protocolo OData. para aplicação de filtros, ordenação e paginação conforme necessidade. A consulta
+não considera a regra de segmentação configurada nos cards do Dashboard, retornando dados brutos
+e consolidados para o período especificado.
+Parâmetros obrigatório
+dataInicial = Data inicial da consulta no formato YYYY-MM-DD;
+dataFinal = Data final da consulta no formato YYYY-MM-DD.
+Parâmetros opcionais
+funilId = Identificador do funil a ser utilizado na consulta.
+Campos mostrados na listagem:
+id = Identificados do pré-vendedor;
+name = Nome do pré-vendedor;
+steps = objeto com as etapas do funil, onde:
+id = id da etapa;
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 31/100
+value = quantidade das conversões de cada etapa etapa.
+Listar Produção da Pré-venda [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+{ "@odata.context": "http://apiv3.exactspotter.com:81/api/v3/$metadata#PreSalesProduction",
+"value": [ { "name": "PV A", "id": 123, "steps": [ { "id": 845698, "value": 30 }, { "id": 98562, "value": 4 },
+{ "id": 9862, "value": 15 } ] }, { "name": "PV B", "id": 5678, "steps": [ { "id": 12358, "value": 0 }, { "id":
+63254, "value": 5 }, { "id": 85612, "value": 12 } ] } ], "@odata.nextLink":
+"https://api.exactspotter.com/v3/PreSalesProduction?datainicial=YYYY-MM-DD&datafinal=YYYYMM-DD&$skip=500" }
+Dashboard - Produção dos vendedores [/SellersProduction?
+dataInicial=YYYY-MM-DD&dataFinal=YYYY-MM-DD]
+Esta seção está atrelada à consulta das métricas de Produção de vendedores do Dashboard do
+Spotter, com base no período informado nos parâmetros da URL. O parâmetro de período (dataInicial
+e dataFinal) é obrigatório para a execução da consulta. O parâmetro funilId é opcional; caso não
+informado, serão utilizados os dados do funil configurado como padrão para a empresa. Utilize o
+protocolo OData. para aplicação de filtros, ordenação e paginação conforme necessidade. A consulta
+não considera a regra de segmentação configurada nos cards do Dashboard, retornando dados brutos
+e consolidados para o período especificado.
+Parâmetros obrigatório
+dataInicial = Data inicial da consulta no formato YYYY-MM-DD;
+dataFinal = Data final da consulta no formato YYYY-MM-DD.
+Parâmetros opcionais
+funilId = Identificador do funil a ser utilizado na consulta.
+Campos mostrados na listagem:
+id = Identificados do vendedor;
+name = Nome do vendedor;
+steps = objeto com as etapas do funil, onde:
+id = id da etapa;
+value = quantidade das conversões de cada etapa etapa.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 32/100
+Listar Produção dos vendedores [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+{ "@odata.context": "http://apiv3.exactspotter.com:81/api/v3/$metadata#SellersProduction", "value":
+[ { "name": "Vendedor A", "id": 123, "steps": [ { "id": 123456, "value": 30 }, { "id": 123456, "value": 4 },
+{ "id": 123456, "value": 15 } ] }, { "name": "Vendedor B", "id": 123, "steps": [ { "id": 123456, "value": 0
+}, { "id": 123456, "value": 5 }, { "id": 123456, "value": 12 } ] } ], "@odata.nextLink":
+"https://api.exactspotter.com/v3/SellersProduction?datainicial=YYYY-MM-DD&datafinal=YYYY-MMDD&$skip=500" }
+Dashboard - Qualidade de reuniões [/MeetingQuality?
+dataInicial=YYYY-MM-DD&dataFinal=YYYY-MM-DD]
+Esta seção disponibiliza os dados estruturados do card Qualidade de Reuniões (gerencial) do
+Dashboard, com base no período informado. O endpoint retorna a distribuição das temperaturas
+atribuídas às reuniões a partir da qualificação dos feedbacks preenchidos após o agendamento.
+Permite o uso do protocolo OData para aplicar filtros, ordenações e paginação conforme necessário. A
+consulta desconsidera segmentações configuradas nos cards do Dashboard, retornando os dados
+brutos e consolidados do período selecionado.
+Parâmetros obrigatório
+dataInicial = Data inicial da consulta no formato YYYY-MM-DD;
+dataFinal = Data final da consulta no formato YYYY-MM-DD.
+Parâmetros opcionais
+funilId = Identificador do funil a ser utilizado na consulta.
+Campos mostrados na listagem
+totalMeetings = Total de reuniões no período;
+pendingFeedbacks = Quantidade de reuniões com feedback pendente;
+completedFeedbacks = Quantidade de reuniões com feedback concluído;
+quantities = Lista das qualificações das reuniões;
+qualification = Nome da qualificação (ex: Congelada, Fria, Morna, etc.);
+quantity = Quantidade de reuniões para aquela qualificação;
+score = ordem da qualificação:
+1 = Congelada
+2 = Fria
+3 = Morna
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 33/100
+4 = Quente
+5 = Muito Quente.
+Listar qualificação de reuniões [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+{ "@odata.context": "http://apiv3.exactspotter.com:81/api/v3/$metadata#MeetingQuality", "value": [ {
+"totalMeetings": 509, "pendingFeedbacks": 8, "completedFeedbacks": 501, "quantities": [ {
+"qualification": "Congelada", "quantity": 123, "score": 1 }, { "qualification": "Fria", "quantity": 2, "score": 2
+}, { "qualification": "Morna", "quantity": 7, "score": 3 }, { "qualification": "Muito Quente", "quantity": 366,
+"score": 5 }, { "qualification": "Quente", "quantity": 3, "score": 4 } ] } ], "@odata.nextLink":
+"https://api.exactspotter.com/v3/MeetingQuality?datainicial=2025-05-01&datafinal=2025-05-
+31&$skip=500" }
+Dashboard - Qualidade de reuniões S.Q.L [/MeetingQualitySQL?
+dataInicial=YYYY-MM-DD&dataFinal=YYYY-MM-DD]
+Este endpoint fornece os dados consolidados para o card Qualidade das Reuniões S.Q.L. no
+Dashboard do Spotter. O objetivo é apresentar o desempenho da qualificação de oportunidades após
+reuniões, com base nas respostas à pergunta “Deseja continuar com a negociação?” durante o
+preenchimento do feedback da reunião. Permite o uso do protocolo OData para aplicar filtros,
+ordenações e paginação conforme necessário. A consulta desconsidera segmentações configuradas
+nos cards do Dashboard, retornando os dados brutos e consolidados do período selecionado.
+Parâmetros obrigatório
+dataInicial = Data inicial da consulta no formato YYYY-MM-DD;
+dataFinal = Data final da consulta no formato YYYY-MM-DD.
+Parâmetros opcionais
+funilId = Identificador do funil a ser utilizado na consulta.
+Campos mostrados na listagem
+sql = Quantidade de reuniões com feedback indicando que a negociação deve continuar (Sales
+Qualified Leads).
+rejected = Quantidade de reuniões com feedback indicando que a negociação não deve
+continuar.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 34/100
+Listar Qualidade de reuniões S.Q.L [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+{ "@odata.context": "http://apiv3.exactspotter.com:81/api/v3/$metadata#MeetingQualitySQL", "value": [
+{ "sql": 428, "rejected": 72 } ], "@odata.nextLink": "https://api.exactspotter.com/v3/MeetingQualitySQL?
+datainicial=2025-05-01&datafinal=2025-05-31&$skip=500" }
+Dashboard - Safra [/Harvest?dataInicial=YYYY-MMDD&dataFinal=YYYY-MM-DD]
+Esta seção está atrelada à consulta das métricas de Safra do Dashboard do Spotter, com base no
+período informado nos parâmetros da URL. O parâmetro de período (dataInicial e dataFinal) é
+obrigatório para a execução da consulta. O parâmetro funilId é opcional; caso não informado, serão
+utilizados os dados do funil configurado como padrão para a empresa. Utilize o protocolo OData para
+aplicação de filtros, ordenação e paginação conforme necessidade. A consulta não considera a regra
+de segmentação configurada nos cards do Dashboard, retornando dados brutos e consolidados para o
+período especificado.
+Parâmetros obrigatório
+dataInicial = Data inicial da consulta no formato YYYY-MM-DD;
+dataFinal = Data final da consulta no formato YYYY-MM-DD.
+Parâmetros opcionais
+funilId = Identificador do funil a ser utilizado na consulta.
+Campos mostrados na listagem
+name = Nome da etapa;
+converted = quantidade de leads convertidos;
+restarted = quantidade de leads reiniciados;
+conversionRate = percentual de conversão;
+parked = quantidade de leads estacionados;
+discarded = quantidade de leads descartados;
+total = quantidade total de leads;
+gateType = gatilho de saída da etapa;
+id = identificador da etapa;
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 35/100
+Listar Safra [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+{ "@odata.context": "http://apiv3.exactspotter.com:81/api/v3/$metadata#Harvest", "value": [ { "name":
+"Vendidos", "converted": null, "restarted": null, "conversionRate": null, "parked": 1, "discarded": null,
+"total": 1, "gateType": "Manualmente", "id": 123 }, { "name": "Qualificados", "converted": 1, "restarted":
+1, "conversionRate": 33, "parked": 2, "discarded": null, "total": 4, "gateType": "Vender", "id": 123 }, {
+"name": "Filtro 2", "converted": 10, "restarted": 2, "conversionRate": 100, "parked": null, "discarded":
+null, "total": 12, "gateType": "Agendar", "id": 123 }, { "name": "Entrada", "converted": 16, "restarted": null,
+"conversionRate": 29, "parked": 11, "discarded": null, "total": 27, "gateType": "Filtrar", "id": 123 }, {
+"name": "Filtro 1", "converted": 6, "restarted": null, "conversionRate": 75, "parked": 2, "discarded": null,
+"total": 8, "gateType": "Manualmente", "id": 123 }, { "name": "Agendados", "converted": 4, "restarted": 1,
+"conversionRate": 36, "parked": 5, "discarded": 2, "total": 12, "gateType": "Filtrar", "id": 123 } ],
+"@odata.nextLink": "https://api.exactspotter.com/v3/Harvest?datainicial=2025-05-01&datafinal=2025-
+05-31&$skip=500" }
+Dashboard - Temperatura [/temperatures?dataInicial=YYYY-MMDD&dataFinal=YYYY-MM-DD]
+Esta seção disponibiliza os dados estruturados do card Temperatura (gerencial) do Dashboard do
+Spotter, com base no período informado. O endpoint retorna a distribuição das temperaturas atribuídas
+aos leads nas etapas vinculadas a questionários. Permite o uso do protocolo OData para aplicar filtros,
+ordenações e paginação conforme necessário. A consulta desconsidera segmentações configuradas
+nos cards do Dashboard, retornando os dados brutos e consolidados do período selecionado.
+Parâmetros obrigatório
+dataInicial = Data inicial da consulta no formato YYYY-MM-DD;
+dataFinal = Data final da consulta no formato YYYY-MM-DD.
+Parâmetros opcionais
+funilId = Identificador do funil a ser utilizado na consulta.
+Campos mostrados na listagem
+questionnaireId = Identificador do questionário;
+questionnaireName = Nome do questionário;
+temperatures = Lista de classificações de temperatura avaliadas;
+qualification = Classificação da temperatura do lead obtida na avaliação;
+rating = ordem da qualificação:
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 36/100
+1 = Congelada
+2 = Fria
+3 = Morna
+4 = Quente
+5 = Muito Quente
+quantity = Quantidade de avaliações com essa temperatura no período
+Listar temperatura [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+{ "@odata.context": "http://apiv3.exactspotter.com:81/api/v3/$metadata#Temperatures", "value": [ {
+"questionnaireId": 123456, "questionnaireName": "Nome do questionário", "temperatures": [ {
+"qualification": "Congelada", "rating": 1, "quantity": 29 }, { "qualification": "Fria", "rating": 2, "quantity": 1
+}, { "qualification": "Morna", "rating": 3, "quantity": 6 }, { "qualification": "Muito Quente", "rating": 5,
+"quantity": 106 }, { "qualification": "Quente", "rating": 4, "quantity": 3 } ] } ], "@odata.nextLink":
+"https://api.exactspotter.com/v3/temperatures?datainicial=2025-05-01&datafinal=2025-05-
+31&$skip=500" }
+Dashboard - Tempo médio por origem [/averageTime?
+dataInicial=YYYY-MM-DD&dataFinal=YYYY-MM-DD]
+Esta seção disponibiliza os dados estruturados do card Tempo médio por origem do Dashboard do
+Spotter, com base no período informado. O endpoint retorna o tempo médio, em segundos, entre o
+cadastro (ou recuperação) do lead e a ocorrência dos principais eventos: Primeira ligação,
+Agendamento, Atividade concluída e Venda, separados por origem do lead.
+Os valores retornados são dados brutos em segundos. No sistema, esses valores são arredondados
+para facilitar a visualização, podendo haver pequenas diferenças em relação ao tempo exibido no
+front-end. É possível utilizar o protocolo OData para filtros, ordenações e paginação conforme a
+necessidade.
+A consulta desconsidera segmentações configuradas nos cards do Dashboard, retornando dados
+brutos e consolidados para o período selecionado.
+Parâmetros obrigatório
+dataInicial = Data inicial da consulta no formato YYYY-MM-DD;
+dataFinal = Data final da consulta no formato YYYY-MM-DD.
+Parâmetros opcionais
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 37/100
+funilId = Identificador do funil a ser utilizado na consulta.
+Campos mostrados na listagem
+totalCall = Tempo médio total (em segundos) entre o cadastro/recuperação do lead e a primeira
+ligação, considerando todas as origens.
+totalScheduling = Tempo médio total (em segundos) entre o cadastro/recuperação do lead e o
+agendamento de uma reunião, considerando todas as origens.
+totalActivity = Tempo médio total (em segundos) entre o cadastro/recuperação do lead e a
+conclusão de uma atividade, considerando todas as origens.
+totalSale = Tempo médio total (em segundos) entre o cadastro/recuperação do lead e a
+conversão em venda, considerando todas as origens.
+list = Lista com os tempos médios por origem do lead.
+name = Nome da origem do lead;
+call = Tempo médio (em segundos) da primeira ligação para leads da origem informada.
+Pode ser null caso não existam dados.
+scheduling = Tempo médio (em segundos) até o agendamento de reunião para leads da
+origem informada. Pode ser null caso não existam dados.
+activity = Tempo médio (em segundos) até a conclusão de uma atividade para leads da
+origem informada. Pode ser null caso não existam dados.
+sale = Tempo médio (em segundos) até a conversão em venda para leads da origem
+informada. Pode ser null caso não existam dados.
+id = Identificador da origem.
+Listar tempo médio por origem [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+{ "@odata.context": "http://apiv3.exactspotter.com:81/api/v3/$metadata#AverageTime", "value": [ {
+"totalCall": 144362.19446083641, "totalScheduling": 56052.816034472278, "totalActivity":
+162785.48769814978, "totalSale": 1739.468051, "id": 0, "list": [ { "name": "Anúncio", "call":
+146324.29662233454, "scheduling": 56052.816034472278, "activity": 162785.48769814978, "sale":
+1739.468051, "id": 1234 }, { "name": "Indicação", "call": null, "scheduling": null, "activity": null, "sale":
+null, "id": 1234 },
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 38/100
+ {
+ "name": "Prospecção",
+ "call": 213.16462055,
+ "scheduling": null,
+ "activity": null,
+ "sale": null,
+ "id": 1234
+ },
+ {
+ "name": "Site",
+ "call": 82.2065609,
+ "scheduling": null,
+ "activity": null,
+ "sale": null,
+ "id": 1234
+ }
+ ]
+ }
+],
+"@odata.nextLink": "https://api.exactspotter.com/v3/averageTime?datainicial=2025-05-
+01&datafinal=2025-05-31&$skip=500"
+}
+Response 400 (application/json)
+Body
+{ "error": { "code": "", "message": "Invalid period. 'initialDate' and 'finalDate' are required, and
+'initialDate' must be before 'finalDate'." } }
+Dores - Listagem [/PainPoints]
+Esta seção está atrelada a listagem das dores dos leads. Utilize o protocolo OData para
+filtros/ordenação/etc.
+Campos mostrados na listagem:
+value = Nome da dor,
+leadId = Identificação do lead,
+id = Identificação da dor.
+Listar Dores [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 39/100
+ {
+ "@odata.context": "https://api.exactspotter.com/v3/$metadata#PainPoints",
+ "value": [
+ {
+ "value": "Nome da dor",
+ "leadId":5253525
+ "id": 1
+ }
+ ]
+ }
+Empresa/Organização - Atualização [/organizationUpdate/{id}]
+Esta seção está atrelada a edição de uma empresa/organização, enviando o id da
+empresa/organização como parâmetro na URL de requisição.
+Campos utilizados para realizar a edição:
+name = Referente ao nome da empresa/organização;
+cpfCnpj = CPF ou CNPJ da empresa/organização;
+ddiPhone": DDI do país em questão;
+phone: DDD + Telefone da empresa/organização sem o 0;
+ddiPhone2: Segunda opção do DDI do país em questão;
+phone2: Segunda opção do DDD + Telefone da empresa/organização sem o 0;
+website = Referente ao site da empresa/organização;
+address = Endereço da empresa/organização;
+addressNumber: Número do endereço,
+adressComplement = Complementação do endereço da empresa/organização, caso tenha;
+neighborhood = Bairro;
+zipcode = Refere-se ao CEP ou o código da região que a empresa/organização se encontra;
+city = A cidade que a empresa/organização se encontra;
+state = O estado desta;
+country = País que a empresa/organização se localiza;
+description = Qualquer observação que se deseja fazer a respeito da empresa/organização que
+está sendo inserida;
+customFields = Permite atualizar ou inserir um campo personalizado em uma
+empresa/organização.
+O "id" será a "key" do campo personalizado;
+Para "options" o "id" será o id da opção.
+Campo obrigatório:
+id = identificador da empresa/organização;
+OBS: Caso seja informado address, addressNumber, addressComplement, neighborhood ou
+zipcode então city, state e country são obrigatórios.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 40/100
+Campos utilizados para o Custom Fields (campos personalizados)
+id = identificação do campo personalizado;
+value = valor do campo personalizado Obs: quando o campo personalizado for do tipo que
+contenha mais de uma opção, o usuário pode entrar com o value, o identificador da opção ou
+ambos. Qualquer uma das situações são aceitáveis
+Caso o parâmetro id seja informado, o value será obrigatório;
+Campo de parametrização:
+duplicityValidation: Se ele for true, verifica a duplicidade e impede o cadastro de acordo com
+informações enviadas nos campos Phone, Phone2 e Website. Caso contrário, se for false,
+ignora a validação e permite o cadastro com duplicidade.
+Atualizar Empresa/Organização [PUT]
+Request (application/json)
+Headers token_exact: token
+Body { "duplicityValidation": "true", "organization": { "name": "Nome da empresa/organização",
+"cpfCnpj": "12345678000132", "ddiPhone": "55", "phone": "048991234567", "ddiPhone2": "55",
+"phone2": "04832321234", "website": "Web site da empresa/organização", "address":
+"Endereço da empresa/organização", "addressNumber":"123456", "addressComplement":
+"Complemento do endereço da empresa/organização", "neighborhood": "Bairro do endereço",
+"zipcode" : "CEP ou Código da região", "city": "Nome da Cidade", "state": "Nome do Estado",
+"country": "Nome do País", "description": "Observações diversas acerca da
+empresa/organização", "customFields": [ { "id": "_texto", "value": "Texto aqui" }, { "id":
+"_textolongo", "value": "Texto longo aqui" }, { "id":"_numero", "value": "123456" }, { "id":
+"_escolhaunica", "options": [ { "id": 32329, "value": "Opcao 1" } ] }, { "id": "_escolhamultipla",
+"options": [ { "id": 32333, "value": "Multipla 1" }, { "id": 32334, "value": "Multipla 2" } ] } ] }
+Response 201 (application/json)
+Body { "value": 4167401 }
+Empresa/Organização - Campos Personalizados Listagem
+[/OrganizationsCustomFields]
+Lista os dados de campos personalizados de empresa/organização. Utilize o protocolo OData para
+filtros/ordenação/etc.
+Dados que serão exibidos na listagem:
+id = Id do campo personalizado;
+OBS: Quando campo personalizado de EscolhaUnica ou EscolhaMultipla, o Id será do
+campo personalizado pai.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 41/100
+key = chave do campo personalizado;
+value = valor do campo personalizado. Será vazio quando campo personalizado de
+EscolhaUnica ou EscolhaMultipla;
+organizationId = id da empresa/organização;
+registerDate = Data em que o campo foi inserido na empresa/organização;
+updateDate = Data em que o campo foi editado na empresa/organização;
+type = Tipo de campo personalizado;
+options = Só preenchido quando campo personalizado de EscolhaUnica ou EscolhaMultipla,
+sendo:
+id = Id da opção;
+value = valor da opção;
+registerDate = Data em que a opção foi inserida na empresa/organização;
+updateDate = Data em que a opção foi editada na empresa/organização;
+Listar [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body {
+"@odata.context":"https://api.exactspotter.com/v3/$metadata#OrganizationsCustomFieldss",
+"value": [ { "key": "_texto", "value": "texto", "organizationId": 14535425, "registerDate": "2023-06-
+15T20:57:18.477319Z", "updateDate": "2023-06-15T20:57:18.477319Z", "type": "Texto", "id":
+32325, "options": [] }, { "key": "_textolongo", "value": "texto longo", "organizationId": 14535425,
+"registerDate": "2023-06-15T20:57:18.477319Z", "updateDate": "2023-06-
+15T20:57:18.477319Z", "type": "Texto", "id": 32326, "options": [] }, { "key": "_numero", "value":
+"123456", "organizationId": 14535425, "registerDate": "2023-06-15T20:57:18.477319Z",
+"updateDate": "2023-06-15T20:57:18.477319Z", "type": "Numero", "id": 32327, "options": [] }, {
+"key": "_escolhaunica", "value": null, "organizationId": 14535425, "registerDate": null,
+"updateDate": null, "type": "EscolhaUnica", "id": 32328, "options": [ { "id": 32329, "value": "Opcao
+1", "registerDate": "2023-06-15T20:57:18.477319Z", "updateDate": "2023-06-
+15T20:57:18.477319Z" } ] }, { "key": "_multiplaescolha", "value": null, "organizationId":
+14535425, "registerDate": null, "updateDate": null, "type": "EscolhaMultipla", "id": 41398,
+"options": [ { "id": 41399, "value": "Escolha A", "registerDate": "2023-06-15T17:17:34.3068406Z",
+"updateDate": "2023-06-15T17:17:34.3068406Z" }, { "id": 41400, "value": "Escolha B",
+"registerDate": "2023-06-15T17:17:34.3068406Z", "updateDate": "2023-06-
+15T17:17:34.3068406Z" } ] }, { "key": "_link", "value": "www.exactsales.com.br", "organizacaoId":
+14535425, "registerDate": "2023-06-15T17:17:34.3068406Z", "updateDate": "2023-06-
+15T17:17:34.3068406Z", "type": "Link", "id": 3743, "options": [] } ] }
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 42/100
+Empresa/Organização - Inserção [/organizationAdd]
+Esta seção está atrelada ao cadastro de uma empresa/organização, fazendo referência aos dados que
+deverão ser inseridos no ato da criação.
+Campos utilizados para realizar a inserção da empresa/organização:
+name = Referente ao nome da empresa/organização;
+userEmail = Email do usuário vinculado ao cadastro da empresa/organização;
+cpfCnpj = CPF ou CNPJ da empresa/organização;
+website = Referente ao site da empresa/organização;
+ddiPhone = DDI do país em questão;
+phone = DDD + Telefone da empresa/organização sem o 0;
+ddiPhone2 = Segunda opção do DDI do país em questão;
+phone2 = DDD + Segunda opção de telefone da empresa/organização sem o 0;
+address = Endereço da empresa/organização;
+addressComplement = Complemento do endereço, caso tenha;
+zipcode = Refere-se ao CEP ou o código da região que a empresa/organização se encontra;
+city = A cidade que a empresa/organização se encontra;
+state = O Estado desta;
+country = País que a empresa/organização se localiza;
+description = Qualquer observação que se deseja fazer a respeito da empresa/organização que
+está sendo inserida.
+Campos utilizados para o Custom Fields (campos personalizados)
+id = identificação do campo personalizado;
+value = valor do campo personalizado
+Obs: quando o campo personalizado for do tipo que contenha mais de uma opção, o
+usuário pode entrar com o value, o identificador da opção ou ambos. Qualquer uma das
+situações são aceitáveis.
+Campos obrigatórios:
+name;
+userEmail;
+Campo de parametrização:
+duplicityValidation: Se ele for true, verifica a duplicidade e impede o cadastro. Caso contrário,
+se for false, ignora a validação e permite o cadastro com duplicidade.
+Campos que o sistema valida a duplicidade :
+name;
+cpfCnpj
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 43/100
+Inserir Empresa/Organização [POST]
+Request (application/json)
+Headers token_exact: token
+Body { "duplicityValidation": true, "organization": { "name": "Referente ao nome da
+empresa/organização", "userEmail": "usuario@spotter.com.br", "cpfCnpj": "12345678910112",
+"website": "www.exactsales.com.br", "ddiPhone": "55", "phone": "4830257750", "ddiPhone2":
+"55", "phone2": "48987654321", "address": "Rod. José Carlos Daux, 5500",
+"addressComplement": "123456", "zipcode": "88032005", "city": "Florianópolis", "state": "SC",
+"country": "Brasil", "description": "Qualquer observação que se deseja fazer a respeito da
+empresa/organização que está sendo inserida.", "customFields": [ { "id":"_valordoticket",
+"value":"150,00" }, { "id":"_escolhamultipla", "options": [ {"value": "Opção 1"}, {"id":3128},
+{"id":3128, "value":"Opção 1"} ] } ] } }
+Response 201 (application/json)
+Body
+{
+ "@odata.context": "https://api.exactspotter.com/v3/$metadata#Edm.Int32",
+ "value": id da empresa/organização gerado
+}
+Empresa/Organização - Listagem [/organization]
+Este endpoint está atrelado a listagem das organizações cadastrados no Spotter, retornando com os
+dados que foram inseridos no ato da criação. Utilize o protocolo OData para filtros/ordenação/etc.
+Listar Empresa/Organização [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context":"https://api.exactspotter.com/v3/$metadata#Organization", "value":[ {
+"id":4187, "name":"Nome da empresa", "registerDate":"2015-04-09T19:30:33.1151616Z",
+"updateDate":"2015-05-16T18:16:21.528629Z",
+"publicLink":"https://app.exactspotter.com/public/organizacao/hjlq0ohclhkkx",
+"website":"https://site.empresa.com/", "cpfCnpj":"", "street": "Nome da Rua do endereço da
+empresa", "number": "Número do endereço", "complement": "Complemento do endereço",
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 44/100
+"neighborhood": "Bairro do endereço", "zipCode": "CEP ou Código da região", "city":"Nome da
+Cidade", "state":"Nome do Estado", "country":"Nome do País", "registrationUserId":123456,
+"phones":[ { "ddiPhone":"55", "phone": "5548987654321" } ] } ] }
+Etapas Funil - Listagem [/stages]
+Esta seção traz a lista das fases cadastradas por empresa. Utilize o protocolo OData para
+filtros/ordenação/etc.
+Dados que serão exibidos na listagem:
+value = nome da fase do lead;
+position = posição da etapa no funil;
+active = configurado de acordo com a regra;
+funnelId = id do funil;
+id = identificador da fase do lead.
+gateType = tipo de saída da etapa:
+1 para Manual;
+2 para Filtro;
+3 para Agendamento;
+4 para Venda.
+Listar Fases da Empresa [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#Stages", "value": [ {
+"value": "Entrada", "position": 1, "active": true, "funnelId": 123, "id": 2, "gateType": 2 } ] }
+Funil - Listagem [/Funnels]
+Esta seção traz a lista dos funis da empresa. Utilize o protocolo OData para filtros/ordenação/etc.
+Dados que serão exibidos na listagem
+value = nome do funil;
+active = status do funil (ativo ou inativo);
+id = identiicador do funil.
+Listar funis da empresa [GET]
+Request (application/json)
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 45/100
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#Funnels", "value": [ {
+"value": "Nome do Funil", "active": true, "id": 123 } ] }
+Grupos - Criar Grupo [/groupsAdd]
+Esta seção está atrelada a criação de um novo Grupo.
+Campos utilizados para realizar a inserção
+name = nome do grupo (não pode conter espaço)
+listSellers = lista com e-mails de usuários vendedores
+listPreSellers = lista com e-mail de usuários pré-vendedores
+É obrigatório informar ao menos e-mail de um usuário para inserção.
+Criar Grupo [POST]
+Request (application/json)
+Headers token_exact: token
+Response 201 (application/json)
+Body {
+"name": "NomeDoGrupo", "listSellers":[ "joao@exactsales.com.br",
+"nathalia@exactsales.com.br" ], "listPreSellers":[ "joao@exactsales.com.br",
+"nathalia@exactsales.com.br" ] }
+Grupos - Excluir grupo [/groupsRemove/{id}]
+Esta seção está atrelada a exclusão de um determinado grupo.
+Parâmetro obrigatório
+id = Ientificador do Grupo
+Remover [DELETE]
+Request (application/json)
+Headers
+ token_exact: token
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 46/100
+Response 204 (application/json)
+Grupos - Inserir usuário [/groupAddUser/{id}]
+Esta seção está atrelada a inclusão de usuário(s) em um determinado grupo.
+Parâmetro obrigatório
+id = identificador do grupo
+Campos utilizados para realizar a inserção
+listSeller = lista com e-mails de usuários vendedores
+listSdr = lista com e-mail de usuários pré-vendedores
+É obrigatório informar ao menos e-mail de um usuário para inserção.
+Inserir usuários [PUT]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "listSeller":[ "joao@exactsales.com.br", "nathalia@exactsales.com.br" ], "listSdr":[
+"joao@exactsales.com.br", "nathalia@exactsales.com.br" ] }
+Grupos - Listagem [/Groups]
+Esta seção está atrelada a listagem dos grupos da empresa. Utilize o protocolo OData para
+filtros/ordenação/etc.
+Campos mostrados na listagem:
+value = Nome do grupo;
+id = Identificação do grupo.
+userId = id do usuário.
+createdAt = Data em que o usuário foi inserido no grupo.
+Listar Grupos [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 47/100
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#Groups", "value": [ {
+"value": "Grupo A", "id": 4343, "listSeller": [ { "email": "usuario@email.com.br", "userId": 123456,
+"createdAt": "2022-02-10T13:34:37.8670683Z" }, { "email": "usuario2@email.com.br", "userId":
+1234567, "createdAt": "2023-03-30T21:04:44.4609346Z" } ], "listSdr": [ { "email":
+"usuario3@email.com.br", "userId": 12345678, "createdAt": "2023-03-31T19:45:48.2738741Z" }
+] } ] }
+Grupos - Remover usuário [/groupRemoveUser/{id}]
+Endpoint que permite remover usuários de um determinado grupo
+Parâmetro obrigatório
+id = identificador do grupo
+Dados obrigatórios
+listSeller = lista com e-mails de usuários vendedores
+listSdr = lista com e-mail de usuários pré-vendedores
+É obrigatório informar ao menos e-mail de um usuário para exclusão.
+Remover usuário [PUT]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "listSeller":[ "joao@exactsales.com.br", "nathalia@exactsales.com.br" ], "listSdr":[
+"joao@exactsales.com.br", "nathalia@exactsales.com.br" ] }
+Histórico de Ligação - Listagem [/callsHistory]
+Esta seção traz a lista do histórico de ligação do lead. Utilize o protocolo OData para
+filtros/ordenação/etc.
+Dados que serão exibidos na listagem:
+id = Identificação do histórico da ligação;
+leadId = Identificação do lead;
+leadName = Nome do Lead;
+stage = Etapa que o lead se encontra no momento que ocorreu a ligação;
+ddi = ddi do país
+caller = Número de origem com DDD;
+called = Número de destino com DDD;
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 48/100
+startDate = Horário de início da ligação, seguindo o formato YYYY-MM-dd HH:mm;
+endDate = Horário de término da ligação, seguindo o formato YYYY-MM-dd HH:mm;
+price = Preço da ligação;
+talkingDurationSeconds = Tempo de duração da ligação (em segundos);
+result = Resultado da ligação;
+description = Observação sobre o resultado da ligação;
+manualSet = Sinaliza se o resultado ligação foi registrado com uma ligação fora ou dentro do
+sistema;
+callAnswered = Sinaliza se a ligação foi atendida ou não (true/false);
+audio = Link para acessar o áudio da ligação;
+userId = Id do usuário que efetuou a ligação;
+userEmail = E-mail do usuário que efetuou a ligação;
+userName = Nome do usuário que efetuou a ligação;
+userLastName = Sobrenome do usuário que efetuou a ligação;
+funnelId = Id do funil que o lead se encontra no momento que ocorreu a ligação.
+Listar Histórico de Ligação [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "api.exactspotter.com.br/v3/$metadata#callsHistory", "value": [ {
+"leadId": 0000000, "leadName": "Nome do Lead", "stage": "Entrada", "caller": "48999132994",
+"called": "48999132994", "startDate": "2019-10-30T19:35:28.1011244Z", "endDate": "2019-10-
+30T19:36:12.0979181Z", "price": 1.02, "talkingDurationSeconds": 59, "result": "Não informado",
+"description": "Ligação não realizada", "manualSet": false, "callAnswered": true, "audio": "Link
+para áudio da ligação", "userId": 123456, "userEmail": "usuario@email.com.br", "userName":
+"Nome", "userLastName": "Sobrenome", "funnelId": 123, "id": 0000000 } ]
+}
+Histórico de Qualificação - Listagem [/QualificationHistories]
+Esta seção está atrelada a listagem das aplicações dos filtros, trazendo as suas perguntas e
+respectivas respostas. Utilize o protocolo OData para filtros/ordenação/etc.
+Dados que serão exibidos na listagem:
+leadId = Identificação do lead;
+stageId = Identificação da etapa;
+stage = Fase que o lead se encontra;
+funnelId = Id do funil;
+cycle = Ciclo do lead que ocorreu o histórico;
+score = Qualificação do lead em questão;
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 49/100
+qualificationDate = Data que aconteceu a qualificação, seguindo o padrão YYYY-MM-dd
+HH:mm ;
+meetingDate = Data que aconteceu a reunião, seguindo o padrão YYYY-MM-dd HH:mm;
+questionAnswers:
+question = texto da questão;
+questionId = identificação da questão;
+answers = resposta da questão, dividida em:
+id = identificação da resposta;
+text = descrição da resposta.
+userAction = Usuário que realizou a ação:
+id = Identificação do usuário;
+name = nome do usuário;
+lastname = sobrenome do usuário;
+email = e-ail do usuário.
+Observações:
+O parâmetro "meetingDate" virá no padrão "0001-01-01T00:00:00Z" quando não houver
+Reunião vinculada ao Stage;
+Somente o histórico do ciclo atual do lead é retornado.
+Listar histórico [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#QualificationHistories",
+"value": [ { "leadId": 123456, "stage": "Nome da Etapa", "stageId": 123456, "funnelId": 123,
+"cycle": 1, "score": "Qualificacao obtida da etapa", "qualificationDate": "2018-09-
+24T09:35:48.2940961-03:00", "meetingDate": "2018-09-23T09:35:48.2940961-03:00Z",
+"questionAnswers": [ { "question": "Descrição da Pergunta", "questionId": 2054, "answers": [ {
+"id":1252, "text":"Descrição da Resposta" } ] } ] } ] }
+Leads - Agendamento [/scheduleAdd]
+Esta seção está atrelada a agendar o lead para uma box disponível.
+Campos utilizados para realizar o agendamento:
+boxId = Id da Box;
+leadId = Id do lead;
+stageName = Nome da etapa de agendamento;
+salesRepEmail = E-mail do vendedor que receberá o agendamento.
+Campos obrigatórios:
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 50/100
+boxId;
+leadId;
+stageName;
+salesRepEmail.
+Observações:
+A Box precisa estar disponível;
+stageName deverá ser de uma etapa de agendamento do mesmo funil do lead;
+salesRepEmail deve ser o mesmo e-mail do vendedor vinculado a Box.
+Agendar Lead [POST]
+Request (application/json)
+Headers token_exact: token
+Body { "boxId": 1234567, "leadId": 654321, "stageName": "Agendados", "salesRepEmail":
+"vendedor@exactsales.com.br" }
+Response 201 (application/json)
+Body { "@odata.context": "http://api-v3.k8s.exactspotter.com/api/v3/$metadata#Edm.Boolean",
+"value": true }
+Leads - Aplicar Feedback [/leadsQualification]
+Este endpoint tem a finalidade de inserir respostas as perguntas de feedback da reunião. Verificar o
+stage do lead no endpoint [/Leads] e consultar o endpoint de etapas perguntas e respostas [/Answers]
+e inserir as respostas da etapa Feedback de reunião.
+Campos Obrigatórios:
+leadId (Required, number) - Id do Lead.
+questionId (Required, number) - Id da pergunta.
+QuestionType (Required) - Tipo da Resposta
+Se o valor 1 (Multiple) , o tipo de resposta é múltipla
+Se o valor: 2 (Unique) , o tipo de resposta é única
+Se o valor: 3 (Open) , o tipo de resposta é aberta
+Text (Caso questão do tipo ABERTA, Required) - Texto da Resposta, se for uma pergunta
+aberta;
+AnswerIds (Caso questão do tipo ÚNICA ou MÚLTIPLA, Required) - Lista de identificadores de
+Resposta.
+continueNegotiation - Continuar Negociação?
+True = Sim
+False = Não
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 51/100
+Inserir feedback de reunião [POST]
+Request (application/json)
+Headers token_exact: token
+Body
+ {
+ "leadId": 609645,
+ "answersList": [
+ {
+ "questionId": 5517,
+ "questionType": "2",
+ "answersIds": [
+ 13328,
+ ]
+ },
+ {
+ "questionId": 9609,
+ "questionType": "3",
+ "text": "Um texto"
+ },
+ {
+ "questionId": 9610,
+ "questionType": "1",
+ "answersIds": [
+ 19526,
+ 19527,
+ 19528
+ ]
+ }
+ ],
+ "continueNegotiation": true
+}
+Response 201 (application/json)
+Body
+ {
+ "@odata.context": "https://api.exactspotter.com/v3/$metadata#Edm.String",
+ "value": "Lead Qualified! The score achieved is: {qualificação}"
+ }
+Response 400 (application/json)
+Body
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 52/100
+ {
+ "error": "justificativa do erro"
+ }
+Leads - Aplicar Filtro [/leadsQualification]
+Este endpoint é utilizado para passar o lead pelas etapas do funil com base nas perguntas e respostas
+definidas pela empresa.
+Verifique no endpoint de Etapas - perguntas e respostas [/Answers], os ids das perguntas e respostas.
+Em caso de perguntas que dependem de resposta anterior, coloque o id da pergunta e id da resposta
+em sequência e envie um payload para cada filtro.
+Campos utilizados para aplicar filtro:
+PainPoints (Optional, List) - Lista de identificadores de dores;
+Products (Optional, List) - Consultar a lista de produtos no endpoint [/Products];
+Campos Obrigatórios
+Answers (Required) - Lista de respostas para avaliação do filtro;
+QuestionId (Required) - Identificador da Pergunta;
+QuestionType (Required) - Tipo da Resposta
+Se o valor: 1 (Multiple) , o tipo de resposta é múltipla
+Se o valor: 2 (Unique) , o tipo de resposta é única
+Se o valor: 3 (Open) , o tipo de resposta é texto livre
+Text (Caso questão do tipo texto livre, Required) - Texto da Resposta, se for uma pergunta
+aberta;
+AnswerIds (Caso questão do tipo ÚNICA ou MÚLTIPLA, Required) - Lista de identificadores
+de Resposta.
+Aplicar Filtro [POST]
+Request (application/json)
+Headers token_exact: token
+Body
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 53/100
+ {
+ "leadId": 609645,
+ "painPoints": [4265, 4265],
+ "products": [4326, 4327],
+ "answersList": [
+ {
+ "questionId": 5517,
+ "questionType": "2",
+ "answersIds": [
+ 13328,
+ ]
+ },
+ {
+ "questionId": 9609,
+ "questionType": "3",
+ "text": "Um texto"
+ },
+ {
+ "questionId": 9610,
+ "questionType": "1",
+ "answersIds": [
+ 19526,
+ 19527,
+ 19528
+ ]
+ }
+Response 201 (application/json)
+Body
+ {
+ "@odata.context": "https://api.exactspotter.com/v3/$metadata#Edm.String",
+ "value": "Lead Qualified! The score achieved is: {qualificação}"
+ }
+Response 400 (application/json)
+Body
+ {
+ "error": "justificativa do erro"
+ }
+Leads - Atualização [/LeadsUpdate/{id}]
+Esta seção está atrelada a edição de um lead na empresa, enviando o id do lead como parâmetro na
+URL de requisição.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 54/100
+Campos utilizados para realizar a edição:
+name = Referente ao nome da empresa;
+industry = Especifica em qual mercado esta empresa atua;
+source = Nome da origem;
+subSource = Nome da sub-origem;
+organizationId = Id da organização;
+sdrEmail = E-mail do pré-vendedor que ficará responsável pelo lead em questão;
+group = Nome do grupo;
+mktLink = URL do marketing da empresa;
+ddiPhone": DDI do país em questão;
+phone: DDD + Telefone da empresa sem o 0;
+ddiPhone2: Segunda opção do DDI do país em questão;
+phone2: Segunda opção do DDD + Telefone da empresa sem o 0;
+website = Referente ao site da empresa;
+leadProduct = Descrição do produto oferecido pelo lead;
+address = Endereço da empresa;
+addressNumber: Número do endereço,
+adressComplement = Complementação do endereço da empresa, caso tenha;
+neighborhood = Bairro;
+zipcode = Refere-se ao CEP ou o código da região que a empresa se encontra;
+city = A cidade que a empresa se encontra;
+state = O estado desta;
+country = País que a empresa se localiza;
+cpfcnpj = CPF ou CNPJ do lead/oportunidade;
+description = Qualquer observação que se deseja fazer a respeito do lead que está sendo
+inserido;
+customFields = Permite atualizar ou inserir um campo personalizado em um lead.
+O "id" será a "key" do campo personalizado;
+Para "options" o "id" será o id da opção.
+Campo obrigatório:
+id = identificador do lead;
+Campos utilizados para o Custom Fields (campos personalizados)
+id = identificação do campo personalizado;
+value = valor do campo personalizado Obs: quando o campo personalizado for do tipo que
+contenha mais de uma opção, o usuário pode entrar com o value, o identificador da opção ou
+ambos. Qualquer uma das situações são aceitáveis
+Caso o parâmetro id seja informado, o value será obrigatório;
+Campo obrigatório:
+name;
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 55/100
+OBS: Caso seja informado address, addressNumber, addressComplement, neighborhood ou
+zipcode então city, state e country são obrigatórios.
+Campo de parametrização:
+duplicityValidation: Se ele for true, verifica a duplicidade e impede o cadastro de acordo com
+informações enviadas nos campos Phone, Phone2 e Website. Caso contrário, se for false,
+ignora a validação e permite o cadastro com duplicidade.
+Atualizar Leads [PUT]
+Request (application/json)
+Headers token_exact: token
+Body { "duplicityValidation":"true", "lead":{ "name":"Nome da empresa", "industry":"Nome do
+Mercado", "source":"Nome da Origem", "subSource":"Nome da sub-origem",
+"organizationId":"123456", "sdrEmail":"Email do pv que vai ser responsavel pelo lead",
+"group":"Nome do grupo", "mktLink":"URL do marketing da Empresa", "ddiPhone":"55",
+"phone":"048991234567", "ddiPhone2":"55", "phone2":"04832321234", "website":"Web site da
+Empresa", "leadProduct":"Descrição do produto oferecido pelo lead", "address":"Endereço da
+Empresa", "addressNumber":"123456", "addressComplement":"Complemento do endereço da
+Empresa", "neighborhood":"Bairro do endereço", "zipcode":"CEP ou Código da região",
+"city":"Nome da Cidade", "state":"Nome do Estado", "country":"Nome do País",
+"cpfcnpj":"21593012000147", "description":"Observações diversas acerca do lead",
+"customFields":[ { "id":"_texto", "value":"Texto aqui" }, { "id":"_textolongo", "value":"Texto longo
+aqui" }, { "id":"_numero", "value":"123456" }, { "id":"_escolhaunica", "options":[ { "id":32329,
+"value":"Opcao 1" } ] }, { "id":"_escolhamultipla", "options":[ { "id":32333, "value":"Multipla 1" }, {
+"id":32334, "value":"Multipla 2" } ] } ] } }
+Response 201 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#Edm.Int32", "value":
+4167401 }
+Leads - Campos personalizados [/LeadsCustomFields]
+Lista os dados de campos personalizados de leads cadastrados pela empresa. Utilize o protocolo
+OData para filtros/ordenação/etc.
+Listar [GET]
+Request (application/json)
+Headers token_exact: token
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 56/100
+Response 200 (application/json)
+Body { "@odata.context":"https://api.exactspotter.com/v3/$metadata#LeadsCustomFields",
+"value": [ { "id": "_escolhamultipla", "value": null, "leadId": 14158786, "options": [ "Multipla 1",
+"Multipla 2" ], "registerDate": "2023-05-26T19:52:33.4414142Z", "updateDate": "2023-05-
+26T19:52:33.4414142Z", "type": "EscolhaMultipla" }, { "id": "_escolhaunica", "value": null,
+"leadId": 14158786, "options": [ "Opcao 1" ], "registerDate": "2023-05-26T19:52:33.4414142Z",
+"updateDate": "2023-05-26T19:52:33.4414142Z", "type": "EscolhaUnica" }, { "id": "_numero",
+"value": "123456", "leadId": 14158786, "options": [], "registerDate": "2023-05-
+26T19:52:33.4414142Z", "updateDate": "2023-05-26T19:52:33.4414142Z", "type": "Numero" }, {
+"id": "_texto", "value": "texto", "leadId": 14158786, "options": [], "registerDate": "2023-05-
+26T19:52:33.4414142Z", "updateDate": "2023-05-26T19:52:33.4414142Z", "type": "Texto" }, {
+"id": "_textolongo", "value": "texto longo", "leadId": 14158786, "options": [], "registerDate":
+"2023-05-26T19:52:33.4414142Z", "updateDate": "2023-05-26T19:52:33.4414142Z", "type":
+"Texto" } ] }
+Leads - Campos Personalizados Exclusão
+[/CustomFieldsLeadsRemove/{leadid}?customFieldId=
+{CampoPersonalizadoId}]
+Esta seção permite excluir campos personalizados atrelados ao Lead, passando o id deste como
+referência na parametrização da URL de requisição.
+Campo obrigatório:
+id = identificador do Lead
+Parâmetro opcional
+customFieldId = identificador do campo personalizado
+Observações:
+Se o identificador do campo personalizado não for informado, serão excluídos todos os campos
+personalizados atrelados ao Lead;
+Para campos personalizados EscolhaUnica ou EscolhaMultipla, o customFieldId será o Id da
+opção.
+Excluir campo personalizado [DELETE]
+Request (application/json)
+Headers token_exact: token
+Response 204 (application/json)
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 57/100
+Leads - Campos Personalizados Listagem [/CustomFieldsLeads]
+Lista os dados de campos personalizados de leads. Utilize o protocolo OData para
+filtros/ordenação/etc.
+Dados que serão exibidos na listagem:
+id = Id do campo personalizado;
+OBS: Quando campo personalizado de EscolhaUnica ou EscolhaMultipla, o Id será do
+campo personalizado pai.
+key = chave do campo personalizado;
+value = valor do campo personalizado. Será vazio quando campo personalizado de
+EscolhaUnica ou EscolhaMultipla;
+leadid = id do lead;
+registerDate = Data em que o campo foi inserido no lead;
+updateDate = Data em que o campo foi editado no lead;
+type = Tipo de campo personalizado;
+options = Só preenchido quando campo personalizado de EscolhaUnica ou EscolhaMultipla,
+sendo:
+id = Id da opção;
+value = valor da opção;
+registerDate = Data em que a opção foi inserida no lead;
+updateDate = Data em que a opção foi editada no lead;
+Listar [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context":"https://api.exactspotter.com/v3/$metadata#CustomFieldsLeads",
+"value": [ { "id": 32325, "key": "_texto", "value": "texto", "leadId": 14535425, "registerDate":
+"2023-06-15T20:57:18.477319Z", "updateDate": "2023-06-15T20:57:18.477319Z", "type":
+"Texto", "options": [] }, { "id": 32326, "key": "_textolongo", "value": "texto longo", "leadId":
+14535425, "registerDate": "2023-06-15T20:57:18.477319Z", "updateDate": "2023-06-
+15T20:57:18.477319Z", "type": "Texto", "options": [] }, { "id": 32327, "key": "_numero", "value":
+"123456", "leadId": 14535425, "registerDate": "2023-06-15T20:57:18.477319Z", "updateDate":
+"2023-06-15T20:57:18.477319Z", "type": "Numero", "options": [] }, { "id": 32328, "key":
+"_escolhaunica", "value": null, "leadId": 14535425, "registerDate": null, "updateDate": null,
+"type": "EscolhaUnica", "options": [ { "id": 32329, "value": "Opcao 1", "registerDate": "2023-06-
+15T20:57:18.477319Z", "updateDate": "2023-06-15T20:57:18.477319Z" } ] }, { "id": 41398,
+"key": "_multiplaescolha", "value": null, "leadId": 14535425, "registerDate": null, "updateDate":
+null, "type": "EscolhaMultipla", "options": [ { "id": 41399, "value": "Escolha A", "registerDate":
+"2023-06-15T17:17:34.3068406Z", "updateDate": "2023-06-15T17:17:34.3068406Z" }, { "id":
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 58/100
+41400, "value": "Escolha B", "registerDate": "2023-06-15T17:17:34.3068406Z", "updateDate":
+"2023-06-15T17:17:34.3068406Z" } ] } ] }
+Leads - Ciclo de vida do Lead *depreciated
+[/leadPipelineStages/{id}]
+Esta seção está atrelada a listar todo ciclo de vida de um lead. É opcional o id do lead como referência
+na parametrização da URL de requisição.
+Campo opcional:
+id = identificador do lead.
+Campos mostrados na listagem:
+id = identificador do histórico,
+originStage = etapa de origem. Nulo quando cadastro,
+destinationStage = etapa de destino,
+createdAt = data da ação,
+cycle = ciclo do Lead no momento da ação,
+discardedStage = se foi descartado na etapa,
+discardDate = data de descarte,
+originFunnelId = Id do funil de origem. Nulo quando cadastro,
+destinationFunnelId = Id do funil de destino.
+Observação:
+Quando o descarte ocorre por filtro ou feedback, o id retornará como = 0, pois trata-se de uma
+alteração de situação do lead e não alteração de etapa.
+Listar [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#leadPipelineStages",
+"value":[ { "leadid": 456789, "stages": [ { "id":123456, "originStage": NULL, "destinationStage":
+"Entrada", "createdAt": "2015-04-17T19:55:21.7496563", "cycle": 1, "discardedStage": false,
+"discardDate": NULL, "originFunnelId": NULL, "destinationFunnelId": 4321 },
+{ "id":654321, "originStage": "Filtro 2", "destinationStage": "Agendados", "createdAt": "2015-04-
+17T19:55:21.7496563", "cycle": 2, "discardedStage": true, "discardDate": "2015-04-
+17T19:55:21.7496563", "originFunnelId": 1234, "destinationFunnelId": 4321 },
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 59/100
+]
+}
+Leads - Ciclo de vida do Lead [/leadStages/{id}]
+Esta seção está atrelada a listar todo ciclo de vida de um lead. É opcional o id do lead como referência
+na parametrização da URL de requisição. Utilize o protocolo OData para filtros/ordenação/etc.
+Campo opcional:
+id = identificador do lead.
+Campos mostrados na listagem:
+leadid = id do lead,
+originStage = etapa de origem. Nulo quando cadastro,
+destinationStage = etapa de destino,
+createdAt = data da ação,
+cycle = ciclo do Lead no momento da ação,
+discardedStage = se foi descartado na etapa,
+discardDate = data de descarte,
+originFunnelId = Id do funil de origem. Nulo quando cadastro,
+destinationFunnelId = Id do funil de destino.
+Observação:
+Quando o descarte ocorre por filtro ou feedback, o id retornará como = 0, pois trata-se de uma
+alteração de situação do lead e não alteração de etapa.
+Listar [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#leadStages", "value":[ {
+"leadid":123456, "originStage": NULL, "destinationStage": "Entrada", "createdAt": "2015-04-
+17T19:55:21.7496563", "cycle": 1, "discardedStage": false, "discardDate": NULL,
+"originFunnelId": NULL, "destinationFunnelId": 4321 },
+{ "leadid":654321, "originStage": "Filtro 2", "destinationStage": "Agendados", "createdAt": "2015-
+04-17T19:55:21.7496563", "cycle": 2, "discardedStage": true, "discardDate": "2015-04-
+17T19:55:21.7496563", "originFunnelId": 1234, "destinationFunnelId": 4321 },
+]
+}
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 60/100
+Leads - Descarte [/leadsLost]
+Esta seção está atrelada ao descarte de um lead.
+Campos utilizados para realizar o descarte:
+leadId = Identificação do lead,
+reason = Motivo do descarte do lead,
+userEmail = E-mail do gerente ou pré-vendedor.
+Campos obrigatórios:
+leadId;
+reason;
+userEmail.
+Descartar Leads [POST]
+Request (application/json)
+Headers token_exact: token
+Body { "leadId": 123456, "reason": "Não demonstrou interesse.", "userEmail":
+"gerenteOUpv@email.com" }
+Response 201 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#Edm.Int32", "value":
+123456 }
+Leads - Exclusão [/LeadsDelete/{id}]
+Procedimento de exclusão é o responsável por deletar um lead que foi criado anteriormente, enviando
+o id do lead como parâmetro na URL da requisição.
+Parâmetro obrigatório:
+id = Identificador do Lead.
+Delete Lead [DELETE]
+Request (application/json)
+Headers token_exact: token
+Response 204 (application/json)
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 61/100
+ 1
+Leads - Inserção [/LeadsAdd]
+Esta seção está atrelada ao cadastro de um lead na empresa, fazendo referência aos dados que
+deverão ser inseridos no ato da criação. Também é possível neste momento fazer a criação de
+campos personalizados para este lead, caso o cliente desejar. *Temos a internacionalização dos
+telefones agora inserir o DDI no campo ddiPhone e o número com DDD sem o zero conforme abaixo:
+Campos utilizados para realizar a inserção do lead:
+name = Referente ao nome da empresa;
+industry = Especifica em qual mercado esta empresa atua;
+source = Nome da origem;
+subSource = Nome da sub-origem;
+organizationId = Id da organização;
+sdrEmail = E-mail do pré-vendedor que ficará responsável pelo lead em questão;
+group = Nome do grupo;
+mktLink = URL do marketing da empresa;
+ddiPhone = DDI do país em questão;
+phone = DDD + Telefone da empresa sem o 0;
+ddiPhone2 = Segunda opção do DDI do país em questão;
+phone2 = DDD + Segunda opção de telefone da empresa sem o 0;
+website = Referente ao site da empresa;
+leadProduct = Descrição do produto oferecido pelo lead;
+address = Endereço da empresa;
+addressNumber = Número do endereço da empresa;
+addressComplement = Complementação do endereço da empresa, caso tenha;
+neighborhood = Bairro;
+zipcode = Refere-se ao CEP ou o código da região que a empresa se encontra;
+city = A cidade que a empresa se encontra;
+state = O estado desta;
+country = País que a empresa se localiza;
+description = Qualquer observação que se deseja fazer a respeito do lead que está sendo
+inserido;
+cpfcnpj = CPF ou CNPJ do lead/oportunidade;
+funnelId = Id do funil pra qual deseja que o lead seja cadastrado;
+stage = Nome da etapa que deseja que o lead seja cadastrado. Necessário informar o funnelId.
+Caso não informar o funnelId, o lead será cadastrado na primeira etapa do funil padrão,
+ignorando a etapa informada.
+Campos utilizados para o Custom Fields (campos personalizados)
+id = identificação do campo personalizado;
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 62/100
+value = valor do campo personalizado Obs: quando o campo personalizado for do tipo que
+contenha mais de uma opção, o usuário pode entrar com o value, o identificador da opção ou
+ambos. Qualquer uma das situações são aceitáveis
+Caso o parâmetro id seja informado, o value será obrigatório;
+Campo obrigatório:
+name;
+OBS: Caso seja informado address, addressNumber, addressComplement, neighborhood,
+zipcode ou city, então state e country são obrigatórios.
+Campo de parametrização:
+duplicityValidation: Se ele for true, verifica a duplicidade e impede o cadastro. Caso contrário,
+se for false, ignora a validação e permite o cadastro com duplicidade.
+Campos que o sistema valida a duplicidade :
+phone = Telefone da empresa;
+phone 2 = Telefone da empresa;
+website = Referente ao site da empresa;
+cpfcnpj = CPF/CNPJ da empresa;
+Inserir Leads [POST]
+Request (application/json)
+Headers token_exact: token
+Body { "duplicityValidation": true, "lead": { "name": "Nome do lead", "industry": "Nome do
+Mercado", "source": "Nome da Origem", "subSource": "Nome da sub-origem", "organizationId":
+"Id da organização", "sdrEmail": "Email do pé-vendedor que vai ser responsavel pelo lead",
+"group": "Nome do grupo", "mktLink": "URL do marketing da Empresa", "ddiPhone": "55",
+"phone": "48991234567", "ddiPhone2": "55", "phone2": "4832321234", "website": "Web site da
+Empresa", "leadProduct": "Descrição do produto oferecido pelo lead", "address": "Endereço da
+Empresa", "addressNumber": "123456", "addressComplement": "Complemento do endereço da
+Empresa", "neighborhood": "Bairro do endereço", "zipcode": "CEP ou Código da região", "city":
+"Florianópolis", "state": "SC", "country": "Brasil", "cpfcnpj": "21593012000147", "description":
+"Observações diversas acerca do lead", "funnelId": 1234, "stage": "Nome da etapa",
+"customFields": [ { "id":"_valordoticket", "value":"150,00" }, { "id":"_escolhamultipla", "options": [
+{"value": "Opção 1"}, {"id":3128}, {"id":3128, "value":"Opção 1"} ] } ] } }
+Response 201 (application/json)
+Body
+{
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 63/100
+ "@odata.context": "https://api.exactspotter.com/v3/$metadata#Edm.Int32",
+ "value": 175216
+}
+Leads - Listagem [/Leads]
+Esta seção está atrelada a listagem de um lead na empresa, retornando com os dados que foram
+inseridos no ato da criação. Utilize o protocolo OData para filtros/ordenação/etc.
+Campos exibidos na listagem:
+Informações referentes ao lead:
+lead = Nome do Lead;
+registerDate = Data e horário do registro no padrão YYYY-MM-dd HH:mm:ss;
+updateDate = Data e horário da atualização do registro no padrão YYYY-MM-dd HH:mm:ss;
+mktLink = URL do marketing da empresa;
+publicLink = Link público;
+phone1 = telefone da empresa;
+phone2 = Segunda opção do Telefone da empresa;
+telephones = Quando lead possuir mais de 3 telefones, serão exibidos nesse parâmetro;
+website = Site da empresa;
+leadProduct = Descrição do produto oferecido pelo lead;
+description = Observação a respeito do lead que está sendo listado;
+stage = Nome da etapa atual;
+cnpj = Número do cadastro nacional da empresa;
+street = Nome da Rua do endereço da empresa;
+cep = Refere-se ao CEP ou o código da região que a empresa se encontra;
+number = Número do endereço;
+complement = Complementação do endereço da empresa, caso tenha;
+district = Bairro do endereço;
+city = Cidade que a empresa está localizada;
+state = Estado em que a empresa está situada;
+country = País em que a empresa se encontra;
+integrationId = Identificação da integração com o CRM;
+id: identificação da empresa;
+funilId: Id do Funil;
+closingForecastDate: Data de previsão de fechamento;
+Informações referentes a origem (source):
+id = Identificação da origem;
+value = Nome da origem.
+Informações referentes ao mercado (industry):
+id = Identificação do mercado;
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 64/100
+value = Nome do mercado cadastrado.
+Informações referentes a sub-origem (subsource):
+id = Identificação da suborigem;
+value = Nome da sub-origem.
+Informações referentes ao pré-vendedor (sdr):
+id = Identificação do pré-vendedor;
+name = Nome do pré-vendedor;
+lastName = Sobrenome do pré-vendedor;
+email = E-mail do pré-vendedor;
+phone = Primeira opção de telefone do pré-vendedor;
+phone2 = Segunda opção de telefone do pré-vendedor;
+active = Identifica se o pré-vendedor está com o status de ativo (true) ou não (false).
+Informações referentes ao vendedor (salesRep):
+id = Identificação do vendedor;
+name = Nome do vendedor;
+lastName = Sobrenome do vendedor;
+email = E-mail do vendedor;
+phone = Primeira opção de telefone do vendedor;
+phone2 = Segunda opção de telefone do vendedor;
+active = Identifica se o vendedor está com o status de ativo (true) ou não (false).
+Listar Leads [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#Leads", "value": [ { "lead":
+"Nome da empresa", "registerDate": "2015-04-09T19:30:33.1151616Z", "updateDate": "2015-
+05-16T18:16:21.528629Z", "mktLink": "https://lead.mktdigital.com/3948", "publicLink":
+"https://app.exactspotter.com/public/m4itsv67wfru", "phone1": "5548991234567", "phone2":
+"554832321234", "telephones": [ "5548991234567", "554832321234", "5555987654321",
+"5555912345678" ], "website": "https://site.empresa.com/", "leadProduct": "Descrição do
+produto oferecido pelo lead", "description": "Observações diversas acerca do lead", "stage":
+"Nome da etapa atual", "cnpj": "21593012000147", "street": "Endereço da Empresa", "cep":
+"CEP ou Código da região", "number": "122354", "complement": "Complemento do endereço da
+Empresa", "district": "Bairro do endereço", "city": "Nome da Cidade", "state": "Nome do Estado",
+"country": "Nome do País", "integrationId": "Id de integração com o CRM", "id": 4187,
+"closingForecastDate": "2015-04-09T00:00:00.0000000Z", "funnelId": 123, "source": { "id": 23,
+"value": "Nome da Origem" }, "industry": { "id": 2, "value": "Nome do Mercado" }, "subSource": {
+"id": 12, "value": "Nome da Sub-Origem" }, "sdr": { "id": 2898, "name": "João", "lastName":
+"silva", "email": "email@pv.com", "phone": "048991234567", "phone2": "04832321234", "active":
+false }, "salesRep": { "id": 2903, "name": "João(somente para lead c/ agend. ou vendido)",
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 65/100
+"lastName": "silva", "email": "email@vendedor.com", "phone": "048991234567", "phone2":
+"04832321234",, "active": false } } ] }
+Leads - Mudar Funil [/changeFunnel]
+Esta seção está atrelada a mudar o lead de funil.
+Campos utilizados para realizar a mudança:
+leadId = Identificação do lead;
+stageId = Id da etapa destino no novo funil.
+Campos obrigatórios:
+leadId;
+stageId.
+Observações:
+O lead não poderá voltar para um funil que já esteve.
+Mudar Funil [POST]
+Request (application/json)
+Headers token_exact: token
+Body { "leadId": 123456, "stageId": 654321 }
+Response 201 (application/json)
+Body { "@odata.context": "http://api-v3.k8s.exactspotter.com/api/v3/$metadata#Edm.Boolean",
+"value": true }
+Leads - Pular Etapas [/SkipSteps?leadId={id}&stageId={id}]
+Esta seção está atrelada ao pular etapa de um lead.
+Campos utilizados para realizar o pular etapa:
+leadId = Id do lead,
+stageId = Id da etapa destino;
+Campos obrigatórios:
+leadId;
+stageId.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 66/100
+Pular Etapas [POST]
+Request (application/json)
+Headers token_exact: token
+Response 201 (application/json)
+Body { "@odata.context": "http://api-v3.k8s.exactspotter.com/api/v3/$metadata#Edm.Boolean",
+"value": true }
+Leads - Recuperação de descarte [/LeadsRecover]
+Esta seção está atrelada na recuperação de um lead que outrora foi descartado, utilizando como
+parâmetro o id deste.
+Campos utilizados para realizar a recuperação do descarte:
+leadId = identificação do lead a ser recuperado;
+userEmail = e-mail do usuário;
+funnelId = id do funil destino;
+Campo obrigatório:
+leadId;
+Campo opcional:
+funnelId;
+Recuperar Lead Descartado [POST]
+Request (application/json)
+Headers token_exact: token
+Body { "leadId": 123456, "userEmail": "usuario@email.com", "funnelId": 123 }
+Response 201 (application/json)
+Body
+{ "@odata.context": "https://api.exactspotter.com/v3/$metadata#Edm.Int32", "value": 123456 }
+Leads - Transferência [/LeadsTransfer]
+Esta seção está atrelada a permissão de transferência de Leads de um pré-vendedor para outro, ou
+para um grupo de pré-vendedores.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 67/100
+Campos utilizados para realizar a transferência:
+ids = Lista de indentificadores dos leads que serão transferidos;
+sdrEmail = E-mail do pré-vendedor;
+group = Grupo do lead
+Campo obrigatório:
+ids;
+sdrEmail.
+Transferir Leads [POST]
+Request (application/json)
+Headers token_exact: token
+Body { "ids":[ 123, 456 ], "sdrEmail":"prevendedor@email.com", "group": "Nome do grupo" }
+Response 201 (application/json)
+Body
+{
+ "@odata.context":"https://api.exactspotter.com/v3/$metadata#Edm.Int32"
+ "value": ""
+}
+Leads - Transferência de Vendedor [/sellerTransfer]
+Esta seção está atrelada a possibilidade de transferência de vendedor de um usuário para outro.
+Campos utilizados para realizar a transferência de vendedor:
+ids = Lista de indentificadores dos leads que serão transferidos;
+sellerEmail = E-mail do usuário destino;
+Campo obrigatório:
+ids;
+sellerEmail.
+Transferir Vendedor [POST]
+Request (application/json)
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 68/100
+Headers token_exact: token
+Body { "ids":[ 123, 456 ], "sellerEmail":"usuario@email.com" }
+Response 201 (application/json)
+Body
+{
+ "@odata.context":"http://apiv3.exactspotter.com:81/api/v3/$metadata#Edm.Boolean",
+ "value": ""
+}
+Leads - Vendas [/leadsWon]
+Esta seção está atrelada a venda de um lead na empresa.
+Campos utilizados para realizar a venda:
+LeadId (Required, number) = Identificador do lead;
+salesDate = Data que ocorreu a venda, no formato YYYY-MM-dd HH:mm;
+SalesRepEmail (Required, string) = E-mail do vendedor;
+IgnoreSalesRep (Optional, bool) = Opção para desabilitar a obrigatoriedade do atributo
+SalesRepEmail.Se o valor: TRUE, o atributo SalesRepEmail será ignorado, a venda será
+registrada para o vendedor responsável pelo Lead.Se o valor: FALSE, mantém a
+obrigatoriedade do atributo SalesRepEmail.Default: FALSE
+productId = Id do produto;
+quantity = Quantidade;
+labelValue = Valor de venda do produto;
+discountType:
+1 = Valor
+2 = Percentual
+discountValue = Valor do desconto (em reais ou percentual)
+Campos obrigatórios:
+quantity: Obrigatório quando productId informado;
+Vender Leads [POST]
+Request (application/json)
+Headers token_exact: token
+Body { "leadId": 123456, "salesDate": "2019-01-28T14:59:39.000Z", "salesRepEmail":
+"vendedor@email.com", "ignoreSalesRep": false, "products": [ { "productId": 321, "quantity": 1,
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 69/100
+"labelValue": 150, "discountType":"1", "discountValue":50 }, { "productId": 12345, "quantity": 1,
+"labelValue": 100, "discountType":"2", "discountValue":10 } ] }
+Response 201 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#LeadsWon/$entity",
+"leadId": 123456, "salesDate": "2019-01-28T14:59:39.000Z", "salesRepEmail":
+"vendedor@email.com", "ignoreSalesRep": false }
+Leads e Contatos - Listagem [/LeadsAndPersons]
+Esta seção está atrelada a listagem dos dados dos leads e seus respectivos contatos. Utilize o
+protocolo OData para filtros/ordenação/etc.
+Campos exibidos na listagem:
+Informações referentes ao lead:
+lead = Nome do Lead;
+registerDate = Data e horário do registro no padrão YYYY-MM-dd HH:mm;
+updateDate = Data e horário da atualização do registro no padrão YYYY-MM-dd HH:mm;
+mktLink = URL do marketing da empresa;
+publicLink = Link público;
+phone1 = telefone da empresa;
+phone2 = Segunda opção do Telefone da empresa;
+website = Site da empresa;
+leadProduct = Descrição do produto oferecido pelo lead;
+description = Observação a respeito do lead que está sendo listado;
+stage = Nome da etapa atual;
+cnpj = Número do cadastro nacional da empresa;
+street = Nome da Rua do endereço da empresa;
+cep = Refere-se ao CEP ou o código da região que a empresa se encontra;
+number = Número do endereço;
+complement = Complementação do endereço da empresa, caso tenha;
+district = Bairro do endereço;
+city = Cidade que a empresa está localizada;
+state = Estado em que a empresa está situada;
+country = País em que a empresa se encontra;
+integrationId = Identificação da integração com o CRM;
+id: identificação da empresa.
+funilId: Id do Funil;
+Informações referentes aos contatos do lead (persons):
+id = Identificação do contato;
+email = E-mail do contato;
+name = Nome do contato;
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 70/100
+leadId = Identifação do lead que este contato se refere;
+jobTitle = Cargo que o contato ocupa;
+phone1 = Primeira opção de telefone do contato;
+phone2 = Segunda opção de telefone do contato;
+messagingPlatform = Plataforma de mensagens utilizada pelo contato;
+idMessagingPlatform = Endereço do contato na plataforma de mensagens;
+mainContact: = Se TRUE, indica se é o contato principal do lead. Por DEFAULT é false.
+Informações referentes ao mercado (industry):
+id = Identificação do mercado;
+value = Nome do mercado cadastrado.
+Informações referentes a origem (source):
+id = Identificação da origem;
+value = Nome da origem.
+Informações referentes a sub-origem (subsource):
+id = Identificação da suborigem;
+value = Nome da sub-origem.
+Informações referentes ao pré-vendedor (sdr):
+id = Identificação do pré-vendedor;
+name = Nome do pré-vendedor;
+lastName = Sobrenome do pré-vendedor;
+email = E-mail do pré-vendedor;
+phone = Primeira opção de telefone do pré-vendedor;
+phone2 = Segunda opção de telefone do pré-vendedor;
+active = Identifica se o pré-vendedor está com o status de ativo ou não.
+Informações referentes ao vendedor (salesRep):
+id = Identificação do vendedor;
+name = Nome do vendedor;
+lastName = Sobrenome do vendedor;
+email = E-mail do vendedor;
+phone = Primeira opção de telefone do vendedor;
+phone2 = Segunda opção de telefone do vendedor;
+active = Identifica se o vendedor está com o status de ativo ou não.
+Listar Leads e Contatos [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#LeadsAndPersons",
+"value": [ { "lead": "Nome do lead", "registerDate": "2019-05-06T19:53:08.1918182Z",
+"updateDate": "2019-05-08T19:01:15.7154699Z", "mktLink":
+"https://app.exactspotter.com/marketingdaempresa", "publicLink":
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 71/100
+"https://app.exactspotter.com/public/co0hkivp2e9yf", "ddiPhone1": "55", "phone1":
+"048991234567", "ddiPhone2": "55", "phone2": "04832321234", "website":
+"www.sitedaempresa.com.br/", "leadProduct": "Especificação do produto da empresa",
+"description":"Observações sobre o lead ", "stage": "Entrada", "cnpj": "11. 222. 333/0001-44 ",
+"street": "Rua do Endereço", "cep": "CEP ou Código da região", "number": "Número do
+endereço", "complement": "Complemento do endereço", "district": "Bairro do Endereço", "city":
+"Florianópolis", "state": "Santa Satarina", "country": "Brasil", "integrationId": 5278512, "id":
+4167401, "funilId": 123, "persons": [ { "id": 6530402 "email": "emaildocontato@email.com.br",
+"name": "Nome do contato", "leadId": 4167401, "jobTitle": "Cargo do contato", "phone1":
+"5548991234567", "phone2": "554832321234",, "messagingPlatform": "Skype",
+"idMessagingPlatform": Skype do contato, "mainContact": false,
+ }
+ ],
+ "industry": {
+ "id": 41920,
+"value": "Nome do mercado"
+ },
+ "source": {
+ "id": 42892,
+ "value": "Integracao Speed IO"
+ },
+ "subSource": {
+ "id": 43903,
+"value": "Nome da sub-origem"
+ },
+ "sdr": {
+ "id": 3592,
+ "name": "Nome do PV",
+ "lastName": "PRD Gmail",
+ "email": "pv.prd@gmail.com",
+ "phone": "4830257750",
+ "phone2": "48999999999",
+ "active": false
+ },
+ "salesRep": {
+ "id": 4603,
+ "name": "Nome do vendedor",
+ "lastName": "Sobrenome do vendedor",
+ "email": "vendedor@gmail.com",
+ "phone": "4830257750",
+ "phone2": "48999999999",
+ "active": false
+ }
+ }
+] }
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 72/100
+Leads Descartados - Listagem [/Losts]
+Esta seção está atrelada a listagem de descarte de leads.
+Campos que serão mostrados na listagem:
+leadId = Identificação do lead,
+stage = Nome da etapa de descarte,
+funnelId = Id do funil que o lead se encontra no momento do descarte,
+reason = Motivo do descarte,
+date = Data que aconteceu o descarte, seguindo o modelo YYYY-MM-dd HH:mm.
+Listar Descartados [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#Losts", "value": [ {
+"leadId": 0000000, "stage": "Nome da etapa de descarte", "reason": "Motivo do descarte",
+"date": "2018-08-09T18:55:38.7046437Z" } ]
+}
+Leads Transferidos - Listagem [/transferHistory]
+Esta seção está atrelada a listagem de leads transferidos. Utilize o protocolo OData para
+filtros/ordenação/etc.
+Campos que serão mostrados na listagem:
+leadId = Identificação do lead,
+stageId = Id da etapa do lead,
+funnelId = Id do funil que o lead se encontra no momento da transferência,
+originUserId = Pré-vendedor que estava com o lead,
+destinationUserId = Pré-vendedor que recebeu o lead,
+actionUserId = Usuário que realizou a transferência,
+createdAt = Data que ocorreu a transferência, seguindo o modelo YYYY-MM-dd HH:mm.,
+Listar Transferências [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 73/100
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#TransferHistory", "value":
+[ { "leadId": 123456, "stageId": 1234, "funnelId": 123, "originUserId": 654321,
+"destinationUserId": 11111, "actionUserId": 22222, "createdAt": "2022-10-
+05T15:47:24.1876272Z" }, { "leadId": 24680, "stageId": 1234, "funnelId": 123, "originUserId":
+654321, "destinationUserId": 11111, "actionUserId": 22222, "createdAt": "2022-10-
+05T15:47:55.1876272Z" } ]
+}
+Leads Vendidos - Listagem [/LeadsSold]
+Esta seção está atrelada a listagem dos leads vendidos na empresa.
+Dados que serão exibidos na listagem:
+Dados gerais:
+leadId = Identificação do lead vendido;
+saleDate = Data que ocorreu a venda do lead, no formato YYYY-MM-dd HH:mm;
+saleStage = Estágio que o lead se encontrava ao ser efetuada a venda;
+cycle = Ciclo que o lead se encontrava ao ser efetuada a venda;
+totalDealValue = Valor total da venda;
+id = Identificação da venda
+Dados correspondente ao vendedor:
+name = Primeiro nome do vendedor;
+lastName = Sobrenome do vendedor;
+email = E-mail do vendedor
+Dados sobre o produto vendido:
+id = Identificação do produto vendido;
+quantity = Quantidade do produto vendido;
+individualValue = Valor individual do produto;
+discountAmount = Quantia de desconto no produto vendido;
+discountType = Tipo do desconto, sendo subdivido em três categorias:
+Absoluto,
+Porcentual,
+Nenhum
+fullValue = Preço do produto;
+finalValue = Preço do produto com desconto;
+name = Nome do produto.
+Observações:
+Vendas desfeitas não são exibidas na listagem.
+Listar Leads Vendidos [GET]
+Request (application/json)
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 74/100
+Headers token_exact: token
+Response 200 (application/json)
+Body
+{ "@odata.context": "https://api.exactspotter.com/v3/$metadata#LeadsSold", "value": [ { "leadId":
+1620559, "saleDate": "2021-08-20T06:00:00Z", "saleStage": "Qualificados", "cycle": 1, "totalDealValue":
+14.50, "id": 21382, "salesRep": { "name": "Vendedor", "lastName": "Da Silva", "email":
+"vendedor@vendedor.com.br" }, "products": [ { "id": 1234, "quantity": 1, "individualValue": 5.00,
+"discountAmount": 10.00, "discountType": "Percent", "fullValue": 5.00, "finalValue": 4.50, "name": "bola
+de futebol" }, { "quantity": 1, "individualValue": 10.00, "discountAmount": 0.00, "discountType": "",
+"fullValue": 10.00, "finalValue": 10.00, "name": "Bola de basquete" } ] ] }
+Ligações - Inserção [/]
+#####ATENÇÃO: Para esta ação, devemos utilizar um endpoint diferente do acostumado até esse
+momento nesta versão. Sempre que se quiser utilizá-lo, teremos:
+ #### [POST] https://api.exactspotter.com/api/v2/call
+Esta seção traz a maneira correta de fazer uma inserção de ligação.
+Dados utilizados na inserção:
+LeadId = Id do lead que será inserida a ligação;
+UrlLigacao = Link que se encontra o conteúdo da ligação. É necessário ser em HTTPS;
+OrigemTel = Corresponde ao telefone do pré-vendedor; É de extrema importância que este
+telefone seja o mesmo que se encontra no cadastro do pré-vendedor;
+DestinoTel = Corresponde ao telefone do lead. É necessário que seja o mesmo telefone do
+cadastro;
+DtInicioChamada = Relacionado quando a ligação se iniciou, em formato YYYY-mm-DD
+hh:mm:ss;
+DtFimChamada = Relacionado à finalização da ligação, em formato YYYY-mm-DD hh:mm:ss;
+TempoConversacao = Tempo, em segundos, de conversação, a partir do momento que o lead
+atende a ligação.
+Campo obrigatório:
+Todos.
+Parâmetros adicionais:
+openCallResultModal = Parâmetro opcional utilizado para abrir a tela de coleta de resultado de
+ligação para o responsável do lead ao inserir uma ligação. Valor default: false. Para utilização,
+acrescentar openCallResultModal=true na URL.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 75/100
+Inserir Ligação [POST]
+Request (application/json)
+Headers token_exact: token
+Body { "LeadId": 123456, "UrlLigacao": "https://callstotalvoice.s3.amazonaws.com/2021/05/28/10059.wav", "OrigemTel": "1235678904",
+"DestinoTel": "35998063607", "DtInicioChamada": "2021-05-28 11:40:00", "DtFimChamada":
+"2021-05-28 11:42:01", "TempoConversacao": 90 }
+Response 200 (application/json) 1
+Localização - Listagem [/cities]
+Esta seção está atrelada a listagem de localizações (cidade, estado e país). Utilize o protocolo OData
+para filtros/ordenação/etc.
+Campos mostrados na listagem:
+city = Nome da cidade;
+state = Nome do estado;
+country = Nome do país
+Listar Localização [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#Cities", "value": [ { "city":
+"Nome da Cidade", "state": "Nome do Estado", "country": "Nome do País" } ] }
+Mercado - Listagem [/industries]
+A funcionalidade traz uma lista dos mercados cadastrados por empresa. Utilize o protocolo OData para
+filtros/ordenação/etc.
+Dados que serão exibidos na listagem:
+value = correspondente ao nome do mercado;
+active = identifica se o mercado está com estado de ativo ou inativo;
+id = identificador do mercado.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 76/100
+Listar Mercado [GET]
+Request (application/json)
+Headers
+ token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#Industries", "value": [ {
+"value": "Nome da Mercado", "active": "true", "id": 2 } ] }
+Metas - Listagem [/goals]
+A funcionalidade traz uma lista das metas dos pré-vendedores e vendedores. O endpoint é um espelho
+da tabela disponível em Configurações -> Metas, Pontuações e Bonificações. . Utilize o protocolo
+OData para filtros/ordenação/etc.
+Dados que serão exibidos na listagem:
+period = Identificação do período da meta, poderá ser Day, Month e Commercial Month (caso
+mês comercial configurado);
+start = Data de início baseado no period;
+end = Data fim baseado no period;
+listSdrs = Lista dos pré-vendedores;
+userId = Id do usuário;
+superGoal = super-meta.
+schedules = Refere-se aos agendamentos (em quantidade), onde:
+goal = Objetivo da meta;
+achieved = agendamentos realizados pelo usuário;
+calls = Refere-se às ligações (em quantidade), onde:
+goal = Objetivo da meta;
+achieved = Ligações realizados pelo usuário;
+minutes = Refere-se à minutagem de ligações (em minutos), onde:
+goal = Objetivo da meta;
+achieved = Minutagem de ligações realizadas pelo usuário;
+sales = Refere-se às vendas realizadas (em quantidade), onde:
+goal = Objetivo da meta;
+achieved = Vendas realizadas pelo usuário ou atribuídas a ele;
+score = Refere-se à pontuação (em quantidade), onde:
+goal = Objetivo da meta;
+achieved = Pontuação atingida pelo usuário;
+listSellers = Retornará os mesmos parâmetros descritos acima, mas para os vendedores;
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 77/100
+Listar Metas [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#Goals", "value": [ {
+"period": "Commercial Month", "start": "2023-05-24T00:00:00Z", "end": "2023-06-
+23T23:59:59Z", "listSdrs": [ { "userId": 123456, "superGoal": 0, "schedules": { "goal": 10,
+"achieved": 5 }, "calls": { "goal": 100, "achieved": 55 }, "minutes": { "goal": 112, "achieved": 80 },
+"sales": { "goal": 5, "achieved": 0 }, "score": { "goal": 500, "achieved": 100.00 } } ], "listSellers": [ {
+"userId": 654321, "superGoal": 0, "schedules": { "goal": 0, "achieved": 0 }, "calls": { "goal": 0,
+"achieved": 0 }, "minutes": { "goal": 0, "achieved": 0 }, "sales": { "goal": 10, "achieved": 1 },
+"score": { "goal": 0, "achieved": 0.00 } } ] }, { "period": "Day", "start": "2023-05-31T00:00:00Z",
+"end": "2023-06-01T00:00:00Z", "listSdrs": [ { "userId": 123456, "superGoal": 0, "schedules": {
+"goal": 0, "achieved": 0 }, "calls": { "goal": 0, "achieved": 0 }, "minutes": { "goal": 0, "achieved": 0
+}, "sales": { "goal": 0, "achieved": 0 }, "score": { "goal": 0, "achieved": 0.00 } } ], "listSellers": [ {
+"userId": 654321, "superGoal": 0, "schedules": { "goal": 0, "achieved": 0 }, "calls": { "goal": 0,
+"achieved": 0 }, "minutes": { "goal": 0, "achieved": 0 }, "sales": { "goal": 0, "achieved": 0 },
+"score": { "goal": 0, "achieved": 0.00 } } ] }, { "period": "Month", "start": "2023-05-01T00:00:00Z",
+"end": "2023-05-31T23:59:59Z", "listSdrs": [ { "userId": 123456, "superGoal": 2, "schedules": {
+"goal": 1, "achieved": 3 }, "calls": { "goal": 1, "achieved": 4 }, "minutes": { "goal": 1, "achieved": 2
+}, "sales": { "goal": 1, "achieved": 2 }, "score": { "goal": 1, "achieved": 600.00 } } ], "listSellers": [ {
+"userId": 654321, "superGoal": 0, "schedules": { "goal": 0, "achieved": 0 }, "calls": { "goal": 0,
+"achieved": 0 }, "minutes": { "goal": 0, "achieved": 0 }, "sales": { "goal": 0, "achieved": 2 },
+"score": { "goal": 0, "achieved": 0.00 } } ] } ] }
+Motivos de Descarte - Listagem [/discardReasons]
+Esta seção está atrelada a listagem dos motivos de descarte da empresa. Utilize o protocolo OData
+para filtros/ordenação/etc.
+Campos mostrados na listagem:
+id = Identificação do motivo de descarte,
+value = Nome do motivo de descarte,
+active = True ou False,
+createdAt = Data em que o motivo de descarte foi criado,
+updatedAt = Data em que o motivo de descarte foi editado.
+Listar Motivos de Descarte [GET]
+Request (application/json)
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 78/100
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "http://apiv3.exactspotter.com/api/v3/$metadata#DiscardReasons",
+"value": [ { "id": 1, "value": "Tentativas de contato esgotadas", "active": true, "createdAt": "0001-
+01-01T00:00:00Z", "updatedAt": "0001-01-01T00:00:00Z" }, { "id": 2, "value": "Tentativas de
+agendamento esgotadas", "active": true, "createdAt": "0001-01-01T00:00:00Z", "updatedAt":
+"0001-01-01T00:00:00Z" }, { "id": 3, "value": "Telefone incorreto ou não existe", "active": true,
+"createdAt": "0001-01-01T00:00:00Z", "updatedAt": "0001-01-01T00:00:00Z" }, { "id": 123456,
+"value": "Nome do motivo de descarte", "active": true, "createdAt": "2022-10-
+05T15:47:24.1876272Z", "updatedAt": "2022-10-05T15:47:24.1876272Z" } ], "@odata.nextLink":
+"https://api.exactspotter.com/v3/discardReasons?$skip=500" }
+Origem e sub-origem - Listagem [/sources]
+Esta seção traz a consulta de registros de todas as origens e suas sub-origens cadastradas. Utilize o
+protocolo OData para filtros/ordenação/etc.
+Dados que serão exibidos na listagem:
+value = nome da origem cadastrada;
+type = identifica o tipo de origem;
+default = identifica qual a origem padrão para integração;
+active = verifica se a origem está com status de ativo ou inativo;
+id = identificador da origem;
+value (subsource) = nome da sub-origem cadastrada;
+active (subsource) = verifica se a sub-origem está com status de ativo ou inativo;
+id (subsource) = identificador da sub-origem;
+Listar Origem e Sub-origem [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#Sources", "value": [ {
+"value": "Nome da origem", "type": "Ativo", "default": false, "active": true, "id": 2, "subSources": {
+"value": "Nome da sub-origem", "active":true, "id":"Identificador da sub-origem" } } ] }
+Perguntas e Respostas - Listagem [/Answers]
+Esta seção traz a lista de perguntas e respostas dos questionários. Utilize o protocolo OData para
+filtros/ordenação/etc.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 79/100
+Campos exibidos na listagem:
+Informações gerais:
+order = Ordem da pergunta;
+stage = Etapa que o lead se encontra.
+Informações sobre as perguntas (questions):
+id = Identificação da pergunta;
+text = Descrição da pergunta;
+tip = Dica da pergunta;
+required = Indica se é uma pergunta com resposta obrigatória;
+active = identifica se está ativa (true) ou não (false)
+type = Informa qual é tipo da pergunta:
+multiple = para pergunta múltipla escolha;
+unique = para pergunta de escolha única;
+open = para perguntas aberta.
+parentAnswerId = Identifica se a pergunta é condicional.
+Informações sobre as respostas (answers):
+id = Identificação da resposta;
+text = Descrição da resposta.
+active = identifica se está ativa (true) ou não (false)
+Listar Perguntas e Respostas [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context":"https://api.exactspotter.com/v3/$metadata#Answers", "value":[ {
+"order:" 1, "stage":"Filtro 1", "questions":[ { "id":123457, "text":"Conhece a Acate?", "tip":"Quero
+saber se faz sentido a gente formar uma parceria.", "required":false, "type":"unique",
+"parentAnswerId":12356, "active": true, "answers":[ { "id":15780, "text":"Sim", "active": true }, {
+"id":15781, "text":"Não", "active": true } ] }, { "id":123458, "text":"Quantidade de Funcionários:",
+"tip":"Encontrar essa informação no site ou linkedin.", "required":false, "type":"multiple",
+"parentAnswerId":12345, "active": true, "answers":[ { "id":456789, "text":"1 a 10" "active": true }, {
+"id":456790, "text":"10 a 50", "active": true }, { "id":456791, "text":"50 ou mais", "active": true } ] },
+{ "id":123461, "text":"Descreva o processo:", "tip":null, "required":false, "type":"open",
+"parentAnswerId":null, "answers":null, "active": true } ] }, { "order": 2, "stage":"Filtro 2",
+"questions":[ ] }, { "order:" 3, "stage":"Feedback reunião", "questions":[ ] } ] }
+Pontuação - Listagem [/scores]
+A funcionalidade traz uma lista da pontuação recebida pelos pré-vendedores. O endpoint é um espelho
+do extrato de pontuação. Utilize o protocolo OData para filtros/ordenação/etc.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 80/100
+Dados que serão exibidos na listagem:
+id = Identificação da pontuação;
+leadId = Id do Lead correspondente àquela pontuação;
+scoreDate = Data/hora no qual o pré-vendedor recebeu a pontuação;
+score = Valor da pontuação recebida;
+stage = Etapa na qual a pontuação foi realizada;
+funnelId = Id do funil;
+inbox = Indica se o Lead possui uma entrada (origem) ativa ou passiva.
+0 : para entradas (origens) ativas;
+1 : para entradas (origens) passivas;
+sdr = Informações do pré-vendedor:
+Id = id do pré-vendedor;
+name = Nome do pré-vendedor;
+lastName = Sobrenome do pré-vendedor;
+email = E-mail do pré-vendedor;
+Listar Pontuação [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#Scores", "value": [
+ {
+ "id": 1234,
+ "leadId": 123456,
+ "scoreDate": "2021-05-12T20:11:27.6558769Z",
+ "score": 9.0,
+ "stage": "Qualificados",
+ "funnelId": 123,
+ "inbox": 0,
+ "sdr": {
+ "id": 123,
+ "name": "Nome do pré-vendedor",
+ "lastName": "Sobrenome do pré-vendedor",
+ "email": "email pré-vendedor"
+ }
+ }
+ ]
+}
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 81/100
+Pré-vendedores - Listagem [/sdrs]
+A funcionalidade está atrelada a uma consulta de todos os pré-vendedores registrados no sistema.
+Utilize o protocolo OData para filtros/ordenação/etc.
+Dados que serão exibidos na listagem:
+id = identificador do pré-vendedor;
+name = nome do pré-vendedor;
+lastName = sobrenome do pré-vendedor;
+e-mail = endereço eletrônico do pré-vendedor;
+ddi = ddi do país
+phone = primeira opção de telefone de contato com DDD;
+phone2 = segunda opção de telefone de contatocom DDD;
+active = identifica se o pré-vendedor se encontra com o status ativo ou inativo.
+Listar pré-vendedores [GET]
+Request (application/json)
+Headers
+ token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#Sdrs", "value": [ { "id":
+"3524", "name": "João", "lastName": "Da Silva", "email": "email@gmail.com", "phone":
+"483025750", "phone2": "4831810180", "active": true } ] }
+Produtos - Atualização [/productsUpdate/{id}]
+Esta seção está atrelada a ação de atualizar um produto específico, passando o id do produto como
+parâmetro na requisição da URL.
+Campos disponíveis para atualizar o usuário:
+name = Nome do produto,
+value = Valor do produto,
+status = Ativo ou Inativo
+1 = Ativo;
+0 = Inativo
+Campos obrigatórios:
+name;
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 82/100
+Campos que o sistema valida a duplicidade :
+name;
+Observações:
+Se o parâmetro value não for informado, será atribuído 0,00 por padrão
+Atualizar Produto [PUT]
+Request (application/json)
+Headers token_exact: token
+Body
+ {
+ "name": "Nome do produto",
+ "value": 1234,
+ "status": 1
+ }
+Response 200 (application/json)
+Produtos - Exclusão [/productsRemove/{id}]
+Esta seção está atrelada a exclusão de um determinado produto.
+Parâmetro obrigatório
+id = Identificador do produto
+Remover produto [DELETE]
+Request (application/json)
+Headers
+ token_exact: token
+Response 204 (application/json)
+Produtos - Inserção [/productsAdd]
+O endpoint permite inserir um produto nas Configurações -> Padrões da empresa.
+Dados utilizados na inserção:
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 83/100
+name = Nome do produto,
+value = Valor do produto
+Campos obrigatórios:
+name;
+Campos que o sistema valida a duplicidade :
+name;
+Observações:
+Se o parâmetro value não for informado, será atribuído 0,00 por padrão
+Inserir produto [POST]
+Request (application/json)
+Headers token_exact: token
+Body { "name": "Webphone", "value": 1234 }
+Response 201 (application/json)
+Body
+{ "@odata.context": "https://api.exactspotter.com/v3/$metadata#productsAdd", "value": Id do
+produto criado }
+Produtos - Listagem [/products]
+Esta seção traz a lista de produtos ativos da empresa. Utilize o protocolo OData para
+filtros/ordenação/etc.
+Listar [GET]
+Request (application/json)
+Headers
+ token_exact: token
+Response 200 (application/json)
+Body
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 84/100
+ {
+ "@odata.context": "https://api.exactspotter.com/v3/$metadata#Products",
+ "value":[
+ {
+ "id":123,
+ "value":123.00,
+ "description": "Nome do Produto"
+ }
+ ]
+}
+Produtos Sugeridos - Adicionar [/recommendedProductsAdd]
+Esta seção permite adicionar produtos sugeridos ao Lead.
+Campos utilizados para realizar a inserção:
+leadId = Identificador do lead,
+productId = Id do produto,
+quantity = Quantidade de produto,
+labelValue = Valor original do produto,
+discountType = Tipo de desconto,
+1 = Valor
+2 = Percentual
+discountValue = Valor do desconto (em reais ou percentual)
+Campos obrigatórios:
+leadId
+productId
+discountType: Obrigatório caso o campo discountValue seja informado.
+Observações:
+Se o campo quantity não for informado ele preencherá automaticamente com valor 1;
+Se o campo labelValue não for informado ele preencherá com valor cadastrado no produto.
+Caso não tenha valor será preenchido com zero;
+Adicionar [POST]
+Request (application/json)
+Headers token_exact: token
+Response 201 (application/json)
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 85/100
+Body { "leadId":123456, "products":[ { "productId":123, "quantity":1, "labelValue":25.00,
+"discountType":"1", "discountValue":10.00 }, { "productId":36, "quantity":3, "labelValue":30.00,
+"discountType":"1", "discountValue":10.00 } ] }
+Produtos Sugeridos - Exclusão
+[/recommendedProductsRemove/{leadid}?productId={productId}]
+Esta seção permite excluir produtos atrelados ao Lead, passando o id deste como referência na
+parametrização da URL de requisição.
+Campo obrigatório:
+id = identificador do Lead
+Parâmetro opcional
+productId = identificador do produto
+Observações: Se o identificador do produto não for informado, serão excluídos todos os produtos
+atrelados ao Lead
+Excluir produto sugerido [DELETE]
+Request (application/json)
+Headers token_exact: token
+Response 204 (application/json)
+Produtos Sugeridos - Listagem [/recommendedProducts]
+Esta seção traz a lista de produtos do lead. É necessário informar o id do lead no parâmetro da URL,
+sempre que a consulta se fizer necessário. Utilize o protocolo OData para filtros/ordenação/etc.
+Campo opcional:
+leadId = Identificador do lead
+Dados que serão exibidos na listagem:
+leadId = Identificador do lead,
+productId = Id do produto,
+quantity = Quantidade de produto,
+labelValue = Valor original do produto,
+discountType = Tipo de desconto,
+discountValue = Valor do desconto,
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 86/100
+amount = Valor final/total
+Listar[GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#recommendedProducts",
+"value": [ { "leadId": 123456, "productId": Id do produto, "quantity": Quantidade de produto,
+"labelValue": Valor original do produto, "discountType": "Tipo de desconto", "discountValue":
+Valor do desconto, "amount": Valor final/total } ] }
+Resultado de ligação - Listagem [/callsResult]
+Esta seção traz a lista do resultado de ligação do lead. Utilize o protocolo OData para
+filtros/ordenação/etc.
+Dados que serão exibidos na listagem:
+id = Identificação do resultado da ligação;
+value = Nome do resultado da ligação;
+Listar Histórico de Ligação [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#CallResults", "value": [ {
+"id": 1, "value": "Nome do tipo de resultado ligação", } ] }
+Reuniões - Feedbacks Pendentes [/pendingFeedbacks]
+Essa seção está atrelada a retornar os feedbacks pendentes de reuniões. Utilize o protocolo OData
+para filtros/ordenação/etc.
+Campos mostrados na listagem:
+meetingId = id da reunião,
+leadid = id do lead,
+leadName = nome do lead,
+stageId = id da etapa atual do lead,
+stageName = nome da etapa atual do lead,
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 87/100
+sellerId = id do vendedor,
+sellerName = nome do vendedor,
+sellerLastName = sobrenome do vendedor,
+date = data da reunião.
+Listar Feedbacks Pendentes [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context":
+"http://apiv3.exactspotter.com:81/api/v3/$metadata#PendingFeedbacks", "value":[ { "meetingId":
+123456, "leadId": 654321, "leadName": "Teste Lead", "stageId": 123, "stageName":
+"Agendados", "sellerId": 0001, "sellerName": "Vendedor", "sellerLastName": "Sobrenome",
+"date": "2024-07-19T18:00:00Z" } ] }
+Reuniões - Listagem [/meetings]
+Esta seção está atrelada a listagem das reuniões, filtrando pela empresa. Utilize o protocolo OData
+para filtros/ordenação/etc.
+Campos exibidos na listagem:
+Informações gerais:
+id = Identificação do agendamento;
+type = Tipo do agendamento:
+Vigente;
+Reagendada;
+Cancelada;
+Concluído;
+NaoOcorreu.
+registerDate = Data que o agendamento foi registrado, no formato YYYY-MM-dd HH:mm;
+meetingType = Identifica qual é o tipo da reunião:
+Presencial;
+Online;
+Telefone.
+meetingDate = Data da reunião, no formato YYYY-MM-dd;
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 88/100
+startTime = Data/Hora do início da reunião, no formato YYYY-MM-dd HH:mm;
+finalTime = Data/Hora do término da reunião, no formato YYYY-MM-dd HH:mm;
+managerDescription = Observação feita pelo gerente;
+sdrDescription = Observação feita pelo pré-vendedor;
+reference = Referencias;
+score = Qualificação obtida no feedback de reunião, se houver;
+qualificationDate = Data em que o feedback de reunião foi realizado, se houver;
+Informações referente ao lead:
+id = Identificação do lead;
+name = Nome do lead;
+site = Site do lead;
+phone = Telefone principal do lead.
+Informações referente ao vendedor:
+id = Identificaçao do vendedor;
+name = Nome do vendedor;
+lastName = Sobrenome do vendedor;
+email = E-mail do vendedor.
+phone = Telefone do vendedor;
+phone2 = Segundo telefone do vendedor;
+active = identifica se o vendedor se encontra com o status ativo ou inativo.
+Informações referente ao usuário:
+id = Identificaçao do usuário;
+name = Nome do usuário;
+lastName = Sobrenome do usuário;
+email = E-mail do usuário;
+phone = Telefone do usuário;
+phone2 = Segundo telefone do usuário
+active = identifica se o usuário se encontra com o status ativo ou inativo.
+Listar Reuniões [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#Meetings", "value": [ { "id":
+717033, "type": "Agendamento", "registerDate": "2019-05-23T17:43:48.7097867Z",
+"meetingType": "Online", "meetingDate": "2019-05-23T17:43:48.5377237Z", "startTime": "2019-
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 89/100
+05-27T08:00:00Z", "finalTime": "2019-05-27T08:30:00Z", "managerDescription": "Observação
+feita pelo gerente", "sdrDescription": "Observação feita pelo pré-vendedor", "reference":
+"Referencias", "meetingFeedbackUrl":"URL do Feedback", "score": "Qualificação obtida no
+feedback de reunião", "qualificationDate": "Data em que o feedback de reunião foi realizado, se
+houver", "lead": { "id": 4352695, "name": "Teste Feedback de Reunião", "site":
+"www.lead.com.br", "phone": "48991484644" }, "salesRep": { "id": 11191, "name": "Primeiro
+Nome", "lastName": "Sobrenome", "email": "teste@exactsales.com.br", "phone":
+"554832223222", "phone2": "554832223222", "active": False }, "user": { "id": 22653, "name":
+"testelimitecaractereste", "lastName": "testelimitecaracterestess", "email":
+"testelimitecaractereso1993@gmail.com", "phone": "554832223222", "phone2":
+"554832223222", "active": True } } ] }
+Temperatura - Listagem de Temperaturas de Qualificação
+[/qualificationTemparature]
+Esta seção é dedicada à listagem das temperaturas de qualificação utilizadas nas avaliações.
+Campos mostrados na listagem:
+id: identificador da temperatura;
+order: classificação da temperatura;
+description: descrição da temperatura.
+Listar Temperaturas [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context":
+"http://apiv3.exactspotter.com/api/v3/$metadata#QualificationTemperature", "value": [ { "id": 1,
+"order": 5, "description": "Muito Quente" }, { "id": 2, "order": 4, "description": "Quente" }, { "id": 3,
+"order": 3, "description": "Morna" }, { "id": 4, "order": 2, "description": "Fria" }, { "id": 5, "order": 1,
+"description": "Congelada" } ] }
+Timeline - Inserir comentário [/timelineAdd]
+O endpoint permite inserir um comentário na Timeline do Lead.
+Dados utilizados na inserção:
+leadId = identificador do Lead;
+text = comentário a ser inserido na timeline;
+userId = identificador do usuário responsável pelo comentário inserido.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 90/100
+Inserir comentário [POST]
+Request (application/json)
+Headers token_exact: token
+Body { "leadId": 123456, "text": "Comentário timeline", "userId": 123 }
+Response 201 (application/json)
+Body
+{ "@odata.context": "https://api.exactspotter.com/v3/$metadata#timelineAdd", “value”: true }
+Timeline - Listar [/ListTimeline/{leadId}]
+Esta seção está atrelada a listar a timeline de um determinado Lead. O identificador do lead é
+obrigatório na URL de requisição.
+Dados que serão exibidos na listagem:
+Id = identificador do registro da timeline
+leadId = identificador do Lead
+text = Texto timeline
+createdAt = Data em que o registro foi criado
+user = Objeto com dados do usuário que realizou a ação
+id = identificador do usuário
+name = Nome do usuário,
+lastName = Sobrenome do usuário,
+email = e-mail do usuário
+Listar timeline [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#ListTimeline", "value": [ {
+"id": 1234, "leadId": 123456, "text": "Texto timeline", "createdAt": "2022-06-
+27T14:25:25.5514597Z", "user": { "id": 123, "name": "Nome do usuário", "lastName":
+"Sobrenome do usuário", "email": "e-mail do usuário" } } ] }
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 91/100
+Transcrição - Listar [/Transcriptions?initialDate=YYYY-MMDD&finalDate=YYYY-MM-DD]
+Esta seção está atrelada à consulta das transcrições realizadas no sistema.
+A consulta retorna os registros de transcrições com base no período informado nos parâmetros da
+URL. O parâmetro de período (initialDate e finalDate) é obrigatório para a execução da consulta.
+Utilize o protocolo OData para aplicação de filtros, ordenação e paginação conforme necessidade.
+A consulta retorna apenas registros criados dentro do período especificado.
+Parâmetros obrigatórios
+initialDate = Data inicial da consulta no formato YYYY-MM-DD.
+finalDate = Data final da consulta no formato YYYY-MM-DD.
+Campos mostrados na listagem
+id = Identificador da transcrição;
+leadId = Identificador do lead relacionado;
+callId = Identificador da ligação associada (será diferente de nulo quando a transcrição se
+referir a uma ligação);
+conferenceId = Identificador da videoconferência associada (será diferente de nulo quando a
+transcrição se referir a uma videoconferência);
+createdAt = Data e hora de criação da transcrição;
+transcription = Conteúdo completo da transcrição.
+Listar transcrição [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "http://apiv3.exactspotter.com:81/api/v3/$metadata#Transcriptions",
+"value": [ { "id": 1234, "leadId": 123456, "callId": 99999, "conferenceId": null, "createdAt": "2026-
+01-15T14:32:10Z", "transcription": "{ "LeadId": 500123, "HistoricoLigacaoId": 700456,
+"TranscricaoSolicitada": true, "Resumo": "Lorem ipsum dolor sit amet, consectetur adipiscing
+elit.", "Transcricao": [{ "Tempo": "00:02", "Locutor": "Speaker 1", "Texto": "Lorem ipsum dolor sit
+amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna
+aliqua." }], "Sumario": [{ "tempo": "00:02", "ponto_chave": "Lorem ipsum dolor sit amet" }],
+"PreVendedorId": 0, "FeedbackLigacaoId": 0 }" } ] }
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 92/100
+Usuário - Atualização [/userUpdate/{id}]
+Esta seção está atrelada a ação de atualizar um usuário específico, passando o id do usuário como
+parâmetro na requisição da URL.
+Campos disponíveis para atualizar o usuário:
+name = Nome do usuário,
+surname = Sobrenome do usuário,
+email = email do usuário,
+phone1 = Telefone 1 do usuário,
+phone2 = Telefone 2 do usuário,
+accessSpotter = Define se o usuário terá acesso ao Spotter
+True = Tem acesso,
+False = Não tem acesso
+receiveLeadsOnboarding = Define se o usuário irá receber leads/oportunidades por integração
+True = Receberá
+False = Não receberá
+Campos obrigatórios:
+id = identificador do usuário;
+Atualizar Usuário [PUT]
+Request (application/json)
+Headers token_exact: token
+Body
+ {
+ "name": "Nome do Usuário",
+ "surname": "UltimoNome do Usuario",
+ "email": "Email do Usuario",
+ "phone1": "Tel1 do Usuario",
+ "phone2": "Tel2 do Usuario",
+ "accessSpotter": true or false,
+ "receiveLeadsOnboarding": true or false,
+ }
+Response 200 (application/json)
+Usuário - Inserção [/UserAdd]
+O endpoint permite inserir um usuário na Empresa.
+Dados utilizados na inserção:
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 93/100
+profileType = Tipo de perfil a ser inserido,
+1 = Gerente
+2 = Pré-vendedor
+6 = Vendedor
+name = Nome do usuário,
+surname = Sobrenome do usuário,
+email = email do usuário,
+phone1 = Telefone 1 do usuário,
+phone2 = Telefone 2 do usuário,
+accessSpotter = Define se o usuário terá acesso ao Spotter
+True = Tem acesso
+False = Não tem acesso
+receiveLeadsOnboarding = Define se o usuário irá receber leads/oportunidades por integração
+True = Receberá
+False = Não receberá
+Campos obrigatórios:
+profileType
+name
+surname
+email
+accessSpotter
+receiveLeadsOnboarding
+Observações:
+A senha de acesso será enviada para o e-mail informado;
+Para usuário Vendedor ou Gerente o sistema irá atribuir sempre False para o parâmetro
+receiveLeadsOnboarding.
+Inserir usuário [POST]
+Request (application/json)
+Headers token_exact: token
+Body { "profileType": "2", "name": "Primeiro Nome", "surname": "Sobrenome", "email":
+"teste@teste.com", "phone1": "04832321234", "phone2": "048981224545", "accessSpotter":
+true, "receiveLeadsOnboarding": true }
+Response 201 (application/json)
+Body
+{ "@odata.context": "https://api.exactspotter.com/v3/$metadata#UserAdd", "value": Id do
+usuário criado }
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 94/100
+Vendedores - Listagem [/sellers]
+Esta seção está atrelada a listagem dos vendedores da empresa. Utilize o protocolo OData para
+filtros/ordenação/etc.
+Campos mostrados na listagem:
+id = Identificação do vendedor;
+name = Nome do vendedor;
+lastName = Sobrenome do vendedor;
+email = Endereço eletrônico do vendedor;
+ddi = DDI do país;
+phone = Primeira opção de telefone do vendedor com DDD;
+phone2 = Segunda opção de telefone do vendedor com DDD;
+active = Identifica de o vendedor está com o status de ativo ou não.
+Listar Vendedores [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "@odata.context": "https://api.exactspotter.com/v3/$metadata#Sellers", "value": [ { "id":
+"Identificador do vendedor", "name": "Nome do vendedor", "lastName": "Sobrenome do
+vendedor", "email": "E-mail do vendedor", "phone": "Número do telefone principal", "phone2":
+"Número do telefone secundário", "active": true } ] }
+##Webhook - Execução [/.] Esta seção apresenta um exemplo do payload em formato .json que será
+recebido na URL configurada na execução de um evento webhook.
+Informações sobre os dados:
+Webhook - Descrição dos dados que serão recebidos:
+Lead - dados do Lead cadastrado
+Custom Fields - campos personalizados
+Sale - Dados da venda e do vendedor responsável
+Appointment - Dados do agendamento da reunião
+Webhook Execução [POST]
+Request (application/json)
+Headers token_exact: token
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 95/100
+Body { "event":"event.schedule", "appointment":{ "boxId":2310929, "previousBoxId":0,
+"salesRep":{ "name":"Nome do vendedor", "lastName":"Vendedor",
+"email":"email@vendedor.com.br" }, "meetingType":"Tipo de reunião", "reference":"referencia da
+reuniao", "linkFeedback":"https://link da reunião", "dateTimeStartDate":"2021-09-10T00:10:00",
+"dateTimeEndDate":"2021-09-10T00:20:00" }, "lead":{ "id":1776178, "company":"Nome do
+Lead", "createdAt":"2021-09-08T20:58:24.9287363", "updatedAt":"2021-09-
+08T20:59:23.1801092", "contact":[ { "id":1770374, "leadId":1776178, "name":"Nome do
+Contato", "phone":"Telefone do contato", "email":"email@docontato.com", "position":"Cargo do
+contato", "typeMessenger":"Plataforma de mensagem (Ex:Linkedin)", "idMessenger":"Contato
+da plataforma/URL" } ], "industry":{ "id":194, "value":"Mercado" }, "origin":{ "id":143,
+"value":"Origem" }, "subOrigin":{ "id":63, "value":"Sub-Origem" }, "sdr":{ "name":"Nome do prévendedor", "lastName":"Sobrenome do pré-vendedor", "email":"prevendedor@email.com.br" },
+"salesRep":{ "name":"Nome do vendedor", "lastName":"Sobrenome do vndedor",
+"email":"vendedor@email.com.br" }, "phone":"554332323232",
+"publicLink":"https://app.exactspotter.com/public/linkpublico", "mktLink":"www.meucrm.com.br",
+"site":"www.meusite.com.br", "productLead":"Produto", "address":{ "address_Maps":"Rua -
+Bairro, Cidade- Estado, País", "publicPlaceName":"Rua - Bairro, Cidade- Estado, País",
+"addAddressInformation":"Número", "zipCode":"Cep", "city":"Cidade", "state":"Estado",
+"country":"País" }, "city":"Cidade", "state":"Estado", "country":"País", "description":"Descrição",
+"stage":"Etapa", "salesQualification":false, "painPoints":[ {"id": 1234, "value": "Descrição da dor
+do cliente"} ], "products":[ {"id":1234, "value":"Nome do produto"} ], "customFields":[ {
+"id":"_campopersonalizado", "value":"valor" } ], "stages":[ { "stageId":ID da etapa,
+"stage":"Etapa", "leadQualification":"Qualificação do lead", "reviewDate":"2021-09-
+08T20:58:33.1390729", "questionAnswers":[ { "question":"Pergunta 1", "responses":[ {
+"response":"Resposta" } ] } ] }, "sale":{ "leadId":1776279, "saleDate":"2021-09-08T06:00:00",
+"saleStage":"Nome da Etapa", "salesRep":{ "name":"Nome do Vendedor", "lastName":"2",
+"email":"emailvendedor@email.com.br" } } }
+Webhooks - Inserção [/webhooksAdd]
+Esta seção está atrelada ao cadastro de uma URL que tem como objetivo notificar os clientes diante
+dos eventos listados abaixo.
+Dados utilizados na inserção:
+url = Endereço para enviar as informações do evento;
+event = Evento gatilho para o disparo das informações.
+Eventos:
+Agendamento de reunião: "event.schedule";
+Nova mensagem na timeline do lead: "insert.timeline";
+Lead vendido: "event.leadwon";
+Novo lead (manual): "event.leadinserted";
+Conversão: "event.leadconverted";
+Reagendamento de reunião: "event.reschedule";
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 96/100
+Cancelamento de reunião (reunião desmarcada e não ocrrida no mesmo webhook):
+"event.cancelschedule";
+Descarte de lead: "event.leadlost";
+Lead qualificado: "event.leadqualified";
+Lead avaliado: "event.leadfiltered";
+Novo lead (integração Inbound Mkt): "event.leadinsertedmkt";
+Lead recuperado por integração com Inbound Mkt: "event.leadrecoveredmkt";
+Novo lead (integração API): "event.leadinsertedapi";
+Lead recuperado por API: "event.leadrecoveredapi";
+Lead editado (geral): "event.leadupdated";
+Lead recuperado: "event.leadrecovered";
+Atividade criada: "event.activitycreated";
+Atividade apagada "event.activitydeleted";
+Atividade concluída: "event.activitydone";
+Atividade editada: "event.activityedited";
+Ligação encerrada: "event.callended";
+Registro/resultado de ligação: "event.callsresultinserted";
+Transferência de vendedor: "event.salestransfered";
+Reunião desmarcada: "event.scheduleunchecked";
+Reunião não ocorrida: "event.schedulenotheld";
+Novo Lead (via importação): "event.leadinsertedimport";
+Pular etapas: "event.skippedstep";
+Lead editado (manualmente): "event.leadupdatedmanually";
+Lead editado (via API): "event.leadupdatedapi";
+Lead tranferido de pré-vendedor: "event.sdrtransfered";
+Lead editado (via integração Mkt): "event.leadupdatedmkt"
+Inserir Webhooks [POST]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body { "url":"https://meucrm.com.br/notificacoes/schedule", "event":"event.schedule" }
+Webhooks - Listagem [/Webhooks]
+Esta seção traz a listagem de todos os eventos que foram cadastrados no webhook pelo usuário.
+Dados que serão exibidos na listagem:
+id = Identificação do evento;
+url = Endereço cadastrado para os envios das informações do evento;
+event = Evento cadastrado.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 97/100
+Listar Eventos Cadastrados [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body {
+ "@odata.context": "https://api.exactspotter.com/v3/$metadata#Webhooks",
+ "value": [
+ {
+ "id": 1234,
+ "url": "https://meucrm.com.br/notificacoes/schedule",
+ "event": "event.schedule"
+ }
+ ]
+}
+Webhooks - Listagem de eventos à cadastrar [/WebhookEvent]
+Esta seção traz a listagem de todos os eventos que podem ser cadastrados no webhook pelo usuário.
+Dados que serão exibidos na listagem:
+id = Identificação do evento;
+event = Evento disponível para cadastro.
+Listar Eventos à Cadastrar [GET]
+Request (application/json)
+Headers token_exact: token
+Response 200 (application/json)
+Body {
+ "@odata.context": "https://api.exactspotter.com/v3/$metadata#WebhookEvent",
+ "value": [
+ {
+ "id": 1234,
+ "event": "event.schedule"
+ }
+ ]
+}
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 98/100
+Webhook - Remover inscrição [/WebhooksDelete/{id}]
+Remover [DELETE]
+Parameters
+id (number) - ID da inscrição
+Request (application/json)
+Headers
+ token_exact: token
+Response 204 (application/json)
+Response 500 (application/json)
+Body
+ {
+ "success":"false",
+ "error":"justificativa do erro"
+ }
+Whatsapp - Inserção [/WhatsAppAdd]
+Este endpoint permite a inserção de mensagens do WhatsApp associadas a um lead. Ele suporta
+tanto mensagens de texto quanto de mídia, possibilitando agrupar conversas por meio de um
+session_id
+Dados utilizados na inserção:
+session_id = ID único para agrupar as mensagens dentro de uma mesma conversa. Deve ser
+gerado e controlado pelo cliente.
+id = ID da mensagem no WhatsApp, único para cada mensagem.
+salesRepEmail = E-mail do SDR associado à mensagem.
+phone = Número de WhatsApp do lead, incluindo o código DDI.
+direction = Indica a direção da mensagem - in para mensagens enviadas pelo lead ao SDR, ou
+out para mensagens enviadas pelo SDR ao lead.
+message = O conteúdo da mensagem, obrigatório para mensagens de texto (type = 1). Para
+outros tipos de mídia, este campo é opcional, pois um subtítulo pode ser recebido da mídia.
+file_url = URL do arquivo de mídia, usado apenas quando o tipo de mensagem (type) for
+diferente de texto.
+type = Define o tipo de mensagem - 1 para texto e 2 para mídia.
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 99/100
+messageDate = Data e hora em que a mensagem foi enviada ou recebida, no formato ISO
+8601.
+Campos obrigatórios:
+session_id
+id
+phone
+direction
+type
+messageDate
+Observações:
+Se o retorno do endpoint for bem-sucedido e a mensagem não for exibida na linha do tempo, é
+necessário realizar o login novamente.
+Inserir mensagem [POST]
+Request
+Headers token_exact: token
+Response 200 (application/json)
+Body
+{ "session_id": "f84f1223-73d5-445b-a678-eb29e7e835a8", "id": "1234", "salesRepEmail":
+"teste@teste.com.br", "phone": "5548999999999", "direction": "in", "message": "oi", "file_url":
+"https://link-al-sitio.com", "type": "2", "messageDate": "2024-09-10T20:26:54.000Z" }
+6/5/26, 3:06 PM API - Exact Spotter V3
+file:///home/KENNER.KLIEMANN/RDProjects/Spotter/api_v3.html 100/100

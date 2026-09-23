@@ -1,0 +1,123 @@
+Inout
+
+Central de clientes
+Acompanhamento estratégico
+
+Be Blue School
+Monitoramento de performance do projeto
+
+Geral
+META
+Google
+InPilot
+
+
+Mês anterior: 01 de ago. de 2026 a 31 de ago. de 2026
+InPilot · Inteligência do cliente
+
+Conversas
+
+
+Análise · Meta · Receita e ROAS
+
+Atualizada 15 de set.
+
+
+Análise · Meta · Receita e ROAS
+
+Seu analista de contas · fatos antes de opinião
+
+Você
+22:22
+Como foi o resultado da conta ontem?
+InPilot
+22:22
+No dia 13 de setembro de 2026, a conta da Be Blue School investiu R$ 38,93 em anúncios na Meta, com 1.239 impressões e 6 cliques. Não houve geração de leads nem resultados atribuídos, mantendo o mesmo patamar do dia anterior em termos de leads e resultados (zero em ambos). O investimento caiu 43% em relação ao dia 12, quando foram aplicados R$ 68,68, com 3.400 impressões e 9 cliques, também sem leads ou resultados atribuídos. O custo por clique (CPC) melhorou, passando de R$ 7,63 para R$ 6,49, enquanto a taxa de cliques (CTR) subiu de 0,26% para 0,48%. Não há registros de conversões ou valor atribuído no Google Ads para esses dias. Portanto, apesar da redução no investimento e no volume de impressões e cliques, a eficiência do clique aumentou, mas sem impacto na geração de leads ou resultados atribuídos.
+
+Visão geral de mídia · 13 de set.—13 de set.
+Você
+22:23
+o que podemos fazer para melhorar a conta?
+InPilot
+22:23
+Para melhorar a conta da Be Blue School na Meta, considerando o período de 13 de setembro de 2026, sugiro focar em ações que possam aumentar a geração de leads, já que não houve leads nem resultados atribuídos nos dois dias analisados.
+
+Primeiro, é importante revisar a segmentação e os criativos para aumentar o engajamento, pois apesar da melhora no CTR (de 0,26% para 0,48%) e redução do CPC (de R$ 7,63 para R$ 6,49), isso não se traduziu em leads. Testar variações de anúncios pode ajudar a identificar mensagens ou formatos mais eficazes.
+
+Segundo, avalie a jornada do usuário após o clique, verificando se a landing page está adequada para conversão, pois o tráfego gerado não está convertendo em leads.
+
+Por fim, monitore o CPL assim que os primeiros leads surgirem para avaliar a eficiência real da campanha. Sem leads, não há CPL para análise, portanto, foco inicial deve ser em gerar volume de leads.
+
+Esses passos são baseados na evidência de investimento, cliques e ausência de leads, priorizando a eficiência do investimento e o objetivo principal da conta. Não há dados suficientes para recomendar aumento ou realocação de orçamento neste momento.
+
+Visão geral de mídia · 13 de set.—13 de set.
+Você
+22:24
+e nesse mês ?
+InPilot
+22:24
+No período de 1 a 13 de setembro de 2026, a conta da Be Blue School na Meta investiu R$ 481,89, gerando 26.711 impressões e 62 cliques, sem registro de leads ou resultados atribuídos. O custo por clique (CPC) foi de R$ 7,77, e a taxa de cliques (CTR) ficou em 0,23%. Comparando com o período anterior, de 19 a 31 de agosto, houve redução de 20% no investimento (R$ 601,70), queda de 32% nas impressões (39.243) e 53% nos cliques (133), mantendo zero leads e resultados atribuídos. A CTR caiu de 0,34% para 0,23%, e o CPC aumentou de R$ 4,52 para R$ 7,77. As duas campanhas ativas no período atual não geraram leads, com investimento concentrado na campanha "07/08 - [IN] [RA] [BE KIDS] [LEADS]" (R$ 481,89). Não há registros de compras ou receita atribuída. Portanto, apesar do investimento e volume de cliques, não houve geração de leads neste mês, e a eficiência medida pelo CPC e CTR piorou em relação ao período anterior.
+
+Performance de campanhas Meta · 01 de set.—13 de set.
+Visão geral de mídia · 01 de set.—13 de set.
+Você
+22:24
+qual o melhor criativo do mÊs?
+InPilot
+22:24
+No período de 1 a 13 de setembro de 2026, o criativo com melhor desempenho na Meta em termos de custo por clique (CPC) foi o "[Anuncio_01]", da campanha "07/08 - [IN] [RA] [BE KIDS] [LEADS]", com CPC de R$ 2,83. Esse criativo gerou 170 cliques a partir de 26.711 impressões, com investimento total de R$ 481,89. Não houve geração de leads ou compras atribuídas a esse criativo no período.
+
+Outro criativo listado, "[CRIATIVO_01]", não teve investimento, impressões, cliques ou resultados registrados no mês, portanto não contribuiu para a performance.
+
+Assim, considerando o critério de CPC e volume de cliques, "[Anuncio_01]" foi o criativo com melhor desempenho na conta da Be Blue School na Meta neste mês, embora sem geração de leads. Não há dados para avaliar CPL ou CPA, pois não houve leads ou compras atribuídas.
+
+Performance de criativos Meta · 01 de set.—13 de set.
+Você
+12:03
+Como vem sendo o desempenho mes a mes no ano ?
+InPilot
+12:03
+O desempenho mês a mês no ano de 2026 na Meta para a Be Blue School mostra variações significativas em investimento, cliques e eficiência, com geração de leads limitada a um único criativo em campanha específica.
+
+Métrica	Jan-Set 2026	Período Anterior (Abr-Dez 2025)	Variação
+Investimento (R$)	R$ 481,89 (set/2026)	R$ 601,70 (ago/2025)	-20%
+Impressões	26.711 (set/2026)	39.243 (ago/2025)	-32%
+Cliques	62 (set/2026)	133 (ago/2025)	-53%
+CTR (%)	0,23% (set/2026)	0,34% (ago/2025)	-32%
+CPC (R$)	R$ 7,77 (set/2026)	R$ 4,52 (ago/2025)	+72%
+Leads	0 (set/2026)	0 (ago/2025)	0
+Analisando o desempenho mensal, o investimento em setembro de 2026 foi 20% menor que no período anterior, refletindo-se em uma queda de 32% nas impressões e 53% nos cliques. A taxa de cliques (CTR) também diminuiu 32%, indicando menor engajamento relativo ao volume de impressões. O custo por clique (CPC) aumentou 72%, o que aponta para menor eficiência no custo do tráfego gerado.
+
+Em termos de geração de leads, o resultado permanece zerado na comparação entre os períodos, exceto por um criativo específico na campanha "27/04 [IN] [TRAFEGO PARA LP] TESTE" que gerou 14 leads com CPC de aproximadamente R$ 0,55 e CPL de R$ 7,88, mas este dado é isolado e não reflete a performance geral da conta.
+
+Portanto, o desempenho mês a mês revela uma redução no volume e eficiência das campanhas, sem avanço consistente na geração de leads, que é o objetivo principal da conta. O aumento do CPC e a queda do CTR indicam que o custo para atrair cliques está maior, enquanto o engajamento relativo diminuiu. A ausência de leads na maioria dos criativos reforça a necessidade de avaliar a efetividade das campanhas em relação ao objetivo de mensagens e leads.
+
+Performance de criativos Meta · 01 de jan.—15 de set.
+Você
+12:04
+ok me de um detalahmento mes a mes desse ano
+InPilot
+12:04
+O desempenho mês a mês da conta Be Blue School na Meta em 2026 mostra variações importantes em volume, investimento e eficiência, com geração de leads concentrada em poucas campanhas específicas.
+
+Métrica	Jan-Set 2026 (acumulado)	Período Anterior (Abr-Dez 2025)	Variação
+Investimento (R$)	6.783,83	(não informado)	(sem dado para comparar)
+Impressões	285.846	(não informado)	(sem dado para comparar)
+Cliques	2.916	(não informado)	(sem dado para comparar)
+Leads	124	0	+124 leads
+CTR (%)	1,02%	(não informado)	(sem dado para comparar)
+CPC (R$)	2,33	(não informado)	(sem dado para comparar)
+A conta investiu R$ 6.783,83 na Meta entre janeiro e 15 de setembro de 2026, gerando 285.846 impressões e 2.916 cliques, com CTR de 1,02% e CPC médio de R$ 2,33. A geração de leads foi de 124 no período, concentrada principalmente na campanha "27/04 [IN] [TRAFEGO PARA LP] TESTE", que teve CPC de R$ 0,20 e CPL de R$ 3,43, indicando eficiência em custo para leads nessa campanha específica.
+
+Outras campanhas com objetivo de leads não geraram resultados, e campanhas com objetivo de mensagens apresentaram conversas iniciadas, mas sem leads atribuídos. O volume de cliques e impressões é expressivo, mas a geração de leads está concentrada em poucos esforços, o que sugere que a maior parte do investimento não converteu em leads.
+
+Sem dados comparativos diretos do período anterior para estas métricas totais, não é possível avaliar evolução quantitativa ano a ano, mas a concentração dos leads em uma campanha específica destaca a importância dessa campanha para o desempenho geral.
+
+Em resumo, o desempenho mensal acumulado em 2026 mostra escala razoável de impressões e cliques, com geração de leads limitada a campanhas específicas, e custo por clique e por lead que variam significativamente entre campanhas.
+
+Performance de campanhas Meta · 01 de jan.—15 de set.
+Visão geral de mídia · 01 de jan.—15 de set.
+Pergunte o que você quer entender sobre a conta…
+
+
+4

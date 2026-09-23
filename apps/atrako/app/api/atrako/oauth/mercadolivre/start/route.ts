@@ -1,0 +1,60 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createHash, randomBytes } from "crypto";
+import { prisma } from "@/lib/db";
+import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { ML_OAUTH_AUTHORIZE } from "@/lib/integrations/mercadolivre/oauth";
+
+function createPkce() {
+  const codeVerifier = randomBytes(32).toString("base64url");
+  const codeChallenge = createHash("sha256").update(codeVerifier).digest("base64url");
+  const state = randomBytes(16).toString("hex");
+  return { codeVerifier, codeChallenge, state };
+}
+
+/** Inicia OAuth Mercado Livre centralizado no Atrako (mesmo padrão do Mercado Pago). */
+export async function GET(request: NextRequest) {
+  const workspaceId = request.nextUrl.searchParams.get("workspaceId")?.trim();
+  if (!workspaceId) {
+    return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
+  }
+  const ws = await findWorkspaceById(workspaceId);
+  if (!ws) return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
+
+  const clientId = process.env.ML_CLIENT_ID?.trim();
+  const redirectUri =
+    process.env.ML_REDIRECT_URI?.trim() ||
+    `${request.nextUrl.origin}/api/atrako/oauth/mercadolivre/callback`;
+
+  if (!clientId) {
+    return NextResponse.json(
+      {
+        error: "ML_CLIENT_ID not configured",
+        hint: "Defina ML_CLIENT_ID e ML_CLIENT_SECRET no .env do Atrako",
+      },
+      { status: 503 },
+    );
+  }
+
+  const { codeVerifier, codeChallenge, state } = createPkce();
+
+  await prisma.workspaceOAuthPending.create({
+    data: {
+      state,
+      provider: "MERCADO_LIVRE",
+      clienteId: workspaceId,
+      codeVerifier,
+      redirectUri,
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+    },
+  });
+
+  const url = new URL(ML_OAUTH_AUTHORIZE);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("client_id", clientId);
+  url.searchParams.set("redirect_uri", redirectUri);
+  url.searchParams.set("state", state);
+  url.searchParams.set("code_challenge", codeChallenge);
+  url.searchParams.set("code_challenge_method", "S256");
+
+  return NextResponse.redirect(url.toString());
+}

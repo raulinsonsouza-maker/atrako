@@ -16,6 +16,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/search-input";
 import { IconButton } from "@/components/ui/icon-button";
 import { UrlChip } from "@/components/criar/CopyLinkButton";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 import { cn } from "@/lib/utils";
 import { isLpSalesPageV1, isLpSalesPageV2 } from "@/lib/criar/lp-schema";
 
@@ -112,16 +113,7 @@ function PageThumb({ name }: { name: string }) {
 const addPageHref = "/criar/oferta?mode=manual";
 
 export default function CommercePage() {
-  const { data: clientes = [] } = useQuery({
-    queryKey: ["commerce-clientes"],
-    queryFn: async () => {
-      const r = await fetch("/api/clientes");
-      if (!r.ok) return [];
-      const j = await r.json();
-      return Array.isArray(j) ? j : j.clientes ?? [];
-    },
-  });
-  const workspaceId = clientes[0]?.id as string | undefined;
+  const { workspaceId } = useActiveWorkspace();
   const [tab, setTab] = useState<Tab>("produtos");
   const [query, setQuery] = useState("");
 

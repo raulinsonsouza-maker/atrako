@@ -1,15 +1,30 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { findAllClientes } from "@/lib/repositories/clientesRepository";
 import { prisma } from "@/lib/db";
 import { evaluateAccountHealthStatus } from "@/lib/account-health/status";
 import { requireInternalAnalyst } from "@/lib/internalAccess";
+import { getInternalUser } from "@/lib/internalUsers";
+import { getWorkspaceMember } from "@/lib/tenancy/memberAuth";
+import { listMemberWorkspaceIds } from "@/lib/tenancy/workspace";
 
 export async function GET() {
-  const access = await requireInternalAnalyst();
-  if (access.response) return access.response;
+  const internal = await getInternalUser();
+  const member = await getWorkspaceMember();
+  let memberFilter: string[] | null = null;
+
+  if (member && !(internal && internal.id !== "atrako-open-access")) {
+    memberFilter = await listMemberWorkspaceIds(member.email);
+  } else {
+    const access = await requireInternalAnalyst();
+    if (access.response) return access.response;
+  }
 
   try {
-    const clientes = await findAllClientes(true);
+    let clientes = await findAllClientes(true);
+    if (memberFilter) {
+      const set = new Set(memberFilter);
+      clientes = clientes.filter((c) => set.has(c.id));
+    }
     const ids = clientes.map((c) => c.id);
     if (ids.length === 0) {
       return NextResponse.json(

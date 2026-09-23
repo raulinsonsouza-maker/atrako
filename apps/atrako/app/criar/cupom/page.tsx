@@ -2,11 +2,11 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { AppPage } from "@/components/layout/AppPage";
 import { Button } from "@/components/ui/button";
 import { BackLink } from "@/components/ui/back-link";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 
 const fieldClass =
   "mt-1 h-11 w-full rounded-[var(--radius-xs)] border border-[rgba(0,0,0,0.08)] bg-[var(--canvas)] px-4 type-caption text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary-focus)]";
@@ -32,16 +32,7 @@ function CupomInner() {
     if (!mode) router.replace("/criar/oferta?mode=manual");
   }, [mode, router]);
 
-  const { data: clientes = [] } = useQuery({
-    queryKey: ["config-clientes"],
-    queryFn: async () => {
-      const r = await fetch("/api/clientes");
-      if (!r.ok) return [];
-      const j = await r.json();
-      return Array.isArray(j) ? j : j.clientes ?? [];
-    },
-  });
-  const workspaceId = clientes[0]?.id as string | undefined;
+  const { workspaceId } = useActiveWorkspace();
 
   function applyAi() {
     const text = brief.trim();

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getWorkspaceConfig, patchWorkspaceSettings } from "@/lib/config/getWorkspaceConfig";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
-import { assertCanManageConfig } from "@/lib/tenancy/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
+
 import { normalizePrimaryHex } from "@/lib/brand/primaryColor";
 
 export async function GET(request: NextRequest) {
@@ -9,14 +10,10 @@ export async function GET(request: NextRequest) {
   if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
   }
+  const access = await requireWorkspaceAccess(workspaceId, "manage");
+  if (!access.ok) return access.response;
   const ws = await findWorkspaceById(workspaceId);
   if (!ws) return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
-
-  try {
-    await assertCanManageConfig(workspaceId);
-  } catch {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
 
   const config = await getWorkspaceConfig(workspaceId);
   return NextResponse.json(config);
@@ -34,14 +31,10 @@ export async function PATCH(request: NextRequest) {
   if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
   }
+  const access = await requireWorkspaceAccess(workspaceId, "manage");
+  if (!access.ok) return access.response;
   const ws = await findWorkspaceById(workspaceId);
   if (!ws) return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
-
-  try {
-    await assertCanManageConfig(workspaceId);
-  } catch {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
 
   let primaryColor: string | null | undefined;
   if (b.primaryColor === null) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { listCaptureForms } from "@/lib/modules/capture-form";
 import { prisma } from "@/lib/db";
 import { publicPath } from "@/lib/criar/slug";
@@ -17,6 +18,8 @@ export async function GET(request: NextRequest) {
   if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
   }
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
   if (!(await findWorkspaceById(workspaceId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }

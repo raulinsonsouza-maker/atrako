@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { AppPage } from "@/components/layout/AppPage";
 import { AgendaSubNav } from "@/components/agenda/AgendaSubNav";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 
 export type AgendaWorkspaceContext = {
   workspaceId: string;
@@ -13,18 +14,8 @@ export type AgendaWorkspaceContext = {
 };
 
 export function useAgendaWorkspace() {
-  const { data: clientes = [], isLoading: loadingClientes } = useQuery({
-    queryKey: ["config-clientes"],
-    queryFn: async () => {
-      const r = await fetch("/api/clientes");
-      if (!r.ok) return [];
-      const j = await r.json();
-      return Array.isArray(j) ? j : j.clientes ?? [];
-    },
-  });
-
-  const workspaceId = clientes[0]?.id as string | undefined;
-  const workspaceSlug = clientes[0]?.slug as string | undefined;
+  const { workspaceId, workspaces, isLoading: loadingClientes } = useActiveWorkspace();
+  const workspaceSlug = workspaces.find((w) => w.id === workspaceId)?.slug;
 
   const { data: meta, isLoading: loadingMeta } = useQuery({
     queryKey: ["agenda-meta", workspaceId],

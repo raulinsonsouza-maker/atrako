@@ -2,14 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 
 export async function GET(request: NextRequest) {
   const workspaceId = request.nextUrl.searchParams.get("workspaceId")?.trim();
   const bookingPageId = request.nextUrl.searchParams.get("bookingPageId");
   const professionalId = request.nextUrl.searchParams.get("professionalId");
 
-  if (!workspaceId || !(await findWorkspaceById(workspaceId))) {
+  if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
+  }
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
+  if (!(await findWorkspaceById(workspaceId))) {
+    return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
   if (professionalId) {
@@ -51,6 +57,8 @@ const putSchema = z.object({
 export async function PUT(request: NextRequest) {
   try {
     const body = putSchema.parse(await request.json());
+    const access = await requireWorkspaceAccess(body.workspaceId, "operate");
+    if (!access.ok) return access.response;
     if (!(await findWorkspaceById(body.workspaceId))) {
       return NextResponse.json({ error: "not found" }, { status: 404 });
     }

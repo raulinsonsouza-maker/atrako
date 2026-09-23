@@ -1,4 +1,16 @@
+/**
+ * Mercado Pago OAuth for the commerce app.
+ *
+ * Platform app credentials (client id/secret/redirect) resolve via Atrako PlatformApp
+ * (`/admin/apps` → MERCADO_PAGO), not a parallel commerce env silo.
+ *
+ * Dealers connecting a seller account should use the Atrako hub:
+ *   `/config/conexoes` → Mercado Pago (WorkspaceConnection).
+ *
+ * Local DX: `MP_*` / `ATRAKO_PLATFORM_MP_*` remain valid fallbacks when the hub is unreachable.
+ */
 import { createHash, randomBytes } from "crypto";
+import { resolveMercadoPagoPlatformCredentials } from "@/lib/atrako-platform";
 
 export function createPkce() {
   const codeVerifier = randomBytes(32).toString("base64url");
@@ -7,15 +19,11 @@ export function createPkce() {
   return { codeVerifier, codeChallenge, state };
 }
 
-export function getAuthorizationUrl(params: {
+export async function getAuthorizationUrl(params: {
   state: string;
   codeChallenge: string;
 }) {
-  const clientId = process.env.MP_CLIENT_ID;
-  const redirectUri = process.env.MP_REDIRECT_URI;
-  if (!clientId || !redirectUri) {
-    throw new Error("MP_CLIENT_ID and MP_REDIRECT_URI are required");
-  }
+  const { clientId, redirectUri } = await resolveMercadoPagoPlatformCredentials();
   const url = new URL("https://auth.mercadopago.com/authorization");
   url.searchParams.set("client_id", clientId);
   url.searchParams.set("response_type", "code");
@@ -32,12 +40,14 @@ export async function exchangeAuthorizationCode(input: {
   codeVerifier: string;
   testToken?: boolean;
 }) {
+  const { clientId, clientSecret, redirectUri } =
+    await resolveMercadoPagoPlatformCredentials();
   const body = {
-    client_id: process.env.MP_CLIENT_ID,
-    client_secret: process.env.MP_CLIENT_SECRET,
+    client_id: clientId,
+    client_secret: clientSecret,
     grant_type: "authorization_code",
     code: input.code,
-    redirect_uri: process.env.MP_REDIRECT_URI,
+    redirect_uri: redirectUri,
     code_verifier: input.codeVerifier,
     test_token: input.testToken ?? false,
   };
@@ -61,12 +71,13 @@ export async function exchangeAuthorizationCode(input: {
 }
 
 export async function refreshAccessToken(refreshToken: string) {
+  const { clientId, clientSecret } = await resolveMercadoPagoPlatformCredentials();
   const res = await fetch("https://api.mercadopago.com/oauth/token", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({
-      client_id: process.env.MP_CLIENT_ID,
-      client_secret: process.env.MP_CLIENT_SECRET,
+      client_id: clientId,
+      client_secret: clientSecret,
       grant_type: "refresh_token",
       refresh_token: refreshToken,
     }),

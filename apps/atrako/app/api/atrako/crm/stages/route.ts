@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
-import { assertCanOperateWorkspace } from "@/lib/tenancy/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import {
   configurePipelineStages,
   createPipelineStage,
@@ -19,13 +19,10 @@ export async function POST(request: NextRequest) {
   if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId obrigatório" }, { status: 400 });
   }
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
   if (!(await findWorkspaceById(workspaceId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
-  }
-  try {
-    await assertCanOperateWorkspace(workspaceId);
-  } catch {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   /** Salvar funil completo (modal configurar). */
@@ -100,13 +97,10 @@ export async function PATCH(request: NextRequest) {
   if (!workspaceId || !stageId) {
     return NextResponse.json({ error: "workspaceId e stageId obrigatórios" }, { status: 400 });
   }
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
   if (!(await findWorkspaceById(workspaceId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
-  }
-  try {
-    await assertCanOperateWorkspace(workspaceId);
-  } catch {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   try {
     const stage = await updatePipelineStage({

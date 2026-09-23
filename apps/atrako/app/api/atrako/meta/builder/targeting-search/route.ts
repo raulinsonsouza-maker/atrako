@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { searchTargeting } from "@/lib/integrations/meta/campaign-builder/publish";
 
 export async function GET(request: NextRequest) {
@@ -9,6 +10,8 @@ export async function GET(request: NextRequest) {
   if (!workspaceId || !q) {
     return NextResponse.json({ error: "workspaceId e q obrigatórios" }, { status: 400 });
   }
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
   if (!(await findWorkspaceById(workspaceId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }

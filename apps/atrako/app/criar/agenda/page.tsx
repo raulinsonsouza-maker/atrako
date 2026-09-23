@@ -7,6 +7,7 @@ import { Loader2, Plus } from "lucide-react";
 import { AppPage } from "@/components/layout/AppPage";
 import { BackLink } from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 import {
   WEEKDAY_LABELS,
   brl,
@@ -53,17 +54,8 @@ function CriarAgendaInner() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: clientes = [], isLoading: loadingClientes } = useQuery({
-    queryKey: ["config-clientes"],
-    queryFn: async () => {
-      const r = await fetch("/api/clientes");
-      if (!r.ok) return [];
-      const j = await r.json();
-      return Array.isArray(j) ? j : j.clientes ?? [];
-    },
-  });
-  const workspaceId = clientes[0]?.id as string | undefined;
-  const workspaceSlug = clientes[0]?.slug as string | undefined;
+  const { workspaceId, workspaces, isLoading: loadingClientes } = useActiveWorkspace();
+  const workspaceSlug = workspaces.find((w) => w.id === workspaceId)?.slug;
 
   const { data: meta } = useQuery({
     queryKey: ["agenda-meta", workspaceId],

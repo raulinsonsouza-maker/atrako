@@ -6,17 +6,31 @@
 
 import { createHmac, timingSafeEqual } from "crypto";
 
+async function resolveWebhookSecret(explicit?: string): Promise<string | undefined> {
+  if (explicit?.trim()) return explicit.trim();
+  try {
+    const { resolvePlatformApp } = await import("@/lib/config/platformApps");
+    const app = await resolvePlatformApp("MERCADO_PAGO");
+    const fromApp = app?.credentials.webhookSecret?.trim();
+    if (fromApp) return fromApp;
+  } catch {
+    // fall through
+  }
+  // Env is seed-only; production should use PlatformApp in /admin/apps.
+  return process.env.MP_WEBHOOK_SECRET?.trim() || undefined;
+}
+
 /**
- * Valida x-signature do MP quando MP_WEBHOOK_SECRET estiver configurado.
+ * Valida x-signature do MP quando o secret (PlatformApp ou env) estiver configurado.
  * Em dev sem secret, retorna true (não bloquear smoke local).
  */
-export function verifyMpWebhookSignature(opts: {
+export async function verifyMpWebhookSignature(opts: {
   xSignature: string | null;
   xRequestId: string | null;
   dataId: string;
   secret?: string;
-}): boolean {
-  const secret = opts.secret ?? process.env.MP_WEBHOOK_SECRET?.trim();
+}): Promise<boolean> {
+  const secret = await resolveWebhookSecret(opts.secret);
   if (!secret) return true;
   if (!opts.xSignature || !opts.xRequestId) return false;
 

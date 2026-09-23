@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
-import { assertCanOperateWorkspace } from "@/lib/tenancy/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 
 const USE_BLOB = !!process.env.BLOB_READ_WRITE_TOKEN;
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -47,14 +47,10 @@ export async function POST(request: NextRequest) {
   if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId obrigatório" }, { status: 400 });
   }
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
   if (!(await findWorkspaceById(workspaceId))) {
     return NextResponse.json({ error: "Workspace não encontrado" }, { status: 404 });
-  }
-
-  try {
-    await assertCanOperateWorkspace(workspaceId);
-  } catch {
-    return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
   }
 
   const file = formData.get("file");

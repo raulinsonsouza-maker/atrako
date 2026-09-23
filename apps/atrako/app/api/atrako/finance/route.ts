@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listLedgerEntries, summarizeLedger, upsertLedgerEntry } from "@/lib/atrako/finance-ledger";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 
 function isAuthorized(request: NextRequest): boolean {
   const expected = process.env.ATRAKO_CONNECTIONS_TOKEN?.trim() || process.env.ATRAKO_EVENTS_TOKEN?.trim();
@@ -15,6 +16,8 @@ export async function GET(request: NextRequest) {
   const workspaceId = request.nextUrl.searchParams.get("workspaceId")?.trim();
   if (!workspaceId) return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
 
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
   const ws = await findWorkspaceById(workspaceId);
   if (!ws) return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
 
@@ -89,6 +92,8 @@ export async function POST(request: NextRequest) {
   const workspaceId = typeof b.workspaceId === "string" ? b.workspaceId : "";
   if (!workspaceId) return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
 
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
   const ws = await findWorkspaceById(workspaceId);
   if (!ws) return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
 

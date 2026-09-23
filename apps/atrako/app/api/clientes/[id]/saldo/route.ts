@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireClienteAccess } from "@/lib/portalSession";
 import { fetchAccountBalance } from "@/lib/meta/metaClient";
 import { fetchAccountBudget } from "@/lib/googleAds/googleAdsClient";
-import { resolveMetaCredentials } from "@/lib/config/resolveIntegracao";
+import { resolveMetaCredentials, resolveGoogleAdsCredentials } from "@/lib/config/resolveIntegracao";
 
 export async function GET(
   request: NextRequest,
@@ -110,20 +110,32 @@ export async function GET(
     const investido = Number(gastoMes._sum.investimento ?? 0);
 
     // Tenta buscar budget via API do Google Ads (só se conta configurada)
-    if (conta?.accountIdPlataforma && access.internalUser) {
+    if (conta?.accountIdPlataforma && (access.internalUser || access.member)) {
       try {
-        const budget = await fetchAccountBudget(
-          conta.accountIdPlataforma,
-          conta.googleAdsLoginCustomerId
-        );
-        if (budget && (budget.approvedSpendingLimit ?? 0) > 0) {
-          return NextResponse.json({
-            saldo: budget.remaining,
-            totalAprovado: budget.approvedSpendingLimit,
-            utilizado: budget.amountServed,
-            moeda: budget.currency,
-            fonte: "account_budget",
-          });
+        const resolved = await resolveGoogleAdsCredentials(id);
+        if (!resolved) {
+          // fall through to orçamento mensal
+        } else {
+          const budget = await fetchAccountBudget(
+            conta.accountIdPlataforma,
+            conta.googleAdsLoginCustomerId ?? resolved.loginCustomerId,
+            {
+              clientId: resolved.clientId,
+              clientSecret: resolved.clientSecret,
+              developerToken: resolved.developerToken,
+              refreshToken: resolved.refreshToken,
+              loginCustomerId: resolved.loginCustomerId,
+            },
+          );
+          if (budget && (budget.approvedSpendingLimit ?? 0) > 0) {
+            return NextResponse.json({
+              saldo: budget.remaining,
+              totalAprovado: budget.approvedSpendingLimit,
+              utilizado: budget.amountServed,
+              moeda: budget.currency,
+              fonte: "account_budget",
+            });
+          }
         }
       } catch {
         // sem account_budget — usa fallback abaixo

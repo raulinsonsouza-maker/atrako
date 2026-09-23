@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 
 const patchSchema = z.object({
   workspaceId: z.string().min(1),
@@ -24,6 +25,11 @@ export async function GET(request: NextRequest, { params }: Ctx) {
   if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
   }
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
+  if (!(await findWorkspaceById(workspaceId))) {
+    return NextResponse.json({ error: "not found" }, { status: 404 });
+  }
   const service = await prisma.agendaService.findFirst({
     where: { id, clienteId: workspaceId },
     include: { customFields: { orderBy: { sortOrder: "asc" } } },
@@ -36,6 +42,8 @@ export async function PATCH(request: NextRequest, { params }: Ctx) {
   const { id } = await params;
   try {
     const body = patchSchema.parse(await request.json());
+    const access = await requireWorkspaceAccess(body.workspaceId, "operate");
+    if (!access.ok) return access.response;
     if (!(await findWorkspaceById(body.workspaceId))) {
       return NextResponse.json({ error: "not found" }, { status: 404 });
     }

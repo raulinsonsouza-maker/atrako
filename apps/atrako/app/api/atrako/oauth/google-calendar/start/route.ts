@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHash, randomBytes } from "crypto";
 import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 
 function createPkce() {
   const codeVerifier = randomBytes(32).toString("base64url");
@@ -18,12 +19,21 @@ export async function GET(request: NextRequest) {
   if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
   }
+  const access = await requireWorkspaceAccess(workspaceId, "manage");
+  if (!access.ok) return access.response;
   if (!(await findWorkspaceById(workspaceId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
-  const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
+  const { resolvePlatformApp } = await import("@/lib/config/platformApps");
+  const calApp = await resolvePlatformApp("GOOGLE_CALENDAR");
+  const googleApp = await resolvePlatformApp("GOOGLE");
+  const clientId =
+    calApp?.credentials.clientId?.trim() ||
+    googleApp?.credentials.clientId?.trim() ||
+    process.env.GOOGLE_CLIENT_ID?.trim();
   const redirectUri =
+    calApp?.credentials.redirectUri?.trim() ||
     process.env.GOOGLE_CALENDAR_REDIRECT_URI?.trim() ||
     `${request.nextUrl.origin}/api/atrako/oauth/google-calendar/callback`;
 
@@ -31,7 +41,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error: "GOOGLE_CLIENT_ID not configured",
-        hint: "Defina GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET no .env",
+        hint: "Configure Google Calendar em /admin/apps",
       },
       { status: 503 },
     );

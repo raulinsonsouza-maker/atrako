@@ -97,19 +97,38 @@ export async function syncClienteCanais(
       : null,
   ]);
 
-  // LinkedIn: requer conta com conexão OAuth vinculada; roda após os demais.
+  // LinkedIn: hub-first (WC), dual-read CI
   let linkedinResult: { ok: boolean; error?: string } | undefined;
-  if (linkedinConta?.accountIdPlataforma && linkedinConta.conexaoIntegracaoId) {
+  if (linkedinConta?.accountIdPlataforma) {
     try {
-      await syncLinkedinCliente({
-        clienteId,
-        contaId: linkedinConta.id,
-        adAccountId: linkedinConta.accountIdPlataforma,
-        conexaoId: linkedinConta.conexaoIntegracaoId,
-        dateFrom: options?.dateFrom,
-        dateTo: options?.dateTo,
-      });
-      linkedinResult = { ok: true };
+      const { getWorkspaceConnection } = await import("@/lib/atrako/workspace-connections");
+      const {
+        getValidLinkedinAccessTokenForWorkspace,
+        getValidLinkedinAccessToken,
+      } = await import("@/lib/linkedin/linkedinClient");
+      const hub = await getWorkspaceConnection(clienteId, "LINKEDIN_ADS");
+      if (hub?.credentials?.accessToken) {
+        await syncLinkedinCliente({
+          clienteId,
+          contaId: linkedinConta.id,
+          adAccountId: linkedinConta.accountIdPlataforma,
+          accessToken: await getValidLinkedinAccessTokenForWorkspace(clienteId),
+          dateFrom: options?.dateFrom,
+          dateTo: options?.dateTo,
+        });
+      } else if (linkedinConta.conexaoIntegracaoId) {
+        await syncLinkedinCliente({
+          clienteId,
+          contaId: linkedinConta.id,
+          adAccountId: linkedinConta.accountIdPlataforma,
+          accessToken: await getValidLinkedinAccessToken(linkedinConta.conexaoIntegracaoId),
+          dateFrom: options?.dateFrom,
+          dateTo: options?.dateTo,
+        });
+      } else {
+        linkedinResult = { ok: false, error: "LinkedIn sem conexão no hub" };
+      }
+      if (!linkedinResult) linkedinResult = { ok: true };
     } catch (e) {
       linkedinResult = { ok: false, error: e instanceof Error ? e.message : String(e) };
     }

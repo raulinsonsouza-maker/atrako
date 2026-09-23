@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -10,6 +11,11 @@ export async function GET(request: NextRequest, { params }: Ctx) {
   const workspaceId = request.nextUrl.searchParams.get("workspaceId")?.trim();
   if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
+  }
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
+  if (!(await findWorkspaceById(workspaceId))) {
+    return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
   const page = await prisma.agendaBookingPage.findFirst({
@@ -48,6 +54,8 @@ export async function PATCH(request: NextRequest, { params }: Ctx) {
   const { id } = await params;
   try {
     const body = patchSchema.parse(await request.json());
+    const access = await requireWorkspaceAccess(body.workspaceId, "operate");
+    if (!access.ok) return access.response;
     if (!(await findWorkspaceById(body.workspaceId))) {
       return NextResponse.json({ error: "not found" }, { status: 404 });
     }

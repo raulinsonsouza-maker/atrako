@@ -6,23 +6,20 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   AlertTriangle,
-  ArrowLeft,
   CheckCircle2,
   ChevronDown,
   Copy,
   ExternalLink,
-  Eye,
-  KeyRound,
-  Pencil,
   Plus,
   RefreshCw,
   RotateCcw,
   Send,
-  Shield,
   X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PillSelect } from "@/components/ui/pill-select";
+import { Button } from "@/components/ui/button";
+import { AppPage } from "@/components/layout/AppPage";
 import { SegmentoManagerModal, fetchSegmentos, type Segmento } from "./SegmentoManagerModal";
 import { LogoUploadField } from "./LogoUploadField";
 
@@ -72,6 +69,7 @@ interface ClientePayload {
   ativo?: boolean;
   syncAfterCreate?: boolean;
   syncNow?: boolean;
+  ownerEmail?: string;
   orcamentoMidiaGoogleMensal?: number | null;
   orcamentoMidiaMetaMensal?: number | null;
   googleAdsAccountId?: string | null;
@@ -366,6 +364,7 @@ function ClienteForm({
   onSubmit: (body: ClientePayload) => void;
 }) {
   const [nome, setNome] = useState(initialValues.nome ?? "");
+  const [ownerEmail, setOwnerEmail] = useState(initialValues.ownerEmail ?? "");
   const [logoUrl, setLogoUrl] = useState(initialValues.logoUrl ?? "");
   const [segmento, setSegmento] = useState(initialValues.segmento ?? "");
   const [ativo, setAtivo] = useState(initialValues.ativo ?? true);
@@ -447,6 +446,20 @@ function ClienteForm({
             <FormField label="Nome" required>
               <input value={nome} onChange={(e) => setNome(e.target.value)} className={inputClass} />
             </FormField>
+            {!clienteId ? (
+              <FormField
+                label="E-mail do OWNER"
+                hint="Envia convite para o dealer definir senha e acessar só este workspace."
+              >
+                <input
+                  type="email"
+                  value={ownerEmail}
+                  onChange={(e) => setOwnerEmail(e.target.value)}
+                  placeholder="dono@empresa.com"
+                  className={inputClass}
+                />
+              </FormField>
+            ) : null}
 
             {/* ── Google Ads ── */}
             <div className="space-y-3 rounded-xl border border-[var(--border)] bg-[var(--muted)]/20 p-4">
@@ -829,6 +842,7 @@ function ClienteForm({
                 onClick={() =>
                   onSubmit({
                     nome: nome.trim(),
+                    ownerEmail: ownerEmail.trim() || undefined,
                     logoUrl: logoUrl.trim() || undefined,
                     segmento: segmento.trim() || undefined,
                     ativo,
@@ -1874,12 +1888,6 @@ export default function AdminClientesPage() {
     queryFn: fetchSegmentos,
   });
 
-  const segmentoMap = useMemo(() => {
-    const map: Record<string, Segmento> = {};
-    for (const s of segmentos) map[s.nome] = s;
-    return map;
-  }, [segmentos]);
-
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -2033,9 +2041,9 @@ export default function AdminClientesPage() {
 
   if (unauthorized) {
     return (
-      <main className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-sm text-[var(--muted-foreground)]">Sua sessão não possui acesso administrativo.</p>
-      </main>
+      <AppPage title="Workspaces">
+        <p className="type-body text-[var(--ink-muted-48)]">Sua sessão não possui acesso administrativo.</p>
+      </AppPage>
     );
   }
 
@@ -2044,13 +2052,50 @@ export default function AdminClientesPage() {
   const churn = total - ativos;
 
   return (
-    <main className="space-y-8 pb-12">
+    <AppPage
+      title={
+        <div>
+          <h1 className="type-tagline text-[var(--ink)]">Workspaces</h1>
+          <p className="type-fine-print mt-1 text-[var(--ink-muted-48)]">
+            {ativos} ativos · {churn} churn · {total} no total
+          </p>
+        </div>
+      }
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            className="!px-2 !py-1.5"
+            onClick={() => syncAllMutation.mutate()}
+            disabled={syncAllMutation.isPending}
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${syncAllMutation.isPending ? "animate-spin" : ""}`} />
+            Sync
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="!px-2 !py-1.5"
+            onClick={() => demoMutation.mutate()}
+            disabled={demoMutation.isPending}
+            title="Cria ou recria o workspace demo"
+          >
+            Demo
+          </Button>
+          <Button type="button" onClick={() => setShowCreateForm(true)} className="!px-4 !py-2">
+            <Plus className="h-3.5 w-3.5" />
+            Novo
+          </Button>
+        </div>
+      }
+    >
       {rdNotification && (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium shadow-lg ${
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-[var(--radius-xs)] px-4 py-3 type-body ${
             rdNotification.ok
-              ? "bg-emerald-600 text-white"
-              : "bg-[var(--accent)] text-white"
+              ? "bg-[var(--success)] text-[var(--on-primary)]"
+              : "bg-[var(--accent)] text-[var(--on-primary)]"
           }`}
         >
           {rdNotification.ok ? (
@@ -2062,133 +2107,78 @@ export default function AdminClientesPage() {
           <button
             onClick={() => setRdNotification(null)}
             className="ml-2 opacity-80 hover:opacity-100"
+            type="button"
           >
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
       )}
 
-      <section className="space-y-5">
-        <Link
-          href="/clientes"
-          className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Central de clientes
-        </Link>
-
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-[var(--primary)]">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
-              Painel administrativo
-            </p>
-            <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-[var(--foreground)] sm:text-3xl">
-              Administração de Clientes
-            </h1>
-            <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-              Cada cliente agora aponta para as contas Google Ads e Meta que alimentam o painel.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <a
-              href="/admin/conexoes"
-              className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)] transition-all hover:border-[var(--primary)]/30 hover:text-[var(--primary)]"
-            >
-              Conexões
-            </a>
-            <button
-              onClick={() => demoMutation.mutate()}
-              disabled={demoMutation.isPending}
-              title="Cria ou recria o cliente-demo integrado de Meta, Google, Analytics e CRM"
-              className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-emerald-600 transition-all hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-400"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${demoMutation.isPending ? "animate-spin" : ""}`} />
-              {demoMutation.isPending ? "Preparando demo..." : "Criar/Atualizar demo"}
-            </button>
-            <button
-              onClick={() => syncAllMutation.mutate()}
-              disabled={syncAllMutation.isPending}
-              className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)] transition-all hover:border-[var(--primary)]/30 hover:text-[var(--primary)] disabled:opacity-50"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${syncAllMutation.isPending ? "animate-spin" : ""}`} />
-              {syncAllMutation.isPending ? "Atualizando..." : "Atualizar todos"}
-            </button>
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-[var(--primary)] px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--primary-foreground)] shadow-md shadow-[var(--primary)]/20 transition-all hover:opacity-90"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Novo cliente
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {clientes && (
-        <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {[
-            { label: "Total", value: total },
-            { label: "Ativos", value: ativos },
-            { label: "Churn", value: churn },
-          ].map((item) => (
-            <div key={item.label} className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
-                {item.label}
-              </p>
-              <p className="text-lg font-bold tabular-nums text-[var(--foreground)]">{item.value}</p>
-            </div>
-          ))}
-        </section>
-      )}
-
       {formError && (
-        <div className="flex items-center gap-3 rounded-xl border border-[var(--accent)]/30 bg-[var(--accent)]/5 px-5 py-3 text-sm">
+        <div className="flex items-center gap-3 rounded-[var(--radius-xs)] border border-[var(--accent)]/30 bg-[var(--accent)]/5 px-4 py-3 type-body">
           <AlertTriangle className="h-4 w-4 shrink-0 text-[var(--accent)]" />
           <span className="text-[var(--accent)]">{formError}</span>
         </div>
       )}
       {formSuccess && (
-        <div className="flex items-center gap-3 rounded-xl border border-[var(--success)]/30 bg-[var(--success)]/5 px-5 py-3 text-sm">
+        <div className="flex items-center gap-3 rounded-[var(--radius-xs)] border border-[var(--success)]/30 bg-[var(--success)]/5 px-4 py-3 type-body">
           <CheckCircle2 className="h-4 w-4 shrink-0 text-[var(--success)]" />
           <span className="text-[var(--success)]">{formSuccess}</span>
         </div>
       )}
 
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div className="h-px flex-1 min-w-[60px] bg-[var(--border)]" />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
-          Clientes cadastrados ({filteredClientes.length})
-        </span>
-        <div className="flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--card)] p-0.5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-1 rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] p-0.5">
           {(["ativos", "churn"] as const).map((f) => (
             <button
               key={f}
+              type="button"
               onClick={() => setFilterStatus(f)}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+              className={`rounded-[var(--radius-xs)] px-3 py-1.5 type-button-utility transition ${
                 filterStatus === f
-                  ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
-                  : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
+                  ? "bg-[var(--primary)] text-[var(--on-primary)]"
+                  : "text-[var(--ink-muted-48)] hover:text-[var(--ink)]"
               }`}
             >
-              {f === "ativos" ? "Ativos" : "Churn"}
+              {f === "ativos" ? `Ativos (${ativos})` : `Churn (${churn})`}
             </button>
           ))}
         </div>
-        <div className="h-px flex-1 min-w-[60px] bg-[var(--border)]" />
+        <p className="type-fine-print text-[var(--ink-muted-48)]">
+          Tokens OAuth ficam em Config → Conexões do dealer
+        </p>
       </div>
 
       {isLoading && (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 animate-pulse rounded-2xl border border-[var(--border)] bg-[var(--card)]" />
+            <div
+              key={i}
+              className="h-16 animate-pulse rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)]"
+            />
           ))}
         </div>
       )}
 
-      {clientes && (
-        <ul className="space-y-3">
+      {!isLoading && filteredClientes.length === 0 && (
+        <div className="rounded-[var(--radius-xs)] border border-dashed border-[var(--hairline)] px-6 py-12 text-center">
+          <p className="type-body text-[var(--ink)]">
+            {filterStatus === "ativos" ? "Nenhum workspace ativo" : "Nenhum workspace em churn"}
+          </p>
+          <p className="type-fine-print mt-1 text-[var(--ink-muted-48)]">
+            Crie um workspace e convide o OWNER por e-mail.
+          </p>
+          {filterStatus === "ativos" ? (
+            <Button type="button" className="mt-4 !px-4 !py-2" onClick={() => setShowCreateForm(true)}>
+              <Plus className="h-3.5 w-3.5" />
+              Novo workspace
+            </Button>
+          ) : null}
+        </div>
+      )}
+
+      {clientes && filteredClientes.length > 0 && (
+        <ul className="divide-y divide-[var(--hairline)] rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)]">
           {filteredClientes.map((cliente) => {
             const googleConta = getConta(cliente, "GOOGLE_ADS");
             const metaConta = getConta(cliente, "META");
@@ -2199,236 +2189,174 @@ export default function AdminClientesPage() {
               .map((part) => part[0])
               .join("")
               .toUpperCase();
-            const seg = cliente.segmento ? segmentoMap[cliente.segmento] : null;
-            const segCor = seg?.cor ?? "#6b7280";
+            const syncing = syncMutation.isPending && syncMutation.variables === cliente.id;
+
+            const channels = [
+              googleConta?.accountIdPlataforma
+                ? `Google ${googleConta.accountIdPlataforma}`
+                : null,
+              metaConta?.accountIdPlataforma ? `Meta ${metaConta.accountIdPlataforma}` : null,
+              analyticsConta?.accountIdPlataforma
+                ? `GA4 ${analyticsConta.accountIdPlataforma}`
+                : null,
+            ].filter(Boolean);
 
             return (
               <li
                 key={cliente.id}
-                className="group rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 transition-all hover:border-[color-mix(in_srgb,var(--primary)_15%,var(--border))] hover:bg-[var(--card-hover)]"
+                className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-4 min-w-0">
-                    {cliente.logoUrl ? (
-                      <Image
-                        src={cliente.logoUrl}
-                        alt={cliente.nome}
-                        width={40}
-                        height={40}
-                        className="h-10 w-10 shrink-0 rounded-xl object-contain"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--muted)] to-[var(--border)] text-sm font-bold text-[var(--muted-foreground)]">
-                        {initials}
-                      </div>
-                    )}
-                    <div className="min-w-0 space-y-1.5">
-                      <div>
-                        <p className="text-sm font-bold text-[var(--foreground)]">{cliente.nome}</p>
-                        <p className="text-[11px] text-[var(--muted-foreground)]">
-                          {cliente.slug} · {cliente.ativo ? "Ativo" : "Churn"}
-                          {cliente.ultimoSyncAt && (
-                            <span className="ml-2 text-[10px] text-[var(--muted-foreground)]/60">
-                              · sync {formatSyncDate(cliente.ultimoSyncAt)}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-
-                      {(cliente.segmento || cliente.squad) && (
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {cliente.segmento && (
-                            <span
-                              className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white"
-                              style={{ backgroundColor: segCor }}
-                            >
-                              {cliente.segmento}
-                            </span>
-                          )}
-                          {cliente.squad && (
-                            <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--muted)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)]">
-                              Squad {cliente.squad}
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="flex flex-wrap items-center gap-2">
-                        {googleConta ? (
-                          <>
-                            <span className="inline-flex items-center rounded-full bg-[var(--success)]/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--success)]">
-                              Google: {googleConta.accountIdPlataforma}
-                            </span>
-                            {googleConta.googleAdsLoginCustomerId ? (
-                              <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                                MCC: {googleConta.googleAdsLoginCustomerId}
-                              </span>
-                            ) : null}
-                            {formatSaldo(googleConta) !== null ? (
-                              <span
-                                title={googleConta.saldoAtualizadoAt ? `Atualizado ${formatSyncDate(googleConta.saldoAtualizadoAt)}` : undefined}
-                                className="inline-flex items-center rounded-full bg-[var(--success)]/5 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--success)] opacity-75"
-                              >
-                                Saldo {formatSaldo(googleConta)}
-                              </span>
-                            ) : null}
-                          </>
-                        ) : (
-                          <span className="inline-flex items-center rounded-full bg-[var(--muted)] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
-                            Sem Google
-                          </span>
-                        )}
-                        {metaConta ? (
-                          <>
-                            <span className="inline-flex items-center rounded-full bg-[var(--primary)]/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--primary)]">
-                              Meta: {metaConta.accountIdPlataforma}
-                            </span>
-                            {formatSaldo(metaConta) !== null ? (
-                              <span
-                                title={metaConta.saldoAtualizadoAt ? `Atualizado ${formatSyncDate(metaConta.saldoAtualizadoAt)}` : undefined}
-                                className="inline-flex items-center rounded-full bg-[var(--primary)]/5 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--primary)] opacity-75"
-                              >
-                                Saldo {formatSaldo(metaConta)}
-                              </span>
-                            ) : null}
-                          </>
-                        ) : (
-                          <span className="inline-flex items-center rounded-full bg-[var(--muted)] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
-                            Sem Meta
-                          </span>
-                        )}
-                        {analyticsConta ? (
-                          <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                            GA4: {analyticsConta.accountIdPlataforma}
-                          </span>
-                        ) : null}
-                      </div>
+                <div className="flex min-w-0 items-start gap-3">
+                  {cliente.logoUrl ? (
+                    <Image
+                      src={cliente.logoUrl}
+                      alt={cliente.nome}
+                      width={40}
+                      height={40}
+                      className="h-10 w-10 shrink-0 rounded-[var(--radius-xs)] object-contain"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-xs)] bg-[var(--surface-pearl)] type-nav-link text-[var(--ink-muted-48)]">
+                      {initials}
                     </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="type-nav-link truncate text-[var(--ink)]">{cliente.nome}</p>
+                    <p className="type-fine-print mt-0.5 text-[var(--ink-muted-48)]">
+                      {cliente.slug}
+                      {cliente.segmento ? ` · ${cliente.segmento}` : ""}
+                      {cliente.squad ? ` · Squad ${cliente.squad}` : ""}
+                      {cliente.ultimoSyncAt
+                        ? ` · sync ${formatSyncDate(cliente.ultimoSyncAt)}`
+                        : ""}
+                    </p>
+                    <p className="type-fine-print mt-1 text-[var(--ink-muted-48)]">
+                      {channels.length > 0 ? channels.join(" · ") : "Sem IDs de mídia"}
+                      {formatSaldo(googleConta) ? ` · Google ${formatSaldo(googleConta)}` : ""}
+                      {formatSaldo(metaConta) ? ` · Meta ${formatSaldo(metaConta)}` : ""}
+                    </p>
                   </div>
+                </div>
 
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <button
-                      onClick={() => syncMutation.mutate(cliente.id)}
-                      disabled={!cliente.ativo || (syncMutation.isPending && syncMutation.variables === cliente.id)}
-                      title="Atualiza anúncios (Meta + Google), GA4, leads do Meta Lead Gen e CRM"
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-transparent px-3 py-2 text-xs font-medium text-[var(--muted-foreground)] transition-all hover:border-[var(--primary)]/30 hover:bg-[var(--primary)]/5 hover:text-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-50"
+                <div className="flex shrink-0 flex-wrap items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="!px-2 !py-1.5"
+                    onClick={() => syncMutation.mutate(cliente.id)}
+                    disabled={!cliente.ativo || syncing}
+                    title="Atualiza mídia, GA4 e CRM"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
+                  </Button>
+                  {cliente.telegramAtivo && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="!px-2 !py-1.5"
+                      disabled={telegramTestingId === cliente.id}
+                      title="Testar Telegram"
+                      onClick={async () => {
+                        setTelegramTestingId(cliente.id);
+                        try {
+                          const r = await fetch(`/api/admin/clientes/${cliente.id}/telegram-test`, {
+                            method: "POST",
+                            headers: getHeaders(),
+                          });
+                          const j = await r.json();
+                          setTelegramTestResult((p) => ({
+                            ...p,
+                            [cliente.id]: {
+                              ok: r.ok,
+                              msg: r.ok ? "Enviado!" : (j.error ?? r.statusText),
+                            },
+                          }));
+                        } catch (e) {
+                          setTelegramTestResult((p) => ({
+                            ...p,
+                            [cliente.id]: {
+                              ok: false,
+                              msg: e instanceof Error ? e.message : String(e),
+                            },
+                          }));
+                        } finally {
+                          setTelegramTestingId(null);
+                        }
+                      }}
                     >
-                      <RefreshCw className={`h-3.5 w-3.5 ${syncMutation.isPending && syncMutation.variables === cliente.id ? "animate-spin" : ""}`} />
-                      Atualizar
-                    </button>
-                    {cliente.telegramAtivo && (
+                      {telegramTestingId === cliente.id ? (
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Send className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  )}
+                  {confirmRegenId === cliente.id ? (
+                    <span className="flex items-center gap-1 type-fine-print text-[var(--ink-muted-48)]">
+                      Substituir link?
                       <button
-                        onClick={async () => {
-                          setTelegramTestingId(cliente.id);
-                          try {
-                            const r = await fetch(`/api/admin/clientes/${cliente.id}/telegram-test`, {
-                              method: "POST",
-                              headers: getHeaders(),
-                            });
-                            const j = await r.json();
-                            setTelegramTestResult((p) => ({
-                              ...p,
-                              [cliente.id]: { ok: r.ok, msg: r.ok ? "Enviado!" : (j.error ?? r.statusText) },
-                            }));
-                          } catch (e) {
-                            setTelegramTestResult((p) => ({
-                              ...p,
-                              [cliente.id]: { ok: false, msg: e instanceof Error ? e.message : String(e) },
-                            }));
-                          } finally {
-                            setTelegramTestingId(null);
-                          }
-                        }}
-                        disabled={telegramTestingId === cliente.id}
-                        title="Enviar resumo de teste para o canal Telegram agora"
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-transparent px-3 py-2 text-xs font-medium text-[var(--muted-foreground)] transition-all hover:border-sky-500/30 hover:bg-sky-500/5 hover:text-sky-400 disabled:cursor-not-allowed disabled:opacity-50"
+                        type="button"
+                        className="text-[var(--primary)]"
+                        disabled={regenTokenMutation.isPending}
+                        onClick={() => regenTokenMutation.mutate(cliente.id)}
                       >
-                        {telegramTestingId === cliente.id ? (
-                          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                        ) : telegramTestResult[cliente.id]?.ok ? (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                        ) : telegramTestResult[cliente.id] ? (
-                          <AlertTriangle className="h-3.5 w-3.5 text-red-400" />
-                        ) : (
-                          <Send className="h-3.5 w-3.5" />
-                        )}
-                        {telegramTestResult[cliente.id]
-                          ? telegramTestResult[cliente.id].msg.slice(0, 20)
-                          : "Testar Telegram"}
+                        Confirmar
                       </button>
-                    )}
-                    {confirmRegenId !== cliente.id && (
-                      <button
+                      <button type="button" onClick={() => setConfirmRegenId(null)}>
+                        Cancelar
+                      </button>
+                    </span>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="!px-2 !py-1.5"
+                        disabled={!cliente.portalToken}
+                        title="Copiar link do portal"
                         onClick={() => {
                           const origin = window.location.origin;
                           navigator.clipboard.writeText(`${origin}/portal/${cliente.portalToken}`);
                           setCopiedPortalId(cliente.id);
                           setTimeout(() => setCopiedPortalId(null), 2000);
                         }}
-                        title="Copiar link exclusivo do portal do cliente"
-                        disabled={!cliente.portalToken}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-transparent px-3 py-2 text-xs font-medium text-[var(--muted-foreground)] transition-all hover:border-[var(--primary)]/30 hover:bg-[var(--primary)]/5 hover:text-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         {copiedPortalId === cliente.id ? (
-                          <>
-                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                            Copiado!
-                          </>
+                          <CheckCircle2 className="h-3.5 w-3.5 text-[var(--success)]" />
                         ) : (
-                          <>
-                            <Copy className="h-3.5 w-3.5" />
-                            Link do Portal
-                          </>
+                          <Copy className="h-3.5 w-3.5" />
                         )}
-                      </button>
-                    )}
-                    {confirmRegenId === cliente.id ? (
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs text-amber-400">Substituir link?</span>
-                        <button
-                          onClick={() => regenTokenMutation.mutate(cliente.id)}
-                          disabled={regenTokenMutation.isPending}
-                          className="rounded-lg bg-amber-500/10 px-2 py-1.5 text-xs font-medium text-amber-400 transition hover:bg-amber-500/20 disabled:opacity-50"
-                        >
-                          {regenTokenMutation.isPending ? "..." : "Confirmar"}
-                        </button>
-                        <button
-                          onClick={() => setConfirmRegenId(null)}
-                          className="rounded-lg px-2 py-1.5 text-xs font-medium text-[var(--muted-foreground)] transition hover:bg-[var(--muted)]"
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                    ) : (
-                      <button
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="!px-2 !py-1.5"
+                        title="Gerar novo link do portal"
                         onClick={() => setConfirmRegenId(cliente.id)}
-                        title="Gerar novo link (o link atual deixará de funcionar)"
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-transparent px-3 py-2 text-xs font-medium text-[var(--muted-foreground)] transition-all hover:border-amber-500/30 hover:bg-amber-500/5 hover:text-amber-400"
                       >
                         <RotateCcw className="h-3.5 w-3.5" />
-                        Novo link
-                      </button>
-                    )}
-                    <button
-                      onClick={() => {
-                        setEditing(cliente);
-                        setEditError("");
-                        setEditSuccess("");
-                      }}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-transparent px-3 py-2 text-xs font-medium text-[var(--muted-foreground)] transition-all hover:border-[var(--primary)]/30 hover:bg-[var(--primary)]/5 hover:text-[var(--primary)]"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                      Editar
-                    </button>
-                    <Link
-                      href={`/clientes/${cliente.id}`}
-                      className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-[var(--muted-foreground)] transition-all hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                      Ver
-                    </Link>
-                  </div>
+                      </Button>
+                    </>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="!px-3 !py-1.5"
+                    onClick={() => {
+                      setEditing(cliente);
+                      setEditError("");
+                      setEditSuccess("");
+                    }}
+                  >
+                    Editar
+                  </Button>
+                  <Link
+                    href={`/clientes/${cliente.id}`}
+                    className="inline-flex items-center rounded-[var(--radius-xs)] px-3 py-1.5 type-button-utility text-[var(--primary)]"
+                  >
+                    Dashboard
+                  </Link>
                 </div>
               </li>
             );
@@ -2438,8 +2366,8 @@ export default function AdminClientesPage() {
 
       {showCreateForm && (
         <ClienteForm
-          title="Novo cliente"
-          submitLabel="Criar cliente"
+          title="Novo workspace"
+          submitLabel="Criar workspace"
           initialValues={{ nome: "", ativo: true, syncAfterCreate: true }}
           segmentos={segmentos}
           sessionReady={sessionReady}
@@ -2460,7 +2388,7 @@ export default function AdminClientesPage() {
 
       {editing && (
         <ClienteForm
-          title={`Editar cliente · ${editing.nome}`}
+          title={`Editar · ${editing.nome}`}
           submitLabel="Salvar alterações"
           initialValues={{
             nome: editing.nome,
@@ -2478,21 +2406,19 @@ export default function AdminClientesPage() {
             conexaoGoogleId: getConta(editing, "GOOGLE_ADS")?.conexaoIntegracaoId ?? null,
             linkedinAdsAccountId: getConta(editing, "LINKEDIN")?.accountIdPlataforma ?? null,
             conexaoLinkedinId: getConta(editing, "LINKEDIN")?.conexaoIntegracaoId ?? null,
-            orcamentoMidiaGoogleMensal: editing.orcamentoMidiaGoogleMensal ?? null,
-            orcamentoMidiaMetaMensal: editing.orcamentoMidiaMetaMensal ?? null,
-            leadScoringEnabled: editing.leadScoringEnabled ?? false,
-            socialMediaAtivo: editing.socialMediaAtivo ?? false,
-            telegramAtivo: editing.telegramAtivo ?? false,
-             inPilotEnabled: editing.inPilotEnabled ?? true,
-            objetivoMidia: editing.objetivoMidia ?? "leads",
+            leadScoringEnabled: editing.leadScoringEnabled,
+            socialMediaAtivo: editing.socialMediaAtivo,
+            telegramAtivo: editing.telegramAtivo,
+            inPilotEnabled: editing.inPilotEnabled,
+            objetivoMidia: editing.objetivoMidia,
             perfilPanel: editing.perfilPanel ?? null,
             squad: editing.squad ?? null,
-             produtoServico: editing.produtoServico ?? null,
-             modeloNegocio: editing.modeloNegocio ?? null,
-             publicoAlvo: editing.publicoAlvo ?? null,
-             objetivoProjeto: editing.objetivoProjeto ?? null,
-             diferenciais: editing.diferenciais ?? null,
-             observacoesAnaliticas: editing.observacoesAnaliticas ?? null,
+            produtoServico: editing.produtoServico ?? null,
+            modeloNegocio: editing.modeloNegocio ?? null,
+            publicoAlvo: editing.publicoAlvo ?? null,
+            objetivoProjeto: editing.objetivoProjeto ?? null,
+            diferenciais: editing.diferenciais ?? null,
+            observacoesAnaliticas: editing.observacoesAnaliticas ?? null,
           }}
           segmentos={segmentos}
           sessionReady={sessionReady}
@@ -2511,6 +2437,6 @@ export default function AdminClientesPage() {
           }}
         />
       )}
-    </main>
+    </AppPage>
   );
 }

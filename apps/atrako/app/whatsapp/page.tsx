@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { Loader2, Send } from "lucide-react";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 const CONVERSATION_STATUS: Record<string, string> = {
   OPEN: "Em atendimento",
   HANDED_OFF: "Com atendente",
@@ -31,16 +32,7 @@ type Conversation = {
 };
 export default function WhatsAppInboxPage() {
   const qc = useQueryClient();
-  const { data: clientes = [] } = useQuery({
-    queryKey: ["wa-clientes"],
-    queryFn: async () => {
-      const r = await fetch("/api/clientes");
-      if (!r.ok) return [];
-      const j = await r.json();
-      return Array.isArray(j) ? j : j.clientes ?? [];
-    },
-  });
-  const workspaceId = clientes[0]?.id as string | undefined;
+  const { workspaceId } = useActiveWorkspace();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [reply, setReply] = useState("");
   const [newPhone, setNewPhone] = useState("");

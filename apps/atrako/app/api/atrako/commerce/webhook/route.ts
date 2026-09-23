@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
         "",
     ).trim();
 
-    const okSig = verifyMpWebhookSignature({
+    const okSig = await verifyMpWebhookSignature({
       xSignature: request.headers.get("x-signature"),
       xRequestId: request.headers.get("x-request-id"),
       dataId,

@@ -25,10 +25,10 @@ export async function POST(req: NextRequest) {
 
   const redirectUri = `${getPublicOrigin(req)}/api/admin/linkedin/oauth/callback`;
   const state = signOauthState(conexaoId, access.user.id);
-  const authUrl = buildLinkedinAuthUrl(redirectUri, state);
+  const authUrl = await buildLinkedinAuthUrl(redirectUri, state);
   if (!authUrl) {
     return NextResponse.json(
-      { error: "LINKEDIN_CLIENT_ID/LINKEDIN_CLIENT_SECRET não configurados nas secrets" },
+      { error: "App LinkedIn não configurado — use /admin/apps" },
       { status: 500 }
     );
   }

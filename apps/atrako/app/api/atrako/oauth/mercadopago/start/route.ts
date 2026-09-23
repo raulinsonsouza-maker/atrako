@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHash, randomBytes } from "crypto";
 import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 
 function createPkce() {
   const codeVerifier = randomBytes(32).toString("base64url");
@@ -16,11 +17,17 @@ export async function GET(request: NextRequest) {
   if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
   }
+  const access = await requireWorkspaceAccess(workspaceId, "manage");
+  if (!access.ok) return access.response;
+
   const ws = await findWorkspaceById(workspaceId);
   if (!ws) return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
 
-  const clientId = process.env.MP_CLIENT_ID?.trim();
+  const { resolvePlatformApp } = await import("@/lib/config/platformApps");
+  const app = await resolvePlatformApp("MERCADO_PAGO");
+  const clientId = app?.credentials.clientId?.trim() || process.env.MP_CLIENT_ID?.trim();
   const redirectUri =
+    app?.credentials.redirectUri?.trim() ||
     process.env.MP_REDIRECT_URI?.trim() ||
     `${request.nextUrl.origin}/api/atrako/oauth/mercadopago/callback`;
 
@@ -28,7 +35,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error: "MP_CLIENT_ID not configured",
-        hint: "Defina MP_CLIENT_ID e MP_CLIENT_SECRET no .env do Atrako",
+        hint: "Configure Mercado Pago em /admin/apps",
       },
       { status: 503 },
     );

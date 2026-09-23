@@ -15,6 +15,7 @@ import {
   LpCreateModal,
   type LpCreateStep,
 } from "@/components/criar/LpCreateModal";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 import {
   firstCheckoutProductIdFromPuck,
   firstFormIdFromPuck,
@@ -131,17 +132,9 @@ function OfertaInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, forceNew, focus, entryParam, templateParam, productIdParam, wantEdit]);
 
-  const { data: clientes = [] } = useQuery({
-    queryKey: ["config-clientes"],
-    queryFn: async () => {
-      const r = await fetch("/api/clientes");
-      if (!r.ok) return [];
-      const j = await r.json();
-      return Array.isArray(j) ? j : j.clientes ?? [];
-    },
-  });
-  const workspaceId = clientes[0]?.id as string | undefined;
-  const brandName = (clientes[0]?.nome as string | undefined) || "Sua marca";
+  const { workspaceId, workspaces } = useActiveWorkspace();
+  const brandName =
+    workspaces.find((w) => w.id === workspaceId)?.nome || "Sua marca";
 
   const { data: commerce, isLoading: loadingPages } = useQuery({
     queryKey: ["commerce-data", workspaceId],

@@ -13,6 +13,8 @@ import { syncClienteCanais } from "@/lib/sync/syncClienteCanais";
 import { requireInternalAdmin } from "@/lib/internalAccess";
 import { writeAuditLog } from "@/lib/internalUsers";
 import { validateCommercialContext } from "@/lib/admin/clientContext";
+import { ensureWorkspaceSettings } from "@/lib/config/getWorkspaceConfig";
+import { createWorkspaceInvite } from "@/lib/tenancy/invites";
 
 export async function GET(request: NextRequest) {
   const authz = await requireInternalAdmin();
@@ -60,6 +62,7 @@ export async function POST(request: NextRequest) {
     objetivoProjeto?: string | null;
     diferenciais?: string | null;
     observacoesAnaliticas?: string | null;
+    ownerEmail?: string;
   };
   try {
     body = await request.json();
@@ -135,6 +138,19 @@ export async function POST(request: NextRequest) {
       conexaoIntegracaoId: body.conexaoLinkedinId ?? null,
     });
 
+    await ensureWorkspaceSettings(cliente.id);
+
+    let ownerInvite: { acceptPath: string; email: string } | null = null;
+    const ownerEmail = body.ownerEmail?.trim().toLowerCase();
+    if (ownerEmail) {
+      const invite = await createWorkspaceInvite({
+        clienteId: cliente.id,
+        email: ownerEmail,
+        role: "OWNER",
+      });
+      ownerInvite = { acceptPath: invite.acceptPath, email: ownerEmail };
+    }
+
     const syncAfterCreate = body.syncAfterCreate ?? true;
     let syncResult = null;
     if (syncAfterCreate && (body.ativo ?? true)) {
@@ -156,6 +172,7 @@ export async function POST(request: NextRequest) {
       cliente: clienteWithContas ?? cliente,
       sync: syncResult,
       dashboardReady: !!(syncResult && syncResult.ok),
+      ownerInvite,
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);

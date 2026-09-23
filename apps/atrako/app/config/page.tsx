@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppPage } from "@/components/layout/AppPage";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 
 const LINKS = [
   {
@@ -80,16 +81,7 @@ export default function ConfigHomePage() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
-  const { data: clientes = [], isLoading } = useQuery({
-    queryKey: ["config-clientes"],
-    queryFn: async () => {
-      const r = await fetch("/api/clientes");
-      if (!r.ok) return [];
-      const j = await r.json();
-      return Array.isArray(j) ? j : j.clientes ?? [];
-    },
-  });
-  const workspaceId = clientes[0]?.id as string | undefined;
+  const { workspaceId, isLoading } = useActiveWorkspace();
 
   const { data: config } = useQuery({
     queryKey: ["workspace-config", workspaceId],
@@ -119,6 +111,7 @@ export default function ConfigHomePage() {
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "Não foi possível criar");
       setNome("");
+      await qc.invalidateQueries({ queryKey: ["my-workspaces"] });
       await qc.invalidateQueries({ queryKey: ["config-clientes"] });
       await qc.invalidateQueries({ queryKey: ["admin-clientes-nav"] });
       window.location.assign("/config/empresa");

@@ -5,6 +5,7 @@ import {
 } from "@atrako/agent";
 import { createFormFromBrief, previewForm } from "@atrako/forms";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 
 const registry = createDefaultAgentToolRegistry();
 
@@ -55,6 +56,8 @@ export async function POST(request: NextRequest) {
   }
 
   if (workspaceId !== "guest") {
+    const access = await requireWorkspaceAccess(workspaceId, "operate");
+    if (!access.ok) return access.response;
     const workspace = await findWorkspaceById(workspaceId).catch(() => null);
     if (!workspace) {
       return NextResponse.json({ error: "Workspace not found" }, { status: 404 });

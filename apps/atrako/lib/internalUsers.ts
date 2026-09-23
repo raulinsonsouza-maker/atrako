@@ -123,33 +123,40 @@ async function sessionUser(): Promise<InternalUser | null> {
 export async function getInternalUser(): Promise<InternalUser | null> {
   const session = await sessionUser();
   if (session) return session;
-  // Shell Atrako sem login: acesso aberto com identidade local.
-  return {
-    id: "atrako-open-access",
-    clerkUserId: null,
-    email: null,
-    username: "atrako",
-    passwordHash: null,
-    mustChangePassword: false,
-    failedLoginCount: 0,
-    failureWindowStartedAt: null,
-    lockedUntil: null,
-    passwordUpdatedAt: null,
-    lastLoginAt: null,
-    name: "Atrako",
-    role: "ADMIN",
-    active: true,
-    createdAt: new Date(0),
-    updatedAt: new Date(0),
-  } as InternalUser;
+  // Dev-only open shell. Production / default: null (login required).
+  if (process.env.ATRAKO_DEV_OPEN_ACCESS === "1") {
+    return {
+      id: "atrako-open-access",
+      clerkUserId: null,
+      email: null,
+      username: "atrako",
+      passwordHash: null,
+      mustChangePassword: false,
+      failedLoginCount: 0,
+      failureWindowStartedAt: null,
+      lockedUntil: null,
+      passwordUpdatedAt: null,
+      lastLoginAt: null,
+      name: "Atrako",
+      role: "ADMIN",
+      active: true,
+      createdAt: new Date(0),
+      updatedAt: new Date(0),
+    } as InternalUser;
+  }
+  return null;
 }
 
 export async function requireInternalUser(role?: InternalRole): Promise<InternalUser> {
   const user = await getInternalUser();
   if (!user) throw new InternalAuthError("Autenticação interna necessária", 401);
   if (!user.active) throw new InternalAuthError("Usuário interno desativado", 403);
-  // Open-access guest is treated as ADMIN for all shell routes.
-  if (user.id === "atrako-open-access") return user;
+  if (user.id === "atrako-open-access") {
+    if (process.env.ATRAKO_DEV_OPEN_ACCESS !== "1") {
+      throw new InternalAuthError("Autenticação interna necessária", 401);
+    }
+    return user;
+  }
   if (role && user.role !== role) throw new InternalAuthError("Permissão de administrador necessária", 403);
   return user;
 }

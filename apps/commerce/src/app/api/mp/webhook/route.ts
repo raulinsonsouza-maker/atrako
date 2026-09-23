@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { approveOrder } from "@/lib/orders";
 import { revokeEntitlementsForOrder } from "@/lib/entitlements";
 import { getMercadoPagoOrder } from "@/lib/mercadopago/orders";
+import { resolveMercadoPagoWebhookSecret } from "@/lib/atrako-platform";
 
 function isPaidStatus(status: string) {
   const s = status.toLowerCase();
@@ -20,13 +21,14 @@ function isCancelledStatus(status: string) {
   );
 }
 
-function verifyWebhookSignature(req: NextRequest) {
-  const secret = process.env.MP_WEBHOOK_SECRET?.trim();
+async function verifyWebhookSignature(req: NextRequest) {
+  // Prefer PlatformApp.webhookSecret via Atrako; MP_WEBHOOK_SECRET is local DX fallback.
+  const secret = await resolveMercadoPagoWebhookSecret();
   const isProd = process.env.NODE_ENV === "production";
 
   if (!secret) {
     if (isProd) {
-      throw new Error("MP_WEBHOOK_SECRET não configurado");
+      throw new Error("MP webhook secret não configurado (Atrako PlatformApp ou MP_WEBHOOK_SECRET)");
     }
     // Dev sem secret: aceita (polling / testes locais)
     return;
@@ -44,7 +46,7 @@ function verifyWebhookSignature(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     try {
-      verifyWebhookSignature(req);
+      await verifyWebhookSignature(req);
     } catch (e) {
       if (e instanceof InvalidWebhookSignatureError || e instanceof Error) {
         console.error("webhook signature rejected", e);

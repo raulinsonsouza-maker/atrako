@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2, Sparkles } from "lucide-react";
 import { AppPage } from "@/components/layout/AppPage";
 import { CopyLinkButton } from "@/components/criar/CopyLinkButton";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 import {
   CRIAR_PLATFORMS,
   platformCounts,
@@ -39,16 +40,7 @@ function CriarHomeInner() {
   const sp = useSearchParams();
   const assistente = sp.get("assistente") === "1";
 
-  const { data: clientes = [], isLoading: loadingWs } = useQuery({
-    queryKey: ["config-clientes"],
-    queryFn: async () => {
-      const r = await fetch("/api/clientes");
-      if (!r.ok) return [];
-      const j = await r.json();
-      return Array.isArray(j) ? j : j.clientes ?? [];
-    },
-  });
-  const workspaceId = clientes[0]?.id as string | undefined;
+  const { workspaceId, isLoading: loadingWs } = useActiveWorkspace();
 
   const { data, isLoading } = useQuery({
     queryKey: ["criar-recent", workspaceId],

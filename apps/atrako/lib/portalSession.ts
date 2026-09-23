@@ -98,23 +98,41 @@ export async function requireClienteAccess(
 ) {
   try {
     const internalUser = await requireInternalUser();
-    return { internalUser, portal: false, response: null };
+    return { internalUser, portal: false, member: null as null, response: null };
   } catch (error) {
     if (!(error instanceof InternalAuthError)) throw error;
-    const portalCookieValue = portalSessionCookieValue(request);
-    if (allowsAnonymousClienteRead(mode, portalCookieValue !== undefined)) {
-      // Public dashboard endpoints must opt in explicitly. Once a portal
-      // cookie is present, it must validate and match this client; otherwise
-      // an authenticated portal for client A must never become anonymous
-      // access to client B.
-      return { internalUser: null, portal: false, response: null };
+
+    const { getWorkspaceMember } = await import("@/lib/tenancy/memberAuth");
+    const memberSession = await getWorkspaceMember();
+    if (memberSession) {
+      const membership = await prisma.workspaceMember.findUnique({
+        where: {
+          clienteId_email: {
+            clienteId,
+            email: memberSession.email.trim().toLowerCase(),
+          },
+        },
+      });
+      if (membership?.active) {
+        return { internalUser: null, portal: false, member: membership, response: null };
+      }
     }
-    if (mode !== "write" && await readPortalSession(request, clienteId)) {
-      return { internalUser: null, portal: true, response: null };
+
+    const portalCookieValue = portalSessionCookieValue(request);
+    // Anonymous public-read only in explicit dev open-access mode.
+    if (
+      process.env.ATRAKO_DEV_OPEN_ACCESS === "1" &&
+      allowsAnonymousClienteRead(mode, portalCookieValue !== undefined)
+    ) {
+      return { internalUser: null, portal: false, member: null, response: null };
+    }
+    if (mode !== "write" && (await readPortalSession(request, clienteId))) {
+      return { internalUser: null, portal: true, member: null, response: null };
     }
     return {
       internalUser: null,
       portal: false,
+      member: null,
       response: NextResponse.json({ error: "Acesso ao cliente não autorizado" }, { status: error.status }),
     };
   }

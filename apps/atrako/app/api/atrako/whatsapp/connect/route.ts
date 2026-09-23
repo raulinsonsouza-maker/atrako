@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireInternalAnalyst } from "@/lib/internalAccess";
+
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import {
   disconnectWorkspaceConnection,
   upsertWorkspaceConnection,
@@ -8,9 +9,6 @@ import {
 
 /** Conectar / desconectar WhatsApp Cloud API via sessão admin (Config). */
 export async function POST(request: NextRequest) {
-  const auth = await requireInternalAnalyst();
-  if (auth.response) return auth.response;
-
   let body: unknown;
   try {
     body = await request.json();
@@ -19,8 +17,13 @@ export async function POST(request: NextRequest) {
   }
   const b = body as Record<string, unknown>;
   const workspaceId = typeof b.workspaceId === "string" ? b.workspaceId : "";
-  if (!workspaceId || !(await findWorkspaceById(workspaceId))) {
+  if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
+  }
+  const access = await requireWorkspaceAccess(workspaceId, "manage");
+  if (!access.ok) return access.response;
+  if (!(await findWorkspaceById(workspaceId))) {
+    return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
   if (b.action === "disconnect") {

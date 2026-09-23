@@ -7,7 +7,18 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/db";
 import { decryptCredentials } from "@/lib/atrako/credentials-crypto";
 
-function metaAppSecret() {
+async function metaAppSecret(): Promise<string> {
+  try {
+    const { resolvePlatformApp } = await import("@/lib/config/platformApps");
+    const app = await resolvePlatformApp("META");
+    const fromApp =
+      app?.credentials.webhookSecret?.trim() ||
+      app?.credentials.clientSecret?.trim() ||
+      "";
+    if (fromApp) return fromApp;
+  } catch {
+    // fall through
+  }
   return (
     process.env.META_APP_SECRET?.trim() ||
     process.env.SYMBIUS_IG_APP_SECRET?.trim() ||
@@ -16,10 +27,12 @@ function metaAppSecret() {
   );
 }
 
-export function verifyWaWebhookSignature(rawBody: string, signatureHeader: string | null): boolean {
-  const appSecret = metaAppSecret();
+export async function verifyWaWebhookSignature(
+  rawBody: string,
+  signatureHeader: string | null,
+): Promise<boolean> {
+  const appSecret = await metaAppSecret();
   if (!appSecret) {
-    // Em dev sem secret: aceita (produção deve ter META_APP_SECRET)
     return process.env.NODE_ENV !== "production";
   }
   if (!signatureHeader?.startsWith("sha256=")) return false;
@@ -54,8 +67,17 @@ export async function findWorkspaceByPhoneNumberId(phoneNumberId: string) {
   return null;
 }
 
-/** GET hub.verify_token — aceita token de qualquer workspace WHATSAPP ativo ou env de plataforma. */
+/** GET hub.verify_token — PlatformApp META, env seed, ou token de workspace WHATSAPP ativo. */
 export async function matchWebhookVerifyToken(token: string): Promise<boolean> {
+  try {
+    const { resolvePlatformApp } = await import("@/lib/config/platformApps");
+    const app = await resolvePlatformApp("META");
+    const fromApp = app?.credentials.webhookVerifyToken?.trim() || "";
+    if (fromApp && token === fromApp) return true;
+  } catch {
+    // fall through to env / workspace
+  }
+
   const platform =
     process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN?.trim() ||
     process.env.META_WEBHOOK_VERIFY_TOKEN?.trim() ||

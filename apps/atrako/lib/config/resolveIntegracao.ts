@@ -3,12 +3,18 @@
  *
  * Priority (Meta):
  *   1. WorkspaceConnection META_ADS (hub /config/conexoes — AES)
- *   2. Conta.conexaoIntegracaoId → ConexaoIntegracao (legado)
- *   3. Global SystemConfig / env (somente legado)
+ *   2. Conta.conexaoIntegracaoId → ConexaoIntegracao (legado dual-read)
+ *   3. Global SystemConfig / env (legado dual-read)
+ *
+ * Priority (Google Ads):
+ *   1. WorkspaceConnection GOOGLE_ADS + PlatformApp GOOGLE_ADS
+ *   2. Conta.conexaoIntegracao (legado)
+ *   3. PlatformApp / SystemConfig / env (legado)
  */
 import { prisma } from "@/lib/db";
 import { getIntegrationsConfig } from "@/lib/config/integrations";
 import { getWorkspaceConnection } from "@/lib/atrako/workspace-connections";
+import { resolvePlatformApp } from "@/lib/config/platformApps";
 import { normalizeAdAccountId } from "@/lib/integrations/meta/graph";
 import { parseMetaAdsMetadata } from "@/lib/integrations/meta/types";
 
@@ -26,6 +32,7 @@ export interface GoogleAdsCredentials {
   refreshToken: string;
   loginCustomerId: string | null;
   connectionName?: string;
+  source?: "workspace_connection" | "conexao_integracao" | "global";
 }
 
 /**
@@ -72,7 +79,7 @@ export async function resolveMetaCredentials(
     };
   }
 
-  // Fallback: global config (legado only)
+  // Fallback: global config (legado only — dual-read)
   const global = await getIntegrationsConfig();
   const token = global.metaAccessToken ?? process.env.META_ACCESS_TOKEN ?? null;
   if (!token) return null;
@@ -89,8 +96,7 @@ export async function resolveMetaCredentials(
 
 /**
  * Resolve Google Ads credentials for a given clienteId.
- * If the client's GOOGLE_ADS Conta has a `conexaoIntegracaoId`, credentials come from that connection.
- * Otherwise falls back to global SystemConfig / env.
+ * Hub-first: WorkspaceConnection GOOGLE_ADS + PlatformApp for client/secret/devToken.
  */
 export async function resolveGoogleAdsCredentials(
   clienteId: string,
@@ -99,6 +105,53 @@ export async function resolveGoogleAdsCredentials(
     where: { clienteId, plataforma: "GOOGLE_ADS" },
     include: { conexaoIntegracao: true },
   });
+
+  const platform = await resolvePlatformApp("GOOGLE_ADS");
+  const hub = await getWorkspaceConnection(clienteId, "GOOGLE_ADS");
+  if (
+    hub &&
+    hub.status !== "DISCONNECTED" &&
+    hub.status !== "REVOKED" &&
+    typeof hub.credentials.refreshToken === "string" &&
+    hub.credentials.refreshToken
+  ) {
+    const clientId =
+      (typeof hub.credentials.clientId === "string" && hub.credentials.clientId) ||
+      platform?.credentials.clientId ||
+      null;
+    const clientSecret =
+      (typeof hub.credentials.clientSecret === "string" && hub.credentials.clientSecret) ||
+      platform?.credentials.clientSecret ||
+      null;
+    const developerToken =
+      (typeof hub.credentials.developerToken === "string" && hub.credentials.developerToken) ||
+      platform?.credentials.developerToken ||
+      null;
+    if (clientId && clientSecret && developerToken) {
+      const loginFromHub =
+        (typeof hub.credentials.loginCustomerId === "string" && hub.credentials.loginCustomerId) ||
+        (hub.metadata &&
+        typeof hub.metadata === "object" &&
+        hub.metadata !== null &&
+        "loginCustomerId" in hub.metadata &&
+        typeof (hub.metadata as { loginCustomerId?: unknown }).loginCustomerId === "string"
+          ? (hub.metadata as { loginCustomerId: string }).loginCustomerId
+          : null);
+      return {
+        clientId,
+        clientSecret,
+        developerToken,
+        refreshToken: hub.credentials.refreshToken,
+        loginCustomerId:
+          loginFromHub ??
+          conta?.googleAdsLoginCustomerId ??
+          platform?.credentials.loginCustomerId ??
+          null,
+        connectionName: hub.label ?? "Google Ads",
+        source: "workspace_connection",
+      };
+    }
+  }
 
   const conn = conta?.conexaoIntegracao;
   if (
@@ -115,17 +168,31 @@ export async function resolveGoogleAdsCredentials(
       refreshToken: conn.googleRefreshToken,
       loginCustomerId: conn.googleLoginCustomerId ?? conta?.googleAdsLoginCustomerId ?? null,
       connectionName: conn.nome,
+      source: "conexao_integracao",
     };
   }
 
   const global = await getIntegrationsConfig();
-  const clientId = global.googleClientId ?? process.env.GOOGLE_ADS_CLIENT_ID ?? null;
+  const clientId =
+    platform?.credentials.clientId ??
+    global.googleClientId ??
+    process.env.GOOGLE_ADS_CLIENT_ID ??
+    null;
   const clientSecret =
-    global.googleClientSecret ?? process.env.GOOGLE_ADS_CLIENT_SECRET ?? null;
+    platform?.credentials.clientSecret ??
+    global.googleClientSecret ??
+    process.env.GOOGLE_ADS_CLIENT_SECRET ??
+    null;
   const developerToken =
-    global.googleDeveloperToken ?? process.env.GOOGLE_ADS_DEVELOPER_TOKEN ?? null;
+    platform?.credentials.developerToken ??
+    global.googleDeveloperToken ??
+    process.env.GOOGLE_ADS_DEVELOPER_TOKEN ??
+    null;
   const refreshToken =
-    global.googleRefreshToken ?? process.env.GOOGLE_ADS_REFRESH_TOKEN ?? null;
+    platform?.credentials.refreshToken ??
+    global.googleRefreshToken ??
+    process.env.GOOGLE_ADS_REFRESH_TOKEN ??
+    null;
   if (!clientId || !clientSecret || !developerToken || !refreshToken) {
     return null;
   }
@@ -135,6 +202,10 @@ export async function resolveGoogleAdsCredentials(
     developerToken,
     refreshToken,
     loginCustomerId:
-      conta?.googleAdsLoginCustomerId ?? global.googleLoginCustomerId ?? null,
+      conta?.googleAdsLoginCustomerId ??
+      platform?.credentials.loginCustomerId ??
+      global.googleLoginCustomerId ??
+      null,
+    source: "global",
   };
 }

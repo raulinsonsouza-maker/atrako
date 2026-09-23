@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -14,6 +15,8 @@ export async function PUT(request: NextRequest, { params }: Ctx) {
   const { id } = await params;
   try {
     const body = schema.parse(await request.json());
+    const access = await requireWorkspaceAccess(body.workspaceId, "operate");
+    if (!access.ok) return access.response;
     if (!(await findWorkspaceById(body.workspaceId))) {
       return NextResponse.json({ error: "not found" }, { status: 404 });
     }

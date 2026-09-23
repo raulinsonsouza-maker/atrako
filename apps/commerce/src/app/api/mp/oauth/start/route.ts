@@ -7,7 +7,9 @@ export async function GET(req: NextRequest) {
   const { codeVerifier, codeChallenge, state } = createPkce();
   const test = req.nextUrl.searchParams.get("test") === "1";
 
-  const res = NextResponse.redirect(getAuthorizationUrl({ state, codeChallenge }));
+  const res = NextResponse.redirect(
+    await getAuthorizationUrl({ state, codeChallenge }),
+  );
   res.cookies.set("mp_oauth_state", state, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

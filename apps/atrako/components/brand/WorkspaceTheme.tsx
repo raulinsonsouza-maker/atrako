@@ -7,24 +7,14 @@ import {
   clearBrandPrimaryFromElement,
   DEFAULT_PRIMARY,
 } from "@/lib/brand/primaryColor";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 
 /**
  * Carrega primaryColor do workspace ativo e injeta nas CSS vars do DS.
  * Sem cor configurada → Action Blue padrão (#0066cc).
  */
 export function WorkspaceTheme() {
-  const { data: clientes = [] } = useQuery({
-    queryKey: ["brand-clientes"],
-    queryFn: async () => {
-      const r = await fetch("/api/clientes");
-      if (!r.ok) return [];
-      const j = await r.json();
-      return Array.isArray(j) ? j : j.clientes ?? [];
-    },
-    staleTime: 60_000,
-  });
-
-  const workspaceId = (clientes[0]?.id as string | undefined) || "";
+  const { workspaceId } = useActiveWorkspace();
 
   const { data: config } = useQuery({
     queryKey: ["workspace-config", workspaceId],

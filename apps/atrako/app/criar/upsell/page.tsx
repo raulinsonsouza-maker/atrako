@@ -9,6 +9,7 @@ import { AppPage } from "@/components/layout/AppPage";
 import { Button } from "@/components/ui/button";
 import { BackLink } from "@/components/ui/back-link";
 import { PillSelect } from "@/components/ui/pill-select";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 
 type Mode = "manual" | "ai";
 type Product = { id: string; name: string };
@@ -34,16 +35,7 @@ function UpsellInner() {
     if (!mode) router.replace("/criar/oferta?mode=manual");
   }, [mode, router]);
 
-  const { data: clientes = [] } = useQuery({
-    queryKey: ["config-clientes"],
-    queryFn: async () => {
-      const r = await fetch("/api/clientes");
-      if (!r.ok) return [];
-      const j = await r.json();
-      return Array.isArray(j) ? j : j.clientes ?? [];
-    },
-  });
-  const workspaceId = clientes[0]?.id as string | undefined;
+  const { workspaceId } = useActiveWorkspace();
 
   const { data: commerce, isLoading } = useQuery({
     queryKey: ["commerce-upsell", workspaceId],

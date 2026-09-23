@@ -17,9 +17,11 @@ export const LINKEDIN_SCOPES = ["r_ads", "r_ads_reporting"];
 // margem de segurança antes de expirar (5 min)
 const TOKEN_EXPIRY_MARGIN_MS = 5 * 60 * 1000;
 
-export function getLinkedinAppCredentials(): { clientId: string; clientSecret: string } | null {
-  const clientId = process.env.LINKEDIN_CLIENT_ID?.trim();
-  const clientSecret = process.env.LINKEDIN_CLIENT_SECRET?.trim();
+export async function getLinkedinAppCredentials(): Promise<{ clientId: string; clientSecret: string } | null> {
+  const { resolvePlatformApp } = await import("@/lib/config/platformApps");
+  const app = await resolvePlatformApp("LINKEDIN");
+  const clientId = app?.credentials.clientId?.trim() || process.env.LINKEDIN_CLIENT_ID?.trim();
+  const clientSecret = app?.credentials.clientSecret?.trim() || process.env.LINKEDIN_CLIENT_SECRET?.trim();
   if (!clientId || !clientSecret) return null;
   return { clientId, clientSecret };
 }
@@ -80,8 +82,8 @@ export function getPublicOrigin(req: { headers: Headers; nextUrl: { origin: stri
   return req.nextUrl.origin;
 }
 
-export function buildLinkedinAuthUrl(redirectUri: string, state: string): string | null {
-  const creds = getLinkedinAppCredentials();
+export async function buildLinkedinAuthUrl(redirectUri: string, state: string): Promise<string | null> {
+  const creds = await getLinkedinAppCredentials();
   if (!creds) return null;
   const params = new URLSearchParams({
     response_type: "code",
@@ -101,7 +103,7 @@ interface TokenResponse {
 }
 
 export async function exchangeLinkedinCode(code: string, redirectUri: string): Promise<TokenResponse> {
-  const creds = getLinkedinAppCredentials();
+  const creds = await getLinkedinAppCredentials();
   if (!creds) throw new Error("LINKEDIN_CLIENT_ID/LINKEDIN_CLIENT_SECRET não configurados");
   const res = await fetch(`${LINKEDIN_OAUTH_BASE}/accessToken`, {
     method: "POST",
@@ -122,7 +124,7 @@ export async function exchangeLinkedinCode(code: string, redirectUri: string): P
 }
 
 async function refreshLinkedinToken(conexaoId: string, refreshToken: string): Promise<string> {
-  const creds = getLinkedinAppCredentials();
+  const creds = await getLinkedinAppCredentials();
   if (!creds) throw new Error("LINKEDIN_CLIENT_ID/LINKEDIN_CLIENT_SECRET não configurados");
   const res = await fetch(`${LINKEDIN_OAUTH_BASE}/accessToken`, {
     method: "POST",
@@ -156,6 +158,60 @@ async function refreshLinkedinToken(conexaoId: string, refreshToken: string): Pr
     },
   });
   return data.access_token;
+}
+
+/**
+ * Access token via WorkspaceConnection LINKEDIN_ADS (hub-first).
+ */
+export async function getValidLinkedinAccessTokenForWorkspace(clienteId: string): Promise<string> {
+  const { getWorkspaceConnection, upsertWorkspaceConnection } = await import(
+    "@/lib/atrako/workspace-connections"
+  );
+  const hub = await getWorkspaceConnection(clienteId, "LINKEDIN_ADS");
+  if (!hub || typeof hub.credentials.accessToken !== "string" || !hub.credentials.accessToken) {
+    throw new Error("LinkedIn não conectado — use Config → Conexões");
+  }
+  const expiresAt =
+    typeof hub.credentials.expiresAt === "string" || typeof hub.credentials.expiresAt === "number"
+      ? new Date(hub.credentials.expiresAt as string | number).getTime()
+      : null;
+  const refreshToken =
+    typeof hub.credentials.refreshToken === "string" ? hub.credentials.refreshToken : null;
+  if (expiresAt && Date.now() > expiresAt - TOKEN_EXPIRY_MARGIN_MS && refreshToken) {
+    const creds = await getLinkedinAppCredentials();
+    if (!creds) throw new Error("App LinkedIn não configurado em /admin/apps");
+    const res = await fetch(`${LINKEDIN_OAUTH_BASE}/accessToken`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+        client_id: creds.clientId,
+        client_secret: creds.clientSecret,
+      }),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`LinkedIn refresh token falhou (${res.status}): ${text.slice(0, 300)}`);
+    }
+    const data = (await res.json()) as TokenResponse;
+    const now = Date.now();
+    await upsertWorkspaceConnection({
+      clienteId,
+      provider: "LINKEDIN_ADS",
+      label: hub.label,
+      credentials: {
+        ...hub.credentials,
+        accessToken: data.access_token,
+        expiresAt: new Date(now + data.expires_in * 1000).toISOString(),
+        ...(data.refresh_token ? { refreshToken: data.refresh_token } : {}),
+      },
+      metadata: hub.metadata as Record<string, unknown> | null,
+      status: hub.status,
+    });
+    return data.access_token;
+  }
+  return hub.credentials.accessToken;
 }
 
 /**

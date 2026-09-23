@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 
 const STEPS = ["empresa", "conexoes", "modulos", "pronto"] as const;
 
@@ -17,16 +17,7 @@ const STEP_LABELS: Record<(typeof STEPS)[number], string> = {
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const { data: clientes = [] } = useQuery({
-    queryKey: ["onboarding-clientes"],
-    queryFn: async () => {
-      const r = await fetch("/api/clientes");
-      if (!r.ok) return [];
-      const j = await r.json();
-      return Array.isArray(j) ? j : j.clientes ?? [];
-    },
-  });
-  const workspaceId = clientes[0]?.id as string | undefined;
+  const { workspaceId } = useActiveWorkspace();
 
   async function markStep(s: string) {
     if (!workspaceId) return;

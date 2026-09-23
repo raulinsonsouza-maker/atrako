@@ -7,10 +7,13 @@ import {
   updateLeadStage,
 } from "@/lib/modules/crm";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 
 export async function GET(request: NextRequest) {
   const workspaceId = request.nextUrl.searchParams.get("workspaceId")?.trim();
   if (!workspaceId) return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
   if (!(await findWorkspaceById(workspaceId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
@@ -56,6 +59,8 @@ export async function POST(request: NextRequest) {
   if (!workspaceId || !name) {
     return NextResponse.json({ error: "workspaceId and name required" }, { status: 400 });
   }
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
   if (!(await findWorkspaceById(workspaceId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }

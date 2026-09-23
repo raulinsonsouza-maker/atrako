@@ -9,6 +9,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const bare =
     pathname.startsWith("/portal") ||
     pathname.startsWith("/sign-in") ||
+    pathname.startsWith("/invite") ||
+    pathname.startsWith("/change-password") ||
+    pathname.startsWith("/admin") ||
     pathname.startsWith("/p/") ||
     pathname.startsWith("/checkout/") ||
     pathname.startsWith("/f/") ||

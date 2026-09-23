@@ -20,6 +20,7 @@ import { AppPage } from "@/components/layout/AppPage";
 import { BackLink } from "@/components/ui/back-link";
 import { PillSelect } from "@/components/ui/pill-select";
 import { UrlChip } from "@/components/criar/CopyLinkButton";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 
 type Tab = "resumo" | "relatorio" | "leads";
 
@@ -103,16 +104,7 @@ export default function PaginaDetailPage() {
   const [tab, setTab] = useState<Tab>("resumo");
   const [period, setPeriod] = useState("7");
 
-  const { data: clientes = [] } = useQuery({
-    queryKey: ["config-clientes"],
-    queryFn: async () => {
-      const r = await fetch("/api/clientes");
-      if (!r.ok) return [];
-      const j = await r.json();
-      return Array.isArray(j) ? j : j.clientes ?? [];
-    },
-  });
-  const workspaceId = clientes[0]?.id as string | undefined;
+  const { workspaceId } = useActiveWorkspace();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["lp-page-detail", workspaceId, productId],

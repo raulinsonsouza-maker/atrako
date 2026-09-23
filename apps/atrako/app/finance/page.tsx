@@ -6,8 +6,8 @@ import { ArrowDownLeft, ArrowUpRight, Loader2, RefreshCcw } from "lucide-react";
 import { AppPage } from "@/components/layout/AppPage";
 import { Button } from "@/components/ui/button";
 import { PillSelect } from "@/components/ui/pill-select";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 
-type Cliente = { id: string; nome: string };
 type Entry = {
   id: string;
   type: string;
@@ -64,24 +64,14 @@ function amountTone(type: string) {
 
 export default function FinancePage() {
   const qc = useQueryClient();
-  const [workspaceId, setWorkspaceId] = useState("");
+  const { workspaceId, setWorkspaceId, workspaces } = useActiveWorkspace();
   const [desc, setDesc] = useState("");
   const [amount, setAmount] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: clientes = [] } = useQuery<Cliente[]>({
-    queryKey: ["finance-clientes"],
-    queryFn: async () => {
-      const r = await fetch("/api/clientes");
-      if (!r.ok) return [];
-      const j = await r.json();
-      return Array.isArray(j) ? j : j.clientes ?? [];
-    },
-  });
-
-  const effective = workspaceId || clientes[0]?.id || "";
+  const effective = workspaceId;
 
   const { data, isLoading } = useQuery({
     queryKey: ["finance-ledger", effective, sourceFilter],
@@ -147,7 +137,7 @@ export default function FinancePage() {
     return Array.from(s).sort();
   }, [entries, sourceFilter]);
 
-  const showWorkspaceSelect = clientes.length > 1;
+  const showWorkspaceSelect = workspaces.length > 1;
 
   return (
     <AppPage
@@ -159,7 +149,7 @@ export default function FinancePage() {
               size="toolbar"
               value={effective}
               onChange={setWorkspaceId}
-              options={clientes.map((c) => ({ value: c.id, label: c.nome }))}
+              options={workspaces.map((c) => ({ value: c.id, label: c.nome }))}
               aria-label="Empresa"
             />
           ) : null}

@@ -9,6 +9,7 @@ import {
   type ConnectionProvider,
 } from "@/lib/atrako/workspace-connections";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 
 function isServiceAuthorized(request: NextRequest): boolean {
   const expected = process.env.ATRAKO_CONNECTIONS_TOKEN?.trim() || process.env.ATRAKO_EVENTS_TOKEN?.trim();
@@ -16,7 +17,7 @@ function isServiceAuthorized(request: NextRequest): boolean {
   return request.headers.get("authorization") === `Bearer ${expected}`;
 }
 
-/** Lista / resolve conexões do workspace. Autorizado por token de serviço OU sessão admin (cookie). */
+/** Lista / resolve conexões do workspace. Autorizado por token de serviço OU membership/staff. */
 export async function GET(request: NextRequest) {
   const workspaceId = request.nextUrl.searchParams.get("workspaceId")?.trim();
   const provider = request.nextUrl.searchParams.get("provider")?.trim();
@@ -29,7 +30,11 @@ export async function GET(request: NextRequest) {
   if (!ws) return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
 
   const serviceOk = isServiceAuthorized(request);
-  // UI admin: sem token ainda permite listagem sem secrets (hasCredentials only)
+  if (!serviceOk) {
+    const access = await requireWorkspaceAccess(workspaceId, "operate");
+    if (!access.ok) return access.response;
+  }
+
   if (provider) {
     if (!isConnectionProvider(provider)) {
       return NextResponse.json({ error: "Invalid provider", providers: CONNECTION_PROVIDERS }, { status: 400 });
@@ -64,13 +69,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const expected = process.env.ATRAKO_CONNECTIONS_TOKEN?.trim() || process.env.ATRAKO_EVENTS_TOKEN?.trim();
-  const authed = expected
+  const serviceOk = expected
     ? request.headers.get("authorization") === `Bearer ${expected}`
-    : true;
-
-  if (!authed) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    : false;
 
   let body: unknown;
   try {
@@ -89,6 +90,10 @@ export async function POST(request: NextRequest) {
   const ws = await findWorkspaceById(workspaceId);
   if (!ws) return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
 
+  if (!serviceOk) {
+    const access = await requireWorkspaceAccess(workspaceId, "manage");
+    if (!access.ok) return access.response;
+  }
   if (b.action === "disconnect") {
     await disconnectWorkspaceConnection(workspaceId, provider as ConnectionProvider);
     return NextResponse.json({ ok: true, disconnected: true });

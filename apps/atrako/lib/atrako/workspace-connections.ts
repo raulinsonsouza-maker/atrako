@@ -10,6 +10,7 @@ export const CONNECTION_PROVIDERS = [
   "MERCADO_LIVRE",
   "WHATSAPP",
   "WOOCOMMERCE",
+  "GOOGLE_CALENDAR",
 ] as const;
 
 export type ConnectionProvider = (typeof CONNECTION_PROVIDERS)[number];

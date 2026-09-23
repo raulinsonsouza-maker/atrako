@@ -35,12 +35,19 @@ export async function syncLinkedinCliente(params: {
   clienteId: string;
   contaId: string;
   adAccountId: string;
-  conexaoId: string;
+  /** Prefer accessToken (hub). conexaoId = legado CI. */
+  accessToken?: string;
+  conexaoId?: string;
   dateFrom?: string;
   dateTo?: string;
 }): Promise<void> {
-  const { clienteId, contaId, adAccountId, conexaoId } = params;
-  const accessToken = await getValidLinkedinAccessToken(conexaoId);
+  const { clienteId, contaId, adAccountId } = params;
+  const accessToken =
+    params.accessToken ??
+    (params.conexaoId ? await getValidLinkedinAccessToken(params.conexaoId) : null);
+  if (!accessToken) {
+    throw new Error("LinkedIn sem access token");
+  }
 
   // Janela de sync
   const hoje = dateOnlyUTC(new Date());
@@ -144,10 +151,10 @@ export async function syncLinkedinTodosClientes(options?: {
   dateFrom?: string;
   dateTo?: string;
 }): Promise<SyncResult[]> {
-  if (!getLinkedinAppCredentials()) {
+  if (!(await getLinkedinAppCredentials())) {
     await logInfo(
-      "LinkedIn Ads: sem credenciais (LINKEDIN_CLIENT_ID/LINKEDIN_CLIENT_SECRET) — etapa pulada.",
-      { plataforma: "LinkedIn Ads" }
+      "LinkedIn Ads: sem credenciais (PlatformApp LINKEDIN) — etapa pulada.",
+      { plataforma: "LinkedIn Ads" },
     );
     return [];
   }
@@ -162,23 +169,35 @@ export async function syncLinkedinTodosClientes(options?: {
   });
 
   const results: SyncResult[] = [];
+  const { getWorkspaceConnection } = await import("@/lib/atrako/workspace-connections");
+  const { getValidLinkedinAccessTokenForWorkspace } = await import("@/lib/linkedin/linkedinClient");
+
   for (const conta of contas) {
     const clienteId = conta.clienteId;
     try {
-      const conexao = conta.conexaoIntegracao;
-      if (!conexao || !conexao.ativo || conexao.plataforma !== PLATAFORMA_LINKEDIN) {
-        results.push({ clienteId, error: "Sem conexão LinkedIn ativa vinculada à conta" });
-        continue;
-      }
-      if (!conexao.linkedinAccessToken) {
-        results.push({ clienteId, error: "Conexão LinkedIn sem OAuth concluído" });
-        continue;
+      const hub = await getWorkspaceConnection(clienteId, "LINKEDIN_ADS");
+      let accessToken: string | null = null;
+      let conexaoId: string | undefined;
+      if (hub?.credentials?.accessToken) {
+        accessToken = await getValidLinkedinAccessTokenForWorkspace(clienteId);
+      } else {
+        const conexao = conta.conexaoIntegracao;
+        if (!conexao || !conexao.ativo || conexao.plataforma !== PLATAFORMA_LINKEDIN) {
+          results.push({ clienteId, error: "Sem conexão LinkedIn ativa vinculada à conta" });
+          continue;
+        }
+        if (!conexao.linkedinAccessToken) {
+          results.push({ clienteId, error: "Conexão LinkedIn sem OAuth concluído" });
+          continue;
+        }
+        conexaoId = conexao.id;
       }
       await syncLinkedinCliente({
         clienteId,
         contaId: conta.id,
         adAccountId: conta.accountIdPlataforma!,
-        conexaoId: conexao.id,
+        accessToken: accessToken ?? undefined,
+        conexaoId,
         dateFrom: options?.dateFrom,
         dateTo: options?.dateTo,
       });
@@ -194,3 +213,4 @@ export async function syncLinkedinTodosClientes(options?: {
   }
   return results;
 }
+

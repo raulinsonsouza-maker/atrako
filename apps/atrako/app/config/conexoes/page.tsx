@@ -19,8 +19,7 @@ import {
   Store,
 } from "lucide-react";
 import { PillSelect } from "@/components/ui/pill-select";
-
-type Cliente = { id: string; nome: string; slug: string };
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 
 type ConnectionRow = {
   id: string;
@@ -73,13 +72,13 @@ const PROVIDER_CARDS: Array<{
     provider: "GOOGLE_ADS",
     title: "Google Ads",
     icon: Megaphone,
-    adsHref: "/admin/conexoes?legacy=google",
+    connectHref: (id) => `/api/atrako/oauth/google-ads/connect?workspaceId=${id}`,
   },
   {
     provider: "LINKEDIN_ADS",
     title: "LinkedIn Ads",
     icon: Megaphone,
-    adsHref: "/admin/conexoes?legacy=linkedin",
+    connectHref: (id) => `/api/atrako/oauth/linkedin/start?workspaceId=${id}`,
   },
   {
     provider: "INSTAGRAM",
@@ -139,8 +138,19 @@ function metaBannerMessage(meta: string | null, metaError: string | null): strin
 function ConexoesHubInner() {
   const qc = useQueryClient();
   const searchParams = useSearchParams();
-  const [workspaceId, setWorkspaceId] = useState<string>("");
+  const {
+    workspaceId,
+    setWorkspaceId,
+    workspaces,
+    isLoading: loadingClientes,
+  } = useActiveWorkspace();
   const [waOpen, setWaOpen] = useState(false);
+  const [googleAdsOpen, setGoogleAdsOpen] = useState(false);
+  const [gadsRefresh, setGadsRefresh] = useState("");
+  const [gadsLoginCustomer, setGadsLoginCustomer] = useState("");
+  const [gadsCustomer, setGadsCustomer] = useState("");
+  const [gadsSaving, setGadsSaving] = useState(false);
+  const [gadsError, setGadsError] = useState<string | null>(null);
   const [waToken, setWaToken] = useState("");
   const [waPhoneId, setWaPhoneId] = useState("");
   const [waWabaId, setWaWabaId] = useState("");
@@ -171,19 +181,9 @@ function ConexoesHubInner() {
 
   useEffect(() => {
     if (workspaceFromUrl) setWorkspaceId(workspaceFromUrl);
-  }, [workspaceFromUrl]);
+  }, [workspaceFromUrl, setWorkspaceId]);
 
-  const { data: clientes = [], isLoading: loadingClientes } = useQuery<Cliente[]>({
-    queryKey: ["admin-clientes-nav"],
-    queryFn: async () => {
-      const r = await fetch("/api/clientes");
-      if (!r.ok) return [];
-      const j = await r.json();
-      return Array.isArray(j) ? j : j.clientes ?? [];
-    },
-  });
-
-  const effectiveWorkspace = workspaceId || clientes[0]?.id || "";
+  const effectiveWorkspace = workspaceId;
 
   const { data: connectionsData, isLoading: loadingConn } = useQuery({
     queryKey: ["workspace-connections", effectiveWorkspace],
@@ -331,9 +331,39 @@ function ConexoesHubInner() {
       setWaDisplay("");
       qc.invalidateQueries({ queryKey: ["workspace-connections", effectiveWorkspace] });
     } catch (err) {
-      setWaError(err instanceof Error ? err.message : "Não foi possível conectar. Tente novamente.");
+      setWaError(err instanceof Error ? err.message : "Erro");
     } finally {
       setWaSaving(false);
+    }
+  }
+
+  async function saveGoogleAds(e: React.FormEvent) {
+    e.preventDefault();
+    if (!effectiveWorkspace || !gadsRefresh.trim()) return;
+    setGadsSaving(true);
+    setGadsError(null);
+    try {
+      const r = await fetch("/api/atrako/oauth/google-ads/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          workspaceId: effectiveWorkspace,
+          refreshToken: gadsRefresh.trim(),
+          customerId: gadsCustomer.trim() || undefined,
+          loginCustomerId: gadsLoginCustomer.trim() || undefined,
+        }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || "Falha ao salvar Google Ads");
+      setGoogleAdsOpen(false);
+      setGadsRefresh("");
+      setGadsCustomer("");
+      setGadsLoginCustomer("");
+      qc.invalidateQueries({ queryKey: ["workspace-connections", effectiveWorkspace] });
+    } catch (err) {
+      setGadsError(err instanceof Error ? err.message : "Erro");
+    } finally {
+      setGadsSaving(false);
     }
   }
 
@@ -469,9 +499,9 @@ function ConexoesHubInner() {
             value={effectiveWorkspace}
             onChange={setWorkspaceId}
             options={
-              clientes.length === 0
+              workspaces.length === 0
                 ? [{ value: "", label: "Nenhuma empresa — crie em Configurações" }]
-                : clientes.map((c) => ({ value: c.id, label: c.nome }))
+                : workspaces.map((c) => ({ value: c.id, label: c.nome }))
             }
             aria-label="Empresa"
           />
@@ -586,6 +616,15 @@ function ConexoesHubInner() {
                           <Link2 className="h-3.5 w-3.5" />
                           {connected ? "Atualizar" : "Conectar"}
                         </button>
+                      ) : card.provider === "GOOGLE_ADS" ? (
+                        <button
+                          type="button"
+                          onClick={() => setGoogleAdsOpen((v) => !v)}
+                          className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95"
+                        >
+                          <Link2 className="h-3.5 w-3.5" />
+                          {connected ? "Atualizar" : "Conectar"}
+                        </button>
                       ) : card.connectHref ? (
                         <a
                           href={card.connectHref(effectiveWorkspace)}
@@ -595,14 +634,11 @@ function ConexoesHubInner() {
                           {needsReauth ? "Reconectar" : connected ? "Reconectar" : "Conectar"}
                         </a>
                       ) : (
-                        <Link
-                          href={card.adsHref ?? "/admin/conexoes/ads"}
-                          className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95"
-                        >
-                          Gerenciar ads
-                        </Link>
+                        <span className="type-fine-print text-[var(--ink-secondary)]">
+                          Em breve
+                        </span>
                       )}
-                      {connected && (card.connectHref || card.manualWhatsApp) ? (
+                      {connected && (card.connectHref || card.manualWhatsApp || card.provider === "GOOGLE_ADS") ? (
                         <button
                           type="button"
                           onClick={() => disconnect(card.provider)}
@@ -659,6 +695,40 @@ function ConexoesHubInner() {
                           className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
                         >
                           {waSaving ? "Salvando…" : "Salvar WhatsApp"}
+                        </button>
+                      </form>
+                    ) : null}
+                    {card.provider === "GOOGLE_ADS" && googleAdsOpen ? (
+                      <form
+                        onSubmit={saveGoogleAds}
+                        className="mt-4 space-y-2 border-t border-[var(--hairline)] pt-3"
+                      >
+                        <input
+                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
+                          placeholder="Refresh token"
+                          value={gadsRefresh}
+                          onChange={(e) => setGadsRefresh(e.target.value)}
+                          required
+                        />
+                        <input
+                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
+                          placeholder="Customer ID (CID, só números)"
+                          value={gadsCustomer}
+                          onChange={(e) => setGadsCustomer(e.target.value)}
+                        />
+                        <input
+                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
+                          placeholder="Login customer ID / MCC (opcional)"
+                          value={gadsLoginCustomer}
+                          onChange={(e) => setGadsLoginCustomer(e.target.value)}
+                        />
+                        {gadsError ? <p className="text-xs text-red-600">{gadsError}</p> : null}
+                        <button
+                          type="submit"
+                          disabled={gadsSaving}
+                          className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
+                        >
+                          {gadsSaving ? "Salvando…" : "Salvar Google Ads"}
                         </button>
                       </form>
                     ) : null}

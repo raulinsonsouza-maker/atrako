@@ -18,11 +18,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(hub);
   }
 
+  const { resolvePlatformApp } = await import("@/lib/config/platformApps");
+  const app = await resolvePlatformApp("META");
   const appId =
+    app?.credentials.clientId?.trim() ||
     process.env.SYMBIUS_IG_APP_ID?.trim() ||
     process.env.META_APP_ID?.trim() ||
     process.env.SYMBIUS_META_APP_ID?.trim();
   const appSecret =
+    app?.credentials.clientSecret?.trim() ||
     process.env.SYMBIUS_IG_APP_SECRET?.trim() ||
     process.env.META_APP_SECRET?.trim() ||
     process.env.SYMBIUS_META_APP_SECRET?.trim();

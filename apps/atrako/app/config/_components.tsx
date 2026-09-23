@@ -1,20 +1,11 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { BackLink } from "@/components/ui/back-link";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 
 export function useConfigWorkspace() {
-  const { data: clientes = [] } = useQuery({
-    queryKey: ["config-clientes"],
-    queryFn: async () => {
-      const r = await fetch("/api/clientes");
-      if (!r.ok) return [];
-      const j = await r.json();
-      return Array.isArray(j) ? j : j.clientes ?? [];
-    },
-  });
-  const workspaceId = (clientes[0]?.id as string) || "";
-  return { workspaceId, clientes };
+  const { workspaceId, workspaces } = useActiveWorkspace();
+  return { workspaceId, clientes: workspaces };
 }
 
 export function ConfigBack({ title }: { title: string }) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 
 /** Inicia OAuth Instagram (Meta) centralizado no Atrako. */
 export async function GET(request: NextRequest) {
@@ -9,14 +10,20 @@ export async function GET(request: NextRequest) {
   if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
   }
+  const access = await requireWorkspaceAccess(workspaceId, "manage");
+  if (!access.ok) return access.response;
   const ws = await findWorkspaceById(workspaceId);
   if (!ws) return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
 
+  const { resolvePlatformApp } = await import("@/lib/config/platformApps");
+  const app = await resolvePlatformApp("META");
   const appId =
+    app?.credentials.clientId?.trim() ||
     process.env.SYMBIUS_IG_APP_ID?.trim() ||
     process.env.META_APP_ID?.trim() ||
     process.env.SYMBIUS_META_APP_ID?.trim();
   const redirectUri =
+    app?.credentials.redirectUri?.trim() ||
     process.env.INSTAGRAM_REDIRECT_URI?.trim() ||
     `${request.nextUrl.origin}/api/atrako/oauth/instagram/callback`;
 
@@ -24,7 +31,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error: "Instagram app id not configured",
-        hint: "Defina SYMBIUS_IG_APP_ID (ou META_APP_ID) no .env do Atrako",
+        hint: "Configure Meta em /admin/apps",
       },
       { status: 503 },
     );

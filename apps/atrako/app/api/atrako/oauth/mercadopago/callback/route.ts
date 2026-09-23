@@ -18,8 +18,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(hub);
   }
 
-  const clientId = process.env.MP_CLIENT_ID?.trim();
-  const clientSecret = process.env.MP_CLIENT_SECRET?.trim();
+  const { resolvePlatformApp } = await import("@/lib/config/platformApps");
+  const app = await resolvePlatformApp("MERCADO_PAGO");
+  const clientId = app?.credentials.clientId?.trim() || process.env.MP_CLIENT_ID?.trim();
+  const clientSecret =
+    app?.credentials.clientSecret?.trim() || process.env.MP_CLIENT_SECRET?.trim();
   if (!clientId || !clientSecret || !pending.codeVerifier) {
     hub.searchParams.set("error", "mp_not_configured");
     return NextResponse.redirect(hub);

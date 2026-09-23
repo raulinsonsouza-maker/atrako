@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHash, randomBytes } from "crypto";
 import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { ML_OAUTH_AUTHORIZE } from "@/lib/integrations/mercadolivre/oauth";
 
 function createPkce() {
@@ -17,11 +18,16 @@ export async function GET(request: NextRequest) {
   if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
   }
+  const access = await requireWorkspaceAccess(workspaceId, "manage");
+  if (!access.ok) return access.response;
   const ws = await findWorkspaceById(workspaceId);
   if (!ws) return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
 
-  const clientId = process.env.ML_CLIENT_ID?.trim();
+  const { resolvePlatformApp } = await import("@/lib/config/platformApps");
+  const app = await resolvePlatformApp("MERCADO_LIVRE");
+  const clientId = app?.credentials.clientId?.trim() || process.env.ML_CLIENT_ID?.trim();
   const redirectUri =
+    app?.credentials.redirectUri?.trim() ||
     process.env.ML_REDIRECT_URI?.trim() ||
     `${request.nextUrl.origin}/api/atrako/oauth/mercadolivre/callback`;
 
@@ -29,7 +35,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error: "ML_CLIENT_ID not configured",
-        hint: "Defina ML_CLIENT_ID e ML_CLIENT_SECRET no .env do Atrako",
+        hint: "Configure Mercado Livre em /admin/apps",
       },
       { status: 503 },
     );

@@ -9,6 +9,7 @@ import {
 } from "@/lib/modules/capture-form";
 import { createNativeLead } from "@/lib/modules/crm";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { getWorkspaceConfig } from "@/lib/config/getWorkspaceConfig";
 import { previewForm, type FormStep } from "@atrako/forms";
 import { publicPath } from "@/lib/criar/slug";
@@ -38,6 +39,8 @@ export async function GET(request: NextRequest) {
   if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
   }
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
   if (!(await findWorkspaceById(workspaceId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
@@ -90,7 +93,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  /** Lead direto da LP (sem CaptureForm publicado). */
+  /** Lead direto da LP (sem CaptureForm publicado). Público — sem ACL. */
   if (action === "lp_lead") {
     if (!workspaceId || !(await findWorkspaceById(workspaceId))) {
       return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
@@ -153,8 +156,13 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  if (!workspaceId || !(await findWorkspaceById(workspaceId))) {
+  if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
+  }
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
+  if (!(await findWorkspaceById(workspaceId))) {
+    return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
   const config = await getWorkspaceConfig(workspaceId);

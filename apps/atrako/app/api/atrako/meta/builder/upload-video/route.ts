@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { resolveMetaCredentials } from "@/lib/config/resolveIntegracao";
 import { ensureActPrefix, metaGraphPostForm } from "@/lib/integrations/meta/graph";
 import { metaGraphGet } from "@/lib/integrations/meta/graph";
@@ -23,6 +24,8 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
   if (!(await findWorkspaceById(workspaceId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }

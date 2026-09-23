@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import {
   buildMetaAuthorizationUrl,
   getMetaLoginConfigId,
@@ -25,6 +26,8 @@ export async function GET(request: NextRequest) {
   if (!workspaceId) {
     return conexoesErrorRedirect(origin, null, "Selecione uma empresa antes de conectar a Meta.");
   }
+  const access = await requireWorkspaceAccess(workspaceId, "manage");
+  if (!access.ok) return access.response;
   const ws = await findWorkspaceById(workspaceId);
   if (!ws) {
     return conexoesErrorRedirect(origin, workspaceId, "Empresa não encontrada.");

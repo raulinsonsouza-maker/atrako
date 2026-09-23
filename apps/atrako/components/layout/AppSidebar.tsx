@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   Bot,
   CalendarDays,
@@ -17,6 +16,7 @@ import {
   PanelLeft,
   Wallet,
 } from "lucide-react";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 
 type NavItem = {
   href: string;
@@ -25,8 +25,6 @@ type NavItem = {
   icon: typeof Bot;
   status: "live" | "system";
 };
-
-type ClienteNav = { id: string; nome: string; slug: string };
 
 const PRIMARY: NavItem[] = [
   { href: "/", label: "Assistente", description: "Pergunte e execute", icon: Bot, status: "live" },
@@ -55,23 +53,11 @@ export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const { data: clientes = [] } = useQuery({
-    queryKey: ["config-clientes"],
-    queryFn: async () => {
-      const response = await fetch("/api/clientes");
-      if (!response.ok) return [] as ClienteNav[];
-      const data = (await response.json()) as Array<{
-        id: string;
-        nome: string;
-        slug: string;
-        ativo?: boolean;
-      }>;
-      return data
-        .filter((c) => c.ativo !== false)
-        .map((c) => ({ id: c.id, nome: c.nome, slug: c.slug }))
-        .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
-    },
-  });
+  const { workspaces } = useActiveWorkspace();
+  const clientes = workspaces
+    .filter((c) => c.ativo !== false)
+    .map((c) => ({ id: c.id, nome: c.nome, slug: c.slug ?? "" }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 
   if (pathname.startsWith("/portal") || pathname.startsWith("/sign-in")) {
     return null;

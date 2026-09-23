@@ -19,8 +19,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(hub);
   }
 
-  const clientId = process.env.ML_CLIENT_ID?.trim();
-  const clientSecret = process.env.ML_CLIENT_SECRET?.trim();
+  const { resolvePlatformApp } = await import("@/lib/config/platformApps");
+  const app = await resolvePlatformApp("MERCADO_LIVRE");
+  const clientId = app?.credentials.clientId?.trim() || process.env.ML_CLIENT_ID?.trim();
+  const clientSecret =
+    app?.credentials.clientSecret?.trim() || process.env.ML_CLIENT_SECRET?.trim();
   if (!clientId || !clientSecret || !pending.codeVerifier) {
     hub.searchParams.set("error", "ml_not_configured");
     return NextResponse.redirect(hub);

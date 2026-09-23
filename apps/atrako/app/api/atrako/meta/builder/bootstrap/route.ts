@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { getMetaConnectionStatus } from "@/lib/integrations/meta/connection";
 import { parseMetaAdsMetadata } from "@/lib/integrations/meta/types";
 import { getWorkspaceConnection } from "@/lib/atrako/workspace-connections";
@@ -8,6 +9,8 @@ import { listUiObjectives, SPECIAL_AD_CATEGORIES, BID_STRATEGIES, getObjectiveCo
 export async function GET(request: NextRequest) {
   const workspaceId = request.nextUrl.searchParams.get("workspaceId")?.trim();
   if (!workspaceId) return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
   if (!(await findWorkspaceById(workspaceId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }

@@ -23,17 +23,40 @@ async function getClientAndRefreshToken(override?: GoogleAdsCredentialOverride) 
     refreshToken = override.refreshToken;
     loginCustomerId = override.loginCustomerId?.replace(/-/g, "") || undefined;
   } else {
+    const { resolvePlatformApp } = await import("@/lib/config/platformApps");
+    const platform = await resolvePlatformApp("GOOGLE_ADS");
     const fromDb = await getIntegrationsConfig();
-    clientId = fromDb.googleClientId ?? process.env.GOOGLE_ADS_CLIENT_ID ?? undefined;
-    clientSecret = fromDb.googleClientSecret ?? process.env.GOOGLE_ADS_CLIENT_SECRET ?? undefined;
-    developerToken = fromDb.googleDeveloperToken ?? process.env.GOOGLE_ADS_DEVELOPER_TOKEN ?? undefined;
-    refreshToken = fromDb.googleRefreshToken ?? process.env.GOOGLE_ADS_REFRESH_TOKEN ?? undefined;
-    loginCustomerId = (fromDb.googleLoginCustomerId ?? process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID)?.replace(/-/g, "") || undefined;
+    clientId =
+      platform?.credentials.clientId ??
+      fromDb.googleClientId ??
+      process.env.GOOGLE_ADS_CLIENT_ID ??
+      undefined;
+    clientSecret =
+      platform?.credentials.clientSecret ??
+      fromDb.googleClientSecret ??
+      process.env.GOOGLE_ADS_CLIENT_SECRET ??
+      undefined;
+    developerToken =
+      platform?.credentials.developerToken ??
+      fromDb.googleDeveloperToken ??
+      process.env.GOOGLE_ADS_DEVELOPER_TOKEN ??
+      undefined;
+    refreshToken =
+      platform?.credentials.refreshToken ??
+      fromDb.googleRefreshToken ??
+      process.env.GOOGLE_ADS_REFRESH_TOKEN ??
+      undefined;
+    loginCustomerId = (
+      platform?.credentials.loginCustomerId ??
+      fromDb.googleLoginCustomerId ??
+      process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID
+    )
+      ?.replace(/-/g, "") || undefined;
   }
 
   if (!clientId || !clientSecret || !developerToken || !refreshToken) {
     throw new Error(
-      "Google Ads API: GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_CLIENT_SECRET, GOOGLE_ADS_DEVELOPER_TOKEN e GOOGLE_ADS_REFRESH_TOKEN são obrigatórios"
+      "Google Ads API: configure PlatformApp GOOGLE_ADS (client/secret/devToken/refresh) ou credenciais por workspace",
     );
   }
 

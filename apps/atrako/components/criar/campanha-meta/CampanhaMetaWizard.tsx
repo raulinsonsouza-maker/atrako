@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { BackLink } from "@/components/ui/back-link";
 import { PillSelect } from "@/components/ui/pill-select";
 import { SearchInput } from "@/components/ui/search-input";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 import type { MetaCampaignBuilderDraft, MetaAdSetDraft, MetaAdDraft } from "@/lib/integrations/meta/campaign-builder/draft-types";
 import type { UiObjective } from "@/lib/integrations/meta/campaign-builder/objective-config";
 import { OBJECTIVE_CONFIG } from "@/lib/integrations/meta/campaign-builder/objective-config";
@@ -160,7 +161,7 @@ export function CampanhaMetaWizard({ initialDraftId }: { initialDraftId?: string
   const objectiveFromUrl = searchParams.get("objective");
   const optGoalFromUrl = searchParams.get("optimizationGoal");
 
-  const [workspaceId, setWorkspaceId] = useState(workspaceFromUrl || "");
+  const { workspaceId, setWorkspaceId, workspaces } = useActiveWorkspace();
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<MetaCampaignBuilderDraft>(() => {
     const d = emptyDraft();
@@ -193,19 +194,9 @@ export function CampanhaMetaWizard({ initialDraftId }: { initialDraftId?: string
   const [videoUrlDraft, setVideoUrlDraft] = useState<Record<string, string>>({});
   const [draftLoaded, setDraftLoaded] = useState(!draftIdFromUrl);
 
-  const { data: clientes = [] } = useQuery({
-    queryKey: ["config-clientes"],
-    queryFn: async () => {
-      const r = await fetch("/api/clientes");
-      if (!r.ok) return [];
-      const j = await r.json();
-      return Array.isArray(j) ? j : j.clientes ?? [];
-    },
-  });
-
   useEffect(() => {
-    if (!workspaceId && clientes[0]?.id) setWorkspaceId(clientes[0].id);
-  }, [clientes, workspaceId]);
+    if (workspaceFromUrl) setWorkspaceId(workspaceFromUrl);
+  }, [workspaceFromUrl, setWorkspaceId]);
 
   // Reabrir draft salvo
   useEffect(() => {
@@ -626,7 +617,7 @@ export function CampanhaMetaWizard({ initialDraftId }: { initialDraftId?: string
                     size="field"
                     value={workspaceId}
                     onChange={setWorkspaceId}
-                    options={clientes.map((c: { id: string; nome: string }) => ({
+                    options={workspaces.map((c) => ({
                       value: c.id,
                       label: c.nome,
                     }))}

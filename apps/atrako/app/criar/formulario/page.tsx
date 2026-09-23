@@ -2,13 +2,13 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { AppPage } from "@/components/layout/AppPage";
 import { Button } from "@/components/ui/button";
 import { BackLink } from "@/components/ui/back-link";
 import { PillSelect } from "@/components/ui/pill-select";
 import { UrlPreview } from "@/components/criar/CopyLinkButton";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 import { slugify } from "@/lib/criar/slug";
 import type { FormField, FormFieldType, FormStep } from "@atrako/forms";
 
@@ -59,16 +59,7 @@ function FormularioInner() {
     if (!mode) router.replace("/criar/p/captura");
   }, [mode, router]);
 
-  const { data: clientes = [] } = useQuery({
-    queryKey: ["config-clientes"],
-    queryFn: async () => {
-      const r = await fetch("/api/clientes");
-      if (!r.ok) return [];
-      const j = await r.json();
-      return Array.isArray(j) ? j : j.clientes ?? [];
-    },
-  });
-  const workspaceId = clientes[0]?.id as string | undefined;
+  const { workspaceId } = useActiveWorkspace();
 
   const autoSlug = useMemo(() => slugify(name || "formulario"), [name]);
   const effectiveSlug = slugTouched && slug ? slugify(slug) : autoSlug;

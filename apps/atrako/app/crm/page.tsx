@@ -2,10 +2,10 @@
 
 import { Suspense } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { CrmPipelineBoard } from "@/components/crm/CrmPipelineBoard";
 import { AppPage } from "@/components/layout/AppPage";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 
 function CrmBody({ workspaceId }: { workspaceId: string }) {
   return (
@@ -22,17 +22,7 @@ function CrmBody({ workspaceId }: { workspaceId: string }) {
 }
 
 export default function CrmPage() {
-  const { data: clientes = [], isLoading } = useQuery({
-    queryKey: ["config-clientes"],
-    queryFn: async () => {
-      const r = await fetch("/api/clientes");
-      if (!r.ok) return [];
-      const j = await r.json();
-      return Array.isArray(j) ? j : j.clientes ?? [];
-    },
-  });
-
-  const workspaceId = clientes[0]?.id as string | undefined;
+  const { workspaceId, isLoading } = useActiveWorkspace();
 
   return (
     <AppPage title="Leads" className="min-h-0">

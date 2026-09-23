@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireInternalAnalyst } from "@/lib/internalAccess";
+
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { prisma } from "@/lib/db-social";
 import { getOrCreateOrgSettings } from "@/lib/symbius/integrations";
 
@@ -15,12 +16,14 @@ function maskSecret(secret: string | undefined): boolean {
  * resolvidos pelo workspace Atrako via Organization.centralClienteId.
  */
 export async function GET(request: NextRequest) {
-  const auth = await requireInternalAnalyst();
-  if (auth.response) return auth.response;
-
   const workspaceId = request.nextUrl.searchParams.get("workspaceId")?.trim();
-  if (!workspaceId || !(await findWorkspaceById(workspaceId))) {
+  if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
+  }
+  const access = await requireWorkspaceAccess(workspaceId, "manage");
+  if (!access.ok) return access.response;
+  if (!(await findWorkspaceById(workspaceId))) {
+    return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
   const org = await prisma.organization.findFirst({
@@ -59,9 +62,6 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const auth = await requireInternalAnalyst();
-  if (auth.response) return auth.response;
-
   let body: unknown;
   try {
     body = await request.json();
@@ -71,8 +71,13 @@ export async function PATCH(request: NextRequest) {
 
   const b = body as Record<string, unknown>;
   const workspaceId = typeof b.workspaceId === "string" ? b.workspaceId : "";
-  if (!workspaceId || !(await findWorkspaceById(workspaceId))) {
+  if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
+  }
+  const access = await requireWorkspaceAccess(workspaceId, "manage");
+  if (!access.ok) return access.response;
+  if (!(await findWorkspaceById(workspaceId))) {
+    return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
   const org = await prisma.organization.findFirst({

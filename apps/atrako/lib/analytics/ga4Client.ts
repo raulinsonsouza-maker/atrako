@@ -30,12 +30,19 @@ let cachedClient: BetaAnalyticsDataClient | null = null;
 async function getGa4Client(): Promise<BetaAnalyticsDataClient> {
   if (cachedClient) return cachedClient;
 
+  const { resolvePlatformApp } = await import("@/lib/config/platformApps");
+  const platform = await resolvePlatformApp("GOOGLE_ANALYTICS");
   const config = await getIntegrationsConfig();
-  const creds = parseCredentials(config.googleAnalyticsCredentials);
+  const creds = parseCredentials(
+    platform?.credentials.serviceAccountJson ??
+      config.googleAnalyticsCredentials ??
+      process.env.GOOGLE_ANALYTICS_CREDENTIALS ??
+      null,
+  );
 
   if (!creds) {
     throw new Error(
-      "Google Analytics: credenciais não configuradas. Defina GOOGLE_ANALYTICS_CREDENTIALS (env) ou google_analytics_credentials (SystemConfig)"
+      "Google Analytics: configure service account em /admin/apps (GOOGLE_ANALYTICS) ou GOOGLE_ANALYTICS_CREDENTIALS",
     );
   }
 

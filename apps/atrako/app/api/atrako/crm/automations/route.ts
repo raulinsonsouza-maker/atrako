@@ -1,24 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireInternalAnalyst } from "@/lib/internalAccess";
+
 import {
   AUTOMATION_TEMPLATES,
   publishCrmAutomation,
   type AutomationKind,
 } from "@/lib/atrako/crm-automations";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 
 const kinds = new Set<AutomationKind>(["welcome", "abandonment", "birthday", "handoff"]);
 
 export async function GET() {
-  const auth = await requireInternalAnalyst();
-  if (auth.response) return auth.response;
   return NextResponse.json({ templates: AUTOMATION_TEMPLATES, kinds: [...kinds] });
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireInternalAnalyst();
-  if (auth.response) return auth.response;
-
   let body: unknown;
   try {
     body = await request.json();
@@ -44,6 +40,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "workspaceId, kind and message are required" }, { status: 400 });
   }
 
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
   if (!(await findWorkspaceById(workspaceId))) {
     return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
   }

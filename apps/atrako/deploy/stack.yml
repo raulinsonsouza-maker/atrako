@@ -53,6 +53,7 @@ services:
       MP_CLIENT_SECRET: ${MP_CLIENT_SECRET:-}
       ML_CLIENT_ID: ${ML_CLIENT_ID:-}
       ML_CLIENT_SECRET: ${ML_CLIENT_SECRET:-}
+      ML_REDIRECT_URI: ${ML_REDIRECT_URI:-}
     networks:
       - internal
       - traefik_proxy

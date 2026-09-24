@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   const state = request.nextUrl.searchParams.get("state");
   const err = request.nextUrl.searchParams.get("error");
 
-  const hub = new URL("/config/conexoes", request.nextUrl.origin);
+  const hub = new URL("/config/conexoes/oauth-complete", request.nextUrl.origin);
 
   if (err || !code || !state) {
     hub.searchParams.set("error", "google_oauth");

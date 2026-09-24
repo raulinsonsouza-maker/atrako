@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { exchangeLinkedinCode } from "@/lib/linkedin/linkedinClient";
 import { upsertWorkspaceConnection } from "@/lib/atrako/workspace-connections";
+import { oauthCompleteRedirect } from "@/lib/oauth/oauthCompleteRedirect";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
@@ -10,18 +11,22 @@ export async function GET(request: NextRequest) {
   const origin = request.nextUrl.origin;
 
   if (err || !code || !state) {
-    return NextResponse.redirect(
-      `${origin}/config/conexoes?error=${encodeURIComponent(err || "oauth_denied")}`,
-    );
+    return oauthCompleteRedirect(origin, {
+      error: err || "oauth_denied",
+      ok: "0",
+    });
   }
 
   const pending = await prisma.workspaceOAuthPending.findUnique({ where: { state } });
   if (!pending || pending.provider !== "LINKEDIN_ADS" || pending.expiresAt < new Date()) {
-    return NextResponse.redirect(`${origin}/config/conexoes?error=invalid_state`);
+    return oauthCompleteRedirect(origin, { error: "invalid_state", ok: "0" });
   }
 
   try {
-    const tokens = await exchangeLinkedinCode(code, pending.redirectUri || `${origin}/api/atrako/oauth/linkedin/callback`);
+    const tokens = await exchangeLinkedinCode(
+      code,
+      pending.redirectUri || `${origin}/api/atrako/oauth/linkedin/callback`,
+    );
     const now = Date.now();
     await upsertWorkspaceConnection({
       clienteId: pending.clienteId,
@@ -36,9 +41,17 @@ export async function GET(request: NextRequest) {
   } catch (e) {
     const msg = e instanceof Error ? e.message : "oauth_failed";
     await prisma.workspaceOAuthPending.delete({ where: { id: pending.id } }).catch(() => null);
-    return NextResponse.redirect(`${origin}/config/conexoes?error=${encodeURIComponent(msg)}`);
+    return oauthCompleteRedirect(origin, {
+      error: msg,
+      workspaceId: pending.clienteId,
+      ok: "0",
+    });
   }
 
   await prisma.workspaceOAuthPending.delete({ where: { id: pending.id } }).catch(() => null);
-  return NextResponse.redirect(`${origin}/config/conexoes?connected=LINKEDIN_ADS`);
+  return oauthCompleteRedirect(origin, {
+    connected: "LINKEDIN_ADS",
+    workspaceId: pending.clienteId,
+    ok: "1",
+  });
 }

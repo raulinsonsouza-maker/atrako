@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
   const oauthError = request.nextUrl.searchParams.get("error");
-  const hub = new URL("/config/conexoes", request.nextUrl.origin);
+  const hub = new URL("/config/conexoes/oauth-complete", request.nextUrl.origin);
 
   if (oauthError) {
     hub.searchParams.set("error", oauthError);

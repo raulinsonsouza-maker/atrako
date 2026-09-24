@@ -16,6 +16,19 @@ Código: `apps/atrako/lib/integrations/`, `lib/config/platformApps.ts`, `lib/atr
 
 **Hub único:** `/config/conexoes`. Staff apps: `/admin/apps`.
 
+## OAuth no hub (popup)
+
+Conectar OAuth **não** navega a tab do hub. Padrão obrigatório para providers atuais e futuros:
+
+1. UI: `useOAuthPopup` / `openOAuthPopup` → `window.open(startUrl)` + overlay “aguardando”.
+2. Start: `/api/atrako/oauth/<provider>/start?workspaceId=`.
+3. Callback API: após trocar o code, redirect para `/config/conexoes/oauth-complete?...` (não direto ao hub).
+4. Bridge: se `window.opener` → `postMessage({ type: "atrako-oauth", ... })` + `close`; senão → `/config/conexoes` (same-tab / popup bloqueado).
+5. Hub: invalida `workspace-connections` (+ Meta status) e mostra banner.
+
+Helpers: `lib/oauth/openOAuthPopup.ts`, `lib/oauth/oauthCompleteRedirect.ts`, `hooks/useOAuthPopup.ts`.  
+Forms manuais (WhatsApp, Woo keys) continuam inline — sem popup.
+
 ## Providers
 
 | Provider | Uso | Doc oficial |

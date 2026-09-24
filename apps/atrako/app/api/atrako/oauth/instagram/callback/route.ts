@@ -5,7 +5,7 @@ import { upsertWorkspaceConnection } from "@/lib/atrako/workspace-connections";
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
-  const hub = new URL("/config/conexoes", request.nextUrl.origin);
+  const hub = new URL("/config/conexoes/oauth-complete", request.nextUrl.origin);
 
   if (!code || !state) {
     hub.searchParams.set("error", "oauth_missing");

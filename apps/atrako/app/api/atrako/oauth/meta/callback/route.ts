@@ -6,16 +6,14 @@ import { discoverMetaBusinessAssets } from "@/lib/integrations/meta/business";
 import { loadMetaPlatformAppCredentials, MetaGraphError } from "@/lib/integrations/meta/graph";
 import { selectMetaAdAccount } from "@/lib/integrations/meta/connection";
 import type { MetaAdsConnectionMetadata } from "@/lib/integrations/meta/types";
+import { oauthCompleteRedirect } from "@/lib/oauth/oauthCompleteRedirect";
 
 function hubRedirect(
   origin: string,
   workspaceId: string,
   params: Record<string, string>,
 ) {
-  const hub = new URL("/config/conexoes", origin);
-  hub.searchParams.set("workspaceId", workspaceId);
-  for (const [k, v] of Object.entries(params)) hub.searchParams.set(k, v);
-  return NextResponse.redirect(hub);
+  return oauthCompleteRedirect(origin, { workspaceId, ...params });
 }
 
 export async function GET(request: NextRequest) {
@@ -43,7 +41,7 @@ export async function GET(request: NextRequest) {
     if (pendingEarly) {
       await prisma.workspaceOAuthPending.delete({ where: { id: pendingEarly.id } }).catch(() => null);
     }
-    const hub = new URL("/config/conexoes", origin);
+    const hub = new URL("/config/conexoes/oauth-complete", origin);
     if (workspaceId) hub.searchParams.set("workspaceId", workspaceId);
     hub.searchParams.set("meta", "cancelled");
     if (errorDescription) hub.searchParams.set("metaError", errorDescription.slice(0, 200));
@@ -51,18 +49,12 @@ export async function GET(request: NextRequest) {
   }
 
   if (!code || !state) {
-    const hub = new URL("/config/conexoes", origin);
-    hub.searchParams.set("meta", "error");
-    hub.searchParams.set("metaError", "oauth_missing");
-    return NextResponse.redirect(hub);
+    return oauthCompleteRedirect(origin, { meta: "error", metaError: "oauth_missing", ok: "0" });
   }
 
   const pending = await prisma.workspaceOAuthPending.findUnique({ where: { state } });
   if (!pending || pending.expiresAt < new Date() || pending.provider !== "META_ADS") {
-    const hub = new URL("/config/conexoes", origin);
-    hub.searchParams.set("meta", "error");
-    hub.searchParams.set("metaError", "oauth_expired");
-    return NextResponse.redirect(hub);
+    return oauthCompleteRedirect(origin, { meta: "error", metaError: "oauth_expired", ok: "0" });
   }
 
   const workspaceId = pending.clienteId;

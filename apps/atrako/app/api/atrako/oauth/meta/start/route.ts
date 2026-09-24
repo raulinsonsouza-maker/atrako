@@ -12,10 +12,11 @@ import {
 import { getMetaAppId, loadMetaPlatformAppCredentials } from "@/lib/integrations/meta/graph";
 
 function conexoesErrorRedirect(origin: string, workspaceId: string | null, message: string) {
-  const u = new URL("/config/conexoes", origin);
+  const u = new URL("/config/conexoes/oauth-complete", origin);
   if (workspaceId) u.searchParams.set("workspaceId", workspaceId);
   u.searchParams.set("meta", "error");
   u.searchParams.set("metaError", message);
+  u.searchParams.set("ok", "0");
   return NextResponse.redirect(u);
 }
 

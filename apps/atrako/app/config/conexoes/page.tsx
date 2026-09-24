@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { PillSelect } from "@/components/ui/pill-select";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
+import { useOAuthPopup } from "@/hooks/useOAuthPopup";
+import type { AtrakoOAuthMessage } from "@/lib/oauth/openOAuthPopup";
 
 type ConnectionRow = {
   id: string;
@@ -174,16 +176,61 @@ function ConexoesHubInner() {
   const [ecommSecret, setEcommSecret] = useState("");
   const [ecommSaving, setEcommSaving] = useState(false);
   const [ecommError, setEcommError] = useState<string | null>(null);
+  const [oauthFlash, setOauthFlash] = useState<string | null>(null);
+  const [oauthMetaOverride, setOauthMetaOverride] = useState<{
+    meta: string | null;
+    metaError: string | null;
+  } | null>(null);
 
-  const metaParam = searchParams.get("meta");
-  const metaErrorParam = searchParams.get("metaError");
+  const metaParam = oauthMetaOverride?.meta ?? searchParams.get("meta");
+  const metaErrorParam = oauthMetaOverride?.metaError ?? searchParams.get("metaError");
   const workspaceFromUrl = searchParams.get("workspaceId");
 
   useEffect(() => {
     if (workspaceFromUrl) setWorkspaceId(workspaceFromUrl);
   }, [workspaceFromUrl, setWorkspaceId]);
 
+  useEffect(() => {
+    const connected = searchParams.get("connected");
+    const err = searchParams.get("error");
+    if (connected) setOauthFlash(`${connected.replace(/_/g, " ")} conectado.`);
+    else if (err) setOauthFlash(err);
+  }, [searchParams]);
+
   const effectiveWorkspace = workspaceId;
+
+  const onOAuthDone = useCallback(
+    (msg: AtrakoOAuthMessage | { ok: false; cancelled: true }) => {
+      void qc.invalidateQueries({ queryKey: ["workspace-connections"] });
+      void qc.invalidateQueries({ queryKey: ["meta-connection-status"] });
+      if ("cancelled" in msg && msg.cancelled) {
+        return;
+      }
+      if (msg.workspaceId) setWorkspaceId(msg.workspaceId);
+      if (msg.meta) {
+        setOauthMetaOverride({ meta: msg.meta, metaError: msg.metaError });
+        setOauthFlash(null);
+      } else if (msg.ok && msg.connected) {
+        setOauthFlash(`${msg.connected.replace(/_/g, " ")} conectado.`);
+      } else if (msg.error) {
+        setOauthFlash(msg.error);
+      }
+    },
+    [qc, setWorkspaceId],
+  );
+
+  const { open: openOAuth, cancel: cancelOAuth, pending: oauthPending } = useOAuthPopup({
+    onDone: onOAuthDone,
+  });
+
+  const startOAuth = useCallback(
+    (href: string) => {
+      if (!effectiveWorkspace) return;
+      setOauthFlash(null);
+      openOAuth(href);
+    },
+    [effectiveWorkspace, openOAuth],
+  );
 
   const { data: connectionsData, isLoading: loadingConn } = useQuery({
     queryKey: ["workspace-connections", effectiveWorkspace],
@@ -490,6 +537,23 @@ function ConexoesHubInner() {
         </div>
       ) : null}
 
+      {oauthFlash && !banner ? (
+        <div
+          className={`flex items-start gap-2 rounded-xl border p-4 type-fine-print ${
+            oauthFlash.includes("conectado")
+              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+              : "border-amber-200 bg-amber-50 text-amber-950"
+          }`}
+        >
+          {oauthFlash.includes("conectado") ? (
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+          ) : (
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          )}
+          {oauthFlash}
+        </div>
+      ) : null}
+
       <div className="rounded-xl border border-[var(--hairline)] bg-white p-4">
         <label className="type-fine-print text-[var(--ink-muted-48)]">Empresa</label>
         {loadingClientes ? (
@@ -623,13 +687,15 @@ function ConexoesHubInner() {
                       ) : card.provider === "GOOGLE_ADS" ? (
                         <>
                           {card.connectHref ? (
-                            <a
-                              href={card.connectHref(effectiveWorkspace)}
-                              className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95"
+                            <button
+                              type="button"
+                              onClick={() => startOAuth(card.connectHref!(effectiveWorkspace))}
+                              disabled={oauthPending}
+                              className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-60"
                             >
                               <Link2 className="h-3.5 w-3.5" />
                               {connected ? "Reconectar" : "Conectar"}
-                            </a>
+                            </button>
                           ) : null}
                           <button
                             type="button"
@@ -640,13 +706,15 @@ function ConexoesHubInner() {
                           </button>
                         </>
                       ) : card.connectHref ? (
-                        <a
-                          href={card.connectHref(effectiveWorkspace)}
-                          className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95"
+                        <button
+                          type="button"
+                          onClick={() => startOAuth(card.connectHref!(effectiveWorkspace))}
+                          disabled={oauthPending}
+                          className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-60"
                         >
                           <Link2 className="h-3.5 w-3.5" />
                           {needsReauth ? "Reconectar" : connected ? "Reconectar" : "Conectar"}
-                        </a>
+                        </button>
                       ) : (
                         <span className="type-fine-print text-[var(--ink-secondary)]">
                           Em breve
@@ -937,6 +1005,34 @@ function ConexoesHubInner() {
       {loadingConn && effectiveWorkspace ? (
         <div className="flex items-center gap-2 type-caption text-[var(--ink-muted-48)]">
           <Loader2 className="h-4 w-4 animate-spin" /> Atualizando status…
+        </div>
+      ) : null}
+
+      {oauthPending ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--ink)]/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="oauth-pending-title"
+        >
+          <div className="w-full max-w-sm rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] p-5">
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-5 w-5 animate-spin text-[var(--primary)]" />
+              <h2 id="oauth-pending-title" className="type-nav-link text-[var(--ink)]">
+                Autorização em andamento
+              </h2>
+            </div>
+            <p className="mt-2 type-fine-print text-[var(--ink-muted-48)]">
+              Conclua o login na janela do provedor. Esta página permanece aberta.
+            </p>
+            <button
+              type="button"
+              onClick={cancelOAuth}
+              className="mt-4 rounded-[var(--radius-xs)] border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] active:scale-95"
+            >
+              Cancelar
+            </button>
+          </div>
         </div>
       ) : null}
     </div>

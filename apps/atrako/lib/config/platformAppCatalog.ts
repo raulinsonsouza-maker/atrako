@@ -184,7 +184,6 @@ export const PLATFORM_APP_CATALOG: Record<PlatformAppProvider, PlatformAppCatalo
     provider: "MERCADO_LIVRE",
     title: "Mercado Livre",
     description: "OAuth do marketplace Mercado Livre.",
-    hideInAdmin: true,
     fields: [
       { key: "label", label: "Nome de exibição" },
       { key: "clientId", label: "Client ID (App ID)", requiredForReady: true },

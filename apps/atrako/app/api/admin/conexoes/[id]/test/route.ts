@@ -57,9 +57,11 @@ async function testGoogleAds(params: {
     const loginCustomerId = params.loginCustomerId?.replace(/\D/g, "") || undefined;
     const headers: HeadersInit = {
       Authorization: `Bearer ${accessToken}`,
-      "developer-token": params.developerToken,
       "Content-Type": "application/json",
     };
+    if (params.developerToken?.trim()) {
+      headers["developer-token"] = params.developerToken.trim();
+    }
     if (loginCustomerId) headers["login-customer-id"] = loginCustomerId;
 
     const body = JSON.stringify({
@@ -112,11 +114,10 @@ export async function POST(
   }
 
   if (c.plataforma === "GOOGLE_ADS") {
-    if (!c.googleClientId || !c.googleClientSecret || !c.googleRefreshToken || !c.googleDeveloperToken) {
+    if (!c.googleClientId || !c.googleClientSecret || !c.googleRefreshToken) {
       const missing = [
         !c.googleClientId && "Client ID",
         !c.googleClientSecret && "Client Secret",
-        !c.googleDeveloperToken && "Developer Token",
         !c.googleRefreshToken && "Refresh Token",
       ]
         .filter(Boolean)
@@ -126,7 +127,7 @@ export async function POST(
     const result = await testGoogleAds({
       clientId: c.googleClientId,
       clientSecret: c.googleClientSecret,
-      developerToken: c.googleDeveloperToken,
+      developerToken: c.googleDeveloperToken ?? "",
       refreshToken: c.googleRefreshToken,
       loginCustomerId: c.googleLoginCustomerId,
     });

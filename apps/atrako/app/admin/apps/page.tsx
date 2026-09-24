@@ -1,10 +1,20 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import Link from "next/link";
+import { useMemo, useState } from "react";
 import { AppPage } from "@/components/layout/AppPage";
 import { Button } from "@/components/ui/button";
+import { PillSelect } from "@/components/ui/pill-select";
+import {
+  PLATFORM_APP_CATALOG,
+  platformAppCatalogList,
+  platformAppStatus,
+  platformAppStatusLabel,
+  type PlatformAppFieldKey,
+  type PlatformAppReadinessFlags,
+} from "@/lib/config/platformAppCatalog";
+import { type PlatformAppProvider } from "@/lib/config/platformAppProviders";
+import { cn } from "@/lib/utils";
 
 type AppRow = {
   provider: string;
@@ -17,201 +27,369 @@ type AppRow = {
   hasWebhookSecret: boolean;
   hasServiceAccount: boolean;
   hasRefreshToken: boolean;
+  hasRedirectUri?: boolean;
+  hasLoginCustomerId?: boolean;
   clientIdPreview: string | null;
   updatedAt: string;
 };
 
+const fieldClass =
+  "h-11 w-full rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-3 type-body text-[var(--ink)] outline-none placeholder:text-[var(--ink-muted-48)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-focus)]";
+
+function rowFlags(row: AppRow | undefined): PlatformAppReadinessFlags {
+  return {
+    enabled: row?.enabled ?? false,
+    hasClientId: Boolean(row?.hasClientId),
+    hasClientSecret: Boolean(row?.hasClientSecret),
+    hasDeveloperToken: Boolean(row?.hasDeveloperToken),
+    hasLoginConfigId: Boolean(row?.hasLoginConfigId),
+    hasWebhookSecret: Boolean(row?.hasWebhookSecret),
+    hasServiceAccount: Boolean(row?.hasServiceAccount),
+    hasRefreshToken: Boolean(row?.hasRefreshToken),
+    hasRedirectUri: Boolean(row?.hasRedirectUri),
+    hasLoginCustomerId: Boolean(row?.hasLoginCustomerId),
+  };
+}
+
+function statusTone(status: ReturnType<typeof platformAppStatus>) {
+  switch (status) {
+    case "ready":
+      return "text-[var(--success)]";
+    case "incomplete":
+      return "text-[var(--primary)]";
+    case "n_a":
+    case "disabled":
+    default:
+      return "text-[var(--ink-muted-48)]";
+  }
+}
+
 export default function AdminAppsPage() {
   const qc = useQueryClient();
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["admin-platform-apps"],
     queryFn: async () => {
       const r = await fetch("/api/admin/apps");
-      if (!r.ok) throw new Error("Falha ao carregar apps");
+      if (!r.ok) throw new Error("Não foi possível carregar os apps.");
       return r.json() as Promise<{ apps: AppRow[] }>;
     },
   });
 
-  const [editing, setEditing] = useState<string | null>(null);
-  const [form, setForm] = useState<Record<string, string>>({});
+  const [editing, setEditing] = useState<PlatformAppProvider | null>(null);
+  const [form, setForm] = useState<Partial<Record<PlatformAppFieldKey | "enabled", string>>>({});
+  const [formError, setFormError] = useState("");
+
+  const appsByProvider = useMemo(() => {
+    const map = new Map<string, AppRow>();
+    for (const row of data?.apps ?? []) map.set(row.provider, row);
+    return map;
+  }, [data?.apps]);
+
+  const siblings = useMemo(() => {
+    const map: Partial<Record<PlatformAppProvider, PlatformAppReadinessFlags>> = {};
+    for (const row of data?.apps ?? []) {
+      map[row.provider as PlatformAppProvider] = rowFlags(row);
+    }
+    return map;
+  }, [data?.apps]);
+
+  const ordered = useMemo(() => {
+    return platformAppCatalogList().map((catalog) => ({
+      provider: catalog.provider,
+      catalog,
+      row: appsByProvider.get(catalog.provider),
+    }));
+  }, [appsByProvider]);
 
   const save = useMutation({
-    mutationFn: async (provider: string) => {
+    mutationFn: async (provider: PlatformAppProvider) => {
+      const payload: Record<string, unknown> = { provider };
+      for (const [k, v] of Object.entries(form)) {
+        if (k === "enabled") {
+          payload.enabled = v === "true";
+          continue;
+        }
+        if (typeof v === "string" && v.trim()) payload[k] = v.trim();
+      }
       const r = await fetch("/api/admin/apps", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, ...form }),
+        body: JSON.stringify(payload),
       });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error((j as { error?: string }).error || r.statusText);
+      if (!r.ok) throw new Error((j as { error?: string }).error || "Falha ao salvar.");
       return j;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-platform-apps"] });
       setEditing(null);
       setForm({});
+      setFormError("");
     },
   });
 
+  function openEditor(provider: PlatformAppProvider, row: AppRow | undefined) {
+    const catalog = PLATFORM_APP_CATALOG[provider];
+    setEditing(provider);
+    setFormError("");
+    setForm({
+      label: row?.label ?? catalog.title,
+      enabled: row?.enabled === false ? "false" : "true",
+    });
+  }
+
+  function closeEditor() {
+    setEditing(null);
+    setForm({});
+    setFormError("");
+  }
+
+  function validateBeforeSave(provider: PlatformAppProvider, row: AppRow | undefined): string | null {
+    const catalog = PLATFORM_APP_CATALOG[provider];
+    const enabling = form.enabled !== "false";
+    if (!enabling || provider === "WOOCOMMERCE") return null;
+
+    const inheritFrom = catalog.inheritsOAuthFrom;
+    const parent = inheritFrom ? siblings[inheritFrom] : undefined;
+    const inherited = Boolean(parent?.enabled && parent.hasClientId && parent.hasClientSecret);
+
+    const flags = {
+      enabled: true,
+      hasClientId: Boolean(form.clientId?.trim()) || Boolean(row?.hasClientId) || inherited,
+      hasClientSecret:
+        Boolean(form.clientSecret?.trim()) || Boolean(row?.hasClientSecret) || inherited,
+      hasDeveloperToken: Boolean(form.developerToken?.trim()) || Boolean(row?.hasDeveloperToken),
+      hasLoginConfigId: Boolean(form.loginConfigId?.trim()) || Boolean(row?.hasLoginConfigId),
+      hasWebhookSecret:
+        Boolean(form.webhookSecret?.trim() || form.webhookVerifyToken?.trim()) ||
+        Boolean(row?.hasWebhookSecret),
+      hasServiceAccount: Boolean(form.serviceAccountJson?.trim()) || Boolean(row?.hasServiceAccount),
+      hasRefreshToken: Boolean(form.refreshToken?.trim()) || Boolean(row?.hasRefreshToken),
+      hasRedirectUri: Boolean(form.redirectUri?.trim()) || Boolean(row?.hasRedirectUri),
+      hasLoginCustomerId: Boolean(form.loginCustomerId?.trim()) || Boolean(row?.hasLoginCustomerId),
+    };
+
+    if (inheritFrom && inherited) {
+      const missingOwn = catalog.fields
+        .filter((f) => f.requiredForReady)
+        .filter((f) => f.key !== "clientId" && f.key !== "clientSecret")
+        .filter((f) => {
+          if (f.key === "serviceAccountJson") return !flags.hasServiceAccount;
+          if (f.key === "webhookSecret" || f.key === "webhookVerifyToken")
+            return !flags.hasWebhookSecret;
+          return false;
+        })
+        .map((f) => f.label);
+      if (missingOwn.length) {
+        return `Para habilitar, preencha: ${missingOwn.join(", ")}.`;
+      }
+      return null;
+    }
+
+    const missing = catalog.fields
+      .filter((f) => f.requiredForReady)
+      .filter((f) => {
+        switch (f.key) {
+          case "clientId":
+            return !flags.hasClientId;
+          case "clientSecret":
+            return !flags.hasClientSecret;
+          case "developerToken":
+            return !flags.hasDeveloperToken;
+          case "webhookSecret":
+          case "webhookVerifyToken":
+            return !flags.hasWebhookSecret;
+          case "serviceAccountJson":
+            return !flags.hasServiceAccount;
+          case "redirectUri":
+            return !flags.hasRedirectUri;
+          default:
+            return false;
+        }
+      })
+      .map((f) => f.label);
+
+    if (missing.length) {
+      if (inheritFrom) {
+        return `Configure o Client em ${PLATFORM_APP_CATALOG[inheritFrom].title}, ou preencha: ${missing.join(", ")}.`;
+      }
+      return `Para habilitar, preencha: ${missing.join(", ")}.`;
+    }
+    return null;
+  }
+
   return (
-    <AppPage title="Apps da plataforma">
-      <p className="type-body text-[var(--ink-secondary)] max-w-2xl">
-        Credenciais de app OAuth/HMAC (Meta, Google, MP, ML, LinkedIn…). Os dealers conectam as
-        contas deles em Config → Conexões.
-      </p>
-
+    <AppPage title="Apps">
       {isLoading ? (
-        <p className="type-body text-[var(--ink-secondary)]">Carregando…</p>
+        <p className="type-body text-[var(--ink-muted-48)]">Carregando…</p>
+      ) : isError ? (
+        <p className="type-body text-[var(--danger)]">
+          {(error as Error)?.message || "Erro ao carregar."}
+        </p>
       ) : (
-        <ul className="flex flex-col gap-3">
-          {(data?.apps ?? []).map((app) => (
-            <li
-              key={app.provider}
-              className="rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--surface)] p-4"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="type-nav-link text-[var(--ink)]">
-                    {app.label ?? app.provider}
-                  </h2>
-                  <p className="type-fine-print text-[var(--ink-secondary)]">
-                    {app.provider}
-                    {app.enabled ? " · habilitado" : " · desabilitado"}
-                    {app.clientIdPreview ? ` · ${app.clientIdPreview}` : ""}
-                    {" · "}
-                    {[
-                      app.hasClientSecret && "secret",
-                      app.hasDeveloperToken && "dev token",
-                      app.hasWebhookSecret && "webhook",
-                      app.hasServiceAccount && "SA",
-                      app.hasRefreshToken && "refresh",
-                    ]
-                      .filter(Boolean)
-                      .join(", ") || "sem secrets"}
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setEditing(app.provider);
-                    setForm({
-                      label: app.label ?? "",
-                      enabled: app.enabled ? "true" : "false",
-                    });
-                  }}
-                >
-                  Configurar
-                </Button>
-              </div>
+        <ul className="flex flex-col gap-2">
+          {ordered.map(({ provider, catalog, row }) => {
+            const flags = rowFlags(row);
+            const status = platformAppStatus(provider, flags, siblings);
+            const isOpen = editing === provider;
 
-              {editing === app.provider ? (
-                <form
-                  className="mt-4 flex flex-col gap-3"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    save.mutate(app.provider);
-                  }}
-                >
-                  <label className="type-fine-print flex flex-col gap-1">
-                    Label
-                    <input
-                      className="h-11 rounded-[var(--radius-xs)] border border-[var(--hairline)] px-3 type-body"
-                      value={form.label ?? ""}
-                      onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
-                    />
-                  </label>
-                  <label className="type-fine-print flex flex-col gap-1">
-                    Client ID
-                    <input
-                      className="h-11 rounded-[var(--radius-xs)] border border-[var(--hairline)] px-3 type-body"
-                      value={form.clientId ?? ""}
-                      onChange={(e) => setForm((f) => ({ ...f, clientId: e.target.value }))}
-                      placeholder="deixe vazio para manter"
-                      autoComplete="off"
-                    />
-                  </label>
-                  <label className="type-fine-print flex flex-col gap-1">
-                    Client Secret
-                    <input
-                      type="password"
-                      className="h-11 rounded-[var(--radius-xs)] border border-[var(--hairline)] px-3 type-body"
-                      value={form.clientSecret ?? ""}
-                      onChange={(e) => setForm((f) => ({ ...f, clientSecret: e.target.value }))}
-                      placeholder="deixe vazio para manter"
-                      autoComplete="new-password"
-                    />
-                  </label>
-                  <label className="type-fine-print flex flex-col gap-1">
-                    Developer token / Login Config / Webhook secret
-                    <input
-                      className="h-11 rounded-[var(--radius-xs)] border border-[var(--hairline)] px-3 type-body"
-                      value={form.developerToken ?? ""}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, developerToken: e.target.value }))
-                      }
-                      placeholder="developerToken (Google Ads)"
-                    />
-                    <input
-                      className="h-11 rounded-[var(--radius-xs)] border border-[var(--hairline)] px-3 type-body"
-                      value={form.loginConfigId ?? ""}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, loginConfigId: e.target.value }))
-                      }
-                      placeholder="loginConfigId (Meta)"
-                    />
-                    <input
-                      className="h-11 rounded-[var(--radius-xs)] border border-[var(--hairline)] px-3 type-body"
-                      value={form.webhookSecret ?? ""}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, webhookSecret: e.target.value }))
-                      }
-                      placeholder="webhookSecret"
-                    />
-                  </label>
-                  <label className="type-fine-print flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={form.enabled !== "false"}
-                      onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          enabled: e.target.checked ? "true" : "false",
-                        }))
-                      }
-                    />
-                    Habilitado no hub
-                  </label>
-                  <div className="flex gap-2">
-                    <Button type="submit" disabled={save.isPending}>
-                      Salvar
-                    </Button>
-                    <Button type="button" variant="outline" onClick={() => setEditing(null)}>
-                      Cancelar
-                    </Button>
+            return (
+              <li
+                key={provider}
+                className="rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-4 py-3"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <h2 className="type-nav-link truncate text-[var(--ink)]">
+                      {row?.label?.trim() || catalog.title}
+                    </h2>
+                    <span className={cn("type-fine-print shrink-0", statusTone(status))}>
+                      {platformAppStatusLabel(status)}
+                    </span>
                   </div>
-                  {save.error ? (
-                    <p className="type-fine-print text-[var(--danger)]">
-                      {(save.error as Error).message}
-                    </p>
-                  ) : null}
-                </form>
-              ) : null}
-            </li>
-          ))}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="!shrink-0 !px-3 !py-1.5 type-button-utility"
+                    onClick={() => (isOpen ? closeEditor() : openEditor(provider, row))}
+                  >
+                    {isOpen ? "Fechar" : "Configurar"}
+                  </Button>
+                </div>
+
+                {isOpen ? (
+                  <form
+                    className="mt-4 flex flex-col gap-4 border-t border-[var(--hairline)] pt-4"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const err = validateBeforeSave(provider, row);
+                      if (err) {
+                        setFormError(err);
+                        return;
+                      }
+                      setFormError("");
+                      save.mutate(provider);
+                    }}
+                  >
+                    {catalog.fields.map((field) => {
+                      if (field.key === "label") {
+                        return (
+                          <label key={field.key} className="flex flex-col gap-1.5">
+                            <span className="type-fine-print text-[var(--ink-muted-48)]">
+                              {field.label}
+                            </span>
+                            <input
+                              className={fieldClass}
+                              value={form.label ?? ""}
+                              onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
+                            />
+                          </label>
+                        );
+                      }
+
+                      const already =
+                        field.key === "clientId"
+                          ? row?.hasClientId
+                          : field.key === "clientSecret"
+                            ? row?.hasClientSecret
+                            : field.key === "developerToken"
+                              ? row?.hasDeveloperToken
+                              : field.key === "loginConfigId"
+                                ? row?.hasLoginConfigId
+                                : field.key === "webhookSecret" || field.key === "webhookVerifyToken"
+                                  ? row?.hasWebhookSecret
+                                  : field.key === "serviceAccountJson"
+                                    ? row?.hasServiceAccount
+                                    : field.key === "redirectUri"
+                                      ? row?.hasRedirectUri
+                                      : field.key === "refreshToken"
+                                        ? row?.hasRefreshToken
+                                        : field.key === "loginCustomerId"
+                                          ? row?.hasLoginCustomerId
+                                          : false;
+
+                      const inheritHint =
+                        catalog.inheritsOAuthFrom &&
+                        (field.key === "clientId" || field.key === "clientSecret")
+                          ? "Opcional — herda do Google Ads se vazio"
+                          : undefined;
+
+                      const placeholder = field.secret
+                        ? already
+                          ? "Salvo — deixe em branco para manter"
+                          : inheritHint || "Informe o valor"
+                        : already
+                          ? "Salvo — deixe em branco para manter"
+                          : inheritHint;
+
+                      return (
+                        <label key={field.key} className="flex flex-col gap-1.5">
+                          <span className="type-fine-print text-[var(--ink-muted-48)]">
+                            {field.label}
+                            {field.requiredForReady ? " *" : ""}
+                          </span>
+                          {field.multiline ? (
+                            <textarea
+                              className={`${fieldClass} min-h-[120px] py-2`}
+                              value={form[field.key] ?? ""}
+                              onChange={(e) =>
+                                setForm((f) => ({ ...f, [field.key]: e.target.value }))
+                              }
+                              placeholder={placeholder}
+                              autoComplete="off"
+                              spellCheck={false}
+                            />
+                          ) : (
+                            <input
+                              type={field.secret ? "password" : "text"}
+                              className={fieldClass}
+                              value={form[field.key] ?? ""}
+                              onChange={(e) =>
+                                setForm((f) => ({ ...f, [field.key]: e.target.value }))
+                              }
+                              placeholder={placeholder}
+                              autoComplete={field.secret ? "new-password" : "off"}
+                            />
+                          )}
+                        </label>
+                      );
+                    })}
+
+                    <div className="flex flex-col gap-1.5">
+                      <span className="type-fine-print text-[var(--ink-muted-48)]">Status</span>
+                      <PillSelect
+                        size="field"
+                        value={form.enabled !== "false" ? "true" : "false"}
+                        onChange={(v) => setForm((f) => ({ ...f, enabled: v }))}
+                        options={[
+                          { value: "true", label: "Habilitado" },
+                          { value: "false", label: "Desabilitado" },
+                        ]}
+                        aria-label="Status"
+                      />
+                    </div>
+
+                    {formError || save.error ? (
+                      <p className="type-fine-print text-[var(--danger)]" role="alert">
+                        {formError || (save.error as Error).message}
+                      </p>
+                    ) : null}
+
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="submit" disabled={save.isPending}>
+                        {save.isPending ? "Salvando…" : "Salvar"}
+                      </Button>
+                      <Button type="button" variant="outline" onClick={closeEditor}>
+                        Cancelar
+                      </Button>
+                    </div>
+                  </form>
+                ) : null}
+              </li>
+            );
+          })}
         </ul>
       )}
-
-      <p className="type-fine-print text-[var(--ink-secondary)]">
-        Também:{" "}
-        <Link href="/admin/configuracoes" className="text-[var(--primary)]">
-          Ops / alertas
-        </Link>
-        {" · "}
-        <Link href="/admin/usuarios" className="text-[var(--primary)]">
-          Usuários internos
-        </Link>
-      </p>
     </AppPage>
   );
 }

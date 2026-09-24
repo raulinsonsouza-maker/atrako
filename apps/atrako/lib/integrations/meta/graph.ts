@@ -9,6 +9,36 @@ import { createHmac } from "crypto";
 export const META_GRAPH_VERSION =
   process.env.META_GRAPH_API_VERSION?.trim() || "v26.0";
 
+/** Cache hub-first (PlatformApp META) — aquecido por `loadMetaPlatformAppCredentials`. */
+let hubMetaCreds: {
+  clientId?: string;
+  clientSecret?: string;
+  loginConfigId?: string;
+  webhookSecret?: string;
+  webhookVerifyToken?: string;
+} | null = null;
+
+/** Carrega App ID/Secret/Config do PlatformApp (hub). Chamar antes do OAuth. */
+export async function loadMetaPlatformAppCredentials(): Promise<void> {
+  try {
+    const { resolvePlatformApp } = await import("@/lib/config/platformApps");
+    const app = await resolvePlatformApp("META");
+    if (!app?.enabled) {
+      hubMetaCreds = null;
+      return;
+    }
+    hubMetaCreds = {
+      clientId: app.credentials.clientId?.trim() || undefined,
+      clientSecret: app.credentials.clientSecret?.trim() || undefined,
+      loginConfigId: app.credentials.loginConfigId?.trim() || undefined,
+      webhookSecret: app.credentials.webhookSecret?.trim() || undefined,
+      webhookVerifyToken: app.credentials.webhookVerifyToken?.trim() || undefined,
+    };
+  } catch {
+    hubMetaCreds = null;
+  }
+}
+
 export class MetaGraphError extends Error {
   constructor(
     message: string,
@@ -30,6 +60,7 @@ export function metaGraphUrl(path: string) {
 
 export function getMetaAppSecret(): string | null {
   return (
+    hubMetaCreds?.clientSecret ||
     process.env.META_APP_SECRET?.trim() ||
     process.env.SYMBIUS_META_APP_SECRET?.trim() ||
     process.env.SYMBIUS_IG_APP_SECRET?.trim() ||
@@ -39,9 +70,18 @@ export function getMetaAppSecret(): string | null {
 
 export function getMetaAppId(): string | null {
   return (
+    hubMetaCreds?.clientId ||
     process.env.META_APP_ID?.trim() ||
     process.env.SYMBIUS_META_APP_ID?.trim() ||
     process.env.SYMBIUS_IG_APP_ID?.trim() ||
+    null
+  );
+}
+
+export function getMetaLoginConfigIdFromHubOrEnv(): string | null {
+  return (
+    hubMetaCreds?.loginConfigId ||
+    process.env.META_LOGIN_CONFIG_ID?.trim() ||
     null
   );
 }

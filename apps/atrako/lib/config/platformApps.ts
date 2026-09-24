@@ -2,6 +2,7 @@ import "server-only";
 
 import { prisma } from "@/lib/db";
 import { decryptCredentials, encryptCredentials } from "@/lib/atrako/credentials-crypto";
+import { PLATFORM_APP_CATALOG } from "@/lib/config/platformAppCatalog";
 import {
   PLATFORM_APP_PROVIDERS,
   isPlatformAppProvider,
@@ -72,8 +73,17 @@ const ENV_SEED: Partial<
   }),
   GOOGLE_CALENDAR: () => ({
     label: "Google Calendar",
-    clientId: process.env.GOOGLE_CLIENT_ID?.trim() || undefined,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET?.trim() || undefined,
+    // Prefer Ads / shared Google client — Calendar herda o Client Web do Ads.
+    clientId:
+      process.env.GOOGLE_CALENDAR_CLIENT_ID?.trim() ||
+      process.env.GOOGLE_ADS_CLIENT_ID?.trim() ||
+      process.env.GOOGLE_CLIENT_ID?.trim() ||
+      undefined,
+    clientSecret:
+      process.env.GOOGLE_CALENDAR_CLIENT_SECRET?.trim() ||
+      process.env.GOOGLE_ADS_CLIENT_SECRET?.trim() ||
+      process.env.GOOGLE_CLIENT_SECRET?.trim() ||
+      undefined,
     redirectUri: process.env.GOOGLE_CALENDAR_REDIRECT_URI?.trim() || undefined,
   }),
   GOOGLE_ANALYTICS: () => ({
@@ -144,6 +154,60 @@ export async function ensurePlatformAppsSeeded(): Promise<void> {
   for (const provider of PLATFORM_APP_PROVIDERS) {
     await seedPlatformAppFromEnv(provider);
   }
+  await enableCalendarWhenAdsReady();
+}
+
+/** Calendar fica pronto automaticamente quando Ads tem Client OAuth. */
+async function enableCalendarWhenAdsReady(): Promise<void> {
+  const ads = await prisma.platformApp.findUnique({ where: { provider: "GOOGLE_ADS" } });
+  if (!ads?.enabled) return;
+  const creds = decryptCredentials(ads.credentialsEnc) as PlatformAppCredentials;
+  if (!creds.clientId?.trim() || !creds.clientSecret?.trim()) return;
+
+  const cal = await prisma.platformApp.findUnique({ where: { provider: "GOOGLE_CALENDAR" } });
+  if (!cal) return;
+
+  const calCreds = decryptCredentials(cal.credentialsEnc) as PlatformAppCredentials;
+  const redirectUri =
+    calCreds.redirectUri?.trim() ||
+    process.env.GOOGLE_CALENDAR_REDIRECT_URI?.trim() ||
+    "https://atrako.com.br/api/atrako/oauth/google-calendar/callback";
+
+  const needsUpdate =
+    !cal.enabled ||
+    calCreds.redirectUri?.trim() !== redirectUri;
+
+  if (!needsUpdate) return;
+
+  await prisma.platformApp.update({
+    where: { provider: "GOOGLE_CALENDAR" },
+    data: {
+      enabled: true,
+      label: cal.label || "Google Calendar",
+      credentialsEnc: encryptCredentials({
+        ...calCreds,
+        redirectUri,
+      }),
+    },
+  });
+}
+
+async function inheritOAuthCredentials(
+  provider: PlatformAppProvider,
+  credentials: PlatformAppCredentials,
+): Promise<PlatformAppCredentials> {
+  const inheritFrom = PLATFORM_APP_CATALOG[provider]?.inheritsOAuthFrom;
+  if (!inheritFrom) return credentials;
+  if (credentials.clientId?.trim() && credentials.clientSecret?.trim()) return credentials;
+
+  const parent = await resolvePlatformApp(inheritFrom);
+  if (!parent?.enabled) return credentials;
+
+  return {
+    ...credentials,
+    clientId: credentials.clientId?.trim() || parent.credentials.clientId,
+    clientSecret: credentials.clientSecret?.trim() || parent.credentials.clientSecret,
+  };
 }
 
 export async function resolvePlatformApp(provider: PlatformAppProvider): Promise<{
@@ -165,15 +229,16 @@ export async function resolvePlatformApp(provider: PlatformAppProvider): Promise
       provider,
       enabled: true,
       label: label ?? provider,
-      credentials,
+      credentials: await inheritOAuthCredentials(provider, credentials),
       metadata: null,
     };
   }
+  const credentials = decryptCredentials(row.credentialsEnc) as PlatformAppCredentials;
   return {
     provider,
     enabled: row.enabled,
     label: row.label,
-    credentials: decryptCredentials(row.credentialsEnc) as PlatformAppCredentials,
+    credentials: await inheritOAuthCredentials(provider, credentials),
     metadata: row.metadata,
   };
 }
@@ -231,6 +296,8 @@ export async function listPlatformAppsMasked() {
       hasWebhookSecret: Boolean(creds.webhookSecret || creds.webhookVerifyToken),
       hasServiceAccount: Boolean(creds.serviceAccountJson),
       hasRefreshToken: Boolean(creds.refreshToken),
+      hasRedirectUri: Boolean(creds.redirectUri),
+      hasLoginCustomerId: Boolean(creds.loginCustomerId),
       clientIdPreview: creds.clientId ? `${creds.clientId.slice(0, 6)}…` : null,
       metadata: row.metadata,
       updatedAt: row.updatedAt.toISOString(),

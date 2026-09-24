@@ -4,7 +4,8 @@ import { getIntegrationsConfig } from "@/lib/config/integrations";
 export interface GoogleAdsCredentialOverride {
   clientId: string;
   clientSecret: string;
-  developerToken: string;
+  /** Legado — Google Ads API ignora desde set/2026; string vazia ok. */
+  developerToken?: string;
   refreshToken: string;
   loginCustomerId?: string | null;
 }
@@ -54,16 +55,17 @@ async function getClientAndRefreshToken(override?: GoogleAdsCredentialOverride) 
       ?.replace(/-/g, "") || undefined;
   }
 
-  if (!clientId || !clientSecret || !developerToken || !refreshToken) {
+  if (!clientId || !clientSecret || !refreshToken) {
     throw new Error(
-      "Google Ads API: configure PlatformApp GOOGLE_ADS (client/secret/devToken/refresh) ou credenciais por workspace",
+      "Google Ads API: configure PlatformApp GOOGLE_ADS (client/secret) e refresh token do workspace",
     );
   }
 
+  // developer_token é opcional pós-set/2026; a lib tipa como string — enviamos legado ou "".
   const client = new GoogleAdsApi({
     client_id: clientId,
     client_secret: clientSecret,
-    developer_token: developerToken,
+    developer_token: developerToken?.trim() || "",
   });
 
   return { client, refreshToken, loginCustomerId };

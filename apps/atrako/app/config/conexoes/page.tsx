@@ -72,7 +72,7 @@ const PROVIDER_CARDS: Array<{
     provider: "GOOGLE_ADS",
     title: "Google Ads",
     icon: Megaphone,
-    connectHref: (id) => `/api/atrako/oauth/google-ads/connect?workspaceId=${id}`,
+    connectHref: (id) => `/api/atrako/oauth/google-ads/start?workspaceId=${id}`,
   },
   {
     provider: "LINKEDIN_ADS",
@@ -339,7 +339,11 @@ function ConexoesHubInner() {
 
   async function saveGoogleAds(e: React.FormEvent) {
     e.preventDefault();
-    if (!effectiveWorkspace || !gadsRefresh.trim()) return;
+    if (!effectiveWorkspace) return;
+    if (!gadsRefresh.trim() && !gadsCustomer.trim()) {
+      setGadsError("Informe o CID ou um refresh token.");
+      return;
+    }
     setGadsSaving(true);
     setGadsError(null);
     try {
@@ -348,7 +352,7 @@ function ConexoesHubInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           workspaceId: effectiveWorkspace,
-          refreshToken: gadsRefresh.trim(),
+          refreshToken: gadsRefresh.trim() || undefined,
           customerId: gadsCustomer.trim() || undefined,
           loginCustomerId: gadsLoginCustomer.trim() || undefined,
         }),
@@ -617,14 +621,24 @@ function ConexoesHubInner() {
                           {connected ? "Atualizar" : "Conectar"}
                         </button>
                       ) : card.provider === "GOOGLE_ADS" ? (
-                        <button
-                          type="button"
-                          onClick={() => setGoogleAdsOpen((v) => !v)}
-                          className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95"
-                        >
-                          <Link2 className="h-3.5 w-3.5" />
-                          {connected ? "Atualizar" : "Conectar"}
-                        </button>
+                        <>
+                          {card.connectHref ? (
+                            <a
+                              href={card.connectHref(effectiveWorkspace)}
+                              className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95"
+                            >
+                              <Link2 className="h-3.5 w-3.5" />
+                              {connected ? "Reconectar" : "Conectar"}
+                            </a>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => setGoogleAdsOpen((v) => !v)}
+                            className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)]"
+                          >
+                            {googleAdsOpen ? "Fechar" : "Conta / CID"}
+                          </button>
+                        </>
                       ) : card.connectHref ? (
                         <a
                           href={card.connectHref(effectiveWorkspace)}
@@ -703,13 +717,10 @@ function ConexoesHubInner() {
                         onSubmit={saveGoogleAds}
                         className="mt-4 space-y-2 border-t border-[var(--hairline)] pt-3"
                       >
-                        <input
-                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
-                          placeholder="Refresh token"
-                          value={gadsRefresh}
-                          onChange={(e) => setGadsRefresh(e.target.value)}
-                          required
-                        />
+                        <p className="type-fine-print text-[var(--ink-muted-48)]">
+                          Depois do OAuth, escolha o CID da conta. Refresh token manual só se
+                          necessário.
+                        </p>
                         <input
                           className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
                           placeholder="Customer ID (CID, só números)"
@@ -722,13 +733,19 @@ function ConexoesHubInner() {
                           value={gadsLoginCustomer}
                           onChange={(e) => setGadsLoginCustomer(e.target.value)}
                         />
+                        <input
+                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
+                          placeholder="Refresh token (opcional se já conectou via OAuth)"
+                          value={gadsRefresh}
+                          onChange={(e) => setGadsRefresh(e.target.value)}
+                        />
                         {gadsError ? <p className="text-xs text-red-600">{gadsError}</p> : null}
                         <button
                           type="submit"
                           disabled={gadsSaving}
                           className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
                         >
-                          {gadsSaving ? "Salvando…" : "Salvar Google Ads"}
+                          {gadsSaving ? "Salvando…" : "Salvar conta"}
                         </button>
                       </form>
                     ) : null}

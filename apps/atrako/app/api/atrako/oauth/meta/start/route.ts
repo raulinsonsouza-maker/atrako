@@ -9,7 +9,7 @@ import {
   META_LOGIN_CONFIG_MISSING,
   resolveMetaOAuthRedirectUri,
 } from "@/lib/integrations/meta/oauth";
-import { getMetaAppId } from "@/lib/integrations/meta/graph";
+import { getMetaAppId, loadMetaPlatformAppCredentials } from "@/lib/integrations/meta/graph";
 
 function conexoesErrorRedirect(origin: string, workspaceId: string | null, message: string) {
   const u = new URL("/config/conexoes", origin);
@@ -33,11 +33,13 @@ export async function GET(request: NextRequest) {
     return conexoesErrorRedirect(origin, workspaceId, "Empresa não encontrada.");
   }
 
+  await loadMetaPlatformAppCredentials();
+
   if (!getMetaAppId()) {
     return conexoesErrorRedirect(
       origin,
       workspaceId,
-      "META_APP_ID não configurado no servidor. Defina META_APP_ID (e META_APP_SECRET + META_LOGIN_CONFIG_ID) no .env e reinicie o app.",
+      "Meta App ID não configurado. Configure em /admin/apps (Meta).",
     );
   }
   if (!getMetaLoginConfigId()) {

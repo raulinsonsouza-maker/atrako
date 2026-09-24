@@ -96,7 +96,8 @@ export async function resolveMetaCredentials(
 
 /**
  * Resolve Google Ads credentials for a given clienteId.
- * Hub-first: WorkspaceConnection GOOGLE_ADS + PlatformApp for client/secret/devToken.
+ * Hub-first: WorkspaceConnection GOOGLE_ADS + PlatformApp (client/secret).
+ * Developer token opcional desde set/2026 (acesso via Google Cloud project).
  */
 export async function resolveGoogleAdsCredentials(
   clienteId: string,
@@ -126,8 +127,8 @@ export async function resolveGoogleAdsCredentials(
     const developerToken =
       (typeof hub.credentials.developerToken === "string" && hub.credentials.developerToken) ||
       platform?.credentials.developerToken ||
-      null;
-    if (clientId && clientSecret && developerToken) {
+      "";
+    if (clientId && clientSecret) {
       const loginFromHub =
         (typeof hub.credentials.loginCustomerId === "string" && hub.credentials.loginCustomerId) ||
         (hub.metadata &&
@@ -154,17 +155,11 @@ export async function resolveGoogleAdsCredentials(
   }
 
   const conn = conta?.conexaoIntegracao;
-  if (
-    conn?.ativo &&
-    conn.googleClientId &&
-    conn.googleClientSecret &&
-    conn.googleDeveloperToken &&
-    conn.googleRefreshToken
-  ) {
+  if (conn?.ativo && conn.googleClientId && conn.googleClientSecret && conn.googleRefreshToken) {
     return {
       clientId: conn.googleClientId,
       clientSecret: conn.googleClientSecret,
-      developerToken: conn.googleDeveloperToken,
+      developerToken: conn.googleDeveloperToken ?? "",
       refreshToken: conn.googleRefreshToken,
       loginCustomerId: conn.googleLoginCustomerId ?? conta?.googleAdsLoginCustomerId ?? null,
       connectionName: conn.nome,
@@ -187,13 +182,13 @@ export async function resolveGoogleAdsCredentials(
     platform?.credentials.developerToken ??
     global.googleDeveloperToken ??
     process.env.GOOGLE_ADS_DEVELOPER_TOKEN ??
-    null;
+    "";
   const refreshToken =
     platform?.credentials.refreshToken ??
     global.googleRefreshToken ??
     process.env.GOOGLE_ADS_REFRESH_TOKEN ??
     null;
-  if (!clientId || !clientSecret || !developerToken || !refreshToken) {
+  if (!clientId || !clientSecret || !refreshToken) {
     return null;
   }
   return {

@@ -27,14 +27,13 @@ export async function GET(request: NextRequest) {
 
   const { resolvePlatformApp } = await import("@/lib/config/platformApps");
   const calApp = await resolvePlatformApp("GOOGLE_CALENDAR");
-  const googleApp = await resolvePlatformApp("GOOGLE");
   const clientId =
     calApp?.credentials.clientId?.trim() ||
-    googleApp?.credentials.clientId?.trim() ||
+    process.env.GOOGLE_ADS_CLIENT_ID?.trim() ||
     process.env.GOOGLE_CLIENT_ID?.trim();
   const clientSecret =
     calApp?.credentials.clientSecret?.trim() ||
-    googleApp?.credentials.clientSecret?.trim() ||
+    process.env.GOOGLE_ADS_CLIENT_SECRET?.trim() ||
     process.env.GOOGLE_CLIENT_SECRET?.trim();
   if (!clientId || !clientSecret) {
     hub.searchParams.set("error", "google_not_configured");

@@ -7,6 +7,7 @@ import {
   upsertPlatformApp,
   type PlatformAppCredentials,
 } from "@/lib/config/platformApps";
+import { PLATFORM_APP_CATALOG } from "@/lib/config/platformAppCatalog";
 
 export async function GET() {
   const authz = await requireInternalAdmin();
@@ -22,7 +23,7 @@ export async function PATCH(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const provider = typeof body.provider === "string" ? body.provider : "";
   if (!isPlatformAppProvider(provider)) {
-    return NextResponse.json({ error: "provider inválido" }, { status: 400 });
+    return NextResponse.json({ error: "Provider inválido." }, { status: 400 });
   }
 
   const credentials: PlatformAppCredentials = {};
@@ -44,16 +45,55 @@ export async function PATCH(request: NextRequest) {
     }
   }
 
+  const enabled =
+    typeof body.enabled === "boolean"
+      ? body.enabled
+      : body.enabled === "true"
+        ? true
+        : body.enabled === "false"
+          ? false
+          : undefined;
+
+  if (enabled === true && provider !== "WOOCOMMERCE") {
+    const current = (await listPlatformAppsMasked()).find((a) => a.provider === provider);
+    const merged = {
+      hasClientId: Boolean(credentials.clientId) || Boolean(current?.hasClientId),
+      hasClientSecret: Boolean(credentials.clientSecret) || Boolean(current?.hasClientSecret),
+      hasDeveloperToken: Boolean(credentials.developerToken) || Boolean(current?.hasDeveloperToken),
+      hasWebhookSecret:
+        Boolean(credentials.webhookSecret || credentials.webhookVerifyToken) ||
+        Boolean(current?.hasWebhookSecret),
+      hasServiceAccount:
+        Boolean(credentials.serviceAccountJson) || Boolean(current?.hasServiceAccount),
+      hasRedirectUri: Boolean(credentials.redirectUri) || Boolean(current?.hasRedirectUri),
+    };
+    const missing = PLATFORM_APP_CATALOG[provider].fields
+      .filter((f) => f.requiredForReady)
+      .filter((f) => {
+        if (f.key === "clientId") return !merged.hasClientId;
+        if (f.key === "clientSecret") return !merged.hasClientSecret;
+        if (f.key === "developerToken") return !merged.hasDeveloperToken;
+        if (f.key === "webhookSecret" || f.key === "webhookVerifyToken") {
+          return !merged.hasWebhookSecret;
+        }
+        if (f.key === "serviceAccountJson") return !merged.hasServiceAccount;
+        if (f.key === "redirectUri") return !merged.hasRedirectUri;
+        return false;
+      })
+      .map((f) => f.label);
+    if (missing.length) {
+      return NextResponse.json(
+        {
+          error: `Para habilitar ${PLATFORM_APP_CATALOG[provider].title}, preencha: ${missing.join(", ")}.`,
+        },
+        { status: 400 },
+      );
+    }
+  }
+
   await upsertPlatformApp({
     provider,
-    enabled:
-      typeof body.enabled === "boolean"
-        ? body.enabled
-        : body.enabled === "true"
-          ? true
-          : body.enabled === "false"
-            ? false
-            : undefined,
+    enabled,
     label: typeof body.label === "string" ? body.label : undefined,
     credentials: Object.keys(credentials).length ? credentials : undefined,
   });

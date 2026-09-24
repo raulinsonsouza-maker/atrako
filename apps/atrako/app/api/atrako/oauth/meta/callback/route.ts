@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { upsertWorkspaceConnection } from "@/lib/atrako/workspace-connections";
 import { exchangeMetaCode } from "@/lib/integrations/meta/oauth";
 import { discoverMetaBusinessAssets } from "@/lib/integrations/meta/business";
-import { MetaGraphError } from "@/lib/integrations/meta/graph";
+import { loadMetaPlatformAppCredentials, MetaGraphError } from "@/lib/integrations/meta/graph";
 import { selectMetaAdAccount } from "@/lib/integrations/meta/connection";
 import type { MetaAdsConnectionMetadata } from "@/lib/integrations/meta/types";
 
@@ -72,6 +72,7 @@ export async function GET(request: NextRequest) {
   await prisma.workspaceOAuthPending.delete({ where: { id: pending.id } }).catch(() => null);
 
   try {
+    await loadMetaPlatformAppCredentials();
     const token = await exchangeMetaCode({ code, redirectUri });
     console.info(
       JSON.stringify({

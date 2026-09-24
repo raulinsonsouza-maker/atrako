@@ -3,13 +3,13 @@
  * Doc: https://developers.facebook.com/docs/facebook-login/facebook-login-for-business/
  */
 
-import { META_GRAPH_VERSION, getMetaAppId, getMetaAppSecret, metaGraphUrl } from "./graph";
+import { META_GRAPH_VERSION, getMetaAppId, getMetaAppSecret, metaGraphUrl, getMetaLoginConfigIdFromHubOrEnv } from "./graph";
 
 export const META_LOGIN_CONFIG_MISSING =
   "Facebook Login for Business não está configurado: META_LOGIN_CONFIG_ID ausente.";
 
 export function getMetaLoginConfigId(): string | null {
-  return process.env.META_LOGIN_CONFIG_ID?.trim() || null;
+  return getMetaLoginConfigIdFromHubOrEnv();
 }
 
 export function requireMetaLoginConfigId(): string {

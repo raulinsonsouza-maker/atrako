@@ -5,6 +5,7 @@ import { upsertWorkspaceConnection, getWorkspaceConnection } from "@/lib/atrako/
 import { resolvePlatformApp } from "@/lib/config/platformApps";
 import { prisma } from "@/lib/db";
 import { PLATAFORMA_GOOGLE_ADS, upsertContaPlataforma } from "@/lib/repositories/contasRepository";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 /**
  * GET → redireciona para OAuth start (fluxo SaaS).
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
   if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
   }
-  const start = new URL("/api/atrako/oauth/google-ads/start", request.nextUrl.origin);
+  const start = new URL("/api/atrako/oauth/google-ads/start", getPublicOrigin(request));
   start.searchParams.set("workspaceId", workspaceId);
   return NextResponse.redirect(start);
 }

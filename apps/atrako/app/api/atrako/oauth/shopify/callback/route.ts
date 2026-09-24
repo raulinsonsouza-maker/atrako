@@ -8,12 +8,13 @@ import {
 } from "@/lib/integrations/shopify/oauth";
 import { registerShopifyWebhooks } from "@/lib/integrations/shopify/webhooks";
 import { syncShopifyWorkspace } from "@/lib/integrations/shopify/sync";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
   const shopParam = request.nextUrl.searchParams.get("shop");
-  const hub = new URL("/config/conexoes/oauth-complete", request.nextUrl.origin);
+  const hub = new URL("/config/conexoes/oauth-complete", getPublicOrigin(request));
 
   if (!code || !state) {
     hub.searchParams.set("error", "oauth_missing");
@@ -102,7 +103,7 @@ export async function GET(request: NextRequest) {
       shop,
       accessToken: token.accessToken,
       apiVersion,
-      callbackBaseUrl: request.nextUrl.origin,
+      callbackBaseUrl: getPublicOrigin(request),
       workspaceId: pending.clienteId,
     });
   } catch (err) {

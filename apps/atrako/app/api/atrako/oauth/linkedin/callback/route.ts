@@ -3,12 +3,13 @@ import { prisma } from "@/lib/db";
 import { exchangeLinkedinCode } from "@/lib/linkedin/linkedinClient";
 import { upsertWorkspaceConnection } from "@/lib/atrako/workspace-connections";
 import { oauthCompleteRedirect } from "@/lib/oauth/oauthCompleteRedirect";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
   const err = request.nextUrl.searchParams.get("error");
-  const origin = request.nextUrl.origin;
+  const origin = getPublicOrigin(request);
 
   if (err || !code || !state) {
     return oauthCompleteRedirect(origin, {

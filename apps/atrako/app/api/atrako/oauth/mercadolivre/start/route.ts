@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { ML_OAUTH_AUTHORIZE } from "@/lib/integrations/mercadolivre/oauth";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 function createPkce() {
   const codeVerifier = randomBytes(32).toString("base64url");
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
   const redirectUri =
     app?.credentials.redirectUri?.trim() ||
     process.env.ML_REDIRECT_URI?.trim() ||
-    `${request.nextUrl.origin}/api/atrako/oauth/mercadolivre/callback`;
+    `${getPublicOrigin(request)}/api/atrako/oauth/mercadolivre/callback`;
 
   if (!clientId) {
     return NextResponse.json(

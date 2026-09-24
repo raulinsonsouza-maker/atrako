@@ -10,6 +10,7 @@ import {
   resolveMetaOAuthRedirectUri,
 } from "@/lib/integrations/meta/oauth";
 import { getMetaAppId, loadMetaPlatformAppCredentials } from "@/lib/integrations/meta/graph";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 function conexoesErrorRedirect(origin: string, workspaceId: string | null, message: string) {
   const u = new URL("/config/conexoes/oauth-complete", origin);
@@ -22,7 +23,7 @@ function conexoesErrorRedirect(origin: string, workspaceId: string | null, messa
 
 /** Inicia Facebook Login for Business (config_id) para META_ADS. */
 export async function GET(request: NextRequest) {
-  const origin = request.nextUrl.origin;
+  const origin = getPublicOrigin(request);
   const workspaceId = request.nextUrl.searchParams.get("workspaceId")?.trim();
   if (!workspaceId) {
     return conexoesErrorRedirect(origin, null, "Selecione uma empresa antes de conectar a Meta.");
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
     return conexoesErrorRedirect(origin, workspaceId, META_LOGIN_CONFIG_MISSING);
   }
 
-  const redirectUri = resolveMetaOAuthRedirectUri(request.nextUrl.origin);
+  const redirectUri = resolveMetaOAuthRedirectUri(getPublicOrigin(request));
   const state = randomBytes(24).toString("hex");
 
   await prisma.workspaceOAuthPending.create({

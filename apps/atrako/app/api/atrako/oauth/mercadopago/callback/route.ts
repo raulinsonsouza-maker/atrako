@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { upsertWorkspaceConnection } from "@/lib/atrako/workspace-connections";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
-  const hub = new URL("/config/conexoes/oauth-complete", request.nextUrl.origin);
+  const hub = new URL("/config/conexoes/oauth-complete", getPublicOrigin(request));
 
   if (!code || !state) {
     hub.searchParams.set("error", "oauth_missing");
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
 
   const redirectUri =
     pending.redirectUri ||
-    `${request.nextUrl.origin}/api/atrako/oauth/mercadopago/callback`;
+    `${getPublicOrigin(request)}/api/atrako/oauth/mercadopago/callback`;
 
   const res = await fetch("https://api.mercadopago.com/oauth/token", {
     method: "POST",

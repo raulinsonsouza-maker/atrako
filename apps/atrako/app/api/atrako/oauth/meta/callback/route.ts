@@ -7,6 +7,7 @@ import { loadMetaPlatformAppCredentials, MetaGraphError } from "@/lib/integratio
 import { selectMetaAdAccount } from "@/lib/integrations/meta/connection";
 import type { MetaAdsConnectionMetadata } from "@/lib/integrations/meta/types";
 import { oauthCompleteRedirect } from "@/lib/oauth/oauthCompleteRedirect";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 function hubRedirect(
   origin: string,
@@ -17,7 +18,7 @@ function hubRedirect(
 }
 
 export async function GET(request: NextRequest) {
-  const origin = request.nextUrl.origin;
+  const origin = getPublicOrigin(request);
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
   const error = request.nextUrl.searchParams.get("error");

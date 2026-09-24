@@ -3,6 +3,7 @@ import { randomBytes } from "crypto";
 import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 /** Inicia OAuth Instagram (Meta) centralizado no Atrako. */
 export async function GET(request: NextRequest) {
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
   const redirectUri =
     app?.credentials.redirectUri?.trim() ||
     process.env.INSTAGRAM_REDIRECT_URI?.trim() ||
-    `${request.nextUrl.origin}/api/atrako/oauth/instagram/callback`;
+    `${getPublicOrigin(request)}/api/atrako/oauth/instagram/callback`;
 
   if (!appId) {
     return NextResponse.json(

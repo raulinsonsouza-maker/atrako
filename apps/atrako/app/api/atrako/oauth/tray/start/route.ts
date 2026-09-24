@@ -7,6 +7,7 @@ import {
   buildTrayAuthorizeUrl,
   normalizeTrayStoreHost,
 } from "@/lib/integrations/tray/oauth";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 /**
  * Inicia OAuth Tray.
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
   const redirectUri =
     app.credentials.redirectUri?.trim() ||
     process.env.TRAY_REDIRECT_URI?.trim() ||
-    `${request.nextUrl.origin}/api/atrako/oauth/tray/callback`;
+    `${getPublicOrigin(request)}/api/atrako/oauth/tray/callback`;
 
   const nonce = randomBytes(16).toString("hex");
   const state = `${nonce}.${storeHost}`;

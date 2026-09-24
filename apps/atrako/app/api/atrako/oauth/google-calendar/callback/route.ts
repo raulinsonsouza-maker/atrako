@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
   const err = request.nextUrl.searchParams.get("error");
 
-  const hub = new URL("/config/conexoes/oauth-complete", request.nextUrl.origin);
+  const hub = new URL("/config/conexoes/oauth-complete", getPublicOrigin(request));
 
   if (err || !code || !state) {
     hub.searchParams.set("error", "google_oauth");

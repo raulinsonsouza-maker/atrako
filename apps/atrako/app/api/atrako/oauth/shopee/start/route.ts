@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { buildShopeeAuthPartnerUrl } from "@/lib/integrations/shopee/oauth";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 /** Inicia OAuth Shopee (auth_partner assinado). */
 export async function GET(request: NextRequest) {
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
   const redirectUri =
     app?.credentials.redirectUri?.trim() ||
     process.env.SHOPEE_REDIRECT_URI?.trim() ||
-    `${request.nextUrl.origin}/api/atrako/oauth/shopee/callback`;
+    `${getPublicOrigin(request)}/api/atrako/oauth/shopee/callback`;
 
   if (!app?.enabled || !partnerId || !partnerKey) {
     return NextResponse.json(

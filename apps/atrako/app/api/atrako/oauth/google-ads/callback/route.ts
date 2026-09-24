@@ -3,6 +3,7 @@ import { GoogleAdsApi } from "google-ads-api";
 import { prisma } from "@/lib/db";
 import { upsertWorkspaceConnection } from "@/lib/atrako/workspace-connections";
 import { PLATAFORMA_GOOGLE_ADS, upsertContaPlataforma } from "@/lib/repositories/contasRepository";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
   const oauthError = request.nextUrl.searchParams.get("error");
-  const hub = new URL("/config/conexoes/oauth-complete", request.nextUrl.origin);
+  const hub = new URL("/config/conexoes/oauth-complete", getPublicOrigin(request));
 
   if (oauthError) {
     hub.searchParams.set("error", oauthError);
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
     process.env.GOOGLE_CLIENT_SECRET?.trim();
   const redirectUri =
     pending.redirectUri ||
-    `${request.nextUrl.origin}/api/atrako/oauth/google-ads/callback`;
+    `${getPublicOrigin(request)}/api/atrako/oauth/google-ads/callback`;
 
   await prisma.workspaceOAuthPending.delete({ where: { id: pending.id } }).catch(() => null);
 

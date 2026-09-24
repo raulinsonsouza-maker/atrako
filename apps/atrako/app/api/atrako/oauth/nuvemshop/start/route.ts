@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { buildNuvemshopAuthorizeUrl } from "@/lib/integrations/nuvemshop/oauth";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 /** Inicia OAuth Nuvemshop (authorize por app id — sem domínio da loja). */
 export async function GET(request: NextRequest) {
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
   const redirectUri =
     app.credentials.redirectUri?.trim() ||
     process.env.NUVEMSHOP_REDIRECT_URI?.trim() ||
-    `${request.nextUrl.origin}/api/atrako/oauth/nuvemshop/callback`;
+    `${getPublicOrigin(request)}/api/atrako/oauth/nuvemshop/callback`;
 
   const state = randomBytes(16).toString("hex");
   await prisma.workspaceOAuthPending.create({

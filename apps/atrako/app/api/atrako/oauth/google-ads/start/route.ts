@@ -3,6 +3,7 @@ import { randomBytes } from "crypto";
 import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 const GOOGLE_OAUTH_AUTH = "https://accounts.google.com/o/oauth2/v2/auth";
 const ADS_SCOPE = "https://www.googleapis.com/auth/adwords";
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
   const redirectUri =
     app.credentials.redirectUri?.trim() ||
     process.env.GOOGLE_ADS_REDIRECT_URI?.trim() ||
-    `${request.nextUrl.origin}/api/atrako/oauth/google-ads/callback`;
+    `${getPublicOrigin(request)}/api/atrako/oauth/google-ads/callback`;
 
   if (!clientId) {
     return NextResponse.json(

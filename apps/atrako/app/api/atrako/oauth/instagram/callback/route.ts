@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { upsertWorkspaceConnection } from "@/lib/atrako/workspace-connections";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
-  const hub = new URL("/config/conexoes/oauth-complete", request.nextUrl.origin);
+  const hub = new URL("/config/conexoes/oauth-complete", getPublicOrigin(request));
 
   if (!code || !state) {
     hub.searchParams.set("error", "oauth_missing");
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
     process.env.SYMBIUS_META_APP_SECRET?.trim();
   const redirectUri =
     pending.redirectUri ||
-    `${request.nextUrl.origin}/api/atrako/oauth/instagram/callback`;
+    `${getPublicOrigin(request)}/api/atrako/oauth/instagram/callback`;
 
   await prisma.workspaceOAuthPending.delete({ where: { id: pending.id } }).catch(() => null);
 

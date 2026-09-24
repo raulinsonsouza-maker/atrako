@@ -8,6 +8,7 @@ import {
   DEFAULT_SHOPIFY_SCOPES,
   normalizeShopifyShop,
 } from "@/lib/integrations/shopify/oauth";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 /**
  * Inicia OAuth Shopify.
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
   const redirectUri =
     app.credentials.redirectUri?.trim() ||
     process.env.SHOPIFY_REDIRECT_URI?.trim() ||
-    `${request.nextUrl.origin}/api/atrako/oauth/shopify/callback`;
+    `${getPublicOrigin(request)}/api/atrako/oauth/shopify/callback`;
 
   const scopes =
     (typeof app.credentials.scopes === "string" && app.credentials.scopes.trim()) ||

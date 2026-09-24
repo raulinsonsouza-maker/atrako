@@ -3,12 +3,13 @@ import { prisma } from "@/lib/db";
 import { upsertWorkspaceConnection } from "@/lib/atrako/workspace-connections";
 import { exchangeShopeeCode } from "@/lib/integrations/shopee/oauth";
 import { syncShopeeWorkspace } from "@/lib/integrations/shopee/sync";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const shopId = request.nextUrl.searchParams.get("shop_id");
   const state = request.nextUrl.searchParams.get("state");
-  const hub = new URL("/config/conexoes/oauth-complete", request.nextUrl.origin);
+  const hub = new URL("/config/conexoes/oauth-complete", getPublicOrigin(request));
 
   if (!code || !shopId || !state) {
     hub.searchParams.set("error", "oauth_missing");

@@ -4,11 +4,12 @@ import { upsertWorkspaceConnection } from "@/lib/atrako/workspace-connections";
 import { exchangeNuvemshopCode } from "@/lib/integrations/nuvemshop/oauth";
 import { registerNuvemshopWebhooks } from "@/lib/integrations/nuvemshop/webhooks";
 import { syncNuvemshopWorkspace } from "@/lib/integrations/nuvemshop/sync";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
-  const hub = new URL("/config/conexoes/oauth-complete", request.nextUrl.origin);
+  const hub = new URL("/config/conexoes/oauth-complete", getPublicOrigin(request));
 
   if (!code || !state) {
     hub.searchParams.set("error", "oauth_missing");
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest) {
       storeId,
       accessToken: token.access_token,
       clientId,
-      callbackBaseUrl: request.nextUrl.origin,
+      callbackBaseUrl: getPublicOrigin(request),
       workspaceId: pending.clienteId,
     });
   } catch (err) {

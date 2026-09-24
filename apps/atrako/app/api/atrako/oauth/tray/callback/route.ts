@@ -8,13 +8,14 @@ import {
   parseTrayDateTime,
 } from "@/lib/integrations/tray/oauth";
 import { syncTrayWorkspace } from "@/lib/integrations/tray/sync";
+import { getPublicOrigin } from "@/lib/http/public-origin";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const store = request.nextUrl.searchParams.get("store");
   const apiAddressRaw = request.nextUrl.searchParams.get("api_address");
   const state = request.nextUrl.searchParams.get("state");
-  const hub = new URL("/config/conexoes/oauth-complete", request.nextUrl.origin);
+  const hub = new URL("/config/conexoes/oauth-complete", getPublicOrigin(request));
 
   if (!code || !apiAddressRaw || !state) {
     hub.searchParams.set("error", "oauth_missing");

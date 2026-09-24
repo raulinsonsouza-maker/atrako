@@ -66,21 +66,10 @@ export function verifyOauthState(
 }
 
 /**
- * Origem pública da aplicação, confiável atrás de proxy (produção Replit).
- * `req.nextUrl.origin` resolve para o bind local (ex: https://0.0.0.0:5000)
- * em produção — usamos x-forwarded-host/proto para obter o domínio real.
+ * Origem pública da aplicação, confiável atrás de proxy (produção Replit / Traefik).
+ * @deprecated Prefer `@/lib/http/public-origin` — reexport para compat LinkedIn.
  */
-export function getPublicOrigin(req: { headers: Headers; nextUrl: { origin: string } }): string {
-  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
-  if (host && !host.startsWith("0.0.0.0") && !host.startsWith("localhost") && !host.startsWith("127.0.0.1")) {
-    const proto = req.headers.get("x-forwarded-proto") ?? "https";
-    return `${proto.split(",")[0].trim()}://${host.split(",")[0].trim()}`;
-  }
-  if (process.env.REPLIT_DOMAINS) {
-    return `https://${process.env.REPLIT_DOMAINS.split(",")[0].trim()}`;
-  }
-  return req.nextUrl.origin;
-}
+export { getPublicOrigin } from "@/lib/http/public-origin";
 
 export async function buildLinkedinAuthUrl(redirectUri: string, state: string): Promise<string | null> {
   const creds = await getLinkedinAppCredentials();

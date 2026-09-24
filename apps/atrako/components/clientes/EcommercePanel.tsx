@@ -1,19 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { Store } from "lucide-react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2, RefreshCcw, Store } from "lucide-react";
+import { PillSelect } from "@/components/ui/pill-select";
 
 type EcommerceResponse = {
   provider: string;
   connected: boolean;
   available: boolean;
   storeLabel: string | null;
+  catalogCount?: number;
+  providers?: {
+    WOOCOMMERCE: { connected: boolean; label: string | null };
+    SHOPIFY: { connected: boolean; label: string | null };
+    TRAY: { connected: boolean; label: string | null };
+    NUVEMSHOP: { connected: boolean; label: string | null };
+  };
   kpis: {
     orders: number;
     gmvCents: number;
     avgTicketCents: number;
     withPhonePct: number;
+    products?: number;
   };
   orders: Array<{
     id: string;
@@ -27,6 +37,7 @@ type EcommerceResponse = {
     contactId: string | null;
     leadId: string | null;
     occurredAt: string | null;
+    provider?: string;
   }>;
 };
 
@@ -37,6 +48,14 @@ function formatBrl(cents: number) {
   });
 }
 
+function providerLabel(p: string | undefined) {
+  if (p === "SHOPIFY") return "Shopify";
+  if (p === "TRAY") return "Tray";
+  if (p === "NUVEMSHOP") return "Nuvemshop";
+  if (p === "WOOCOMMERCE") return "WooCommerce";
+  return p || "—";
+}
+
 export function EcommercePanel({
   clienteId,
   dateRange,
@@ -44,11 +63,15 @@ export function EcommercePanel({
   clienteId: string;
   dateRange: { from: string; to: string };
 }) {
+  const qc = useQueryClient();
+  const [provider, setProvider] = useState("ALL");
+  const [syncing, setSyncing] = useState(false);
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["ecommerce", clienteId, dateRange.from, dateRange.to],
+    queryKey: ["ecommerce", clienteId, provider, dateRange.from, dateRange.to],
     queryFn: async () => {
       const params = new URLSearchParams({
-        provider: "WOOCOMMERCE",
+        provider,
         from: dateRange.from,
         to: dateRange.to,
       });
@@ -58,6 +81,48 @@ export function EcommercePanel({
     },
     enabled: !!clienteId,
   });
+
+  async function syncShopify() {
+    setSyncing(true);
+    try {
+      await fetch("/api/atrako/shopify/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId: clienteId }),
+      });
+      await qc.invalidateQueries({ queryKey: ["ecommerce", clienteId] });
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  async function syncTray() {
+    setSyncing(true);
+    try {
+      await fetch("/api/atrako/tray/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId: clienteId }),
+      });
+      await qc.invalidateQueries({ queryKey: ["ecommerce", clienteId] });
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  async function syncNuvemshop() {
+    setSyncing(true);
+    try {
+      await fetch("/api/atrako/nuvemshop/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId: clienteId }),
+      });
+      await qc.invalidateQueries({ queryKey: ["ecommerce", clienteId] });
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -81,7 +146,8 @@ export function EcommercePanel({
         <Store className="mx-auto h-8 w-8 text-[var(--muted-foreground)]" strokeWidth={1.5} />
         <p className="mt-3 type-body text-[var(--foreground)]">Loja não conectada</p>
         <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
-          Conecte o WooCommerce em Integrações para ver pedidos e GMV aqui.
+          Conecte Shopify, Tray, Nuvemshop ou WooCommerce em Integrações para ver pedidos e GMV
+          aqui.
         </p>
         <Link
           href={`/config/conexoes?workspaceId=${clienteId}`}
@@ -95,18 +161,80 @@ export function EcommercePanel({
 
   return (
     <div className="space-y-4">
-      {data.storeLabel ? (
-        <p className="type-fine-print text-[var(--muted-foreground)]">
-          {data.storeLabel} · WooCommerce
-        </p>
-      ) : null}
+      <div className="flex flex-wrap items-center gap-3">
+        <PillSelect
+          size="toolbar"
+          value={provider}
+          onChange={setProvider}
+          options={[
+            { value: "ALL", label: "Todas as lojas" },
+            { value: "SHOPIFY", label: "Shopify" },
+            { value: "TRAY", label: "Tray" },
+            { value: "NUVEMSHOP", label: "Nuvemshop" },
+            { value: "WOOCOMMERCE", label: "WooCommerce" },
+          ]}
+          aria-label="Provedor e-commerce"
+        />
+        {data.storeLabel ? (
+          <p className="type-fine-print text-[var(--muted-foreground)]">{data.storeLabel}</p>
+        ) : null}
+        {data.providers?.SHOPIFY?.connected ? (
+          <button
+            type="button"
+            onClick={() => syncShopify()}
+            disabled={syncing}
+            className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] border border-[var(--border)] px-3 py-1.5 type-fine-print text-[var(--foreground)] active:scale-95 disabled:opacity-50"
+          >
+            {syncing ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <RefreshCcw className="h-3.5 w-3.5" />
+            )}
+            Sincronizar Shopify
+          </button>
+        ) : null}
+        {data.providers?.TRAY?.connected ? (
+          <button
+            type="button"
+            onClick={() => syncTray()}
+            disabled={syncing}
+            className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] border border-[var(--border)] px-3 py-1.5 type-fine-print text-[var(--foreground)] active:scale-95 disabled:opacity-50"
+          >
+            {syncing ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <RefreshCcw className="h-3.5 w-3.5" />
+            )}
+            Sincronizar Tray
+          </button>
+        ) : null}
+        {data.providers?.NUVEMSHOP?.connected ? (
+          <button
+            type="button"
+            onClick={() => syncNuvemshop()}
+            disabled={syncing}
+            className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] border border-[var(--border)] px-3 py-1.5 type-fine-print text-[var(--foreground)] active:scale-95 disabled:opacity-50"
+          >
+            {syncing ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <RefreshCcw className="h-3.5 w-3.5" />
+            )}
+            Sincronizar Nuvemshop
+          </button>
+        ) : null}
+      </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {[
           { label: "Pedidos", value: String(data.kpis.orders) },
           { label: "GMV", value: formatBrl(data.kpis.gmvCents) },
           { label: "Ticket médio", value: formatBrl(data.kpis.avgTicketCents) },
           { label: "Com telefone", value: `${data.kpis.withPhonePct}%` },
+          {
+            label: "Produtos",
+            value: String(data.kpis.products ?? data.catalogCount ?? 0),
+          },
         ].map((kpi) => (
           <div
             key={kpi.label}
@@ -138,6 +266,7 @@ export function EcommercePanel({
               <thead>
                 <tr className="border-b border-[var(--border)] text-left text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
                   <th className="px-4 py-3 font-semibold">Pedido</th>
+                  <th className="px-4 py-3 font-semibold">Loja</th>
                   <th className="px-4 py-3 font-semibold">Comprador</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
                   <th className="px-4 py-3 font-semibold text-right">Valor</th>
@@ -157,6 +286,9 @@ export function EcommercePanel({
                           Lead
                         </Link>
                       ) : null}
+                    </td>
+                    <td className="px-4 py-3 text-[var(--muted-foreground)]">
+                      {providerLabel(order.provider)}
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-[var(--foreground)]">

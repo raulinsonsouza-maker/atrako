@@ -13,6 +13,8 @@
  * - Mercado Livre: https://developers.mercadolivre.com.br/pt_br/guia-para-produtos
  * - Google Ads: https://developers.google.com/google-ads/api
  * - WooCommerce: https://woocommerce.github.io/woocommerce-rest-api-docs/
+ * - Shopify: https://shopify.dev/docs/api/admin-graphql/latest
+ * - Shopee: https://open.shopee.com/developer-guide/4
  */
 
 export { META_GRAPH_VERSION, metaGraphGet, metaGraphUrl } from "./meta/graph";
@@ -31,3 +33,38 @@ export { refreshMarketplaceSellerSnapshot } from "./mercadolivre/insights";
 export { wcFetch, validateWooCredentials } from "./woocommerce/client";
 export { getWooOrder } from "./woocommerce/orders";
 export { ingestWooCommerceOrder } from "./woocommerce/ingest-order";
+export {
+  normalizeShopifyShop,
+  buildShopifyAuthorizeUrl,
+  exchangeShopifyAccessToken,
+} from "./shopify/oauth";
+export { shopifyGraphql, resolveShopifyConnection } from "./shopify/client";
+export { ingestShopifyHubOrder } from "./shopify/ingest-order";
+export { syncShopifyWorkspace } from "./shopify/sync";
+export { verifyShopifyWebhookHmac } from "./shopify/webhooks";
+export { buildShopeeAuthPartnerUrl, exchangeShopeeCode } from "./shopee/oauth";
+export { shopeeFetch } from "./shopee/client";
+export { ingestShopeeOrder } from "./shopee/ingest-order";
+export { syncShopeeWorkspace } from "./shopee/sync";
+export {
+  extractShopeePushOrderSn,
+  isShopeeOrderPush,
+} from "./shopee/webhooks";
+export {
+  buildTrayAuthorizeUrl,
+  exchangeTrayCode,
+  normalizeTrayStoreHost,
+} from "./tray/oauth";
+export { trayFetch } from "./tray/client";
+export { ingestTrayHubOrder } from "./tray/ingest-order";
+export { syncTrayWorkspace } from "./tray/sync";
+export { parseTrayNotification, isTrayOrderNotification } from "./tray/webhooks";
+export {
+  buildNuvemshopAuthorizeUrl,
+  exchangeNuvemshopCode,
+} from "./nuvemshop/oauth";
+export { nuvemshopFetch } from "./nuvemshop/client";
+export { ingestNuvemshopHubOrder } from "./nuvemshop/ingest-order";
+export { syncNuvemshopWorkspace } from "./nuvemshop/sync";
+export { registerNuvemshopWebhooks, isNuvemshopOrderEvent } from "./nuvemshop/webhooks";
+

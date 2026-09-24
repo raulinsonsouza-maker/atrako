@@ -9,12 +9,17 @@ export type PlatformAppFieldKey =
   | "clientSecret"
   | "developerToken"
   | "loginConfigId"
+  | "whatsappLoginConfigId"
   | "redirectUri"
   | "webhookSecret"
   | "webhookVerifyToken"
   | "serviceAccountJson"
   | "refreshToken"
-  | "loginCustomerId";
+  | "loginCustomerId"
+  | "scopes"
+  | "apiVersion"
+  | "apiBaseUrl"
+  | "partnerKeyExpiresAt";
 
 export type PlatformAppField = {
   key: PlatformAppFieldKey;
@@ -61,9 +66,14 @@ export const PLATFORM_APP_CATALOG: Record<PlatformAppProvider, PlatformAppCatalo
       },
       {
         key: "loginConfigId",
-        label: "Login Config ID",
-        hint: "Facebook Login for Business → Configuration",
+        label: "Login Config ID (Ads)",
+        hint: "Facebook Login for Business — variação Ads / System User",
         requiredForReady: true,
+      },
+      {
+        key: "whatsappLoginConfigId",
+        label: "Login Config ID (WhatsApp)",
+        hint: "Facebook Login for Business → Embedded Signup (WhatsApp)",
       },
       {
         key: "webhookVerifyToken",
@@ -223,6 +233,137 @@ export const PLATFORM_APP_CATALOG: Record<PlatformAppProvider, PlatformAppCatalo
     description: "Sem app OAuth central — cada dealer informa a loja em Config → Conexões.",
     fields: [{ key: "label", label: "Nome de exibição" }],
   },
+  SHOPIFY: {
+    provider: "SHOPIFY",
+    title: "Shopify",
+    description: "OAuth Admin API — pedidos, clientes e produtos no CRM, dashboard e financeiro.",
+    fields: [
+      { key: "label", label: "Nome de exibição" },
+      {
+        key: "clientId",
+        label: "API key (Client ID)",
+        hint: "Shopify Partners → App → Client ID",
+        requiredForReady: true,
+      },
+      {
+        key: "clientSecret",
+        label: "API secret key",
+        hint: "Usado no OAuth e HMAC de webhooks",
+        secret: true,
+        requiredForReady: true,
+      },
+      {
+        key: "redirectUri",
+        label: "Redirect URI",
+        hint: "https://atrako.com.br/api/atrako/oauth/shopify/callback",
+      },
+      {
+        key: "scopes",
+        label: "Scopes",
+        hint: "read_orders,read_products,read_customers,read_fulfillments",
+      },
+      {
+        key: "apiVersion",
+        label: "API version",
+        hint: "2026-07",
+      },
+    ],
+  },
+  SHOPEE: {
+    provider: "SHOPEE",
+    title: "Shopee",
+    description: "OAuth Open Platform V2 — pedidos no CRM, Marketplaces e financeiro.",
+    fields: [
+      { key: "label", label: "Nome de exibição" },
+      {
+        key: "clientId",
+        label: "Partner ID",
+        hint: "Shopee Open Platform → App → Partner ID",
+        requiredForReady: true,
+      },
+      {
+        key: "clientSecret",
+        label: "Partner Key",
+        hint: "HMAC + OAuth — nunca no frontend; validade típica 180 dias",
+        secret: true,
+        requiredForReady: true,
+      },
+      {
+        key: "redirectUri",
+        label: "Redirect URI",
+        hint: "https://atrako.com.br/api/atrako/oauth/shopee/callback",
+      },
+      {
+        key: "apiBaseUrl",
+        label: "API base URL",
+        hint: "https://partner.shopeemobile.com (ou partner.test-stable.shopeemobile.com)",
+      },
+      {
+        key: "partnerKeyExpiresAt",
+        label: "Partner Key expira em",
+        hint: "ISO date (YYYY-MM-DD) — alerta no admin",
+      },
+    ],
+  },
+  TRAY: {
+    provider: "TRAY",
+    title: "Tray",
+    description:
+      "OAuth Tray Commerce — pedidos no CRM, E-commerce e financeiro. Webhook app-level cadastrado na Tray.",
+    fields: [
+      { key: "label", label: "Nome de exibição" },
+      {
+        key: "clientId",
+        label: "Consumer Key",
+        hint: "Enviado por e-mail após cadastro do app parceiro",
+        requiredForReady: true,
+      },
+      {
+        key: "clientSecret",
+        label: "Consumer Secret",
+        hint: "Nunca no frontend",
+        secret: true,
+        requiredForReady: true,
+      },
+      {
+        key: "redirectUri",
+        label: "URL de callback",
+        hint: "https://atrako.com.br/api/atrako/oauth/tray/callback",
+      },
+    ],
+  },
+  NUVEMSHOP: {
+    provider: "NUVEMSHOP",
+    title: "Nuvemshop",
+    description:
+      "OAuth Nuvemshop/Tiendanube — pedidos no CRM, E-commerce e financeiro.",
+    fields: [
+      { key: "label", label: "Nome de exibição" },
+      {
+        key: "clientId",
+        label: "App ID (Client ID)",
+        hint: "DevHub Nuvemshop → Meu aplicativo",
+        requiredForReady: true,
+      },
+      {
+        key: "clientSecret",
+        label: "Client Secret",
+        hint: "Nunca no frontend",
+        secret: true,
+        requiredForReady: true,
+      },
+      {
+        key: "redirectUri",
+        label: "Redirect URI",
+        hint: "https://atrako.com.br/api/atrako/oauth/nuvemshop/callback",
+      },
+      {
+        key: "scopes",
+        label: "Scopes",
+        hint: "read_orders,read_products,read_customers",
+      },
+    ],
+  },
 };
 
 export function platformAppCatalogList(): PlatformAppCatalogEntry[] {
@@ -235,6 +376,7 @@ export type PlatformAppReadinessFlags = {
   hasClientSecret: boolean;
   hasDeveloperToken: boolean;
   hasLoginConfigId: boolean;
+  hasWhatsappLoginConfigId?: boolean;
   hasWebhookSecret: boolean;
   hasServiceAccount: boolean;
   hasRefreshToken: boolean;
@@ -296,6 +438,11 @@ export function platformAppStatus(
         return Boolean(flags.hasLoginCustomerId);
       case "loginConfigId":
         return flags.hasLoginConfigId;
+      case "scopes":
+      case "apiVersion":
+      case "apiBaseUrl":
+      case "partnerKeyExpiresAt":
+        return true;
       default:
         return true;
     }
@@ -354,6 +501,12 @@ export function credentialChecklist(
           break;
         case "loginCustomerId":
           ok = Boolean(flags.hasLoginCustomerId);
+          break;
+        case "scopes":
+        case "apiVersion":
+        case "apiBaseUrl":
+        case "partnerKeyExpiresAt":
+          ok = true;
           break;
         default:
           ok = false;

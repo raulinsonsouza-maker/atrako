@@ -119,6 +119,7 @@ export async function GET(request: NextRequest) {
       connectedAt: new Date().toISOString(),
       scope: token.scope ?? null,
       accessibleCustomerIds,
+      customerId: singleCid ?? null,
       needsAccountPick: accessibleCustomerIds.length > 1,
     },
   });

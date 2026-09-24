@@ -32,6 +32,12 @@ const SOURCE_LABELS: Record<string, string> = {
   crm: "CRM",
   whatsapp: "WhatsApp",
   forms: "Formulários",
+  shopify: "Shopify",
+  woocommerce: "WooCommerce",
+  mercadolivre: "Mercado Livre",
+  shopee: "Shopee",
+  tray: "Tray",
+  nuvemshop: "Nuvemshop",
 };
 
 const fieldClass =

@@ -127,7 +127,7 @@ export function MarketplacePanel({
       if (!res.ok) throw new Error("Falha ao carregar marketplaces");
       return res.json() as Promise<MarketplaceResponse>;
     },
-    enabled: !!clienteId && sub === "ml",
+    enabled: !!clienteId && (sub === "ml" || sub === "shopee"),
   });
 
   return (
@@ -149,7 +149,7 @@ export function MarketplacePanel({
         ))}
       </div>
 
-      {sub !== "ml" ? (
+      {sub === "magalu" ? (
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8 text-center">
           <Store className="mx-auto h-8 w-8 text-[var(--muted-foreground)]" strokeWidth={1.5} />
           <p className="mt-3 type-body text-[var(--foreground)]">{SUB_LABELS[sub]}</p>
@@ -163,12 +163,14 @@ export function MarketplacePanel({
         </div>
       ) : isError ? (
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8 text-center type-fine-print text-red-400">
-          Não foi possível carregar os dados do Mercado Livre.
+          Não foi possível carregar os dados de {SUB_LABELS[sub]}.
         </div>
       ) : !data?.connected ? (
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8 text-center">
           <Store className="mx-auto h-8 w-8 text-[var(--muted-foreground)]" strokeWidth={1.5} />
-          <p className="mt-3 type-body text-[var(--foreground)]">Mercado Livre não conectado</p>
+          <p className="mt-3 type-body text-[var(--foreground)]">
+            {SUB_LABELS[sub]} não conectado
+          </p>
           <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
             Conecte a conta do vendedor para importar pedidos, produtos e leads.
           </p>
@@ -176,7 +178,7 @@ export function MarketplacePanel({
             href={`/config/conexoes?workspaceId=${clienteId}`}
             className="mt-4 inline-flex rounded-[var(--radius-xs)] bg-[var(--primary)] px-4 py-2 type-button-utility text-[var(--primary-foreground)] active:scale-95"
           >
-            Conectar Mercado Livre
+            Conectar {SUB_LABELS[sub]}
           </Link>
         </div>
       ) : (
@@ -186,7 +188,7 @@ export function MarketplacePanel({
             <Link href="/crm" className="text-[var(--primary)] hover:underline">
               CRM
             </Link>{" "}
-            com origem <span className="text-[var(--foreground)]">Mercado Livre</span>
+            com origem <span className="text-[var(--foreground)]">{SUB_LABELS[sub]}</span>
             {data.kpis.recoverable > 0
               ? ` — ${data.kpis.recoverable} com telefone elegíveis a WhatsApp/promoções.`
               : "."}

@@ -3,6 +3,8 @@
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { AppPage } from "@/components/layout/AppPage";
+import { BackLink } from "@/components/ui/back-link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PillSelect } from "@/components/ui/pill-select";
 import { DefaultPanel } from "@/components/clientes/DefaultPanel";
@@ -33,7 +35,7 @@ import {
   ResponsiveContainer,
   ComposedChart,
 } from "recharts";
-import { ArrowLeft, ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, ChevronLeft, ChevronRight, SlidersHorizontal, BarChart3, Play, TrendingUp, X, Wallet, AlertTriangle, Zap, Target, Film, MousePointerClick, Eye, EyeOff, CheckCircle2, Circle, Trash2, Flag, Clock, ChevronDown, RefreshCw } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, ChevronLeft, ChevronRight, SlidersHorizontal, BarChart3, Play, TrendingUp, X, Wallet, AlertTriangle, Zap, Target, Film, MousePointerClick, Eye, EyeOff, CheckCircle2, Circle, Trash2, Flag, Clock, ChevronDown, RefreshCw } from "lucide-react";
 import { upgradeFbCdnImageUrl } from "@/lib/utils";
 
 /* ─── data fetchers (unchanged) ─── */
@@ -918,8 +920,82 @@ function formatPercentage(value: number) {
   return `${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}%`;
 }
 
+  const channelTabs = socialMediaOnly ? (
+    <div className="flex items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--card)] p-1">
+      <span className="rounded-lg bg-[var(--primary)] px-3 py-2 text-xs font-semibold uppercase tracking-wider text-[var(--primary-foreground)] sm:px-4">
+        Social Media
+      </span>
+    </div>
+  ) : (
+    <div className="flex flex-wrap items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--card)] p-1">
+      {([
+        "geral",
+        "meta",
+        "google",
+        ...(hasLinkedin ? ["linkedin"] : []),
+        ...(isMiguelImoveis(cliente) ? ["imoveis"] : []),
+        ...(hasCrm ? ["crm"] : []),
+        "marketplaces",
+        "ecommerce",
+      ] as const).map((c) => (
+        <button
+          key={c}
+          type="button"
+          onClick={() => {
+            setCanal(c as typeof canal);
+            setSubView("dados");
+            setAnalystOpen(false);
+            setSaldoVisible(false);
+            if (c === "marketplaces") setMarketplaceSub("ml");
+          }}
+          className={`rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-all sm:px-4 ${
+            canal === c
+              ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
+              : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
+          }`}
+        >
+          {c === "geral" ? "Geral" : c === "meta" ? "META" : c === "google" ? "Google" : c === "linkedin" ? "LinkedIn" : c === "imoveis" ? "Imóveis" : c === "crm" ? "CRM" : c === "marketplaces" ? "Marketplaces" : c === "ecommerce" ? "E-commerce" : "Lead Scoring"}
+        </button>
+      ))}
+      {hotelPilotEnabled && (
+        <button
+          type="button"
+          onClick={() => {
+            setCanal("geral");
+            setSubView("dados");
+            setAnalystOpen(true);
+          }}
+          className={`rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-all sm:px-4 ${
+            analystOpen
+              ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
+              : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
+          }`}
+        >
+          InPilot
+        </button>
+      )}
+    </div>
+  );
+
   return (
-    <main className="space-y-8 pb-12">
+    <AppPage
+      title={
+        <div className="min-w-0 space-y-2">
+          {!portalMode && (
+            <BackLink href="/clientes">Central de clientes</BackLink>
+          )}
+          <div>
+            <h1 className="type-tagline text-[var(--ink)]">
+              {cliente?.nome ?? "…"}
+            </h1>
+            <p className="type-fine-print mt-0.5 text-[var(--muted-foreground)]">
+              Monitoramento de performance do projeto
+            </p>
+          </div>
+        </div>
+      }
+      actions={channelTabs}
+    >
       {/* ── Fullscreen loading overlay ── */}
       {loaderVisible && (
         <div
@@ -951,89 +1027,7 @@ function formatPercentage(value: number) {
 
       {!portalMode && !socialMediaOnly ? <MetaConnectionBanner workspaceId={id} /> : null}
 
-      {/* ── Breadcrumb + Title + Channel tabs ── */}
-      <section className="space-y-5">
-        {!portalMode && (
-          <Link
-            href="/clientes"
-            className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Central de clientes
-          </Link>
-        )}
-
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[var(--primary)]">
-              <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
-              Acompanhamento estratégico
-            </p>
-            <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-[var(--foreground)] sm:text-3xl">
-              {cliente?.nome ?? "…"}
-            </h1>
-            <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-              Monitoramento de performance do projeto
-            </p>
-          </div>
-
-          {socialMediaOnly ? (
-            <div className="flex items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--card)] p-1">
-              <span className="rounded-lg bg-[var(--primary)] px-3 py-2 text-xs font-semibold uppercase tracking-wider text-[var(--primary-foreground)] shadow-md shadow-[var(--primary)]/20 sm:px-4">
-                Social Media
-              </span>
-            </div>
-          ) : (
-            <div className="flex flex-wrap items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--card)] p-1">
-              {([
-                "geral",
-                "meta",
-                "google",
-                ...(hasLinkedin ? ["linkedin"] : []),
-                ...(isMiguelImoveis(cliente) ? ["imoveis"] : []),
-                ...(hasCrm ? ["crm"] : []),
-                "marketplaces",
-                "ecommerce",
-              ] as const).map((c) => (
-                <button
-                  key={c}
-                  onClick={() => {
-                    setCanal(c as typeof canal);
-                    setSubView("dados");
-                    setAnalystOpen(false);
-                    setSaldoVisible(false);
-                    if (c === "marketplaces") setMarketplaceSub("ml");
-                  }}
-                  className={`rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-all sm:px-4 ${
-                    canal === c
-                      ? "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-md shadow-[var(--primary)]/20"
-                      : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-                  }`}
-                >
-                  {c === "geral" ? "Geral" : c === "meta" ? "META" : c === "google" ? "Google" : c === "linkedin" ? "LinkedIn" : c === "imoveis" ? "Imóveis" : c === "crm" ? "CRM" : c === "marketplaces" ? "Marketplaces" : c === "ecommerce" ? "E-commerce" : "Lead Scoring"}
-                </button>
-              ))}
-              {hotelPilotEnabled && (
-                <button
-                  onClick={() => {
-                    setCanal("geral");
-                    setSubView("dados");
-                    setAnalystOpen(true);
-                  }}
-                  className={`rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-all sm:px-4 ${
-                    analystOpen
-                      ? "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-md shadow-[var(--primary)]/20"
-                      : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-                  }`}
-                >
-                  InPilot
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
-
+      <div className="flex min-h-0 flex-col gap-6">
       {/* ── Date filter + sub-aba Criativos / Análise de dados (Meta/Google) ── */}
       <div className="flex flex-col gap-2" ref={filterRef}>
         {/* Linha 1: Saldo chip (esquerda) + Filtro de data (direita) */}
@@ -1721,7 +1715,8 @@ function formatPercentage(value: number) {
           </CardContent>
         </Card>
       )}
-    </main>
+      </div>
+    </AppPage>
   );
 }
 

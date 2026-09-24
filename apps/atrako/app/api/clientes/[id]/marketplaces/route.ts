@@ -73,9 +73,19 @@ export async function GET(
     provider === "MERCADO_LIVRE"
       ? await getWorkspaceConnection(clienteId, "MERCADO_LIVRE")
       : null;
-  const connected = Boolean(mlConnection && mlConnection.status === "ACTIVE");
+  const shopeeConnection =
+    provider === "SHOPEE"
+      ? await getWorkspaceConnection(clienteId, "SHOPEE")
+      : null;
 
-  if (provider !== "MERCADO_LIVRE") {
+  const connected =
+    provider === "MERCADO_LIVRE"
+      ? Boolean(mlConnection && mlConnection.status === "ACTIVE")
+      : provider === "SHOPEE"
+        ? Boolean(shopeeConnection && shopeeConnection.status === "ACTIVE")
+        : false;
+
+  if (provider !== "MERCADO_LIVRE" && provider !== "SHOPEE") {
     return NextResponse.json(emptyPayload(provider));
   }
 
@@ -92,19 +102,21 @@ export async function GET(
       : {}),
   };
 
-  let sellerSnapshot = connected
-    ? await prisma.marketplaceSellerSnapshot.findUnique({
-        where: {
-          clienteId_provider: { clienteId, provider: "MERCADO_LIVRE" },
-        },
-      })
-    : null;
+  let sellerSnapshot =
+    connected && provider === "MERCADO_LIVRE"
+      ? await prisma.marketplaceSellerSnapshot.findUnique({
+          where: {
+            clienteId_provider: { clienteId, provider: "MERCADO_LIVRE" },
+          },
+        })
+      : null;
 
   const stale =
-    !sellerSnapshot ||
-    Date.now() - sellerSnapshot.capturedAt.getTime() > 6 * 60 * 60 * 1000;
+    provider === "MERCADO_LIVRE" &&
+    (!sellerSnapshot ||
+      Date.now() - sellerSnapshot.capturedAt.getTime() > 6 * 60 * 60 * 1000);
 
-  if (connected && (refreshSeller || stale)) {
+  if (provider === "MERCADO_LIVRE" && connected && (refreshSeller || stale)) {
     try {
       sellerSnapshot = await refreshMarketplaceSellerSnapshot(clienteId);
     } catch (err) {
@@ -248,7 +260,10 @@ export async function GET(
 
   const shippingMap = new Map<string, number>();
   for (const o of orders) {
-    const label = shippingLabel(o.shippingMode, o.logisticType);
+    const label =
+      provider === "MERCADO_LIVRE"
+        ? shippingLabel(o.shippingMode, o.logisticType)
+        : o.shippingStatus || o.shippingMode || "Envio";
     shippingMap.set(label, (shippingMap.get(label) ?? 0) + 1);
   }
   const byShipping = [...shippingMap.entries()]
@@ -297,7 +312,10 @@ export async function GET(
       shippingCostCents: o.shippingCostCents,
       netCents: o.netCents,
       currency: o.currency,
-      shippingLabel: shippingLabel(o.shippingMode, o.logisticType),
+      shippingLabel:
+        provider === "MERCADO_LIVRE"
+          ? shippingLabel(o.shippingMode, o.logisticType)
+          : o.shippingStatus || o.shippingMode || "Envio",
       shippingStatus: o.shippingStatus,
       buyerName: o.buyerName,
       buyerEmail: o.buyerEmail,

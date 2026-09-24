@@ -8,7 +8,7 @@ import { PLATAFORMA_GOOGLE_ADS, upsertContaPlataforma } from "@/lib/repositories
 
 /**
  * GET → redireciona para OAuth start (fluxo SaaS).
- * POST → opcional: colar refresh token / escolher CID após OAuth.
+ * POST → escolher CID após OAuth (usa refresh token já gravado na WC).
  */
 export async function GET(request: NextRequest) {
   const workspaceId = request.nextUrl.searchParams.get("workspaceId")?.trim();

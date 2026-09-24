@@ -14,6 +14,7 @@ let hubMetaCreds: {
   clientId?: string;
   clientSecret?: string;
   loginConfigId?: string;
+  whatsappLoginConfigId?: string;
   webhookSecret?: string;
   webhookVerifyToken?: string;
 } | null = null;
@@ -31,6 +32,10 @@ export async function loadMetaPlatformAppCredentials(): Promise<void> {
       clientId: app.credentials.clientId?.trim() || undefined,
       clientSecret: app.credentials.clientSecret?.trim() || undefined,
       loginConfigId: app.credentials.loginConfigId?.trim() || undefined,
+      whatsappLoginConfigId:
+        (typeof app.credentials.whatsappLoginConfigId === "string"
+          ? app.credentials.whatsappLoginConfigId.trim()
+          : "") || undefined,
       webhookSecret: app.credentials.webhookSecret?.trim() || undefined,
       webhookVerifyToken: app.credentials.webhookVerifyToken?.trim() || undefined,
     };

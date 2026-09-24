@@ -20,6 +20,8 @@ export type PlatformAppCredentials = {
   clientSecret?: string;
   developerToken?: string;
   loginConfigId?: string;
+  /** Facebook Login for Business — Embedded Signup (WhatsApp). */
+  whatsappLoginConfigId?: string;
   redirectUri?: string;
   webhookSecret?: string;
   webhookVerifyToken?: string;
@@ -27,6 +29,14 @@ export type PlatformAppCredentials = {
   serviceAccountJson?: string;
   refreshToken?: string;
   loginCustomerId?: string;
+  /** Shopify OAuth scopes (comma-separated). */
+  scopes?: string;
+  /** Shopify Admin API version, e.g. 2026-07. */
+  apiVersion?: string;
+  /** Shopee partner host, e.g. https://partner.shopeemobile.com */
+  apiBaseUrl?: string;
+  /** ISO date when Partner Key expires (admin ops). */
+  partnerKeyExpiresAt?: string;
   [key: string]: unknown;
 };
 
@@ -46,6 +56,7 @@ const ENV_SEED: Partial<
       process.env.SYMBIUS_IG_APP_SECRET?.trim() ||
       undefined,
     loginConfigId: process.env.META_LOGIN_CONFIG_ID?.trim() || undefined,
+    whatsappLoginConfigId: process.env.META_WHATSAPP_LOGIN_CONFIG_ID?.trim() || undefined,
     webhookVerifyToken: process.env.META_WEBHOOK_VERIFY_TOKEN?.trim() || undefined,
     webhookSecret:
       process.env.META_APP_SECRET?.trim() ||
@@ -116,6 +127,47 @@ const ENV_SEED: Partial<
   WOOCOMMERCE: () => ({
     label: "WooCommerce",
   }),
+  SHOPIFY: () => ({
+    label: "Shopify",
+    clientId: process.env.SHOPIFY_API_KEY?.trim() || process.env.SHOPIFY_CLIENT_ID?.trim() || undefined,
+    clientSecret:
+      process.env.SHOPIFY_API_SECRET?.trim() ||
+      process.env.SHOPIFY_CLIENT_SECRET?.trim() ||
+      undefined,
+    redirectUri: process.env.SHOPIFY_REDIRECT_URI?.trim() || undefined,
+    scopes:
+      process.env.SHOPIFY_SCOPES?.trim() ||
+      "read_orders,read_products,read_customers,read_fulfillments",
+    apiVersion: process.env.SHOPIFY_API_VERSION?.trim() || "2026-07",
+  }),
+  SHOPEE: () => ({
+    label: "Shopee",
+    clientId: process.env.SHOPEE_PARTNER_ID?.trim() || undefined,
+    clientSecret: process.env.SHOPEE_PARTNER_KEY?.trim() || undefined,
+    redirectUri: process.env.SHOPEE_REDIRECT_URI?.trim() || undefined,
+    apiBaseUrl:
+      process.env.SHOPEE_API_BASE_URL?.trim() || "https://partner.shopeemobile.com",
+    partnerKeyExpiresAt: process.env.SHOPEE_PARTNER_KEY_EXPIRES_AT?.trim() || undefined,
+  }),
+  TRAY: () => ({
+    label: "Tray",
+    clientId: process.env.TRAY_CONSUMER_KEY?.trim() || undefined,
+    clientSecret: process.env.TRAY_CONSUMER_SECRET?.trim() || undefined,
+    redirectUri:
+      process.env.TRAY_REDIRECT_URI?.trim() ||
+      "https://atrako.com.br/api/atrako/oauth/tray/callback",
+  }),
+  NUVEMSHOP: () => ({
+    label: "Nuvemshop",
+    clientId: process.env.NUVEMSHOP_CLIENT_ID?.trim() || undefined,
+    clientSecret: process.env.NUVEMSHOP_CLIENT_SECRET?.trim() || undefined,
+    redirectUri:
+      process.env.NUVEMSHOP_REDIRECT_URI?.trim() ||
+      "https://atrako.com.br/api/atrako/oauth/nuvemshop/callback",
+    scopes:
+      process.env.NUVEMSHOP_SCOPES?.trim() ||
+      "read_orders,read_products,read_customers",
+  }),
 };
 
 function hasAnyCredential(creds: PlatformAppCredentials): boolean {
@@ -129,7 +181,15 @@ export async function seedPlatformAppFromEnv(provider: PlatformAppProvider): Pro
   if (!seeder) return;
   const seeded = seeder();
   const { label, ...credentials } = seeded;
-  if (!hasAnyCredential(credentials) && provider !== "WOOCOMMERCE" && provider !== "TIKTOK") {
+  if (
+    !hasAnyCredential(credentials) &&
+    provider !== "WOOCOMMERCE" &&
+    provider !== "TIKTOK" &&
+    provider !== "SHOPIFY" &&
+    provider !== "SHOPEE" &&
+    provider !== "TRAY" &&
+    provider !== "NUVEMSHOP"
+  ) {
     await prisma.platformApp.create({
       data: {
         provider,
@@ -224,7 +284,16 @@ export async function resolvePlatformApp(provider: PlatformAppProvider): Promise
     if (!seeder) return null;
     const seeded = seeder();
     const { label, ...credentials } = seeded;
-    if (!hasAnyCredential(credentials) && provider !== "WOOCOMMERCE") return null;
+    if (
+      !hasAnyCredential(credentials) &&
+      provider !== "WOOCOMMERCE" &&
+      provider !== "SHOPIFY" &&
+      provider !== "SHOPEE" &&
+      provider !== "TRAY" &&
+      provider !== "NUVEMSHOP"
+    ) {
+      return null;
+    }
     return {
       provider,
       enabled: true,
@@ -293,12 +362,17 @@ export async function listPlatformAppsMasked() {
       hasClientSecret: Boolean(creds.clientSecret),
       hasDeveloperToken: Boolean(creds.developerToken),
       hasLoginConfigId: Boolean(creds.loginConfigId),
+      hasWhatsappLoginConfigId: Boolean(creds.whatsappLoginConfigId),
       hasWebhookSecret: Boolean(creds.webhookSecret || creds.webhookVerifyToken),
       hasServiceAccount: Boolean(creds.serviceAccountJson),
       hasRefreshToken: Boolean(creds.refreshToken),
       hasRedirectUri: Boolean(creds.redirectUri),
       hasLoginCustomerId: Boolean(creds.loginCustomerId),
       clientIdPreview: creds.clientId ? `${creds.clientId.slice(0, 6)}…` : null,
+      partnerKeyExpiresAt:
+        typeof creds.partnerKeyExpiresAt === "string"
+          ? creds.partnerKeyExpiresAt
+          : null,
       metadata: row.metadata,
       updatedAt: row.updatedAt.toISOString(),
     };

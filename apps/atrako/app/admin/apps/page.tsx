@@ -24,14 +24,28 @@ type AppRow = {
   hasClientSecret: boolean;
   hasDeveloperToken: boolean;
   hasLoginConfigId: boolean;
+  hasWhatsappLoginConfigId?: boolean;
   hasWebhookSecret: boolean;
   hasServiceAccount: boolean;
   hasRefreshToken: boolean;
   hasRedirectUri?: boolean;
   hasLoginCustomerId?: boolean;
   clientIdPreview: string | null;
+  partnerKeyExpiresAt?: string | null;
   updatedAt: string;
 };
+
+function partnerKeyExpiryBanner(apps: AppRow[] | undefined): string | null {
+  const shopee = apps?.find((a) => a.provider === "SHOPEE");
+  const raw = shopee?.partnerKeyExpiresAt?.trim();
+  if (!raw) return null;
+  const expires = new Date(raw);
+  if (Number.isNaN(expires.getTime())) return null;
+  const days = Math.ceil((expires.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+  if (days > 30) return null;
+  if (days < 0) return "Partner Key da Shopee expirada — renove em /admin/apps.";
+  return `Partner Key da Shopee expira em ${days} dia${days === 1 ? "" : "s"}.`;
+}
 
 const fieldClass =
   "h-11 w-full rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-3 type-body text-[var(--ink)] outline-none placeholder:text-[var(--ink-muted-48)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-focus)]";
@@ -43,6 +57,7 @@ function rowFlags(row: AppRow | undefined): PlatformAppReadinessFlags {
     hasClientSecret: Boolean(row?.hasClientSecret),
     hasDeveloperToken: Boolean(row?.hasDeveloperToken),
     hasLoginConfigId: Boolean(row?.hasLoginConfigId),
+    hasWhatsappLoginConfigId: Boolean(row?.hasWhatsappLoginConfigId),
     hasWebhookSecret: Boolean(row?.hasWebhookSecret),
     hasServiceAccount: Boolean(row?.hasServiceAccount),
     hasRefreshToken: Boolean(row?.hasRefreshToken),
@@ -135,6 +150,9 @@ export default function AdminAppsPage() {
     setForm({
       label: row?.label ?? catalog.title,
       enabled: row?.enabled === false ? "false" : "true",
+      ...(row?.partnerKeyExpiresAt
+        ? { partnerKeyExpiresAt: row.partnerKeyExpiresAt }
+        : {}),
     });
   }
 
@@ -160,6 +178,8 @@ export default function AdminAppsPage() {
         Boolean(form.clientSecret?.trim()) || Boolean(row?.hasClientSecret) || inherited,
       hasDeveloperToken: Boolean(form.developerToken?.trim()) || Boolean(row?.hasDeveloperToken),
       hasLoginConfigId: Boolean(form.loginConfigId?.trim()) || Boolean(row?.hasLoginConfigId),
+      hasWhatsappLoginConfigId:
+        Boolean(form.whatsappLoginConfigId?.trim()) || Boolean(row?.hasWhatsappLoginConfigId),
       hasWebhookSecret:
         Boolean(form.webhookSecret?.trim() || form.webhookVerifyToken?.trim()) ||
         Boolean(row?.hasWebhookSecret),
@@ -218,8 +238,15 @@ export default function AdminAppsPage() {
     return null;
   }
 
+  const shopeeKeyBanner = partnerKeyExpiryBanner(data?.apps);
+
   return (
     <AppPage title="Apps">
+      {shopeeKeyBanner ? (
+        <p className="mb-4 rounded-[var(--radius-xs)] border border-amber-200 bg-amber-50 px-4 py-3 type-fine-print text-amber-950">
+          {shopeeKeyBanner}
+        </p>
+      ) : null}
       {isLoading ? (
         <p className="type-body text-[var(--ink-muted-48)]">Carregando…</p>
       ) : isError ? (
@@ -296,6 +323,8 @@ export default function AdminAppsPage() {
                               ? row?.hasDeveloperToken
                               : field.key === "loginConfigId"
                                 ? row?.hasLoginConfigId
+                                : field.key === "whatsappLoginConfigId"
+                                  ? row?.hasWhatsappLoginConfigId
                                 : field.key === "webhookSecret" || field.key === "webhookVerifyToken"
                                   ? row?.hasWebhookSecret
                                   : field.key === "serviceAccountJson"

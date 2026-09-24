@@ -27,7 +27,7 @@ Conectar OAuth **não** navega a tab do hub. Padrão obrigatório para providers
 5. Hub: invalida `workspace-connections` (+ Meta status) e mostra banner.
 
 Helpers: `lib/oauth/openOAuthPopup.ts`, `lib/oauth/oauthCompleteRedirect.ts`, `hooks/useOAuthPopup.ts`.  
-Forms manuais (WhatsApp, Woo keys) continuam inline — sem popup.
+Forms manuais só onde a plataforma exige chave (ex.: WooCommerce). WhatsApp e Ads: só OAuth oficial (popup). WhatsApp usa Embedded Signup (`/config/conexoes/whatsapp-auth` + Login Config ID WhatsApp em Meta). Shopify: OAuth popup com domínio da loja (`/api/atrako/oauth/shopify/start?workspaceId=&shop=`). Tray: OAuth popup com domínio da loja (`/api/atrako/oauth/tray/start?workspaceId=&store=`) — callback `https://atrako.com.br/api/atrako/oauth/tray/callback`; webhook app-level `https://atrako.com.br/api/webhooks/tray` (cadastrar via chamado Tray Desenvolvedores). Nuvemshop: OAuth popup (`/api/atrako/oauth/nuvemshop/start?workspaceId=`) — callback `https://atrako.com.br/api/atrako/oauth/nuvemshop/callback`; webhooks registrados na loja (`order/created|updated|paid|cancelled`). Shopee: OAuth popup (`/api/atrako/oauth/shopee/start?workspaceId=`) com Partner ID/Key em `/admin/apps`.
 
 ## Providers
 
@@ -39,6 +39,10 @@ Forms manuais (WhatsApp, Woo keys) continuam inline — sem popup.
 | Mercado Pago | OAuth vendedor, pagamentos, webhooks | https://www.mercadopago.com.br/developers/pt/docs |
 | Mercado Livre | OAuth vendedor, pedidos → CRM + aba Marketplaces | https://developers.mercadolivre.com.br/pt_br/guia-para-produtos |
 | WooCommerce | REST keys, pedidos → CRM + aba E-commerce + atribuição | https://woocommerce.github.io/woocommerce-rest-api-docs/ |
+| Shopify | OAuth Admin API, pedidos/clientes/produtos → CRM + E-commerce + financeiro | https://shopify.dev/docs/api/admin-graphql/latest |
+| Tray | OAuth Tray Commerce, pedidos → CRM + E-commerce + financeiro; webhook app-level | https://developers.tray.com.br/#tray-api-plugin |
+| Nuvemshop | OAuth Tiendanube, pedidos → CRM + E-commerce + financeiro | https://dev.nuvemshop.com.br/docs/erp-guide/authentication |
+| Shopee | OAuth Open Platform V2, pedidos → CRM + Marketplaces + financeiro | https://open.shopee.com/developer-guide/4 |
 | Google Ads / GA4 | Contas e sync | https://developers.google.com/google-ads/api |
 | LinkedIn Ads | Sync campanhas | LinkedIn Marketing API |
 | Google Calendar | Agenda | Google Calendar API |
@@ -62,6 +66,21 @@ GOOGLE_ADS_CLIENT_SECRET=
 GOOGLE_ADS_DEVELOPER_TOKEN=
 LINKEDIN_CLIENT_ID=
 LINKEDIN_CLIENT_SECRET=
+SHOPIFY_API_KEY=
+SHOPIFY_API_SECRET=
+SHOPIFY_REDIRECT_URI=
+SHOPIFY_SCOPES=
+SHOPEE_PARTNER_ID=
+SHOPEE_PARTNER_KEY=
+SHOPEE_REDIRECT_URI=
+SHOPEE_API_BASE_URL=
+TRAY_CONSUMER_KEY=
+TRAY_CONSUMER_SECRET=
+TRAY_REDIRECT_URI=
+NUVEMSHOP_CLIENT_ID=
+NUVEMSHOP_CLIENT_SECRET=
+NUVEMSHOP_REDIRECT_URI=
+NUVEMSHOP_SCOPES=
 ATRAKO_CONNECTIONS_SECRET=
 ATRAKO_DEV_OPEN_ACCESS=   # só local; default off = login obrigatório
 ```
@@ -70,7 +89,7 @@ Depois do seed, edite em `/admin/apps` — não espalhe secrets em módulos.
 
 ## WorkspaceConnection.provider
 
-`MERCADO_PAGO` | `MERCADO_LIVRE` | `INSTAGRAM` | `META_ADS` | `GOOGLE_ADS` | `LINKEDIN_ADS` | `WHATSAPP` | `WOOCOMMERCE` | `GOOGLE_CALENDAR`
+`MERCADO_PAGO` | `MERCADO_LIVRE` | `INSTAGRAM` | `META_ADS` | `GOOGLE_ADS` | `LINKEDIN_ADS` | `WHATSAPP` | `WOOCOMMERCE` | `SHOPIFY` | `SHOPEE` | `TRAY` | `NUVEMSHOP` | `GOOGLE_CALENDAR`
 
 ## Fluxo
 

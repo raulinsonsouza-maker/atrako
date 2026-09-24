@@ -10,6 +10,10 @@ export const CONNECTION_PROVIDERS = [
   "MERCADO_LIVRE",
   "WHATSAPP",
   "WOOCOMMERCE",
+  "SHOPIFY",
+  "SHOPEE",
+  "TRAY",
+  "NUVEMSHOP",
   "GOOGLE_CALENDAR",
 ] as const;
 

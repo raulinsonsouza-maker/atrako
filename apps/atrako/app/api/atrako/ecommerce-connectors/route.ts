@@ -5,15 +5,15 @@ import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { prisma } from "@/lib/db-social";
 import { getOrCreateOrgSettings } from "@/lib/symbius/integrations";
 
-type ConnectorKey = "shopify" | "tray" | "nuvemshop";
+type ConnectorKey = "shopify" | "nuvemshop";
 
 function maskSecret(secret: string | undefined): boolean {
   return Boolean(secret && secret.length > 0);
 }
 
 /**
- * Secrets de webhooks Shopify/Tray/Nuvemshop (Symbius ecommerceConnectors),
- * resolvidos pelo workspace Atrako via Organization.centralClienteId.
+ * Secrets de webhooks legados (Nuvemshop stub Symbius).
+ * Tray/Shopify usam OAuth canônico + WorkspaceConnection.
  */
 export async function GET(request: NextRequest) {
   const workspaceId = request.nextUrl.searchParams.get("workspaceId")?.trim();
@@ -37,7 +37,6 @@ export async function GET(request: NextRequest) {
       organizationId: null,
       connectors: {
         shopify: { configured: false },
-        tray: { configured: false },
         nuvemshop: { configured: false },
       },
     });
@@ -55,7 +54,6 @@ export async function GET(request: NextRequest) {
     organizationId: org.id,
     connectors: {
       shopify: { configured: maskSecret(ec.shopify?.webhookSecret) },
-      tray: { configured: maskSecret(ec.tray?.webhookSecret) },
       nuvemshop: { configured: maskSecret(ec.nuvemshop?.webhookSecret) },
     },
   });
@@ -88,7 +86,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "Nenhuma organização Symbius ligada a este workspace (centralClienteId). Crie/vincule a org para salvar secrets de Shopify/Tray/Nuvemshop.",
+          "Nenhuma organização Symbius ligada a este workspace (centralClienteId). Crie/vincule a org para salvar secrets de Nuvemshop.",
       },
       { status: 400 },
     );
@@ -96,9 +94,9 @@ export async function PATCH(request: NextRequest) {
 
   const connector =
     typeof b.connector === "string" ? (b.connector as ConnectorKey) : null;
-  if (!connector || !["shopify", "tray", "nuvemshop"].includes(connector)) {
+  if (!connector || !["shopify", "nuvemshop"].includes(connector)) {
     return NextResponse.json(
-      { error: "connector deve ser shopify, tray ou nuvemshop" },
+      { error: "connector deve ser shopify ou nuvemshop" },
       { status: 400 },
     );
   }

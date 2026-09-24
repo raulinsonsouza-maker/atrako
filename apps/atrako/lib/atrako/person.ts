@@ -343,7 +343,7 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
   const phone = contact.phone;
   const email = contact.email;
 
-  const [leads, conversations, orders, bookings] = await Promise.all([
+  const [leads, conversations, orders, bookings, marketplaceOrders] = await Promise.all([
     prisma.nativeLead.findMany({
       where: { clienteId: workspaceId, contactId },
       include: { stage: true },
@@ -382,6 +382,19 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
       },
       include: { service: true },
       orderBy: { createdAt: "asc" },
+    }),
+    prisma.marketplaceOrder.findMany({
+      where: {
+        clienteId: workspaceId,
+        OR: [
+          { contactId },
+          ...(email ? [{ buyerEmail: email }] : []),
+          ...(phone ? [{ buyerPhone: phone }] : []),
+        ],
+      },
+      include: { items: { take: 10 } },
+      orderBy: { occurredAt: "asc" },
+      take: 50,
     }),
   ]);
 
@@ -547,6 +560,38 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
         detail: [order.id, leadAttrDetail].filter(Boolean).join(" · ") || undefined,
       });
     }
+  }
+
+  for (const mo of marketplaceOrders) {
+    const cents = mo.totalCents ?? 0;
+    const providerLabel =
+      mo.provider === "SHOPIFY"
+        ? "Shopify"
+        : mo.provider === "WOOCOMMERCE"
+          ? "WooCommerce"
+          : mo.provider === "MERCADO_LIVRE"
+            ? "Mercado Livre"
+            : mo.provider;
+    items.push({
+      at: (mo.occurredAt ?? mo.createdAt).toISOString(),
+      type: "marketplace.order",
+      title: `${providerLabel} · R$ ${(cents / 100).toFixed(2)}`,
+      detail:
+        [
+          mo.items.map((i) => i.title).join(", ") || null,
+          mo.status,
+          leadAttrDetail,
+        ]
+          .filter(Boolean)
+          .join(" · ") || undefined,
+      href: mo.leadId ? `/crm/leads/${mo.leadId}` : undefined,
+      meta: {
+        provider: mo.provider,
+        externalId: mo.externalId,
+        orderId: mo.id,
+        leadId: mo.leadId,
+      },
+    });
   }
 
   for (const entry of ledger) {

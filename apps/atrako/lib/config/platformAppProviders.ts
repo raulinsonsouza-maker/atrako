@@ -11,6 +11,10 @@ export const PLATFORM_APP_PROVIDERS = [
   "LINKEDIN",
   "TIKTOK",
   "WOOCOMMERCE",
+  "SHOPIFY",
+  "SHOPEE",
+  "TRAY",
+  "NUVEMSHOP",
 ] as const;
 
 export type PlatformAppProvider = (typeof PLATFORM_APP_PROVIDERS)[number];

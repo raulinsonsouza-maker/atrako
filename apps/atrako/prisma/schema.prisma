@@ -84,6 +84,7 @@ model Cliente {
   captureForms               CaptureForm[]
   marketplaceOrders          MarketplaceOrder[]
   marketplaceSellerSnapshots MarketplaceSellerSnapshot[]
+  marketplaceCatalogItems    MarketplaceCatalogItem[]
   igAccountsNative           IgAccountNative[]
   waConversations            WaConversation[]
   waMessages                 WaMessage[]
@@ -1589,6 +1590,25 @@ model MarketplaceOrderItem {
 
   @@index([orderId])
   @@index([externalItemId])
+}
+
+/// Snapshot de produto do catálogo externo (Shopify, etc.).
+model MarketplaceCatalogItem {
+  id          String   @id @default(cuid())
+  clienteId   String
+  provider    String   @db.VarChar(40)
+  externalId  String   @db.VarChar(80)
+  title       String   @db.VarChar(300)
+  status      String?  @db.VarChar(40)
+  sku         String?  @db.VarChar(120)
+  priceCents  Int?
+  rawPayload  Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  cliente     Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, provider, externalId])
+  @@index([clienteId, provider, updatedAt])
 }
 
 model IgAccountNative {

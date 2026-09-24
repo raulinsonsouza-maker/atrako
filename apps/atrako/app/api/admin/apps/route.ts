@@ -32,12 +32,17 @@ export async function PATCH(request: NextRequest) {
     "clientSecret",
     "developerToken",
     "loginConfigId",
+    "whatsappLoginConfigId",
     "redirectUri",
     "webhookSecret",
     "webhookVerifyToken",
     "serviceAccountJson",
     "refreshToken",
     "loginCustomerId",
+    "scopes",
+    "apiVersion",
+    "apiBaseUrl",
+    "partnerKeyExpiresAt",
   ] as const;
   for (const f of fields) {
     if (typeof body[f] === "string" && body[f].trim()) {

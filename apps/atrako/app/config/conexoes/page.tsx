@@ -45,24 +45,14 @@ type MetaConnectionStatus = {
   lastError: string | null;
 };
 
-type EcommerceConnectorsStatus = {
-  available: boolean;
-  organizationId: string | null;
-  connectors: {
-    shopify: { configured: boolean };
-    tray: { configured: boolean };
-    nuvemshop: { configured: boolean };
-  };
-};
-
 const PROVIDER_CARDS: Array<{
   provider: string;
   title: string;
   icon: typeof Instagram;
   connectHref?: (workspaceId: string) => string;
   adsHref?: string;
-  manualWhatsApp?: boolean;
-  manualWoo?: boolean;
+  /** WhatsApp Embedded Signup (Facebook) */
+  facebookSignup?: boolean;
 }> = [
   {
     provider: "META_ADS",
@@ -101,6 +91,12 @@ const PROVIDER_CARDS: Array<{
     connectHref: (id) => `/api/atrako/oauth/mercadolivre/start?workspaceId=${id}`,
   },
   {
+    provider: "SHOPEE",
+    title: "Shopee",
+    icon: ShoppingBag,
+    connectHref: (id) => `/api/atrako/oauth/shopee/start?workspaceId=${id}`,
+  },
+  {
     provider: "GOOGLE_CALENDAR",
     title: "Google Calendar",
     icon: CalendarDays,
@@ -111,19 +107,14 @@ const PROVIDER_CARDS: Array<{
     provider: "WHATSAPP",
     title: "WhatsApp",
     icon: MessageCircle,
-    manualWhatsApp: true,
+    facebookSignup: true,
   },
 ];
 
 const ECOMM_CARDS: Array<{
-  key: "woocommerce" | "shopify" | "tray" | "nuvemshop";
+  key: "woocommerce";
   title: string;
-}> = [
-  { key: "woocommerce", title: "WooCommerce" },
-  { key: "shopify", title: "Shopify" },
-  { key: "tray", title: "Tray" },
-  { key: "nuvemshop", title: "Nuvemshop" },
-];
+}> = [{ key: "woocommerce", title: "WooCommerce" }];
 
 function metaBannerMessage(meta: string | null, metaError: string | null): string | null {
   if (!meta) return null;
@@ -146,23 +137,13 @@ function ConexoesHubInner() {
     workspaces,
     isLoading: loadingClientes,
   } = useActiveWorkspace();
-  const [waOpen, setWaOpen] = useState(false);
-  const [googleAdsOpen, setGoogleAdsOpen] = useState(false);
-  const [gadsRefresh, setGadsRefresh] = useState("");
-  const [gadsLoginCustomer, setGadsLoginCustomer] = useState("");
-  const [gadsCustomer, setGadsCustomer] = useState("");
-  const [gadsSaving, setGadsSaving] = useState(false);
-  const [gadsError, setGadsError] = useState<string | null>(null);
-  const [waToken, setWaToken] = useState("");
-  const [waPhoneId, setWaPhoneId] = useState("");
-  const [waWabaId, setWaWabaId] = useState("");
-  const [waVerify, setWaVerify] = useState("");
-  const [waDisplay, setWaDisplay] = useState("");
-  const [waSaving, setWaSaving] = useState(false);
-  const [waError, setWaError] = useState<string | null>(null);
   const [selectedAdAccount, setSelectedAdAccount] = useState("");
   const [selectingAd, setSelectingAd] = useState(false);
   const [selectError, setSelectError] = useState<string | null>(null);
+  const [selectedGadsCid, setSelectedGadsCid] = useState("");
+  const [selectingGads, setSelectingGads] = useState(false);
+  const [gadsPickError, setGadsPickError] = useState<string | null>(null);
+  const [forceGadsPick, setForceGadsPick] = useState(false);
 
   const [wooOpen, setWooOpen] = useState(false);
   const [wooUrl, setWooUrl] = useState("");
@@ -172,10 +153,14 @@ function ConexoesHubInner() {
   const [wooSaving, setWooSaving] = useState(false);
   const [wooError, setWooError] = useState<string | null>(null);
 
-  const [ecommOpen, setEcommOpen] = useState<"shopify" | "tray" | "nuvemshop" | null>(null);
-  const [ecommSecret, setEcommSecret] = useState("");
-  const [ecommSaving, setEcommSaving] = useState(false);
-  const [ecommError, setEcommError] = useState<string | null>(null);
+  const [shopifyShop, setShopifyShop] = useState("");
+  const [shopifyOpen, setShopifyOpen] = useState(false);
+  const [shopifySyncing, setShopifySyncing] = useState(false);
+  const [trayStore, setTrayStore] = useState("");
+  const [trayOpen, setTrayOpen] = useState(false);
+  const [traySyncing, setTraySyncing] = useState(false);
+  const [nuvemshopSyncing, setNuvemshopSyncing] = useState(false);
+  const [shopeeSyncing, setShopeeSyncing] = useState(false);
   const [oauthFlash, setOauthFlash] = useState<string | null>(null);
   const [oauthMetaOverride, setOauthMetaOverride] = useState<{
     meta: string | null;
@@ -193,8 +178,15 @@ function ConexoesHubInner() {
   useEffect(() => {
     const connected = searchParams.get("connected");
     const err = searchParams.get("error");
-    if (connected) setOauthFlash(`${connected.replace(/_/g, " ")} conectado.`);
-    else if (err) setOauthFlash(err);
+    const pick = searchParams.get("pick");
+    if (pick === "GOOGLE_ADS") setForceGadsPick(true);
+    if (connected) {
+      setOauthFlash(
+        pick === "GOOGLE_ADS"
+          ? "Google Ads autorizado. Escolha a conta (CID) abaixo."
+          : `${connected.replace(/_/g, " ")} conectado.`,
+      );
+    } else if (err) setOauthFlash(err);
   }, [searchParams]);
 
   const effectiveWorkspace = workspaceId;
@@ -207,11 +199,16 @@ function ConexoesHubInner() {
         return;
       }
       if (msg.workspaceId) setWorkspaceId(msg.workspaceId);
+      if (msg.pick === "GOOGLE_ADS") setForceGadsPick(true);
       if (msg.meta) {
         setOauthMetaOverride({ meta: msg.meta, metaError: msg.metaError });
         setOauthFlash(null);
       } else if (msg.ok && msg.connected) {
-        setOauthFlash(`${msg.connected.replace(/_/g, " ")} conectado.`);
+        setOauthFlash(
+          msg.pick === "GOOGLE_ADS"
+            ? "Google Ads autorizado. Escolha a conta (CID) abaixo."
+            : `${msg.connected.replace(/_/g, " ")} conectado.`,
+        );
       } else if (msg.error) {
         setOauthFlash(msg.error);
       }
@@ -252,18 +249,6 @@ function ConexoesHubInner() {
     enabled: Boolean(effectiveWorkspace),
   });
 
-  const { data: ecommStatus } = useQuery({
-    queryKey: ["ecommerce-connectors", effectiveWorkspace],
-    queryFn: async () => {
-      const r = await fetch(
-        `/api/atrako/ecommerce-connectors?workspaceId=${effectiveWorkspace}`,
-      );
-      if (!r.ok) return null;
-      return r.json() as Promise<EcommerceConnectorsStatus>;
-    },
-    enabled: Boolean(effectiveWorkspace),
-  });
-
   useEffect(() => {
     if (metaStatus?.selectedAdAccountId) {
       setSelectedAdAccount(metaStatus.selectedAdAccountId);
@@ -277,6 +262,35 @@ function ConexoesHubInner() {
     for (const c of connectionsData?.connections ?? []) map.set(c.provider, c);
     return map;
   }, [connectionsData]);
+
+  const googleAdsMeta = useMemo(() => {
+    const row = byProvider.get("GOOGLE_ADS");
+    const meta =
+      row?.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata)
+        ? (row.metadata as Record<string, unknown>)
+        : {};
+    const ids = Array.isArray(meta.accessibleCustomerIds)
+      ? meta.accessibleCustomerIds
+          .filter((x): x is string => typeof x === "string")
+          .map((x) => x.replace(/\D/g, ""))
+          .filter(Boolean)
+      : [];
+    const customerId =
+      typeof meta.customerId === "string" ? meta.customerId.replace(/\D/g, "") : "";
+    return {
+      accessibleCustomerIds: ids,
+      customerId,
+      needsAccountPick: meta.needsAccountPick === true || (ids.length > 1 && !customerId),
+    };
+  }, [byProvider]);
+
+  useEffect(() => {
+    if (googleAdsMeta.customerId) {
+      setSelectedGadsCid(googleAdsMeta.customerId);
+    } else if (googleAdsMeta.accessibleCustomerIds.length === 1) {
+      setSelectedGadsCid(googleAdsMeta.accessibleCustomerIds[0]);
+    }
+  }, [googleAdsMeta.customerId, googleAdsMeta.accessibleCustomerIds]);
 
   const wooRow = byProvider.get("WOOCOMMERCE");
   const wooConnected = wooRow?.status === "ACTIVE" && wooRow.hasCredentials;
@@ -343,78 +357,28 @@ function ConexoesHubInner() {
     }
   }
 
-  async function saveWhatsApp(e: React.FormEvent) {
-    e.preventDefault();
-    if (!effectiveWorkspace || !waToken.trim() || !waPhoneId.trim()) return;
-    setWaSaving(true);
-    setWaError(null);
-    try {
-      const r = await fetch("/api/atrako/whatsapp/connect", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          workspaceId: effectiveWorkspace,
-          label: waDisplay.trim() || "WhatsApp",
-          credentials: {
-            accessToken: waToken.trim(),
-            phoneNumberId: waPhoneId.trim(),
-            wabaId: waWabaId.trim() || undefined,
-            webhookVerifyToken: waVerify.trim() || undefined,
-          },
-          metadata: {
-            phoneNumberId: waPhoneId.trim(),
-            displayPhoneNumber: waDisplay.trim() || undefined,
-            wabaId: waWabaId.trim() || undefined,
-          },
-        }),
-      });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.error || "Não foi possível salvar. Verifique os dados e tente novamente.");
-      setWaOpen(false);
-      setWaToken("");
-      setWaPhoneId("");
-      setWaWabaId("");
-      setWaVerify("");
-      setWaDisplay("");
-      qc.invalidateQueries({ queryKey: ["workspace-connections", effectiveWorkspace] });
-    } catch (err) {
-      setWaError(err instanceof Error ? err.message : "Erro");
-    } finally {
-      setWaSaving(false);
-    }
-  }
-
-  async function saveGoogleAds(e: React.FormEvent) {
-    e.preventDefault();
-    if (!effectiveWorkspace) return;
-    if (!gadsRefresh.trim() && !gadsCustomer.trim()) {
-      setGadsError("Informe o CID ou um refresh token.");
-      return;
-    }
-    setGadsSaving(true);
-    setGadsError(null);
+  async function confirmGoogleAdsCid() {
+    if (!effectiveWorkspace || !selectedGadsCid) return;
+    setSelectingGads(true);
+    setGadsPickError(null);
     try {
       const r = await fetch("/api/atrako/oauth/google-ads/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           workspaceId: effectiveWorkspace,
-          refreshToken: gadsRefresh.trim() || undefined,
-          customerId: gadsCustomer.trim() || undefined,
-          loginCustomerId: gadsLoginCustomer.trim() || undefined,
+          customerId: selectedGadsCid,
         }),
       });
       const j = await r.json();
-      if (!r.ok) throw new Error(j.error || "Falha ao salvar Google Ads");
-      setGoogleAdsOpen(false);
-      setGadsRefresh("");
-      setGadsCustomer("");
-      setGadsLoginCustomer("");
+      if (!r.ok) throw new Error(j.error || "Não foi possível salvar a conta.");
+      setForceGadsPick(false);
+      setOauthFlash("Google Ads conectado.");
       qc.invalidateQueries({ queryKey: ["workspace-connections", effectiveWorkspace] });
     } catch (err) {
-      setGadsError(err instanceof Error ? err.message : "Erro");
+      setGadsPickError(err instanceof Error ? err.message : "Erro ao selecionar conta");
     } finally {
-      setGadsSaving(false);
+      setSelectingGads(false);
     }
   }
 
@@ -452,44 +416,109 @@ function ConexoesHubInner() {
     }
   }
 
-  async function saveEcommConnector(e: React.FormEvent) {
-    e.preventDefault();
-    if (!effectiveWorkspace || !ecommOpen || !ecommSecret.trim()) return;
-    setEcommSaving(true);
-    setEcommError(null);
+  async function syncShopify() {
+    if (!effectiveWorkspace) return;
+    setShopifySyncing(true);
     try {
-      const r = await fetch("/api/atrako/ecommerce-connectors", {
-        method: "PATCH",
+      const r = await fetch("/api/atrako/shopify/sync", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          workspaceId: effectiveWorkspace,
-          connector: ecommOpen,
-          webhookSecret: ecommSecret.trim(),
-        }),
+        body: JSON.stringify({ workspaceId: effectiveWorkspace }),
       });
       const j = await r.json();
-      if (!r.ok) throw new Error(j.error || "Não foi possível salvar.");
-      setEcommOpen(null);
-      setEcommSecret("");
-      qc.invalidateQueries({ queryKey: ["ecommerce-connectors", effectiveWorkspace] });
+      if (!r.ok) throw new Error(j.error || "Falha ao sincronizar");
+      setOauthFlash("Shopify sincronizado.");
+      qc.invalidateQueries({ queryKey: ["workspace-connections", effectiveWorkspace] });
     } catch (err) {
-      setEcommError(err instanceof Error ? err.message : "Não foi possível salvar.");
+      setOauthFlash(err instanceof Error ? err.message : "Erro ao sincronizar Shopify");
     } finally {
-      setEcommSaving(false);
+      setShopifySyncing(false);
     }
   }
 
-  async function disconnectEcomm(connector: "shopify" | "tray" | "nuvemshop") {
-    await fetch("/api/atrako/ecommerce-connectors", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        workspaceId: effectiveWorkspace,
-        connector,
-        action: "disconnect",
-      }),
-    }).catch(() => null);
-    qc.invalidateQueries({ queryKey: ["ecommerce-connectors", effectiveWorkspace] });
+  async function syncTray() {
+    if (!effectiveWorkspace) return;
+    setTraySyncing(true);
+    try {
+      const r = await fetch("/api/atrako/tray/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId: effectiveWorkspace }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || "Falha ao sincronizar");
+      setOauthFlash("Tray sincronizado.");
+      qc.invalidateQueries({ queryKey: ["workspace-connections", effectiveWorkspace] });
+    } catch (err) {
+      setOauthFlash(err instanceof Error ? err.message : "Erro ao sincronizar Tray");
+    } finally {
+      setTraySyncing(false);
+    }
+  }
+
+  async function syncNuvemshop() {
+    if (!effectiveWorkspace) return;
+    setNuvemshopSyncing(true);
+    try {
+      const r = await fetch("/api/atrako/nuvemshop/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId: effectiveWorkspace }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || "Falha ao sincronizar");
+      setOauthFlash("Nuvemshop sincronizado.");
+      qc.invalidateQueries({ queryKey: ["workspace-connections", effectiveWorkspace] });
+    } catch (err) {
+      setOauthFlash(err instanceof Error ? err.message : "Erro ao sincronizar Nuvemshop");
+    } finally {
+      setNuvemshopSyncing(false);
+    }
+  }
+
+  async function syncShopee() {
+    if (!effectiveWorkspace) return;
+    setShopeeSyncing(true);
+    try {
+      const r = await fetch("/api/atrako/shopee/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId: effectiveWorkspace }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || "Falha ao sincronizar");
+      setOauthFlash("Shopee sincronizado.");
+      qc.invalidateQueries({ queryKey: ["workspace-connections", effectiveWorkspace] });
+    } catch (err) {
+      setOauthFlash(err instanceof Error ? err.message : "Erro ao sincronizar Shopee");
+    } finally {
+      setShopeeSyncing(false);
+    }
+  }
+
+  function startShopifyOAuth() {
+    if (!effectiveWorkspace || !shopifyShop.trim()) return;
+    const q = new URLSearchParams({
+      workspaceId: effectiveWorkspace,
+      shop: shopifyShop.trim(),
+    });
+    startOAuth(`/api/atrako/oauth/shopify/start?${q}`);
+  }
+
+  function startTrayOAuth() {
+    if (!effectiveWorkspace || !trayStore.trim()) return;
+    const q = new URLSearchParams({
+      workspaceId: effectiveWorkspace,
+      store: trayStore.trim(),
+    });
+    startOAuth(`/api/atrako/oauth/tray/start?${q}`);
+  }
+
+  function startNuvemshopOAuth() {
+    if (!effectiveWorkspace) return;
+    startOAuth(
+      `/api/atrako/oauth/nuvemshop/start?workspaceId=${encodeURIComponent(effectiveWorkspace)}`,
+    );
   }
 
   const banner = metaBannerMessage(metaParam, metaErrorParam);
@@ -499,6 +528,16 @@ function ConexoesHubInner() {
       metaParam === "select_account" ||
       (metaStatus.adAccountsCount > 1 && !metaStatus.selectedAdAccountId));
 
+  const showGadsSelect =
+    Boolean(byProvider.get("GOOGLE_ADS")?.hasCredentials) &&
+    googleAdsMeta.accessibleCustomerIds.length > 0 &&
+    (forceGadsPick || googleAdsMeta.needsAccountPick);
+
+  const gadsPickUnavailable =
+    forceGadsPick &&
+    Boolean(byProvider.get("GOOGLE_ADS")?.hasCredentials) &&
+    googleAdsMeta.accessibleCustomerIds.length === 0;
+
   function metaStatusLabel(row: ConnectionRow | undefined): string {
     if (metaStatus?.health === "needs_reauth" || row?.status === "NEEDS_REAUTH") {
       return "Reconectar";
@@ -506,10 +545,6 @@ function ConexoesHubInner() {
     if (metaStatus?.health === "ready") return "Pronto";
     if (metaStatus?.connected) return "Conectado";
     return "Não conectado";
-  }
-
-  function ecommConfigured(key: "shopify" | "tray" | "nuvemshop") {
-    return Boolean(ecommStatus?.connectors?.[key]?.configured);
   }
 
   return (
@@ -610,6 +645,48 @@ function ConexoesHubInner() {
         </div>
       ) : null}
 
+      {showGadsSelect ? (
+        <div className="rounded-xl border border-[var(--hairline)] bg-white p-4 space-y-3">
+          <h2 className="type-caption-strong text-[var(--ink)]">Conta Google Ads</h2>
+          <p className="type-fine-print text-[var(--ink-muted-80)]">
+            Escolha o CID que o dashboard vai usar.
+          </p>
+          <PillSelect
+            size="field"
+            className="w-full"
+            value={selectedGadsCid}
+            onChange={setSelectedGadsCid}
+            options={[
+              { value: "", label: "Selecione a conta" },
+              ...googleAdsMeta.accessibleCustomerIds.map((id) => ({
+                value: id,
+                label: id.replace(/(\d{3})(?=\d)/g, "$1-"),
+              })),
+            ]}
+            aria-label="Conta Google Ads"
+          />
+          {gadsPickError ? (
+            <p className="type-fine-print text-red-600">{gadsPickError}</p>
+          ) : null}
+          <button
+            type="button"
+            disabled={!selectedGadsCid || selectingGads}
+            onClick={confirmGoogleAdsCid}
+            className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-4 py-2 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
+          >
+            {selectingGads ? "Salvando…" : "Continuar"}
+          </button>
+        </div>
+      ) : null}
+
+      {gadsPickUnavailable ? (
+        <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 type-fine-print text-amber-950">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          Google Ads autorizado, mas nenhuma conta (CID) foi listada. Reconecte e confirme as
+          permissões da conta.
+        </div>
+      ) : null}
+
       {!effectiveWorkspace ? (
         <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -667,6 +744,11 @@ function ConexoesHubInner() {
                               ? ` · act_${metaStatus.selectedAdAccountId.replace(/^act_/, "")}`
                               : ""}
                           </p>
+                        ) : card.provider === "GOOGLE_ADS" && googleAdsMeta.customerId ? (
+                          <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
+                            CID{" "}
+                            {googleAdsMeta.customerId.replace(/(\d{3})(?=\d)/g, "$1-")}
+                          </p>
                         ) : row?.label ? (
                           <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
                             {row.label}
@@ -675,41 +757,25 @@ function ConexoesHubInner() {
                       </div>
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2">
-                      {card.manualWhatsApp ? (
+                      {card.facebookSignup ? (
                         <button
                           type="button"
-                          onClick={() => setWaOpen((v) => !v)}
-                          className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95"
+                          onClick={() =>
+                            startOAuth(
+                              `/config/conexoes/whatsapp-auth?workspaceId=${effectiveWorkspace}`,
+                            )
+                          }
+                          disabled={oauthPending || !effectiveWorkspace}
+                          className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-60"
                         >
                           <Link2 className="h-3.5 w-3.5" />
-                          {connected ? "Atualizar" : "Conectar"}
+                          {connected ? "Reconectar" : "Conectar com Facebook"}
                         </button>
-                      ) : card.provider === "GOOGLE_ADS" ? (
-                        <>
-                          {card.connectHref ? (
-                            <button
-                              type="button"
-                              onClick={() => startOAuth(card.connectHref!(effectiveWorkspace))}
-                              disabled={oauthPending}
-                              className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-60"
-                            >
-                              <Link2 className="h-3.5 w-3.5" />
-                              {connected ? "Reconectar" : "Conectar"}
-                            </button>
-                          ) : null}
-                          <button
-                            type="button"
-                            onClick={() => setGoogleAdsOpen((v) => !v)}
-                            className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)]"
-                          >
-                            {googleAdsOpen ? "Fechar" : "Conta / CID"}
-                          </button>
-                        </>
                       ) : card.connectHref ? (
                         <button
                           type="button"
                           onClick={() => startOAuth(card.connectHref!(effectiveWorkspace))}
-                          disabled={oauthPending}
+                          disabled={oauthPending || !effectiveWorkspace}
                           className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-60"
                         >
                           <Link2 className="h-3.5 w-3.5" />
@@ -720,7 +786,17 @@ function ConexoesHubInner() {
                           Em breve
                         </span>
                       )}
-                      {connected && (card.connectHref || card.manualWhatsApp || card.provider === "GOOGLE_ADS") ? (
+                      {connected && card.provider === "SHOPEE" ? (
+                        <button
+                          type="button"
+                          onClick={() => syncShopee()}
+                          disabled={shopeeSyncing}
+                          className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)] disabled:opacity-50"
+                        >
+                          {shopeeSyncing ? "Sincronizando…" : "Sincronizar"}
+                        </button>
+                      ) : null}
+                      {connected && (card.connectHref || card.facebookSignup) ? (
                         <button
                           type="button"
                           onClick={() => disconnect(card.provider)}
@@ -730,93 +806,6 @@ function ConexoesHubInner() {
                         </button>
                       ) : null}
                     </div>
-                    {card.manualWhatsApp && waOpen ? (
-                      <form
-                        onSubmit={saveWhatsApp}
-                        className="mt-4 space-y-2 border-t border-[var(--hairline)] pt-3"
-                      >
-                        <input
-                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
-                          placeholder="Token de acesso (permanente)"
-                          value={waToken}
-                          onChange={(e) => setWaToken(e.target.value)}
-                          required
-                        />
-                        <input
-                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
-                          placeholder="ID do número (phone number ID)"
-                          value={waPhoneId}
-                          onChange={(e) => setWaPhoneId(e.target.value)}
-                          required
-                        />
-                        <input
-                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
-                          placeholder="ID da conta WhatsApp Business (WABA ID)"
-                          value={waWabaId}
-                          onChange={(e) => setWaWabaId(e.target.value)}
-                        />
-                        <input
-                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
-                          placeholder="Token de verificação do webhook"
-                          value={waVerify}
-                          onChange={(e) => setWaVerify(e.target.value)}
-                        />
-                        <input
-                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
-                          placeholder="Número exibido (opcional)"
-                          value={waDisplay}
-                          onChange={(e) => setWaDisplay(e.target.value)}
-                        />
-                        {waError ? <p className="text-xs text-red-600">{waError}</p> : null}
-                        <p className="type-micro-legal text-[var(--ink-muted-48)]">
-                          Webhook: <code className="type-micro-legal">/api/webhooks/whatsapp</code>
-                        </p>
-                        <button
-                          type="submit"
-                          disabled={waSaving}
-                          className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
-                        >
-                          {waSaving ? "Salvando…" : "Salvar WhatsApp"}
-                        </button>
-                      </form>
-                    ) : null}
-                    {card.provider === "GOOGLE_ADS" && googleAdsOpen ? (
-                      <form
-                        onSubmit={saveGoogleAds}
-                        className="mt-4 space-y-2 border-t border-[var(--hairline)] pt-3"
-                      >
-                        <p className="type-fine-print text-[var(--ink-muted-48)]">
-                          Depois do OAuth, escolha o CID da conta. Refresh token manual só se
-                          necessário.
-                        </p>
-                        <input
-                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
-                          placeholder="Customer ID (CID, só números)"
-                          value={gadsCustomer}
-                          onChange={(e) => setGadsCustomer(e.target.value)}
-                        />
-                        <input
-                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
-                          placeholder="Login customer ID / MCC (opcional)"
-                          value={gadsLoginCustomer}
-                          onChange={(e) => setGadsLoginCustomer(e.target.value)}
-                        />
-                        <input
-                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
-                          placeholder="Refresh token (opcional se já conectou via OAuth)"
-                          value={gadsRefresh}
-                          onChange={(e) => setGadsRefresh(e.target.value)}
-                        />
-                        {gadsError ? <p className="text-xs text-red-600">{gadsError}</p> : null}
-                        <button
-                          type="submit"
-                          disabled={gadsSaving}
-                          className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
-                        >
-                          {gadsSaving ? "Salvando…" : "Salvar conta"}
-                        </button>
-                      </form>
-                    ) : null}
                   </div>
                 );
               })}
@@ -826,24 +815,310 @@ function ConexoesHubInner() {
           <div>
             <h2 className="mb-1 type-caption-strong text-[var(--ink-muted-80)]">E-commerce</h2>
             <p className="mb-3 type-fine-print text-[var(--ink-muted-48)]">
-              Conecte a loja do cliente. Pedidos WooCommerce aparecem na aba E-commerce do
-              dashboard.
+              Conecte a loja do cliente. Pedidos Shopify, Tray, Nuvemshop e WooCommerce aparecem
+              na aba E-commerce, no CRM e no financeiro.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
+              {(() => {
+                const shopifyRow = byProvider.get("SHOPIFY");
+                const shopifyConnected =
+                  shopifyRow?.status === "ACTIVE" && shopifyRow.hasCredentials;
+                const shopifyMeta =
+                  shopifyRow?.metadata &&
+                  typeof shopifyRow.metadata === "object" &&
+                  !Array.isArray(shopifyRow.metadata)
+                    ? (shopifyRow.metadata as Record<string, unknown>)
+                    : {};
+                const shopifyLabel =
+                  (typeof shopifyMeta.shopName === "string" && shopifyMeta.shopName) ||
+                  (typeof shopifyMeta.shop === "string" && shopifyMeta.shop) ||
+                  shopifyRow?.label ||
+                  null;
+                return (
+                  <div className="flex flex-col rounded-xl border border-[var(--hairline)] bg-white p-4">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--canvas-parchment)] text-[var(--ink)]">
+                        <Store className="h-5 w-5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="type-caption-strong text-[var(--ink)]">Shopify</h3>
+                          {shopifyConnected ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 type-micro-legal text-emerald-700">
+                              <CheckCircle2 className="h-3 w-3" /> Conectado
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-[var(--canvas-parchment)] px-2 py-0.5 type-micro-legal text-[var(--ink-muted-48)]">
+                              Não conectado
+                            </span>
+                          )}
+                        </div>
+                        {shopifyLabel ? (
+                          <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
+                            {shopifyLabel}
+                          </p>
+                        ) : (
+                          <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
+                            OAuth Admin API — pedidos, clientes e produtos
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShopifyOpen((v) => !v);
+                          setWooOpen(false);
+                          setTrayOpen(false);
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95"
+                      >
+                        <Link2 className="h-3.5 w-3.5" />
+                        {shopifyConnected ? "Reconectar" : "Conectar"}
+                      </button>
+                      {shopifyConnected ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => syncShopify()}
+                            disabled={shopifySyncing}
+                            className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)] disabled:opacity-50"
+                          >
+                            {shopifySyncing ? "Sincronizando…" : "Sincronizar"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => disconnect("SHOPIFY")}
+                            className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)]"
+                          >
+                            Desconectar
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
+                    {shopifyOpen ? (
+                      <div className="mt-4 space-y-2 border-t border-[var(--hairline)] pt-3">
+                        <input
+                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
+                          placeholder="loja.myshopify.com"
+                          value={shopifyShop}
+                          onChange={(e) => setShopifyShop(e.target.value)}
+                          aria-label="Domínio Shopify"
+                        />
+                        <p className="type-micro-legal text-[var(--ink-muted-48)]">
+                          Informe o domínio da loja e autorize o app. Pedidos entram no CRM,
+                          dashboard e financeiro.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={startShopifyOAuth}
+                          disabled={oauthPending || !shopifyShop.trim() || !effectiveWorkspace}
+                          className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
+                        >
+                          {oauthPending ? "Abrindo…" : "Autorizar no Shopify"}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })()}
+
+              {(() => {
+                const trayRow = byProvider.get("TRAY");
+                const trayConnected =
+                  trayRow?.status === "ACTIVE" && trayRow.hasCredentials;
+                const trayMeta =
+                  trayRow?.metadata &&
+                  typeof trayRow.metadata === "object" &&
+                  !Array.isArray(trayRow.metadata)
+                    ? (trayRow.metadata as Record<string, unknown>)
+                    : {};
+                const trayLabel =
+                  (typeof trayMeta.storeName === "string" && trayMeta.storeName) ||
+                  (typeof trayMeta.storeHost === "string" && trayMeta.storeHost) ||
+                  trayRow?.label ||
+                  null;
+                return (
+                  <div className="flex flex-col rounded-xl border border-[var(--hairline)] bg-white p-4">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--canvas-parchment)] text-[var(--ink)]">
+                        <Store className="h-5 w-5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="type-caption-strong text-[var(--ink)]">Tray</h3>
+                          {trayConnected ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 type-micro-legal text-emerald-700">
+                              <CheckCircle2 className="h-3 w-3" /> Conectado
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-[var(--canvas-parchment)] px-2 py-0.5 type-micro-legal text-[var(--ink-muted-48)]">
+                              Não conectado
+                            </span>
+                          )}
+                        </div>
+                        {trayLabel ? (
+                          <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
+                            {trayLabel}
+                          </p>
+                        ) : (
+                          <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
+                            OAuth Tray Commerce — pedidos no CRM e financeiro
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTrayOpen((v) => !v);
+                          setWooOpen(false);
+                          setShopifyOpen(false);
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95"
+                      >
+                        <Link2 className="h-3.5 w-3.5" />
+                        {trayConnected ? "Reconectar" : "Conectar"}
+                      </button>
+                      {trayConnected ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => syncTray()}
+                            disabled={traySyncing}
+                            className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)] disabled:opacity-50"
+                          >
+                            {traySyncing ? "Sincronizando…" : "Sincronizar"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => disconnect("TRAY")}
+                            className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)]"
+                          >
+                            Desconectar
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
+                    {trayOpen ? (
+                      <div className="mt-4 space-y-2 border-t border-[var(--hairline)] pt-3">
+                        <input
+                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
+                          placeholder="minhaloja.com.br"
+                          value={trayStore}
+                          onChange={(e) => setTrayStore(e.target.value)}
+                          aria-label="Domínio da loja Tray"
+                        />
+                        <p className="type-micro-legal text-[var(--ink-muted-48)]">
+                          Informe o domínio da loja Tray e autorize o aplicativo.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={startTrayOAuth}
+                          disabled={oauthPending || !trayStore.trim() || !effectiveWorkspace}
+                          className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
+                        >
+                          {oauthPending ? "Abrindo…" : "Autorizar na Tray"}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })()}
+
+              {(() => {
+                const nsRow = byProvider.get("NUVEMSHOP");
+                const nsConnected =
+                  nsRow?.status === "ACTIVE" && nsRow.hasCredentials;
+                const nsMeta =
+                  nsRow?.metadata &&
+                  typeof nsRow.metadata === "object" &&
+                  !Array.isArray(nsRow.metadata)
+                    ? (nsRow.metadata as Record<string, unknown>)
+                    : {};
+                const nsLabel =
+                  (typeof nsMeta.storeName === "string" && nsMeta.storeName) ||
+                  (typeof nsMeta.domain === "string" && nsMeta.domain) ||
+                  nsRow?.label ||
+                  null;
+                return (
+                  <div className="flex flex-col rounded-xl border border-[var(--hairline)] bg-white p-4">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--canvas-parchment)] text-[var(--ink)]">
+                        <Store className="h-5 w-5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="type-caption-strong text-[var(--ink)]">Nuvemshop</h3>
+                          {nsConnected ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 type-micro-legal text-emerald-700">
+                              <CheckCircle2 className="h-3 w-3" /> Conectado
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-[var(--canvas-parchment)] px-2 py-0.5 type-micro-legal text-[var(--ink-muted-48)]">
+                              Não conectado
+                            </span>
+                          )}
+                        </div>
+                        {nsLabel ? (
+                          <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
+                            {nsLabel}
+                          </p>
+                        ) : (
+                          <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
+                            OAuth Nuvemshop — pedidos no CRM e financeiro
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setWooOpen(false);
+                          setShopifyOpen(false);
+                          setTrayOpen(false);
+                          startNuvemshopOAuth();
+                        }}
+                        disabled={oauthPending || !effectiveWorkspace}
+                        className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
+                      >
+                        <Link2 className="h-3.5 w-3.5" />
+                        {oauthPending
+                          ? "Abrindo…"
+                          : nsConnected
+                            ? "Reconectar"
+                            : "Conectar"}
+                      </button>
+                      {nsConnected ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => syncNuvemshop()}
+                            disabled={nuvemshopSyncing}
+                            className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)] disabled:opacity-50"
+                          >
+                            {nuvemshopSyncing ? "Sincronizando…" : "Sincronizar"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => disconnect("NUVEMSHOP")}
+                            className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)]"
+                          >
+                            Desconectar
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {ECOMM_CARDS.map((card) => {
-                const isWoo = card.key === "woocommerce";
-                const connectorKey =
-                  card.key === "shopify" || card.key === "tray" || card.key === "nuvemshop"
-                    ? card.key
-                    : null;
-                const connected = isWoo
-                  ? wooConnected
-                  : connectorKey
-                    ? ecommConfigured(connectorKey)
-                    : false;
-                const open = isWoo
-                  ? wooOpen
-                  : connectorKey !== null && ecommOpen === connectorKey;
+                const connected = wooConnected;
+                const open = wooOpen;
 
                 return (
                   <div
@@ -867,14 +1142,9 @@ function ConexoesHubInner() {
                             </span>
                           )}
                         </div>
-                        {isWoo && wooRow?.label ? (
+                        {wooRow?.label ? (
                           <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
                             {wooRow.label}
-                          </p>
-                        ) : null}
-                        {!isWoo && ecommStatus && !ecommStatus.available ? (
-                          <p className="mt-1 type-fine-print text-amber-700">
-                            Vincule a org Symbius (centralClienteId) para salvar o secret.
                           </p>
                         ) : null}
                       </div>
@@ -883,15 +1153,9 @@ function ConexoesHubInner() {
                       <button
                         type="button"
                         onClick={() => {
-                          if (isWoo) {
-                            setWooOpen((v) => !v);
-                            setEcommOpen(null);
-                          } else if (connectorKey) {
-                            setEcommOpen((v) => (v === connectorKey ? null : connectorKey));
-                            setWooOpen(false);
-                            setEcommSecret("");
-                            setEcommError(null);
-                          }
+                          setWooOpen((v) => !v);
+                          setShopifyOpen(false);
+                          setTrayOpen(false);
                         }}
                         className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95"
                       >
@@ -901,13 +1165,7 @@ function ConexoesHubInner() {
                       {connected ? (
                         <button
                           type="button"
-                          onClick={() =>
-                            isWoo
-                              ? disconnect("WOOCOMMERCE")
-                              : connectorKey
-                                ? disconnectEcomm(connectorKey)
-                                : undefined
-                          }
+                          onClick={() => disconnect("WOOCOMMERCE")}
                           className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)]"
                         >
                           Desconectar
@@ -915,7 +1173,7 @@ function ConexoesHubInner() {
                       ) : null}
                     </div>
 
-                    {isWoo && open ? (
+                    {open ? (
                       <form
                         onSubmit={saveWoo}
                         className="mt-4 space-y-2 border-t border-[var(--hairline)] pt-3"
@@ -960,37 +1218,6 @@ function ConexoesHubInner() {
                           className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
                         >
                           {wooSaving ? "Validando…" : "Salvar WooCommerce"}
-                        </button>
-                      </form>
-                    ) : null}
-
-                    {!isWoo && open ? (
-                      <form
-                        onSubmit={saveEcommConnector}
-                        className="mt-4 space-y-2 border-t border-[var(--hairline)] pt-3"
-                      >
-                        <input
-                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
-                          placeholder="Webhook secret"
-                          value={ecommSecret}
-                          onChange={(e) => setEcommSecret(e.target.value)}
-                          required
-                        />
-                        {ecommError ? (
-                          <p className="text-xs text-red-600">{ecommError}</p>
-                        ) : null}
-                        <p className="type-micro-legal text-[var(--ink-muted-48)]">
-                          Endpoint Symbius:{" "}
-                          <code className="type-micro-legal">
-                            /api/v1/connectors/{card.key}/[organizationId]
-                          </code>
-                        </p>
-                        <button
-                          type="submit"
-                          disabled={ecommSaving || ecommStatus?.available === false}
-                          className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
-                        >
-                          {ecommSaving ? "Salvando…" : `Salvar ${card.title}`}
                         </button>
                       </form>
                     ) : null}

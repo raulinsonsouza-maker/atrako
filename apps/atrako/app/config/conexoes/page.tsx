@@ -45,13 +45,11 @@ type MetaConnectionStatus = {
   lastError: string | null;
 };
 
-const PROVIDER_CARDS: Array<{
+const ADS_CARDS: Array<{
   provider: string;
   title: string;
   icon: typeof Instagram;
   connectHref?: (workspaceId: string) => string;
-  adsHref?: string;
-  /** WhatsApp Embedded Signup (Facebook) */
   facebookSignup?: boolean;
 }> = [
   {
@@ -72,18 +70,15 @@ const PROVIDER_CARDS: Array<{
     icon: Megaphone,
     connectHref: (id) => `/api/atrako/oauth/linkedin/start?workspaceId=${id}`,
   },
-  {
-    provider: "INSTAGRAM",
-    title: "Instagram",
-    icon: Instagram,
-    connectHref: (id) => `/api/atrako/oauth/instagram/start?workspaceId=${id}`,
-  },
-  {
-    provider: "MERCADO_PAGO",
-    title: "Mercado Pago",
-    icon: CreditCard,
-    connectHref: (id) => `/api/atrako/oauth/mercadopago/start?workspaceId=${id}`,
-  },
+];
+
+const MARKETPLACE_CARDS: Array<{
+  provider: string;
+  title: string;
+  icon: typeof Instagram;
+  connectHref?: (workspaceId: string) => string;
+  facebookSignup?: boolean;
+}> = [
   {
     provider: "MERCADO_LIVRE",
     title: "Mercado Livre",
@@ -96,12 +91,20 @@ const PROVIDER_CARDS: Array<{
     icon: ShoppingBag,
     connectHref: (id) => `/api/atrako/oauth/shopee/start?workspaceId=${id}`,
   },
+];
+
+const CHANNEL_CARDS: Array<{
+  provider: string;
+  title: string;
+  icon: typeof Instagram;
+  connectHref?: (workspaceId: string) => string;
+  facebookSignup?: boolean;
+}> = [
   {
-    provider: "GOOGLE_CALENDAR",
-    title: "Google Calendar",
-    icon: CalendarDays,
-    connectHref: (id) =>
-      `/api/atrako/oauth/google-calendar/start?workspaceId=${id}`,
+    provider: "INSTAGRAM",
+    title: "Instagram",
+    icon: Instagram,
+    connectHref: (id) => `/api/atrako/oauth/instagram/start?workspaceId=${id}`,
   },
   {
     provider: "WHATSAPP",
@@ -109,12 +112,42 @@ const PROVIDER_CARDS: Array<{
     icon: MessageCircle,
     facebookSignup: true,
   },
+  {
+    provider: "MERCADO_PAGO",
+    title: "Mercado Pago",
+    icon: CreditCard,
+    connectHref: (id) => `/api/atrako/oauth/mercadopago/start?workspaceId=${id}`,
+  },
+  {
+    provider: "GOOGLE_CALENDAR",
+    title: "Google Calendar",
+    icon: CalendarDays,
+    connectHref: (id) =>
+      `/api/atrako/oauth/google-calendar/start?workspaceId=${id}`,
+  },
 ];
 
 const ECOMM_CARDS: Array<{
   key: "woocommerce";
   title: string;
 }> = [{ key: "woocommerce", title: "WooCommerce" }];
+
+type HubCard = (typeof ADS_CARDS)[number];
+
+function SectionHeading({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="mb-3">
+      <h2 className="type-caption-strong text-[var(--ink-muted-80)]">{title}</h2>
+      <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">{description}</p>
+    </div>
+  );
+}
 
 function metaBannerMessage(meta: string | null, metaError: string | null): string | null {
   if (!meta) return null;
@@ -547,6 +580,115 @@ function ConexoesHubInner() {
     return "Não conectado";
   }
 
+  function renderHubCard(card: HubCard) {
+    const Icon = card.icon;
+    const row = byProvider.get(card.provider);
+    const connected =
+      card.provider === "META_ADS"
+        ? Boolean(metaStatus?.connected)
+        : row?.status === "ACTIVE" && row.hasCredentials;
+    const isMeta = card.provider === "META_ADS";
+    const needsReauth =
+      isMeta &&
+      (metaStatus?.health === "needs_reauth" || row?.status === "NEEDS_REAUTH");
+
+    return (
+      <div
+        key={card.provider}
+        className="flex flex-col rounded-xl border border-[var(--hairline)] bg-white p-4"
+      >
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--canvas-parchment)] text-[var(--ink)]">
+            <Icon className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="type-caption-strong text-[var(--ink)]">{card.title}</h3>
+              {connected && !needsReauth ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 type-micro-legal text-emerald-700">
+                  <CheckCircle2 className="h-3 w-3" />{" "}
+                  {isMeta ? metaStatusLabel(row) : "Conectado"}
+                </span>
+              ) : needsReauth ? (
+                <span className="rounded-full bg-amber-50 px-2 py-0.5 type-micro-legal text-amber-800">
+                  Reconectar
+                </span>
+              ) : (
+                <span className="rounded-full bg-[var(--canvas-parchment)] px-2 py-0.5 type-micro-legal text-[var(--ink-muted-48)]">
+                  Não conectado
+                </span>
+              )}
+            </div>
+            {isMeta && metaStatus?.businessName ? (
+              <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
+                {metaStatus.businessName}
+                {metaStatus.selectedAdAccountId
+                  ? ` · act_${metaStatus.selectedAdAccountId.replace(/^act_/, "")}`
+                  : ""}
+              </p>
+            ) : card.provider === "GOOGLE_ADS" && googleAdsMeta.customerId ? (
+              <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
+                CID {googleAdsMeta.customerId.replace(/(\d{3})(?=\d)/g, "$1-")}
+              </p>
+            ) : row?.label ? (
+              <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
+                {row.label}
+              </p>
+            ) : null}
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {card.facebookSignup ? (
+            <button
+              type="button"
+              onClick={() =>
+                startOAuth(
+                  `/config/conexoes/whatsapp-auth?workspaceId=${effectiveWorkspace}`,
+                )
+              }
+              disabled={oauthPending || !effectiveWorkspace}
+              className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-60"
+            >
+              <Link2 className="h-3.5 w-3.5" />
+              {connected ? "Reconectar" : "Conectar com Facebook"}
+            </button>
+          ) : card.connectHref ? (
+            <button
+              type="button"
+              onClick={() => startOAuth(card.connectHref!(effectiveWorkspace))}
+              disabled={oauthPending || !effectiveWorkspace}
+              className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-60"
+            >
+              <Link2 className="h-3.5 w-3.5" />
+              {needsReauth || connected ? "Reconectar" : "Conectar"}
+            </button>
+          ) : (
+            <span className="type-fine-print text-[var(--ink-secondary)]">Em breve</span>
+          )}
+          {connected && card.provider === "SHOPEE" ? (
+            <button
+              type="button"
+              onClick={() => syncShopee()}
+              disabled={shopeeSyncing}
+              className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)] disabled:opacity-50"
+            >
+              {shopeeSyncing ? "Sincronizando…" : "Sincronizar"}
+            </button>
+          ) : null}
+          {connected && (card.connectHref || card.facebookSignup) ? (
+            <button
+              type="button"
+              onClick={() => disconnect(card.provider)}
+              className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)]"
+            >
+              Desconectar
+            </button>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
       <div className="flex items-center gap-3">
@@ -695,129 +837,28 @@ function ConexoesHubInner() {
       ) : (
         <>
           <div>
-            <h2 className="mb-3 type-caption-strong text-[var(--ink-muted-80)]">
-              Canais e ferramentas
-            </h2>
+            <SectionHeading
+              title="Plataformas de anúncios"
+              description="Mídia paga — campanhas e gasto."
+            />
+            <div className="grid gap-3 sm:grid-cols-2">{ADS_CARDS.map(renderHubCard)}</div>
+          </div>
+
+          <div>
+            <SectionHeading
+              title="Marketplaces"
+              description="Vendas em plataformas de terceiros."
+            />
             <div className="grid gap-3 sm:grid-cols-2">
-              {PROVIDER_CARDS.map((card) => {
-                const Icon = card.icon;
-                const row = byProvider.get(card.provider);
-                const connected =
-                  card.provider === "META_ADS"
-                    ? Boolean(metaStatus?.connected)
-                    : row?.status === "ACTIVE" && row.hasCredentials;
-                const isMeta = card.provider === "META_ADS";
-                const needsReauth =
-                  isMeta &&
-                  (metaStatus?.health === "needs_reauth" || row?.status === "NEEDS_REAUTH");
-                return (
-                  <div
-                    key={card.provider}
-                    className="flex flex-col rounded-xl border border-[var(--hairline)] bg-white p-4"
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--canvas-parchment)] text-[var(--ink)]">
-                        <Icon className="h-5 w-5" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <h2 className="type-caption-strong text-[var(--ink)]">{card.title}</h2>
-                          {connected && !needsReauth ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 type-micro-legal text-emerald-700">
-                              <CheckCircle2 className="h-3 w-3" />{" "}
-                              {isMeta ? metaStatusLabel(row) : "Conectado"}
-                            </span>
-                          ) : needsReauth ? (
-                            <span className="rounded-full bg-amber-50 px-2 py-0.5 type-micro-legal text-amber-800">
-                              Reconectar
-                            </span>
-                          ) : (
-                            <span className="rounded-full bg-[var(--canvas-parchment)] px-2 py-0.5 type-micro-legal text-[var(--ink-muted-48)]">
-                              Não conectado
-                            </span>
-                          )}
-                        </div>
-                        {isMeta && metaStatus?.businessName ? (
-                          <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
-                            {metaStatus.businessName}
-                            {metaStatus.selectedAdAccountId
-                              ? ` · act_${metaStatus.selectedAdAccountId.replace(/^act_/, "")}`
-                              : ""}
-                          </p>
-                        ) : card.provider === "GOOGLE_ADS" && googleAdsMeta.customerId ? (
-                          <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
-                            CID{" "}
-                            {googleAdsMeta.customerId.replace(/(\d{3})(?=\d)/g, "$1-")}
-                          </p>
-                        ) : row?.label ? (
-                          <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
-                            {row.label}
-                          </p>
-                        ) : null}
-                      </div>
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {card.facebookSignup ? (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            startOAuth(
-                              `/config/conexoes/whatsapp-auth?workspaceId=${effectiveWorkspace}`,
-                            )
-                          }
-                          disabled={oauthPending || !effectiveWorkspace}
-                          className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-60"
-                        >
-                          <Link2 className="h-3.5 w-3.5" />
-                          {connected ? "Reconectar" : "Conectar com Facebook"}
-                        </button>
-                      ) : card.connectHref ? (
-                        <button
-                          type="button"
-                          onClick={() => startOAuth(card.connectHref!(effectiveWorkspace))}
-                          disabled={oauthPending || !effectiveWorkspace}
-                          className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-60"
-                        >
-                          <Link2 className="h-3.5 w-3.5" />
-                          {needsReauth ? "Reconectar" : connected ? "Reconectar" : "Conectar"}
-                        </button>
-                      ) : (
-                        <span className="type-fine-print text-[var(--ink-secondary)]">
-                          Em breve
-                        </span>
-                      )}
-                      {connected && card.provider === "SHOPEE" ? (
-                        <button
-                          type="button"
-                          onClick={() => syncShopee()}
-                          disabled={shopeeSyncing}
-                          className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)] disabled:opacity-50"
-                        >
-                          {shopeeSyncing ? "Sincronizando…" : "Sincronizar"}
-                        </button>
-                      ) : null}
-                      {connected && (card.connectHref || card.facebookSignup) ? (
-                        <button
-                          type="button"
-                          onClick={() => disconnect(card.provider)}
-                          className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)]"
-                        >
-                          Desconectar
-                        </button>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })}
+              {MARKETPLACE_CARDS.map(renderHubCard)}
             </div>
           </div>
 
           <div>
-            <h2 className="mb-1 type-caption-strong text-[var(--ink-muted-80)]">E-commerce</h2>
-            <p className="mb-3 type-fine-print text-[var(--ink-muted-48)]">
-              Conecte a loja do cliente. Pedidos Shopify, Tray, Nuvemshop e WooCommerce aparecem
-              na aba E-commerce, no CRM e no financeiro.
-            </p>
+            <SectionHeading
+              title="E-commerce"
+              description="Loja própria do cliente."
+            />
             <div className="grid gap-3 sm:grid-cols-2">
               {(() => {
                 const shopifyRow = byProvider.get("SHOPIFY");
@@ -859,7 +900,7 @@ function ConexoesHubInner() {
                           </p>
                         ) : (
                           <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
-                            OAuth Admin API — pedidos, clientes e produtos
+                            Pedidos, clientes e produtos
                           </p>
                         )}
                       </div>
@@ -907,8 +948,7 @@ function ConexoesHubInner() {
                           aria-label="Domínio Shopify"
                         />
                         <p className="type-micro-legal text-[var(--ink-muted-48)]">
-                          Informe o domínio da loja e autorize o app. Pedidos entram no CRM,
-                          dashboard e financeiro.
+                          Informe o domínio da loja e autorize o acesso.
                         </p>
                         <button
                           type="button"
@@ -964,7 +1004,7 @@ function ConexoesHubInner() {
                           </p>
                         ) : (
                           <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
-                            OAuth Tray Commerce — pedidos no CRM e financeiro
+                            Pedidos da loja Tray
                           </p>
                         )}
                       </div>
@@ -1012,7 +1052,7 @@ function ConexoesHubInner() {
                           aria-label="Domínio da loja Tray"
                         />
                         <p className="type-micro-legal text-[var(--ink-muted-48)]">
-                          Informe o domínio da loja Tray e autorize o aplicativo.
+                          Informe o domínio da loja e autorize o acesso.
                         </p>
                         <button
                           type="button"
@@ -1068,7 +1108,7 @@ function ConexoesHubInner() {
                           </p>
                         ) : (
                           <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
-                            OAuth Nuvemshop — pedidos no CRM e financeiro
+                            Pedidos da loja Nuvemshop
                           </p>
                         )}
                       </div>
@@ -1225,6 +1265,14 @@ function ConexoesHubInner() {
                 );
               })}
             </div>
+          </div>
+
+          <div>
+            <SectionHeading
+              title="Canais e ferramentas"
+              description="Mensageria, redes, pagamentos e agenda."
+            />
+            <div className="grid gap-3 sm:grid-cols-2">{CHANNEL_CARDS.map(renderHubCard)}</div>
           </div>
         </>
       )}

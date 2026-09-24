@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-/** Hub legado /modules → home do agente. */
+/** Hub legado /modules → assistente. */
 export default function ModulesHubRedirect() {
-  redirect("/");
+  redirect("/assistente");
 }

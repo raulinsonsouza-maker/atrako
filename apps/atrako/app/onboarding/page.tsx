@@ -32,7 +32,7 @@ export default function OnboardingPage() {
     const nextIdx = Math.min(step + 1, STEPS.length - 1);
     await markStep(STEPS[nextIdx]);
     setStep(nextIdx);
-    if (STEPS[nextIdx] === "pronto") router.push("/");
+    if (STEPS[nextIdx] === "pronto") router.push("/assistente");
   }
 
   return (

@@ -7,7 +7,7 @@ import { getInternalUser } from "@/lib/internalUsers";
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getInternalUser();
   if (!user || !user.active || user.role !== "ADMIN") {
-    redirect("/");
+    redirect("/assistente");
   }
 
   const openAccess = user.id === "atrako-open-access";

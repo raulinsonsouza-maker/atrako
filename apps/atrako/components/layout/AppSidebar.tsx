@@ -8,6 +8,7 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  LogOut,
   MessageSquare,
   Plus,
   Settings2,
@@ -17,6 +18,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
+import { logoutEverywhere } from "@/lib/auth/logoutClient";
 
 type NavItem = {
   href: string;
@@ -27,7 +29,13 @@ type NavItem = {
 };
 
 const PRIMARY: NavItem[] = [
-  { href: "/", label: "Assistente", description: "Pergunte e execute", icon: Bot, status: "live" },
+  {
+    href: "/assistente",
+    label: "Assistente",
+    description: "Pergunte e execute",
+    icon: Bot,
+    status: "live",
+  },
 ];
 
 const SYSTEMS: NavItem[] = [
@@ -44,7 +52,6 @@ const SETTINGS: NavItem[] = [
 ];
 
 function isActive(pathname: string, href: string) {
-  if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -52,6 +59,7 @@ export function AppSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const { workspaces } = useActiveWorkspace();
   const clientes = workspaces
@@ -61,6 +69,13 @@ export function AppSidebar() {
 
   if (pathname.startsWith("/portal") || pathname.startsWith("/sign-in")) {
     return null;
+  }
+
+  async function handleLogout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    setMobileOpen(false);
+    await logoutEverywhere("/");
   }
 
   const NavBlock = ({ title, items }: { title: string; items: NavItem[] }) => (
@@ -119,12 +134,12 @@ export function AppSidebar() {
     >
       <div className={`flex items-center gap-2 px-3 py-4 ${collapsed ? "justify-center" : "justify-between"}`}>
         {!collapsed ? (
-          <Link href="/" className="type-tagline px-1 text-[var(--on-dark)]">
+          <Link href="/assistente" className="type-tagline px-1 text-[var(--on-dark)]">
             Atrako
           </Link>
         ) : (
           <Link
-            href="/"
+            href="/assistente"
             className="flex h-9 w-9 items-center justify-center rounded-sm bg-[var(--primary)] type-caption-strong text-[var(--on-primary)] active:scale-95"
           >
             A
@@ -224,6 +239,21 @@ export function AppSidebar() {
         <NavBlock title="Operação" items={SYSTEMS} />
         <NavBlock title="Ajustes" items={SETTINGS} />
       </nav>
+
+      <div className="border-t border-[var(--surface-tile-2)] px-2 py-3">
+        <button
+          type="button"
+          onClick={handleLogout}
+          disabled={loggingOut}
+          title={collapsed ? "Sair" : undefined}
+          className="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-[var(--body-muted)] transition hover:bg-[var(--surface-tile-2)] hover:text-[var(--on-dark)] active:scale-95 disabled:opacity-50"
+        >
+          <LogOut className="h-5 w-5 shrink-0" strokeWidth={1.75} />
+          {!collapsed ? (
+            <span className="type-nav-link">{loggingOut ? "Saindo…" : "Sair"}</span>
+          ) : null}
+        </button>
+      </div>
     </aside>
   );
 

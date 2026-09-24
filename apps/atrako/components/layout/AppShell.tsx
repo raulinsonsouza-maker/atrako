@@ -7,6 +7,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   /** Páginas públicas / autenticação — sem sidebar do app. */
   const bare =
+    pathname === "/" ||
     pathname.startsWith("/portal") ||
     pathname.startsWith("/sign-in") ||
     pathname.startsWith("/invite") ||

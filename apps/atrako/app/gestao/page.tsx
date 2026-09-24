@@ -5,5 +5,5 @@ import { redirect } from "next/navigation";
  * Mantido só como redirect para não quebrar bookmarks.
  */
 export default function GestaoPage() {
-  redirect("/");
+  redirect("/assistente");
 }

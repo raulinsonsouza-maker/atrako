@@ -19,6 +19,7 @@ const PUBLIC_PREFIXES = [
   "/checkout",
   "/obrigado",
   "/api/auth/login",
+  "/api/auth/session-login",
   "/api/auth/member",
   "/api/webhooks",
   "/api/atrako/commerce/webhook",
@@ -28,7 +29,7 @@ const PUBLIC_PREFIXES = [
 ];
 
 function isPublicPath(pathname: string): boolean {
-  if (pathname === "/") return false;
+  if (pathname === "/") return true;
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p));
 }
 

@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { logoutEverywhere } from "@/lib/auth/logoutClient";
 
 const ADMIN_NAV = [
   { href: "/admin/clientes", label: "Workspaces" },
@@ -31,6 +33,7 @@ export function AdminShell({
   identity?: { username: string; role: string; openAccess: boolean };
 }) {
   const pathname = usePathname();
+  const [loggingOut, setLoggingOut] = useState(false);
   const { data: me } = useQuery({
     queryKey: ["internal-me"],
     queryFn: async () => {
@@ -44,6 +47,12 @@ export function AdminShell({
   const username = identity?.username ?? me?.username ?? "staff";
   const role = identity?.role ?? me?.role ?? "ADMIN";
   const openAccess = identity?.openAccess ?? me?.openAccess ?? false;
+
+  async function handleLogout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    await logoutEverywhere("/");
+  }
 
   return (
     <div className="flex min-h-screen bg-[var(--canvas-parchment)]">
@@ -78,16 +87,20 @@ export function AdminShell({
         </nav>
 
         <div className="border-t border-[var(--surface-tile-2)] px-5 py-4">
-          <p className="type-fine-print text-[var(--on-dark)]">{username}</p>
-          <p className="type-fine-print mt-0.5 text-[var(--body-muted)]">
-            {openAccess ? "Modo aberto (dev)" : `Staff ${role}`}
+          <p className="type-nav-link text-[var(--on-dark)]">
+            {openAccess ? "Admin" : username}
           </p>
-          <Link
-            href="/admin/conexoes"
-            className="type-fine-print mt-3 inline-block text-[var(--body-muted)] underline-offset-2 hover:text-[var(--on-dark)] hover:underline"
+          <p className="type-fine-print mt-0.5 text-[var(--body-muted)]">
+            {openAccess ? "Acesso local" : role}
+          </p>
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="mt-3 type-body text-[var(--primary-on-dark)] underline-offset-2 transition hover:underline active:scale-95 disabled:opacity-50"
           >
-            Legado ads
-          </Link>
+            {loggingOut ? "Saindo…" : "Sair"}
+          </button>
         </div>
       </aside>
 

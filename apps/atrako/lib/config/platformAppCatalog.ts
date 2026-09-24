@@ -145,6 +145,8 @@ export const PLATFORM_APP_CATALOG: Record<PlatformAppProvider, PlatformAppCatalo
     provider: "GOOGLE_ANALYTICS",
     title: "Google Analytics",
     description: "Service account JSON (GA4).",
+    /** Só mostra quando houver SA ou for habilitado — evita ruído Desabilitado. */
+    hideInAdmin: true,
     fields: [
       { key: "label", label: "Nome de exibição" },
       {
@@ -182,6 +184,7 @@ export const PLATFORM_APP_CATALOG: Record<PlatformAppProvider, PlatformAppCatalo
     provider: "MERCADO_LIVRE",
     title: "Mercado Livre",
     description: "OAuth do marketplace Mercado Livre.",
+    hideInAdmin: true,
     fields: [
       { key: "label", label: "Nome de exibição" },
       { key: "clientId", label: "Client ID (App ID)", requiredForReady: true },
@@ -197,6 +200,7 @@ export const PLATFORM_APP_CATALOG: Record<PlatformAppProvider, PlatformAppCatalo
     provider: "LINKEDIN",
     title: "LinkedIn Ads",
     description: "OAuth do app LinkedIn Marketing.",
+    hideInAdmin: true,
     fields: [
       { key: "label", label: "Nome de exibição" },
       { key: "clientId", label: "Client ID", requiredForReady: true },
@@ -207,6 +211,7 @@ export const PLATFORM_APP_CATALOG: Record<PlatformAppProvider, PlatformAppCatalo
     provider: "TIKTOK",
     title: "TikTok",
     description: "App TikTok Ads / Marketing (quando ativado).",
+    hideInAdmin: true,
     fields: [
       { key: "label", label: "Nome de exibição" },
       { key: "clientId", label: "App ID / Client key", requiredForReady: true },

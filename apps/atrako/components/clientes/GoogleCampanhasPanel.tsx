@@ -122,7 +122,15 @@ interface Props { clienteId: string; filter: DateFilter; comparePrevious?: boole
 export function GoogleCampanhasPanel({ clienteId, filter, comparePrevious = false, comparisonPreset }: Props) {
   const campParams = buildParams(filter, { nivel: "campanhas", ...(comparePrevious ? { compare: "previous" } : {}), ...(comparePrevious && comparisonPreset ? { comparisonPreset } : {}) });
 
-  const { data, isLoading, error } = useQuery<{ campanhas: Campanha[] }>({
+  const { data, isLoading, error } = useQuery<{
+    campanhas: Campanha[];
+    connection?: {
+      status: string;
+      accountSelected: boolean;
+      lastSyncAt: string | null;
+      lastSyncError: string | null;
+    };
+  }>({
     queryKey: ["google-campanhas", clienteId, campParams, comparePrevious ? "pilot-internal" : "standard"],
     queryFn: async () => {
       let r = await fetch(`/api/clientes/${clienteId}/campanhas-google?${campParams}`);
@@ -181,11 +189,30 @@ export function GoogleCampanhasPanel({ clienteId, filter, comparePrevious = fals
         </div>
       ) : error ? (
         <div className="flex items-center justify-center py-16"><p className="text-sm text-red-400">{error instanceof Error ? error.message : "Erro ao carregar campanhas Google."}</p></div>
+      ) : data?.connection?.status === "DISCONNECTED" ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
+          <BarChart3 className="w-8 h-8 text-[var(--muted-foreground)] opacity-30" />
+          <p className="text-sm text-[var(--muted-foreground)]">Conecte o Google Ads em Configurações → Conexões.</p>
+        </div>
+      ) : !data?.connection?.accountSelected ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
+          <BarChart3 className="w-8 h-8 text-[var(--muted-foreground)] opacity-30" />
+          <p className="text-sm text-[var(--muted-foreground)]">Escolha a conta Google Ads usada por este dashboard.</p>
+        </div>
+      ) : data?.connection?.status === "SYNCING" ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
+          <p className="text-sm text-[var(--muted-foreground)]">Sincronizando o histórico do Google Ads…</p>
+        </div>
+      ) : data?.connection?.lastSyncError ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
+          <p className="text-sm text-red-400">{data.connection.lastSyncError}</p>
+          <p className="text-xs text-[var(--muted-foreground)]">Tente novamente em Configurações → Conexões.</p>
+        </div>
       ) : sorted.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
           <BarChart3 className="w-8 h-8 text-[var(--muted-foreground)] opacity-30" />
           <p className="text-sm text-[var(--muted-foreground)]">Nenhuma campanha Google com gasto no período.</p>
-          <p className="text-xs text-[var(--muted-foreground)] opacity-70">Os dados aparecem após o próximo sync de criativos.</p>
+          <p className="text-xs text-[var(--muted-foreground)] opacity-70">A sincronização terminou, mas não houve gasto no período selecionado.</p>
         </div>
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-[var(--border)]">

@@ -17,6 +17,8 @@ import { findAllClientes } from "@/lib/repositories/clientesRepository";
 import { prisma } from "@/lib/db";
 import { resolveGoogleAdsCredentials } from "@/lib/config/resolveIntegracao";
 import { isSyntheticDemoCliente } from "@/lib/demo/syntheticDemo";
+import { getWorkspaceConnection, upsertWorkspaceConnection } from "@/lib/atrako/workspace-connections";
+import { googleAdsFriendlyError, parseGoogleAdsConnectionMetadata } from "@/lib/googleAds/types";
 
 /** Extract a human-readable message from google-ads-api errors (which are often non-Error objects). */
 function extractGoogleAdsError(e: unknown): string {
@@ -58,7 +60,30 @@ export interface GoogleAdsSyncOptions {
 
 export interface GoogleAdsSyncResult {
   daysProcessed: number;
+  campaignsProcessed: number;
   error?: string;
+}
+
+async function persistGoogleAdsSyncState(
+  clienteId: string,
+  result: GoogleAdsSyncResult,
+): Promise<void> {
+  const connection = await getWorkspaceConnection(clienteId, "GOOGLE_ADS");
+  if (!connection || typeof connection.credentials.refreshToken !== "string") return;
+  const metadata = parseGoogleAdsConnectionMetadata(connection.metadata);
+  const error = result.error ? googleAdsFriendlyError(result.error) : null;
+  await upsertWorkspaceConnection({
+    clienteId,
+    provider: "GOOGLE_ADS",
+    label: connection.label,
+    status: error ? "SYNC_ERROR" : "ACTIVE",
+    credentials: connection.credentials,
+    metadata: {
+      ...metadata,
+      lastSyncAt: error ? metadata.lastSyncAt : new Date().toISOString(),
+      lastSyncError: error,
+    },
+  });
 }
 
 export async function syncGoogleAdsCliente(
@@ -66,7 +91,7 @@ export async function syncGoogleAdsCliente(
   options?: GoogleAdsSyncOptions
 ): Promise<GoogleAdsSyncResult> {
   if (await isSyntheticDemoCliente(clienteId)) {
-    return { daysProcessed: 0 };
+    return { daysProcessed: 0, campaignsProcessed: 0 };
   }
   const [resolved, conta] = await Promise.all([
     resolveGoogleAdsCredentials(clienteId),
@@ -74,12 +99,12 @@ export async function syncGoogleAdsCliente(
   ]);
 
   if (!resolved) {
-    return { daysProcessed: 0, error: "Credenciais Google Ads não configuradas" };
+    return { daysProcessed: 0, campaignsProcessed: 0, error: "Credenciais Google Ads não configuradas" };
   }
 
   const customerId = options?.customerId ?? conta?.accountIdPlataforma;
   if (!customerId) {
-    return { daysProcessed: 0, error: "Sem conta Google Ads configurada (Conta com plataforma GOOGLE_ADS)" };
+    return { daysProcessed: 0, campaignsProcessed: 0, error: "Sem conta Google Ads configurada (Conta com plataforma GOOGLE_ADS)" };
   }
 
   const today = formatDate(new Date());
@@ -186,17 +211,22 @@ export async function syncGoogleAdsCliente(
       }
     }
 
-    return { daysProcessed: byDate.size };
+    const result = { daysProcessed: byDate.size, campaignsProcessed: campaignRows.length };
+    await persistGoogleAdsSyncState(clienteId, result);
+    return result;
   } catch (e) {
-    const message = extractGoogleAdsError(e);
+    const message = googleAdsFriendlyError(extractGoogleAdsError(e));
     console.error(`[googleAdsSync] ERRO clienteId=${clienteId} customerId=${customerId}:`, message);
-    return { daysProcessed: 0, error: message };
+    const result = { daysProcessed: 0, campaignsProcessed: 0, error: message };
+    await persistGoogleAdsSyncState(clienteId, result).catch(() => null);
+    return result;
   }
 }
 
 export interface GoogleAdsSyncAllResult {
   clienteId: string;
   daysProcessed: number;
+  campaignsProcessed: number;
   error?: string;
 }
 
@@ -214,9 +244,35 @@ export async function syncGoogleAdsTodosClientes(options?: { dateFrom?: string; 
     results.push({
       clienteId: cliente.id,
       daysProcessed: result.daysProcessed,
+      campaignsProcessed: result.campaignsProcessed,
       error: result.error,
     });
   }
 
   return results;
+}
+
+export async function backfillGoogleAdsCliente(
+  clienteId: string,
+  options: { customerId: string; dateFrom?: string; dateTo?: string },
+): Promise<GoogleAdsSyncResult> {
+  const start = new Date(`${options.dateFrom ?? "2026-01-01"}T00:00:00.000Z`);
+  const end = new Date(`${options.dateTo ?? formatDate(new Date())}T00:00:00.000Z`);
+  let daysProcessed = 0;
+  let campaignsProcessed = 0;
+  for (let cursor = new Date(start); cursor <= end;) {
+    const chunkStart = new Date(cursor);
+    const chunkEnd = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 0));
+    if (chunkEnd > end) chunkEnd.setTime(end.getTime());
+    const result = await syncGoogleAdsCliente(clienteId, {
+      customerId: options.customerId,
+      dateFrom: formatDate(chunkStart),
+      dateTo: formatDate(chunkEnd),
+    });
+    daysProcessed += result.daysProcessed;
+    campaignsProcessed += result.campaignsProcessed;
+    if (result.error) return { daysProcessed, campaignsProcessed, error: result.error };
+    cursor = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 1));
+  }
+  return { daysProcessed, campaignsProcessed };
 }

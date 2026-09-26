@@ -13,6 +13,7 @@ export interface SyncClienteCanaisResult {
   googleAds?: {
     ok: boolean;
     daysProcessed: number;
+    campaignsProcessed: number;
     error?: string;
   };
   meta?: {
@@ -147,6 +148,7 @@ export async function syncClienteCanais(
       ? {
           ok: !googleAdsResult.error,
           daysProcessed: googleAdsResult.daysProcessed,
+          campaignsProcessed: googleAdsResult.campaignsProcessed,
           error: googleAdsResult.error,
         }
       : undefined,

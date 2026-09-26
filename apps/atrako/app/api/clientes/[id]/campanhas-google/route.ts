@@ -5,6 +5,8 @@ import { isContaHotelPilot } from "@/lib/clientProfiles";
 import { formatLocalDate, parseLocalDate, percentChange, previousPeriod } from "@/lib/hotelAnalysis";
 import { isInternalAdminAuthorized } from "@/lib/internalAccess";
 import { requireClienteAccess } from "@/lib/portalSession";
+import { getWorkspaceConnection } from "@/lib/atrako/workspace-connections";
+import { parseGoogleAdsConnectionMetadata } from "@/lib/googleAds/types";
 
 function parseDateOnly(value: string) {
   const [y, m, d] = value.split("-").map(Number);
@@ -59,6 +61,8 @@ export async function GET(
 
   // ── Level 1: Campanhas ──────────────────────────────────────────────────────
   if (nivel === "campanhas") {
+    const googleConnection = await getWorkspaceConnection(id, "GOOGLE_ADS");
+    const googleMetadata = parseGoogleAdsConnectionMetadata(googleConnection?.metadata);
     const rows = await prisma.googleAdsCampanha.findMany({
       where: {
         clienteId: id,
@@ -153,7 +157,17 @@ export async function GET(
       conversoes: 0, conversaoValor: 0, ctr: null, cpc: null, custoConversao: null, roas: null,
       comparison: { state: "stopped", investimento: -100, conversoes: -100, conversaoValor: -100 },
     })) : [];
-    return NextResponse.json({ nivel: "campanhas", campanhas: [...campanhas, ...stoppedCampaigns], ...(comparePrevious ? { comparisonPeriod: { start: formatLocalDate(previousStart), end: formatLocalDate(comparison.end) } } : {}) });
+    return NextResponse.json({
+      nivel: "campanhas",
+      campanhas: [...campanhas, ...stoppedCampaigns],
+      connection: {
+        status: googleConnection?.status ?? "DISCONNECTED",
+        accountSelected: Boolean(googleMetadata.customerId),
+        lastSyncAt: googleMetadata.lastSyncAt,
+        lastSyncError: googleMetadata.lastSyncError,
+      },
+      ...(comparePrevious ? { comparisonPeriod: { start: formatLocalDate(previousStart), end: formatLocalDate(comparison.end) } } : {}),
+    });
   }
 
   // ── Level 2: Grupos de anúncios ────────────────────────────────────────────

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -22,6 +22,7 @@ import { PillSelect } from "@/components/ui/pill-select";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 import { useOAuthPopup } from "@/hooks/useOAuthPopup";
 import type { AtrakoOAuthMessage } from "@/lib/oauth/openOAuthPopup";
+import { parseGoogleAdsConnectionMetadata } from "@/lib/googleAds/types";
 
 type ConnectionRow = {
   id: string;
@@ -161,6 +162,21 @@ function metaBannerMessage(meta: string | null, metaError: string | null): strin
   return null;
 }
 
+function formatGadsCid(id: string): string {
+  const d = id.replace(/\D/g, "");
+  if (d.length !== 10) return d || id;
+  return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
+}
+
+function gadsAccountOptionLabel(a: { id: string; name: string; manager?: boolean }): string {
+  const cid = formatGadsCid(a.id);
+  const name = a.name.trim();
+  const nameIsCid = name.replace(/\D/g, "") === a.id.replace(/\D/g, "");
+  const mcc = a.manager ? " (MCC)" : "";
+  if (nameIsCid || !name) return `${cid}${mcc}`;
+  return `${name}${mcc} · ${cid}`;
+}
+
 function ConexoesHubInner() {
   const qc = useQueryClient();
   const searchParams = useSearchParams();
@@ -177,6 +193,7 @@ function ConexoesHubInner() {
   const [selectingGads, setSelectingGads] = useState(false);
   const [gadsPickError, setGadsPickError] = useState<string | null>(null);
   const [forceGadsPick, setForceGadsPick] = useState(false);
+  const gadsNamesRefreshTried = useRef(false);
 
   const [wooOpen, setWooOpen] = useState(false);
   const [wooUrl, setWooUrl] = useState("");
@@ -231,6 +248,7 @@ function ConexoesHubInner() {
       if ("cancelled" in msg && msg.cancelled) {
         return;
       }
+      if (!("workspaceId" in msg)) return;
       if (msg.workspaceId) setWorkspaceId(msg.workspaceId);
       if (msg.pick === "GOOGLE_ADS") setForceGadsPick(true);
       if (msg.meta) {
@@ -298,22 +316,12 @@ function ConexoesHubInner() {
 
   const googleAdsMeta = useMemo(() => {
     const row = byProvider.get("GOOGLE_ADS");
-    const meta =
-      row?.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata)
-        ? (row.metadata as Record<string, unknown>)
-        : {};
-    const ids = Array.isArray(meta.accessibleCustomerIds)
-      ? meta.accessibleCustomerIds
-          .filter((x): x is string => typeof x === "string")
-          .map((x) => x.replace(/\D/g, ""))
-          .filter(Boolean)
-      : [];
-    const customerId =
-      typeof meta.customerId === "string" ? meta.customerId.replace(/\D/g, "") : "";
+    const meta = parseGoogleAdsConnectionMetadata(row?.metadata);
     return {
-      accessibleCustomerIds: ids,
-      customerId,
-      needsAccountPick: meta.needsAccountPick === true || (ids.length > 1 && !customerId),
+      ...meta,
+      accounts: meta.accessibleCustomers,
+      customerId: meta.customerId ?? "",
+      loginCustomerId: meta.loginCustomerId ?? "",
     };
   }, [byProvider]);
 
@@ -324,6 +332,36 @@ function ConexoesHubInner() {
       setSelectedGadsCid(googleAdsMeta.accessibleCustomerIds[0]);
     }
   }, [googleAdsMeta.customerId, googleAdsMeta.accessibleCustomerIds]);
+
+  // Metadata antigo / query sem MCC → nomes = CID. Re-busca descriptive_name sem novo OAuth.
+  useEffect(() => {
+    gadsNamesRefreshTried.current = false;
+  }, [effectiveWorkspace]);
+
+  useEffect(() => {
+    if (!effectiveWorkspace || gadsNamesRefreshTried.current) return;
+    if (!byProvider.get("GOOGLE_ADS")?.hasCredentials) return;
+    if (googleAdsMeta.accounts.length === 0) return;
+    const needsNames = googleAdsMeta.accounts.some(
+      (a) => a.name.replace(/\D/g, "") === a.id.replace(/\D/g, ""),
+    );
+    if (!needsNames) return;
+    gadsNamesRefreshTried.current = true;
+    void (async () => {
+      try {
+        const r = await fetch("/api/atrako/oauth/google-ads/refresh-accounts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ workspaceId: effectiveWorkspace }),
+        });
+        if (r.ok) {
+          qc.invalidateQueries({ queryKey: ["workspace-connections", effectiveWorkspace] });
+        }
+      } catch {
+        /* silencioso — usuário ainda vê CIDs */
+      }
+    })();
+  }, [effectiveWorkspace, byProvider, googleAdsMeta.accounts, qc]);
 
   const wooRow = byProvider.get("WOOCOMMERCE");
   const wooConnected = wooRow?.status === "ACTIVE" && wooRow.hasCredentials;
@@ -395,18 +433,26 @@ function ConexoesHubInner() {
     setSelectingGads(true);
     setGadsPickError(null);
     try {
+      const picked = googleAdsMeta.accounts.find((a) => a.id === selectedGadsCid);
       const r = await fetch("/api/atrako/oauth/google-ads/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           workspaceId: effectiveWorkspace,
           customerId: selectedGadsCid,
+          loginCustomerId: picked?.loginCustomerId || googleAdsMeta.loginCustomerId || undefined,
+          customerName: picked?.name || undefined,
         }),
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || "Não foi possível salvar a conta.");
       setForceGadsPick(false);
-      setOauthFlash("Google Ads conectado.");
+      const syncError = typeof j.error === "string" ? j.error : null;
+      setOauthFlash(
+        syncError
+          ? `Google Ads conectado, mas a sincronização falhou: ${syncError}`
+          : `Google Ads conectado. ${Number(j.daysProcessed ?? 0)} dias e ${Number(j.campaignsProcessed ?? 0)} campanhas sincronizados.`,
+      );
       qc.invalidateQueries({ queryKey: ["workspace-connections", effectiveWorkspace] });
     } catch (err) {
       setGadsPickError(err instanceof Error ? err.message : "Erro ao selecionar conta");
@@ -436,6 +482,19 @@ function ConexoesHubInner() {
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || "Não foi possível conectar a loja.");
+      const imported = Number(j.initialSync?.processed ?? 0);
+      const syncMessage = j.syncError
+        ? `Falha na carga inicial: ${j.syncError}`
+        : `${imported} pedidos importados na carga inicial.`;
+      const webhookMessage = j.webhookError
+        ? `Webhooks não registrados: ${j.webhookError}`
+        : "Webhooks de novos pedidos ativos.";
+      const hasConnectionWarnings = Boolean(j.syncError || j.webhookError);
+      setOauthFlash(
+        hasConnectionWarnings
+          ? `WooCommerce conectado com pendências. ${syncMessage} ${webhookMessage}`
+          : `WooCommerce conectado. ${syncMessage} ${webhookMessage}`,
+      );
       setWooOpen(false);
       setWooUrl("");
       setWooKey("");
@@ -563,12 +622,12 @@ function ConexoesHubInner() {
 
   const showGadsSelect =
     Boolean(byProvider.get("GOOGLE_ADS")?.hasCredentials) &&
-    googleAdsMeta.accessibleCustomerIds.length > 0 &&
-    (forceGadsPick || googleAdsMeta.needsAccountPick);
+    googleAdsMeta.accounts.length > 0 &&
+    (forceGadsPick || googleAdsMeta.needsAccountPick || !googleAdsMeta.customerId);
 
   const gadsPickUnavailable =
-    forceGadsPick &&
     Boolean(byProvider.get("GOOGLE_ADS")?.hasCredentials) &&
+    !googleAdsMeta.customerId &&
     googleAdsMeta.accessibleCustomerIds.length === 0;
 
   function metaStatusLabel(row: ConnectionRow | undefined): string {
@@ -628,7 +687,12 @@ function ConexoesHubInner() {
               </p>
             ) : card.provider === "GOOGLE_ADS" && googleAdsMeta.customerId ? (
               <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
-                CID {googleAdsMeta.customerId.replace(/(\d{3})(?=\d)/g, "$1-")}
+                {googleAdsMeta.customerName &&
+                googleAdsMeta.customerName.replace(/\D/g, "") !== googleAdsMeta.customerId
+                  ? googleAdsMeta.customerName
+                  : "Google Ads"}
+                {" · "}
+                {formatGadsCid(googleAdsMeta.customerId)}
               </p>
             ) : row?.label ? (
               <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
@@ -637,6 +701,55 @@ function ConexoesHubInner() {
             ) : null}
           </div>
         </div>
+        {card.provider === "GOOGLE_ADS" && showGadsSelect ? (
+          <div className="mt-3 space-y-2 border-t border-[var(--hairline)] pt-3">
+            <p className="type-fine-print text-[var(--ink-muted-80)]">
+              Escolha a conta que o dashboard vai usar.
+            </p>
+            <PillSelect
+              size="field"
+              className="w-full"
+              value={selectedGadsCid}
+              onChange={setSelectedGadsCid}
+              options={[
+                { value: "", label: "Selecione a conta" },
+                ...googleAdsMeta.accounts.filter((a) => !a.manager).map((a) => ({
+                  value: a.id,
+                  label: gadsAccountOptionLabel(a),
+                })),
+              ]}
+              aria-label="Conta Google Ads"
+            />
+            {gadsPickError ? (
+              <p className="type-fine-print text-red-600">{gadsPickError}</p>
+            ) : null}
+            <button
+              type="button"
+              disabled={!selectedGadsCid || selectingGads}
+              onClick={confirmGoogleAdsCid}
+              className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
+            >
+              {selectingGads ? "Salvando…" : "Usar esta conta"}
+            </button>
+          </div>
+        ) : null}
+        {card.provider === "GOOGLE_ADS" && gadsPickUnavailable ? (
+          <p className="mt-3 type-fine-print text-amber-800">
+            Autorizado, mas nenhuma conta Ads foi listada.
+            {googleAdsMeta.listError ? ` (${googleAdsMeta.listError})` : ""} Reconecte após
+            liberar o Google Ads API no Cloud project.
+          </p>
+        ) : null}
+        {card.provider === "GOOGLE_ADS" && googleAdsMeta.lastSyncError ? (
+          <p className="mt-3 type-fine-print text-red-600">
+            Sincronização do Google Ads falhou: {googleAdsMeta.lastSyncError}
+          </p>
+        ) : null}
+        {card.provider === "GOOGLE_ADS" && row?.status === "SYNCING" ? (
+          <p className="mt-3 type-fine-print text-amber-800">
+            Sincronização inicial em andamento. Os dados aparecerão após a conclusão.
+          </p>
+        ) : null}
         <div className="mt-4 flex flex-wrap gap-2">
           {card.facebookSignup ? (
             <button
@@ -673,6 +786,16 @@ function ConexoesHubInner() {
               className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)] disabled:opacity-50"
             >
               {shopeeSyncing ? "Sincronizando…" : "Sincronizar"}
+            </button>
+          ) : null}
+          {card.provider === "GOOGLE_ADS" && googleAdsMeta.customerId && row?.status === "SYNC_ERROR" ? (
+            <button
+              type="button"
+              onClick={confirmGoogleAdsCid}
+              disabled={selectingGads}
+              className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)] disabled:opacity-50"
+            >
+              {selectingGads ? "Sincronizando…" : "Tentar sincronizar novamente"}
             </button>
           ) : null}
           {connected && (card.connectHref || card.facebookSignup) ? (
@@ -715,20 +838,26 @@ function ConexoesHubInner() {
       ) : null}
 
       {oauthFlash && !banner ? (
+        (() => {
+          const flashIsSuccess =
+            oauthFlash.includes("conectado") && !oauthFlash.includes("pendências");
+          return (
         <div
           className={`flex items-start gap-2 rounded-xl border p-4 type-fine-print ${
-            oauthFlash.includes("conectado")
+            flashIsSuccess
               ? "border-emerald-200 bg-emerald-50 text-emerald-900"
               : "border-amber-200 bg-amber-50 text-amber-950"
           }`}
         >
-          {oauthFlash.includes("conectado") ? (
+          {flashIsSuccess ? (
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
           ) : (
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           )}
           {oauthFlash}
         </div>
+          );
+        })()
       ) : null}
 
       <div className="rounded-xl border border-[var(--hairline)] bg-white p-4">
@@ -784,48 +913,6 @@ function ConexoesHubInner() {
           >
             {selectingAd ? "Salvando…" : "Continuar"}
           </button>
-        </div>
-      ) : null}
-
-      {showGadsSelect ? (
-        <div className="rounded-xl border border-[var(--hairline)] bg-white p-4 space-y-3">
-          <h2 className="type-caption-strong text-[var(--ink)]">Conta Google Ads</h2>
-          <p className="type-fine-print text-[var(--ink-muted-80)]">
-            Escolha o CID que o dashboard vai usar.
-          </p>
-          <PillSelect
-            size="field"
-            className="w-full"
-            value={selectedGadsCid}
-            onChange={setSelectedGadsCid}
-            options={[
-              { value: "", label: "Selecione a conta" },
-              ...googleAdsMeta.accessibleCustomerIds.map((id) => ({
-                value: id,
-                label: id.replace(/(\d{3})(?=\d)/g, "$1-"),
-              })),
-            ]}
-            aria-label="Conta Google Ads"
-          />
-          {gadsPickError ? (
-            <p className="type-fine-print text-red-600">{gadsPickError}</p>
-          ) : null}
-          <button
-            type="button"
-            disabled={!selectedGadsCid || selectingGads}
-            onClick={confirmGoogleAdsCid}
-            className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-4 py-2 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
-          >
-            {selectingGads ? "Salvando…" : "Continuar"}
-          </button>
-        </div>
-      ) : null}
-
-      {gadsPickUnavailable ? (
-        <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 type-fine-print text-amber-950">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          Google Ads autorizado, mas nenhuma conta (CID) foi listada. Reconecte e confirme as
-          permissões da conta.
         </div>
       ) : null}
 

@@ -3,9 +3,18 @@ import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { upsertWorkspaceConnection, getWorkspaceConnection } from "@/lib/atrako/workspace-connections";
 import { resolvePlatformApp } from "@/lib/config/platformApps";
-import { prisma } from "@/lib/db";
-import { PLATAFORMA_GOOGLE_ADS, upsertContaPlataforma } from "@/lib/repositories/contasRepository";
+import {
+  PLATAFORMA_GOOGLE_ADS,
+  normalizeGoogleAdsAccountId,
+  normalizeGoogleAdsLoginCustomerId,
+} from "@/lib/repositories/contasRepository";
 import { getPublicOrigin } from "@/lib/http/public-origin";
+import { prisma } from "@/lib/db";
+import { encryptCredentials } from "@/lib/atrako/credentials-crypto";
+import { backfillGoogleAdsCliente } from "@/lib/sync/googleAdsApiSync";
+import { googleAdsFriendlyError, parseGoogleAdsConnectionMetadata } from "@/lib/googleAds/types";
+
+export const maxDuration = 300;
 
 /**
  * GET → redireciona para OAuth start (fluxo SaaS).
@@ -67,41 +76,116 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const prevMeta =
-    existing?.metadata && typeof existing.metadata === "object"
-      ? (existing.metadata as Record<string, unknown>)
-      : {};
+  const prevMeta = parseGoogleAdsConnectionMetadata(existing?.metadata);
+  const previousLoginCustomerId =
+    (typeof existing?.credentials.loginCustomerId === "string"
+      ? existing.credentials.loginCustomerId.replace(/\D/g, "")
+      : "") ||
+    (prevMeta.loginCustomerId ?? "");
 
-  await upsertWorkspaceConnection({
-    clienteId: workspaceId,
-    provider: "GOOGLE_ADS",
-    label: "Google Ads",
-    credentials: {
-      refreshToken: nextRefresh,
-      loginCustomerId: loginCustomerId || undefined,
-      customerId: customerId || undefined,
-    },
-    metadata: {
-      ...prevMeta,
-      loginCustomerId: loginCustomerId || null,
-      customerId: customerId || null,
-      needsAccountPick: customerId ? false : prevMeta.needsAccountPick === true,
-    },
-  });
+  const accounts = prevMeta.accessibleCustomers;
+  const selectedAccount = accounts.find((account) => account.id === customerId);
+  const inferredManagerId = selectedAccount?.loginCustomerId ||
+    accounts.find((account) => account.manager)?.id || "";
+  const effectiveLoginCustomerId =
+    selectedAccount?.loginCustomerId || loginCustomerId || previousLoginCustomerId || inferredManagerId;
+  const customerNameFromList =
+    customerId &&
+    selectedAccount?.name?.trim();
+  const customerName =
+    (typeof body.customerName === "string" && body.customerName.trim()) ||
+    customerNameFromList ||
+    null;
 
   if (customerId) {
-    const cliente = await prisma.cliente.findUnique({
-      where: { id: workspaceId },
-      select: { nome: true },
+    if (selectedAccount?.manager && accounts.some((account) => !account.manager)) {
+      return NextResponse.json({ error: "Selecione uma conta anunciante, não a conta MCC." }, { status: 400 });
+    }
+    const normalizedCustomerId = normalizeGoogleAdsAccountId(customerId)!;
+    const normalizedLoginId = normalizeGoogleAdsLoginCustomerId(effectiveLoginCustomerId);
+    const credentials = {
+      ...existing?.credentials,
+      refreshToken: nextRefresh,
+      loginCustomerId: normalizedLoginId ?? undefined,
+      customerId: normalizedCustomerId,
+    };
+    const pendingMetadata = {
+      ...prevMeta,
+      loginCustomerId: normalizedLoginId,
+      customerId: normalizedCustomerId,
+      customerName,
+      needsAccountPick: false,
+      lastSyncError: null,
+    };
+    await prisma.$transaction(async (tx) => {
+      await tx.workspaceConnection.upsert({
+        where: { clienteId_provider: { clienteId: workspaceId, provider: "GOOGLE_ADS" } },
+        create: {
+          clienteId: workspaceId,
+          provider: "GOOGLE_ADS",
+          label: customerName || "Google Ads",
+          status: "SYNCING",
+          credentialsEnc: encryptCredentials(credentials),
+          metadata: pendingMetadata,
+        },
+        update: {
+          label: customerName || "Google Ads",
+          status: "SYNCING",
+          credentialsEnc: encryptCredentials(credentials),
+          metadata: pendingMetadata,
+        },
+      });
+      const current = await tx.conta.findFirst({
+        where: { clienteId: workspaceId, plataforma: PLATAFORMA_GOOGLE_ADS },
+      });
+      if (current) {
+        await tx.conta.update({
+          where: { id: current.id },
+          data: {
+            accountIdPlataforma: normalizedCustomerId,
+            googleAdsLoginCustomerId: normalizedLoginId,
+            nomeConta: customerName || current.nomeConta || "Google Ads",
+          },
+        });
+      } else {
+        await tx.conta.create({
+          data: {
+            clienteId: workspaceId,
+            plataforma: PLATAFORMA_GOOGLE_ADS,
+            accountIdPlataforma: normalizedCustomerId,
+            googleAdsLoginCustomerId: normalizedLoginId,
+            nomeConta: customerName || "Google Ads",
+          },
+        });
+      }
     });
-    await upsertContaPlataforma({
+
+    const sync = await backfillGoogleAdsCliente(workspaceId, { customerId: normalizedCustomerId });
+    const completedAt = new Date().toISOString();
+    const syncError = sync.error ? googleAdsFriendlyError(sync.error) : null;
+    await upsertWorkspaceConnection({
       clienteId: workspaceId,
-      plataforma: PLATAFORMA_GOOGLE_ADS,
-      accountIdPlataforma: customerId,
-      googleAdsLoginCustomerId: loginCustomerId || null,
-      nomeConta: cliente?.nome ?? "Google Ads",
-      conexaoIntegracaoId: null,
+      provider: "GOOGLE_ADS",
+      label: customerName || "Google Ads",
+      status: syncError ? "SYNC_ERROR" : "ACTIVE",
+      credentials,
+      metadata: {
+        ...pendingMetadata,
+        lastSyncAt: syncError ? prevMeta.lastSyncAt : completedAt,
+        lastSyncError: syncError,
+      },
     });
+    if (!syncError) {
+      await prisma.cliente.update({ where: { id: workspaceId }, data: { ultimoSyncAt: new Date() } });
+    }
+    return NextResponse.json({
+      ok: !syncError,
+      customerId: normalizedCustomerId,
+      loginCustomerId: normalizedLoginId,
+      daysProcessed: sync.daysProcessed,
+      campaignsProcessed: sync.campaignsProcessed,
+      error: syncError,
+    }, { status: syncError ? 502 : 200 });
   }
 
   return NextResponse.json({ ok: true });

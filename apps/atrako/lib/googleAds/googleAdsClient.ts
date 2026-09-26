@@ -1,5 +1,7 @@
 import { GoogleAdsApi } from "google-ads-api";
 import { getIntegrationsConfig } from "@/lib/config/integrations";
+import type { GoogleAdsAccessibleAccount } from "@/lib/googleAds/types";
+import { googleAdsFriendlyError } from "@/lib/googleAds/types";
 
 export interface GoogleAdsCredentialOverride {
   clientId: string;
@@ -89,6 +91,450 @@ function createCustomer(client: GoogleAdsApi, params: {
     refresh_token: params.refreshToken,
     ...(loginCustomerId ? { login_customer_id: loginCustomerId } : {}),
   });
+}
+
+/**
+ * Lista CIDs acessíveis pelo OAuth do usuário.
+ * Pós-set/2026: developer token é opcional/ignorado — o acesso vem do Google Cloud project
+ * do Client OAuth (https://developers.google.com/google-ads/api/docs/api-policy/developer-token).
+ * Pacote google-ads-api@23 → API v23.
+ */
+export type { GoogleAdsAccessibleAccount } from "@/lib/googleAds/types";
+
+export function formatGoogleAdsCid(id: string): string {
+  const d = id.replace(/\D/g, "");
+  if (d.length !== 10) return d || id;
+  return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
+}
+
+export function isGoogleAdsDescriptiveName(name: string | null | undefined, id: string): boolean {
+  const n = name?.trim() ?? "";
+  if (!n || n.toLowerCase() === "google ads") return false;
+  return n.replace(/\D/g, "") !== id.replace(/\D/g, "");
+}
+
+function unwrapScalar(value: unknown): string {
+  if (typeof value === "string" || typeof value === "number" || typeof value === "bigint") {
+    return String(value);
+  }
+  if (value && typeof value === "object" && "value" in value) {
+    return unwrapScalar((value as { value: unknown }).value);
+  }
+  return "";
+}
+
+function pickDescriptiveName(row: Record<string, unknown> | undefined | null): string | null {
+  if (!row) return null;
+  const raw = unwrapScalar(row.descriptive_name) || unwrapScalar(row.descriptiveName);
+  const name = raw.trim();
+  return name || null;
+}
+
+function isManagerFlag(row: Record<string, unknown> | undefined | null): boolean {
+  if (!row) return false;
+  const v = row.manager;
+  if (v === true || v === "true" || v === 1) return true;
+  if (v && typeof v === "object" && "value" in v) return Boolean((v as { value: unknown }).value);
+  return false;
+}
+
+function extractCustomerRow(row: unknown): Record<string, unknown> | null {
+  if (!row || typeof row !== "object" || Array.isArray(row)) return null;
+  const o = row as Record<string, unknown>;
+  if (o.customer && typeof o.customer === "object" && !Array.isArray(o.customer)) {
+    return o.customer as Record<string, unknown>;
+  }
+  return o;
+}
+
+function extractCustomerClientRow(row: unknown): Record<string, unknown> | null {
+  if (!row || typeof row !== "object" || Array.isArray(row)) return null;
+  const o = row as Record<string, unknown>;
+  if (o.customer_client && typeof o.customer_client === "object" && !Array.isArray(o.customer_client)) {
+    return o.customer_client as Record<string, unknown>;
+  }
+  if (o.customerClient && typeof o.customerClient === "object" && !Array.isArray(o.customerClient)) {
+    return o.customerClient as Record<string, unknown>;
+  }
+  return o;
+}
+
+function adsHeaders(accessToken: string, developerToken?: string, loginCustomerId?: string) {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${accessToken}`,
+    Accept: "application/json",
+  };
+  if (developerToken) headers["developer-token"] = developerToken;
+  if (loginCustomerId) headers["login-customer-id"] = loginCustomerId;
+  return headers;
+}
+
+async function queryCustomerMeta(
+  client: GoogleAdsApi,
+  refreshToken: string,
+  customerId: string,
+  loginCustomerId?: string,
+): Promise<{ name: string | null; manager: boolean; error: string | null }> {
+  try {
+    const customer = client.Customer({
+      customer_id: customerId,
+      refresh_token: refreshToken,
+      ...(loginCustomerId ? { login_customer_id: loginCustomerId } : {}),
+    });
+    const result = (await customer.query(`
+      SELECT customer.id, customer.descriptive_name, customer.manager
+      FROM customer
+      LIMIT 1
+    `)) as unknown[];
+    const row = extractCustomerRow(result[0]);
+    return {
+      name: pickDescriptiveName(row),
+      manager: isManagerFlag(row),
+      error: null,
+    };
+  } catch (err) {
+    const error = err instanceof Error ? err.message.slice(0, 200) : "customer_query_failed";
+    return { name: null, manager: false, error };
+  }
+}
+
+async function getCustomerViaRest(
+  accessToken: string,
+  customerId: string,
+  developerToken?: string,
+  loginCustomerId?: string,
+): Promise<{ name: string | null; manager: boolean; error: string | null }> {
+  const versions = ["v23", "v22"];
+  let lastError: string | null = null;
+  for (const v of versions) {
+    try {
+      const searchUrl = `https://googleads.googleapis.com/${v}/customers/${customerId}/googleAds:search`;
+      const searchRes = await fetch(searchUrl, {
+        method: "POST",
+        headers: {
+          ...adsHeaders(accessToken, developerToken, loginCustomerId),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: "SELECT customer.id, customer.descriptive_name, customer.manager FROM customer LIMIT 1",
+        }),
+      });
+      const searchBody = (await searchRes.json().catch(() => ({}))) as {
+        results?: unknown[];
+        error?: { message?: string };
+      };
+      if (searchRes.ok) {
+        const row = extractCustomerRow(searchBody.results?.[0]);
+        const name = pickDescriptiveName(row);
+        if (name) return { name, manager: isManagerFlag(row), error: null };
+      } else {
+        lastError = searchBody.error?.message || `http_${searchRes.status}`;
+      }
+
+      const getUrl = `https://googleads.googleapis.com/${v}/customers/${customerId}`;
+      const getRes = await fetch(getUrl, {
+        headers: adsHeaders(accessToken, developerToken, loginCustomerId),
+      });
+      const getBody = (await getRes.json().catch(() => ({}))) as Record<string, unknown> & {
+        error?: { message?: string };
+      };
+      if (getRes.ok) {
+        const name = pickDescriptiveName(getBody);
+        if (name) return { name, manager: isManagerFlag(getBody), error: null };
+      } else {
+        lastError = getBody.error?.message || `http_${getRes.status}`;
+      }
+    } catch (err) {
+      lastError = err instanceof Error ? err.message.slice(0, 200) : "rest_customer_failed";
+    }
+  }
+  return { name: null, manager: false, error: lastError };
+}
+
+/** Nomes dos clientes sob um MCC (mais confiável que query direta sem login_customer_id). */
+async function queryCustomerClientNames(
+  client: GoogleAdsApi,
+  refreshToken: string,
+  managerId: string,
+): Promise<{ map: Map<string, { name: string; manager: boolean }>; error: string | null }> {
+  const map = new Map<string, { name: string; manager: boolean }>();
+  try {
+    const customer = client.Customer({
+      customer_id: managerId,
+      refresh_token: refreshToken,
+      login_customer_id: managerId,
+    });
+    const result = (await customer.query(`
+      SELECT
+        customer_client.id,
+        customer_client.client_customer,
+        customer_client.descriptive_name,
+        customer_client.manager
+      FROM customer_client
+      WHERE customer_client.status = 'ENABLED'
+    `)) as unknown[];
+    for (const row of result) {
+      const cc = extractCustomerClientRow(row);
+      if (!cc) continue;
+      const fromId = unwrapScalar(cc.id).replace(/\D/g, "");
+      const fromResource = unwrapScalar(cc.client_customer || cc.clientCustomer).replace(/\D/g, "");
+      const id = fromId || fromResource;
+      const name = pickDescriptiveName(cc);
+      if (!id) continue;
+      map.set(id, { name: name || formatGoogleAdsCid(id), manager: isManagerFlag(cc) });
+    }
+    return { map, error: null };
+  } catch (err) {
+    const error = googleAdsFriendlyError(err).slice(0, 400);
+    return { map, error };
+  }
+}
+
+async function fetchCustomerLabels(
+  client: GoogleAdsApi,
+  params: {
+    refreshToken: string;
+    accessToken?: string | null;
+    developerToken?: string;
+    ids: string[];
+  },
+): Promise<{
+  accounts: GoogleAdsAccessibleAccount[];
+  loginCustomerId: string | null;
+  nameError: string | null;
+}> {
+  const { refreshToken, accessToken, developerToken, ids } = params;
+  const byId = new Map<string, GoogleAdsAccessibleAccount>();
+  for (const id of ids) {
+    byId.set(id, { id, name: formatGoogleAdsCid(id), manager: false, loginCustomerId: null });
+  }
+
+  const managers: string[] = [];
+  const batchSize = 4;
+  let lastError: string | null = null;
+
+  const applyMeta = (id: string, meta: { name: string | null; manager: boolean; error: string | null }) => {
+    if (meta.error) lastError = meta.error;
+    const current = byId.get(id)!;
+    if (meta.name && isGoogleAdsDescriptiveName(meta.name, id)) {
+      byId.set(id, { id, name: meta.name, manager: meta.manager, loginCustomerId: current.loginCustomerId });
+    } else if (meta.manager) {
+      byId.set(id, { id, name: current.name, manager: true, loginCustomerId: current.loginCustomerId });
+    }
+    if (meta.manager && !managers.includes(id)) managers.push(id);
+  };
+
+  for (let i = 0; i < ids.length; i += batchSize) {
+    const batch = ids.slice(i, i + batchSize);
+    await Promise.all(
+      batch.map(async (id) => {
+        const meta = await queryCustomerMeta(client, refreshToken, id);
+        applyMeta(id, meta);
+        if (!isGoogleAdsDescriptiveName(byId.get(id)!.name, id) && accessToken) {
+          const rest = await getCustomerViaRest(accessToken, id, developerToken);
+          applyMeta(id, rest);
+        }
+      }),
+    );
+  }
+
+  const mccCandidates = managers.length > 0 ? managers : ids;
+  for (const mcc of mccCandidates) {
+    const clients = await queryCustomerClientNames(client, refreshToken, mcc);
+    if (clients.error) lastError = clients.error;
+    if (clients.map.size === 0) continue;
+    if (!managers.includes(mcc)) managers.push(mcc);
+    for (const [cid, info] of clients.map) {
+      const current = byId.get(cid);
+      byId.set(cid, {
+        id: cid,
+        name: current && isGoogleAdsDescriptiveName(current.name, cid) ? current.name : info.name,
+        manager: info.manager,
+        loginCustomerId: mcc,
+      });
+    }
+  }
+
+  const stillMissing = () => Array.from(byId.values())
+    .filter((account) => !isGoogleAdsDescriptiveName(account.name, account.id))
+    .map((account) => account.id);
+  if (stillMissing().length > 0 && managers.length > 0) {
+    const missing = stillMissing();
+    for (let i = 0; i < missing.length; i += batchSize) {
+      const batch = missing.slice(i, i + batchSize);
+      await Promise.all(
+        batch.map(async (id) => {
+          for (const mcc of managers) {
+            if (mcc === id) continue;
+            if (!byId.has(id)) return;
+            const meta = await queryCustomerMeta(client, refreshToken, id, mcc);
+            applyMeta(id, meta);
+            if (isGoogleAdsDescriptiveName(byId.get(id)!.name, id)) return;
+            if (accessToken) {
+              const rest = await getCustomerViaRest(accessToken, id, developerToken, mcc);
+              applyMeta(id, rest);
+              if (isGoogleAdsDescriptiveName(byId.get(id)!.name, id)) return;
+            }
+          }
+        }),
+      );
+    }
+  }
+
+  const accounts = Array.from(byId.values());
+  const selectable = accounts.some((account) => !account.manager)
+    ? accounts.filter((account) => !account.manager)
+    : accounts;
+  const namesMissing = selectable.length > 0 && selectable.every(
+    (account) => !isGoogleAdsDescriptiveName(account.name, account.id),
+  );
+  return {
+    accounts: selectable.sort((a, b) => a.name.localeCompare(b.name, "pt-BR")),
+    loginCustomerId: managers[0] ?? null,
+    nameError: namesMissing ? lastError : null,
+  };
+}
+
+/**
+ * Lista CIDs acessíveis pelo OAuth do usuário (com nome descritivo quando possível).
+ * Pós-set/2026: developer token é opcional/ignorado — o acesso vem do Google Cloud project
+ * do Client OAuth (https://developers.google.com/google-ads/api/docs/api-policy/developer-token).
+ * Pacote google-ads-api@23 → API v23.
+ */
+export async function listAccessibleCustomerIds(params: {
+  refreshToken: string;
+  accessToken?: string | null;
+  clientId: string;
+  clientSecret: string;
+  /** Legado opcional — enviado só se presente; API ignora desde set/2026. */
+  developerToken?: string | null;
+}): Promise<{
+  ids: string[];
+  accounts: GoogleAdsAccessibleAccount[];
+  error: string | null;
+  loginCustomerId: string | null;
+}> {
+  const legacyToken = params.developerToken?.trim() || "";
+  let libError: string | null = null;
+  let ids: string[] = [];
+
+  const client = new GoogleAdsApi({
+    client_id: params.clientId,
+    client_secret: params.clientSecret,
+    developer_token: legacyToken,
+  });
+
+  // 1) Client library (alinhada à v23 do pacote)
+  try {
+    const listed = await client.listAccessibleCustomers(params.refreshToken);
+    const resources = (listed as { resource_names?: string[] })?.resource_names ?? [];
+    ids = resources
+      .map((r) => r.replace(/^customers\//, "").replace(/\D/g, ""))
+      .filter(Boolean);
+    if (ids.length === 0) libError = "no_accessible_customers";
+  } catch (err) {
+    libError = err instanceof Error ? err.message.slice(0, 240) : "list_customers_failed";
+  }
+
+  // 2) REST v23 (fallback) — versões antigas retornam http_404
+  const accessToken = await refreshGoogleAccessToken(
+    params.clientId,
+    params.clientSecret,
+    params.refreshToken,
+  ).catch(() => params.accessToken?.trim() || null);
+
+  if (ids.length === 0 && accessToken) {
+    const rest = await listViaRest(accessToken, legacyToken || undefined);
+    if (rest.ids.length > 0) {
+      ids = rest.ids;
+      libError = null;
+    } else {
+      return { ids: [], accounts: [], error: rest.error || libError, loginCustomerId: null };
+    }
+  }
+
+  if (ids.length === 0) {
+    return { ids: [], accounts: [], error: libError, loginCustomerId: null };
+  }
+
+  const labeled = await fetchCustomerLabels(client, {
+    refreshToken: params.refreshToken,
+    accessToken,
+    developerToken: legacyToken || undefined,
+    ids,
+  });
+  return {
+    ids: labeled.accounts.map((account) => account.id),
+    accounts: labeled.accounts,
+    error: labeled.nameError,
+    loginCustomerId: labeled.loginCustomerId,
+  };
+}
+
+async function refreshGoogleAccessToken(
+  clientId: string,
+  clientSecret: string,
+  refreshToken: string,
+): Promise<string> {
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      grant_type: "refresh_token",
+    }),
+  });
+  const json = await response.json().catch(() => ({})) as {
+    access_token?: string;
+    error_description?: string;
+  };
+  if (!response.ok || !json.access_token) {
+    throw new Error(json.error_description || `oauth_refresh_http_${response.status}`);
+  }
+  return json.access_token;
+}
+
+/** google-ads-api@23 → v23; v22 só como fallback de rede. */
+const GADS_LIST_URLS = [
+  "https://googleads.googleapis.com/v23/customers:listAccessibleCustomers",
+  "https://googleads.googleapis.com/v22/customers:listAccessibleCustomers",
+];
+
+async function listViaRest(
+  accessToken: string,
+  developerToken?: string,
+): Promise<{ ids: string[]; error: string | null }> {
+  let lastError: string | null = null;
+  for (const url of GADS_LIST_URLS) {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/json",
+    };
+    if (developerToken) headers["developer-token"] = developerToken;
+    try {
+      const res = await fetch(url, { headers });
+      const body = (await res.json().catch(() => ({}))) as {
+        resourceNames?: string[];
+        error?: { message?: string; status?: string };
+      };
+      if (!res.ok) {
+        lastError = body.error?.message || `http_${res.status}`;
+        continue;
+      }
+      const ids = (body.resourceNames ?? [])
+        .map((r) => r.replace(/^customers\//, "").replace(/\D/g, ""))
+        .filter(Boolean);
+      return {
+        ids,
+        error: ids.length === 0 ? "no_accessible_customers" : null,
+      };
+    } catch (err) {
+      lastError = err instanceof Error ? err.message.slice(0, 200) : "rest_list_failed";
+    }
+  }
+  return { ids: [], error: lastError };
 }
 
 export interface GoogleAdsCampaignRow {

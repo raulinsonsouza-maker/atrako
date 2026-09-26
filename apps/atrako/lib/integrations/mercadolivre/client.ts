@@ -9,6 +9,7 @@ import {
   encryptCredentials,
 } from "@/lib/atrako/credentials-crypto";
 import { ML_API_BASE, ML_OAUTH_TOKEN } from "./oauth";
+import { resolvePlatformApp } from "@/lib/config/platformApps";
 
 type MlCredentials = {
   accessToken: string;
@@ -22,8 +23,9 @@ async function refreshAccessToken(
   connectionId: string,
   refreshToken: string,
 ): Promise<MlCredentials | null> {
-  const clientId = process.env.ML_CLIENT_ID?.trim();
-  const clientSecret = process.env.ML_CLIENT_SECRET?.trim();
+  const platform = await resolvePlatformApp("MERCADO_LIVRE");
+  const clientId = platform?.credentials.clientId?.trim() || process.env.ML_CLIENT_ID?.trim();
+  const clientSecret = platform?.credentials.clientSecret?.trim() || process.env.ML_CLIENT_SECRET?.trim();
   if (!clientId || !clientSecret) return null;
 
   const body = new URLSearchParams({
@@ -63,7 +65,7 @@ async function refreshAccessToken(
   const prev = decryptCredentials(row.credentialsEnc) as MlCredentials;
   const next: MlCredentials = {
     ...prev,
-    accessToken: token.access_token,
+    accessToken: token.access_token || prev.accessToken,
     refreshToken: token.refresh_token ?? refreshToken,
     expiresAt,
     expiresIn: token.expires_in ?? null,
@@ -90,7 +92,7 @@ async function resolveCredentials(workspaceId: string): Promise<{
       clienteId_provider: { clienteId: workspaceId, provider: "MERCADO_LIVRE" },
     },
   });
-  if (!row || row.status !== "ACTIVE") return null;
+  if (!row || row.status === "DISCONNECTED" || row.status === "REVOKED") return null;
 
   let credentials = decryptCredentials(row.credentialsEnc) as MlCredentials;
   if (typeof credentials.accessToken !== "string" || !credentials.accessToken) {

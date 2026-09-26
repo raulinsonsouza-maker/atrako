@@ -7,6 +7,19 @@ import {
 } from "@/lib/integrations/mercadolivre/webhooks";
 import { ingestMercadoLivreOrder } from "@/lib/integrations/mercadolivre/ingest-order";
 import { ingestMercadoLivreShipment } from "@/lib/integrations/mercadolivre/ingest-shipment";
+import { prisma } from "@/lib/db";
+
+async function markWebhookReceived(connectionId: string) {
+  const row = await prisma.workspaceConnection.findUnique({ where: { id: connectionId } });
+  if (!row) return;
+  const metadata = row.metadata && typeof row.metadata === "object"
+    ? row.metadata as Record<string, unknown>
+    : {};
+  await prisma.workspaceConnection.update({
+    where: { id: connectionId },
+    data: { metadata: { ...metadata, lastWebhookAt: new Date().toISOString() } },
+  });
+}
 
 /**
  * Webhook ML — topics: orders_v2 / orders / shipments.
@@ -40,6 +53,7 @@ export async function POST(request: NextRequest) {
         workspaceId: match.workspaceId,
         shipmentId,
       });
+      await markWebhookReceived(match.connectionId);
       return NextResponse.json({ ok: true, topic, ...result });
     }
 
@@ -57,6 +71,7 @@ export async function POST(request: NextRequest) {
       orderId,
       notification: payload as Record<string, unknown>,
     });
+    await markWebhookReceived(match.connectionId);
     return NextResponse.json({
       ok: true,
       created: result.created,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { upsertWorkspaceConnection } from "@/lib/atrako/workspace-connections";
+import { getWorkspaceConnection, upsertWorkspaceConnection } from "@/lib/atrako/workspace-connections";
 import { ML_OAUTH_TOKEN } from "@/lib/integrations/mercadolivre/oauth";
 import { getPublicOrigin } from "@/lib/http/public-origin";
 
@@ -73,25 +73,50 @@ export async function GET(request: NextRequest) {
       ? new Date(Date.now() + token.expires_in * 1000).toISOString()
       : null;
 
+  const existing = await getWorkspaceConnection(pending.clienteId, "MERCADO_LIVRE");
+  const existingMetadata = existing?.metadata && typeof existing.metadata === "object"
+    ? existing.metadata as Record<string, unknown>
+    : {};
+  const existingRefreshToken = typeof existing?.credentials.refreshToken === "string"
+    ? existing.credentials.refreshToken
+    : null;
+
   await upsertWorkspaceConnection({
     clienteId: pending.clienteId,
     provider: "MERCADO_LIVRE",
     label: token.user_id ? `ML #${token.user_id}` : "Mercado Livre",
+    status: "SYNCING",
     credentials: {
       accessToken: token.access_token,
-      refreshToken: token.refresh_token ?? null,
+      refreshToken: token.refresh_token ?? existingRefreshToken,
       userId: token.user_id ?? null,
       expiresIn: token.expires_in ?? null,
       expiresAt,
       scope: token.scope ?? null,
     },
     metadata: {
+      ...existingMetadata,
       connectedAt: new Date().toISOString(),
       meliUserId: token.user_id ?? null,
+      lastSyncError: null,
     },
   });
 
+  let syncError: string | null = null;
+  try {
+    const { syncMercadoLivreWorkspace } = await import("@/lib/integrations/mercadolivre/sync");
+    const result = await syncMercadoLivreWorkspace(pending.clienteId, { dateFrom: "2026-01-01" });
+    syncError = result.error;
+  } catch (err) {
+    syncError = err instanceof Error ? err.message : "Falha na sincronização inicial";
+    console.error(
+      "[mercadolivre-oauth] initial sync",
+      syncError,
+    );
+  }
+
   hub.searchParams.set("workspaceId", pending.clienteId);
   hub.searchParams.set("connected", "MERCADO_LIVRE");
+  if (syncError) hub.searchParams.set("meta", "sync_failed");
   return NextResponse.redirect(hub);
 }

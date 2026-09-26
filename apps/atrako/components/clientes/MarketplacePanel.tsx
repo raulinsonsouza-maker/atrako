@@ -1,8 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { Store } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2, RefreshCcw, Store } from "lucide-react";
+import { useState } from "react";
+import {
+  Area,
+  Bar,
+  CartesianGrid,
+  ComposedChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 type MarketplaceSub = "ml" | "shopee" | "magalu";
 
@@ -10,6 +21,13 @@ type MarketplaceResponse = {
   provider: string;
   connected: boolean;
   available: boolean;
+  connection: {
+    status: string;
+    sellerConnected: boolean;
+    lastSyncAt: string | null;
+    lastWebhookAt: string | null;
+    lastSyncError: string | null;
+  };
   kpis: {
     orders: number;
     gmvCents: number;
@@ -36,6 +54,7 @@ type MarketplaceResponse = {
   } | null;
   byStatus: Array<{ status: string; orders: number; gmvCents: number }>;
   byShipping: Array<{ label: string; orders: number }>;
+  series: Array<{ date: string; orders: number; gmvCents: number; netCents: number }>;
   topProducts: Array<{
     key: string;
     title: string;
@@ -115,6 +134,9 @@ export function MarketplacePanel({
   onSubChange: (sub: MarketplaceSub) => void;
 }) {
   const provider = PROVIDER_QUERY[sub];
+  const queryClient = useQueryClient();
+  const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const { data, isLoading, isError } = useQuery({
     queryKey: ["marketplaces", clienteId, provider, dateRange.from, dateRange.to],
     queryFn: async () => {
@@ -129,6 +151,26 @@ export function MarketplacePanel({
     },
     enabled: !!clienteId && (sub === "ml" || sub === "shopee"),
   });
+
+  async function syncMarketplace() {
+    const endpoint = sub === "ml" ? "/api/atrako/mercadolivre/sync" : "/api/atrako/shopee/sync";
+    setSyncing(true);
+    setSyncError(null);
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId: clienteId }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Não foi possível sincronizar.");
+      await queryClient.invalidateQueries({ queryKey: ["marketplaces", clienteId] });
+    } catch (err) {
+      setSyncError(err instanceof Error ? err.message : "Falha na sincronização.");
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -148,6 +190,21 @@ export function MarketplacePanel({
           </button>
         ))}
       </div>
+
+      {data?.connected && (sub === "ml" || sub === "shopee") ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={syncMarketplace}
+            disabled={syncing}
+            className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] border border-[var(--border)] px-3 py-1.5 type-fine-print text-[var(--foreground)] disabled:opacity-50"
+          >
+            {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="h-3.5 w-3.5" />}
+            Sincronizar {sub === "ml" ? "Mercado Livre" : "Shopee"}
+          </button>
+          {syncError ? <p role="alert" className="type-fine-print text-red-600">{syncError}</p> : null}
+        </div>
+      ) : null}
 
       {sub === "magalu" ? (
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8 text-center">
@@ -181,69 +238,47 @@ export function MarketplacePanel({
             Conectar {SUB_LABELS[sub]}
           </Link>
         </div>
+      ) : data.connection.status === "SYNCING" ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center type-fine-print text-amber-900">
+          Sincronizando o histórico do Mercado Livre. Os dados aparecerão após a conclusão.
+        </div>
+      ) : data.connection.lastSyncError ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+          <p className="type-body text-red-700">Falha na sincronização</p>
+          <p className="mt-1 type-fine-print text-red-600">{data.connection.lastSyncError}</p>
+        </div>
       ) : (
         <>
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 type-fine-print text-[var(--muted-foreground)]">
-            Compradores deste canal entram no{" "}
+            Compradores deste canal são registrados no{" "}
             <Link href="/crm" className="text-[var(--primary)] hover:underline">
               CRM
             </Link>{" "}
             com origem <span className="text-[var(--foreground)]">{SUB_LABELS[sub]}</span>
             {data.kpis.recoverable > 0
-              ? ` — ${data.kpis.recoverable} com telefone elegíveis a WhatsApp/promoções.`
+              ? ` · ${data.kpis.recoverable} pedidos possuem contato disponibilizado pelo marketplace.`
               : "."}
           </div>
 
-          {data.seller ? (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
+          {data.seller && sub === "ml" ? (
+            <div className="flex flex-col gap-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 lg:flex-row lg:items-center lg:justify-between">
+              <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                  Conta
+                  Vendedor Mercado Livre
                 </p>
                 <p className="mt-2 text-lg font-semibold text-[var(--foreground)]">
                   {data.seller.nickname || "—"}
                 </p>
                 <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
-                  {data.seller.powerSellerStatus
-                    ? `Mercado Líder: ${data.seller.powerSellerStatus}`
-                    : "Reputação do vendedor"}
+                  Atualizado {data.connection.lastSyncAt
+                    ? new Date(data.connection.lastSyncAt).toLocaleString("pt-BR")
+                    : "ainda não sincronizado"}
                 </p>
               </div>
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                  Reputação
-                </p>
-                <p className="mt-2 text-2xl font-semibold tabular-nums text-[var(--foreground)]">
-                  {data.seller.reputationLevel || "—"}
-                </p>
-                <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
-                  +{Math.round((data.seller.ratingsPositive ?? 0) * 100)}% / −
-                  {Math.round((data.seller.ratingsNegative ?? 0) * 100)}%
-                </p>
-              </div>
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                  Visitas (30d)
-                </p>
-                <p className="mt-2 text-2xl font-semibold tabular-nums text-[var(--foreground)]">
-                  {(data.seller.visitsLast30 ?? 0).toLocaleString("pt-BR")}
-                </p>
-                <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
-                  {data.seller.transactionsTotal != null
-                    ? `${data.seller.transactionsTotal.toLocaleString("pt-BR")} vendas hist.`
-                    : "Anúncios da conta"}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                  Margem líquida*
-                </p>
-                <p className="mt-2 text-2xl font-semibold tabular-nums text-[var(--foreground)]">
-                  {formatBrl(data.kpis.netCents)}
-                </p>
-                <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
-                  {data.kpis.marginPct}% · GMV − taxas − frete
-                </p>
+              <div className="grid grid-cols-2 gap-6 text-right sm:grid-cols-3">
+                <div><p className="type-fine-print text-[var(--muted-foreground)]">Reputação</p><p className="font-semibold">{data.seller.reputationLevel || "—"}</p></div>
+                <div><p className="type-fine-print text-[var(--muted-foreground)]">Mercado Líder</p><p className="font-semibold">{data.seller.powerSellerStatus || "—"}</p></div>
+                <div><p className="type-fine-print text-[var(--muted-foreground)]">Visitas 30d</p><p className="font-semibold tabular-nums">{(data.seller.visitsLast30 ?? 0).toLocaleString("pt-BR")}</p></div>
               </div>
             </div>
           ) : null}
@@ -253,13 +288,9 @@ export function MarketplacePanel({
               { label: "Pedidos", value: String(data.kpis.orders) },
               { label: "GMV", value: formatBrl(data.kpis.gmvCents) },
               { label: "Ticket médio", value: formatBrl(data.kpis.avgTicketCents) },
+              { label: "Líquido estimado", value: formatBrl(data.kpis.netCents), hint: `${data.kpis.marginPct}% do GMV` },
               { label: "Taxas ML", value: formatBrl(data.kpis.feesCents) },
               { label: "Frete (custo)", value: formatBrl(data.kpis.shippingCostCents) },
-              {
-                label: "Recuperáveis WA",
-                value: `${data.kpis.recoverable}`,
-                hint: `${data.kpis.withPhonePct}% com telefone`,
-              },
             ].map((kpi) => (
               <div
                 key={kpi.label}
@@ -277,6 +308,28 @@ export function MarketplacePanel({
               </div>
             ))}
           </div>
+
+          {sub === "ml" && data.series.length > 0 ? (
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
+              <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+                Evolução diária de vendas
+              </p>
+              <div className="h-72 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={data.series}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis dataKey="date" tickFormatter={(v) => String(v).slice(5)} fontSize={11} />
+                    <YAxis yAxisId="money" tickFormatter={(v) => `R$${Math.round(Number(v) / 100)}`} fontSize={11} />
+                    <YAxis yAxisId="orders" orientation="right" allowDecimals={false} fontSize={11} />
+                    <Tooltip formatter={(value, name) => name === "Pedidos" ? [value, name] : [formatBrl(Number(value)), name]} />
+                    <Area yAxisId="money" type="monotone" dataKey="gmvCents" name="GMV" fill="var(--primary)" stroke="var(--primary)" fillOpacity={0.16} />
+                    <Area yAxisId="money" type="monotone" dataKey="netCents" name="Líquido" fill="#10b981" stroke="#10b981" fillOpacity={0.08} />
+                    <Bar yAxisId="orders" dataKey="orders" name="Pedidos" fill="#94a3b8" opacity={0.55} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          ) : null}
 
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)]">
@@ -398,7 +451,7 @@ export function MarketplacePanel({
               </p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-[860px] w-full text-sm">
+                <table className="min-w-[1100px] w-full text-sm">
                   <thead>
                     <tr className="border-b border-[var(--border)] text-left text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
                       <th className="px-4 py-3 font-semibold">Pedido</th>
@@ -406,6 +459,9 @@ export function MarketplacePanel({
                       <th className="px-4 py-3 font-semibold">Comprador</th>
                       <th className="px-4 py-3 font-semibold">Status</th>
                       <th className="px-4 py-3 font-semibold text-right">Valor</th>
+                      {sub === "ml" ? <th className="px-4 py-3 font-semibold text-right">Taxas</th> : null}
+                      {sub === "ml" ? <th className="px-4 py-3 font-semibold text-right">Frete</th> : null}
+                      {sub === "ml" ? <th className="px-4 py-3 font-semibold text-right">Líquido</th> : null}
                       <th className="px-4 py-3 font-semibold">Data</th>
                     </tr>
                   </thead>
@@ -442,6 +498,9 @@ export function MarketplacePanel({
                         <td className="px-4 py-3 text-right tabular-nums font-semibold text-[var(--foreground)]">
                           {order.totalCents != null ? formatBrl(order.totalCents) : "—"}
                         </td>
+                        {sub === "ml" ? <td className="px-4 py-3 text-right tabular-nums">{formatBrl(order.saleFeeCents ?? 0)}</td> : null}
+                        {sub === "ml" ? <td className="px-4 py-3 text-right tabular-nums">{formatBrl(order.shippingCostCents ?? 0)}</td> : null}
+                        {sub === "ml" ? <td className="px-4 py-3 text-right tabular-nums font-semibold">{formatBrl(order.netCents ?? 0)}</td> : null}
                         <td className="px-4 py-3 text-[var(--muted-foreground)]">
                           {order.occurredAt
                             ? new Date(order.occurredAt).toLocaleDateString("pt-BR")

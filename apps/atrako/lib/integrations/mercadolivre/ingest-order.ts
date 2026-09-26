@@ -3,7 +3,7 @@
  * Pedido pago → lead Ganho com dealValue, pronto para promoções / WA.
  */
 
-import { createEvent, createEventId } from "@atrako/events";
+import { createEvent, createEventId, type AtrakoEvent } from "@atrako/events";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@/lib/generated/prisma";
 import { upsertPersonAndLead } from "@/lib/atrako/person";
@@ -326,7 +326,7 @@ async function persistMlOrder(input: {
   });
 
   try {
-    const events = [
+    const events: AtrakoEvent[] = [
       createEvent({
         id: createEventId(),
         name: "order.created",

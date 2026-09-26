@@ -4,6 +4,10 @@ import { getWorkspaceConnection } from "@/lib/atrako/workspace-connections";
 import { requireClienteAccess } from "@/lib/portalSession";
 import { refreshMarketplaceSellerSnapshot } from "@/lib/integrations/mercadolivre/insights";
 import { shippingLabel } from "@/lib/integrations/mercadolivre/shipments";
+import {
+  buildMarketplaceDailySeries,
+  MERCADO_LIVRE_PAID_STATUSES,
+} from "@/lib/integrations/mercadolivre/metrics";
 
 const PROVIDER_MAP: Record<string, string> = {
   MERCADO_LIVRE: "MERCADO_LIVRE",
@@ -31,6 +35,13 @@ const emptyPayload = (provider: string) => ({
   provider,
   connected: false,
   available: false,
+  connection: {
+    status: "DISCONNECTED",
+    sellerConnected: false,
+    lastSyncAt: null,
+    lastWebhookAt: null,
+    lastSyncError: null,
+  },
   kpis: {
     orders: 0,
     gmvCents: 0,
@@ -47,7 +58,9 @@ const emptyPayload = (provider: string) => ({
   seller: null as null,
   byStatus: [] as Array<{ status: string; orders: number; gmvCents: number }>,
   byShipping: [] as Array<{ label: string; orders: number }>,
+  series: [] as Array<{ date: string; orders: number; gmvCents: number; netCents: number }>,
   topProducts: [],
+  recentOrders: [],
   orders: [],
 });
 
@@ -80,10 +93,15 @@ export async function GET(
 
   const connected =
     provider === "MERCADO_LIVRE"
-      ? Boolean(mlConnection && mlConnection.status === "ACTIVE")
+      ? Boolean(mlConnection && !["DISCONNECTED", "REVOKED"].includes(mlConnection.status))
       : provider === "SHOPEE"
-        ? Boolean(shopeeConnection && shopeeConnection.status === "ACTIVE")
+        ? Boolean(shopeeConnection && !["DISCONNECTED", "REVOKED"].includes(shopeeConnection.status))
         : false;
+
+  const activeConnection = provider === "MERCADO_LIVRE" ? mlConnection : shopeeConnection;
+  const connectionMeta = activeConnection?.metadata && typeof activeConnection.metadata === "object"
+    ? activeConnection.metadata as Record<string, unknown>
+    : {};
 
   if (provider !== "MERCADO_LIVRE" && provider !== "SHOPEE") {
     return NextResponse.json(emptyPayload(provider));
@@ -101,6 +119,9 @@ export async function GET(
         }
       : {}),
   };
+  const commercialWhere = provider === "MERCADO_LIVRE"
+    ? { ...where, status: { in: [...MERCADO_LIVRE_PAID_STATUSES] } }
+    : where;
 
   let sellerSnapshot =
     connected && provider === "MERCADO_LIVRE"
@@ -124,7 +145,7 @@ export async function GET(
     }
   }
 
-  const [orders, aggregates, withPhone, itemRows, statusGroups] = await Promise.all([
+  const [orders, aggregates, withPhone, itemRows, statusGroups, shippingRows, seriesRows] = await Promise.all([
     prisma.marketplaceOrder.findMany({
       where,
       orderBy: { occurredAt: "desc" },
@@ -160,7 +181,7 @@ export async function GET(
       },
     }),
     prisma.marketplaceOrder.aggregate({
-      where,
+      where: commercialWhere,
       _count: { _all: true },
       _sum: {
         totalCents: true,
@@ -171,7 +192,7 @@ export async function GET(
     }),
     prisma.marketplaceOrder.count({
       where: {
-        ...where,
+        ...commercialWhere,
         OR: [
           { buyerPhone: { not: null } },
           { contact: { phone: { not: null } } },
@@ -179,7 +200,7 @@ export async function GET(
       },
     }),
     prisma.marketplaceOrderItem.findMany({
-      where: { order: where },
+      where: { order: commercialWhere },
       select: {
         title: true,
         quantity: true,
@@ -194,6 +215,20 @@ export async function GET(
       where,
       _count: { _all: true },
       _sum: { totalCents: true },
+    }),
+    prisma.marketplaceOrder.findMany({
+      where,
+      select: { shippingMode: true, logisticType: true, shippingStatus: true },
+    }),
+    prisma.marketplaceOrder.findMany({
+      where: commercialWhere,
+      select: {
+        occurredAt: true,
+        totalCents: true,
+        saleFeeCents: true,
+        shippingCostCents: true,
+        netCents: true,
+      },
     }),
   ]);
 
@@ -259,7 +294,7 @@ export async function GET(
     .sort((a, b) => b.orders - a.orders);
 
   const shippingMap = new Map<string, number>();
-  for (const o of orders) {
+  for (const o of shippingRows) {
     const label =
       provider === "MERCADO_LIVRE"
         ? shippingLabel(o.shippingMode, o.logisticType)
@@ -270,10 +305,50 @@ export async function GET(
     .map(([label, count]) => ({ label, orders: count }))
     .sort((a, b) => b.orders - a.orders);
 
+  const recentOrders = orders.map((o) => ({
+    id: o.id,
+    externalId: o.externalId,
+    status: o.status,
+    totalCents: o.totalCents,
+    saleFeeCents: o.saleFeeCents,
+    shippingCostCents: o.shippingCostCents,
+    netCents: o.netCents,
+    currency: o.currency,
+    shippingLabel:
+      provider === "MERCADO_LIVRE"
+        ? shippingLabel(o.shippingMode, o.logisticType)
+        : o.shippingStatus || o.shippingMode || "Envio",
+    shippingStatus: o.shippingStatus,
+    buyerName: o.buyerName,
+    buyerEmail: o.buyerEmail,
+    buyerPhone: o.buyerPhone,
+    contactId: o.contactId,
+    leadId: o.leadId,
+    occurredAt: o.occurredAt?.toISOString() ?? null,
+    createdAt: o.createdAt.toISOString(),
+    items: o.items,
+    itemSummary:
+      o.items.length === 0
+        ? "—"
+        : o.items.length === 1
+          ? `${o.items[0].quantity}× ${o.items[0].title}`
+          : `${o.items.reduce((s, i) => s + i.quantity, 0)} un · ${o.items.length} produtos`,
+  }));
+
   return NextResponse.json({
     provider,
     connected,
     available: true,
+    connection: {
+      status: activeConnection?.status ?? "DISCONNECTED",
+      sellerConnected: Boolean(connectionMeta.meliUserId || sellerSnapshot?.meliUserId),
+      lastSyncAt:
+        (typeof connectionMeta.lastSyncAt === "string" && connectionMeta.lastSyncAt) ||
+        activeConnection?.lastSyncedAt?.toISOString() ||
+        null,
+      lastWebhookAt: typeof connectionMeta.lastWebhookAt === "string" ? connectionMeta.lastWebhookAt : null,
+      lastSyncError: typeof connectionMeta.lastSyncError === "string" ? connectionMeta.lastSyncError : null,
+    },
     kpis: {
       orders: orderCount,
       gmvCents,
@@ -302,35 +377,9 @@ export async function GET(
       : null,
     byStatus,
     byShipping,
+    series: buildMarketplaceDailySeries(seriesRows),
     topProducts,
-    orders: orders.map((o) => ({
-      id: o.id,
-      externalId: o.externalId,
-      status: o.status,
-      totalCents: o.totalCents,
-      saleFeeCents: o.saleFeeCents,
-      shippingCostCents: o.shippingCostCents,
-      netCents: o.netCents,
-      currency: o.currency,
-      shippingLabel:
-        provider === "MERCADO_LIVRE"
-          ? shippingLabel(o.shippingMode, o.logisticType)
-          : o.shippingStatus || o.shippingMode || "Envio",
-      shippingStatus: o.shippingStatus,
-      buyerName: o.buyerName,
-      buyerEmail: o.buyerEmail,
-      buyerPhone: o.buyerPhone,
-      contactId: o.contactId,
-      leadId: o.leadId,
-      occurredAt: o.occurredAt?.toISOString() ?? null,
-      createdAt: o.createdAt.toISOString(),
-      items: o.items,
-      itemSummary:
-        o.items.length === 0
-          ? "—"
-          : o.items.length === 1
-            ? `${o.items[0].quantity}× ${o.items[0].title}`
-            : `${o.items.reduce((s, i) => s + i.quantity, 0)} un · ${o.items.length} produtos`,
-    })),
+    recentOrders,
+    orders: recentOrders,
   });
 }

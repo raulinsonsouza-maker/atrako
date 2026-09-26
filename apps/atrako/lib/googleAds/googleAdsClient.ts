@@ -63,11 +63,13 @@ async function getClientAndRefreshToken(override?: GoogleAdsCredentialOverride) 
     );
   }
 
-  // developer_token é opcional pós-set/2026; a lib tipa como string — enviamos legado ou "".
+  // O acesso é definido pelo Cloud project desde set/2026, mas google-ads-api@23
+  // ainda valida localmente que o campo não esteja vazio antes de enviar a chamada.
+  // Um marcador neutro mantém compatibilidade com o SDK; o servidor ignora o valor.
   const client = new GoogleAdsApi({
     client_id: clientId,
     client_secret: clientSecret,
-    developer_token: developerToken?.trim() || "",
+    developer_token: developerToken?.trim() || "cloud-project-access",
   });
 
   return { client, refreshToken, loginCustomerId };

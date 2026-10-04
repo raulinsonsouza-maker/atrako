@@ -23,6 +23,7 @@ import {
   STAGE_ROLE_ENTRY,
   STAGE_ROLE_WON,
 } from "@/lib/modules/crm";
+import { enrichItemsFromCatalog } from "@/lib/flows/catalog-enrich";
 
 export const ABANDON_AFTER_MINUTES = 60;
 export const NOTIFY_MAX_AGE_HOURS = 24;
@@ -43,6 +44,8 @@ export type AbandonedCartItem = {
   quantity: number;
   unitPriceCents?: number;
   sku?: string | null;
+  imageUrl?: string | null;
+  productUrl?: string | null;
 };
 
 type BuyerInput = {
@@ -98,6 +101,20 @@ export async function trackOrderPayment(
       provider: input.provider,
     });
     if (input.leadId) await moveLeadToWon(input.workspaceId, input.leadId, input.totalCents);
+    const { onOrderPaid } = await import("@/lib/flows/attribution");
+    await onOrderPaid({
+      workspaceId: input.workspaceId,
+      contactId: input.contactId ?? null,
+      leadId: input.leadId ?? null,
+      email: input.email,
+      phone: input.phone,
+      orderRef: `${input.provider}:${input.externalOrderId}`,
+      totalCents: input.totalCents,
+      paidAt: input.occurredAt,
+      provider: input.provider,
+      rawPayload: input.rawPayload,
+      items: input.items,
+    }).catch((err) => console.warn("[flows] onOrderPaid", err instanceof Error ? err.message : err));
     return;
   }
 
@@ -203,6 +220,9 @@ async function upsertCartRow(input: BuyerInput & {
     },
   };
   const existing = await prisma.abandonedCart.findUnique({ where });
+  const items = input.items?.length
+    ? await enrichItemsFromCatalog(input.workspaceId, input.provider, input.items).catch(() => input.items)
+    : input.items;
   const shared = {
     name: name ?? existing?.name ?? null,
     email: email ?? existing?.email ?? null,
@@ -211,7 +231,7 @@ async function upsertCartRow(input: BuyerInput & {
     leadId: input.leadId ?? existing?.leadId ?? null,
     totalCents: input.totalCents,
     currency: (input.currency || "BRL").toUpperCase().slice(0, 8),
-    items: (input.items ?? undefined) as Prisma.InputJsonValue | undefined,
+    items: (items ?? undefined) as Prisma.InputJsonValue | undefined,
     recoveryUrl: input.recoveryUrl ?? existing?.recoveryUrl ?? null,
     rawPayload: (input.rawPayload ?? undefined) as Prisma.InputJsonValue | undefined,
   };
@@ -397,11 +417,65 @@ export async function promoteDueCarts(opts?: { limit?: number; now?: Date; notif
         where: { id: cart.id },
         data: { notifiedAt: now },
       });
-      await emitCheckoutAbandoned({ ...cart, contactId, leadId });
+      const viaFlow = contactId ? await enrollCartInFlow({ ...cart, contactId, leadId }) : false;
+      // Sem fluxo ativo com template aprovado: só texto/CTA dentro da janela de 24h
+      if (!viaFlow) await emitCheckoutAbandoned({ ...cart, contactId, leadId });
       notified++;
     }
   }
   return { promoted, notified, scanned: due.length };
+}
+
+/**
+ * Matricula o carrinho no fluxo (checkout → cart_abandoned; pedido não pago → order_unpaid).
+ * Retorna true se o WhatsApp sai pelo fluxo (template aprovado) — senão o caller usa o envio legado.
+ */
+async function enrollCartInFlow(cart: {
+  id: string;
+  clienteId: string;
+  provider: string;
+  kind: string;
+  externalId: string;
+  contactId: string;
+  leadId: string | null;
+  totalCents: number;
+  currency: string;
+  items: unknown;
+  recoveryUrl: string | null;
+}) {
+  try {
+    const { enrollContact } = await import("@/lib/flows/engine");
+    const trigger = cart.kind === "order" ? "order_unpaid" : "cart_abandoned";
+    const items = Array.isArray(cart.items) ? (cart.items as AbandonedCartItem[]) : [];
+    const { enrolled } = await enrollContact({
+      clienteId: cart.clienteId,
+      trigger,
+      contactId: cart.contactId,
+      leadId: cart.leadId,
+      refType: "cart",
+      refId: cart.id,
+      context: {
+        items,
+        totalCents: cart.totalCents,
+        currency: cart.currency,
+        destination: cart.recoveryUrl,
+        orderRef: cart.kind === "order" ? cart.externalId.replace(/^order:/, "") : null,
+        provider: cart.provider,
+      },
+    });
+    if (!enrolled) return false;
+    const approved = await prisma.waTemplateRef.count({
+      where: {
+        clienteId: cart.clienteId,
+        status: "APPROVED",
+        purpose: cart.kind === "order" ? "order_unpaid" : "cart_1",
+      },
+    });
+    return approved > 0;
+  } catch (err) {
+    console.warn("[abandoned-cart] flow enroll failed", err instanceof Error ? err.message : err);
+    return false;
+  }
 }
 
 /**
@@ -466,6 +540,18 @@ export async function markLeadLost(
       } as Prisma.InputJsonValue,
     },
   });
+  if (lead.contactId && reason !== "reembolso") {
+    const { enrollContact } = await import("@/lib/flows/engine");
+    await enrollContact({
+      clienteId: workspaceId,
+      trigger: "lead_lost",
+      contactId: lead.contactId,
+      leadId: lead.id,
+      refType: "lead",
+      refId: lead.id,
+      context: {},
+    }).catch((err) => console.warn("[flows] lead_lost enroll", err instanceof Error ? err.message : err));
+  }
   return true;
 }
 

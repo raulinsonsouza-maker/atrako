@@ -21,6 +21,8 @@ const PUBLIC_PREFIXES = [
   "/p/",
   "/checkout",
   "/obrigado",
+  "/r/",
+  "/u/",
   "/api/auth/login",
   "/api/auth/session-login",
   "/api/auth/member",

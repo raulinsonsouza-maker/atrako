@@ -98,6 +98,7 @@ components:
   criar-catalog: { css: ".criar-platform-* / .criar-recipe-* / .criar-filter-*", note: "Hub Criar — plataformas + receitas; badges DS" }
   lp-phone-preview: { file: components/criar/LpPhonePreview.tsx, css: ".lp-preview / .lp-phone-*", note: "Preview iPhone da LP no Criar oferta + sucesso" }
   panel-modal: { css: ".panel-modal-*", note: "Sheet lateral de detalhe (CRM lead) — mantém contexto da tela" }
+  relacionamento: { css: ".rel-*", note: "Fluxos/campanhas/envios — KPIs canvas, tabela hairline, badges ok/warn/bad, editor + preview, sino de notificações" }
   store-utility-card: { file: components/ui/card.tsx }
   sub-nav-frosted: { file: components/ui/sub-nav-frosted.tsx }
   floating-sticky-bar: { file: components/ui/floating-sticky-bar.tsx }

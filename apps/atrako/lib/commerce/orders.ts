@@ -197,6 +197,24 @@ export async function approveOrder(orderId: string) {
     provider: "COMMERCE",
   }).catch((err) => console.error("[commerce-abandoned-cart]", err));
 
+  const usedCoupon = updated.couponId
+    ? await prisma.commerceCoupon.findUnique({ where: { id: updated.couponId }, select: { code: true } })
+    : null;
+  const { onOrderPaid } = await import("@/lib/flows/attribution");
+  await onOrderPaid({
+    workspaceId: updated.clienteId,
+    contactId: updated.contactId,
+    leadId: wonLead?.id ?? null,
+    email: updated.email,
+    phone: updated.phone,
+    orderRef: `COMMERCE:${updated.id}`,
+    totalCents: updated.totalCents,
+    paidAt: updated.approvedAt ?? new Date(),
+    provider: "COMMERCE",
+    couponCodes: usedCoupon ? [usedCoupon.code] : [],
+    items: updated.items.map((i) => ({ title: i.name, quantity: i.quantity, unitPriceCents: i.priceCents })),
+  }).catch((err) => console.error("[commerce-flows]", err));
+
   const leadMeta =
     wonLead?.metadata &&
     typeof wonLead.metadata === "object" &&

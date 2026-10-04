@@ -74,6 +74,8 @@ export default function ConfigRastreamentoPage() {
       keys={[
         { key: "pixelId", label: "ID do Meta Pixel" },
         { key: "capiToken", label: "Token da API de conversões (CAPI)" },
+        { key: "ga4MeasurementId", label: "GA4 — ID de métricas (G-XXXXXXX)" },
+        { key: "ga4ApiSecret", label: "GA4 — chave secreta do Measurement Protocol" },
       ]}
     />
   );

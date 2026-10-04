@@ -22,6 +22,8 @@ const FIELD_TYPES: { value: FormFieldType; label: string }[] = [
   { value: "email", label: "E-mail" },
   { value: "phone", label: "Telefone" },
   { value: "choice", label: "Escolha" },
+  { value: "date", label: "Aniversário" },
+  { value: "consent", label: "Aceite de comunicações" },
 ];
 
 function newField(partial?: Partial<FormField>): FormField {

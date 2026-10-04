@@ -88,6 +88,10 @@ export async function PATCH(request: NextRequest) {
       b.formsPrefs && typeof b.formsPrefs === "object"
         ? (b.formsPrefs as Record<string, unknown>)
         : undefined,
+    messagingPrefs:
+      b.messagingPrefs && typeof b.messagingPrefs === "object"
+        ? (b.messagingPrefs as Record<string, unknown>)
+        : undefined,
   });
 
   const config = await getWorkspaceConfig(workspaceId);

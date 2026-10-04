@@ -86,6 +86,55 @@ export async function sendWhatsAppCtaUrl(input: SendCtaUrlInput) {
   return { wamid: data.messages?.[0]?.id ?? null };
 }
 
+export class WaSendError extends Error {
+  code: number | null;
+  constructor(message: string, code: number | null) {
+    super(message);
+    this.code = code;
+  }
+}
+
+/**
+ * Template com componentes já montados (header imagem, body nomeado, botões URL/copy_code/
+ * quick_reply, limited_time_offer, carrossel). `marketingApi` usa /marketing_messages (MM API).
+ */
+export async function sendWhatsAppTemplateComponents(input: {
+  workspaceId: string;
+  to: string;
+  templateName: string;
+  languageCode?: string;
+  components: Array<Record<string, unknown>>;
+  marketingApi?: boolean;
+}) {
+  const creds = await getWhatsAppCredsOrThrow(input.workspaceId);
+  const endpoint = input.marketingApi ? "marketing_messages" : "messages";
+  const res = await waFetch(input.workspaceId, `/${creds.phoneNumberId}/${endpoint}`, {
+    method: "POST",
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: onlyDigitsPhone(input.to),
+      type: "template",
+      template: {
+        name: input.templateName,
+        language: { code: input.languageCode || "pt_BR" },
+        ...(input.components.length ? { components: input.components } : {}),
+      },
+    }),
+  });
+  const data = (await res.json()) as {
+    messages?: Array<{ id?: string }>;
+    error?: { message?: string; code?: number };
+  };
+  if (!res.ok) {
+    throw new WaSendError(
+      data.error?.message || `Falha ao enviar template WhatsApp (${res.status})`,
+      data.error?.code ?? null,
+    );
+  }
+  return { wamid: data.messages?.[0]?.id ?? null, templateName: input.templateName };
+}
+
 export async function sendWhatsAppTemplate(input: SendTemplateInput) {
   const creds = await getWhatsAppCredsOrThrow(input.workspaceId);
   const components: Array<Record<string, unknown>> = [];

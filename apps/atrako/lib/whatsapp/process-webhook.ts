@@ -12,6 +12,7 @@ import {
   upsertWaConversation,
 } from "@/lib/whatsapp/domain";
 import { upsertPersonAndLead } from "@/lib/atrako/person";
+import { handleFlowInbound, handleFlowStatuses, handleWabaLevelChange } from "@/lib/flows/wa-webhook";
 
 type WaChangeValue = {
   messaging_product?: string;
@@ -23,13 +24,16 @@ type WaChangeValue = {
     timestamp?: string;
     type?: string;
     text?: { body?: string };
-    button?: { text?: string };
-    interactive?: { button_reply?: { title?: string }; list_reply?: { title?: string } };
+    button?: { text?: string; payload?: string };
+    interactive?: { button_reply?: { id?: string; title?: string }; list_reply?: { title?: string } };
   }>;
   statuses?: Array<{
     id?: string;
     status?: string;
+    timestamp?: string;
     recipient_id?: string;
+    pricing?: { billable?: boolean; category?: string; pricing_model?: string };
+    errors?: Array<{ code?: number; title?: string; message?: string; error_data?: { details?: string } }>;
   }>;
 };
 
@@ -50,6 +54,12 @@ export async function processWhatsAppWebhookPayload(payload: unknown) {
     for (const change of entry.changes ?? []) {
       const value = change.value;
       if (!value) continue;
+      if (change.field && change.field !== "messages") {
+        await handleWabaLevelChange(entry.id ?? "", change.field, value).catch((e) =>
+          console.warn("[whatsapp/webhook] waba change failed", change.field, e instanceof Error ? e.message : e),
+        );
+        continue;
+      }
       const phoneNumberId = value.metadata?.phone_number_id ?? "";
       const resolved = phoneNumberId
         ? await findWorkspaceByPhoneNumberId(phoneNumberId)
@@ -66,6 +76,11 @@ export async function processWhatsAppWebhookPayload(payload: unknown) {
           where: { clienteId: workspaceId, wamid: status.id },
           data: { status: status.status || undefined },
         });
+      }
+      if (value.statuses?.length) {
+        await handleFlowStatuses(workspaceId, value.statuses).catch((e) =>
+          console.warn("[whatsapp/webhook] flow statuses failed", e instanceof Error ? e.message : e),
+        );
       }
 
       const contactName = value.contacts?.[0]?.profile?.name ?? null;
@@ -103,6 +118,10 @@ export async function processWhatsAppWebhookPayload(payload: unknown) {
           wamid: msg.id ?? null,
           type: msg.type || "text",
         });
+
+        await handleFlowInbound(workspaceId, contact.id, msg).catch((e) =>
+          console.warn("[whatsapp/webhook] flow inbound failed", e instanceof Error ? e.message : e),
+        );
 
         const event = createEvent({
           name: "conversation.started",

@@ -8,6 +8,7 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  HeartHandshake,
   LogOut,
   MessageSquare,
   Plus,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 import { logoutEverywhere } from "@/lib/auth/logoutClient";
+import { NotificationBell } from "@/components/relacionamento/NotificationBell";
 
 type NavItem = {
   href: string;
@@ -40,6 +42,7 @@ const PRIMARY: NavItem[] = [
 
 const SYSTEMS: NavItem[] = [
   { href: "/crm", label: "Leads", description: "Funil até o fechamento", icon: Users, status: "live" },
+  { href: "/relacionamento", label: "Relacionamento", description: "E-mail e WhatsApp por etapa", icon: HeartHandshake, status: "live" },
   { href: "/whatsapp", label: "Atendimento", description: "Conversas no WhatsApp", icon: MessageSquare, status: "live" },
   { href: "/social", label: "Instagram", description: "Conteúdo e automações", icon: MessageSquare, status: "live" },
   { href: "/agenda", label: "Agenda", description: "Calendário de reservas", icon: CalendarDays, status: "live" },
@@ -145,15 +148,33 @@ export function AppSidebar() {
             A
           </Link>
         )}
-        <button
-          type="button"
-          onClick={() => setCollapsed((v) => !v)}
-          className="hidden h-8 w-8 items-center justify-center rounded-sm text-[var(--ink-muted-48)] hover:bg-[var(--surface-tile-2)] hover:text-[var(--on-dark)] md:inline-flex active:scale-95"
-          title={collapsed ? "Expandir menu" : "Recolher menu"}
-        >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </button>
+        {!collapsed ? (
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <button
+              type="button"
+              onClick={() => setCollapsed(true)}
+              className="hidden h-8 w-8 items-center justify-center rounded-sm text-[var(--ink-muted-48)] hover:bg-[var(--surface-tile-2)] hover:text-[var(--on-dark)] md:inline-flex active:scale-95"
+              title="Recolher menu"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+          </div>
+        ) : null}
       </div>
+      {collapsed ? (
+        <div className="flex flex-col items-center gap-1 pb-2">
+          <NotificationBell collapsed />
+          <button
+            type="button"
+            onClick={() => setCollapsed(false)}
+            className="hidden h-8 w-8 items-center justify-center rounded-sm text-[var(--ink-muted-48)] hover:bg-[var(--surface-tile-2)] hover:text-[var(--on-dark)] md:inline-flex active:scale-95"
+            title="Expandir menu"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      ) : null}
 
       <nav className="flex-1 space-y-4 overflow-y-auto px-2 pb-4">
         <NavBlock title="Início" items={PRIMARY} />

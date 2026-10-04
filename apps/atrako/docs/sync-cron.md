@@ -116,6 +116,42 @@ npx tsx scripts/backfill-abandoned-carts.ts --apply
 
 ---
 
+## Fluxos de relacionamento (e-mail + WhatsApp)
+
+Uma rota, três jobs. Cada execução grava `JobRun`; job parado (> intervalo + 30 min) ou com 3 falhas seguidas vira aviso no sino e na Visão geral de `/relacionamento`.
+
+| Job | Cron (UTC) | Chamada | O que faz |
+|---|---|---|---|
+| Passos | `*/5 * * * *` | `GET /api/atrako/flows/cron?job=steps` | Claim com lease dos passos vencidos (`FOR UPDATE SKIP LOCKED`), envio e-mail/WA, campanhas agendadas em lotes |
+| Horário | `7 * * * *` | `GET /api/atrako/flows/cron?job=hourly` | Sync `GET /emails` do Resend (backup do webhook), aniversários/datas (`date_based`, idempotente por ano), campanhas sazonais D-30, régua de lembretes (9h local), saúde, limite do portfólio WA |
+| Perfis | `30 6 * * *` (03:30 BRT) | `GET /api/atrako/flows/cron?job=profiles` | Recalcula `CustomerProfile` e matricula em segunda compra, recompra e win-back |
+
+```bash
+*/5 * * * * /opt/apps/atrako/cron/flows.sh steps
+7 * * * *   /opt/apps/atrako/cron/flows.sh hourly
+30 6 * * *  /opt/apps/atrako/cron/flows.sh profiles
+```
+
+`/opt/apps/atrako/cron/flows.sh` (mesmo padrão do `abandonment.sh`):
+
+```bash
+#!/bin/sh
+set -a; . /opt/apps/atrako/.env; set +a
+curl -fsS -m 290 -H "Authorization: Bearer $CRON_SECRET" \
+  "https://<host>/api/atrako/flows/cron?job=${1:-steps}" > /dev/null
+```
+
+O carrinho abandonado (acima) continua promovendo carrinhos; ao virar `OPEN` o carrinho é matriculado no fluxo **Carrinho abandonado** (o envio sai pelo job de passos). Fluxos só enviam quando a loja tem Resend com domínio verificado; passos de WhatsApp só com template `APPROVED`.
+
+**Primeira vez em produção:**
+
+```bash
+npx tsx scripts/backfill-flows.ts            # dry-run: perfis, aniversários das lojas, fluxos padrão
+npx tsx scripts/backfill-flows.ts --apply
+```
+
+---
+
 ## Caminho alternativo — endpoints HTTP (Vercel ou cron externo)
 
 Caso o app seja migrado para a Vercel ou você prefira um agendador externo (crontab, GitHub Actions), cada rota aceita **GET** e **POST**, autenticadas por `SYNC_CRON_TOKEN`:

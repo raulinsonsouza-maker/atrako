@@ -154,6 +154,11 @@ export async function POST(request: NextRequest) {
     status: "ACTIVE",
   });
 
+  const { onWhatsAppConnected } = await import("@/lib/flows/wa-sync");
+  void onWhatsAppConnected(workspaceId).catch((err) =>
+    console.warn("[whatsapp/embedded-signup] templates", err instanceof Error ? err.message : err),
+  );
+
   return NextResponse.json({
     ok: true,
     id: row.id,

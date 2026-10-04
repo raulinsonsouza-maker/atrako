@@ -20,6 +20,7 @@ export type NuvemshopProductLine = {
   quantity?: string | number;
   price?: string | number;
   sku?: string | null;
+  image?: { src?: string | null } | null;
 };
 
 export type NuvemshopOrder = {
@@ -49,6 +50,8 @@ export type NormalizedNuvemshopLineItem = {
   unitPriceCents: number;
   lineTotalCents: number;
   sku: string | null;
+  imageUrl?: string | null;
+  productUrl?: string | null;
 };
 
 export type NuvemshopBuyer = {
@@ -149,6 +152,7 @@ export function extractNuvemshopLineItems(
       unitPriceCents: unit,
       lineTotalCents: unit * qty,
       sku: p.sku || null,
+      imageUrl: p.image?.src || null,
     });
   }
   return items;

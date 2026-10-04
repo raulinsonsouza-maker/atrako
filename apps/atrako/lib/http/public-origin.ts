@@ -22,6 +22,15 @@ function envPublicOrigin(): string | null {
   return null;
 }
 
+/** Origem pública sem request (cron/jobs): links de e-mail, /r e /u. */
+export function getServerPublicOrigin(): string {
+  return (
+    envPublicOrigin() ||
+    process.env.APP_URL?.trim().replace(/\/$/, "") ||
+    "http://localhost:3000"
+  );
+}
+
 export function getPublicOrigin(req: {
   headers: Headers;
   nextUrl: { origin: string };

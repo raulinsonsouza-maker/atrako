@@ -14,6 +14,7 @@ import {
 } from "@/lib/modules/crm";
 import { ingestPurchase } from "@/lib/symbius/attribution/engine";
 import { markLeadLost, trackOrderPayment } from "@/lib/crm/abandoned-cart";
+import { enrichItemsFromCatalog } from "@/lib/flows/catalog-enrich";
 import {
   extractTrayBuyer,
   extractTrayLineItems,
@@ -160,7 +161,9 @@ export async function ingestTrayHubOrder(input: {
   notification?: Record<string, unknown> | null;
 }) {
   const externalId = trayOrderExternalId(input.order);
-  const items = extractTrayLineItems(input.order);
+  const items = await enrichItemsFromCatalog(input.workspaceId, "TRAY", extractTrayLineItems(input.order)).catch(() =>
+    extractTrayLineItems(input.order),
+  );
   const totalCents = trayOrderTotalCents(input.order);
   const status = trayOrderStatus(input.order);
   const paid = isTrayPaidStatus(input.order);
@@ -207,6 +210,8 @@ export async function ingestTrayHubOrder(input: {
             unitPriceCents: it.unitPriceCents,
             lineTotalCents: it.lineTotalCents,
             sku: it.sku,
+            imageUrl: it.imageUrl ?? null,
+            productUrl: it.productUrl ?? null,
           })),
         });
       }
@@ -306,6 +311,8 @@ export async function ingestTrayHubOrder(input: {
           unitPriceCents: it.unitPriceCents,
           lineTotalCents: it.lineTotalCents,
           sku: it.sku,
+            imageUrl: it.imageUrl ?? null,
+            productUrl: it.productUrl ?? null,
         })),
       },
     },

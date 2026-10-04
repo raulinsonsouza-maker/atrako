@@ -9,6 +9,7 @@ const MACHINE_ORIGIN_EXEMPTIONS = new Set([
   "/api/webhooks/whatsapp",
   "/api/webhooks/meta",
   "/api/atrako/commerce/webhook",
+  "/api/atrako/flows/cron",
 ]);
 const QUERY_TOKEN_MACHINE_ROUTES = new Set([
   "/api/sync/meta",

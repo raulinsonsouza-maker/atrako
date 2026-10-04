@@ -14,6 +14,7 @@ import {
 } from "@/lib/modules/crm";
 import { ingestPurchase } from "@/lib/symbius/attribution/engine";
 import { markLeadLost, trackOrderPayment } from "@/lib/crm/abandoned-cart";
+import { enrichItemsFromCatalog } from "@/lib/flows/catalog-enrich";
 import {
   extractNuvemshopBuyer,
   extractNuvemshopLineItems,
@@ -161,7 +162,9 @@ export async function ingestNuvemshopHubOrder(input: {
   notification?: Record<string, unknown> | null;
 }) {
   const externalId = nuvemshopOrderExternalId(input.order);
-  const items = extractNuvemshopLineItems(input.order);
+  const items = await enrichItemsFromCatalog(input.workspaceId, "NUVEMSHOP", extractNuvemshopLineItems(input.order)).catch(() =>
+    extractNuvemshopLineItems(input.order),
+  );
   const totalCents = nuvemshopOrderTotalCents(input.order);
   const status = nuvemshopOrderStatus(input.order);
   const currency = nuvemshopOrderCurrency(input.order);
@@ -207,6 +210,8 @@ export async function ingestNuvemshopHubOrder(input: {
             unitPriceCents: it.unitPriceCents,
             lineTotalCents: it.lineTotalCents,
             sku: it.sku,
+            imageUrl: it.imageUrl ?? null,
+            productUrl: it.productUrl ?? null,
           })),
         });
       }
@@ -306,6 +311,8 @@ export async function ingestNuvemshopHubOrder(input: {
           unitPriceCents: it.unitPriceCents,
           lineTotalCents: it.lineTotalCents,
           sku: it.sku,
+            imageUrl: it.imageUrl ?? null,
+            productUrl: it.productUrl ?? null,
         })),
       },
     },

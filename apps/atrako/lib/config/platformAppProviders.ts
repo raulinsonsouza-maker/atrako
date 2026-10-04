@@ -15,6 +15,7 @@ export const PLATFORM_APP_PROVIDERS = [
   "SHOPEE",
   "TRAY",
   "NUVEMSHOP",
+  "RESEND",
 ] as const;
 
 export type PlatformAppProvider = (typeof PLATFORM_APP_PROVIDERS)[number];

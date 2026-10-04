@@ -5,6 +5,7 @@ import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { getPersonJourney, storeProviderLabel } from "@/lib/atrako/person";
 import type { AbandonedCartItem } from "@/lib/crm/abandoned-cart";
 import { ensureDefaultPipeline } from "@/lib/modules/crm";
+import { leadCommunications } from "@/lib/flows/lead-card";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -61,7 +62,10 @@ export async function GET(request: NextRequest, ctx: Ctx) {
       notifiedAt: c.notifiedAt?.toISOString() ?? null,
     }));
 
+  const communications = lead.contactId ? await leadCommunications(workspaceId, lead.contactId) : null;
+
   return NextResponse.json({
+    communications,
     lead: {
       id: lead.id,
       contactId: lead.contactId,

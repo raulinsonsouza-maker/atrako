@@ -14,6 +14,7 @@ import {
 } from "@/lib/modules/crm";
 import { ingestPurchase } from "@/lib/symbius/attribution/engine";
 import { markLeadLost, trackOrderPayment } from "@/lib/crm/abandoned-cart";
+import { enrichItemsFromCatalog } from "@/lib/flows/catalog-enrich";
 import {
   extractShopifyBuyer,
   extractShopifyLineItems,
@@ -162,7 +163,9 @@ export async function ingestShopifyHubOrder(input: {
   webhookPayload?: Record<string, unknown> | null;
 }) {
   const externalId = shopifyOrderExternalId(input.order);
-  const items = extractShopifyLineItems(input.order);
+  const items = await enrichItemsFromCatalog(input.workspaceId, "SHOPIFY", extractShopifyLineItems(input.order)).catch(() =>
+    extractShopifyLineItems(input.order),
+  );
   const totalCents = shopifyOrderTotalCents(input.order);
   const status = shopifyOrderStatus(input.order);
   const currency = shopifyOrderCurrency(input.order);
@@ -208,6 +211,8 @@ export async function ingestShopifyHubOrder(input: {
             unitPriceCents: it.unitPriceCents,
             lineTotalCents: it.lineTotalCents,
             sku: it.sku,
+            imageUrl: it.imageUrl ?? null,
+            productUrl: it.productUrl ?? null,
           })),
         });
       }
@@ -306,6 +311,8 @@ export async function ingestShopifyHubOrder(input: {
           unitPriceCents: it.unitPriceCents,
           lineTotalCents: it.lineTotalCents,
           sku: it.sku,
+            imageUrl: it.imageUrl ?? null,
+            productUrl: it.productUrl ?? null,
         })),
       },
     },

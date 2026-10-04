@@ -46,6 +46,7 @@ Forms manuais só onde a plataforma exige chave (ex.: WooCommerce). WhatsApp e A
 | Google Ads / GA4 | Contas e sync | https://developers.google.com/google-ads/api |
 | LinkedIn Ads | Sync campanhas | LinkedIn Marketing API |
 | Google Calendar | Agenda | Google Calendar API |
+| Resend | E-mail dos fluxos de relacionamento e campanhas (API key por loja) | https://resend.com/docs/api-reference |
 
 ## Env (seed → PlatformApp)
 
@@ -81,6 +82,8 @@ NUVEMSHOP_CLIENT_ID=
 NUVEMSHOP_CLIENT_SECRET=
 NUVEMSHOP_REDIRECT_URI=
 NUVEMSHOP_SCOPES=
+RESEND_API_KEY=           # só avisos internos/testes; lojas usam a própria key
+RESEND_FROM=
 ATRAKO_CONNECTIONS_SECRET=
 ATRAKO_DEV_OPEN_ACCESS=   # só local; default off = login obrigatório
 ```
@@ -89,7 +92,26 @@ Depois do seed, edite em `/admin/apps` — não espalhe secrets em módulos.
 
 ## WorkspaceConnection.provider
 
-`MERCADO_PAGO` | `MERCADO_LIVRE` | `INSTAGRAM` | `META_ADS` | `GOOGLE_ADS` | `LINKEDIN_ADS` | `WHATSAPP` | `WOOCOMMERCE` | `SHOPIFY` | `SHOPEE` | `TRAY` | `NUVEMSHOP` | `GOOGLE_CALENDAR`
+`MERCADO_PAGO` | `MERCADO_LIVRE` | `INSTAGRAM` | `META_ADS` | `GOOGLE_ADS` | `LINKEDIN_ADS` | `WHATSAPP` | `WOOCOMMERCE` | `SHOPIFY` | `SHOPEE` | `TRAY` | `NUVEMSHOP` | `GOOGLE_CALENDAR` | `RESEND`
+
+## Resend (e-mail de relacionamento)
+
+- **PlatformApp `RESEND`** (`/admin/apps`): só fallback interno — avisos da equipe e envios de teste. Nunca usado para e-mail de cliente final.
+- **WorkspaceConnection `RESEND`** (`/config/conexoes`): cada loja cola a própria API key (`re_…`, criptografada). O card lista os domínios da conta, escolhe remetente (`from`, `reply-to`) e cria o webhook.
+- Ao escolher o domínio: `PATCH /domains/{id}` com `click_tracking: false` (o clique passa pelo nosso `/r/{token}`, com UTMs e atribuição) e `open_tracking: true`.
+- **Webhook**: `POST /api/webhooks/resend/{workspaceId}`, assinatura svix com o `signing_secret` devolvido na criação (guardado na conexão). Eventos: `email.sent|delivered|delivery_delayed|opened|clicked|bounced|complained|failed` → `MessageDelivery` + `MessageEvent`; bounce permanente e spam viram supressão.
+- **Backup do webhook**: o job `hourly` de `/api/atrako/flows/cron` reconcilia com `GET /emails`.
+- **Limites**: throttle de ~2 req/s por API key e retry com backoff em 429/5xx (`Retry-After`) em `lib/integrations/resend/client.ts`; `Idempotency-Key` por envio.
+- **Aquecimento**: campanhas respeitam o teto diário pela idade da verificação do domínio (200 → 500 → 1.000 → 2.500 → 5.000 → 10.000 → sem teto após ~6 semanas), em `warmupDailyCap`.
+- Fluxos só enviam e-mail quando a loja tem Resend ativo com domínio verificado.
+
+## Mídia (fechar o ciclo)
+
+Em `/config/rastreamento` (`WorkspaceSettings.tracking`): `pixelId` + `capiToken` (Meta CAPI) e `ga4MeasurementId` + `ga4ApiSecret` (GA4 Measurement Protocol). Venda atribuída a fluxo/campanha envia `RecoveredPurchase` (CAPI) e `recovered_purchase` (GA4) — nomes próprios para não duplicar o `Purchase` do pixel da loja. Públicos (Perdidos, carrinhos, inativos, clientes para exclusão, VIP) saem em CSV com hash SHA-256 na aba Públicos de `/relacionamento`.
+
+## WhatsApp: templates por loja
+
+Templates vivem em `WaTemplateRef` por workspace (sync com a WABA, criação dos recomendados no estúdio de `/relacionamento`). Não existe mais `WHATSAPP_TEMPLATE_*` no env do shell: o envio legado de carrinho/boas-vindas/agenda só usa `templateName` vindo do evento ou texto/CTA dentro da janela de 24h.
 
 ## Fluxo
 

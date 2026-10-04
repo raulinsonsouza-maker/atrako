@@ -69,6 +69,7 @@ export async function getWorkspaceConfig(workspaceId: string) {
       financePrefs: (settings.financePrefs as Record<string, unknown>) ?? {},
       notifyPrefs: (settings.notifyPrefs as Record<string, unknown>) ?? {},
       formsPrefs: (settings.formsPrefs as Record<string, unknown>) ?? {},
+      messagingPrefs: (settings.messagingPrefs as Record<string, unknown>) ?? {},
       onboardingStep: settings.onboardingStep,
     },
     connections,
@@ -88,6 +89,7 @@ export async function patchWorkspaceSettings(
     financePrefs?: Record<string, unknown>;
     notifyPrefs?: Record<string, unknown>;
     formsPrefs?: Record<string, unknown>;
+    messagingPrefs?: Record<string, unknown>;
     onboardingStep?: string;
     nome?: string;
     logoUrl?: string | null;
@@ -133,6 +135,9 @@ export async function patchWorkspaceSettings(
       formsPrefs: patch.formsPrefs
         ? { ...(current.formsPrefs as object), ...patch.formsPrefs }
         : undefined,
+      messagingPrefs: patch.messagingPrefs
+        ? (JSON.parse(JSON.stringify({ ...(current.messagingPrefs as object), ...patch.messagingPrefs })) as object)
+        : undefined,
     },
   });
 }
@@ -153,5 +158,7 @@ export function resolveTracking(config: NonNullable<Awaited<ReturnType<typeof ge
   return {
     pixelId: typeof t.pixelId === "string" ? t.pixelId : null,
     capiToken: typeof t.capiToken === "string" ? t.capiToken : null,
+    ga4MeasurementId: typeof t.ga4MeasurementId === "string" && t.ga4MeasurementId.trim() ? t.ga4MeasurementId.trim() : null,
+    ga4ApiSecret: typeof t.ga4ApiSecret === "string" && t.ga4ApiSecret.trim() ? t.ga4ApiSecret.trim() : null,
   };
 }

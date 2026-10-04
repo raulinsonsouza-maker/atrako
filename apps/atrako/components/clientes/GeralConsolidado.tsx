@@ -12,6 +12,15 @@ type Consolidado = {
     roas: number | null;
     leadsCrm: number;
     leadsMidia: number;
+    roasSemRelacionamento?: number | null;
+  };
+  relacionamento?: {
+    receitaAtribuida: number;
+    pedidosAtribuidos: number;
+    receitaInfluenciada: number;
+    pedidosInfluenciados: number;
+    custoWhatsApp: number;
+    participacao: number | null;
   };
   canaisVenda: Array<{ id: string; label: string; pedidos: number; receitaCents: number }>;
   canaisMidia: Array<{
@@ -65,7 +74,8 @@ export function GeralConsolidado({
     );
   }
 
-  const { totais, canaisVenda, canaisMidia } = data;
+  const { totais, canaisVenda, canaisMidia, relacionamento: rel } = data;
+  const showRel = Boolean(rel && (rel.pedidosAtribuidos > 0 || rel.pedidosInfluenciados > 0 || rel.custoWhatsApp > 0));
   const maxReceita = Math.max(1, ...canaisVenda.map((c) => c.receitaCents));
 
   return (
@@ -106,6 +116,28 @@ export function GeralConsolidado({
           hint="Investimento ÷ pedidos"
         />
       </div>
+
+      {showRel && rel ? (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <Kpi
+            label="Receita via relacionamento"
+            value={brl(rel.receitaAtribuida)}
+            hint={`${rel.pedidosAtribuidos.toLocaleString("pt-BR")} pedidos atribuídos a e-mail/WhatsApp${
+              rel.participacao != null ? ` · ${rel.participacao.toLocaleString("pt-BR")}% da receita` : ""
+            } · já incluída na receita acima`}
+          />
+          <Kpi
+            label="Influenciada"
+            value={brl(rel.receitaInfluenciada)}
+            hint={`${rel.pedidosInfluenciados.toLocaleString("pt-BR")} pedidos de quem recebeu mensagem sem clicar`}
+          />
+          <Kpi
+            label="ROAS só da mídia"
+            value={totais.roasSemRelacionamento != null ? `${totais.roasSemRelacionamento.toLocaleString("pt-BR")}x` : "—"}
+            hint={`Receita sem a parte do relacionamento ÷ investimento · WhatsApp ${brl(rel.custoWhatsApp)}`}
+          />
+        </div>
+      ) : null}
 
       <div className="grid gap-3 lg:grid-cols-2">
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">

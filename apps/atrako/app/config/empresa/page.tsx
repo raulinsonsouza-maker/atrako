@@ -49,6 +49,10 @@ export default function ConfigEmpresaPage() {
   const [timezone, setTimezone] = useState("America/Sao_Paulo");
   const [currency, setCurrency] = useState("BRL");
   const [primaryColor, setPrimaryColor] = useState(DEFAULT_PRIMARY);
+  const [senderName, setSenderName] = useState("");
+  const [storeUrl, setStoreUrl] = useState("");
+  const [footerAddress, setFooterAddress] = useState("");
+  const [socials, setSocials] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +63,13 @@ export default function ConfigEmpresaPage() {
     setTimezone(config.settings?.timezone ?? "America/Sao_Paulo");
     setCurrency(config.settings?.currency ?? "BRL");
     setPrimaryColor(normalizePrimaryHex(config.settings?.primaryColor) ?? DEFAULT_PRIMARY);
+    const mp = (config.settings?.messagingPrefs ?? {}) as Record<string, unknown>;
+    setSenderName(typeof mp.senderName === "string" ? mp.senderName : "");
+    setStoreUrl(typeof mp.storeUrl === "string" ? mp.storeUrl : "");
+    setFooterAddress(typeof mp.footerAddress === "string" ? mp.footerAddress : "");
+    setSocials(
+      mp.socials && typeof mp.socials === "object" ? (mp.socials as Record<string, string>) : {},
+    );
   }, [config]);
 
   async function save(e: React.FormEvent) {
@@ -77,7 +88,21 @@ export default function ConfigEmpresaPage() {
       const r = await fetch("/api/atrako/config", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workspaceId, nome, timezone, currency, primaryColor: hex }),
+        body: JSON.stringify({
+          workspaceId,
+          nome,
+          timezone,
+          currency,
+          primaryColor: hex,
+          messagingPrefs: {
+            senderName: senderName.trim() || null,
+            storeUrl: storeUrl.trim() || null,
+            footerAddress: footerAddress.trim() || null,
+            socials: Object.fromEntries(
+              Object.entries(socials).filter(([, v]) => /^https?:\/\//i.test(v.trim())),
+            ),
+          },
+        }),
       });
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
@@ -188,6 +213,64 @@ export default function ConfigEmpresaPage() {
                     aria-label="Moeda"
                   />
                 </label>
+              </div>
+            </div>
+
+            <div className="utility-card space-y-5">
+              <div>
+                <p className="type-caption-strong text-[var(--ink)]">E-mails e WhatsApp</p>
+                <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
+                  Usado no remetente e no rodapé dos fluxos de relacionamento. O endereço é exigido
+                  pelas regras anti-spam.
+                </p>
+              </div>
+              <label className="block">
+                <span className="type-caption-strong text-[var(--ink)]">Nome do remetente</span>
+                <input
+                  className={fieldClass}
+                  value={senderName}
+                  onChange={(e) => setSenderName(e.target.value)}
+                  placeholder={nome || "Nome da loja"}
+                />
+              </label>
+              <label className="block">
+                <span className="type-caption-strong text-[var(--ink)]">Site da loja</span>
+                <input
+                  className={fieldClass}
+                  value={storeUrl}
+                  onChange={(e) => setStoreUrl(e.target.value)}
+                  placeholder="https://minhaloja.com.br"
+                />
+              </label>
+              <label className="block">
+                <span className="type-caption-strong text-[var(--ink)]">Endereço no rodapé</span>
+                <input
+                  className={fieldClass}
+                  value={footerAddress}
+                  onChange={(e) => setFooterAddress(e.target.value)}
+                  placeholder="Rua, número — Cidade/UF — CNPJ"
+                />
+              </label>
+              <div className="grid gap-5 sm:grid-cols-2">
+                {(
+                  [
+                    ["instagram", "Instagram"],
+                    ["facebook", "Facebook"],
+                    ["tiktok", "TikTok"],
+                    ["youtube", "YouTube"],
+                    ["whatsapp", "WhatsApp (link wa.me)"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <label key={key} className="block">
+                    <span className="type-caption-strong text-[var(--ink)]">{label}</span>
+                    <input
+                      className={fieldClass}
+                      value={socials[key] ?? ""}
+                      onChange={(e) => setSocials((s) => ({ ...s, [key]: e.target.value }))}
+                      placeholder="https://"
+                    />
+                  </label>
+                ))}
               </div>
             </div>
 

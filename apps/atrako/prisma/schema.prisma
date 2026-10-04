@@ -91,9 +91,20 @@ model Cliente {
   waMessages                 WaMessage[]
   waWebhookEvents            WaWebhookEvent[]
   waTemplateRefs             WaTemplateRef[]
+  waTemplateEvents           WaTemplateEvent[]
   metaCampaignDrafts         MetaCampaignDraft[]
   metaCampaigns              MetaCampaignBuilder[]
   metaApiLogs                MetaApiLog[]
+  messageFlows               MessageFlow[]
+  messageFlowEnrollments     MessageFlowEnrollment[]
+  messageCampaigns           MessageCampaign[]
+  messageDeliveries          MessageDelivery[]
+  messageEvents              MessageEvent[]
+  customerProfiles           CustomerProfile[]
+  contactImportantDates      ContactImportantDate[]
+  emailTheme                 EmailTheme?
+  calendarDates              WorkspaceCalendarDate[]
+  notifications              Notification[]
 }
 
 model AnalystConversation {
@@ -838,6 +849,8 @@ model WorkspaceSettings {
   tracking        Json     @default("{}")
   financePrefs    Json     @default("{}")
   notifyPrefs     Json     @default("{}")
+  /// Remetente, rodapé (endereço anti-spam), redes, janela de envio, limites de frequência
+  messagingPrefs  Json     @default("{}")
   formsPrefs      Json     @default("{}")
   agendaPrefs     Json     @default("{}")
   onboardingStep  String   @default("empresa") @db.VarChar(40)
@@ -939,6 +952,21 @@ model NativeContact {
   email       String?      @db.VarChar(255)
   phone       String?      @db.VarChar(40)
   metadata    Json?
+  /// Descadastro de e-mail (link /u ou List-Unsubscribe)
+  emailOptOutAt           DateTime?
+  emailBouncedAt          DateTime?
+  emailComplainedAt       DateTime?
+  /// "Não quero receber" / parar: nenhum WhatsApp automático
+  waOptOutAt              DateTime?
+  /// Só marketing (131050, user_preferences stop, atk_optout); utility segue permitido
+  waMarketingOptOutAt     DateTime?
+  /// 131049 — limite de marketing por usuário: não reenviar antes disso
+  waMarketingBlockedUntil DateTime?
+  marketingConsentAt      DateTime?
+  consentSource           String?      @db.VarChar(40)
+  phoneE164               String?      @db.VarChar(20)
+  /// Cliente respondeu / handoff: fluxos de venda pausados até aqui
+  flowsPausedUntil        DateTime?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   cliente     Cliente      @relation(fields: [clienteId], references: [id], onDelete: Cascade)
@@ -946,9 +974,14 @@ model NativeContact {
   waConversations WaConversation[]
   commerceOrders  CommerceOrder[]
   marketplaceOrders MarketplaceOrder[]
+  profile         CustomerProfile?
+  importantDates  ContactImportantDate[]
+  flowEnrollments MessageFlowEnrollment[]
+  deliveries      MessageDelivery[]
 
   @@index([clienteId, email])
   @@index([clienteId, phone])
+  @@index([clienteId, phoneE164])
 }
 
 model NativeLead {
@@ -1622,6 +1655,8 @@ model MarketplaceOrderItem {
   unitPriceCents  Int             @default(0)
   lineTotalCents  Int             @default(0)
   sku             String?         @db.VarChar(120)
+  imageUrl        String?         @db.VarChar(1000)
+  productUrl      String?         @db.VarChar(1000)
   createdAt       DateTime        @default(now())
   order           MarketplaceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
@@ -1639,6 +1674,8 @@ model MarketplaceCatalogItem {
   status      String?  @db.VarChar(40)
   sku         String?  @db.VarChar(120)
   priceCents  Int?
+  imageUrl    String?  @db.VarChar(1000)
+  productUrl  String?  @db.VarChar(1000)
   rawPayload  Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -1720,18 +1757,420 @@ model WaWebhookEvent {
 }
 
 model WaTemplateRef {
-  id        String   @id @default(cuid())
-  clienteId String
-  name      String   @db.VarChar(120)
-  language  String   @default("pt_BR") @db.VarChar(16)
-  status    String   @default("APPROVED") @db.VarChar(40)
-  category  String?  @db.VarChar(40)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  cliente   Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  id               String    @id @default(cuid())
+  clienteId        String
+  name             String    @db.VarChar(120)
+  language         String    @default("pt_BR") @db.VarChar(16)
+  /// APPROVED | PENDING | REJECTED | PAUSED | DISABLED | FLAGGED | IN_APPEAL | ARCHIVED | LIMIT_EXCEEDED | LOCKED | PENDING_DELETION | DELETED | DRAFT
+  status           String    @default("APPROVED") @db.VarChar(40)
+  category         String?   @db.VarChar(40)
+  /// Categoria pedida na criação (para detectar recategorização)
+  requestedCategory String?  @db.VarChar(40)
+  metaTemplateId   String?   @db.VarChar(64)
+  qualityScore     String?   @db.VarChar(16)
+  rejectedReason   String?   @db.VarChar(500)
+  components       Json?
+  parameterFormat  String?   @db.VarChar(16)
+  /// cart_1, cart_coupon, order_unpaid, birthday, repurchase, campaign:{id}…
+  purpose          String?   @db.VarChar(60)
+  version          Int       @default(1)
+  replacedById     String?
+  pauseCount       Int       @default(0)
+  pausedUntil      DateTime?
+  lastUsedAt       DateTime?
+  lastSyncedAt     DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  cliente          Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  events           WaTemplateEvent[]
 
   @@unique([clienteId, name, language])
   @@index([clienteId, status])
+  @@index([clienteId, purpose])
+  @@index([metaTemplateId])
+}
+
+/// Histórico de status / qualidade / categoria (webhooks Meta).
+model WaTemplateEvent {
+  id             String         @id @default(cuid())
+  clienteId      String
+  templateRefId  String?
+  metaTemplateId String?        @db.VarChar(64)
+  field          String         @db.VarChar(60)
+  event          String?        @db.VarChar(60)
+  detail         String?        @db.VarChar(500)
+  payload        Json?
+  createdAt      DateTime       @default(now())
+  cliente        Cliente        @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  templateRef    WaTemplateRef? @relation(fields: [templateRefId], references: [id], onDelete: SetNull)
+
+  @@index([clienteId, createdAt])
+  @@index([templateRefId, createdAt])
+}
+
+/// Preço por mensagem da Meta (configurável — muda por trimestre).
+model WaRateCard {
+  id            String   @id @default(cuid())
+  category      String   @db.VarChar(20)
+  country       String   @default("BR") @db.VarChar(4)
+  currency      String   @default("BRL") @db.VarChar(8)
+  priceMicros   Int
+  effectiveFrom DateTime
+  createdAt     DateTime @default(now())
+
+  @@unique([category, country, effectiveFrom])
+}
+
+/// Fluxo automático (régua) por etapa do cliente.
+model MessageFlow {
+  id             String   @id @default(cuid())
+  clienteId      String
+  /// Chave do playbook padrão (cart_abandoned, order_unpaid…) — null = fluxo criado pela loja
+  key            String?  @db.VarChar(60)
+  name           String   @db.VarChar(160)
+  /// cart_abandoned | order_unpaid | order_paid | second_purchase | repurchase_due | winback | lead_lost | lead_welcome | date_based
+  trigger        String   @db.VarChar(40)
+  /// DRAFT | ACTIVE | PAUSED
+  status         String   @default("ACTIVE") @db.VarChar(16)
+  pausedReason   String?  @db.VarChar(200)
+  /// Menor = mais prioritário (carrinho 10, pós-compra 20, recompra 30, win-back 40, nutrição 50)
+  priority       Int      @default(50)
+  /// janela de atribuição, saídas, dateKind/offsetDays/sendHour, teto diário de matrículas
+  settings       Json     @default("{}")
+  /// 0 = sem grupo de controle; 5–10 = % sorteado que não recebe
+  holdoutPercent Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  cliente        Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  steps          MessageFlowStep[]
+  enrollments    MessageFlowEnrollment[]
+
+  @@unique([clienteId, key])
+  @@index([clienteId, trigger, status])
+}
+
+model MessageFlowStep {
+  id              String    @id @default(cuid())
+  flowId          String
+  position        Int
+  delayMinutes    Int       @default(0)
+  /// EMAIL | WHATSAPP
+  channel         String    @db.VarChar(16)
+  enabled         Boolean   @default(true)
+  /// Versão no ar: assunto/preheader/blocos ou template WA + variáveis
+  content         Json      @default("{}")
+  /// Edição em andamento — só vai ao ar após teste + publicar
+  draftContent    Json?
+  draftUpdatedAt  DateTime?
+  couponCode      String?   @db.VarChar(40)
+  couponConfirmed Boolean   @default(false)
+  /// ex.: { requiresPhone: true, skipIfClickedPrevious: true }
+  conditions      Json      @default("{}")
+  /// Referência à biblioteca de copy (atualiza textos padrão de quem não personalizou)
+  copyKey         String?   @db.VarChar(80)
+  customized      Boolean   @default(false)
+  publishedAt     DateTime?
+  testedAt        DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  flow            MessageFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  @@index([flowId, position])
+}
+
+model MessageFlowEnrollment {
+  id                String    @id @default(cuid())
+  clienteId         String
+  flowId            String
+  contactId         String
+  leadId            String?
+  /// cart | order | date | lead
+  refType           String?   @db.VarChar(20)
+  refId             String?   @db.VarChar(120)
+  /// ACTIVE | PAUSED | CONVERTED | EXITED | COMPLETED
+  status            String    @default("ACTIVE") @db.VarChar(16)
+  stepIndex         Int       @default(0)
+  nextRunAt         DateTime?
+  /// Lease do claim — evita envio duplo e destrava após queda
+  leaseUntil        DateTime?
+  context           Json      @default("{}")
+  /// Grupo de controle: não recebe, mas é medido
+  holdout           Boolean   @default(false)
+  /// Idempotência (ex.: aniversário 1x/ano, carrinho 1x por ref)
+  dedupeKey         String?   @db.VarChar(160)
+  exitReason        String?   @db.VarChar(60)
+  convertedOrderRef String?   @db.VarChar(160)
+  convertedCents    Int?
+  convertedAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  cliente           Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  flow              MessageFlow   @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  contact           NativeContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([flowId, dedupeKey])
+  @@index([status, nextRunAt])
+  @@index([clienteId, contactId, status])
+  @@index([flowId, status])
+}
+
+/// Disparo avulso / campanha sazonal com produção e aprovação.
+model MessageCampaign {
+  id                 String    @id @default(cuid())
+  clienteId          String
+  name               String    @db.VarChar(200)
+  /// EMAIL | WHATSAPP | BOTH
+  channel            String    @default("EMAIL") @db.VarChar(16)
+  content            Json      @default("{}")
+  waTemplateRefId    String?
+  couponCode         String?   @db.VarChar(40)
+  audience           Json      @default("{}")
+  /// IDEIA | BRIEFING | CRIACAO | REVISAO | APROVADA | AGENDADA | ENVIANDO | ENVIADA | PERDIDA
+  status             String    @default("IDEIA") @db.VarChar(16)
+  briefing           Json      @default("{}")
+  checklist          Json      @default("{}")
+  ownerMemberId      String?
+  approverMemberId   String?
+  approvedAt         DateTime?
+  approvedByMemberId String?
+  eventDate          DateTime?
+  scheduledAt        DateTime?
+  testedAt           DateTime?
+  contentUpdatedAt   DateTime?
+  sentAt             DateTime?
+  /// ex.: dia-das-maes-2027 (criação automática D-30)
+  calendarKey        String?   @db.VarChar(80)
+  recipientsCount    Int       @default(0)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  cliente            Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  recipients         MessageCampaignRecipient[]
+  comments           MessageCampaignComment[]
+
+  @@unique([clienteId, calendarKey])
+  @@index([clienteId, status])
+  @@index([status, scheduledAt])
+}
+
+model MessageCampaignRecipient {
+  id         String    @id @default(cuid())
+  campaignId String
+  contactId  String
+  /// PENDING | SENDING | SENT | FAILED | SKIPPED
+  status     String    @default("PENDING") @db.VarChar(16)
+  leaseUntil DateTime?
+  deliveryId String?
+  error      String?   @db.VarChar(500)
+  sentAt     DateTime?
+  createdAt  DateTime  @default(now())
+  campaign   MessageCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, contactId])
+  @@index([campaignId, status])
+}
+
+model MessageCampaignComment {
+  id         String   @id @default(cuid())
+  campaignId String
+  memberId   String?
+  authorName String?  @db.VarChar(120)
+  body       String   @db.Text
+  /// COMENTARIO | AJUSTES | APROVACAO | SISTEMA
+  kind       String   @default("COMENTARIO") @db.VarChar(16)
+  createdAt  DateTime @default(now())
+  campaign   MessageCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, createdAt])
+}
+
+/// Log unificado de cada mensagem enviada (e-mail ou WhatsApp) — base do card e da aba Envios.
+model MessageDelivery {
+  id                String    @id @default(cuid())
+  clienteId         String
+  /// EMAIL | WHATSAPP
+  channel           String    @db.VarChar(16)
+  flowId            String?
+  enrollmentId      String?
+  stepId            String?
+  campaignId        String?
+  contactId         String?
+  toAddress         String?   @db.VarChar(255)
+  /// id do Resend ou wamid
+  providerMessageId String?   @db.VarChar(128)
+  trackingToken     String    @unique @db.VarChar(40)
+  subject           String?   @db.VarChar(300)
+  templateName      String?   @db.VarChar(120)
+  couponCode        String?   @db.VarChar(40)
+  /// QUEUED | SENT | DELIVERED | OPENED | CLICKED | CONVERTED | BOUNCED | COMPLAINED | FAILED | BLOCKED | SKIPPED
+  status            String    @default("QUEUED") @db.VarChar(16)
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  openedAt          DateTime?
+  clickedAt         DateTime?
+  convertedAt       DateTime?
+  convertedCents    Int?
+  convertedOrderRef String?   @db.VarChar(160)
+  /// ATTRIBUTED (clique/cupom na janela) | INFLUENCED (recebeu/abriu e comprou)
+  conversionKind    String?   @db.VarChar(16)
+  bouncedAt         DateTime?
+  complainedAt      DateTime?
+  failedAt          DateTime?
+  error             String?   @db.VarChar(500)
+  errorCode         Int?
+  pricingCategory   String?   @db.VarChar(20)
+  billable          Boolean?
+  costMicros        Int?
+  isTest            Boolean   @default(false)
+  contentSnapshot   Json?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  cliente           Cliente        @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  contact           NativeContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  events            MessageEvent[]
+
+  @@index([clienteId, createdAt])
+  @@index([clienteId, contactId, createdAt])
+  @@index([providerMessageId])
+  @@index([enrollmentId])
+  @@index([campaignId])
+  @@index([clienteId, flowId, createdAt])
+}
+
+/// Timeline bruta: cada abertura, clique (com URL), bounce, status WA…
+model MessageEvent {
+  id              String    @id @default(cuid())
+  clienteId       String
+  deliveryId      String?
+  contactId       String?
+  type            String    @db.VarChar(40)
+  at              DateTime  @default(now())
+  meta            Json?
+  /// svix-id / id do status WA — idempotência
+  providerEventId String?   @db.VarChar(160)
+  cliente         Cliente          @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  delivery        MessageDelivery? @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, providerEventId])
+  @@index([deliveryId, at])
+  @@index([clienteId, type, at])
+}
+
+/// Métricas por contato (recalculadas na ingestão de pedido e no cron noturno).
+model CustomerProfile {
+  id              String    @id @default(cuid())
+  clienteId       String
+  contactId       String    @unique
+  ordersCount     Int       @default(0)
+  totalSpentCents Int       @default(0)
+  firstOrderAt    DateTime?
+  lastOrderAt     DateTime?
+  avgIntervalDays Float?
+  nextPurchaseAt  DateTime?
+  topProducts     Json      @default("[]")
+  /// LEAD | NOVO | RECORRENTE | VIP | EM_RISCO | INATIVO | PERDIDO
+  lifecycle       String    @default("LEAD") @db.VarChar(16)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  cliente         Cliente       @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  contact         NativeContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([clienteId, lifecycle])
+  @@index([clienteId, nextPurchaseAt])
+}
+
+/// Aniversário ou datas próprias do contato (mês/dia separados — ano costuma faltar).
+model ContactImportantDate {
+  id        String   @id @default(cuid())
+  clienteId String
+  contactId String
+  /// BIRTHDAY | CUSTOM
+  kind      String   @default("BIRTHDAY") @db.VarChar(16)
+  label     String   @default("Aniversário") @db.VarChar(80)
+  month     Int
+  day       Int
+  year      Int?
+  source    String?  @db.VarChar(40)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cliente   Cliente       @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  contact   NativeContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([contactId, kind, label])
+  @@index([clienteId, month, day])
+}
+
+/// Tema único de e-mail da loja (rascunho + publicado).
+model EmailTheme {
+  id                  String    @id @default(cuid())
+  clienteId           String    @unique
+  draft               Json      @default("{}")
+  published           Json?
+  publishedAt         DateTime?
+  publishedByMemberId String?
+  testedAt            DateTime?
+  draftUpdatedAt      DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  cliente             Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+}
+
+/// Datas sazonais ativas da loja + datas próprias.
+model WorkspaceCalendarDate {
+  id        String    @id @default(cuid())
+  clienteId String
+  /// chave sazonal (natal, black-friday…) ou custom:{slug}
+  key       String    @db.VarChar(80)
+  label     String    @db.VarChar(120)
+  /// Datas próprias: data fixa (ano ignorado se recurring)
+  date      DateTime?
+  recurring Boolean   @default(true)
+  custom    Boolean   @default(false)
+  enabled   Boolean   @default(true)
+  leadDays  Int       @default(30)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  cliente   Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, key])
+}
+
+/// Avisos na plataforma (sino + /notificacoes + e-mail para a equipe).
+model Notification {
+  id        String    @id @default(cuid())
+  clienteId String
+  /// null = todos do papel (ou todos se role também null)
+  memberId  String?
+  role      String?   @db.VarChar(16)
+  type      String    @db.VarChar(60)
+  title     String    @db.VarChar(200)
+  body      String?   @db.Text
+  href      String?   @db.VarChar(300)
+  /// info | aviso | urgente
+  severity  String    @default("info") @db.VarChar(16)
+  dedupeKey String?   @db.VarChar(160)
+  readAt    DateTime?
+  /// ids de membros que já leram (avisos para papel / todos)
+  readBy    String[]  @default([])
+  emailedAt DateTime?
+  createdAt DateTime  @default(now())
+  cliente   Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, dedupeKey])
+  @@index([clienteId, createdAt])
+}
+
+/// Saúde dos crons.
+model JobRun {
+  id         String    @id @default(cuid())
+  job        String    @db.VarChar(60)
+  clienteId  String?
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  ok         Boolean?
+  stats      Json?
+  error      String?   @db.Text
+
+  @@index([job, startedAt])
 }
 
 /// Draft do wizard Criar → Campanha Meta (payload JSON do builder).

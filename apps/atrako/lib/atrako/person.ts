@@ -13,11 +13,39 @@ export function normalizePersonPhone(raw?: string | null): string | null {
   return digits;
 }
 
+const EMAIL_RE = /^[^\s@<>()[\],;:"]+@[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$/;
+const TYPO_DOMAINS: Record<string, string> = {
+  "gmail.con": "gmail.com",
+  "gmial.com": "gmail.com",
+  "gmai.com": "gmail.com",
+  "gamil.com": "gmail.com",
+  "hotmail.con": "hotmail.com",
+  "hotmal.com": "hotmail.com",
+  "hotmail.com.br.": "hotmail.com.br",
+  "outlok.com": "outlook.com",
+  "yahoo.con": "yahoo.com",
+};
+
 export function normalizePersonEmail(raw?: string | null): string | null {
   if (!raw) return null;
-  const email = raw.trim().toLowerCase();
-  if (!email.includes("@") || email.length < 5) return null;
-  return email.slice(0, 255);
+  let email = raw.trim().toLowerCase().replace(/\s+/g, "");
+  const at = email.lastIndexOf("@");
+  if (at > 0) {
+    const domain = email.slice(at + 1);
+    if (TYPO_DOMAINS[domain]) email = `${email.slice(0, at)}@${TYPO_DOMAINS[domain]}`;
+  }
+  if (email.length < 6 || email.length > 255 || !EMAIL_RE.test(email)) return null;
+  return email;
+}
+
+/** E.164 (+55…) para envio WA e matching de públicos. Sem DDI assume Brasil. */
+export function toPhoneE164(raw?: string | null): string | null {
+  const digits = normalizePersonPhone(raw);
+  if (!digits) return null;
+  if (digits.length === 10 || digits.length === 11) return `+55${digits}`;
+  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) return `+${digits}`;
+  if (digits.length >= 11 && digits.length <= 15) return `+${digits}`;
+  return null;
 }
 
 async function ensurePipeline(clienteId: string) {
@@ -52,6 +80,9 @@ export type UpsertPersonInput = {
   phone?: string | null;
   source?: string | null;
   metadata?: Record<string, unknown> | null;
+  /** Checkbox de consentimento marcado (form/LP/importação) — LGPD */
+  marketingConsent?: boolean;
+  consentSource?: string | null;
 };
 
 /**
@@ -153,6 +184,10 @@ export async function upsertPersonContact(input: UpsertPersonInput) {
         name: name !== "Contato" ? name : existing.name,
         email: email ?? existing.email,
         phone: phone ?? existing.phone,
+        phoneE164: toPhoneE164(phone ?? existing.phone) ?? existing.phoneE164,
+        ...(input.marketingConsent && !existing.marketingConsentAt
+          ? { marketingConsentAt: new Date(), consentSource: (input.consentSource ?? input.source ?? "form").slice(0, 40) }
+          : {}),
         metadata: nextMeta,
       },
     });
@@ -164,6 +199,10 @@ export async function upsertPersonContact(input: UpsertPersonInput) {
       name,
       email,
       phone,
+      phoneE164: toPhoneE164(phone),
+      ...(input.marketingConsent
+        ? { marketingConsentAt: new Date(), consentSource: (input.consentSource ?? input.source ?? "form").slice(0, 40) }
+        : {}),
       metadata: {
         ...(input.metadata ?? {}),
         source: input.source ?? undefined,

@@ -173,10 +173,16 @@ export async function completeCaptureForm(input: {
 
   const flat: Record<string, string> = {};
   for (const a of input.answers) flat[a.fieldId] = a.value;
+  // Campos por tipo (ids gerados no builder não são "email"/"phone")
+  const byType: Record<string, string> = {};
+  for (const f of form.steps.flatMap((s) => s.fields ?? [])) {
+    const v = flat[f.id];
+    if (v && !byType[f.type]) byType[f.type] = v;
+  }
 
   const name = flat.name || flat.nome || "Lead formulário";
-  const email = flat.email || undefined;
-  const phone = flat.phone || flat.whatsapp || flat.telefone || undefined;
+  const email = flat.email || byType.email || undefined;
+  const phone = flat.phone || flat.whatsapp || flat.telefone || byType.phone || undefined;
 
   const attr = input.attribution ?? {};
   const pageSlug =
@@ -212,6 +218,17 @@ export async function completeCaptureForm(input: {
     contactId: lead.contactId ?? undefined,
     answers: input.answers,
   });
+
+  if (lead.contactId) {
+    const { onLeadCaptured } = await import("@/lib/flows/capture");
+    await onLeadCaptured({
+      workspaceId: form.clienteId,
+      contactId: lead.contactId,
+      leadId: lead.id,
+      payload: { ...flat, aniversario: byType.date ?? flat.aniversario, consent: byType.consent ?? flat.consent },
+      source: pageSlug ? "lp" : "form",
+    }).catch((err) => console.warn("[capture-form] flows", err instanceof Error ? err.message : err));
+  }
 
   return { leadId: lead.id, formId: form.id };
 }

@@ -32,6 +32,8 @@ type ShopifyAbandonedCheckout = {
       quantity?: number | null;
       sku?: string | null;
       originalUnitPriceSet?: Money | null;
+      image?: { url?: string | null } | null;
+      product?: { onlineStoreUrl?: string | null } | null;
     }>;
   } | null;
 };
@@ -43,7 +45,7 @@ type QueryData = {
   };
 };
 
-const QUERY = `
+const buildQuery = (withMedia: boolean) => `
 query AbandonedCheckouts($first: Int!, $after: String, $query: String) {
   abandonedCheckouts(first: $first, after: $after, query: $query) {
     pageInfo { hasNextPage endCursor }
@@ -58,7 +60,7 @@ query AbandonedCheckouts($first: Int!, $after: String, $query: String) {
       billingAddress { firstName lastName phone }
       shippingAddress { firstName lastName phone }
       lineItems(first: 50) {
-        nodes { title quantity sku originalUnitPriceSet { shopMoney { amount } } }
+        nodes { title quantity sku originalUnitPriceSet { shopMoney { amount } }${withMedia ? " image { url } product { onlineStoreUrl }" : ""} }
       }
     }
   }
@@ -83,12 +85,19 @@ export async function syncShopifyAbandonedCheckouts(
 
   let after: string | null = null;
   let count = 0;
+  let withMedia = true;
   for (let page = 0; page < 20; page++) {
-    const res: ShopifyGraphqlResult<QueryData> = await shopifyGraphql<QueryData>({
+    const variables = { first: 50, after, query: `updated_at:>'${since.toISOString()}'` };
+    let res: ShopifyGraphqlResult<QueryData> = await shopifyGraphql<QueryData>({
       ...conn,
-      query: QUERY,
-      variables: { first: 50, after, query: `updated_at:>'${since.toISOString()}'` },
+      query: buildQuery(withMedia),
+      variables,
     });
+    // Versão da API sem image/product na linha: segue sem foto (catálogo completa depois)
+    if (withMedia && res.errors?.some((e) => /image|product|field/i.test(e.message))) {
+      withMedia = false;
+      res = await shopifyGraphql<QueryData>({ ...conn, query: buildQuery(false), variables });
+    }
     if (res.errors?.length) {
       throw new Error(`shopify_abandoned_checkouts:${res.errors[0].message}`);
     }
@@ -117,6 +126,8 @@ export async function syncShopifyAbandonedCheckouts(
           quantity: i.quantity ?? 1,
           unitPriceCents: toCents(i.originalUnitPriceSet),
           sku: i.sku ?? null,
+          imageUrl: i.image?.url ?? null,
+          productUrl: i.product?.onlineStoreUrl ?? null,
         })),
       });
       count++;

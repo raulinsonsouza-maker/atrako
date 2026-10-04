@@ -364,6 +364,27 @@ export const PLATFORM_APP_CATALOG: Record<PlatformAppProvider, PlatformAppCatalo
       },
     ],
   },
+  RESEND: {
+    provider: "RESEND",
+    title: "Resend",
+    description:
+      "Fallback interno: avisos da equipe e testes. Cada loja conecta a própria API key em Config → Conexões.",
+    fields: [
+      { key: "label", label: "Nome de exibição" },
+      {
+        key: "clientSecret",
+        label: "API key",
+        hint: "re_… — só para avisos internos e testes",
+        secret: true,
+        requiredForReady: true,
+      },
+      {
+        key: "clientId",
+        label: "Remetente padrão",
+        hint: "Ex.: Atrako <avisos@atrako.com.br> (domínio verificado no Resend)",
+      },
+    ],
+  },
 };
 
 export function platformAppCatalogList(): PlatformAppCatalogEntry[] {

@@ -25,6 +25,9 @@ export type WooLineItem = {
   quantity?: number;
   total?: string;
   sku?: string;
+  image?: { id?: number | string; src?: string } | null;
+  /** Woo 9+: permalink do produto (nem toda versão envia) */
+  permalink?: string;
 };
 
 export type WooOrder = {
@@ -113,7 +116,27 @@ export function wooOrderItems(order: WooOrder) {
       quantity,
       unitPriceCents: Number.isFinite(total) ? Math.round((total * 100) / quantity) : 0,
       sku: it.sku ?? null,
+      imageUrl: typeof it.image?.src === "string" && it.image.src ? it.image.src : null,
+      productUrl: typeof it.permalink === "string" && it.permalink ? it.permalink : null,
+      externalItemId: it.product_id != null ? String(it.product_id) : it.id != null ? String(it.id) : null,
     };
+  });
+}
+
+/** Itens do pedido com foto/link (completa productUrl pelo catálogo sincronizado). */
+export async function wooOrderItemsEnriched(workspaceId: string, order: WooOrder) {
+  const items = wooOrderItems(order);
+  const missing = items.filter((i) => (!i.productUrl || !i.imageUrl) && i.externalItemId).map((i) => i.externalItemId!);
+  if (!missing.length) return items;
+  const { prisma } = await import("@/lib/db");
+  const catalog = await prisma.marketplaceCatalogItem.findMany({
+    where: { clienteId: workspaceId, provider: "WOOCOMMERCE", externalId: { in: missing } },
+    select: { externalId: true, imageUrl: true, productUrl: true },
+  });
+  const byId = new Map(catalog.map((c) => [c.externalId, c]));
+  return items.map((i) => {
+    const c = i.externalItemId ? byId.get(i.externalItemId) : undefined;
+    return c ? { ...i, imageUrl: i.imageUrl ?? c.imageUrl, productUrl: i.productUrl ?? c.productUrl } : i;
   });
 }
 

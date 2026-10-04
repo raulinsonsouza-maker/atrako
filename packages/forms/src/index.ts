@@ -1,6 +1,7 @@
 import { createEvent, publishEventBatch } from "@atrako/events";
 
-export type FormFieldType = "text" | "email" | "phone" | "choice" | "number";
+/** `date` = aniversário (dia/mês) · `consent` = aceite LGPD de comunicações */
+export type FormFieldType = "text" | "email" | "phone" | "choice" | "number" | "date" | "consent";
 
 export interface FormField {
   id: string;

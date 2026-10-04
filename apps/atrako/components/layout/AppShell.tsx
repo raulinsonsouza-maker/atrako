@@ -19,6 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/p/") ||
     pathname.startsWith("/checkout/") ||
     pathname.startsWith("/f/") ||
+    pathname.startsWith("/u/") ||
     /** Studio LP full-bleed (estilo GreatPages) */
     pathname.startsWith("/criar/oferta") ||
     pathname.startsWith("/criar/paginas");

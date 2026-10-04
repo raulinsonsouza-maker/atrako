@@ -63,6 +63,8 @@ export type NormalizedTrayLineItem = {
   unitPriceCents: number;
   lineTotalCents: number;
   sku: string | null;
+  imageUrl?: string | null;
+  productUrl?: string | null;
 };
 
 export type TrayBuyer = {

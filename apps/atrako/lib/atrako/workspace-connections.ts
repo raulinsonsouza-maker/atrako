@@ -15,6 +15,7 @@ export const CONNECTION_PROVIDERS = [
   "TRAY",
   "NUVEMSHOP",
   "GOOGLE_CALENDAR",
+  "RESEND",
 ] as const;
 
 export type ConnectionProvider = (typeof CONNECTION_PROVIDERS)[number];

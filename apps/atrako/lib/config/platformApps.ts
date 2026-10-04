@@ -168,6 +168,11 @@ const ENV_SEED: Partial<
       process.env.NUVEMSHOP_SCOPES?.trim() ||
       "read_orders,read_products,read_customers",
   }),
+  RESEND: () => ({
+    label: "Resend",
+    clientSecret: process.env.RESEND_API_KEY?.trim() || undefined,
+    clientId: process.env.RESEND_FROM?.trim() || undefined,
+  }),
 };
 
 function hasAnyCredential(creds: PlatformAppCredentials): boolean {

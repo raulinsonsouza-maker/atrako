@@ -19,6 +19,8 @@ import {
   Store,
 } from "lucide-react";
 import { PillSelect } from "@/components/ui/pill-select";
+import { ResendConnectionCard } from "@/components/relacionamento/ResendConnectionCard";
+import { NativeRecoveryChecklistCard } from "@/components/relacionamento/NativeRecoveryChecklistCard";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 import { useOAuthPopup } from "@/hooks/useOAuthPopup";
 import type { AtrakoOAuthMessage } from "@/lib/oauth/openOAuthPopup";
@@ -1351,6 +1353,17 @@ function ConexoesHubInner() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+          <div>
+            <SectionHeading
+              title="E-mail"
+              description="Conta Resend da loja para fluxos de relacionamento e campanhas."
+            />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <ResendConnectionCard workspaceId={effectiveWorkspace} />
+              <NativeRecoveryChecklistCard workspaceId={effectiveWorkspace} />
             </div>
           </div>
 

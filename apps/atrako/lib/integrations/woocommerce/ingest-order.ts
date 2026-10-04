@@ -9,6 +9,7 @@ import { upsertPersonAndLead } from "@/lib/atrako/person";
 import { publishAtrakoEvents } from "@/lib/atrako/events";
 import { ingestPurchase } from "@/lib/symbius/attribution/engine";
 import { markLeadLost, trackOrderPayment } from "@/lib/crm/abandoned-cart";
+import { birthDateFromStorePayload, upsertContactBirthday } from "@/lib/flows/important-dates";
 import {
   extractWooBuyerContact,
   getWooOrder,
@@ -16,10 +17,32 @@ import {
   isWooRefundedOrder,
   isWooUnpaidOrder,
   wooMetaValue,
-  wooOrderItems,
+  wooOrderItemsEnriched,
   wooOrderTotalCents,
   type WooOrder,
 } from "./orders";
+
+/** MarketplaceOrderItem com foto/link — base de recomendações, recompra e itens no e-mail. */
+async function syncWooOrderItems(workspaceId: string, orderId: string, wooOrder: WooOrder) {
+  const items = await wooOrderItemsEnriched(workspaceId, wooOrder);
+  if (!items.length) return;
+  await prisma.$transaction([
+    prisma.marketplaceOrderItem.deleteMany({ where: { orderId } }),
+    prisma.marketplaceOrderItem.createMany({
+      data: items.map((it) => ({
+        orderId,
+        externalItemId: it.externalItemId,
+        title: it.title.slice(0, 300),
+        quantity: it.quantity,
+        unitPriceCents: it.unitPriceCents,
+        lineTotalCents: it.unitPriceCents * it.quantity,
+        sku: it.sku?.slice(0, 120) ?? null,
+        imageUrl: it.imageUrl?.slice(0, 1000) ?? null,
+        productUrl: it.productUrl?.slice(0, 1000) ?? null,
+      })),
+    }),
+  ]);
+}
 
 /** Pago → Ganho (+ recupera carrinho); não pago → carrinho abandonado; reembolso → Perdido. */
 async function syncWooOrderState(input: {
@@ -54,7 +77,7 @@ async function syncWooOrderState(input: {
       name: buyer.name,
       email: buyer.email,
       phone: buyer.phone,
-      items: wooOrderItems(input.wooOrder),
+      items: await wooOrderItemsEnriched(input.workspaceId, input.wooOrder),
       recoveryUrl: input.wooOrder.payment_url || null,
     });
   } catch (err) {
@@ -109,6 +132,9 @@ export async function ingestWooCommerceOrder(input: {
         } as object,
       },
     });
+    await syncWooOrderItems(input.workspaceId, existing.id, wooOrder).catch((err) =>
+      console.error("[woo-items]", err instanceof Error ? err.message : err),
+    );
     await maybeAttributePurchase(input.workspaceId, wooOrder);
     const updated = await prisma.marketplaceOrder.findUniqueOrThrow({
       where: { id: existing.id },
@@ -184,6 +210,15 @@ async function persistWooOrder(input: {
       occurredAt,
     },
   });
+  await syncWooOrderItems(input.workspaceId, order.id, input.wooOrder).catch((err) =>
+    console.error("[woo-items]", err instanceof Error ? err.message : err),
+  );
+  const birth = birthDateFromStorePayload("WOOCOMMERCE", input.wooOrder);
+  if (birth) {
+    await upsertContactBirthday({ workspaceId: input.workspaceId, contactId: contact.id, raw: birth, source: "woocommerce" }).catch(
+      () => null,
+    );
+  }
 
   try {
     await publishAtrakoEvents([

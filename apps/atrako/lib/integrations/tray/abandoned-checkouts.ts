@@ -27,6 +27,8 @@ type TrayCartComplete = {
       quantity?: string | number | null;
       price?: string | number | null;
       date?: string | null;
+      url?: { http?: string | null; https?: string | null } | string | null;
+      ProductImage?: Array<{ https?: string | null; http?: string | null }> | null;
     }> | null;
   };
 };
@@ -106,6 +108,8 @@ export async function syncTrayAbandonedCheckouts(
       quantity: Number(p.quantity) || 1,
       unitPriceCents: toCents(p.price),
       sku: p.id ?? null,
+      imageUrl: p.ProductImage?.[0]?.https || p.ProductImage?.[0]?.http || null,
+      productUrl: typeof p.url === "string" ? p.url : p.url?.https || p.url?.http || null,
     }));
     await upsertCheckoutCart({
       workspaceId,

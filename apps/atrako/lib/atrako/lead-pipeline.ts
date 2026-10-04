@@ -172,5 +172,16 @@ export async function upsertLeadFromEvent(input: {
     },
   });
 
+  if (/form|lead|signup|cadastro|newsletter/i.test(input.eventName) && !/checkout|order|cart/i.test(input.eventName)) {
+    const { onLeadCaptured } = await import("@/lib/flows/capture");
+    await onLeadCaptured({
+      workspaceId: input.workspaceId,
+      contactId: contact.id,
+      leadId: lead.id,
+      payload,
+      source: fonte === "lp" ? "lp" : "form",
+    }).catch((err) => console.warn("[lead-pipeline] capture", err instanceof Error ? err.message : err));
+  }
+
   return { leadCrm, contact, lead };
 }

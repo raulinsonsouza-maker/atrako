@@ -22,6 +22,8 @@ type NuvemshopCheckout = {
     price?: string | number | null;
     quantity?: string | number | null;
     sku?: string | null;
+    product_id?: string | number | null;
+    image?: { src?: string | null } | null;
   }> | null;
 };
 
@@ -65,7 +67,8 @@ export async function syncNuvemshopAbandonedCheckouts(
           title: p.name || "Item",
           quantity: Number(p.quantity) || 1,
           unitPriceCents: toCents(p.price),
-          sku: p.sku ?? null,
+          sku: p.sku ?? (p.product_id != null ? String(p.product_id) : null),
+          imageUrl: p.image?.src || null,
         })),
       });
       count++;

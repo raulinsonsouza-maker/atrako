@@ -50,8 +50,11 @@ export default function PublicFormPage() {
 
   const canNext = useMemo(() => {
     if (!current) return false;
+    const v = value.trim();
+    if (v && current.type === "email" && !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(v)) return false;
+    if (v && current.type === "date" && !/^\d{2}\/\d{2}(\/\d{4})?$/.test(v)) return false;
     if (!current.required) return true;
-    return value.trim().length > 0;
+    return v.length > 0;
   }, [current, value]);
 
   async function finish(finalAnswers: Record<string, string>) {
@@ -125,7 +128,45 @@ export default function PublicFormPage() {
         <p className="type-fine-print text-[var(--ink-muted-48)]">{name}</p>
         <form onSubmit={onNext} className="mt-4">
           <h1 className="type-lead text-[var(--ink)]">{current?.label}</h1>
-          {current?.type === "choice" && current.options?.length ? (
+          {current?.type === "consent" ? (
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={value === "sim"}
+              onClick={() => setAnswers((a) => ({ ...a, [current.id]: value === "sim" ? "" : "sim" }))}
+              className={`mt-6 flex w-full items-start gap-3 rounded-[var(--radius-xs)] border px-5 py-4 text-left type-body active:scale-[0.99] ${
+                value === "sim"
+                  ? "border-[var(--primary)] bg-[var(--primary-glow)] text-[var(--ink)]"
+                  : "border-[var(--hairline)] bg-[var(--canvas)] text-[var(--ink)]"
+              }`}
+            >
+              <span
+                className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-[var(--radius-xs)] border ${
+                  value === "sim" ? "border-[var(--primary)] bg-[var(--primary)] text-[var(--on-primary)]" : "border-[var(--hairline)]"
+                }`}
+                aria-hidden
+              >
+                {value === "sim" ? "✓" : ""}
+              </span>
+              <span>Aceito receber novidades e ofertas por e-mail e WhatsApp. Posso cancelar quando quiser.</span>
+            </button>
+          ) : current?.type === "date" ? (
+            <input
+              autoFocus
+              className={fieldClass}
+              inputMode="numeric"
+              placeholder="DD/MM"
+              maxLength={10}
+              value={value}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
+                const masked =
+                  digits.length <= 2 ? digits : digits.length <= 4 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+                setAnswers((a) => ({ ...a, [current.id]: masked }));
+              }}
+              required={current?.required}
+            />
+          ) : current?.type === "choice" && current.options?.length ? (
             <div className="mt-6 flex flex-col gap-2">
               {current.options.map((opt) => (
                 <button

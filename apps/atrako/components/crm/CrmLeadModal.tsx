@@ -17,6 +17,7 @@ import {
 import { PillSelect } from "@/components/ui/pill-select";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { LeadCommunications, type LeadCommunicationsData } from "@/components/crm/LeadCommunications";
 
 type JourneyItem = {
   at: string;
@@ -69,6 +70,7 @@ type LeadDetail = {
   stages: Array<{ id: string; name: string; color: string }>;
   journey: JourneyItem[];
   carts: LeadCart[];
+  communications: LeadCommunicationsData | null;
 };
 
 const LOST_REASON_LABELS: Record<string, string> = {
@@ -393,6 +395,10 @@ export function CrmLeadModal({
                     </div>
                   ))}
                 </div>
+              ) : null}
+
+              {data?.communications ? (
+                <LeadCommunications workspaceId={workspaceId} leadId={leadId} data={data.communications} />
               ) : null}
 
               <div className="panel-modal-section">

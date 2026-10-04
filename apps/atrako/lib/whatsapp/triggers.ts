@@ -81,7 +81,7 @@ export async function processWhatsAppEventSideEffects(event: {
     const templateName =
       typeof event.payload.templateName === "string"
         ? event.payload.templateName
-        : process.env.WHATSAPP_TEMPLATE_WELCOME?.trim() || null;
+        : null;
 
     try {
       if (templateName) {
@@ -148,7 +148,7 @@ export async function processWhatsAppEventSideEffects(event: {
     const templateName =
       typeof event.payload.templateName === "string"
         ? event.payload.templateName
-        : process.env.WHATSAPP_TEMPLATE_ABANDONMENT?.trim() || null;
+        : null;
 
     try {
       if (templateName) {
@@ -161,6 +161,11 @@ export async function processWhatsAppEventSideEffects(event: {
           previewBody: body,
         });
       } else {
+        const conv = await upsertWaConversation({ workspaceId, phone, contactId });
+        if (!isWithinCustomerWindow(conv.windowExpiresAt)) {
+          console.info("[wa-triggers] abandonment skipped (no window / no template)", workspaceId);
+          return;
+        }
         await sendAndPersistCta({
           workspaceId,
           to: phone,
@@ -202,7 +207,7 @@ export async function processWhatsAppEventSideEffects(event: {
     const templateName =
       typeof event.payload.templateName === "string"
         ? event.payload.templateName
-        : process.env.WHATSAPP_TEMPLATE_BOOKING?.trim() || null;
+        : null;
 
     try {
       if (templateName) {
@@ -242,7 +247,7 @@ export async function processWhatsAppEventSideEffects(event: {
     const templateName =
       typeof event.payload.templateName === "string"
         ? event.payload.templateName
-        : process.env.WHATSAPP_TEMPLATE_BIRTHDAY?.trim() || null;
+        : null;
     try {
       if (templateName) {
         await sendAndPersistTemplate({

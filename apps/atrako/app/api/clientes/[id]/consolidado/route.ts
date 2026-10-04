@@ -49,7 +49,7 @@ export async function GET(
   dataFim.setHours(23, 59, 59, 999);
   const range = { gte: dataInicio, lte: dataFim };
 
-  const [midia, pedidos, checkout, crmLeads] = await Promise.all([
+  const [midia, pedidos, checkout, crmLeads, relConv, relCost] = await Promise.all([
     prisma.fatoMidiaDiario.groupBy({
       by: ["canal"],
       where: { clienteId: id, data: range },
@@ -78,6 +78,16 @@ export async function GET(
         createdAt: range,
         OR: [{ source: null }, { source: { notIn: ORDER_LEAD_SOURCES } }],
       },
+    }),
+    prisma.messageDelivery.groupBy({
+      by: ["conversionKind"],
+      where: { clienteId: id, isTest: false, convertedAt: range },
+      _count: { _all: true },
+      _sum: { convertedCents: true },
+    }),
+    prisma.messageDelivery.aggregate({
+      where: { clienteId: id, isTest: false, createdAt: range },
+      _sum: { costMicros: true },
     }),
   ]);
 
@@ -115,6 +125,12 @@ export async function GET(
   const leadsMidia = canaisMidia.reduce((s, c) => s + c.leads, 0);
   const receita = receitaCents / 100;
 
+  const attributed = relConv.find((r) => r.conversionKind === "ATTRIBUTED");
+  const influenced = relConv.find((r) => r.conversionKind === "INFLUENCED");
+  const relReceita = (attributed?._sum.convertedCents ?? 0) / 100;
+  // Receita do relacionamento já está dentro da receita das lojas: só separa, não soma.
+  const receitaSemRel = Math.max(0, receita - relReceita);
+
   return NextResponse.json({
     periodo: { dataInicio: dataInicio.toISOString(), dataFim: dataFim.toISOString() },
     totais: {
@@ -125,6 +141,16 @@ export async function GET(
       roas: investimento > 0 ? Math.round((receita / investimento) * 100) / 100 : null,
       leadsCrm: crmLeads,
       leadsMidia,
+      roasSemRelacionamento:
+        investimento > 0 ? Math.round((receitaSemRel / investimento) * 100) / 100 : null,
+    },
+    relacionamento: {
+      receitaAtribuida: relReceita,
+      pedidosAtribuidos: attributed?._count._all ?? 0,
+      receitaInfluenciada: (influenced?._sum.convertedCents ?? 0) / 100,
+      pedidosInfluenciados: influenced?._count._all ?? 0,
+      custoWhatsApp: Math.round((relCost._sum.costMicros ?? 0) / 10_000) / 100,
+      participacao: receita > 0 ? Math.round((relReceita / receita) * 1000) / 10 : null,
     },
     canaisVenda,
     canaisMidia,

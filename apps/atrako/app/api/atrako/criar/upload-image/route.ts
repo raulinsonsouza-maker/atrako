@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
+import { saveUpload } from "@/lib/uploads";
 
 const USE_BLOB = !!process.env.BLOB_READ_WRITE_TOKEN;
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -26,12 +27,7 @@ async function uploadToBlob(
 }
 
 async function uploadToFilesystem(buffer: Buffer, filename: string) {
-  const { writeFile, mkdir } = await import("fs/promises");
-  const path = await import("path");
-  const dir = path.join(process.cwd(), "public", "lp-media");
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, filename), buffer);
-  return `/lp-media/${filename}`;
+  return saveUpload("lp-media", filename, buffer);
 }
 
 export async function POST(request: NextRequest) {
@@ -71,9 +67,7 @@ export async function POST(request: NextRequest) {
   }
 
   const bytes = Buffer.from(await file.arrayBuffer());
-  const ext =
-    file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") ||
-    "jpg";
+  const ext = file.type === "image/jpeg" || file.type === "image/jpg" ? "jpg" : file.type.slice("image/".length);
   const filename = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
   const pathname = `lp/${workspaceId}/${filename}`;
 

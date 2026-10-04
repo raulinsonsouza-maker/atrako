@@ -101,6 +101,8 @@ Puxa checkouts abandonados (Shopify `abandonedCheckouts`, Nuvemshop `/checkouts`
 
 `CRON_SECRET` é obrigatório em produção (sem ele a rota responde 401). Também aceita `Authorization: Bearer <CRON_SECRET>`.
 
+Na VPS: `CRON_SECRET` fica em `/opt/apps/atrako/.env` (repassado pelo `stack.yml`) e o crontab do root chama `/opt/apps/atrako/cron/abandonment.sh`, que lê o segredo do `.env` e envia como Bearer.
+
 Último erro por loja (ex.: escopo sem `read_orders`, API de carrinhos desativada) fica em `WorkspaceConnection.metadata.abandonedCheckoutsError`.
 
 Pedido não pago há mais de 30 dias, carrinho expirado e reembolso vão para a coluna **Perdido** (com `metadata.lostReason`); o contato fica na base para reativação, e um carrinho novo traz o lead de volta.

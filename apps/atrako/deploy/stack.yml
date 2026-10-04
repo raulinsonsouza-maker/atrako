@@ -59,6 +59,9 @@ services:
       TRAY_CONSUMER_KEY: ${TRAY_CONSUMER_KEY:-}
       TRAY_CONSUMER_SECRET: ${TRAY_CONSUMER_SECRET:-}
       TRAY_REDIRECT_URI: ${TRAY_REDIRECT_URI:-}
+      CRON_SECRET: ${CRON_SECRET:-}
+      # Links já enviados foram assinados com esta chave (fallback antes de CRON_SECRET existir).
+      SYMBIUS_LINK_TRACKING_SECRET: ${SYMBIUS_LINK_TRACKING_SECRET:-symbius-link-dev}
     networks:
       - internal
       - traefik_proxy

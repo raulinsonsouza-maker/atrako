@@ -56,6 +56,9 @@ services:
       ML_CLIENT_ID: ${ML_CLIENT_ID:-}
       ML_CLIENT_SECRET: ${ML_CLIENT_SECRET:-}
       ML_REDIRECT_URI: ${ML_REDIRECT_URI:-}
+      TRAY_CONSUMER_KEY: ${TRAY_CONSUMER_KEY:-}
+      TRAY_CONSUMER_SECRET: ${TRAY_CONSUMER_SECRET:-}
+      TRAY_REDIRECT_URI: ${TRAY_REDIRECT_URI:-}
     networks:
       - internal
       - traefik_proxy

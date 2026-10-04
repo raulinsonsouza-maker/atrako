@@ -31,6 +31,12 @@ export function isUnsafeMethod(method: string): boolean {
  * token-validated routes only; all cookie-auth browser APIs remain protected.
  */
 export function hasMachineCredential(pathname: string, request: Request): boolean {
+  // Webhooks de plataformas (Tray, Shopify, …) nunca enviam Origin; auth/assinatura na rota.
+  if (pathname.startsWith("/api/webhooks/")) return true;
+  if (pathname.startsWith("/api/internal/")) {
+    const auth = request.headers.get("authorization");
+    return Boolean(auth?.startsWith("Bearer ") && auth.slice(7).trim());
+  }
   if (!MACHINE_ORIGIN_EXEMPTIONS.has(pathname)) return false;
   // Webhooks Meta/WhatsApp/MP: assinatura validada na rota; sem Origin de browser
   if (pathname.startsWith("/api/webhooks/") || pathname.endsWith("/webhook")) {

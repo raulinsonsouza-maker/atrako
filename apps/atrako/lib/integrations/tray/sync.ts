@@ -16,6 +16,7 @@ import {
   getTrayOrderComplete,
   listTrayOrders,
 } from "./orders";
+import { backfillTrayLedger } from "./ledger";
 
 export type TraySyncResult = {
   store: { name: string | null; storeId: string | null } | null;
@@ -154,6 +155,12 @@ export async function syncTrayWorkspace(
     }
   } catch (err) {
     errors.push(`orders: ${err instanceof Error ? err.message : "failed"}`);
+  }
+
+  try {
+    await backfillTrayLedger(workspaceId);
+  } catch (err) {
+    errors.push(`ledger: ${err instanceof Error ? err.message : "failed"}`);
   }
 
   await prisma.workspaceConnection

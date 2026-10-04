@@ -95,6 +95,35 @@ export function ThemeTab({ workspaceId }: { workspaceId: string }) {
     return () => clearTimeout(t);
   }, [serialized, dirty, workspaceId]);
 
+  const [autosave, setAutosave] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const latest = useRef("");
+  latest.current = serialized;
+  useEffect(() => {
+    if (!serialized || !dirty) return;
+    const t = setTimeout(async () => {
+      setAutosave("saving");
+      try {
+        await api("/api/atrako/relacionamento/theme", { body: { workspaceId, action: "save", theme: JSON.parse(serialized) } });
+        if (latest.current === serialized) setDirty(false);
+        setAutosave("saved");
+        void qc.invalidateQueries({ queryKey: ["rel-theme", workspaceId] });
+      } catch {
+        setAutosave("error");
+      }
+    }, 1000);
+    return () => clearTimeout(t);
+  }, [serialized, dirty, workspaceId, qc]);
+
+  useEffect(() => {
+    if (!dirty && autosave !== "saving") return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty, autosave]);
+
   if (isLoading || !data || !theme) {
     return (
       <div className="flex justify-center py-16">
@@ -152,6 +181,15 @@ export function ThemeTab({ workspaceId }: { workspaceId: string }) {
           <p className="type-fine-print text-[var(--ink-muted-48)]">
             {data.publishedAt ? `Publicado em ${dateBR(data.publishedAt, true)}` : "Ainda não publicado — os e-mails usam a marca de Config → Empresa"}
             {data.hasUnpublished || dirty ? " · há alterações não publicadas" : ""}
+          </p>
+          <p className="type-fine-print text-[var(--ink-muted-48)]">
+            {autosave === "saving" || (dirty && autosave !== "error")
+              ? "Salvando rascunho…"
+              : autosave === "error"
+                ? "Não foi possível salvar o rascunho — clique em Salvar rascunho"
+                : autosave === "saved"
+                  ? "Rascunho salvo"
+                  : null}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

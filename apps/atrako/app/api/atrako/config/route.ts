@@ -10,7 +10,8 @@ export async function GET(request: NextRequest) {
   if (!workspaceId) {
     return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
   }
-  const access = await requireWorkspaceAccess(workspaceId, "manage");
+  // Leitura: operate (OWNER/ADMIN/OPERATOR + staff). Escrita (PATCH) exige manage.
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
   if (!access.ok) return access.response;
   const ws = await findWorkspaceById(workspaceId);
   if (!ws) return NextResponse.json({ error: "Workspace not found" }, { status: 404 });

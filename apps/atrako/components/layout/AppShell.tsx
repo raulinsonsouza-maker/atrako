@@ -13,6 +13,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/invite") ||
     pathname.startsWith("/change-password") ||
     pathname.startsWith("/admin") ||
+    pathname.startsWith("/politica-de-privacidade") ||
+    pathname.startsWith("/termos-de-uso") ||
+    pathname.startsWith("/exclusao-de-dados") ||
     pathname.startsWith("/p/") ||
     pathname.startsWith("/checkout/") ||
     pathname.startsWith("/f/") ||

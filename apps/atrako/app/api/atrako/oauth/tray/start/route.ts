@@ -8,6 +8,7 @@ import {
   normalizeTrayStoreHost,
 } from "@/lib/integrations/tray/oauth";
 import { getPublicOrigin } from "@/lib/http/public-origin";
+import { resolveTrayApp } from "@/lib/integrations/tray/connect";
 
 /**
  * Inicia OAuth Tray.
@@ -32,11 +33,9 @@ export async function GET(request: NextRequest) {
   const ws = await findWorkspaceById(workspaceId);
   if (!ws) return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
 
-  const { resolvePlatformApp } = await import("@/lib/config/platformApps");
-  const app = await resolvePlatformApp("TRAY");
-  const consumerKey =
-    app?.credentials.clientId?.trim() || process.env.TRAY_CONSUMER_KEY?.trim();
-  if (!app?.enabled || !consumerKey) {
+  const app = await resolveTrayApp(getPublicOrigin(request));
+  const consumerKey = app.consumerKey;
+  if (!app.enabled || !consumerKey) {
     return NextResponse.json(
       {
         error: "Tray app não configurado",
@@ -46,13 +45,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const redirectUri =
-    app.credentials.redirectUri?.trim() ||
-    process.env.TRAY_REDIRECT_URI?.trim() ||
-    `${getPublicOrigin(request)}/api/atrako/oauth/tray/callback`;
-
-  const nonce = randomBytes(16).toString("hex");
-  const state = `${nonce}.${storeHost}`;
+  const redirectUri = app.redirectUri;
+  const state = `${randomBytes(16).toString("hex")}.${storeHost}`;
 
   await prisma.workspaceOAuthPending.create({
     data: {
@@ -65,14 +59,11 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  // Tray callback só devolve code/store/api_address — state via redirectUri query
-  const callbackWithState = new URL(redirectUri);
-  callbackWithState.searchParams.set("state", state);
-
+  // A Tray descarta query no callback; o retorno é casado pelo host da loja (codeVerifier).
   const url = buildTrayAuthorizeUrl({
     storeHost,
     consumerKey,
-    callback: callbackWithState.toString(),
+    callback: redirectUri,
   });
 
   return NextResponse.redirect(url);

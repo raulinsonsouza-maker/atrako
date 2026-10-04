@@ -1,10 +1,10 @@
 /**
  * Credential resolver for multi-BM (Meta) and multi-MCC (Google Ads) support.
  *
- * Priority (Meta):
- *   1. WorkspaceConnection META_ADS (hub /config/conexoes — AES)
- *   2. Conta.conexaoIntegracaoId → ConexaoIntegracao (legado dual-read)
- *   3. Global SystemConfig / env (legado dual-read)
+ * Priority (Meta) — temporário enquanto o Facebook Login falha:
+ *   1. Conta.conexaoIntegracaoId → ConexaoIntegracao (token da BM)
+ *   2. Global SystemConfig / env (token da BM)
+ *   3. WorkspaceConnection META_ADS (hub OAuth), só se não houver token de BM
  *
  * Priority (Google Ads):
  *   1. WorkspaceConnection GOOGLE_ADS + PlatformApp GOOGLE_ADS
@@ -37,6 +37,7 @@ export interface GoogleAdsCredentials {
 
 /**
  * Resolve Meta credentials for a given clienteId (= workspaceId).
+ * Token da BM primeiro; OAuth do hub só quando não há token legado.
  */
 export async function resolveMetaCredentials(
   clienteId: string,
@@ -45,6 +46,30 @@ export async function resolveMetaCredentials(
     where: { clienteId, plataforma: "META" },
     include: { conexaoIntegracao: true },
   });
+
+  const conn = conta?.conexaoIntegracao;
+  if (conn?.ativo && conn.metaAccessToken) {
+    return {
+      token: conn.metaAccessToken,
+      accountId: conta?.accountIdPlataforma ?? null,
+      connectionName: conn.nome,
+      source: "conexao_integracao",
+    };
+  }
+
+  const global = await getIntegrationsConfig();
+  const globalToken = global.metaAccessToken ?? process.env.META_ACCESS_TOKEN ?? null;
+  if (globalToken) {
+    return {
+      token: globalToken,
+      accountId:
+        conta?.accountIdPlataforma ??
+        global.metaAdAccountId ??
+        process.env.META_AD_ACCOUNT_ID ??
+        null,
+      source: "global",
+    };
+  }
 
   const hub = await getWorkspaceConnection(clienteId, "META_ADS");
   if (
@@ -69,29 +94,7 @@ export async function resolveMetaCredentials(
     };
   }
 
-  const conn = conta?.conexaoIntegracao;
-  if (conn?.ativo && conn.metaAccessToken) {
-    return {
-      token: conn.metaAccessToken,
-      accountId: conta?.accountIdPlataforma ?? null,
-      connectionName: conn.nome,
-      source: "conexao_integracao",
-    };
-  }
-
-  // Fallback: global config (legado only — dual-read)
-  const global = await getIntegrationsConfig();
-  const token = global.metaAccessToken ?? process.env.META_ACCESS_TOKEN ?? null;
-  if (!token) return null;
-  return {
-    token,
-    accountId:
-      conta?.accountIdPlataforma ??
-      global.metaAdAccountId ??
-      process.env.META_AD_ACCOUNT_ID ??
-      null,
-    source: "global",
-  };
+  return null;
 }
 
 /**

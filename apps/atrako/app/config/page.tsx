@@ -81,9 +81,21 @@ export default function ConfigHomePage() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
-  const { workspaceId, isLoading } = useActiveWorkspace();
+  const {
+    workspaceId,
+    workspaces,
+    isLoading,
+    isReady,
+    isError: workspaceError,
+    error: workspaceLoadError,
+    retry: retryWorkspaces,
+  } = useActiveWorkspace();
 
-  const { data: config } = useQuery({
+  const {
+    data: config,
+    isLoading: configLoading,
+    isError: configError,
+  } = useQuery({
     queryKey: ["workspace-config", workspaceId],
     queryFn: async () => {
       const r = await fetch(`/api/atrako/config?workspaceId=${workspaceId}`);
@@ -91,11 +103,17 @@ export default function ConfigHomePage() {
       return r.json();
     },
     enabled: Boolean(workspaceId),
+    retry: 1,
   });
 
   const activeConnections =
     config?.connections?.filter((c: { hasCredentials: boolean }) => c.hasCredentials)
       .length ?? 0;
+
+  const workspaceName =
+    config?.workspace?.name ||
+    workspaces.find((w) => w.id === workspaceId)?.nome ||
+    null;
 
   async function createEmpresa(e: React.FormEvent) {
     e.preventDefault();
@@ -132,20 +150,35 @@ export default function ConfigHomePage() {
     .filter(Boolean)
     .join(" · ");
 
+  const showCreate = isReady && !workspaceError && workspaces.length === 0;
+  const sessionExpired =
+    workspaceLoadError instanceof Error &&
+    "status" in workspaceLoadError &&
+    workspaceLoadError.status === 401;
+  const showHub = Boolean(workspaceId);
+  const showSpinner =
+    isLoading || !isReady || (showHub && configLoading && !config && !configError);
+
   return (
     <AppPage title="Configuração" narrow>
-      {isLoading ? (
+      {showSpinner ? (
         <div className="flex justify-center py-16">
           <Loader2 className="h-5 w-5 animate-spin text-[var(--primary)]" />
         </div>
-      ) : config ? (
+      ) : showHub ? (
         <div className="flex flex-col gap-8">
           <header className="space-y-1">
             <p className="type-body-strong text-[var(--ink)]">
-              {config.workspace?.name}
+              {workspaceName || "Empresa"}
             </p>
             {meta ? (
               <p className="type-fine-print text-[var(--ink-muted-48)]">{meta}</p>
+            ) : null}
+            {configError && !config ? (
+              <p className="type-fine-print text-[var(--ink-muted-48)]">
+                Não foi possível carregar todos os detalhes — os atalhos abaixo seguem
+                disponíveis.
+              </p>
             ) : null}
           </header>
 
@@ -184,7 +217,7 @@ export default function ConfigHomePage() {
             })}
           </nav>
         </div>
-      ) : (
+      ) : showCreate ? (
         <form onSubmit={createEmpresa} className="utility-card space-y-5 !p-5">
           <div>
             <h2 className="type-body-strong text-[var(--ink)]">Criar empresa</h2>
@@ -210,6 +243,36 @@ export default function ConfigHomePage() {
             {creating ? "Criando…" : "Continuar"}
           </Button>
         </form>
+      ) : workspaceError ? (
+        <div className="utility-card space-y-4 !p-5">
+          <div>
+            <h2 className="type-body-strong text-[var(--ink)]">
+              {sessionExpired ? "Sua sessão expirou" : "Não foi possível carregar sua empresa"}
+            </h2>
+            <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
+              {sessionExpired
+                ? "Entre novamente para continuar."
+                : "Ocorreu uma falha ao consultar seus workspaces. Tente novamente."}
+            </p>
+          </div>
+          {sessionExpired ? (
+            <Button
+              type="button"
+              variant="primary"
+              onClick={() => window.location.assign("/sign-in?next=%2Fconfig")}
+            >
+              Entrar novamente
+            </Button>
+          ) : (
+            <Button type="button" variant="primary" onClick={() => void retryWorkspaces()}>
+              Tentar novamente
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="flex justify-center py-16">
+          <Loader2 className="h-5 w-5 animate-spin text-[var(--primary)]" />
+        </div>
       )}
     </AppPage>
   );

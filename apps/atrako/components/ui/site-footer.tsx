@@ -28,6 +28,14 @@ const DEFAULT_COLUMNS: FooterColumn[] = [
       { href: "/membros", label: "Membros" },
     ],
   },
+  {
+    title: "Legal",
+    links: [
+      { href: "/politica-de-privacidade", label: "Privacidade" },
+      { href: "/termos-de-uso", label: "Termos de uso" },
+      { href: "/exclusao-de-dados", label: "Exclusão de dados" },
+    ],
+  },
 ];
 
 export function SiteFooter({

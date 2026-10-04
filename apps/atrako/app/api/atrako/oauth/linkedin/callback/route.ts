@@ -39,6 +39,29 @@ export async function GET(request: NextRequest) {
         expiresAt: new Date(now + tokens.expires_in * 1000).toISOString(),
       },
     });
+    const adAccount = await prisma.conta.findFirst({
+      where: {
+        clienteId: pending.clienteId,
+        plataforma: "LINKEDIN",
+        accountIdPlataforma: { not: null },
+      },
+    });
+    if (adAccount?.accountIdPlataforma) {
+      try {
+        const { syncLinkedinCliente } = await import("@/lib/sync/linkedinApiSync");
+        await syncLinkedinCliente({
+          clienteId: pending.clienteId,
+          contaId: adAccount.id,
+          adAccountId: adAccount.accountIdPlataforma,
+          accessToken: tokens.access_token,
+        });
+      } catch (syncError) {
+        console.error(
+          "[linkedin-oauth] initial sync",
+          syncError instanceof Error ? syncError.message : syncError,
+        );
+      }
+    }
   } catch (e) {
     const msg = e instanceof Error ? e.message : "oauth_failed";
     await prisma.workspaceOAuthPending.delete({ where: { id: pending.id } }).catch(() => null);

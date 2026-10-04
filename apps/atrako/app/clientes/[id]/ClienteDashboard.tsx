@@ -21,7 +21,6 @@ import { HotelAnalystPanel } from "@/components/clientes/HotelAnalystPanel";
 import { TertuliaPanel } from "@/components/clientes/TertuliaPanel";
 import { VarellaMotosPanel } from "@/components/clientes/VarellaMotosPanel";
 import { CampanhasPanel } from "@/components/clientes/CampanhasPanel";
-import { MetaConnectionBanner } from "@/components/clientes/MetaConnectionBanner";
 import { GoogleCampanhasPanel } from "@/components/clientes/GoogleCampanhasPanel";
 import { LinkedInCampanhasPanel } from "@/components/clientes/LinkedInCampanhasPanel";
 import { isHotelFazendaSaoJoao, isTertulia, isVarellaMotos, isMiguelImoveis, isDrFernandoGuena, isClinicaESpa, isDor, isGranarolo, isFlorien, isAcademyAmericana, isVitoBalducci, isKombucha, isBeBlueSchool, isSouIcarai, isImobClient, isSocialMediaOnly } from "@/lib/clientProfiles";
@@ -1024,8 +1023,6 @@ function formatPercentage(value: number) {
           </p>
         </div>
       )}
-
-      {!portalMode && !socialMediaOnly ? <MetaConnectionBanner workspaceId={id} /> : null}
 
       <div className="flex min-h-0 flex-col gap-6">
       {/* ── Date filter + sub-aba Criativos / Análise de dados (Meta/Google) ── */}

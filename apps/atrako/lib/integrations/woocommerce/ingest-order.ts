@@ -42,8 +42,32 @@ export async function ingestWooCommerceOrder(input: {
     },
   });
   if (existing) {
+    const buyer = extractWooBuyerContact(wooOrder);
+    await prisma.marketplaceOrder.update({
+      where: { id: existing.id },
+      data: {
+        status: wooOrder.status ?? existing.status,
+        totalCents: wooOrderTotalCents(wooOrder),
+        currency: wooOrder.currency ?? existing.currency,
+        buyerName: buyer.name ?? existing.buyerName,
+        buyerEmail: buyer.email ?? existing.buyerEmail,
+        buyerPhone: buyer.phone ?? existing.buyerPhone,
+        occurredAt: wooOrder.date_paid
+          ? new Date(wooOrder.date_paid)
+          : wooOrder.date_created
+            ? new Date(wooOrder.date_created)
+            : existing.occurredAt,
+        rawPayload: {
+          order: wooOrder,
+          webhook: input.webhookPayload ?? null,
+        } as object,
+      },
+    });
     await maybeAttributePurchase(input.workspaceId, wooOrder);
-    return { order: existing, created: false as const };
+    const updated = await prisma.marketplaceOrder.findUniqueOrThrow({
+      where: { id: existing.id },
+    });
+    return { order: updated, created: false as const };
   }
 
   return persistWooOrder({

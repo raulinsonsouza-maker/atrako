@@ -88,6 +88,20 @@ export function resolveMetaOAuthRedirectUri(origin: string, explicit?: string | 
     explicit?.trim() ||
     process.env.META_OAUTH_REDIRECT_URI?.trim() ||
     null;
-  if (fromEnv) return fromEnv;
-  return `${origin}/api/atrako/oauth/meta/callback`;
+  let originHost = "";
+  try {
+    originHost = new URL(origin).host;
+  } catch {
+    originHost = "";
+  }
+  const loopback = /^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(originHost);
+  if (fromEnv && !loopback) return fromEnv;
+  if (fromEnv && loopback) {
+    try {
+      if (new URL(fromEnv).host === originHost) return fromEnv;
+    } catch {
+      /* usa a origem do request */
+    }
+  }
+  return `${origin.replace(/\/$/, "")}/api/atrako/oauth/meta/callback`;
 }

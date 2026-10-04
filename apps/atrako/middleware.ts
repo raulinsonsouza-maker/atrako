@@ -12,6 +12,9 @@ const PUBLIC_PREFIXES = [
   "/change-password",
   "/invite",
   "/portal",
+  "/politica-de-privacidade",
+  "/termos-de-uso",
+  "/exclusao-de-dados",
   "/b/",
   "/c/",
   "/f/",
@@ -72,7 +75,7 @@ export default function middleware(request: NextRequest) {
 
   if (!hasSessionCookie(request)) {
     const signIn = new URL("/sign-in", request.url);
-    signIn.searchParams.set("next", pathname);
+    signIn.searchParams.set("next", pathname + request.nextUrl.search);
     return NextResponse.redirect(signIn);
   }
 

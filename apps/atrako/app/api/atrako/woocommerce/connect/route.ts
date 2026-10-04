@@ -10,6 +10,10 @@ import {
   normalizeStoreUrl,
   validateWooCredentials,
 } from "@/lib/integrations/woocommerce/client";
+import { registerWooCommerceWebhooks } from "@/lib/integrations/woocommerce/webhooks";
+import { getPublicOrigin } from "@/lib/http/public-origin";
+
+export const maxDuration = 300;
 
 /** Conectar / desconectar WooCommerce via sessão admin (Config). */
 export async function POST(request: NextRequest) {
@@ -90,9 +94,34 @@ export async function POST(request: NextRequest) {
     status: "ACTIVE",
   });
 
+  let initialSync: { processed: number; pages: number } | null = null;
+  let syncError: string | null = null;
+  try {
+    const { syncWooCommerceWorkspace } = await import("@/lib/integrations/woocommerce/sync");
+    initialSync = await syncWooCommerceWorkspace(workspaceId, { daysBack: 90, maxPages: 5 });
+  } catch (err) {
+    syncError = err instanceof Error ? err.message : "Falha na importação inicial";
+    console.error("[woocommerce-connect] initial sync", syncError);
+  }
+
+  let webhooksRegistered = false;
+  let webhookError: string | null = null;
+  const webhookUrl = `${getPublicOrigin(request)}/api/webhooks/woocommerce/${workspaceId}`;
+  try {
+    await registerWooCommerceWebhooks(workspaceId, webhookUrl);
+    webhooksRegistered = true;
+  } catch (err) {
+    webhookError = err instanceof Error ? err.message : "Falha ao registrar webhooks";
+    console.error("[woocommerce-connect] webhook registration", webhookError);
+  }
+
   return NextResponse.json({
     ok: true,
     id: row.id,
     webhookUrl: `/api/webhooks/woocommerce/${workspaceId}`,
+    initialSync,
+    syncError,
+    webhooksRegistered,
+    webhookError,
   });
 }

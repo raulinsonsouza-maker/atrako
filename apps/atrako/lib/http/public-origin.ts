@@ -3,14 +3,18 @@
  * `req.nextUrl.origin` vira o bind local (ex.: https://0.0.0.0:5000) — inválido no browser.
  */
 
-const BIND_HOST = /^(0\.0\.0\.0|localhost|127\.0\.0\.1)(:\d+)?$/i;
+/** Host que o browser realmente usa (dev local). Não substituir por APP_URL. */
+const LOOPBACK_HOST = /^(localhost|127\.0\.0\.1)(:\d+)?$/i;
+/** Bind do container — inválido como redirect OAuth. */
+const UNSPECIFIED_BIND = /^(0\.0\.0\.0)(:\d+)?$/i;
 
 function envPublicOrigin(): string | null {
   for (const key of ["APP_URL", "NEXTAUTH_URL", "NEXT_PUBLIC_APP_URL"] as const) {
     const raw = process.env[key]?.trim().replace(/\/$/, "");
     if (!raw || !/^https?:\/\//i.test(raw)) continue;
     try {
-      if (!BIND_HOST.test(new URL(raw).host)) return raw;
+      const host = new URL(raw).host;
+      if (!LOOPBACK_HOST.test(host) && !UNSPECIFIED_BIND.test(host)) return raw;
     } catch {
       /* ignore */
     }
@@ -25,7 +29,15 @@ export function getPublicOrigin(req: {
   const host = (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "")
     .split(",")[0]
     .trim();
-  if (host && !BIND_HOST.test(host)) {
+
+  // Dev em localhost: o callback OAuth tem que voltar para o mesmo processo
+  // que gravou o state. APP_URL de produção quebrava o "Conectar" da Meta.
+  if (host && LOOPBACK_HOST.test(host)) {
+    const proto = (req.headers.get("x-forwarded-proto") ?? "http").split(",")[0].trim();
+    return `${proto}://${host}`;
+  }
+
+  if (host && !UNSPECIFIED_BIND.test(host)) {
     const proto = (req.headers.get("x-forwarded-proto") ?? "https").split(",")[0].trim();
     return `${proto}://${host}`;
   }

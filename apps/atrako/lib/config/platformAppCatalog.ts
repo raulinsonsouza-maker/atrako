@@ -115,8 +115,8 @@ export const PLATFORM_APP_CATALOG: Record<PlatformAppProvider, PlatformAppCatalo
       },
       {
         key: "developerToken",
-        label: "Developer Token (legado)",
-        hint: "Opcional — Google ignora desde set/2026",
+        label: "Developer Token (legado / ignorado)",
+        hint: "Sunset 9/set/2026 — acesso agora é pelo Google Cloud project do Client ID. Campo opcional.",
         secret: true,
       },
       {

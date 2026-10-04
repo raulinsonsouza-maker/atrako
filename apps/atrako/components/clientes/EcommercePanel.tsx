@@ -66,6 +66,7 @@ export function EcommercePanel({
   const qc = useQueryClient();
   const [provider, setProvider] = useState("ALL");
   const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["ecommerce", clienteId, provider, dateRange.from, dateRange.to],
@@ -82,47 +83,29 @@ export function EcommercePanel({
     enabled: !!clienteId,
   });
 
-  async function syncShopify() {
+  async function syncProvider(path: string) {
     setSyncing(true);
+    setSyncError(null);
     try {
-      await fetch("/api/atrako/shopify/sync", {
+      const response = await fetch(path, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ workspaceId: clienteId }),
       });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Não foi possível sincronizar.");
       await qc.invalidateQueries({ queryKey: ["ecommerce", clienteId] });
+    } catch (err) {
+      setSyncError(err instanceof Error ? err.message : "Falha na sincronização.");
     } finally {
       setSyncing(false);
     }
   }
 
-  async function syncTray() {
-    setSyncing(true);
-    try {
-      await fetch("/api/atrako/tray/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workspaceId: clienteId }),
-      });
-      await qc.invalidateQueries({ queryKey: ["ecommerce", clienteId] });
-    } finally {
-      setSyncing(false);
-    }
-  }
-
-  async function syncNuvemshop() {
-    setSyncing(true);
-    try {
-      await fetch("/api/atrako/nuvemshop/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workspaceId: clienteId }),
-      });
-      await qc.invalidateQueries({ queryKey: ["ecommerce", clienteId] });
-    } finally {
-      setSyncing(false);
-    }
-  }
+  const syncShopify = () => syncProvider("/api/atrako/shopify/sync");
+  const syncTray = () => syncProvider("/api/atrako/tray/sync");
+  const syncNuvemshop = () => syncProvider("/api/atrako/nuvemshop/sync");
+  const syncWooCommerce = () => syncProvider("/api/atrako/woocommerce/sync");
 
   if (isLoading) {
     return (
@@ -223,6 +206,18 @@ export function EcommercePanel({
             Sincronizar Nuvemshop
           </button>
         ) : null}
+        {data.providers?.WOOCOMMERCE?.connected ? (
+          <button
+            type="button"
+            onClick={syncWooCommerce}
+            disabled={syncing}
+            className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] border border-[var(--border)] px-3 py-1.5 type-fine-print text-[var(--foreground)] active:scale-95 disabled:opacity-50"
+          >
+            {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="h-3.5 w-3.5" />}
+            Sincronizar WooCommerce
+          </button>
+        ) : null}
+        {syncError ? <p role="alert" className="w-full type-fine-print text-red-600">{syncError}</p> : null}
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">

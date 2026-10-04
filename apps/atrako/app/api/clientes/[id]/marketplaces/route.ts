@@ -21,7 +21,8 @@ const PROVIDER_MAP: Record<string, string> = {
 
 function parseDate(value: string | null, endOfDay = false): Date | null {
   if (!value) return null;
-  const d = new Date(value);
+  const ymd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  const d = ymd ? new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3])) : new Date(value);
   if (Number.isNaN(d.getTime())) return null;
   if (endOfDay) {
     d.setHours(23, 59, 59, 999);

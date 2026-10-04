@@ -15,6 +15,7 @@ import { ImoveisPanel } from "@/components/clientes/ImoveisPanel";
 import { CrmTab } from "@/components/clientes/CrmTab";
 import { MarketplacePanel, type MarketplaceSub } from "@/components/clientes/MarketplacePanel";
 import { EcommercePanel } from "@/components/clientes/EcommercePanel";
+import { GeralConsolidado } from "@/components/clientes/GeralConsolidado";
 import { SocialMediaPanel } from "@/components/clientes/SocialMediaPanel";
 import { HotelFazendaSaoJoaoPanel } from "@/components/clientes/HotelFazendaSaoJoaoPanel";
 import { HotelAnalystPanel } from "@/components/clientes/HotelAnalystPanel";
@@ -601,6 +602,8 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
     queryFn: () => fetchResumo(id, canal as "geral" | "meta" | "google", dateFilter),
     enabled: !!id && !!cliente && canal !== "imoveis" && canal !== "crm" && canal !== "marketplaces" && canal !== "ecommerce" && !socialMediaOnly,
   });
+  const geralSemMidia =
+    canal === "geral" && !!resumo && resumo.leads === 0 && Number(resumo.investimento) === 0;
 
   // Auto-sync when data is stale (last fato more than 24h behind today)
   const autoSyncFiredRef = React.useRef(false);
@@ -1415,8 +1418,13 @@ function formatPercentage(value: number) {
         />
       )}
 
+      {/* ── Geral: soma de todos os canais (vendas, leads, mídia) ── */}
+      {!analystOpen && id && canal === "geral" && !socialMediaOnly && (
+        <GeralConsolidado clienteId={id} query={buildQueryParams(dateFilter)} />
+      )}
+
       {/* ── Default panel (KPIs, chart, weekly table, financial) ── */}
-      {!analystOpen && canal !== "imoveis" && canal !== "crm" && canal !== "marketplaces" && canal !== "ecommerce" && (canal === "geral" || subView === "dados") && !isSpecialPanel && resumo && (
+      {!analystOpen && canal !== "imoveis" && canal !== "crm" && canal !== "marketplaces" && canal !== "ecommerce" && (canal === "geral" || subView === "dados") && !isSpecialPanel && resumo && !geralSemMidia && (
         <DefaultPanel
           resumo={
             isMiguelImoveisPanel
@@ -1686,7 +1694,7 @@ function formatPercentage(value: number) {
       {!analystOpen && id && canal === "geral" && !portalMode && canUseAnalyst && !socialMediaOnly && <PautaDaSemana clienteId={id} />}
 
       {/* ── Empty state ── */}
-      {!analystOpen && id && (canal === "geral" || subView === "dados") && resumo && resumo.leads === 0 && Number(resumo.investimento) === 0 && (
+      {!analystOpen && id && canal !== "geral" && subView === "dados" && resumo && resumo.leads === 0 && Number(resumo.investimento) === 0 && (
         <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
           <CardContent className="py-16 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--muted)]">

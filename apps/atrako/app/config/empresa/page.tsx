@@ -1,13 +1,18 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Loader2 } from "lucide-react";
-import { useConfigWorkspace } from "../_components";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  ConfigPage,
+  ConfigSection,
+  SaveButton,
+  useSaveConfig,
+  useWorkspaceConfig,
+} from "../_components";
 import { BrandColorPicker } from "@/components/ui/brand-color-picker";
-import { Button } from "@/components/ui/button";
-import { BackLink } from "@/components/ui/back-link";
 import { PillSelect } from "@/components/ui/pill-select";
+import { TextField } from "@/components/ui/text-field";
 import { DEFAULT_PRIMARY, normalizePrimaryHex } from "@/lib/brand/primaryColor";
 
 const TIMEZONES = [
@@ -24,26 +29,23 @@ const TIMEZONES = [
 ];
 
 const CURRENCIES = [
-  { value: "BRL", label: "BRL" },
-  { value: "USD", label: "USD" },
-  { value: "EUR", label: "EUR" },
+  { value: "BRL", label: "Real (BRL)" },
+  { value: "USD", label: "Dólar (USD)" },
+  { value: "EUR", label: "Euro (EUR)" },
 ];
 
-const fieldClass =
-  "mt-2 h-11 w-full rounded-[var(--radius-xs)] border border-[rgba(0,0,0,0.08)] bg-[var(--canvas)] px-5 type-body text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary-focus)]";
+const SOCIALS = [
+  ["instagram", "Instagram"],
+  ["facebook", "Facebook"],
+  ["tiktok", "TikTok"],
+  ["youtube", "YouTube"],
+  ["whatsapp", "WhatsApp (link wa.me)"],
+] as const;
 
 export default function ConfigEmpresaPage() {
   const qc = useQueryClient();
-  const { workspaceId } = useConfigWorkspace();
-  const { data: config, isLoading } = useQuery({
-    queryKey: ["workspace-config", workspaceId],
-    queryFn: async () => {
-      const r = await fetch(`/api/atrako/config?workspaceId=${workspaceId}`);
-      if (!r.ok) throw new Error("fail");
-      return r.json();
-    },
-    enabled: Boolean(workspaceId),
-  });
+  const { data: config, isLoading } = useWorkspaceConfig();
+  const { save, saving, saved, error, markDirty } = useSaveConfig();
 
   const [nome, setNome] = useState("");
   const [timezone, setTimezone] = useState("America/Sao_Paulo");
@@ -53,9 +55,7 @@ export default function ConfigEmpresaPage() {
   const [storeUrl, setStoreUrl] = useState("");
   const [footerAddress, setFooterAddress] = useState("");
   const [socials, setSocials] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!config) return;
@@ -72,212 +72,152 @@ export default function ConfigEmpresaPage() {
     );
   }, [config]);
 
-  async function save(e: React.FormEvent) {
-    e.preventDefault();
-    if (!workspaceId) return;
-    setSaving(true);
-    setError(null);
-    setSaved(false);
-    try {
-      const hex = normalizePrimaryHex(primaryColor);
-      if (!hex) {
-        setError("Cor inválida.");
-        setSaving(false);
-        return;
-      }
-      const r = await fetch("/api/atrako/config", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          workspaceId,
-          nome,
-          timezone,
-          currency,
-          primaryColor: hex,
-          messagingPrefs: {
-            senderName: senderName.trim() || null,
-            storeUrl: storeUrl.trim() || null,
-            footerAddress: footerAddress.trim() || null,
-            socials: Object.fromEntries(
-              Object.entries(socials).filter(([, v]) => /^https?:\/\//i.test(v.trim())),
-            ),
-          },
-        }),
-      });
-      if (!r.ok) {
-        const j = await r.json().catch(() => ({}));
-        throw new Error(j.error || "Não foi possível salvar.");
-      }
-      await qc.invalidateQueries({ queryKey: ["workspace-config", workspaceId] });
-      await qc.invalidateQueries({ queryKey: ["brand-clientes"] });
-      setSaved(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível salvar.");
-    } finally {
-      setSaving(false);
-    }
+  function edit<T>(setter: (v: T) => void) {
+    return (v: T) => {
+      setter(v);
+      markDirty();
+    };
   }
 
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const hex = normalizePrimaryHex(primaryColor);
+    if (!hex) {
+      setLocalError("Cor inválida.");
+      return;
+    }
+    setLocalError(null);
+    const ok = await save({
+      nome,
+      timezone,
+      currency,
+      primaryColor: hex,
+      messagingPrefs: {
+        senderName: senderName.trim() || null,
+        storeUrl: storeUrl.trim() || null,
+        footerAddress: footerAddress.trim() || null,
+        socials: Object.fromEntries(
+          Object.entries(socials).filter(([, v]) => /^https?:\/\//i.test(v.trim())),
+        ),
+      },
+    });
+    if (ok) await qc.invalidateQueries({ queryKey: ["brand-clientes"] });
+  }
+
+  const message = localError || error;
+
   return (
-    <div className="min-h-full bg-[var(--canvas-parchment)]">
-      <div className="frosted-bar sticky top-0 z-20 border-b border-[rgba(0,0,0,0.08)]">
-        <div className="mx-auto flex h-[52px] max-w-content items-center justify-between gap-4 px-4 md:px-8">
-          <div className="flex min-w-0 items-center gap-3">
-            <BackLink href="/config" />
-              <p className="type-body-strong truncate text-[var(--ink)]">Empresa</p>
+    <ConfigPage
+      title="Empresa"
+      loading={isLoading}
+      actions={<SaveButton form="empresa-form" saving={saving} saved={saved} disabled={isLoading} />}
+    >
+      <form id="empresa-form" onSubmit={onSubmit} className="flex flex-col gap-6">
+        <ConfigSection title="Identidade" description="Como a empresa aparece para a equipe e clientes.">
+          <TextField
+            label="Nome"
+            value={nome}
+            onChange={(e) => edit(setNome)(e.target.value)}
+            placeholder="Nome da empresa"
+            required
+          />
+          <div>
+            <p className="mb-3 type-caption-strong text-[var(--ink)]">Cor da marca</p>
+            <BrandColorPicker
+              value={primaryColor}
+              onChange={edit(setPrimaryColor)}
+              brandName={nome || "Sua marca"}
+            />
           </div>
-          <Button
-            type="submit"
-            form="empresa-form"
-            variant="primary"
-            disabled={saving || isLoading}
-            className="!px-5 !py-2 type-button-utility"
-          >
-            {saving ? "…" : saved ? (
-              <span className="inline-flex items-center gap-1">
-                <Check className="h-3.5 w-3.5" strokeWidth={2.5} /> Salvo
-              </span>
-            ) : (
-              "Salvar"
-            )}
-          </Button>
-        </div>
-      </div>
+        </ConfigSection>
 
-      <div className="mx-auto max-w-prose px-4 py-8 md:px-8 md:py-10">
-        {isLoading ? (
-          <div className="flex justify-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-[var(--primary)]" />
+        <ConfigSection title="Região" description="Usado em agendas, relatórios e valores.">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <p className="type-caption-strong text-[var(--ink)]">Fuso horário</p>
+              <PillSelect
+                className="mt-2 w-full"
+                size="field"
+                value={timezone}
+                onChange={edit(setTimezone)}
+                options={[
+                  ...(!TIMEZONES.includes(timezone) ? [{ value: timezone, label: timezone }] : []),
+                  ...TIMEZONES.map((tz) => ({
+                    value: tz,
+                    label: tz.replace("America/", "").replace(/_/g, " "),
+                  })),
+                ]}
+                aria-label="Fuso horário"
+              />
+            </div>
+            <div>
+              <p className="type-caption-strong text-[var(--ink)]">Moeda</p>
+              <PillSelect
+                className="mt-2 w-full"
+                size="field"
+                value={currency}
+                onChange={edit(setCurrency)}
+                options={[
+                  ...CURRENCIES,
+                  ...(!CURRENCIES.some((c) => c.value === currency)
+                    ? [{ value: currency, label: currency }]
+                    : []),
+                ]}
+                aria-label="Moeda"
+              />
+            </div>
           </div>
-        ) : (
-          <form id="empresa-form" onSubmit={save} className="space-y-5">
-            <div className="utility-card space-y-5">
-              <label className="block">
-                <span className="type-caption-strong text-[var(--ink)]">Nome</span>
-                <input
-                  className={fieldClass}
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  placeholder="Nome da empresa"
-                  required
-                />
-              </label>
+        </ConfigSection>
 
-              <div>
-                <p className="mb-3 type-caption-strong text-[var(--ink)]">Cor</p>
-                <BrandColorPicker
-                  value={primaryColor}
-                  onChange={(v) => {
-                    setPrimaryColor(v);
-                    setSaved(false);
-                  }}
-                  brandName={nome || "Sua marca"}
-                />
-              </div>
-            </div>
+        <ConfigSection
+          title="Contato e rodapé"
+          description="Aparece no rodapé dos e-mails e mensagens. O endereço é exigido pelas regras anti-spam."
+        >
+          <TextField
+            label="Nome exibido nas mensagens"
+            value={senderName}
+            onChange={(e) => edit(setSenderName)(e.target.value)}
+            placeholder={nome || "Nome da loja"}
+            hint={
+              <>
+                O remetente do e-mail (endereço de envio) fica em{" "}
+                <Link href="/config/conexoes" className="text-[var(--primary)] underline-offset-2 hover:underline">
+                  Integrações → E-mail
+                </Link>.
+              </>
+            }
+          />
+          <TextField
+            label="Site da loja"
+            value={storeUrl}
+            onChange={(e) => edit(setStoreUrl)(e.target.value)}
+            placeholder="https://minhaloja.com.br"
+          />
+          <TextField
+            label="Endereço no rodapé"
+            value={footerAddress}
+            onChange={(e) => edit(setFooterAddress)(e.target.value)}
+            placeholder="Rua, número — Cidade/UF — CNPJ"
+          />
+          <div className="grid gap-5 sm:grid-cols-2">
+            {SOCIALS.map(([key, label]) => (
+              <TextField
+                key={key}
+                label={label}
+                value={socials[key] ?? ""}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setSocials((s) => ({ ...s, [key]: v }));
+                  markDirty();
+                }}
+                placeholder="https://"
+              />
+            ))}
+          </div>
+        </ConfigSection>
 
-            <div className="utility-card">
-              <div className="grid gap-5 sm:grid-cols-2">
-                <label className="block">
-                  <span className="type-caption-strong text-[var(--ink)]">Fuso</span>
-                  <PillSelect
-                    className="mt-2 w-full"
-                    size="field"
-                    value={timezone}
-                    onChange={setTimezone}
-                    options={[
-                      ...(!TIMEZONES.includes(timezone)
-                        ? [{ value: timezone, label: timezone }]
-                        : []),
-                      ...TIMEZONES.map((tz) => ({
-                        value: tz,
-                        label: tz.replace("America/", "").replace(/_/g, " "),
-                      })),
-                    ]}
-                    aria-label="Fuso"
-                  />
-                </label>
-                <label className="block">
-                  <span className="type-caption-strong text-[var(--ink)]">Moeda</span>
-                  <PillSelect
-                    className="mt-2 w-full"
-                    size="field"
-                    value={currency}
-                    onChange={setCurrency}
-                    options={[
-                      ...CURRENCIES,
-                      ...(!CURRENCIES.some((c) => c.value === currency)
-                        ? [{ value: currency, label: currency }]
-                        : []),
-                    ]}
-                    aria-label="Moeda"
-                  />
-                </label>
-              </div>
-            </div>
-
-            <div className="utility-card space-y-5">
-              <div>
-                <p className="type-caption-strong text-[var(--ink)]">E-mails e WhatsApp</p>
-                <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
-                  Usado no remetente e no rodapé dos fluxos de relacionamento. O endereço é exigido
-                  pelas regras anti-spam.
-                </p>
-              </div>
-              <label className="block">
-                <span className="type-caption-strong text-[var(--ink)]">Nome do remetente</span>
-                <input
-                  className={fieldClass}
-                  value={senderName}
-                  onChange={(e) => setSenderName(e.target.value)}
-                  placeholder={nome || "Nome da loja"}
-                />
-              </label>
-              <label className="block">
-                <span className="type-caption-strong text-[var(--ink)]">Site da loja</span>
-                <input
-                  className={fieldClass}
-                  value={storeUrl}
-                  onChange={(e) => setStoreUrl(e.target.value)}
-                  placeholder="https://minhaloja.com.br"
-                />
-              </label>
-              <label className="block">
-                <span className="type-caption-strong text-[var(--ink)]">Endereço no rodapé</span>
-                <input
-                  className={fieldClass}
-                  value={footerAddress}
-                  onChange={(e) => setFooterAddress(e.target.value)}
-                  placeholder="Rua, número — Cidade/UF — CNPJ"
-                />
-              </label>
-              <div className="grid gap-5 sm:grid-cols-2">
-                {(
-                  [
-                    ["instagram", "Instagram"],
-                    ["facebook", "Facebook"],
-                    ["tiktok", "TikTok"],
-                    ["youtube", "YouTube"],
-                    ["whatsapp", "WhatsApp (link wa.me)"],
-                  ] as const
-                ).map(([key, label]) => (
-                  <label key={key} className="block">
-                    <span className="type-caption-strong text-[var(--ink)]">{label}</span>
-                    <input
-                      className={fieldClass}
-                      value={socials[key] ?? ""}
-                      onChange={(e) => setSocials((s) => ({ ...s, [key]: e.target.value }))}
-                      placeholder="https://"
-                    />
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {error ? <p className="type-caption text-[var(--danger)]">{error}</p> : null}
-          </form>
-        )}
-      </div>
-    </div>
+        {message ? <p className="type-caption text-[var(--danger)]">{message}</p> : null}
+      </form>
+    </ConfigPage>
   );
 }

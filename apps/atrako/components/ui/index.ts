@@ -22,3 +22,6 @@ export type { SiteFooterProps, FooterColumn } from "./site-footer";
 export { BrandColorPicker } from "./brand-color-picker";
 export { PillSelect } from "./pill-select";
 export type { PillSelectOption, PillSelectSize } from "./pill-select";
+export { BrandLogo } from "./brand-logo";
+export { TextField } from "./text-field";
+export type { TextFieldProps } from "./text-field";

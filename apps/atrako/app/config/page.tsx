@@ -4,69 +4,85 @@ import Link from "next/link";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Bell,
   Building2,
   ChevronRight,
   Crosshair,
-  FileText,
   Link2,
   Loader2,
-  Puzzle,
   Users,
-  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TextField } from "@/components/ui/text-field";
 import { AppPage } from "@/components/layout/AppPage";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
+import { useWorkspaceConfig, type WorkspaceConfig } from "./_components";
 
-const LINKS = [
+type HubLink = {
+  href: string;
+  label: string;
+  desc: string;
+  icon: typeof Building2;
+  status: (ctx: { config?: WorkspaceConfig; memberCount: number | null }) => string | null;
+};
+
+const GROUPS: Array<{ title: string; links: HubLink[] }> = [
   {
-    href: "/config/empresa",
-    label: "Empresa",
-    desc: "Nome, fuso, moeda e cor da marca",
-    icon: Building2,
+    title: "Negócio",
+    links: [
+      {
+        href: "/config/empresa",
+        label: "Empresa",
+        desc: "Nome, cor, fuso e contato",
+        icon: Building2,
+        status: ({ config }) =>
+          [formatTimezone(config?.settings?.timezone), config?.settings?.currency]
+            .filter(Boolean)
+            .join(" · ") || null,
+      },
+      {
+        href: "/config/membros",
+        label: "Equipe",
+        desc: "Quem acessa e o que pode fazer",
+        icon: Users,
+        status: ({ memberCount }) =>
+          memberCount == null
+            ? null
+            : memberCount === 1
+              ? "1 pessoa"
+              : `${memberCount} pessoas`,
+      },
+    ],
   },
   {
-    href: "/config/membros",
-    label: "Equipe",
-    desc: "Quem acessa o workspace",
-    icon: Users,
-  },
-  {
-    href: "/config/conexoes",
-    label: "Integrações",
-    desc: "Mercado Pago, Mercado Livre, Instagram e Meta Ads",
-    icon: Link2,
-  },
-  {
-    href: "/config/modulos",
-    label: "Módulos",
-    desc: "O que está ativo na operação",
-    icon: Puzzle,
-  },
-  {
-    href: "/config/financeiro",
-    label: "Financeiro",
-    desc: "Preferências do caixa",
-    icon: Wallet,
-  },
-  {
-    href: "/config/rastreamento",
-    label: "Rastreamento",
-    desc: "Pixels e eventos",
-    icon: Crosshair,
-  },
-  {
-    href: "/config/forms",
-    label: "Formulários",
-    desc: "Origem padrão dos leads",
-    icon: FileText,
-  },
-  {
-    href: "/config/notificacoes",
-    label: "Notificações",
-    desc: "Alertas da equipe",
-    icon: Bell,
+    title: "Conexões",
+    links: [
+      {
+        href: "/config/conexoes",
+        label: "Integrações",
+        desc: "WhatsApp, Instagram, e-mail, loja e anúncios",
+        icon: Link2,
+        status: ({ config }) => {
+          if (!config) return null;
+          const n = config.connections.filter((c) => c.hasCredentials).length;
+          if (n === 0) return "Nenhuma ativa";
+          return n === 1 ? "1 ativa" : `${n} ativas`;
+        },
+      },
+      {
+        href: "/config/rastreamento",
+        label: "Rastreamento",
+        desc: "Meta Pixel e Google Analytics",
+        icon: Crosshair,
+        status: ({ config }) => {
+          if (!config) return null;
+          const t = config.settings.tracking ?? {};
+          const active = [t.pixelId ? "Pixel" : null, t.ga4MeasurementId ? "GA4" : null].filter(
+            Boolean,
+          );
+          return active.length ? `${active.join(" + ")} ativo` : "Não configurado";
+        },
+      },
+    ],
   },
 ];
 
@@ -95,20 +111,19 @@ export default function ConfigHomePage() {
     data: config,
     isLoading: configLoading,
     isError: configError,
-  } = useQuery({
-    queryKey: ["workspace-config", workspaceId],
+  } = useWorkspaceConfig();
+
+  const { data: membersData } = useQuery({
+    queryKey: ["workspace-members", workspaceId],
     queryFn: async () => {
-      const r = await fetch(`/api/atrako/config?workspaceId=${workspaceId}`);
-      if (!r.ok) throw new Error("Não foi possível carregar");
-      return r.json();
+      const r = await fetch(`/api/atrako/members?workspaceId=${workspaceId}`);
+      if (!r.ok) throw new Error("fail");
+      return r.json() as Promise<{ members: unknown[] }>;
     },
     enabled: Boolean(workspaceId),
-    retry: 1,
+    retry: false,
   });
-
-  const activeConnections =
-    config?.connections?.filter((c: { hasCredentials: boolean }) => c.hasCredentials)
-      .length ?? 0;
+  const memberCount = membersData ? membersData.members.length : null;
 
   const workspaceName =
     config?.workspace?.name ||
@@ -140,16 +155,6 @@ export default function ConfigHomePage() {
     }
   }
 
-  const meta = [
-    formatTimezone(config?.settings?.timezone),
-    config?.settings?.currency,
-    activeConnections > 0
-      ? `${activeConnections} integração${activeConnections === 1 ? "" : "ões"}`
-      : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-
   const showCreate = isReady && !workspaceError && workspaces.length === 0;
   const sessionExpired =
     workspaceLoadError instanceof Error &&
@@ -166,14 +171,9 @@ export default function ConfigHomePage() {
           <Loader2 className="h-5 w-5 animate-spin text-[var(--primary)]" />
         </div>
       ) : showHub ? (
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-6">
           <header className="space-y-1">
-            <p className="type-body-strong text-[var(--ink)]">
-              {workspaceName || "Empresa"}
-            </p>
-            {meta ? (
-              <p className="type-fine-print text-[var(--ink-muted-48)]">{meta}</p>
-            ) : null}
+            <p className="type-body-strong text-[var(--ink)]">{workspaceName || "Empresa"}</p>
             {configError && !config ? (
               <p className="type-fine-print text-[var(--ink-muted-48)]">
                 Não foi possível carregar todos os detalhes — os atalhos abaixo seguem
@@ -182,40 +182,53 @@ export default function ConfigHomePage() {
             ) : null}
           </header>
 
-          <nav
-            className="overflow-hidden rounded-[18px] border border-[var(--hairline)] bg-[var(--canvas)]"
-            aria-label="Ajustes"
-          >
-            {LINKS.map((l, i) => {
-              const Icon = l.icon;
-              return (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  className={`flex items-center gap-3.5 px-4 py-3.5 transition hover:bg-[var(--surface-pearl)] active:scale-[0.995] ${
-                    i > 0 ? "border-t border-[var(--divider-soft)]" : ""
-                  }`}
-                >
-                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--primary-glow)] text-[var(--primary)]">
-                    <Icon className="h-4 w-4" strokeWidth={1.75} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block type-caption-strong text-[var(--ink)]">
-                      {l.label}
-                    </span>
-                    <span className="mt-0.5 block type-fine-print text-[var(--ink-muted-48)]">
-                      {l.desc}
-                    </span>
-                  </span>
-                  <ChevronRight
-                    className="h-4 w-4 shrink-0 text-[var(--ink-muted-48)]"
-                    strokeWidth={1.75}
-                    aria-hidden
-                  />
-                </Link>
-              );
-            })}
-          </nav>
+          {GROUPS.map((group) => (
+            <section key={group.title} className="space-y-2">
+              <h2 className="px-1 type-caption-strong text-[var(--ink-muted-80)]">
+                {group.title}
+              </h2>
+              <nav
+                className="overflow-hidden rounded-[18px] border border-[var(--hairline)] bg-[var(--canvas)]"
+                aria-label={group.title}
+              >
+                {group.links.map((l, i) => {
+                  const Icon = l.icon;
+                  const status = l.status({ config, memberCount });
+                  return (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      className={`flex items-center gap-3.5 px-4 py-3.5 transition hover:bg-[var(--surface-pearl)] active:scale-[0.995] ${
+                        i > 0 ? "border-t border-[var(--divider-soft)]" : ""
+                      }`}
+                    >
+                      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--primary-glow)] text-[var(--primary)]">
+                        <Icon className="h-4 w-4" strokeWidth={1.75} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block type-caption-strong text-[var(--ink)]">
+                          {l.label}
+                        </span>
+                        <span className="mt-0.5 block type-fine-print text-[var(--ink-muted-48)]">
+                          {l.desc}
+                        </span>
+                      </span>
+                      {status ? (
+                        <span className="shrink-0 type-fine-print text-[var(--ink-muted-48)] phone:hidden">
+                          {status}
+                        </span>
+                      ) : null}
+                      <ChevronRight
+                        className="h-4 w-4 shrink-0 text-[var(--ink-muted-48)]"
+                        strokeWidth={1.75}
+                        aria-hidden
+                      />
+                    </Link>
+                  );
+                })}
+              </nav>
+            </section>
+          ))}
         </div>
       ) : showCreate ? (
         <form onSubmit={createEmpresa} className="utility-card space-y-5 !p-5">
@@ -225,17 +238,14 @@ export default function ConfigHomePage() {
               É o workspace onde você publica e opera.
             </p>
           </div>
-          <label className="block">
-            <span className="type-caption-strong text-[var(--ink)]">Nome</span>
-            <input
-              className="mt-2 h-11 w-full rounded-[var(--radius-xs)] border border-[rgba(0,0,0,0.08)] bg-[var(--canvas)] px-5 type-body text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary-focus)]"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              placeholder="Sua empresa"
-              required
-              autoFocus
-            />
-          </label>
+          <TextField
+            label="Nome"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            placeholder="Sua empresa"
+            required
+            autoFocus
+          />
           {createError ? (
             <p className="type-caption text-[var(--danger)]">{createError}</p>
           ) : null}

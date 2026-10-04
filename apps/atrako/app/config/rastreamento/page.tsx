@@ -1,82 +1,146 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ConfigBack, useConfigWorkspace } from "../_components";
+import { Button } from "@/components/ui/button";
+import { TextField } from "@/components/ui/text-field";
+import {
+  ConfigPage,
+  ConfigSection,
+  SaveButton,
+  StatusBadge,
+  useSaveConfig,
+  useWorkspaceConfig,
+} from "../_components";
 
-function SimplePrefsPage({
-  title,
-  field,
-  keys,
-}: {
-  title: string;
-  field: "tracking" | "financePrefs" | "formsPrefs" | "notifyPrefs";
-  keys: Array<{ key: string; label: string }>;
-}) {
-  const qc = useQueryClient();
-  const { workspaceId } = useConfigWorkspace();
-  const { data: config } = useQuery({
-    queryKey: ["workspace-config", workspaceId],
-    queryFn: async () => {
-      const r = await fetch(`/api/atrako/config?workspaceId=${workspaceId}`);
-      if (!r.ok) throw new Error("fail");
-      return r.json();
-    },
-    enabled: Boolean(workspaceId),
-  });
-  const [vals, setVals] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    const src = (config?.settings?.[field] ?? {}) as Record<string, unknown>;
-    const next: Record<string, string> = {};
-    for (const k of keys) next[k.key] = typeof src[k.key] === "string" ? (src[k.key] as string) : "";
-    setVals(next);
-  }, [config, field, keys]);
-
-  async function save(e: React.FormEvent) {
-    e.preventDefault();
-    if (!workspaceId) return;
-    await fetch("/api/atrako/config", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ workspaceId, [field]: vals }),
-    });
-    qc.invalidateQueries({ queryKey: ["workspace-config", workspaceId] });
-  }
-
-  return (
-    <div className="mx-auto max-w-lg space-y-6 p-6">
-      <ConfigBack title={title} />
-      <form onSubmit={save} className="space-y-3 rounded-xl border border-[var(--hairline)] bg-white p-4">
-        {keys.map((k) => (
-          <label key={k.key} className="block type-fine-print text-[var(--ink-muted-48)]">
-            {k.label}
-            <input
-              className="mt-1 w-full rounded-lg border border-[var(--hairline)] px-3 py-2 text-sm"
-              value={vals[k.key] ?? ""}
-              onChange={(e) => setVals((v) => ({ ...v, [k.key]: e.target.value }))}
-            />
-          </label>
-        ))}
-        <button type="submit" className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-[22px] py-[11px] type-body text-[var(--on-primary)] active:scale-95">
-          Salvar
-        </button>
-      </form>
-    </div>
-  );
-}
+type SecretKey = "capiToken" | "ga4ApiSecret";
 
 export default function ConfigRastreamentoPage() {
+  const { data: config, isLoading } = useWorkspaceConfig();
+  const { save, saving, saved, error, markDirty } = useSaveConfig();
+
+  const tracking = config?.settings?.tracking ?? {};
+  const [pixelId, setPixelId] = useState("");
+  const [ga4MeasurementId, setGa4MeasurementId] = useState("");
+  const [secrets, setSecrets] = useState<Record<SecretKey, string>>({
+    capiToken: "",
+    ga4ApiSecret: "",
+  });
+
+  useEffect(() => {
+    if (!config) return;
+    const t = config.settings.tracking ?? {};
+    setPixelId(typeof t.pixelId === "string" ? t.pixelId : "");
+    setGa4MeasurementId(typeof t.ga4MeasurementId === "string" ? t.ga4MeasurementId : "");
+    setSecrets({ capiToken: "", ga4ApiSecret: "" });
+  }, [config]);
+
+  function setSecret(key: SecretKey, value: string) {
+    setSecrets((s) => ({ ...s, [key]: value }));
+    markDirty();
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await save({
+      tracking: {
+        pixelId: pixelId.trim(),
+        ga4MeasurementId: ga4MeasurementId.trim(),
+        capiToken: secrets.capiToken.trim(),
+        ga4ApiSecret: secrets.ga4ApiSecret.trim(),
+      },
+    });
+  }
+
+  async function clearSecret(key: SecretKey) {
+    await save({ tracking: { [key]: null } });
+  }
+
+  function secretHint(has: boolean | undefined, key: SecretKey) {
+    if (!has) return undefined;
+    return (
+      <span className="inline-flex flex-wrap items-center gap-x-2">
+        Já configurado. Deixe em branco para manter.
+        <Button
+          type="button"
+          variant="ghost"
+          className="!px-0 !py-0 type-fine-print !text-[var(--danger)]"
+          onClick={() => void clearSecret(key)}
+        >
+          Remover
+        </Button>
+      </span>
+    );
+  }
+
+  const metaActive = Boolean(tracking.pixelId);
+  const ga4Active = Boolean(tracking.ga4MeasurementId);
+
   return (
-    <SimplePrefsPage
+    <ConfigPage
       title="Rastreamento"
-      field="tracking"
-      keys={[
-        { key: "pixelId", label: "ID do Meta Pixel" },
-        { key: "capiToken", label: "Token da API de conversões (CAPI)" },
-        { key: "ga4MeasurementId", label: "GA4 — ID de métricas (G-XXXXXXX)" },
-        { key: "ga4ApiSecret", label: "GA4 — chave secreta do Measurement Protocol" },
-      ]}
-    />
+      loading={isLoading}
+      actions={
+        <SaveButton form="rastreamento-form" saving={saving} saved={saved} disabled={isLoading} />
+      }
+    >
+      <form id="rastreamento-form" onSubmit={onSubmit} className="flex flex-col gap-6">
+        <ConfigSection
+          title="Meta"
+          description="Pixel nas páginas e conversões enviadas pelo servidor para otimizar os anúncios."
+          aside={
+            <StatusBadge active={metaActive}>{metaActive ? "Ativo" : "Não configurado"}</StatusBadge>
+          }
+        >
+          <TextField
+            label="ID do Pixel"
+            value={pixelId}
+            onChange={(e) => {
+              setPixelId(e.target.value);
+              markDirty();
+            }}
+            placeholder="123456789012345"
+            inputMode="numeric"
+          />
+          <TextField
+            label="Token da API de Conversões"
+            type="password"
+            autoComplete="off"
+            value={secrets.capiToken}
+            onChange={(e) => setSecret("capiToken", e.target.value)}
+            placeholder={tracking.hasCapiToken ? "••••••••" : "Cole o token gerado no Gerenciador de Eventos"}
+            hint={secretHint(tracking.hasCapiToken, "capiToken")}
+          />
+        </ConfigSection>
+
+        <ConfigSection
+          title="Google Analytics 4"
+          description="Envia visitas e compras para a sua propriedade do GA4."
+          aside={
+            <StatusBadge active={ga4Active}>{ga4Active ? "Ativo" : "Não configurado"}</StatusBadge>
+          }
+        >
+          <TextField
+            label="ID de métricas"
+            value={ga4MeasurementId}
+            onChange={(e) => {
+              setGa4MeasurementId(e.target.value);
+              markDirty();
+            }}
+            placeholder="G-XXXXXXXXXX"
+          />
+          <TextField
+            label="Chave secreta do Measurement Protocol"
+            type="password"
+            autoComplete="off"
+            value={secrets.ga4ApiSecret}
+            onChange={(e) => setSecret("ga4ApiSecret", e.target.value)}
+            placeholder={tracking.hasGa4ApiSecret ? "••••••••" : "Admin → Fluxos de dados → Chaves secretas"}
+            hint={secretHint(tracking.hasGa4ApiSecret, "ga4ApiSecret")}
+          />
+        </ConfigSection>
+
+        {error ? <p className="type-caption text-[var(--danger)]">{error}</p> : null}
+      </form>
+    </ConfigPage>
   );
 }

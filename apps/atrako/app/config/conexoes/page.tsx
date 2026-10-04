@@ -2,29 +2,22 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import {
-  ArrowLeft,
-  CheckCircle2,
-  Link2,
-  Loader2,
-  Instagram,
-  CreditCard,
-  Megaphone,
-  AlertCircle,
-  MessageCircle,
-  CalendarDays,
-  ShoppingBag,
-  Store,
-} from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { BrandLogo } from "@/components/ui/brand-logo";
+import { Button } from "@/components/ui/button";
 import { PillSelect } from "@/components/ui/pill-select";
-import { ResendConnectionCard } from "@/components/relacionamento/ResendConnectionCard";
-import { NativeRecoveryChecklistCard } from "@/components/relacionamento/NativeRecoveryChecklistCard";
+import { TextField } from "@/components/ui/text-field";
+import {
+  ResendConnectionCard,
+  fetchResendStatus,
+  resendStatusKey,
+} from "@/components/relacionamento/ResendConnectionCard";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 import { useOAuthPopup } from "@/hooks/useOAuthPopup";
 import type { AtrakoOAuthMessage } from "@/lib/oauth/openOAuthPopup";
 import { parseGoogleAdsConnectionMetadata } from "@/lib/googleAds/types";
+import { ConfigPage } from "../_components";
 
 type ConnectionRow = {
   id: string;
@@ -48,106 +41,108 @@ type MetaConnectionStatus = {
   lastError: string | null;
 };
 
-const ADS_CARDS: Array<{
+type Category = "loja" | "marketplace" | "pagamentos" | "anuncios" | "comunicacao" | "agenda";
+type ItemState = "on" | "attention" | "off";
+
+type Item = {
   provider: string;
   title: string;
-  icon: typeof Instagram;
-  connectHref?: (workspaceId: string) => string;
-  facebookSignup?: boolean;
-}> = [
-  {
-    provider: "META_ADS",
-    title: "Meta Ads",
-    icon: Megaphone,
-    connectHref: (id) => `/api/atrako/oauth/meta/start?workspaceId=${id}`,
-  },
-  {
-    provider: "GOOGLE_ADS",
-    title: "Google Ads",
-    icon: Megaphone,
-    connectHref: (id) => `/api/atrako/oauth/google-ads/start?workspaceId=${id}`,
-  },
-  {
-    provider: "LINKEDIN_ADS",
-    title: "LinkedIn Ads",
-    icon: Megaphone,
-    connectHref: (id) => `/api/atrako/oauth/linkedin/start?workspaceId=${id}`,
-  },
+  category: Category;
+  /** Uma linha: o que a integração faz (só aparece quando desconectada). */
+  hint: string;
+  state: ItemState;
+  detail?: string | null;
+  /** Conexão direta (OAuth). Sem isso, "Conectar" abre o painel. */
+  onConnect?: () => void;
+  onReconnect?: () => void;
+  panel?: React.ReactNode;
+  actions?: React.ReactNode;
+  disconnectable?: boolean;
+  /** Painel aberto sem clique (ex.: escolher conta de anúncio). */
+  forceOpen?: boolean;
+};
+
+const CATEGORIES: Array<{ id: Category; title: string }> = [
+  { id: "loja", title: "Loja própria" },
+  { id: "marketplace", title: "Marketplaces" },
+  { id: "pagamentos", title: "Pagamentos" },
+  { id: "anuncios", title: "Anúncios" },
+  { id: "comunicacao", title: "Comunicação" },
+  { id: "agenda", title: "Agenda" },
 ];
 
-const MARKETPLACE_CARDS: Array<{
-  provider: string;
-  title: string;
-  icon: typeof Instagram;
-  connectHref?: (workspaceId: string) => string;
-  facebookSignup?: boolean;
-}> = [
-  {
-    provider: "MERCADO_LIVRE",
-    title: "Mercado Livre",
-    icon: ShoppingBag,
-    connectHref: (id) => `/api/atrako/oauth/mercadolivre/start?workspaceId=${id}`,
-  },
-  {
-    provider: "SHOPEE",
-    title: "Shopee",
-    icon: ShoppingBag,
-    connectHref: (id) => `/api/atrako/oauth/shopee/start?workspaceId=${id}`,
-  },
+const STATE_ORDER: Record<ItemState, number> = { attention: 0, on: 1, off: 2 };
+
+const PROVIDER_ORDER = [
+  "SHOPIFY",
+  "NUVEMSHOP",
+  "TRAY",
+  "WOOCOMMERCE",
+  "MERCADO_LIVRE",
+  "SHOPEE",
+  "MERCADO_PAGO",
+  "META_ADS",
+  "GOOGLE_ADS",
+  "LINKEDIN_ADS",
+  "WHATSAPP",
+  "INSTAGRAM",
+  "RESEND",
+  "GOOGLE_CALENDAR",
 ];
 
-const CHANNEL_CARDS: Array<{
-  provider: string;
-  title: string;
-  icon: typeof Instagram;
-  connectHref?: (workspaceId: string) => string;
-  facebookSignup?: boolean;
-}> = [
-  {
-    provider: "INSTAGRAM",
-    title: "Instagram",
-    icon: Instagram,
-    connectHref: (id) => `/api/atrako/oauth/instagram/start?workspaceId=${id}`,
-  },
-  {
-    provider: "WHATSAPP",
-    title: "WhatsApp",
-    icon: MessageCircle,
-    facebookSignup: true,
-  },
-  {
-    provider: "MERCADO_PAGO",
-    title: "Mercado Pago",
-    icon: CreditCard,
-    connectHref: (id) => `/api/atrako/oauth/mercadopago/start?workspaceId=${id}`,
-  },
-  {
-    provider: "GOOGLE_CALENDAR",
-    title: "Google Calendar",
-    icon: CalendarDays,
-    connectHref: (id) =>
-      `/api/atrako/oauth/google-calendar/start?workspaceId=${id}`,
-  },
-];
-
-const ECOMM_CARDS: Array<{
-  key: "woocommerce";
-  title: string;
-}> = [{ key: "woocommerce", title: "WooCommerce" }];
-
-type HubCard = (typeof ADS_CARDS)[number];
-
-function SectionHeading({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
+function compareItems(a: Item, b: Item) {
   return (
-    <div className="mb-3">
-      <h2 className="type-caption-strong text-[var(--ink-muted-80)]">{title}</h2>
-      <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">{description}</p>
+    STATE_ORDER[a.state] - STATE_ORDER[b.state] ||
+    PROVIDER_ORDER.indexOf(a.provider) - PROVIDER_ORDER.indexOf(b.provider)
+  );
+}
+
+const OAUTH: Array<{ provider: string; title: string; category: Category; hint: string; start: string }> = [
+  { provider: "INSTAGRAM", title: "Instagram", category: "comunicacao", hint: "Direct e automações", start: "instagram" },
+  { provider: "MERCADO_PAGO", title: "Mercado Pago", category: "pagamentos", hint: "Checkout e cobranças", start: "mercadopago" },
+  { provider: "GOOGLE_CALENDAR", title: "Google Calendar", category: "agenda", hint: "Agenda e reservas", start: "google-calendar" },
+  { provider: "MERCADO_LIVRE", title: "Mercado Livre", category: "marketplace", hint: "Pedidos do marketplace", start: "mercadolivre" },
+  { provider: "SHOPEE", title: "Shopee", category: "marketplace", hint: "Pedidos do marketplace", start: "shopee" },
+  { provider: "LINKEDIN_ADS", title: "LinkedIn Ads", category: "anuncios", hint: "Campanhas e investimento", start: "linkedin" },
+];
+
+const SYNC_PATHS: Record<string, string> = {
+  SHOPIFY: "/api/atrako/shopify/sync",
+  TRAY: "/api/atrako/tray/sync",
+  NUVEMSHOP: "/api/atrako/nuvemshop/sync",
+  SHOPEE: "/api/atrako/shopee/sync",
+};
+
+const smallPrimary = "!px-4 !py-1.5 type-button-utility";
+const smallOutline = "!px-4 !py-1.5 type-button-utility";
+
+function rowState(row: ConnectionRow | undefined): ItemState {
+  if (!row?.hasCredentials) return "off";
+  if (row.status === "NEEDS_REAUTH" || row.status === "SYNC_ERROR" || row.status === "ERROR") {
+    return "attention";
+  }
+  return row.status === "ACTIVE" || row.status === "SYNCING" ? "on" : "off";
+}
+
+function metaOf(row: ConnectionRow | undefined): Record<string, unknown> {
+  return row?.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata)
+    ? (row.metadata as Record<string, unknown>)
+    : {};
+}
+
+function str(v: unknown): string | null {
+  return typeof v === "string" && v.trim() ? v : null;
+}
+
+function Notice({ ok, children }: { ok: boolean; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-2 rounded-[var(--radius-lg)] border border-[var(--hairline)] bg-[var(--canvas)] p-4 type-fine-print text-[var(--ink)]">
+      {ok ? (
+        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--success)]" />
+      ) : (
+        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--danger)]" />
+      )}
+      <span>{children}</span>
     </div>
   );
 }
@@ -179,15 +174,103 @@ function gadsAccountOptionLabel(a: { id: string; name: string; manager?: boolean
   return `${name}${mcc} · ${cid}`;
 }
 
+function IntegrationRow({
+  item,
+  open,
+  first,
+  pending,
+  onToggle,
+  onDisconnect,
+}: {
+  item: Item;
+  open: boolean;
+  first: boolean;
+  pending: boolean;
+  onToggle: () => void;
+  onDisconnect: () => void;
+}) {
+  const connected = item.state !== "off";
+  const expanded = open || Boolean(item.forceOpen);
+  const showFooter = connected && (item.actions || item.onReconnect || item.disconnectable);
+
+  return (
+    <li className={first ? "" : "border-t border-[var(--divider-soft)]"}>
+      <div className="flex items-center gap-3 px-4 py-3">
+        <BrandLogo provider={item.provider} />
+        <div className="min-w-0 flex-1">
+          <p className="type-caption-strong text-[var(--ink)]">{item.title}</p>
+          {item.state === "off" ? (
+            <p className="truncate type-fine-print text-[var(--ink-muted-48)]">{item.hint}</p>
+          ) : (
+            <p className="flex min-w-0 items-center gap-1.5 type-fine-print text-[var(--ink-muted-80)]">
+              <span
+                className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                  item.state === "on" ? "bg-[var(--success)]" : "bg-[var(--danger)]"
+                }`}
+                aria-hidden
+              />
+              <span className="truncate">
+                {(item.detail && item.detail !== item.title ? item.detail : null) ||
+                  (item.state === "on" ? "Conectado" : "Precisa de atenção")}
+              </span>
+            </p>
+          )}
+        </div>
+        {item.state === "off" && item.onConnect ? (
+          <Button type="button" variant="ghost" disabled={pending} onClick={item.onConnect}>
+            Conectar
+          </Button>
+        ) : item.state === "off" ? (
+          <Button type="button" variant="ghost" onClick={onToggle}>
+            {open ? "Cancelar" : "Conectar"}
+          </Button>
+        ) : item.forceOpen ? null : (
+          <Button type="button" variant="ghost" onClick={onToggle}>
+            {open ? "Fechar" : "Gerenciar"}
+          </Button>
+        )}
+      </div>
+
+      {expanded && (item.panel || showFooter) ? (
+        <div className="space-y-3 border-t border-[var(--divider-soft)] bg-[var(--canvas-parchment)] px-4 py-4">
+          {item.panel}
+          {showFooter ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {item.actions}
+              {item.onReconnect ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={smallOutline}
+                  disabled={pending}
+                  onClick={item.onReconnect}
+                >
+                  Reconectar
+                </Button>
+              ) : null}
+              {item.disconnectable ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="!text-[var(--danger)]"
+                  onClick={onDisconnect}
+                >
+                  Desconectar
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
 function ConexoesHubInner() {
   const qc = useQueryClient();
   const searchParams = useSearchParams();
-  const {
-    workspaceId,
-    setWorkspaceId,
-    workspaces,
-    isLoading: loadingClientes,
-  } = useActiveWorkspace();
+  const { workspaceId, setWorkspaceId, isLoading: loadingClientes } = useActiveWorkspace();
+  const [openKey, setOpenKey] = useState<string | null>(null);
   const [selectedAdAccount, setSelectedAdAccount] = useState("");
   const [selectingAd, setSelectingAd] = useState(false);
   const [selectError, setSelectError] = useState<string | null>(null);
@@ -197,7 +280,6 @@ function ConexoesHubInner() {
   const [forceGadsPick, setForceGadsPick] = useState(false);
   const gadsNamesRefreshTried = useRef(false);
 
-  const [wooOpen, setWooOpen] = useState(false);
   const [wooUrl, setWooUrl] = useState("");
   const [wooKey, setWooKey] = useState("");
   const [wooSecret, setWooSecret] = useState("");
@@ -206,13 +288,8 @@ function ConexoesHubInner() {
   const [wooError, setWooError] = useState<string | null>(null);
 
   const [shopifyShop, setShopifyShop] = useState("");
-  const [shopifyOpen, setShopifyOpen] = useState(false);
-  const [shopifySyncing, setShopifySyncing] = useState(false);
   const [trayStore, setTrayStore] = useState("");
-  const [trayOpen, setTrayOpen] = useState(false);
-  const [traySyncing, setTraySyncing] = useState(false);
-  const [nuvemshopSyncing, setNuvemshopSyncing] = useState(false);
-  const [shopeeSyncing, setShopeeSyncing] = useState(false);
+  const [syncing, setSyncing] = useState<string | null>(null);
   const [oauthFlash, setOauthFlash] = useState<string | null>(null);
   const [oauthMetaOverride, setOauthMetaOverride] = useState<{
     meta: string | null;
@@ -302,6 +379,12 @@ function ConexoesHubInner() {
     enabled: Boolean(effectiveWorkspace),
   });
 
+  const { data: resendStatus } = useQuery({
+    queryKey: resendStatusKey(effectiveWorkspace ?? ""),
+    queryFn: () => fetchResendStatus(effectiveWorkspace ?? ""),
+    enabled: Boolean(effectiveWorkspace),
+  });
+
   useEffect(() => {
     if (metaStatus?.selectedAdAccountId) {
       setSelectedAdAccount(metaStatus.selectedAdAccountId);
@@ -364,9 +447,6 @@ function ConexoesHubInner() {
       }
     })();
   }, [effectiveWorkspace, byProvider, googleAdsMeta.accounts, qc]);
-
-  const wooRow = byProvider.get("WOOCOMMERCE");
-  const wooConnected = wooRow?.status === "ACTIVE" && wooRow.hasCredentials;
 
   const disconnect = useCallback(
     async (provider: string) => {
@@ -497,7 +577,7 @@ function ConexoesHubInner() {
           ? `WooCommerce conectado com pendências. ${syncMessage} ${webhookMessage}`
           : `WooCommerce conectado. ${syncMessage} ${webhookMessage}`,
       );
-      setWooOpen(false);
+      setOpenKey(null);
       setWooUrl("");
       setWooKey("");
       setWooSecret("");
@@ -510,109 +590,46 @@ function ConexoesHubInner() {
     }
   }
 
-  async function syncShopify() {
+  async function syncProvider(provider: string, title: string) {
     if (!effectiveWorkspace) return;
-    setShopifySyncing(true);
+    setSyncing(provider);
     try {
-      const r = await fetch("/api/atrako/shopify/sync", {
+      const r = await fetch(SYNC_PATHS[provider], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ workspaceId: effectiveWorkspace }),
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || "Falha ao sincronizar");
-      setOauthFlash("Shopify sincronizado.");
+      setOauthFlash(`${title} sincronizado.`);
       qc.invalidateQueries({ queryKey: ["workspace-connections", effectiveWorkspace] });
     } catch (err) {
-      setOauthFlash(err instanceof Error ? err.message : "Erro ao sincronizar Shopify");
+      setOauthFlash(err instanceof Error ? err.message : `Erro ao sincronizar ${title}`);
     } finally {
-      setShopifySyncing(false);
+      setSyncing(null);
     }
   }
 
-  async function syncTray() {
-    if (!effectiveWorkspace) return;
-    setTraySyncing(true);
-    try {
-      const r = await fetch("/api/atrako/tray/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workspaceId: effectiveWorkspace }),
-      });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.error || "Falha ao sincronizar");
-      setOauthFlash("Tray sincronizado.");
-      qc.invalidateQueries({ queryKey: ["workspace-connections", effectiveWorkspace] });
-    } catch (err) {
-      setOauthFlash(err instanceof Error ? err.message : "Erro ao sincronizar Tray");
-    } finally {
-      setTraySyncing(false);
-    }
-  }
-
-  async function syncNuvemshop() {
-    if (!effectiveWorkspace) return;
-    setNuvemshopSyncing(true);
-    try {
-      const r = await fetch("/api/atrako/nuvemshop/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workspaceId: effectiveWorkspace }),
-      });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.error || "Falha ao sincronizar");
-      setOauthFlash("Nuvemshop sincronizado.");
-      qc.invalidateQueries({ queryKey: ["workspace-connections", effectiveWorkspace] });
-    } catch (err) {
-      setOauthFlash(err instanceof Error ? err.message : "Erro ao sincronizar Nuvemshop");
-    } finally {
-      setNuvemshopSyncing(false);
-    }
-  }
-
-  async function syncShopee() {
-    if (!effectiveWorkspace) return;
-    setShopeeSyncing(true);
-    try {
-      const r = await fetch("/api/atrako/shopee/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workspaceId: effectiveWorkspace }),
-      });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.error || "Falha ao sincronizar");
-      setOauthFlash("Shopee sincronizado.");
-      qc.invalidateQueries({ queryKey: ["workspace-connections", effectiveWorkspace] });
-    } catch (err) {
-      setOauthFlash(err instanceof Error ? err.message : "Erro ao sincronizar Shopee");
-    } finally {
-      setShopeeSyncing(false);
-    }
-  }
-
-  function startShopifyOAuth() {
-    if (!effectiveWorkspace || !shopifyShop.trim()) return;
-    const q = new URLSearchParams({
-      workspaceId: effectiveWorkspace,
-      shop: shopifyShop.trim(),
-    });
+  function startShopifyOAuth(shop: string) {
+    if (!effectiveWorkspace || !shop.trim()) return;
+    const q = new URLSearchParams({ workspaceId: effectiveWorkspace, shop: shop.trim() });
     startOAuth(`/api/atrako/oauth/shopify/start?${q}`);
   }
 
-  function startTrayOAuth() {
-    if (!effectiveWorkspace || !trayStore.trim()) return;
-    const q = new URLSearchParams({
-      workspaceId: effectiveWorkspace,
-      store: trayStore.trim(),
-    });
+  function startTrayOAuth(store: string) {
+    if (!effectiveWorkspace || !store.trim()) return;
+    const q = new URLSearchParams({ workspaceId: effectiveWorkspace, store: store.trim() });
     startOAuth(`/api/atrako/oauth/tray/start?${q}`);
   }
 
-  function startNuvemshopOAuth() {
-    if (!effectiveWorkspace) return;
-    startOAuth(
-      `/api/atrako/oauth/nuvemshop/start?workspaceId=${encodeURIComponent(effectiveWorkspace)}`,
-    );
+  function oauthHref(start: string) {
+    return `/api/atrako/oauth/${start}/start?workspaceId=${encodeURIComponent(effectiveWorkspace ?? "")}`;
+  }
+
+  async function confirmDisconnect(item: Item) {
+    if (!confirm(`Desconectar ${item.title}?`)) return;
+    await disconnect(item.provider);
+    setOpenKey(null);
   }
 
   const banner = metaBannerMessage(metaParam, metaErrorParam);
@@ -622,766 +639,459 @@ function ConexoesHubInner() {
       metaParam === "select_account" ||
       (metaStatus.adAccountsCount > 1 && !metaStatus.selectedAdAccountId));
 
+  const gadsRow = byProvider.get("GOOGLE_ADS");
   const showGadsSelect =
-    Boolean(byProvider.get("GOOGLE_ADS")?.hasCredentials) &&
+    Boolean(gadsRow?.hasCredentials) &&
     googleAdsMeta.accounts.length > 0 &&
     (forceGadsPick || googleAdsMeta.needsAccountPick || !googleAdsMeta.customerId);
 
   const gadsPickUnavailable =
-    Boolean(byProvider.get("GOOGLE_ADS")?.hasCredentials) &&
+    Boolean(gadsRow?.hasCredentials) &&
     !googleAdsMeta.customerId &&
     googleAdsMeta.accessibleCustomerIds.length === 0;
 
-  function metaStatusLabel(row: ConnectionRow | undefined): string {
-    if (metaStatus?.health === "needs_reauth" || row?.status === "NEEDS_REAUTH") {
-      return "Reconectar";
-    }
-    if (metaStatus?.health === "ready") return "Pronto";
-    if (metaStatus?.connected) return "Conectado";
-    return "Não conectado";
+  function syncButton(provider: string, title: string) {
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        className={smallOutline}
+        disabled={syncing !== null}
+        onClick={() => void syncProvider(provider, title)}
+      >
+        {syncing === provider ? "Sincronizando…" : "Sincronizar"}
+      </Button>
+    );
   }
 
-  function renderHubCard(card: HubCard) {
-    const Icon = card.icon;
-    const row = byProvider.get(card.provider);
-    const connected =
-      card.provider === "META_ADS"
-        ? Boolean(metaStatus?.connected)
-        : row?.status === "ACTIVE" && row.hasCredentials;
-    const isMeta = card.provider === "META_ADS";
-    const needsReauth =
-      isMeta &&
-      (metaStatus?.health === "needs_reauth" || row?.status === "NEEDS_REAUTH");
-
+  function storeDomainPanel(opts: {
+    label: string;
+    placeholder: string;
+    value: string;
+    onChange: (v: string) => void;
+    cta: string;
+    onSubmit: () => void;
+  }) {
     return (
-      <div
-        key={card.provider}
-        className="flex flex-col rounded-xl border border-[var(--hairline)] bg-white p-4"
+      <form
+        className="space-y-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          opts.onSubmit();
+        }}
       >
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--canvas-parchment)] text-[var(--ink)]">
-            <Icon className="h-5 w-5" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="type-caption-strong text-[var(--ink)]">{card.title}</h3>
-              {connected && !needsReauth ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 type-micro-legal text-emerald-700">
-                  <CheckCircle2 className="h-3 w-3" />{" "}
-                  {isMeta ? metaStatusLabel(row) : "Conectado"}
-                </span>
-              ) : needsReauth ? (
-                <span className="rounded-full bg-amber-50 px-2 py-0.5 type-micro-legal text-amber-800">
-                  Reconectar
-                </span>
-              ) : (
-                <span className="rounded-full bg-[var(--canvas-parchment)] px-2 py-0.5 type-micro-legal text-[var(--ink-muted-48)]">
-                  Não conectado
-                </span>
-              )}
-            </div>
-            {isMeta && metaStatus?.businessName ? (
-              <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
-                {metaStatus.businessName}
-                {metaStatus.selectedAdAccountId
-                  ? ` · act_${metaStatus.selectedAdAccountId.replace(/^act_/, "")}`
-                  : ""}
-              </p>
-            ) : card.provider === "GOOGLE_ADS" && googleAdsMeta.customerId ? (
-              <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
-                {googleAdsMeta.customerName &&
-                googleAdsMeta.customerName.replace(/\D/g, "") !== googleAdsMeta.customerId
-                  ? googleAdsMeta.customerName
-                  : "Google Ads"}
-                {" · "}
-                {formatGadsCid(googleAdsMeta.customerId)}
-              </p>
-            ) : row?.label ? (
-              <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
-                {row.label}
-              </p>
-            ) : null}
+        <TextField
+          label={opts.label}
+          placeholder={opts.placeholder}
+          value={opts.value}
+          onChange={(e) => opts.onChange(e.target.value)}
+          autoFocus
+        />
+        <Button
+          type="submit"
+          variant="primary"
+          className={smallPrimary}
+          disabled={oauthPending || !opts.value.trim()}
+        >
+          {oauthPending ? "Abrindo…" : opts.cta}
+        </Button>
+      </form>
+    );
+  }
+
+  const items: Item[] = [];
+
+  {
+    const row = byProvider.get("WHATSAPP");
+    items.push({
+      provider: "WHATSAPP",
+      title: "WhatsApp",
+      category: "comunicacao",
+      hint: "Atendimento e mensagens",
+      state: rowState(row),
+      detail: row?.label,
+      onConnect: () => startOAuth(`/config/conexoes/whatsapp-auth?workspaceId=${effectiveWorkspace}`),
+      onReconnect: () => startOAuth(`/config/conexoes/whatsapp-auth?workspaceId=${effectiveWorkspace}`),
+      disconnectable: true,
+    });
+  }
+
+  for (const p of OAUTH) {
+    const row = byProvider.get(p.provider);
+    items.push({
+      provider: p.provider,
+      title: p.title,
+      category: p.category,
+      hint: p.hint,
+      state: rowState(row),
+      detail: row?.label,
+      onConnect: () => startOAuth(oauthHref(p.start)),
+      onReconnect: () => startOAuth(oauthHref(p.start)),
+      actions: p.provider === "SHOPEE" ? syncButton("SHOPEE", "Shopee") : undefined,
+      disconnectable: true,
+    });
+  }
+
+  {
+    const connected = Boolean(resendStatus?.connected);
+    const verified = resendStatus?.domainStatus === "verified";
+    items.push({
+      provider: "RESEND",
+      title: "Resend",
+      category: "comunicacao",
+      hint: "E-mails com o domínio da loja",
+      state: !connected ? "off" : verified ? "on" : "attention",
+      detail: connected
+        ? verified
+          ? resendStatus?.fromEmail || "Pronto para enviar"
+          : "Domínio pendente de verificação"
+        : null,
+      panel: effectiveWorkspace ? (
+        <ResendConnectionCard workspaceId={effectiveWorkspace} embedded />
+      ) : null,
+    });
+  }
+
+  {
+    const row = byProvider.get("SHOPIFY");
+    const meta = metaOf(row);
+    const savedShop = str(meta.shop);
+    const state = rowState(row);
+    items.push({
+      provider: "SHOPIFY",
+      title: "Shopify",
+      category: "loja",
+      hint: "Pedidos, clientes e produtos",
+      state,
+      detail: str(meta.shopName) || savedShop || row?.label,
+      panel:
+        state === "off"
+          ? storeDomainPanel({
+              label: "Domínio da loja",
+              placeholder: "loja.myshopify.com",
+              value: shopifyShop,
+              onChange: setShopifyShop,
+              cta: "Autorizar no Shopify",
+              onSubmit: () => startShopifyOAuth(shopifyShop),
+            })
+          : null,
+      onReconnect: savedShop ? () => startShopifyOAuth(savedShop) : undefined,
+      actions: syncButton("SHOPIFY", "Shopify"),
+      disconnectable: true,
+    });
+  }
+
+  {
+    const row = byProvider.get("TRAY");
+    const meta = metaOf(row);
+    const savedStore = str(meta.storeHost);
+    const state = rowState(row);
+    items.push({
+      provider: "TRAY",
+      title: "Tray",
+      category: "loja",
+      hint: "Pedidos, clientes e produtos",
+      state,
+      detail: str(meta.storeName) || savedStore || row?.label,
+      panel:
+        state === "off"
+          ? storeDomainPanel({
+              label: "Domínio da loja",
+              placeholder: "minhaloja.com.br",
+              value: trayStore,
+              onChange: setTrayStore,
+              cta: "Autorizar na Tray",
+              onSubmit: () => startTrayOAuth(trayStore),
+            })
+          : null,
+      onReconnect: savedStore ? () => startTrayOAuth(savedStore) : undefined,
+      actions: syncButton("TRAY", "Tray"),
+      disconnectable: true,
+    });
+  }
+
+  {
+    const row = byProvider.get("NUVEMSHOP");
+    const meta = metaOf(row);
+    items.push({
+      provider: "NUVEMSHOP",
+      title: "Nuvemshop",
+      category: "loja",
+      hint: "Pedidos, clientes e produtos",
+      state: rowState(row),
+      detail: str(meta.storeName) || str(meta.domain) || row?.label,
+      onConnect: () => startOAuth(oauthHref("nuvemshop")),
+      onReconnect: () => startOAuth(oauthHref("nuvemshop")),
+      actions: syncButton("NUVEMSHOP", "Nuvemshop"),
+      disconnectable: true,
+    });
+  }
+
+  {
+    const row = byProvider.get("WOOCOMMERCE");
+    const state = rowState(row);
+    items.push({
+      provider: "WOOCOMMERCE",
+      title: "WooCommerce",
+      category: "loja",
+      hint: "Pedidos, clientes e produtos",
+      state,
+      detail: row?.label,
+      panel: (
+        <form onSubmit={saveWoo} className="space-y-3">
+          {state !== "off" ? (
+            <p className="type-caption-strong text-[var(--ink)]">Atualizar credenciais</p>
+          ) : null}
+          <TextField
+            label="URL da loja"
+            placeholder="https://loja.com"
+            value={wooUrl}
+            onChange={(e) => setWooUrl(e.target.value)}
+            required
+          />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <TextField
+              label="Consumer Key"
+              value={wooKey}
+              onChange={(e) => setWooKey(e.target.value)}
+              required
+            />
+            <TextField
+              label="Consumer Secret"
+              type="password"
+              autoComplete="off"
+              value={wooSecret}
+              onChange={(e) => setWooSecret(e.target.value)}
+              required
+            />
           </div>
-        </div>
-        {card.provider === "GOOGLE_ADS" && showGadsSelect ? (
-          <div className="mt-3 space-y-2 border-t border-[var(--hairline)] pt-3">
-            <p className="type-fine-print text-[var(--ink-muted-80)]">
-              Escolha a conta que o dashboard vai usar.
-            </p>
+          <TextField
+            label="Webhook Secret (opcional)"
+            type="password"
+            autoComplete="off"
+            value={wooWebhookSecret}
+            onChange={(e) => setWooWebhookSecret(e.target.value)}
+            hint={
+              <>
+                URL do webhook:{" "}
+                <code className="break-all">/api/webhooks/woocommerce/{effectiveWorkspace}</code>
+              </>
+            }
+          />
+          {wooError ? <p className="type-fine-print text-[var(--danger)]">{wooError}</p> : null}
+          <Button type="submit" variant="primary" className={smallPrimary} disabled={wooSaving}>
+            {wooSaving ? "Validando…" : state === "off" ? "Conectar loja" : "Salvar"}
+          </Button>
+        </form>
+      ),
+      disconnectable: true,
+    });
+  }
+
+  {
+    const row = byProvider.get("META_ADS");
+    const connected = Boolean(metaStatus?.connected);
+    const needsReauth = metaStatus?.health === "needs_reauth" || row?.status === "NEEDS_REAUTH";
+    const account = metaStatus?.selectedAdAccountId
+      ? `act_${metaStatus.selectedAdAccountId.replace(/^act_/, "")}`
+      : null;
+    items.push({
+      provider: "META_ADS",
+      title: "Meta Ads",
+      category: "anuncios",
+      hint: "Campanhas e investimento",
+      state: !connected ? "off" : needsReauth || showMetaSelect ? "attention" : "on",
+      detail: needsReauth
+        ? "Reconecte a conta"
+        : showMetaSelect
+          ? "Escolha a conta de anúncio"
+          : [metaStatus?.businessName, account].filter(Boolean).join(" · ") || null,
+      onConnect: () => startOAuth(oauthHref("meta")),
+      onReconnect: () => startOAuth(oauthHref("meta")),
+      forceOpen: Boolean(showMetaSelect),
+      panel:
+        showMetaSelect && metaStatus ? (
+          <div className="space-y-3">
             <PillSelect
               size="field"
               className="w-full"
-              value={selectedGadsCid}
-              onChange={setSelectedGadsCid}
+              value={selectedAdAccount}
+              onChange={setSelectedAdAccount}
               options={[
-                { value: "", label: "Selecione a conta" },
-                ...googleAdsMeta.accounts.filter((a) => !a.manager).map((a) => ({
-                  value: a.id,
-                  label: gadsAccountOptionLabel(a),
-                })),
+                { value: "", label: "Selecione a conta de anúncio" },
+                ...metaStatus.adAccounts.map((a) => ({ value: a.id, label: a.name || a.id })),
               ]}
-              aria-label="Conta Google Ads"
+              aria-label="Conta de anúncio Meta"
             />
-            {gadsPickError ? (
-              <p className="type-fine-print text-red-600">{gadsPickError}</p>
+            {selectError ? (
+              <p className="type-fine-print text-[var(--danger)]">{selectError}</p>
             ) : null}
-            <button
+            <Button
               type="button"
-              disabled={!selectedGadsCid || selectingGads}
-              onClick={confirmGoogleAdsCid}
-              className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
+              variant="primary"
+              className={smallPrimary}
+              disabled={!selectedAdAccount || selectingAd}
+              onClick={confirmMetaAdAccount}
             >
-              {selectingGads ? "Salvando…" : "Usar esta conta"}
-            </button>
+              {selectingAd ? "Salvando…" : "Usar esta conta"}
+            </Button>
           </div>
-        ) : null}
-        {card.provider === "GOOGLE_ADS" && gadsPickUnavailable ? (
-          <p className="mt-3 type-fine-print text-amber-800">
-            Autorizado, mas nenhuma conta Ads foi listada.
-            {googleAdsMeta.listError ? ` (${googleAdsMeta.listError})` : ""} Reconecte após
-            liberar o Google Ads API no Cloud project.
-          </p>
-        ) : null}
-        {card.provider === "GOOGLE_ADS" && googleAdsMeta.lastSyncError ? (
-          <p className="mt-3 type-fine-print text-red-600">
-            Sincronização do Google Ads falhou: {googleAdsMeta.lastSyncError}
-          </p>
-        ) : null}
-        {card.provider === "GOOGLE_ADS" && row?.status === "SYNCING" ? (
-          <p className="mt-3 type-fine-print text-amber-800">
-            Sincronização inicial em andamento. Os dados aparecerão após a conclusão.
-          </p>
-        ) : null}
-        <div className="mt-4 flex flex-wrap gap-2">
-          {card.facebookSignup ? (
-            <button
-              type="button"
-              onClick={() =>
-                startOAuth(
-                  `/config/conexoes/whatsapp-auth?workspaceId=${effectiveWorkspace}`,
-                )
-              }
-              disabled={oauthPending || !effectiveWorkspace}
-              className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-60"
-            >
-              <Link2 className="h-3.5 w-3.5" />
-              {connected ? "Reconectar" : "Conectar com Facebook"}
-            </button>
-          ) : card.connectHref ? (
-            <button
-              type="button"
-              onClick={() => startOAuth(card.connectHref!(effectiveWorkspace))}
-              disabled={oauthPending || !effectiveWorkspace}
-              className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-60"
-            >
-              <Link2 className="h-3.5 w-3.5" />
-              {needsReauth || connected ? "Reconectar" : "Conectar"}
-            </button>
-          ) : (
-            <span className="type-fine-print text-[var(--ink-secondary)]">Em breve</span>
-          )}
-          {connected && card.provider === "SHOPEE" ? (
-            <button
-              type="button"
-              onClick={() => syncShopee()}
-              disabled={shopeeSyncing}
-              className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)] disabled:opacity-50"
-            >
-              {shopeeSyncing ? "Sincronizando…" : "Sincronizar"}
-            </button>
-          ) : null}
-          {card.provider === "GOOGLE_ADS" && googleAdsMeta.customerId && row?.status === "SYNC_ERROR" ? (
-            <button
-              type="button"
-              onClick={confirmGoogleAdsCid}
-              disabled={selectingGads}
-              className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)] disabled:opacity-50"
-            >
-              {selectingGads ? "Sincronizando…" : "Tentar sincronizar novamente"}
-            </button>
-          ) : null}
-          {connected && (card.connectHref || card.facebookSignup) ? (
-            <button
-              type="button"
-              onClick={() => disconnect(card.provider)}
-              className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)]"
-            >
-              Desconectar
-            </button>
-          ) : null}
-        </div>
-      </div>
+        ) : null,
+      disconnectable: true,
+    });
+  }
+
+  {
+    const row = gadsRow;
+    const connected = Boolean(row?.hasCredentials);
+    const syncError = googleAdsMeta.lastSyncError;
+    const attention =
+      showGadsSelect || gadsPickUnavailable || Boolean(syncError) || row?.status === "SYNC_ERROR";
+    const name =
+      googleAdsMeta.customerName &&
+      googleAdsMeta.customerName.replace(/\D/g, "") !== googleAdsMeta.customerId
+        ? googleAdsMeta.customerName
+        : null;
+    items.push({
+      provider: "GOOGLE_ADS",
+      title: "Google Ads",
+      category: "anuncios",
+      hint: "Campanhas e investimento",
+      state: !connected ? "off" : attention ? "attention" : "on",
+      detail: showGadsSelect
+        ? "Escolha a conta (CID)"
+        : gadsPickUnavailable
+          ? "Nenhuma conta encontrada"
+          : syncError
+            ? "Falha na sincronização"
+            : row?.status === "SYNCING"
+              ? "Sincronizando…"
+              : googleAdsMeta.customerId
+                ? [name, formatGadsCid(googleAdsMeta.customerId)].filter(Boolean).join(" · ")
+                : null,
+      onConnect: () => startOAuth(oauthHref("google-ads")),
+      onReconnect: () => startOAuth(oauthHref("google-ads")),
+      forceOpen: showGadsSelect,
+      panel:
+        showGadsSelect || gadsPickUnavailable || syncError ? (
+          <div className="space-y-3">
+            {showGadsSelect ? (
+              <>
+                <PillSelect
+                  size="field"
+                  className="w-full"
+                  value={selectedGadsCid}
+                  onChange={setSelectedGadsCid}
+                  options={[
+                    { value: "", label: "Selecione a conta" },
+                    ...googleAdsMeta.accounts
+                      .filter((a) => !a.manager)
+                      .map((a) => ({ value: a.id, label: gadsAccountOptionLabel(a) })),
+                  ]}
+                  aria-label="Conta Google Ads"
+                />
+                {gadsPickError ? (
+                  <p className="type-fine-print text-[var(--danger)]">{gadsPickError}</p>
+                ) : null}
+                <Button
+                  type="button"
+                  variant="primary"
+                  className={smallPrimary}
+                  disabled={!selectedGadsCid || selectingGads}
+                  onClick={confirmGoogleAdsCid}
+                >
+                  {selectingGads ? "Salvando…" : "Usar esta conta"}
+                </Button>
+              </>
+            ) : null}
+            {gadsPickUnavailable ? (
+              <p className="type-fine-print text-[var(--ink-muted-80)]">
+                Autorizado, mas nenhuma conta Ads foi listada
+                {googleAdsMeta.listError ? ` (${googleAdsMeta.listError})` : ""}. Reconecte após
+                liberar o Google Ads API no Cloud project.
+              </p>
+            ) : null}
+            {syncError ? (
+              <p className="type-fine-print text-[var(--danger)]">{syncError}</p>
+            ) : null}
+          </div>
+        ) : null,
+      actions:
+        googleAdsMeta.customerId && row?.status === "SYNC_ERROR" ? (
+          <Button
+            type="button"
+            variant="outline"
+            className={smallOutline}
+            disabled={selectingGads}
+            onClick={confirmGoogleAdsCid}
+          >
+            {selectingGads ? "Sincronizando…" : "Tentar de novo"}
+          </Button>
+        ) : undefined,
+      disconnectable: true,
+    });
+  }
+
+  function renderList(list: Item[]) {
+    return (
+      <ul className="overflow-hidden rounded-[18px] border border-[var(--hairline)] bg-[var(--canvas)]">
+        {list.map((item, i) => (
+          <IntegrationRow
+            key={item.provider}
+            item={item}
+            first={i === 0}
+            open={openKey === item.provider}
+            pending={oauthPending || !effectiveWorkspace}
+            onToggle={() => setOpenKey((k) => (k === item.provider ? null : item.provider))}
+            onDisconnect={() => void confirmDisconnect(item)}
+          />
+        ))}
+      </ul>
     );
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-6">
-      <div className="flex items-center gap-3">
-        <Link
-          href="/config"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--hairline)] text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)]"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-        <h1 className="type-tagline text-[var(--ink)]">Integrações</h1>
-      </div>
-
+    <ConfigPage title="Integrações" loading={loadingClientes || (loadingConn && !connectionsData)}>
       {banner ? (
-        <div
-          className={`flex items-start gap-2 rounded-xl border p-4 type-fine-print ${
-            metaParam === "error" || metaParam === "cancelled" || metaParam === "no_ad_account"
-              ? "border-amber-200 bg-amber-50 text-amber-950"
-              : "border-emerald-200 bg-emerald-50 text-emerald-900"
-          }`}
+        <Notice
+          ok={!(metaParam === "error" || metaParam === "cancelled" || metaParam === "no_ad_account")}
         >
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           {banner}
-        </div>
+        </Notice>
       ) : null}
 
       {oauthFlash && !banner ? (
-        (() => {
-          const flashIsSuccess =
-            oauthFlash.includes("conectado") && !oauthFlash.includes("pendências");
-          return (
-        <div
-          className={`flex items-start gap-2 rounded-xl border p-4 type-fine-print ${
-            flashIsSuccess
-              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-              : "border-amber-200 bg-amber-50 text-amber-950"
-          }`}
-        >
-          {flashIsSuccess ? (
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-          ) : (
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          )}
+        <Notice ok={oauthFlash.includes("conectado") && !oauthFlash.includes("pendências")}>
           {oauthFlash}
-        </div>
-          );
-        })()
-      ) : null}
-
-      <div className="rounded-xl border border-[var(--hairline)] bg-white p-4">
-        <label className="type-fine-print text-[var(--ink-muted-48)]">Empresa</label>
-        {loadingClientes ? (
-          <div className="mt-2 flex items-center gap-2 type-caption text-[var(--ink-muted-48)]">
-            <Loader2 className="h-4 w-4 animate-spin" /> Carregando…
-          </div>
-        ) : (
-          <PillSelect
-            className="mt-1 w-full"
-            size="field"
-            value={effectiveWorkspace}
-            onChange={setWorkspaceId}
-            options={
-              workspaces.length === 0
-                ? [{ value: "", label: "Nenhuma empresa — crie em Configurações" }]
-                : workspaces.map((c) => ({ value: c.id, label: c.nome }))
-            }
-            aria-label="Empresa"
-          />
-        )}
-      </div>
-
-      {showMetaSelect && metaStatus ? (
-        <div className="rounded-xl border border-[var(--hairline)] bg-white p-4 space-y-3">
-          <h2 className="type-caption-strong text-[var(--ink)]">Conta de anúncio Meta</h2>
-          <p className="type-fine-print text-[var(--ink-muted-80)]">
-            {metaStatus.businessName
-              ? `Portfólio: ${metaStatus.businessName}`
-              : "Escolha a conta que o dashboard vai usar."}
-          </p>
-          <PillSelect
-            size="field"
-            className="w-full"
-            value={selectedAdAccount}
-            onChange={setSelectedAdAccount}
-            options={[
-              { value: "", label: "Selecione a conta" },
-              ...metaStatus.adAccounts.map((a) => ({
-                value: a.id,
-                label: a.name || a.id,
-              })),
-            ]}
-            aria-label="Conta de anúncio Meta"
-          />
-          {selectError ? <p className="type-fine-print text-red-600">{selectError}</p> : null}
-          <button
-            type="button"
-            disabled={!selectedAdAccount || selectingAd}
-            onClick={confirmMetaAdAccount}
-            className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-4 py-2 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
-          >
-            {selectingAd ? "Salvando…" : "Continuar"}
-          </button>
-        </div>
+        </Notice>
       ) : null}
 
       {!effectiveWorkspace ? (
-        <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          Crie uma empresa em Configurações para gerenciar integrações.
-        </div>
+        <Notice ok={false}>Crie uma empresa em Configuração para gerenciar integrações.</Notice>
       ) : (
         <>
-          <div>
-            <SectionHeading
-              title="Plataformas de anúncios"
-              description="Mídia paga — campanhas e gasto."
-            />
-            <div className="grid gap-3 sm:grid-cols-2">{ADS_CARDS.map(renderHubCard)}</div>
-          </div>
-
-          <div>
-            <SectionHeading
-              title="Marketplaces"
-              description="Vendas em plataformas de terceiros."
-            />
-            <div className="grid gap-3 sm:grid-cols-2">
-              {MARKETPLACE_CARDS.map(renderHubCard)}
-            </div>
-          </div>
-
-          <div>
-            <SectionHeading
-              title="E-commerce"
-              description="Loja própria do cliente."
-            />
-            <div className="grid gap-3 sm:grid-cols-2">
-              {(() => {
-                const shopifyRow = byProvider.get("SHOPIFY");
-                const shopifyConnected =
-                  shopifyRow?.status === "ACTIVE" && shopifyRow.hasCredentials;
-                const shopifyMeta =
-                  shopifyRow?.metadata &&
-                  typeof shopifyRow.metadata === "object" &&
-                  !Array.isArray(shopifyRow.metadata)
-                    ? (shopifyRow.metadata as Record<string, unknown>)
-                    : {};
-                const shopifyLabel =
-                  (typeof shopifyMeta.shopName === "string" && shopifyMeta.shopName) ||
-                  (typeof shopifyMeta.shop === "string" && shopifyMeta.shop) ||
-                  shopifyRow?.label ||
-                  null;
-                return (
-                  <div className="flex flex-col rounded-xl border border-[var(--hairline)] bg-white p-4">
-                    <div className="flex items-start gap-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--canvas-parchment)] text-[var(--ink)]">
-                        <Store className="h-5 w-5" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="type-caption-strong text-[var(--ink)]">Shopify</h3>
-                          {shopifyConnected ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 type-micro-legal text-emerald-700">
-                              <CheckCircle2 className="h-3 w-3" /> Conectado
-                            </span>
-                          ) : (
-                            <span className="rounded-full bg-[var(--canvas-parchment)] px-2 py-0.5 type-micro-legal text-[var(--ink-muted-48)]">
-                              Não conectado
-                            </span>
-                          )}
-                        </div>
-                        {shopifyLabel ? (
-                          <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
-                            {shopifyLabel}
-                          </p>
-                        ) : (
-                          <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
-                            Pedidos, clientes e produtos
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShopifyOpen((v) => !v);
-                          setWooOpen(false);
-                          setTrayOpen(false);
-                        }}
-                        className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95"
-                      >
-                        <Link2 className="h-3.5 w-3.5" />
-                        {shopifyConnected ? "Reconectar" : "Conectar"}
-                      </button>
-                      {shopifyConnected ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => syncShopify()}
-                            disabled={shopifySyncing}
-                            className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)] disabled:opacity-50"
-                          >
-                            {shopifySyncing ? "Sincronizando…" : "Sincronizar"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => disconnect("SHOPIFY")}
-                            className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)]"
-                          >
-                            Desconectar
-                          </button>
-                        </>
-                      ) : null}
-                    </div>
-                    {shopifyOpen ? (
-                      <div className="mt-4 space-y-2 border-t border-[var(--hairline)] pt-3">
-                        <input
-                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
-                          placeholder="loja.myshopify.com"
-                          value={shopifyShop}
-                          onChange={(e) => setShopifyShop(e.target.value)}
-                          aria-label="Domínio Shopify"
-                        />
-                        <p className="type-micro-legal text-[var(--ink-muted-48)]">
-                          Informe o domínio da loja e autorize o acesso.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={startShopifyOAuth}
-                          disabled={oauthPending || !shopifyShop.trim() || !effectiveWorkspace}
-                          className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
-                        >
-                          {oauthPending ? "Abrindo…" : "Autorizar no Shopify"}
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })()}
-
-              {(() => {
-                const trayRow = byProvider.get("TRAY");
-                const trayConnected =
-                  trayRow?.status === "ACTIVE" && trayRow.hasCredentials;
-                const trayMeta =
-                  trayRow?.metadata &&
-                  typeof trayRow.metadata === "object" &&
-                  !Array.isArray(trayRow.metadata)
-                    ? (trayRow.metadata as Record<string, unknown>)
-                    : {};
-                const trayLabel =
-                  (typeof trayMeta.storeName === "string" && trayMeta.storeName) ||
-                  (typeof trayMeta.storeHost === "string" && trayMeta.storeHost) ||
-                  trayRow?.label ||
-                  null;
-                return (
-                  <div className="flex flex-col rounded-xl border border-[var(--hairline)] bg-white p-4">
-                    <div className="flex items-start gap-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--canvas-parchment)] text-[var(--ink)]">
-                        <Store className="h-5 w-5" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="type-caption-strong text-[var(--ink)]">Tray</h3>
-                          {trayConnected ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 type-micro-legal text-emerald-700">
-                              <CheckCircle2 className="h-3 w-3" /> Conectado
-                            </span>
-                          ) : (
-                            <span className="rounded-full bg-[var(--canvas-parchment)] px-2 py-0.5 type-micro-legal text-[var(--ink-muted-48)]">
-                              Não conectado
-                            </span>
-                          )}
-                        </div>
-                        {trayLabel ? (
-                          <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
-                            {trayLabel}
-                          </p>
-                        ) : (
-                          <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
-                            Pedidos da loja Tray
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setTrayOpen((v) => !v);
-                          setWooOpen(false);
-                          setShopifyOpen(false);
-                        }}
-                        className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95"
-                      >
-                        <Link2 className="h-3.5 w-3.5" />
-                        {trayConnected ? "Reconectar" : "Conectar"}
-                      </button>
-                      {trayConnected ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => syncTray()}
-                            disabled={traySyncing}
-                            className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)] disabled:opacity-50"
-                          >
-                            {traySyncing ? "Sincronizando…" : "Sincronizar"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => disconnect("TRAY")}
-                            className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)]"
-                          >
-                            Desconectar
-                          </button>
-                        </>
-                      ) : null}
-                    </div>
-                    {trayOpen ? (
-                      <div className="mt-4 space-y-2 border-t border-[var(--hairline)] pt-3">
-                        <input
-                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
-                          placeholder="minhaloja.com.br"
-                          value={trayStore}
-                          onChange={(e) => setTrayStore(e.target.value)}
-                          aria-label="Domínio da loja Tray"
-                        />
-                        <p className="type-micro-legal text-[var(--ink-muted-48)]">
-                          Informe o domínio da loja e autorize o acesso.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={startTrayOAuth}
-                          disabled={oauthPending || !trayStore.trim() || !effectiveWorkspace}
-                          className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
-                        >
-                          {oauthPending ? "Abrindo…" : "Autorizar na Tray"}
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })()}
-
-              {(() => {
-                const nsRow = byProvider.get("NUVEMSHOP");
-                const nsConnected =
-                  nsRow?.status === "ACTIVE" && nsRow.hasCredentials;
-                const nsMeta =
-                  nsRow?.metadata &&
-                  typeof nsRow.metadata === "object" &&
-                  !Array.isArray(nsRow.metadata)
-                    ? (nsRow.metadata as Record<string, unknown>)
-                    : {};
-                const nsLabel =
-                  (typeof nsMeta.storeName === "string" && nsMeta.storeName) ||
-                  (typeof nsMeta.domain === "string" && nsMeta.domain) ||
-                  nsRow?.label ||
-                  null;
-                return (
-                  <div className="flex flex-col rounded-xl border border-[var(--hairline)] bg-white p-4">
-                    <div className="flex items-start gap-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--canvas-parchment)] text-[var(--ink)]">
-                        <Store className="h-5 w-5" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="type-caption-strong text-[var(--ink)]">Nuvemshop</h3>
-                          {nsConnected ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 type-micro-legal text-emerald-700">
-                              <CheckCircle2 className="h-3 w-3" /> Conectado
-                            </span>
-                          ) : (
-                            <span className="rounded-full bg-[var(--canvas-parchment)] px-2 py-0.5 type-micro-legal text-[var(--ink-muted-48)]">
-                              Não conectado
-                            </span>
-                          )}
-                        </div>
-                        {nsLabel ? (
-                          <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
-                            {nsLabel}
-                          </p>
-                        ) : (
-                          <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
-                            Pedidos da loja Nuvemshop
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setWooOpen(false);
-                          setShopifyOpen(false);
-                          setTrayOpen(false);
-                          startNuvemshopOAuth();
-                        }}
-                        disabled={oauthPending || !effectiveWorkspace}
-                        className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
-                      >
-                        <Link2 className="h-3.5 w-3.5" />
-                        {oauthPending
-                          ? "Abrindo…"
-                          : nsConnected
-                            ? "Reconectar"
-                            : "Conectar"}
-                      </button>
-                      {nsConnected ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => syncNuvemshop()}
-                            disabled={nuvemshopSyncing}
-                            className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)] disabled:opacity-50"
-                          >
-                            {nuvemshopSyncing ? "Sincronizando…" : "Sincronizar"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => disconnect("NUVEMSHOP")}
-                            className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)]"
-                          >
-                            Desconectar
-                          </button>
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {ECOMM_CARDS.map((card) => {
-                const connected = wooConnected;
-                const open = wooOpen;
-
-                return (
-                  <div
-                    key={card.key}
-                    className="flex flex-col rounded-xl border border-[var(--hairline)] bg-white p-4"
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--canvas-parchment)] text-[var(--ink)]">
-                        <Store className="h-5 w-5" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="type-caption-strong text-[var(--ink)]">{card.title}</h3>
-                          {connected ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 type-micro-legal text-emerald-700">
-                              <CheckCircle2 className="h-3 w-3" /> Conectado
-                            </span>
-                          ) : (
-                            <span className="rounded-full bg-[var(--canvas-parchment)] px-2 py-0.5 type-micro-legal text-[var(--ink-muted-48)]">
-                              Não conectado
-                            </span>
-                          )}
-                        </div>
-                        {wooRow?.label ? (
-                          <p className="mt-1 truncate type-fine-print text-[var(--ink-muted-80)]">
-                            {wooRow.label}
-                          </p>
-                        ) : null}
-                      </div>
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setWooOpen((v) => !v);
-                          setShopifyOpen(false);
-                          setTrayOpen(false);
-                        }}
-                        className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95"
-                      >
-                        <Link2 className="h-3.5 w-3.5" />
-                        {connected ? "Atualizar" : "Conectar"}
-                      </button>
-                      {connected ? (
-                        <button
-                          type="button"
-                          onClick={() => disconnect("WOOCOMMERCE")}
-                          className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] hover:bg-[var(--surface-pearl)]"
-                        >
-                          Desconectar
-                        </button>
-                      ) : null}
-                    </div>
-
-                    {open ? (
-                      <form
-                        onSubmit={saveWoo}
-                        className="mt-4 space-y-2 border-t border-[var(--hairline)] pt-3"
-                      >
-                        <input
-                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
-                          placeholder="URL da loja (https://loja.com)"
-                          value={wooUrl}
-                          onChange={(e) => setWooUrl(e.target.value)}
-                          required
-                        />
-                        <input
-                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
-                          placeholder="Consumer Key"
-                          value={wooKey}
-                          onChange={(e) => setWooKey(e.target.value)}
-                          required
-                        />
-                        <input
-                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
-                          placeholder="Consumer Secret"
-                          value={wooSecret}
-                          onChange={(e) => setWooSecret(e.target.value)}
-                          required
-                        />
-                        <input
-                          className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1.5 type-fine-print"
-                          placeholder="Webhook Secret (HMAC)"
-                          value={wooWebhookSecret}
-                          onChange={(e) => setWooWebhookSecret(e.target.value)}
-                        />
-                        {wooError ? <p className="text-xs text-red-600">{wooError}</p> : null}
-                        <p className="type-micro-legal text-[var(--ink-muted-48)]">
-                          Webhook Delivery URL:{" "}
-                          <code className="type-micro-legal break-all">
-                            /api/webhooks/woocommerce/{effectiveWorkspace}
-                          </code>
-                        </p>
-                        <button
-                          type="submit"
-                          disabled={wooSaving}
-                          className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-fine-print text-[var(--on-primary)] active:scale-95 disabled:opacity-50"
-                        >
-                          {wooSaving ? "Validando…" : "Salvar WooCommerce"}
-                        </button>
-                      </form>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div>
-            <SectionHeading
-              title="E-mail"
-              description="Conta Resend da loja para fluxos de relacionamento e campanhas."
-            />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <ResendConnectionCard workspaceId={effectiveWorkspace} />
-              <NativeRecoveryChecklistCard workspaceId={effectiveWorkspace} />
-            </div>
-          </div>
-
-          <div>
-            <SectionHeading
-              title="Canais e ferramentas"
-              description="Mensageria, redes, pagamentos e agenda."
-            />
-            <div className="grid gap-3 sm:grid-cols-2">{CHANNEL_CARDS.map(renderHubCard)}</div>
-          </div>
+          {CATEGORIES.map((cat) => {
+            const list = items
+              .filter((i) => i.category === cat.id)
+              .sort(compareItems);
+            if (!list.length) return null;
+            const active = list.filter((i) => i.state !== "off").length;
+            return (
+              <section key={cat.id} className="space-y-2">
+                <h2 className="flex items-baseline justify-between px-1">
+                  <span className="type-caption-strong text-[var(--ink-muted-80)]">{cat.title}</span>
+                  {active ? (
+                    <span className="type-fine-print text-[var(--ink-muted-48)]">
+                      {active === 1 ? "1 conectada" : `${active} conectadas`}
+                    </span>
+                  ) : null}
+                </h2>
+                {renderList(list)}
+              </section>
+            );
+          })}
         </>
       )}
-
-      {loadingConn && effectiveWorkspace ? (
-        <div className="flex items-center gap-2 type-caption text-[var(--ink-muted-48)]">
-          <Loader2 className="h-4 w-4 animate-spin" /> Atualizando status…
-        </div>
-      ) : null}
 
       {oauthPending ? (
         <div
@@ -1400,17 +1110,13 @@ function ConexoesHubInner() {
             <p className="mt-2 type-fine-print text-[var(--ink-muted-48)]">
               Conclua o login na janela do provedor. Esta página permanece aberta.
             </p>
-            <button
-              type="button"
-              onClick={cancelOAuth}
-              className="mt-4 rounded-[var(--radius-xs)] border border-[var(--hairline)] px-3 py-1.5 type-fine-print text-[var(--ink-muted-80)] active:scale-95"
-            >
+            <Button type="button" variant="outline" onClick={cancelOAuth} className="mt-4">
               Cancelar
-            </button>
+            </Button>
           </div>
         </div>
       ) : null}
-    </div>
+    </ConfigPage>
   );
 }
 
@@ -1418,9 +1124,9 @@ export default function ConexoesHubPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center gap-2 p-6 type-caption text-[var(--ink-muted-48)]">
-          <Loader2 className="h-4 w-4 animate-spin" /> Carregando integrações…
-        </div>
+        <ConfigPage title="Integrações" loading>
+          {null}
+        </ConfigPage>
       }
     >
       <ConexoesHubInner />

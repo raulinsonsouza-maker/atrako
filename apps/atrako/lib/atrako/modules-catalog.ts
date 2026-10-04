@@ -113,11 +113,7 @@ export const ATRAKO_MODULES: AtrakoModule[] = [
     path: "/finance",
     liveInShell: [
       { label: "Ledger", href: "/finance", description: "Receitas e despesas" },
-      {
-        label: "Prefs",
-        href: "/config/financeiro",
-        description: "Moeda e categorias no Config",
-      },
+      { label: "Moeda", href: "/config/empresa", description: "Moeda e fuso no Config" },
     ],
   },
   {
@@ -128,7 +124,7 @@ export const ATRAKO_MODULES: AtrakoModule[] = [
     path: "/config",
     liveInShell: [
       { label: "Home Config", href: "/config", description: "Checklist" },
-      { label: "Conexões", href: "/config/conexoes", description: "MP, IG, Ads" },
+      { label: "Integrações", href: "/config/conexoes", description: "Canais, e-mail, loja e anúncios" },
     ],
   },
 ];

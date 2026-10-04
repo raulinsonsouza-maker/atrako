@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 
-const STEPS = ["empresa", "conexoes", "modulos", "pronto"] as const;
+const STEPS = ["empresa", "conexoes", "equipe", "pronto"] as const;
 
 const STEP_LABELS: Record<(typeof STEPS)[number], string> = {
   empresa: "Empresa",
   conexoes: "Integrações",
-  modulos: "Módulos",
+  equipe: "Equipe",
   pronto: "Pronto",
 };
 
@@ -39,7 +39,7 @@ export default function OnboardingPage() {
     <div className="mx-auto max-w-lg space-y-6 p-6">
       <h1 className="type-tagline text-[var(--ink)]">Primeiros passos</h1>
       <p className="type-caption text-[var(--ink-muted-48)]">
-        Configure sua empresa, integrações e módulos para começar a operar.
+        Configure sua empresa, integrações e equipe para começar a operar.
       </p>
       <ol className="space-y-3">
         {STEPS.map((s, i) => (
@@ -62,9 +62,9 @@ export default function OnboardingPage() {
                 Abrir Configurações → Integrações
               </Link>
             ) : null}
-            {i === step && s === "modulos" ? (
-              <Link href="/config/modulos" className="mt-2 inline-block text-[var(--primary)] underline">
-                Abrir Configurações → Módulos
+            {i === step && s === "equipe" ? (
+              <Link href="/config/membros" className="mt-2 inline-block text-[var(--primary)] underline">
+                Abrir Configurações → Equipe
               </Link>
             ) : null}
           </li>

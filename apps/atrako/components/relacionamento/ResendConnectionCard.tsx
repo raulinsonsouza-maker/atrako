@@ -7,6 +7,8 @@ import { PillSelect } from "@/components/ui";
 
 type Domain = { id: string; name: string; status: string };
 
+export type ResendStatus = Status;
+
 type Status = {
   connected: boolean;
   fromName?: string | null;
@@ -41,15 +43,28 @@ async function post(body: Record<string, unknown>) {
   return json;
 }
 
-export function ResendConnectionCard({ workspaceId }: { workspaceId: string }) {
+export function resendStatusKey(workspaceId: string) {
+  return ["resend-connect", workspaceId];
+}
+
+export async function fetchResendStatus(workspaceId: string) {
+  const r = await fetch(`/api/atrako/resend/connect?workspaceId=${workspaceId}&domains=1`);
+  return (await r.json()) as Status;
+}
+
+/** `embedded`: sem moldura nem cabeçalho — conteúdo dentro de outra linha/painel. */
+export function ResendConnectionCard({
+  workspaceId,
+  embedded = false,
+}: {
+  workspaceId: string;
+  embedded?: boolean;
+}) {
   const qc = useQueryClient();
-  const key = ["resend-connect", workspaceId];
+  const key = resendStatusKey(workspaceId);
   const { data, isLoading } = useQuery<Status>({
     queryKey: key,
-    queryFn: async () => {
-      const r = await fetch(`/api/atrako/resend/connect?workspaceId=${workspaceId}&domains=1`);
-      return (await r.json()) as Status;
-    },
+    queryFn: () => fetchResendStatus(workspaceId),
     enabled: Boolean(workspaceId),
   });
 
@@ -99,29 +114,35 @@ export function ResendConnectionCard({ workspaceId }: { workspaceId: string }) {
   const verified = data?.domainStatus === "verified";
 
   return (
-    <div className="rounded-xl border border-[var(--hairline)] bg-white p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Mail className="h-5 w-5 text-[var(--primary)]" />
-          <div>
-            <p className="type-nav-link text-[var(--ink)]">E-mail (Resend)</p>
-            <p className="type-fine-print text-[var(--ink-muted-48)]">
-              Envio dos fluxos de relacionamento e campanhas com o domínio da loja.
-            </p>
+    <div
+      className={
+        embedded ? "" : "rounded-[var(--radius-lg)] border border-[var(--hairline)] bg-[var(--canvas)] p-4"
+      }
+    >
+      {embedded ? null : (
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Mail className="h-5 w-5 text-[var(--primary)]" />
+            <div>
+              <p className="type-nav-link text-[var(--ink)]">E-mail (Resend)</p>
+              <p className="type-fine-print text-[var(--ink-muted-48)]">
+                Envio dos fluxos de relacionamento e campanhas com o domínio da loja.
+              </p>
+            </div>
           </div>
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin text-[var(--ink-muted-48)]" />
+          ) : connected ? (
+            <span className="flex items-center gap-1 type-fine-print text-[var(--ink-muted-80)]">
+              <CheckCircle2 className="h-4 w-4 text-[var(--primary)]" />
+              {verified ? "Pronto para enviar" : "Domínio pendente"}
+            </span>
+          ) : null}
         </div>
-        {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin text-[var(--ink-muted-48)]" />
-        ) : connected ? (
-          <span className="flex items-center gap-1 type-fine-print text-[var(--ink-muted-80)]">
-            <CheckCircle2 className="h-4 w-4 text-[var(--primary)]" />
-            {verified ? "Pronto para enviar" : "Domínio pendente"}
-          </span>
-        ) : null}
-      </div>
+      )}
 
       {connected && !editing ? (
-        <div className="mt-3 space-y-1 type-fine-print text-[var(--ink-muted-80)]">
+        <div className={`${embedded ? "" : "mt-3 "}space-y-1 type-fine-print text-[var(--ink-muted-80)]`}>
           <p>
             Remetente: <b>{data?.fromName || "—"}</b> &lt;{data?.fromEmail || "sem remetente"}&gt;
           </p>
@@ -145,7 +166,7 @@ export function ResendConnectionCard({ workspaceId }: { workspaceId: string }) {
             </p>
           ) : null}
           {data?.domainsError ? (
-            <p className="text-red-600">Resend: {data.domainsError}</p>
+            <p className="text-[var(--danger)]">Resend: {data.domainsError}</p>
           ) : null}
 
           {!data?.webhookConfigured ? (
@@ -234,7 +255,7 @@ export function ResendConnectionCard({ workspaceId }: { workspaceId: string }) {
             </button>
             <button
               type="button"
-              className="type-fine-print text-red-600"
+              className="type-fine-print text-[var(--danger)]"
               disabled={busy !== null}
               onClick={() =>
                 run("disc", async () => {
@@ -252,7 +273,7 @@ export function ResendConnectionCard({ workspaceId }: { workspaceId: string }) {
 
       {!connected || editing ? (
         <form
-          className="mt-3 space-y-2"
+          className={`${embedded ? "" : "mt-3 "}space-y-2`}
           onSubmit={(e) => {
             e.preventDefault();
             void run("save", async () => {
@@ -357,7 +378,7 @@ export function ResendConnectionCard({ workspaceId }: { workspaceId: string }) {
       ) : null}
 
       {error ? (
-        <p className="mt-2 flex items-center gap-1 type-fine-print text-red-600">
+        <p className="mt-2 flex items-center gap-1 type-fine-print text-[var(--danger)]">
           <AlertCircle className="h-4 w-4" /> {error}
         </p>
       ) : null}

@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getWorkspaceConfig, patchWorkspaceSettings } from "@/lib/config/getWorkspaceConfig";
+import {
+  getWorkspaceConfig,
+  patchWorkspaceSettings,
+  redactConfigSecrets,
+  sanitizeTrackingPatch,
+} from "@/lib/config/getWorkspaceConfig";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 
@@ -17,7 +22,7 @@ export async function GET(request: NextRequest) {
   if (!ws) return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
 
   const config = await getWorkspaceConfig(workspaceId);
-  return NextResponse.json(config);
+  return NextResponse.json(config ? redactConfigSecrets(config) : config);
 }
 
 export async function PATCH(request: NextRequest) {
@@ -74,7 +79,7 @@ export async function PATCH(request: NextRequest) {
         : undefined,
     tracking:
       b.tracking && typeof b.tracking === "object"
-        ? (b.tracking as Record<string, unknown>)
+        ? sanitizeTrackingPatch(b.tracking as Record<string, unknown>)
         : undefined,
     financePrefs:
       b.financePrefs && typeof b.financePrefs === "object"
@@ -95,5 +100,5 @@ export async function PATCH(request: NextRequest) {
   });
 
   const config = await getWorkspaceConfig(workspaceId);
-  return NextResponse.json(config);
+  return NextResponse.json(config ? redactConfigSecrets(config) : config);
 }

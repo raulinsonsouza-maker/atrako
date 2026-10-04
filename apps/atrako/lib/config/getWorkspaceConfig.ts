@@ -153,6 +153,31 @@ export function resolveBrand(config: NonNullable<Awaited<ReturnType<typeof getWo
   };
 }
 
+const TRACKING_SECRETS = ["capiToken", "ga4ApiSecret"] as const;
+
+/** Resposta da API para o browser: segredos de tracking viram `has*` booleans. */
+export function redactConfigSecrets(config: NonNullable<Awaited<ReturnType<typeof getWorkspaceConfig>>>) {
+  const t = { ...config.settings.tracking };
+  const hasSecret = (k: string) => typeof t[k] === "string" && (t[k] as string).trim() !== "";
+  const flags = {
+    hasCapiToken: hasSecret("capiToken"),
+    hasGa4ApiSecret: hasSecret("ga4ApiSecret"),
+  };
+  for (const k of TRACKING_SECRETS) delete t[k];
+  return { ...config, settings: { ...config.settings, tracking: { ...t, ...flags } } };
+}
+
+/** Segredo vazio no PATCH = manter o salvo; `null` = remover. */
+export function sanitizeTrackingPatch(patch: Record<string, unknown>) {
+  const out = { ...patch };
+  for (const k of TRACKING_SECRETS) {
+    if (typeof out[k] === "string" && (out[k] as string).trim() === "") delete out[k];
+  }
+  delete out.hasCapiToken;
+  delete out.hasGa4ApiSecret;
+  return out;
+}
+
 export function resolveTracking(config: NonNullable<Awaited<ReturnType<typeof getWorkspaceConfig>>>) {
   const t = config.settings.tracking;
   return {

@@ -104,6 +104,8 @@ components:
   floating-sticky-bar: { file: components/ui/floating-sticky-bar.tsx }
   configurator-option-chip: { file: components/ui/option-chip.tsx }
   pill-select: { file: components/ui/pill-select.tsx, note: "Único select do produto — nunca <select> nativo; size toolbar|field" }
+  brand-logo: { file: components/ui/brand-logo.tsx, note: "Logo de parceiro (simple-icons CC0) em tile 10px — só integrações de terceiros, nunca accent" }
+  text-field: { file: components/ui/text-field.tsx, note: "Campo de formulário canônico — label + input h-11 radius-xs + hint; type=password com olho" }
   app-page: { file: components/layout/AppPage.tsx, note: "Shell de página AppShell — padding/título densos" }
   footer: { file: components/ui/site-footer.tsx }
   global-nav: { file: components/layout/AppSidebar.tsx, note: "SaaS rail — type-nav-link 14/600 + type-fine-print desc; pairs with type-tagline page titles" }

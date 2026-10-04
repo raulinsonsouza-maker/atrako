@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
   try {
     const result = await syncTrayWorkspace(workspaceId, {
       daysBack: typeof body.daysBack === "number" ? body.daysBack : 90,
-      maxPages: typeof body.maxPages === "number" ? body.maxPages : 8,
+      maxPages: typeof body.maxPages === "number" ? body.maxPages : 12,
     });
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {

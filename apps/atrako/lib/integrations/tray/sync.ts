@@ -32,7 +32,7 @@ export async function syncTrayWorkspace(
   if (!conn) throw new Error("Tray não conectado");
 
   const daysBack = options?.daysBack ?? 90;
-  const maxPages = options?.maxPages ?? 8;
+  const maxPages = options?.maxPages ?? 12;
   const errors: string[] = [];
   const result: TraySyncResult = {
     store: null,
@@ -127,15 +127,20 @@ export async function syncTrayWorkspace(
               typeof p.price === "number"
                 ? Math.round(p.price * 100)
                 : Math.round(Number(String(p.price ?? 0).replace(",", ".")) * 100);
-            await upsertTrayCatalogProduct({
-              workspaceId,
-              productId: String(p.product_id),
-              title: p.original_name || p.name || `Produto ${p.product_id}`,
-              sku: p.reference ?? null,
-              priceCents: Number.isFinite(price) ? price : null,
-              raw: p,
-            });
-            result.products.imported += 1;
+            try {
+              await upsertTrayCatalogProduct({
+                workspaceId,
+                productId: String(p.product_id),
+                title: p.original_name || p.name || `Produto ${p.product_id}`,
+                sku: p.reference ?? null,
+                priceCents: Number.isFinite(price) ? price : null,
+                raw: p,
+              });
+              result.products.imported += 1;
+            } catch (err) {
+              const msg = `catalog: ${err instanceof Error ? err.message.split("\n").pop() : "failed"}`;
+              if (!errors.includes(msg)) errors.push(msg);
+            }
           }
         } catch (err) {
           errors.push(`order: ${err instanceof Error ? err.message : "failed"}`);

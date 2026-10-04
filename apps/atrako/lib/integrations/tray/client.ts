@@ -120,6 +120,7 @@ export async function trayFetch<T = unknown>(
     query?: Record<string, string | number | undefined | null>;
     body?: Record<string, unknown> | URLSearchParams;
     _retried?: boolean;
+    _rateRetries?: number;
   },
 ): Promise<T> {
   const resolved = await resolveCredentials(workspaceId);
@@ -148,6 +149,18 @@ export async function trayFetch<T = unknown>(
   }
 
   const res = await fetch(url.toString(), { method, headers, body });
+  // Limite Tray: 180 req/min por loja.
+  if (res.status === 429 && (init?._rateRetries ?? 0) < 4) {
+    const retryAfter = Number(res.headers.get("retry-after"));
+    const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
+      ? retryAfter * 1000
+      : 15_000 * 2 ** (init?._rateRetries ?? 0);
+    await new Promise((r) => setTimeout(r, waitMs));
+    return trayFetch<T>(workspaceId, path, {
+      ...init,
+      _rateRetries: (init?._rateRetries ?? 0) + 1,
+    });
+  }
   const text = await res.text().catch(() => "");
   let json: unknown = null;
   try {

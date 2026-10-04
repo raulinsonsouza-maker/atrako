@@ -188,6 +188,8 @@ export async function listTrayOrders(
       page: options?.page ?? 1,
       limit: options?.limit ?? 50,
       date: options?.date,
+      // Sem sort a Tray devolve do mais antigo; com páginas limitadas os pedidos recentes ficavam de fora.
+      sort: "id_desc",
     },
   });
   const list = json.Orders ?? [];

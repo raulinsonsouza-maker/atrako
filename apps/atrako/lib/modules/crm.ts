@@ -7,6 +7,21 @@ import { upsertPersonAndLead } from "@/lib/atrako/person";
 
 export const STAGE_ROLE_ENTRY = "ENTRY";
 export const STAGE_ROLE_WON = "WON";
+/** Criada sob demanda no primeiro carrinho abandonado; depois fica fixa logo após Novo. */
+export const STAGE_ROLE_ABANDONED = "ABANDONED";
+/** Criada sob demanda (pedido expirado / reembolso); fica fixa depois de Ganho. */
+export const STAGE_ROLE_LOST = "LOST";
+
+export type StageRole = "ENTRY" | "WON" | "ABANDONED" | "LOST";
+
+function isFixedRole(role: string | null | undefined) {
+  return (
+    role === STAGE_ROLE_ENTRY ||
+    role === STAGE_ROLE_WON ||
+    role === STAGE_ROLE_ABANDONED ||
+    role === STAGE_ROLE_LOST
+  );
+}
 
 /** Colunas base do funil Atrako. ENTRY / WON são papéis fixos; nomes editáveis. */
 export const ATRAKO_BASE_STAGES = [
@@ -30,6 +45,10 @@ type StageRow = {
 const STAGE_COLOR_DEFAULT = "#8E8E93";
 const FIXED_ENTRY_NAME = "Novo";
 const FIXED_WON_NAME = "Ganho";
+const FIXED_ABANDONED_NAME = "Carrinho abandonado";
+const ABANDONED_STAGE_COLOR = "#FF9500";
+const FIXED_LOST_NAME = "Perdido";
+const LOST_STAGE_COLOR = "#FF3B30";
 
 /**
  * Prisma client no Windows pode ficar sem o campo `role` até reiniciar o
@@ -172,9 +191,7 @@ async function ensureEssentialStages(pipeline: NonNullable<PipelineWithStages>) 
 
   // Seed colunas intermediárias base (cria as que faltarem por nome)
   stages = (await loadDefaultPipeline(pipeline.clienteId))?.stages ?? stages;
-  const middle = stages.filter(
-    (s) => s.role !== STAGE_ROLE_ENTRY && s.role !== STAGE_ROLE_WON,
-  );
+  const middle = stages.filter((s) => !isFixedRole(s.role));
   const baseMiddle = ATRAKO_BASE_STAGES.filter((s) => !s.role);
   const existingNames = new Set(stages.map((s) => s.name.toLowerCase()));
 
@@ -214,16 +231,24 @@ async function ensureEssentialStages(pipeline: NonNullable<PipelineWithStages>) 
     }
   }
 
-  // Reordenar: Novo = 0 … Ganho = último
-  const fresh = await loadDefaultPipeline(pipeline.clienteId);
+  return normalizeStageOrder(pipeline.clienteId);
+}
+
+function stageRank(role: string | null | undefined) {
+  if (role === STAGE_ROLE_ENTRY) return 0;
+  if (role === STAGE_ROLE_ABANDONED) return 1;
+  if (role === STAGE_ROLE_WON) return 3;
+  if (role === STAGE_ROLE_LOST) return 4;
+  return 2;
+}
+
+/** Novo = 0, Carrinho abandonado = 1 (se existir), livres, Ganho, Perdido (se existir). */
+async function normalizeStageOrder(clienteId: string) {
+  const fresh = await loadDefaultPipeline(clienteId);
   if (!fresh) throw new Error("Pipeline não encontrado");
-  const sorted = [...fresh.stages].sort((a, b) => {
-    if (a.role === STAGE_ROLE_ENTRY) return -1;
-    if (b.role === STAGE_ROLE_ENTRY) return 1;
-    if (a.role === STAGE_ROLE_WON) return 1;
-    if (b.role === STAGE_ROLE_WON) return -1;
-    return a.order - b.order;
-  });
+  const sorted = [...fresh.stages].sort(
+    (a, b) => stageRank(a.role) - stageRank(b.role) || a.order - b.order,
+  );
   for (let i = 0; i < sorted.length; i++) {
     if (sorted[i].order !== i) {
       await prisma.crmStage.update({
@@ -233,9 +258,65 @@ async function ensureEssentialStages(pipeline: NonNullable<PipelineWithStages>) 
     }
   }
 
-  const final = await loadDefaultPipeline(pipeline.clienteId);
+  const final = await loadDefaultPipeline(clienteId);
   if (!final) throw new Error("Pipeline não encontrado");
   return final;
+}
+
+/** Garante a coluna "Carrinho abandonado" (reaproveita uma coluna livre com esse nome). */
+export async function ensureAbandonedStage(clienteId: string) {
+  const pipeline = await ensureDefaultPipeline(clienteId);
+  const existing = pipeline.stages.find((s) => s.role === STAGE_ROLE_ABANDONED);
+  if (existing) return existing;
+
+  const byName = pipeline.stages.find(
+    (s) => !isFixedRole(s.role) && /carrinho\s+abandonado|abandon/i.test(s.name),
+  );
+  if (byName) {
+    await setStageRole(byName.id, STAGE_ROLE_ABANDONED, byName.name);
+  } else {
+    await createStageRow({
+      pipelineId: pipeline.id,
+      name: FIXED_ABANDONED_NAME,
+      order: 1,
+      color: ABANDONED_STAGE_COLOR,
+      role: STAGE_ROLE_ABANDONED,
+    });
+  }
+  const final = await normalizeStageOrder(clienteId);
+  return final.stages.find((s) => s.role === STAGE_ROLE_ABANDONED)!;
+}
+
+export function isAbandonedStage(stage: { role?: string | null } | null) {
+  return stage?.role === STAGE_ROLE_ABANDONED;
+}
+
+/** Garante a coluna "Perdido" (reaproveita uma coluna livre com esse nome). */
+export async function ensureLostStage(clienteId: string) {
+  const pipeline = await ensureDefaultPipeline(clienteId);
+  const existing = pipeline.stages.find((s) => s.role === STAGE_ROLE_LOST);
+  if (existing) return existing;
+
+  const byName = pipeline.stages.find(
+    (s) => !isFixedRole(s.role) && /^(perdido|perdidos|lost)$/i.test(s.name.trim()),
+  );
+  if (byName) {
+    await setStageRole(byName.id, STAGE_ROLE_LOST, byName.name);
+  } else {
+    await createStageRow({
+      pipelineId: pipeline.id,
+      name: FIXED_LOST_NAME,
+      order: 999,
+      color: LOST_STAGE_COLOR,
+      role: STAGE_ROLE_LOST,
+    });
+  }
+  const final = await normalizeStageOrder(clienteId);
+  return final.stages.find((s) => s.role === STAGE_ROLE_LOST)!;
+}
+
+export function isLostStage(stage: { role?: string | null } | null) {
+  return stage?.role === STAGE_ROLE_LOST;
 }
 
 export function isWonStage(stage: { role?: string | null; name?: string | null } | null) {
@@ -278,85 +359,101 @@ export async function createNativeLead(input: {
   return lead;
 }
 
+/** Cards carregados por coluna; contagem e valor da coluna são sempre do total. */
+const PIPELINE_LEADS_PER_STAGE = 100;
+
 export async function getPipelineBoard(clienteId: string, opts?: { q?: string; source?: string }) {
   const pipeline = await ensureDefaultPipeline(clienteId);
   const q = opts?.q?.trim().toLowerCase();
   const source = opts?.source?.trim();
 
-  const leads = await prisma.nativeLead.findMany({
-    where: {
-      clienteId,
-      ...(source ? { source: { contains: source, mode: "insensitive" } } : {}),
-      ...(q
-        ? {
-            OR: [
-              { contact: { name: { contains: q, mode: "insensitive" } } },
-              { contact: { email: { contains: q, mode: "insensitive" } } },
-              { contact: { phone: { contains: q } } },
-            ],
-          }
-        : {}),
-    },
-    include: { contact: true, stage: true },
-    orderBy: { updatedAt: "desc" },
-    take: 500,
-  });
+  const where = {
+    clienteId,
+    ...(source ? { source: { contains: source, mode: "insensitive" as const } } : {}),
+    ...(q
+      ? {
+          OR: [
+            { contact: { name: { contains: q, mode: "insensitive" as const } } },
+            { contact: { email: { contains: q, mode: "insensitive" as const } } },
+            { contact: { phone: { contains: q } } },
+          ],
+        }
+      : {}),
+  };
 
-  const stages = pipeline.stages.map((stage) => {
-    const stageLeads = leads.filter((l) => l.stageId === stage.id);
-    const totalValue = stageLeads.reduce(
-      (sum, l) => sum + (l.dealValue != null ? Number(l.dealValue) : 0),
-      0,
-    );
+  const [byStage, byStatus, newThisWeek] = await Promise.all([
+    prisma.nativeLead.groupBy({
+      by: ["stageId"],
+      where,
+      _count: { _all: true },
+      _sum: { dealValue: true },
+    }),
+    prisma.nativeLead.groupBy({ by: ["status"], where, _count: { _all: true } }),
+    prisma.nativeLead.count({
+      where: { ...where, createdAt: { gt: new Date(Date.now() - 7 * 86400000) } },
+    }),
+  ]);
+
+  const statsFor = (stageId: string | null) => {
+    const row = byStage.find((r) => r.stageId === stageId);
     return {
+      totalCount: row?._count._all ?? 0,
+      totalValue: row?._sum.dealValue != null ? Number(row._sum.dealValue) : 0,
+    };
+  };
+  const leadsFor = (stageId: string | null) =>
+    prisma.nativeLead.findMany({
+      where: { ...where, stageId },
+      include: { contact: true },
+      orderBy: { updatedAt: "desc" },
+      take: PIPELINE_LEADS_PER_STAGE,
+    });
+
+  const stages = await Promise.all(
+    pipeline.stages.map(async (stage) => ({
       id: stage.id,
       name: stage.name,
       color: stage.color || STAGE_COLOR_DEFAULT,
       order: stage.order,
-      role: (stage.role as "ENTRY" | "WON" | null) ?? null,
-      totalCount: stageLeads.length,
-      totalValue,
-      leads: stageLeads.map((l) => mapLead(l)),
-    };
-  });
+      role: (stage.role as StageRole | null) ?? null,
+      ...statsFor(stage.id),
+      leads: (await leadsFor(stage.id)).map((l) => mapLead(l)),
+    })),
+  );
 
-  const unstaged = leads.filter((l) => !l.stageId);
-  if (unstaged.length) {
+  const unstagedStats = statsFor(null);
+  if (unstagedStats.totalCount) {
     stages.unshift({
       id: "_none",
       name: "Sem etapa",
       color: "#AEAEB2",
       order: -1,
       role: null,
-      totalCount: unstaged.length,
-      totalValue: unstaged.reduce(
-        (sum, l) => sum + (l.dealValue != null ? Number(l.dealValue) : 0),
-        0,
-      ),
-      leads: unstaged.map((l) => mapLead(l)),
+      ...unstagedStats,
+      leads: (await leadsFor(null)).map((l) => mapLead(l)),
     });
   }
 
-  const totalCount = leads.length;
-  const totalValue = leads.reduce(
-    (sum, l) => sum + (l.dealValue != null ? Number(l.dealValue) : 0),
-    0,
-  );
-  const newThisWeek = leads.filter(
-    (l) => l.createdAt.getTime() > Date.now() - 7 * 86400000,
-  ).length;
-  const won = leads.filter(
-    (l) => l.status === "WON" || isWonStage(l.stage),
-  ).length;
+  const wonStageIds = new Set(pipeline.stages.filter((s) => isWonStage(s)).map((s) => s.id));
+  const statusCount = (status: string) =>
+    byStatus.find((r) => r.status === status)?._count._all ?? 0;
 
   return {
     pipelineId: pipeline.id,
     stages,
-    totalCount,
-    totalValue,
+    totalCount: byStage.reduce((sum, r) => sum + r._count._all, 0),
+    totalValue: byStage.reduce(
+      (sum, r) => sum + (r._sum.dealValue != null ? Number(r._sum.dealValue) : 0),
+      0,
+    ),
     newThisWeek,
-    won,
-    openCount: leads.filter((l) => l.status === "OPEN").length,
+    won: Math.max(
+      statusCount("WON"),
+      byStage
+        .filter((r) => r.stageId && wonStageIds.has(r.stageId))
+        .reduce((sum, r) => sum + r._count._all, 0),
+    ),
+    openCount: statusCount("OPEN"),
   };
 }
 
@@ -406,12 +503,12 @@ export async function updateLeadStage(input: {
   });
   if (!lead) throw new Error("Lead não encontrado");
 
-  const won = isWonStage(stage);
+  const status = isWonStage(stage) ? "WON" : isLostStage(stage) ? "LOST" : "OPEN";
   return prisma.nativeLead.update({
     where: { id: lead.id },
     data: {
       stageId: stage?.id ?? null,
-      status: won ? "WON" : lead.status === "WON" && !won ? "OPEN" : lead.status,
+      status,
     },
     include: { contact: true, stage: true },
   });
@@ -426,7 +523,7 @@ export async function createPipelineStage(input: {
   if (!name) throw new Error("Nome obrigatório");
   const pipeline = await ensureDefaultPipeline(input.workspaceId);
   const won = pipeline.stages.find((s) => s.role === STAGE_ROLE_WON);
-  // Nova coluna sempre antes de Ganho (fixo no fim)
+  // Nova coluna sempre antes de Ganho (Ganho/Perdido fixos no fim)
   const insertOrder = won ? won.order : pipeline.stages.length;
   const toShift = [...pipeline.stages]
     .filter((s) => s.order >= insertOrder)
@@ -484,10 +581,16 @@ export async function configurePipelineStages(input: {
   entryColor?: string;
   wonName?: string;
   wonColor?: string;
+  abandonedName?: string;
+  abandonedColor?: string;
+  lostName?: string;
+  lostColor?: string;
 }) {
   const pipeline = await ensureDefaultPipeline(input.workspaceId);
   const entry = pipeline.stages.find((s) => s.role === STAGE_ROLE_ENTRY);
   const won = pipeline.stages.find((s) => s.role === STAGE_ROLE_WON);
+  const abandoned = pipeline.stages.find((s) => s.role === STAGE_ROLE_ABANDONED);
+  const lost = pipeline.stages.find((s) => s.role === STAGE_ROLE_LOST);
   if (!entry || !won) throw new Error("Funil incompleto");
 
   const middleInput = input.middle.map((s) => ({
@@ -499,9 +602,7 @@ export async function configurePipelineStages(input: {
     if (!s.name) throw new Error("Nome da etapa obrigatório");
   }
 
-  const existingMiddle = pipeline.stages.filter(
-    (s) => s.role !== STAGE_ROLE_ENTRY && s.role !== STAGE_ROLE_WON,
-  );
+  const existingMiddle = pipeline.stages.filter((s) => !isFixedRole(s.role));
   const keepIds = new Set(middleInput.map((s) => s.id).filter(Boolean) as string[]);
   const toRemove = existingMiddle.filter((s) => !keepIds.has(s.id));
 
@@ -535,6 +636,32 @@ export async function configurePipelineStages(input: {
     await prisma.crmStage.update({ where: { id: won.id }, data: wonPatch });
   }
 
+  if (abandoned) {
+    const abandonedPatch: { name?: string; color?: string } = {};
+    if (typeof input.abandonedName === "string" && input.abandonedName.trim()) {
+      abandonedPatch.name = input.abandonedName.trim().slice(0, 80);
+    }
+    if (input.abandonedColor !== undefined) {
+      abandonedPatch.color = input.abandonedColor.trim() || ABANDONED_STAGE_COLOR;
+    }
+    if (Object.keys(abandonedPatch).length) {
+      await prisma.crmStage.update({ where: { id: abandoned.id }, data: abandonedPatch });
+    }
+  }
+
+  if (lost) {
+    const lostPatch: { name?: string; color?: string } = {};
+    if (typeof input.lostName === "string" && input.lostName.trim()) {
+      lostPatch.name = input.lostName.trim().slice(0, 80);
+    }
+    if (input.lostColor !== undefined) {
+      lostPatch.color = input.lostColor.trim() || LOST_STAGE_COLOR;
+    }
+    if (Object.keys(lostPatch).length) {
+      await prisma.crmStage.update({ where: { id: lost.id }, data: lostPatch });
+    }
+  }
+
   const resolvedIds: string[] = [];
   for (const s of middleInput) {
     if (s.id && existingMiddle.some((e) => e.id === s.id)) {
@@ -555,17 +682,27 @@ export async function configurePipelineStages(input: {
     }
   }
 
+  const offset = abandoned ? 2 : 1;
   await prisma.crmStage.update({ where: { id: entry.id }, data: { order: 0 } });
+  if (abandoned) {
+    await prisma.crmStage.update({ where: { id: abandoned.id }, data: { order: 1 } });
+  }
   for (let i = 0; i < resolvedIds.length; i++) {
     await prisma.crmStage.update({
       where: { id: resolvedIds[i] },
-      data: { order: i + 1 },
+      data: { order: i + offset },
     });
   }
   await prisma.crmStage.update({
     where: { id: won.id },
-    data: { order: resolvedIds.length + 1 },
+    data: { order: resolvedIds.length + offset },
   });
+  if (lost) {
+    await prisma.crmStage.update({
+      where: { id: lost.id },
+      data: { order: resolvedIds.length + offset + 1 },
+    });
+  }
 
   return ensureDefaultPipeline(input.workspaceId);
 }
@@ -577,8 +714,8 @@ export async function deletePipelineStage(input: {
   const pipeline = await ensureDefaultPipeline(input.workspaceId);
   const stage = pipeline.stages.find((s) => s.id === input.stageId);
   if (!stage) throw new Error("Etapa não encontrada");
-  if (stage.role === STAGE_ROLE_ENTRY || stage.role === STAGE_ROLE_WON) {
-    throw new Error("Não é possível remover Novo ou Ganho");
+  if (isFixedRole(stage.role)) {
+    throw new Error("Não é possível remover Novo, Carrinho abandonado, Ganho ou Perdido");
   }
   const entry = pipeline.stages.find((s) => s.role === STAGE_ROLE_ENTRY);
   if (entry) {

@@ -314,6 +314,49 @@ export async function upsertPersonAndLead(input: UpsertPersonInput) {
   return { contact, lead };
 }
 
+const STORE_PROVIDER_LABELS: Record<string, string> = {
+  SHOPIFY: "Shopify",
+  WOOCOMMERCE: "WooCommerce",
+  MERCADO_LIVRE: "Mercado Livre",
+  NUVEMSHOP: "Nuvemshop",
+  TRAY: "Tray",
+  SHOPEE: "Shopee",
+  COMMERCE: "Checkout próprio",
+};
+
+export function storeProviderLabel(provider: string) {
+  return STORE_PROVIDER_LABELS[provider] ?? provider;
+}
+
+const ORDER_STATUS_LABELS: Record<string, string> = {
+  pending: "Aguardando pagamento",
+  "on-hold": "Aguardando pagamento",
+  processing: "Pago",
+  completed: "Concluído",
+  cancelled: "Cancelado",
+  failed: "Pagamento recusado",
+  refunded: "Reembolsado",
+  paid: "Pago",
+  partially_paid: "Pago parcialmente",
+  authorized: "Pagamento autorizado",
+  voided: "Cancelado",
+  expired: "Expirado",
+  abandoned: "Abandonado",
+};
+
+/** Status da loja em português (Tray já vem em PT, só normaliza a caixa). */
+export function orderStatusLabel(status: string | null | undefined) {
+  if (!status) return null;
+  const mapped = ORDER_STATUS_LABELS[status.toLowerCase()];
+  if (mapped) return mapped;
+  const lower = status.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
+
+function brl(cents: number) {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
+}
+
 export type JourneyItem = {
   at: string;
   type: string;
@@ -564,22 +607,14 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
 
   for (const mo of marketplaceOrders) {
     const cents = mo.totalCents ?? 0;
-    const providerLabel =
-      mo.provider === "SHOPIFY"
-        ? "Shopify"
-        : mo.provider === "WOOCOMMERCE"
-          ? "WooCommerce"
-          : mo.provider === "MERCADO_LIVRE"
-            ? "Mercado Livre"
-            : mo.provider;
     items.push({
       at: (mo.occurredAt ?? mo.createdAt).toISOString(),
       type: "marketplace.order",
-      title: `${providerLabel} · R$ ${(cents / 100).toFixed(2)}`,
+      title: `${storeProviderLabel(mo.provider)} · ${brl(cents)}`,
       detail:
         [
+          orderStatusLabel(mo.status),
           mo.items.map((i) => i.title).join(", ") || null,
-          mo.status,
           leadAttrDetail,
         ]
           .filter(Boolean)
@@ -628,6 +663,34 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
       detail: `${b.status} · ${b.startAt.toLocaleString("pt-BR")}`,
       href: "/agenda",
     });
+  }
+
+  const carts = await prisma.abandonedCart.findMany({
+    where: { clienteId: workspaceId, contactId, status: { in: ["OPEN", "RECOVERED", "EXPIRED"] } },
+    orderBy: { abandonedAt: "desc" },
+    take: 20,
+  });
+  for (const cart of carts) {
+    items.push({
+      at: cart.abandonedAt.toISOString(),
+      type: "cart.abandoned",
+      title: `Carrinho abandonado · ${brl(cart.totalCents)}`,
+      detail: storeProviderLabel(cart.provider),
+    });
+    if (cart.notifiedAt) {
+      items.push({
+        at: cart.notifiedAt.toISOString(),
+        type: "cart.notified",
+        title: "WhatsApp de recuperação enviado",
+      });
+    }
+    if (cart.status === "RECOVERED" && cart.recoveredAt) {
+      items.push({
+        at: cart.recoveredAt.toISOString(),
+        type: "cart.recovered",
+        title: `Carrinho recuperado · ${brl(cart.recoveredCents ?? cart.totalCents)}`,
+      });
+    }
   }
 
   items.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());

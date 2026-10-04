@@ -60,6 +60,9 @@ export async function POST(request: NextRequest, ctx: Ctx) {
       order,
       webhookPayload: payload as Record<string, unknown>,
     });
+    if (!result.order) {
+      return NextResponse.json({ ok: true, ignored: true, reason: result.skipped });
+    }
     return NextResponse.json({
       ok: true,
       created: result.created,

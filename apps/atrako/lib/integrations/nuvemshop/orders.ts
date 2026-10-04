@@ -64,6 +64,18 @@ const PAID = new Set([
   "authorized",
 ]);
 
+const UNPAID = new Set(["pending", "abandoned", "voided"]);
+
+export function isNuvemshopRefundedStatus(status: string | null | undefined): boolean {
+  return (status ?? "").toLowerCase() === "refunded";
+}
+
+/** Pedido criado e não pago (carrinho abandonado em potencial). */
+export function isNuvemshopUnpaidStatus(status: string | null | undefined): boolean {
+  if (!status) return false;
+  return UNPAID.has(status.toLowerCase());
+}
+
 function moneyToCents(raw: string | number | null | undefined): number {
   if (raw == null) return 0;
   const n = typeof raw === "number" ? raw : Number(String(raw).replace(",", "."));

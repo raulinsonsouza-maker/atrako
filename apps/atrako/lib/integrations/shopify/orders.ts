@@ -83,6 +83,18 @@ export function isShopifyPaidStatus(status: string | null | undefined): boolean 
   return PAID_STATUSES.has(status) || PAID_STATUSES.has(status.toLowerCase());
 }
 
+const UNPAID_STATUSES = new Set(["pending", "expired", "voided"]);
+
+export function isShopifyRefundedStatus(status: string | null | undefined): boolean {
+  return (status ?? "").toLowerCase() === "refunded";
+}
+
+/** Pedido criado e não pago (carrinho abandonado em potencial). */
+export function isShopifyUnpaidStatus(status: string | null | undefined): boolean {
+  if (!status) return false;
+  return UNPAID_STATUSES.has(status.toLowerCase());
+}
+
 function moneyToCents(raw: string | number | null | undefined): number {
   if (raw == null) return 0;
   const n = typeof raw === "number" ? raw : Number(String(raw).replace(",", "."));

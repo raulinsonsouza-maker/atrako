@@ -35,6 +35,7 @@ export type TrayOrder = {
   has_payment?: string | number | null;
   payment_method?: string | null;
   modified?: string | null;
+  urls?: { payment?: string | null; payment_switch?: string | null } | null;
   OrderStatus?: {
     id?: string | number;
     type?: string | null;
@@ -104,14 +105,41 @@ export function trayOrderStatus(order: TrayOrder): string | null {
   );
 }
 
+/** Link da loja para o cliente pagar o pedido (retomada do carrinho). */
+export function trayOrderPaymentUrl(order: TrayOrder): string | null {
+  return order.urls?.payment || order.urls?.payment_switch || null;
+}
+
+/** Não pago: aguardando pagamento ou cancelado sem pagamento (carrinho abandonado em potencial). */
+export function isTrayUnpaidOrder(order: TrayOrder): boolean {
+  if (isTrayPaidStatus(order) || isTrayRefundedOrder(order)) return false;
+  const status = trayStatusText(order);
+  // "Aguardando envio/separação" é pós-pagamento; só conta aguardando pagamento/gateway.
+  return /aguardando(?!\s+(envio|coleta|retirada|separa))|pendente|cancelad|expirad/.test(status);
+}
+
+function trayStatusText(order: TrayOrder) {
+  return `${order.OrderStatus?.status ?? ""} ${order.status ?? ""}`.toLowerCase();
+}
+
+/** Estornado / devolvido: venda desfeita. */
+export function isTrayRefundedOrder(order: TrayOrder): boolean {
+  return /estorn|devolvid|reembols/.test(trayStatusText(order));
+}
+
 export function isTrayPaidStatus(order: TrayOrder): boolean {
+  if (isTrayRefundedOrder(order)) return false;
   if (order.has_payment === "1" || order.has_payment === 1) return true;
   const pd = order.payment_date;
   if (pd && !pd.startsWith("0000")) return true;
   const type = (order.OrderStatus?.type || "").toLowerCase();
   if (type === "closed" || type === "paid") return true;
-  const status = (order.status || "").toLowerCase();
-  return /pago|paid|enviado|entregue|faturado/.test(status);
+  const status = trayStatusText(order);
+  if (/n[aã]o pago/.test(status)) return false;
+  // Status de logística (a enviar, separação, envio) só existem depois do pagamento aprovado.
+  return /pago|paid|enviado|entregue|faturado|finalizado|conclu|a enviar|em separa|aguardando (envio|coleta|retirada)|pronto para|em transporte|despachado/.test(
+    status,
+  );
 }
 
 export function trayOrderOccurredAt(order: TrayOrder): Date {

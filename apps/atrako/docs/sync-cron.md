@@ -87,6 +87,33 @@ As credenciais das integrações ficam **no banco** (tabela de configuração de
 
 ---
 
+## Carrinho abandonado — a cada 15 minutos
+
+Puxa checkouts abandonados (Shopify `abandonedCheckouts`, Nuvemshop `/checkouts`, Tray `/carts`), promove pedidos não pagos / checkouts com mais de 60 min para a coluna **Carrinho abandonado** do CRM, dispara o WhatsApp de recuperação (só carrinhos com menos de 24h) e expira os com mais de 30 dias.
+
+| Agendamento | Cron (UTC) | Chamada |
+|---|---|---|
+| Carrinho abandonado | `*/15 * * * *` | `GET /api/atrako/whatsapp/cron-abandonment?secret=$CRON_SECRET` |
+
+```bash
+*/15 * * * * curl -fsS "https://<host>/api/atrako/whatsapp/cron-abandonment?secret=$CRON_SECRET" > /dev/null
+```
+
+`CRON_SECRET` é obrigatório em produção (sem ele a rota responde 401). Também aceita `Authorization: Bearer <CRON_SECRET>`.
+
+Último erro por loja (ex.: escopo sem `read_orders`, API de carrinhos desativada) fica em `WorkspaceConnection.metadata.abandonedCheckoutsError`.
+
+Pedido não pago há mais de 30 dias, carrinho expirado e reembolso vão para a coluna **Perdido** (com `metadata.lostReason`); o contato fica na base para reativação, e um carrinho novo traz o lead de volta.
+
+**Primeira vez em produção:** rode o backfill (histórico de pedidos → Ganho / Carrinho / Perdido; checkouts de 30 dias; sem WhatsApp) em dry-run e depois com `--apply`:
+
+```bash
+npx tsx scripts/backfill-abandoned-carts.ts            # dry-run
+npx tsx scripts/backfill-abandoned-carts.ts --apply
+```
+
+---
+
 ## Caminho alternativo — endpoints HTTP (Vercel ou cron externo)
 
 Caso o app seja migrado para a Vercel ou você prefira um agendador externo (crontab, GitHub Actions), cada rota aceita **GET** e **POST**, autenticadas por `SYNC_CRON_TOKEN`:

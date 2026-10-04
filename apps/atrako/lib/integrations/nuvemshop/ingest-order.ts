@@ -13,10 +13,13 @@ import {
   STAGE_ROLE_WON,
 } from "@/lib/modules/crm";
 import { ingestPurchase } from "@/lib/symbius/attribution/engine";
+import { markLeadLost, trackOrderPayment } from "@/lib/crm/abandoned-cart";
 import {
   extractNuvemshopBuyer,
   extractNuvemshopLineItems,
   isNuvemshopPaidStatus,
+  isNuvemshopRefundedStatus,
+  isNuvemshopUnpaidStatus,
   nuvemshopOrderCurrency,
   nuvemshopOrderExternalId,
   nuvemshopOrderOccurredAt,
@@ -108,6 +111,50 @@ async function markNuvemshopBuyerInCrm(input: {
   return updatedLead;
 }
 
+async function syncNuvemshopAbandonment(input: {
+  workspaceId: string;
+  externalId: string;
+  status: string | null;
+  occurredAt: Date;
+  totalCents: number;
+  currency: string;
+  contactId: string | null;
+  leadId: string | null;
+  items: NormalizedNuvemshopLineItem[];
+  buyer: { name: string | null; email: string | null; phone: string | null };
+}) {
+  if (isNuvemshopRefundedStatus(input.status)) {
+    if (input.leadId) {
+      await markLeadLost(input.workspaceId, input.leadId, "reembolso", {
+        lostOrderRef: `NUVEMSHOP:${input.externalId}`,
+      }).catch((err) => console.error("[nuvemshop-lost]", err));
+    }
+    return;
+  }
+  const paid = isNuvemshopPaidStatus(input.status);
+  if (!paid && !isNuvemshopUnpaidStatus(input.status)) return;
+  await trackOrderPayment({
+    workspaceId: input.workspaceId,
+    provider: "NUVEMSHOP",
+    externalOrderId: input.externalId,
+    paid,
+    occurredAt: input.occurredAt,
+    totalCents: input.totalCents,
+    currency: input.currency,
+    contactId: input.contactId,
+    leadId: input.leadId,
+    name: input.buyer.name,
+    email: input.buyer.email,
+    phone: input.buyer.phone,
+    items: input.items.map((i) => ({
+      title: i.title,
+      quantity: i.quantity,
+      unitPriceCents: i.unitPriceCents,
+      sku: i.sku,
+    })),
+  }).catch((err) => console.error("[nuvemshop-abandoned-cart]", err));
+}
+
 export async function ingestNuvemshopHubOrder(input: {
   workspaceId: string;
   order: NuvemshopOrder;
@@ -196,6 +243,22 @@ export async function ingestNuvemshopHubOrder(input: {
     await maybeAttributePurchase(input.workspaceId, input.order);
     const refreshed = await prisma.marketplaceOrder.findUniqueOrThrow({
       where: { id: existing.id },
+    });
+    await syncNuvemshopAbandonment({
+      workspaceId: input.workspaceId,
+      externalId,
+      status,
+      occurredAt,
+      totalCents,
+      currency,
+      contactId: refreshed.contactId,
+      leadId: refreshed.leadId,
+      items,
+      buyer: {
+        name: refreshed.buyerName,
+        email: refreshed.buyerEmail,
+        phone: refreshed.buyerPhone,
+      },
     });
     return { order: refreshed, created: false as const };
   }
@@ -335,6 +398,18 @@ export async function ingestNuvemshopHubOrder(input: {
   }
 
   await maybeAttributePurchase(input.workspaceId, input.order);
+  await syncNuvemshopAbandonment({
+    workspaceId: input.workspaceId,
+    externalId,
+    status,
+    occurredAt,
+    totalCents,
+    currency,
+    contactId: contact.id,
+    leadId: (wonLead ?? lead).id,
+    items,
+    buyer,
+  });
 
   return { order, created: true as const, contact, lead: wonLead ?? lead };
 }

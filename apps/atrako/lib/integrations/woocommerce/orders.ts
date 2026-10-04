@@ -36,6 +36,8 @@ export type WooOrder = {
   date_created?: string;
   date_created_gmt?: string;
   date_paid?: string | null;
+  /** Link "pagar pedido" do Woo — usado na recuperação de carrinho. */
+  payment_url?: string;
   billing?: WooBilling;
   shipping?: WooShipping;
   customer_id?: number;
@@ -76,6 +78,43 @@ export function extractWooBuyerContact(order: WooOrder): {
     phone,
     customerId: typeof order.customer_id === "number" ? order.customer_id : null,
   };
+}
+
+const WOO_PAID_STATUSES = new Set(["processing", "completed"]);
+const WOO_UNPAID_STATUSES = new Set(["pending", "on-hold", "failed", "cancelled"]);
+
+/** Reembolsado: venda desfeita (date_paid continua preenchido). */
+export function isWooRefundedOrder(order: WooOrder): boolean {
+  return (order.status ?? "").toLowerCase() === "refunded";
+}
+
+/** Pago: `date_paid` ou processing/completed. */
+export function isWooPaidOrder(order: WooOrder): boolean {
+  if (isWooRefundedOrder(order)) return false;
+  if (order.date_paid) return true;
+  return WOO_PAID_STATUSES.has((order.status ?? "").toLowerCase());
+}
+
+/**
+ * Não pago = carrinho abandonado em potencial. `cancelled` sem pagamento é o pedido que o
+ * Woo cancela sozinho; refunded/trash/checkout-draft ficam de fora.
+ */
+export function isWooUnpaidOrder(order: WooOrder): boolean {
+  if (isWooPaidOrder(order)) return false;
+  return WOO_UNPAID_STATUSES.has((order.status ?? "").toLowerCase());
+}
+
+export function wooOrderItems(order: WooOrder) {
+  return (order.line_items ?? []).map((it) => {
+    const quantity = Math.max(1, Number(it.quantity ?? 1));
+    const total = Number(it.total ?? 0);
+    return {
+      title: String(it.name ?? "Item"),
+      quantity,
+      unitPriceCents: Number.isFinite(total) ? Math.round((total * 100) / quantity) : 0,
+      sku: it.sku ?? null,
+    };
+  });
 }
 
 export function wooOrderTotalCents(order: WooOrder): number {

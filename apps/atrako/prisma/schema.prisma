@@ -85,6 +85,7 @@ model Cliente {
   marketplaceOrders          MarketplaceOrder[]
   marketplaceSellerSnapshots MarketplaceSellerSnapshot[]
   marketplaceCatalogItems    MarketplaceCatalogItem[]
+  abandonedCarts             AbandonedCart[]
   igAccountsNative           IgAccountNative[]
   waConversations            WaConversation[]
   waMessages                 WaMessage[]
@@ -1550,6 +1551,42 @@ model MarketplaceOrder {
   @@index([clienteId, provider, occurredAt])
   @@index([clienteId, createdAt])
   @@index([clienteId, shippingId])
+}
+
+/// Carrinho abandonado: checkout abandonado da loja (API) ou pedido não pago vencido.
+model AbandonedCart {
+  id               String    @id @default(cuid())
+  clienteId        String
+  provider         String    @db.VarChar(40)
+  /// `checkout` (API da loja) ou `order` (pedido não pago)
+  kind             String    @default("checkout") @db.VarChar(16)
+  externalId       String    @db.VarChar(120)
+  contactId        String?
+  leadId           String?
+  name             String?   @db.VarChar(200)
+  email            String?   @db.VarChar(255)
+  phone            String?   @db.VarChar(40)
+  totalCents       Int       @default(0)
+  currency         String    @default("BRL") @db.VarChar(8)
+  items            Json?
+  recoveryUrl      String?
+  /// OPEN | RECOVERED | EXPIRED
+  status           String    @default("OPEN") @db.VarChar(16)
+  abandonedAt      DateTime
+  recoveredAt      DateTime?
+  recoveredOrderId String?   @db.VarChar(120)
+  recoveredCents   Int?
+  notifiedAt       DateTime?
+  rawPayload       Json?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  cliente          Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, provider, externalId])
+  @@index([clienteId, status, abandonedAt])
+  @@index([clienteId, contactId])
+  @@index([clienteId, email])
+  @@index([clienteId, phone])
 }
 
 /// Snapshot de métricas do vendedor no marketplace (visitas + reputação).

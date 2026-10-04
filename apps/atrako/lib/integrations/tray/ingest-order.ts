@@ -13,10 +13,14 @@ import {
   STAGE_ROLE_WON,
 } from "@/lib/modules/crm";
 import { ingestPurchase } from "@/lib/symbius/attribution/engine";
+import { markLeadLost, trackOrderPayment } from "@/lib/crm/abandoned-cart";
 import {
   extractTrayBuyer,
   extractTrayLineItems,
   isTrayPaidStatus,
+  isTrayRefundedOrder,
+  isTrayUnpaidOrder,
+  trayOrderPaymentUrl,
   trayOrderExternalId,
   trayOrderOccurredAt,
   trayOrderStatus,
@@ -105,6 +109,49 @@ async function markTrayBuyerInCrm(input: {
   }
 
   return updatedLead;
+}
+
+async function syncTrayAbandonment(input: {
+  workspaceId: string;
+  order: TrayOrder;
+  externalId: string;
+  paid: boolean;
+  occurredAt: Date;
+  totalCents: number;
+  contactId: string | null;
+  leadId: string | null;
+  items: NormalizedTrayLineItem[];
+  buyer: { name: string | null; email: string | null; phone: string | null };
+}) {
+  if (isTrayRefundedOrder(input.order)) {
+    if (input.leadId) {
+      await markLeadLost(input.workspaceId, input.leadId, "reembolso", {
+        lostOrderRef: `TRAY:${input.externalId}`,
+      }).catch((err) => console.error("[tray-lost]", err));
+    }
+    return;
+  }
+  if (!input.paid && !isTrayUnpaidOrder(input.order)) return;
+  await trackOrderPayment({
+    workspaceId: input.workspaceId,
+    provider: "TRAY",
+    externalOrderId: input.externalId,
+    paid: input.paid,
+    occurredAt: input.occurredAt,
+    totalCents: input.totalCents,
+    contactId: input.contactId,
+    leadId: input.leadId,
+    name: input.buyer.name,
+    email: input.buyer.email,
+    phone: input.buyer.phone,
+    recoveryUrl: trayOrderPaymentUrl(input.order),
+    items: input.items.map((i) => ({
+      title: i.title,
+      quantity: i.quantity,
+      unitPriceCents: i.unitPriceCents,
+      sku: i.sku,
+    })),
+  }).catch((err) => console.error("[tray-abandoned-cart]", err));
 }
 
 export async function ingestTrayHubOrder(input: {
@@ -197,6 +244,22 @@ export async function ingestTrayHubOrder(input: {
     await maybeAttributePurchase(input.workspaceId, input.order);
     const refreshed = await prisma.marketplaceOrder.findUniqueOrThrow({
       where: { id: existing.id },
+    });
+    await syncTrayAbandonment({
+      workspaceId: input.workspaceId,
+      order: input.order,
+      externalId,
+      paid,
+      occurredAt,
+      totalCents,
+      contactId: refreshed.contactId,
+      leadId: refreshed.leadId,
+      items,
+      buyer: {
+        name: refreshed.buyerName,
+        email: refreshed.buyerEmail,
+        phone: refreshed.buyerPhone,
+      },
     });
     return { order: refreshed, created: false as const };
   }
@@ -336,6 +399,18 @@ export async function ingestTrayHubOrder(input: {
   }
 
   await maybeAttributePurchase(input.workspaceId, input.order);
+  await syncTrayAbandonment({
+    workspaceId: input.workspaceId,
+    order: input.order,
+    externalId,
+    paid,
+    occurredAt,
+    totalCents,
+    contactId: contact.id,
+    leadId: (wonLead ?? lead).id,
+    items,
+    buyer,
+  });
 
   return { order, created: true as const, contact, lead: wonLead ?? lead };
 }

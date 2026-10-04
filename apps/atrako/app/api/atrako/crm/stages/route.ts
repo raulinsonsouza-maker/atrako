@@ -47,6 +47,10 @@ export async function POST(request: NextRequest) {
         entryColor: typeof b.entryColor === "string" ? b.entryColor : undefined,
         wonName: typeof b.wonName === "string" ? b.wonName : undefined,
         wonColor: typeof b.wonColor === "string" ? b.wonColor : undefined,
+        abandonedName: typeof b.abandonedName === "string" ? b.abandonedName : undefined,
+        abandonedColor: typeof b.abandonedColor === "string" ? b.abandonedColor : undefined,
+        lostName: typeof b.lostName === "string" ? b.lostName : undefined,
+        lostColor: typeof b.lostColor === "string" ? b.lostColor : undefined,
       });
       return NextResponse.json({
         stages: pipeline.stages.map((s) => ({

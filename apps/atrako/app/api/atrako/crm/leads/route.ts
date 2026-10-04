@@ -7,6 +7,7 @@ import {
   updateLeadStage,
 } from "@/lib/modules/crm";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
+import { getAbandonedCartSummary } from "@/lib/crm/abandoned-cart";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 
 export async function GET(request: NextRequest) {
@@ -20,11 +21,14 @@ export async function GET(request: NextRequest) {
 
   const view = request.nextUrl.searchParams.get("view")?.trim();
   if (view === "pipeline") {
-    const board = await getPipelineBoard(workspaceId, {
-      q: request.nextUrl.searchParams.get("q") ?? undefined,
-      source: request.nextUrl.searchParams.get("source") ?? undefined,
-    });
-    return NextResponse.json(board);
+    const [board, abandonedCarts] = await Promise.all([
+      getPipelineBoard(workspaceId, {
+        q: request.nextUrl.searchParams.get("q") ?? undefined,
+        source: request.nextUrl.searchParams.get("source") ?? undefined,
+      }),
+      getAbandonedCartSummary(workspaceId).catch(() => null),
+    ]);
+    return NextResponse.json({ ...board, abandonedCarts });
   }
 
   await ensureDefaultPipeline(workspaceId);

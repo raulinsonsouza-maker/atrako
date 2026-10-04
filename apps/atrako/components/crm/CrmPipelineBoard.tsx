@@ -30,7 +30,7 @@ type StageCol = {
   color: string;
   totalCount: number;
   totalValue: number;
-  role?: "ENTRY" | "WON" | null;
+  role?: "ENTRY" | "WON" | "ABANDONED" | "LOST" | null;
   leads: CrmBoardLead[];
 };
 
@@ -41,6 +41,13 @@ type PipelineData = {
   newThisWeek: number;
   won: number;
   openCount: number;
+  abandonedCarts?: {
+    openCount: number;
+    openValueCents: number;
+    recoveredMonthCount: number;
+    recoveredMonthCents: number;
+    recoveryRate: number | null;
+  } | null;
 };
 
 function fmtCurrency(v: number) {
@@ -104,23 +111,23 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
       const prev = data;
       const lead = prev.stages.flatMap((s) => s.leads).find((l) => l.id === leadId);
       if (!lead) return;
+      // Colunas trazem só parte dos cards: ajusta o total em vez de recontar a lista.
+      const value = lead.dealValue ?? 0;
       const nextStages = prev.stages.map((s) => {
         if (s.id === fromStageId) {
-          const leads = s.leads.filter((l) => l.id !== leadId);
           return {
             ...s,
-            leads,
-            totalCount: leads.length,
-            totalValue: leads.reduce((sum, l) => sum + (l.dealValue ?? 0), 0),
+            leads: s.leads.filter((l) => l.id !== leadId),
+            totalCount: Math.max(0, s.totalCount - 1),
+            totalValue: s.totalValue - value,
           };
         }
         if (s.id === toStageId) {
-          const leads = [...s.leads, { ...lead, stageId: toStageId }];
           return {
             ...s,
-            leads,
-            totalCount: leads.length,
-            totalValue: leads.reduce((sum, l) => sum + (l.dealValue ?? 0), 0),
+            leads: [{ ...lead, stageId: toStageId }, ...s.leads],
+            totalCount: s.totalCount + 1,
+            totalValue: s.totalValue + value,
           };
         }
         return s;
@@ -280,6 +287,24 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
         </form>
       ) : null}
 
+      {data?.abandonedCarts &&
+      (data.abandonedCarts.openCount > 0 || data.abandonedCarts.recoveredMonthCount > 0) ? (
+        <p className="shrink-0 type-fine-print text-[var(--ink-muted-48)]">
+          Carrinhos abandonados em aberto:{" "}
+          <span className="tabular-nums text-[var(--ink)]">
+            {data.abandonedCarts.openCount} ·{" "}
+            {fmtCurrency(data.abandonedCarts.openValueCents / 100)}
+          </span>
+          {"  ·  "}Recuperado no mês:{" "}
+          <span className="tabular-nums text-[var(--ink)]">
+            {fmtCurrency(data.abandonedCarts.recoveredMonthCents / 100)}
+          </span>
+          {data.abandonedCarts.recoveryRate != null
+            ? ` (${Math.round(data.abandonedCarts.recoveryRate * 100)}% recuperados)`
+            : null}
+        </p>
+      ) : null}
+
       {isLoading && !data ? (
         <div className="flex flex-1 items-center justify-center py-16">
           <Loader2 className="h-5 w-5 animate-spin text-[var(--primary)]" />
@@ -321,6 +346,11 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
                   name={stage.name}
                   color={stage.color}
                   count={stage.totalCount}
+                  valueLabel={
+                    stage.role === "ABANDONED" && stage.totalValue > 0
+                      ? fmtCurrency(stage.totalValue)
+                      : undefined
+                  }
                   role={stage.role ?? null}
                   editable={canEdit}
                   onSave={(patch) => saveStage(stage.id, patch)}
@@ -341,6 +371,11 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
                       <CrmLeadCard lead={lead} drag onOpen={setOpenLeadId} />
                     </div>
                   ))}
+                  {stage.totalCount > stage.leads.length ? (
+                    <p className="px-1 py-2 type-fine-print text-[var(--ink-muted-48)]">
+                      +{stage.totalCount - stage.leads.length} leads · use a busca
+                    </p>
+                  ) : null}
                 </div>
               </div>
             );

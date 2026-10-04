@@ -6,6 +6,7 @@
 
 import { prisma } from "@/lib/db";
 import { upsertLedgerEntry } from "@/lib/atrako/finance-ledger";
+import { markCartsRecovered } from "@/lib/crm/abandoned-cart";
 import {
   ensureDefaultPipeline,
   STAGE_ROLE_WON,
@@ -183,6 +184,18 @@ export async function approveOrder(orderId: string) {
     productIds,
     productNames,
   }).catch(() => null);
+
+  await markCartsRecovered({
+    workspaceId: updated.clienteId,
+    contactId: updated.contactId,
+    email: updated.email,
+    phone: updated.phone,
+    orderRef: `COMMERCE:${updated.id}`,
+    totalCents: updated.totalCents,
+    paidAt: updated.approvedAt ?? new Date(),
+    ownExternalId: `order:${updated.id}`,
+    provider: "COMMERCE",
+  }).catch((err) => console.error("[commerce-abandoned-cart]", err));
 
   const leadMeta =
     wonLead?.metadata &&

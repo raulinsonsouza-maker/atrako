@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { upsertPersonAndLead } from "@/lib/atrako/person";
+import { ensureOpenNativeLead, upsertPersonAndLead } from "@/lib/atrako/person";
 
 async function ensureAtrakoCrmConfig(clienteId: string) {
   const existing = await prisma.crmConfig.findUnique({ where: { clienteId } });
@@ -41,6 +41,26 @@ function flattenEventPayload(payload: Record<string, unknown>): Record<string, u
   return flat;
 }
 
+/**
+ * Contato/lead já resolvidos pelo produtor do evento (commerce, forms, WA).
+ * `context.contactId` de apps satélite (social, crm) é de outro banco — só vale se existir aqui.
+ */
+async function resolveEventPerson(workspaceId: string, context: Record<string, unknown>) {
+  const contactId = typeof context.contactId === "string" ? context.contactId : "";
+  if (!contactId) return null;
+  const contact = await prisma.nativeContact.findFirst({
+    where: { id: contactId, clienteId: workspaceId },
+  });
+  if (!contact) return null;
+  const leadId = typeof context.leadId === "string" ? context.leadId : "";
+  const lead = leadId
+    ? await prisma.nativeLead.findFirst({
+        where: { id: leadId, clienteId: workspaceId, contactId: contact.id },
+      })
+    : null;
+  return { contact, lead };
+}
+
 /** Upsert LeadCrm + Person hub a partir de eventos de conversão. */
 export async function upsertLeadFromEvent(input: {
   workspaceId: string;
@@ -68,20 +88,39 @@ export async function upsertLeadFromEvent(input: {
         ? Number(valorRaw)
         : null;
 
-  const { contact, lead } = await upsertPersonAndLead({
-    workspaceId: input.workspaceId,
-    name: nome,
-    email,
-    phone: telefone,
-    source: fonte,
-    metadata: {
-      eventName: input.eventName,
-      lastEvent: input.eventName,
-      utmSource: pickString(payload, ["utmSource", "utm_source"]),
-      utmMedium: pickString(payload, ["utmMedium", "utm_medium"]),
-      utmCampaign: pickString(payload, ["utmCampaign", "utm_campaign"]),
-    },
-  });
+  const leadMetadata = {
+    eventName: input.eventName,
+    lastEvent: input.eventName,
+    utmSource: pickString(payload, ["utmSource", "utm_source"]),
+    utmMedium: pickString(payload, ["utmMedium", "utm_medium"]),
+    utmCampaign: pickString(payload, ["utmCampaign", "utm_campaign"]),
+  };
+
+  const known = await resolveEventPerson(input.workspaceId, input.context);
+  let contact;
+  let lead;
+  if (known) {
+    contact = known.contact;
+    lead =
+      known.lead ??
+      (await ensureOpenNativeLead({
+        workspaceId: input.workspaceId,
+        contactId: known.contact.id,
+        source: fonte,
+        metadata: leadMetadata,
+      }));
+  } else {
+    // Lead sem nenhum identificador não é trabalhável no CRM.
+    if (!nome && !email && !telefone) return null;
+    ({ contact, lead } = await upsertPersonAndLead({
+      workspaceId: input.workspaceId,
+      name: nome,
+      email,
+      phone: telefone,
+      source: fonte,
+      metadata: leadMetadata,
+    }));
+  }
 
   // Chave estável por pessoa — recompra e multi-touch no mesmo LeadCrm
   const crmLeadId = `atrako:contact:${contact.id}`.slice(0, 190);

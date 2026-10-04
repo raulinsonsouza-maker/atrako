@@ -549,6 +549,10 @@
   border-left-width: 3px;
 }
 
+.pipeline-column-header-abandoned {
+  border-left-width: 3px;
+}
+
 .pipeline-column-body {
   flex: 1;
   min-height: 0;

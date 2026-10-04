@@ -8,13 +8,59 @@ import { prisma as socialPrisma } from "@/lib/db-social";
 import { upsertPersonAndLead } from "@/lib/atrako/person";
 import { publishAtrakoEvents } from "@/lib/atrako/events";
 import { ingestPurchase } from "@/lib/symbius/attribution/engine";
+import { markLeadLost, trackOrderPayment } from "@/lib/crm/abandoned-cart";
 import {
   extractWooBuyerContact,
   getWooOrder,
+  isWooPaidOrder,
+  isWooRefundedOrder,
+  isWooUnpaidOrder,
   wooMetaValue,
+  wooOrderItems,
   wooOrderTotalCents,
   type WooOrder,
 } from "./orders";
+
+/** Pago → Ganho (+ recupera carrinho); não pago → carrinho abandonado; reembolso → Perdido. */
+async function syncWooOrderState(input: {
+  workspaceId: string;
+  wooOrder: WooOrder;
+  contactId: string | null;
+  leadId: string | null;
+  occurredAt: Date;
+}) {
+  if (isWooRefundedOrder(input.wooOrder)) {
+    if (input.leadId) {
+      await markLeadLost(input.workspaceId, input.leadId, "reembolso", {
+        lostOrderRef: `WOOCOMMERCE:${input.wooOrder.id}`,
+      }).catch((err) => console.error("[woo-lost]", err));
+    }
+    return;
+  }
+  const paid = isWooPaidOrder(input.wooOrder);
+  if (!paid && !isWooUnpaidOrder(input.wooOrder)) return;
+  const buyer = extractWooBuyerContact(input.wooOrder);
+  try {
+    await trackOrderPayment({
+      workspaceId: input.workspaceId,
+      provider: "WOOCOMMERCE",
+      externalOrderId: String(input.wooOrder.id),
+      paid,
+      occurredAt: input.wooOrder.date_created ? new Date(input.wooOrder.date_created) : input.occurredAt,
+      totalCents: wooOrderTotalCents(input.wooOrder),
+      currency: input.wooOrder.currency,
+      contactId: input.contactId,
+      leadId: input.leadId,
+      name: buyer.name,
+      email: buyer.email,
+      phone: buyer.phone,
+      items: wooOrderItems(input.wooOrder),
+      recoveryUrl: input.wooOrder.payment_url || null,
+    });
+  } catch (err) {
+    console.error("[woo-abandoned-cart]", err instanceof Error ? err.message : err);
+  }
+}
 
 export async function ingestWooCommerceOrder(input: {
   workspaceId: string;
@@ -67,7 +113,19 @@ export async function ingestWooCommerceOrder(input: {
     const updated = await prisma.marketplaceOrder.findUniqueOrThrow({
       where: { id: existing.id },
     });
+    await syncWooOrderState({
+      workspaceId: input.workspaceId,
+      wooOrder,
+      contactId: updated.contactId,
+      leadId: updated.leadId,
+      occurredAt: updated.occurredAt ?? updated.createdAt,
+    });
     return { order: updated, created: false as const };
+  }
+
+  // Rascunho do checkout em blocos: sem dados de comprador, não é pedido ainda.
+  if ((wooOrder.status ?? "").toLowerCase() === "checkout-draft") {
+    return { order: null, created: false as const, skipped: "checkout-draft" as const };
   }
 
   return persistWooOrder({
@@ -172,6 +230,13 @@ async function persistWooOrder(input: {
   }
 
   await maybeAttributePurchase(input.workspaceId, input.wooOrder);
+  await syncWooOrderState({
+    workspaceId: input.workspaceId,
+    wooOrder: input.wooOrder,
+    contactId: contact.id,
+    leadId: lead.id,
+    occurredAt,
+  });
 
   return { order, created: true as const, contact, lead };
 }

@@ -13,10 +13,13 @@ import {
   STAGE_ROLE_WON,
 } from "@/lib/modules/crm";
 import { ingestPurchase } from "@/lib/symbius/attribution/engine";
+import { markLeadLost, trackOrderPayment } from "@/lib/crm/abandoned-cart";
 import {
   extractShopifyBuyer,
   extractShopifyLineItems,
   isShopifyPaidStatus,
+  isShopifyRefundedStatus,
+  isShopifyUnpaidStatus,
   shopifyNoteValue,
   shopifyOrderCurrency,
   shopifyOrderExternalId,
@@ -109,6 +112,50 @@ async function markShopifyBuyerInCrm(input: {
   return updatedLead;
 }
 
+async function syncShopifyAbandonment(input: {
+  workspaceId: string;
+  externalId: string;
+  status: string | null;
+  occurredAt: Date;
+  totalCents: number;
+  currency: string;
+  contactId: string | null;
+  leadId: string | null;
+  items: NormalizedShopifyLineItem[];
+  buyer: { name: string | null; email: string | null; phone: string | null };
+}) {
+  if (isShopifyRefundedStatus(input.status)) {
+    if (input.leadId) {
+      await markLeadLost(input.workspaceId, input.leadId, "reembolso", {
+        lostOrderRef: `SHOPIFY:${input.externalId}`,
+      }).catch((err) => console.error("[shopify-lost]", err));
+    }
+    return;
+  }
+  const paid = isShopifyPaidStatus(input.status);
+  if (!paid && !isShopifyUnpaidStatus(input.status)) return;
+  await trackOrderPayment({
+    workspaceId: input.workspaceId,
+    provider: "SHOPIFY",
+    externalOrderId: input.externalId,
+    paid,
+    occurredAt: input.occurredAt,
+    totalCents: input.totalCents,
+    currency: input.currency,
+    contactId: input.contactId,
+    leadId: input.leadId,
+    name: input.buyer.name,
+    email: input.buyer.email,
+    phone: input.buyer.phone,
+    items: input.items.map((i) => ({
+      title: i.title,
+      quantity: i.quantity,
+      unitPriceCents: i.unitPriceCents,
+      sku: i.sku,
+    })),
+  }).catch((err) => console.error("[shopify-abandoned-cart]", err));
+}
+
 export async function ingestShopifyHubOrder(input: {
   workspaceId: string;
   order: ShopifyOrder;
@@ -197,6 +244,22 @@ export async function ingestShopifyHubOrder(input: {
     await maybeAttributePurchase(input.workspaceId, input.order);
     const refreshed = await prisma.marketplaceOrder.findUniqueOrThrow({
       where: { id: existing.id },
+    });
+    await syncShopifyAbandonment({
+      workspaceId: input.workspaceId,
+      externalId,
+      status,
+      occurredAt,
+      totalCents,
+      currency,
+      contactId: refreshed.contactId,
+      leadId: refreshed.leadId,
+      items,
+      buyer: {
+        name: refreshed.buyerName,
+        email: refreshed.buyerEmail,
+        phone: refreshed.buyerPhone,
+      },
     });
     return { order: refreshed, created: false as const };
   }
@@ -335,6 +398,18 @@ export async function ingestShopifyHubOrder(input: {
   }
 
   await maybeAttributePurchase(input.workspaceId, input.order);
+  await syncShopifyAbandonment({
+    workspaceId: input.workspaceId,
+    externalId,
+    status,
+    occurredAt,
+    totalCents,
+    currency,
+    contactId: contact.id,
+    leadId: (wonLead ?? lead).id,
+    items,
+    buyer,
+  });
 
   return { order, created: true as const, contact, lead: wonLead ?? lead };
 }

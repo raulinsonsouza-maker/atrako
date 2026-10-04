@@ -5,12 +5,14 @@ import { GripVertical, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { STAGE_COLOR_PRESETS } from "@/components/crm/CrmStageHeader";
 
+type StageRole = "ENTRY" | "WON" | "ABANDONED" | "LOST";
+
 type StageDraft = {
   key: string;
   id?: string;
   name: string;
   color: string;
-  role: "ENTRY" | "WON" | null;
+  role: StageRole | null;
 };
 
 type Props = {
@@ -19,19 +21,25 @@ type Props = {
     id: string;
     name: string;
     color: string;
-    role?: "ENTRY" | "WON" | null;
+    role?: StageRole | null;
   }>;
   onClose: () => void;
   onSaved: () => void;
 };
 
-function toDrafts(
-  stages: Props["stages"],
-): { entry: StageDraft; middle: StageDraft[]; won: StageDraft } {
+function toDrafts(stages: Props["stages"]): {
+  entry: StageDraft;
+  abandoned: StageDraft | null;
+  middle: StageDraft[];
+  won: StageDraft;
+  lost: StageDraft | null;
+} {
   const entryRow = stages.find((s) => s.role === "ENTRY") ?? stages[0];
   const wonRow = stages.find((s) => s.role === "WON") ?? stages[stages.length - 1];
+  const abandonedRow = stages.find((s) => s.role === "ABANDONED");
+  const lostRow = stages.find((s) => s.role === "LOST");
   const middle = stages
-    .filter((s) => s.role !== "ENTRY" && s.role !== "WON")
+    .filter((s) => !s.role)
     .map((s) => ({
       key: s.id,
       id: s.id,
@@ -47,6 +55,15 @@ function toDrafts(
       color: entryRow?.color || STAGE_COLOR_PRESETS[0],
       role: "ENTRY",
     },
+    abandoned: abandonedRow
+      ? {
+          key: abandonedRow.id,
+          id: abandonedRow.id,
+          name: abandonedRow.name,
+          color: abandonedRow.color || "#FF9500",
+          role: "ABANDONED",
+        }
+      : null,
     middle,
     won: {
       key: wonRow?.id ?? "won",
@@ -55,6 +72,15 @@ function toDrafts(
       color: wonRow?.color || "#34C759",
       role: "WON",
     },
+    lost: lostRow
+      ? {
+          key: lostRow.id,
+          id: lostRow.id,
+          name: lostRow.name,
+          color: lostRow.color || "#FF3B30",
+          role: "LOST",
+        }
+      : null,
   };
 }
 
@@ -67,8 +93,10 @@ export function CrmFunnelConfigModal({
 }: Props) {
   const initial = useMemo(() => toDrafts(stages), [stages]);
   const [entry, setEntry] = useState(initial.entry);
+  const [abandoned, setAbandoned] = useState(initial.abandoned);
   const [middle, setMiddle] = useState(initial.middle);
   const [won, setWon] = useState(initial.won);
+  const [lost, setLost] = useState(initial.lost);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragKey, setDragKey] = useState<string | null>(null);
@@ -77,8 +105,10 @@ export function CrmFunnelConfigModal({
   useEffect(() => {
     const next = toDrafts(stages);
     setEntry(next.entry);
+    setAbandoned(next.abandoned);
     setMiddle(next.middle);
     setWon(next.won);
+    setLost(next.lost);
   }, [stages]);
 
   useEffect(() => {
@@ -131,8 +161,13 @@ export function CrmFunnelConfigModal({
 
   async function save() {
     if (saving) return;
-    if (!entry.name.trim() || !won.name.trim()) {
-      setError("Dê um nome à entrada e ao fechamento.");
+    if (
+      !entry.name.trim() ||
+      !won.name.trim() ||
+      (abandoned && !abandoned.name.trim()) ||
+      (lost && !lost.name.trim())
+    ) {
+      setError("Dê um nome a todas as etapas fixas.");
       return;
     }
     for (const s of middle) {
@@ -154,6 +189,10 @@ export function CrmFunnelConfigModal({
           entryColor: entry.color,
           wonName: won.name.trim(),
           wonColor: won.color,
+          ...(abandoned
+            ? { abandonedName: abandoned.name.trim(), abandonedColor: abandoned.color }
+            : {}),
+          ...(lost ? { lostName: lost.name.trim(), lostColor: lost.color } : {}),
           middle: middle.map((s) => ({
             id: s.id,
             name: s.name.trim(),
@@ -240,6 +279,23 @@ export function CrmFunnelConfigModal({
             />
           </section>
 
+          {abandoned ? (
+            <section className="funnel-config-section">
+              <p className="type-caption-strong text-[var(--ink)]">Carrinho abandonado</p>
+              <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
+                Pedidos não pagos e checkouts abandonados da loja. Pagou, vai para o fechamento.
+              </p>
+              <StageRow
+                draft={abandoned}
+                editing={editingKey === abandoned.key}
+                onEdit={() => setEditingKey(abandoned.key)}
+                onDone={() => setEditingKey(null)}
+                onName={(name) => setAbandoned((a) => (a ? { ...a, name } : a))}
+                onColor={(color) => setAbandoned((a) => (a ? { ...a, color } : a))}
+              />
+            </section>
+          ) : null}
+
           <section className="funnel-config-section">
             <p className="type-caption-strong text-[var(--ink)]">No meio do caminho</p>
             <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
@@ -285,6 +341,24 @@ export function CrmFunnelConfigModal({
               onColor={(color) => setWon((w) => ({ ...w, color }))}
             />
           </section>
+
+          {lost ? (
+            <section className="funnel-config-section">
+              <p className="type-caption-strong text-[var(--ink)]">Perdido</p>
+              <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
+                Pedido não pago há mais de 30 dias, carrinho expirado ou reembolso. O contato
+                continua na base para campanhas de reativação.
+              </p>
+              <StageRow
+                draft={lost}
+                editing={editingKey === lost.key}
+                onEdit={() => setEditingKey(lost.key)}
+                onDone={() => setEditingKey(null)}
+                onName={(name) => setLost((l) => (l ? { ...l, name } : l))}
+                onColor={(color) => setLost((l) => (l ? { ...l, color } : l))}
+              />
+            </section>
+          ) : null}
 
           {error ? (
             <p className="type-caption text-[var(--danger)]">{error}</p>

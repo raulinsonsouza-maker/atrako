@@ -121,14 +121,26 @@ export async function processWhatsAppEventSideEffects(event: {
       typeof event.payload.productId === "string" ? event.payload.productId : null;
     const slug = typeof event.payload.slug === "string" ? event.payload.slug : null;
     const orderId = typeof event.payload.orderId === "string" ? event.payload.orderId : null;
+    const recoveryUrl =
+      typeof event.payload.recoveryUrl === "string" && event.payload.recoveryUrl
+        ? event.payload.recoveryUrl
+        : null;
     const base = publicBaseUrl();
-    const url = productId
-      ? `${base}/checkout/${productId}`
-      : slug
-        ? `${base}/p/${slug}`
-        : orderId
-          ? `${base}/obrigado?orderId=${orderId}`
-          : `${base}/commerce`;
+    const url =
+      recoveryUrl ??
+      (productId
+        ? `${base}/checkout/${productId}`
+        : slug
+          ? `${base}/p/${slug}`
+          : orderId
+            ? `${base}/obrigado?orderId=${orderId}`
+            : null);
+    // Loja externa sem link de retomada: mensagem sem botão quebrado para /commerce.
+    if (!url) {
+      console.info("[wa-triggers] abandonment skipped (no recovery url)", workspaceId);
+      return;
+    }
+    const internalSuffix = url.startsWith(`${base}/`) ? url.slice(base.length + 1) : null;
 
     const body =
       (typeof event.payload.message === "string" && event.payload.message) ||
@@ -145,7 +157,7 @@ export async function processWhatsAppEventSideEffects(event: {
           to: phone,
           templateName,
           contactId,
-          buttonUrlSuffix: productId || slug || undefined,
+          buttonUrlSuffix: recoveryUrl ? internalSuffix || undefined : productId || slug || undefined,
           previewBody: body,
         });
       } else {
@@ -250,42 +262,4 @@ export async function processWhatsAppEventSideEffects(event: {
       console.warn("[wa-triggers] birthday failed", e);
     }
   }
-}
-
-/** Cron / job: pedidos PENDING antigos → checkout.abandoned + send. */
-export async function emitAbandonedCommerceOrders(opts?: { olderThanMinutes?: number }) {
-  const minutes = opts?.olderThanMinutes ?? 60;
-  const cutoff = new Date(Date.now() - minutes * 60 * 1000);
-  const orders = await prisma.commerceOrder.findMany({
-    where: {
-      status: "PENDING",
-      createdAt: { lt: cutoff },
-      phone: { not: null },
-    },
-    take: 50,
-    orderBy: { createdAt: "asc" },
-  });
-
-  const { createEvent, publishEventBatch } = await import("@atrako/events");
-  const events = [];
-  for (const order of orders) {
-    if (!order.phone) continue;
-    events.push(
-      createEvent({
-        name: "checkout.abandoned",
-        source: "commerce",
-        idempotencyKey: `commerce-abandon-${order.id}`,
-        context: { workspaceId: order.clienteId },
-        payload: {
-          orderId: order.id,
-          productId: order.productId,
-          phone: order.phone,
-          email: order.email,
-          kind: "abandonment",
-        },
-      }),
-    );
-  }
-  if (events.length) await publishEventBatch(events);
-  return { count: events.length };
 }

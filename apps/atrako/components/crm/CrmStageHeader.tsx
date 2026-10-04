@@ -15,23 +15,35 @@ export const STAGE_COLOR_PRESETS = [
   "#AF52DE",
 ];
 
-type StageRole = "ENTRY" | "WON" | null;
+type StageRole = "ENTRY" | "WON" | "ABANDONED" | "LOST" | null;
 
 type Props = {
   stageId: string;
   name: string;
   color: string;
   count: number;
+  /** Valor somado da coluna (ex.: carrinhos em aberto). */
+  valueLabel?: string;
   role?: StageRole;
   editable?: boolean;
   onSave: (patch: { name: string; color: string }) => Promise<void>;
 };
 
-/** Header da coluna — ENTRY e WON são fixos na posição; nomes editáveis. */
+const FIXED_ROLE_HINT: Record<Exclude<StageRole, null>, string> = {
+  ENTRY: "Entrada do funil — o nome é só um rótulo.",
+  ABANDONED:
+    "Carrinho abandonado — pedidos não pagos e checkouts da loja entram aqui sozinhos.",
+  WON: "Fechamento (ganho) — o nome é só um rótulo.",
+  LOST:
+    "Perdido — pedido não pago há mais de 30 dias, carrinho expirado ou reembolso. O contato segue na base para reativação.",
+};
+
+/** Header da coluna — ENTRY, ABANDONED, WON e LOST são fixos na posição; nomes editáveis. */
 export function CrmStageHeader({
   name,
   color,
   count,
+  valueLabel,
   role = null,
   editable = true,
   onSave,
@@ -89,6 +101,7 @@ export function CrmStageHeader({
         "pipeline-column-header relative",
         role === "ENTRY" && "pipeline-column-header-entry",
         role === "WON" && "pipeline-column-header-won",
+        (role === "ABANDONED" || role === "LOST") && "pipeline-column-header-abandoned",
       )}
     >
       <button
@@ -110,16 +123,14 @@ export function CrmStageHeader({
           />
         ) : null}
       </button>
-      <span className="type-fine-print tabular-nums text-[var(--ink-muted-48)]">{count}</span>
+      <span className="shrink-0 type-fine-print tabular-nums text-[var(--ink-muted-48)]">
+        {valueLabel ? `${valueLabel} · ${count}` : count}
+      </span>
 
       {open ? (
         <div className="absolute left-2 right-2 top-[calc(100%+6px)] z-20 space-y-3 rounded-lg border border-[var(--hairline)] bg-[var(--canvas)] p-3">
-          {role === "ENTRY" || role === "WON" ? (
-            <p className="type-fine-print text-[var(--ink-muted-48)]">
-              {role === "ENTRY"
-                ? "Entrada do funil — o nome é só um rótulo."
-                : "Fechamento (ganho) — o nome é só um rótulo."}
-            </p>
+          {role ? (
+            <p className="type-fine-print text-[var(--ink-muted-48)]">{FIXED_ROLE_HINT[role]}</p>
           ) : null}
           <label className="block">
             <span className="type-micro-legal text-[var(--ink-muted-48)]">Nome</span>

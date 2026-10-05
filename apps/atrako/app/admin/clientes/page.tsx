@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { AppPage } from "@/components/layout/AppPage";
 import { SegmentoManagerModal, fetchSegmentos, type Segmento } from "./SegmentoManagerModal";
 import { LogoUploadField } from "./LogoUploadField";
+import { ClienteAcessoSection } from "./ClienteAcessoSection";
 
 interface ContaAdmin {
   id: string;
@@ -449,7 +450,7 @@ function ClienteForm({
             {!clienteId ? (
               <FormField
                 label="E-mail do OWNER"
-                hint="Envia convite para o dealer definir senha e acessar só este workspace."
+                hint="Gera um link de convite (exibido após criar) para o dono definir a senha e acessar só este workspace."
               >
                 <input
                   type="email"
@@ -809,6 +810,8 @@ function ClienteForm({
                 <span className="text-sm text-[var(--foreground)]">{inPilotEnabled ? "InPilot ativado" : "InPilot desativado"}</span>
               </label>
             </div>
+
+            {clienteId && <ClienteAcessoSection clienteId={clienteId} />}
 
             {clienteId && (
               <CrmConfigSection clienteId={clienteId} sessionReady={sessionReady} />
@@ -1926,7 +1929,14 @@ export default function AdminClientesPage() {
       queryClient.invalidateQueries({ queryKey: ["admin", "clientes"] });
       queryClient.invalidateQueries({ queryKey: ["clientes"] });
       setFormError("");
-      setFormSuccess(data.sync ? "" : "Cliente criado.");
+      const invitePath = data.ownerInvite?.acceptPath as string | undefined;
+      setFormSuccess(
+        invitePath
+          ? `Cliente criado. Link para o dono definir a senha (válido por 14 dias): ${window.location.origin}${invitePath}`
+          : data.sync
+            ? ""
+            : "Cliente criado.",
+      );
       setShowCreateForm(false);
     },
     onError: (e: Error) => {
@@ -2123,7 +2133,7 @@ export default function AdminClientesPage() {
       {formSuccess && (
         <div className="flex items-center gap-3 rounded-[var(--radius-xs)] border border-[var(--success)]/30 bg-[var(--success)]/5 px-4 py-3 type-body">
           <CheckCircle2 className="h-4 w-4 shrink-0 text-[var(--success)]" />
-          <span className="text-[var(--success)]">{formSuccess}</span>
+          <span className="break-all text-[var(--success)]">{formSuccess}</span>
         </div>
       )}
 

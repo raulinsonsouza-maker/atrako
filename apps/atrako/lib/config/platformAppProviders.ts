@@ -13,6 +13,7 @@ export const PLATFORM_APP_PROVIDERS = [
   "WOOCOMMERCE",
   "SHOPIFY",
   "SHOPEE",
+  "TIKTOK_SHOP",
   "TRAY",
   "NUVEMSHOP",
   "RESEND",

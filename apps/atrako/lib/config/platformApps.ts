@@ -37,6 +37,10 @@ export type PlatformAppCredentials = {
   apiBaseUrl?: string;
   /** ISO date when Partner Key expires (admin ops). */
   partnerKeyExpiresAt?: string;
+  /** TikTok Shop service_id (Partner Center → App → ID). */
+  serviceId?: string;
+  /** TikTok Shop authorize host, e.g. https://services.tiktokshop.com */
+  authBaseUrl?: string;
   [key: string]: unknown;
 };
 
@@ -149,6 +153,17 @@ const ENV_SEED: Partial<
       process.env.SHOPEE_API_BASE_URL?.trim() || "https://partner.shopeemobile.com",
     partnerKeyExpiresAt: process.env.SHOPEE_PARTNER_KEY_EXPIRES_AT?.trim() || undefined,
   }),
+  TIKTOK_SHOP: () => ({
+    label: "TikTok Shop",
+    clientId: process.env.TIKTOK_SHOP_APP_KEY?.trim() || undefined,
+    clientSecret: process.env.TIKTOK_SHOP_APP_SECRET?.trim() || undefined,
+    serviceId: process.env.TIKTOK_SHOP_SERVICE_ID?.trim() || undefined,
+    redirectUri:
+      process.env.TIKTOK_SHOP_REDIRECT_URI?.trim() ||
+      "https://atrako.com.br/api/atrako/oauth/tiktok-shop/callback",
+    authBaseUrl:
+      process.env.TIKTOK_SHOP_AUTH_BASE_URL?.trim() || "https://services.tiktokshop.com",
+  }),
   TRAY: () => ({
     label: "Tray",
     clientId: process.env.TRAY_CONSUMER_KEY?.trim() || undefined,
@@ -192,6 +207,7 @@ export async function seedPlatformAppFromEnv(provider: PlatformAppProvider): Pro
     provider !== "TIKTOK" &&
     provider !== "SHOPIFY" &&
     provider !== "SHOPEE" &&
+    provider !== "TIKTOK_SHOP" &&
     provider !== "TRAY" &&
     provider !== "NUVEMSHOP"
   ) {
@@ -294,6 +310,7 @@ export async function resolvePlatformApp(provider: PlatformAppProvider): Promise
       provider !== "WOOCOMMERCE" &&
       provider !== "SHOPIFY" &&
       provider !== "SHOPEE" &&
+      provider !== "TIKTOK_SHOP" &&
       provider !== "TRAY" &&
       provider !== "NUVEMSHOP"
     ) {
@@ -373,6 +390,7 @@ export async function listPlatformAppsMasked() {
       hasRefreshToken: Boolean(creds.refreshToken),
       hasRedirectUri: Boolean(creds.redirectUri),
       hasLoginCustomerId: Boolean(creds.loginCustomerId),
+      hasServiceId: Boolean(creds.serviceId),
       clientIdPreview: creds.clientId ? `${creds.clientId.slice(0, 6)}…` : null,
       partnerKeyExpiresAt:
         typeof creds.partnerKeyExpiresAt === "string"

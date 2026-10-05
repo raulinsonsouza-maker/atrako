@@ -27,7 +27,15 @@ Conectar OAuth **não** navega a tab do hub. Padrão obrigatório para providers
 5. Hub: invalida `workspace-connections` (+ Meta status) e mostra banner.
 
 Helpers: `lib/oauth/openOAuthPopup.ts`, `lib/oauth/oauthCompleteRedirect.ts`, `hooks/useOAuthPopup.ts`.  
-Forms manuais só onde a plataforma exige chave (ex.: WooCommerce). WhatsApp e Ads: só OAuth oficial (popup). WhatsApp usa Embedded Signup (`/config/conexoes/whatsapp-auth` + Login Config ID WhatsApp em Meta). Shopify: OAuth popup com domínio da loja (`/api/atrako/oauth/shopify/start?workspaceId=&shop=`). Tray: OAuth popup com domínio da loja (`/api/atrako/oauth/tray/start?workspaceId=&store=`) — callback `https://atrako.com.br/api/atrako/oauth/tray/callback`; webhook app-level `https://atrako.com.br/api/webhooks/tray` (cadastrar via chamado Tray Desenvolvedores). Nuvemshop: OAuth popup (`/api/atrako/oauth/nuvemshop/start?workspaceId=`) — callback `https://atrako.com.br/api/atrako/oauth/nuvemshop/callback`; webhooks registrados na loja (`order/created|updated|paid|cancelled`). Shopee: OAuth popup (`/api/atrako/oauth/shopee/start?workspaceId=`) com Partner ID/Key em `/admin/apps`.
+Forms manuais só onde a plataforma exige chave (ex.: WooCommerce). WhatsApp e Ads: só OAuth oficial (popup). WhatsApp usa Embedded Signup (`/config/conexoes/whatsapp-auth` + Login Config ID WhatsApp em Meta). Shopify: OAuth popup com domínio da loja (`/api/atrako/oauth/shopify/start?workspaceId=&shop=`). Tray: OAuth popup com domínio da loja (`/api/atrako/oauth/tray/start?workspaceId=&store=`) — callback `https://atrako.com.br/api/atrako/oauth/tray/callback`; webhook app-level `https://atrako.com.br/api/webhooks/tray` (cadastrar via chamado Tray Desenvolvedores). Nuvemshop: OAuth popup (`/api/atrako/oauth/nuvemshop/start?workspaceId=`) — callback `https://atrako.com.br/api/atrako/oauth/nuvemshop/callback`; webhooks registrados na loja (`order/created|updated|paid|cancelled`). Shopee: OAuth popup (`/api/atrako/oauth/shopee/start?workspaceId=`) com Partner ID/Key em `/admin/apps`. TikTok Shop: OAuth popup (`/api/atrako/oauth/tiktok-shop/start?workspaceId=`) com App Key/Secret + Service ID em `/admin/apps` (`TIKTOK_SHOP`, separado do `TIKTOK` de Ads) — redirect `https://atrako.com.br/api/atrako/oauth/tiktok-shop/callback`; webhook `https://atrako.com.br/api/webhooks/tiktok-shop` (assinar `ORDER_STATUS_CHANGE` no Partner Center; HMAC no header `Authorization`).
+
+### TikTok Shop
+
+- App: Partner Center → Aplicativos e serviços (serviço personalizado, mercado Brasil). Authorize em `https://services.tiktokshop.com/open/authorize?service_id=…&state=…` (US: `services.us.tiktokshop.com`).
+- Token: `auth.tiktok-shops.com/api/v2/token/get|refresh`; APIs em `open-api.tiktokglobalshop.com` (versão 202309) com `app_key`, `timestamp`, `sign`, `shop_cipher` + header `x-tts-access-token`.
+- Escopos no app: Authorization (lojas / `shop_cipher`), Order, Product.
+- Lista de IPs permitidos (se ativada): incluir o IP de saída do servidor.
+- Código: `lib/integrations/tiktok-shop/*`; conexão `WorkspaceConnection.provider = TIKTOK_SHOP` (tokens + `shopCipher` em credentials; `shopId` em metadata para casar webhooks).
 
 ## Providers
 
@@ -43,6 +51,7 @@ Forms manuais só onde a plataforma exige chave (ex.: WooCommerce). WhatsApp e A
 | Tray | OAuth Tray Commerce, pedidos → CRM + E-commerce + financeiro; webhook app-level | https://developers.tray.com.br/#tray-api-plugin |
 | Nuvemshop | OAuth Tiendanube, pedidos → CRM + E-commerce + financeiro | https://dev.nuvemshop.com.br/docs/erp-guide/authentication |
 | Shopee | OAuth Open Platform V2, pedidos → CRM + Marketplaces + financeiro | https://open.shopee.com/developer-guide/4 |
+| TikTok Shop | OAuth Partner Center, pedidos/produtos → CRM + Marketplaces + financeiro; webhook ORDER_STATUS_CHANGE | https://partner.tiktokshop.com/docv2/page/about-partner-center-console |
 | Google Ads / GA4 | Contas e sync | https://developers.google.com/google-ads/api |
 | LinkedIn Ads | Sync campanhas | LinkedIn Marketing API |
 | Google Calendar | Agenda | Google Calendar API |
@@ -75,6 +84,11 @@ SHOPEE_PARTNER_ID=
 SHOPEE_PARTNER_KEY=
 SHOPEE_REDIRECT_URI=
 SHOPEE_API_BASE_URL=
+TIKTOK_SHOP_APP_KEY=
+TIKTOK_SHOP_APP_SECRET=
+TIKTOK_SHOP_SERVICE_ID=
+TIKTOK_SHOP_REDIRECT_URI=
+TIKTOK_SHOP_AUTH_BASE_URL=   # default https://services.tiktokshop.com
 TRAY_CONSUMER_KEY=
 TRAY_CONSUMER_SECRET=
 TRAY_REDIRECT_URI=
@@ -92,7 +106,7 @@ Depois do seed, edite em `/admin/apps` — não espalhe secrets em módulos.
 
 ## WorkspaceConnection.provider
 
-`MERCADO_PAGO` | `MERCADO_LIVRE` | `INSTAGRAM` | `META_ADS` | `GOOGLE_ADS` | `LINKEDIN_ADS` | `WHATSAPP` | `WOOCOMMERCE` | `SHOPIFY` | `SHOPEE` | `TRAY` | `NUVEMSHOP` | `GOOGLE_CALENDAR` | `RESEND`
+`MERCADO_PAGO` | `MERCADO_LIVRE` | `INSTAGRAM` | `META_ADS` | `GOOGLE_ADS` | `LINKEDIN_ADS` | `WHATSAPP` | `WOOCOMMERCE` | `SHOPIFY` | `SHOPEE` | `TIKTOK_SHOP` | `TRAY` | `NUVEMSHOP` | `GOOGLE_CALENDAR` | `RESEND`
 
 ## Resend (e-mail de relacionamento)
 

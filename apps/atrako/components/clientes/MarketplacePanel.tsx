@@ -15,7 +15,15 @@ import {
   YAxis,
 } from "recharts";
 
-type MarketplaceSub = "ml" | "shopee" | "magalu";
+type MarketplaceSub = "ml" | "shopee" | "tiktok" | "magalu";
+
+const SYNCABLE_SUBS: MarketplaceSub[] = ["ml", "shopee", "tiktok"];
+
+const SYNC_ENDPOINTS: Partial<Record<MarketplaceSub, string>> = {
+  ml: "/api/atrako/mercadolivre/sync",
+  shopee: "/api/atrako/shopee/sync",
+  tiktok: "/api/atrako/tiktok-shop/sync",
+};
 
 type MarketplaceResponse = {
   provider: string;
@@ -93,12 +101,14 @@ type MarketplaceResponse = {
 const SUB_LABELS: Record<MarketplaceSub, string> = {
   ml: "Mercado Livre",
   shopee: "Shopee",
+  tiktok: "TikTok Shop",
   magalu: "Magalu",
 };
 
 const PROVIDER_QUERY: Record<MarketplaceSub, string> = {
   ml: "MERCADO_LIVRE",
   shopee: "SHOPEE",
+  tiktok: "TIKTOK_SHOP",
   magalu: "MAGALU",
 };
 
@@ -117,6 +127,15 @@ function statusLabel(status: string) {
     payment_in_process: "Pagamento em processo",
     cancelled: "Cancelado",
     invalid: "Inválido",
+    UNPAID: "Aguardando pagamento",
+    ON_HOLD: "Em espera",
+    AWAITING_SHIPMENT: "Aguardando envio",
+    PARTIALLY_SHIPPING: "Envio parcial",
+    AWAITING_COLLECTION: "Aguardando coleta",
+    IN_TRANSIT: "Em trânsito",
+    DELIVERED: "Entregue",
+    COMPLETED: "Concluído",
+    CANCELLED: "Cancelado",
     unknown: "Outros",
   };
   return map[status] ?? status;
@@ -149,11 +168,12 @@ export function MarketplacePanel({
       if (!res.ok) throw new Error("Falha ao carregar marketplaces");
       return res.json() as Promise<MarketplaceResponse>;
     },
-    enabled: !!clienteId && (sub === "ml" || sub === "shopee"),
+    enabled: !!clienteId && SYNCABLE_SUBS.includes(sub),
   });
 
   async function syncMarketplace() {
-    const endpoint = sub === "ml" ? "/api/atrako/mercadolivre/sync" : "/api/atrako/shopee/sync";
+    const endpoint = SYNC_ENDPOINTS[sub];
+    if (!endpoint) return;
     setSyncing(true);
     setSyncError(null);
     try {
@@ -175,7 +195,7 @@ export function MarketplacePanel({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--card)] p-1 self-start w-fit">
-        {(["ml", "shopee", "magalu"] as const).map((key) => (
+        {(["ml", "shopee", "tiktok", "magalu"] as const).map((key) => (
           <button
             key={key}
             type="button"
@@ -191,7 +211,7 @@ export function MarketplacePanel({
         ))}
       </div>
 
-      {data?.connected && (sub === "ml" || sub === "shopee") ? (
+      {data?.connected && SYNCABLE_SUBS.includes(sub) ? (
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
@@ -200,7 +220,7 @@ export function MarketplacePanel({
             className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] border border-[var(--border)] px-3 py-1.5 type-fine-print text-[var(--foreground)] disabled:opacity-50"
           >
             {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="h-3.5 w-3.5" />}
-            Sincronizar {sub === "ml" ? "Mercado Livre" : "Shopee"}
+            Sincronizar {SUB_LABELS[sub]}
           </button>
           {syncError ? <p role="alert" className="type-fine-print text-red-600">{syncError}</p> : null}
         </div>

@@ -19,7 +19,9 @@ export type PlatformAppFieldKey =
   | "scopes"
   | "apiVersion"
   | "apiBaseUrl"
-  | "partnerKeyExpiresAt";
+  | "partnerKeyExpiresAt"
+  | "serviceId"
+  | "authBaseUrl";
 
 export type PlatformAppField = {
   key: PlatformAppFieldKey;
@@ -305,6 +307,44 @@ export const PLATFORM_APP_CATALOG: Record<PlatformAppProvider, PlatformAppCatalo
       },
     ],
   },
+  TIKTOK_SHOP: {
+    provider: "TIKTOK_SHOP",
+    title: "TikTok Shop",
+    description:
+      "OAuth TikTok Shop Partner Center — pedidos no CRM, Marketplaces e financeiro. Webhook ORDER_STATUS_CHANGE.",
+    fields: [
+      { key: "label", label: "Nome de exibição" },
+      {
+        key: "clientId",
+        label: "App Key",
+        hint: "Partner Center → App e serviço → Credenciais",
+        requiredForReady: true,
+      },
+      {
+        key: "clientSecret",
+        label: "App Secret",
+        hint: "Assina chamadas e webhooks — nunca no frontend",
+        secret: true,
+        requiredForReady: true,
+      },
+      {
+        key: "serviceId",
+        label: "Service ID",
+        hint: "ID do app/serviço no Partner Center (service_id do authorize)",
+        requiredForReady: true,
+      },
+      {
+        key: "redirectUri",
+        label: "Redirect URL",
+        hint: "https://atrako.com.br/api/atrako/oauth/tiktok-shop/callback",
+      },
+      {
+        key: "authBaseUrl",
+        label: "Authorize host",
+        hint: "https://services.tiktokshop.com (US: https://services.us.tiktokshop.com)",
+      },
+    ],
+  },
   TRAY: {
     provider: "TRAY",
     title: "Tray",
@@ -403,6 +443,7 @@ export type PlatformAppReadinessFlags = {
   hasRefreshToken: boolean;
   hasRedirectUri?: boolean;
   hasLoginCustomerId?: boolean;
+  hasServiceId?: boolean;
 };
 
 export type PlatformAppStatus = "ready" | "incomplete" | "disabled" | "n_a";
@@ -459,10 +500,13 @@ export function platformAppStatus(
         return Boolean(flags.hasLoginCustomerId);
       case "loginConfigId":
         return flags.hasLoginConfigId;
+      case "serviceId":
+        return Boolean(flags.hasServiceId);
       case "scopes":
       case "apiVersion":
       case "apiBaseUrl":
       case "partnerKeyExpiresAt":
+      case "authBaseUrl":
         return true;
       default:
         return true;
@@ -523,10 +567,14 @@ export function credentialChecklist(
         case "loginCustomerId":
           ok = Boolean(flags.hasLoginCustomerId);
           break;
+        case "serviceId":
+          ok = Boolean(flags.hasServiceId);
+          break;
         case "scopes":
         case "apiVersion":
         case "apiBaseUrl":
         case "partnerKeyExpiresAt":
+        case "authBaseUrl":
           ok = true;
           break;
         default:

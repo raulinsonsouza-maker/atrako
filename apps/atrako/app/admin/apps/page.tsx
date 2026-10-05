@@ -30,6 +30,7 @@ type AppRow = {
   hasRefreshToken: boolean;
   hasRedirectUri?: boolean;
   hasLoginCustomerId?: boolean;
+  hasServiceId?: boolean;
   clientIdPreview: string | null;
   partnerKeyExpiresAt?: string | null;
   updatedAt: string;
@@ -63,6 +64,7 @@ function rowFlags(row: AppRow | undefined): PlatformAppReadinessFlags {
     hasRefreshToken: Boolean(row?.hasRefreshToken),
     hasRedirectUri: Boolean(row?.hasRedirectUri),
     hasLoginCustomerId: Boolean(row?.hasLoginCustomerId),
+    hasServiceId: Boolean(row?.hasServiceId),
   };
 }
 
@@ -187,6 +189,7 @@ export default function AdminAppsPage() {
       hasRefreshToken: Boolean(form.refreshToken?.trim()) || Boolean(row?.hasRefreshToken),
       hasRedirectUri: Boolean(form.redirectUri?.trim()) || Boolean(row?.hasRedirectUri),
       hasLoginCustomerId: Boolean(form.loginCustomerId?.trim()) || Boolean(row?.hasLoginCustomerId),
+      hasServiceId: Boolean(form.serviceId?.trim()) || Boolean(row?.hasServiceId),
     };
 
     if (inheritFrom && inherited) {
@@ -223,6 +226,8 @@ export default function AdminAppsPage() {
             return !flags.hasServiceAccount;
           case "redirectUri":
             return !flags.hasRedirectUri;
+          case "serviceId":
+            return !flags.hasServiceId;
           default:
             return false;
         }
@@ -335,7 +340,9 @@ export default function AdminAppsPage() {
                                         ? row?.hasRefreshToken
                                         : field.key === "loginCustomerId"
                                           ? row?.hasLoginCustomerId
-                                          : false;
+                                          : field.key === "serviceId"
+                                            ? row?.hasServiceId
+                                            : false;
 
                       const inheritHint =
                         catalog.inheritsOAuthFrom &&

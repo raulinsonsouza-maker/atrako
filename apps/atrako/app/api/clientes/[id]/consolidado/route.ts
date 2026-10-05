@@ -9,6 +9,7 @@ const PROVIDER_LABELS: Record<string, string> = {
   NUVEMSHOP: "Nuvemshop",
   MERCADO_LIVRE: "Mercado Livre",
   SHOPEE: "Shopee",
+  TIKTOK_SHOP: "TikTok Shop",
   CHECKOUT: "Checkout Atrako",
   META: "Meta Ads",
   GOOGLE: "Google Ads",
@@ -17,7 +18,7 @@ const PROVIDER_LABELS: Record<string, string> = {
 };
 
 /** Compradores importados de lojas/marketplaces já contam como pedidos, não como leads. */
-const ORDER_LEAD_SOURCES = ["tray", "shopify", "woocommerce", "nuvemshop", "mercadolivre", "shopee"];
+const ORDER_LEAD_SOURCES = ["tray", "shopify", "woocommerce", "nuvemshop", "mercadolivre", "shopee", "tiktokshop"];
 
 function parseDateOnly(value: string | null): Date | null {
   if (!value) return null;

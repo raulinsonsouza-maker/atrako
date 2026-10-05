@@ -5,6 +5,7 @@ import { isShopifyPaidStatus } from "@/lib/integrations/shopify/orders";
 import { isNuvemshopPaidStatus } from "@/lib/integrations/nuvemshop/orders";
 import { isTrayPaidStatus, type TrayOrder } from "@/lib/integrations/tray/orders";
 import { isShopeePaidStatus } from "@/lib/integrations/shopee/orders";
+import { isTiktokShopPaidStatus } from "@/lib/integrations/tiktok-shop/orders";
 
 function rec(v: unknown): Record<string, unknown> {
   return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
@@ -30,6 +31,8 @@ export function isPaidMarketplaceOrder(o: { provider: string; status: string | n
       return isTrayPaidStatus(order as unknown as TrayOrder);
     case "SHOPEE":
       return isShopeePaidStatus(o.status);
+    case "TIKTOK_SHOP":
+      return isTiktokShopPaidStatus(o.status);
     case "MERCADO_LIVRE":
       return (o.status ?? "").toLowerCase() === "paid";
     default:

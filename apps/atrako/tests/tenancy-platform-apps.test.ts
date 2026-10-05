@@ -29,6 +29,7 @@ describe("platform app providers", () => {
     assert.ok(isPlatformAppProvider("TRAY"));
     assert.ok(isPlatformAppProvider("NUVEMSHOP"));
     assert.equal(isPlatformAppProvider("TIKTOK"), true);
+    assert.ok(isPlatformAppProvider("TIKTOK_SHOP"));
     assert.equal(isPlatformAppProvider("NOPE"), false);
   });
 });
@@ -47,6 +48,7 @@ describe("connection providers include calendar", () => {
     assert.ok(isConnectionProvider("SHOPIFY"));
     assert.ok(isConnectionProvider("TRAY"));
     assert.ok(isConnectionProvider("NUVEMSHOP"));
+    assert.ok(isConnectionProvider("TIKTOK_SHOP"));
     assert.equal(isConnectionProvider("GOOGLE_ADS"), true);
     assert.equal(isConnectionProvider("LINKEDIN_ADS"), true);
   });

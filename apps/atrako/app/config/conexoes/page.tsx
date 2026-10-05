@@ -80,6 +80,7 @@ const PROVIDER_ORDER = [
   "WOOCOMMERCE",
   "MERCADO_LIVRE",
   "SHOPEE",
+  "TIKTOK_SHOP",
   "MERCADO_PAGO",
   "META_ADS",
   "GOOGLE_ADS",
@@ -103,6 +104,7 @@ const OAUTH: Array<{ provider: string; title: string; category: Category; hint: 
   { provider: "GOOGLE_CALENDAR", title: "Google Calendar", category: "agenda", hint: "Agenda e reservas", start: "google-calendar" },
   { provider: "MERCADO_LIVRE", title: "Mercado Livre", category: "marketplace", hint: "Pedidos do marketplace", start: "mercadolivre" },
   { provider: "SHOPEE", title: "Shopee", category: "marketplace", hint: "Pedidos do marketplace", start: "shopee" },
+  { provider: "TIKTOK_SHOP", title: "TikTok Shop", category: "marketplace", hint: "Pedidos do marketplace", start: "tiktok-shop" },
   { provider: "LINKEDIN_ADS", title: "LinkedIn Ads", category: "anuncios", hint: "Campanhas e investimento", start: "linkedin" },
 ];
 
@@ -111,6 +113,7 @@ const SYNC_PATHS: Record<string, string> = {
   TRAY: "/api/atrako/tray/sync",
   NUVEMSHOP: "/api/atrako/nuvemshop/sync",
   SHOPEE: "/api/atrako/shopee/sync",
+  TIKTOK_SHOP: "/api/atrako/tiktok-shop/sync",
 };
 
 const smallPrimary = "!px-4 !py-1.5 type-button-utility";
@@ -727,7 +730,7 @@ function ConexoesHubInner() {
       detail: row?.label,
       onConnect: () => startOAuth(oauthHref(p.start)),
       onReconnect: () => startOAuth(oauthHref(p.start)),
-      actions: p.provider === "SHOPEE" ? syncButton("SHOPEE", "Shopee") : undefined,
+      actions: SYNC_PATHS[p.provider] ? syncButton(p.provider, p.title) : undefined,
       disconnectable: true,
     });
   }

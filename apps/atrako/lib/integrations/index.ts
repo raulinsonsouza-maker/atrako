@@ -15,6 +15,7 @@
  * - WooCommerce: https://woocommerce.github.io/woocommerce-rest-api-docs/
  * - Shopify: https://shopify.dev/docs/api/admin-graphql/latest
  * - Shopee: https://open.shopee.com/developer-guide/4
+ * - TikTok Shop: https://partner.tiktokshop.com/docv2/page/about-partner-center-console
  */
 
 export { META_GRAPH_VERSION, metaGraphGet, metaGraphUrl } from "./meta/graph";
@@ -50,6 +51,15 @@ export {
   extractShopeePushOrderSn,
   isShopeeOrderPush,
 } from "./shopee/webhooks";
+export {
+  buildTiktokShopAuthorizeUrl,
+  exchangeTiktokShopCode,
+  resolveTiktokShopApp,
+} from "./tiktok-shop/oauth";
+export { tiktokShopFetch } from "./tiktok-shop/client";
+export { ingestTiktokShopOrder } from "./tiktok-shop/ingest-order";
+export { syncTiktokShopWorkspace } from "./tiktok-shop/sync";
+export { verifyTiktokShopWebhook, isTiktokShopOrderEvent } from "./tiktok-shop/webhooks";
 export {
   buildTrayAuthorizeUrl,
   exchangeTrayCode,

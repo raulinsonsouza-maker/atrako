@@ -15,6 +15,8 @@ const PROVIDER_MAP: Record<string, string> = {
   mercadolivre: "MERCADO_LIVRE",
   SHOPEE: "SHOPEE",
   shopee: "SHOPEE",
+  TIKTOK_SHOP: "TIKTOK_SHOP",
+  tiktok: "TIKTOK_SHOP",
   MAGALU: "MAGALU",
   magalu: "MAGALU",
 };
@@ -87,24 +89,20 @@ export async function GET(
     provider === "MERCADO_LIVRE"
       ? await getWorkspaceConnection(clienteId, "MERCADO_LIVRE")
       : null;
-  const shopeeConnection =
-    provider === "SHOPEE"
-      ? await getWorkspaceConnection(clienteId, "SHOPEE")
+  const marketplaceConnection =
+    provider === "SHOPEE" || provider === "TIKTOK_SHOP"
+      ? await getWorkspaceConnection(clienteId, provider)
       : null;
 
-  const connected =
-    provider === "MERCADO_LIVRE"
-      ? Boolean(mlConnection && !["DISCONNECTED", "REVOKED"].includes(mlConnection.status))
-      : provider === "SHOPEE"
-        ? Boolean(shopeeConnection && !["DISCONNECTED", "REVOKED"].includes(shopeeConnection.status))
-        : false;
-
-  const activeConnection = provider === "MERCADO_LIVRE" ? mlConnection : shopeeConnection;
+  const activeConnection = provider === "MERCADO_LIVRE" ? mlConnection : marketplaceConnection;
+  const connected = Boolean(
+    activeConnection && !["DISCONNECTED", "REVOKED"].includes(activeConnection.status),
+  );
   const connectionMeta = activeConnection?.metadata && typeof activeConnection.metadata === "object"
     ? activeConnection.metadata as Record<string, unknown>
     : {};
 
-  if (provider !== "MERCADO_LIVRE" && provider !== "SHOPEE") {
+  if (provider !== "MERCADO_LIVRE" && provider !== "SHOPEE" && provider !== "TIKTOK_SHOP") {
     return NextResponse.json(emptyPayload(provider));
   }
 

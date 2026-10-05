@@ -360,6 +360,7 @@ const STORE_PROVIDER_LABELS: Record<string, string> = {
   NUVEMSHOP: "Nuvemshop",
   TRAY: "Tray",
   SHOPEE: "Shopee",
+  TIKTOK_SHOP: "TikTok Shop",
   COMMERCE: "Checkout próprio",
 };
 

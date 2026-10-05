@@ -43,6 +43,8 @@ export async function PATCH(request: NextRequest) {
     "apiVersion",
     "apiBaseUrl",
     "partnerKeyExpiresAt",
+    "serviceId",
+    "authBaseUrl",
   ] as const;
   for (const f of fields) {
     if (typeof body[f] === "string" && body[f].trim()) {
@@ -71,6 +73,7 @@ export async function PATCH(request: NextRequest) {
       hasServiceAccount:
         Boolean(credentials.serviceAccountJson) || Boolean(current?.hasServiceAccount),
       hasRedirectUri: Boolean(credentials.redirectUri) || Boolean(current?.hasRedirectUri),
+      hasServiceId: Boolean(credentials.serviceId) || Boolean(current?.hasServiceId),
     };
     const missing = PLATFORM_APP_CATALOG[provider].fields
       .filter((f) => f.requiredForReady)
@@ -83,6 +86,7 @@ export async function PATCH(request: NextRequest) {
         }
         if (f.key === "serviceAccountJson") return !merged.hasServiceAccount;
         if (f.key === "redirectUri") return !merged.hasRedirectUri;
+        if (f.key === "serviceId") return !merged.hasServiceId;
         return false;
       })
       .map((f) => f.label);

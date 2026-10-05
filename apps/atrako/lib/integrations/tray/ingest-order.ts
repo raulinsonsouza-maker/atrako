@@ -151,6 +151,8 @@ async function syncTrayAbandonment(input: {
       quantity: i.quantity,
       unitPriceCents: i.unitPriceCents,
       sku: i.sku,
+      imageUrl: i.imageUrl ?? null,
+      productUrl: i.productUrl ?? null,
     })),
   }).catch((err) => console.error("[tray-abandoned-cart]", err));
 }

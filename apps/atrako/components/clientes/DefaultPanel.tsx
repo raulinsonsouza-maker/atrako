@@ -38,7 +38,7 @@ function KpiCard({
 }: {
   title: string;
   value: string;
-  sub: string;
+  sub?: string;
   icon: React.ElementType;
   accentValue?: boolean;
   tone?: "positive" | "negative";
@@ -64,7 +64,7 @@ function KpiCard({
           <p className={`mt-2 whitespace-nowrap type-tagline tabular-nums ${valueColor}`}>
             {value}
           </p>
-          <p className="mt-1.5 type-fine-print leading-snug text-[var(--muted-foreground)]">{sub}</p>
+          {sub ? <p className="mt-1.5 type-fine-print leading-snug text-[var(--muted-foreground)]">{sub}</p> : null}
         </div>
       </CardContent>
     </Card>
@@ -132,8 +132,6 @@ type DefaultPanelProps = {
   agrupamento?: "diario" | "semanal" | "mensal";
   /** Callback para alternar agrupamento (não disponível em modo mensal) */
   onAgrupamentoChange?: (ag: "diario" | "semanal") => void;
-  /** Chave de faturamento no chartData (ex.: "Faturamento"). Quando definido, adiciona linha verde ao gráfico. */
-  chartRevenueKey?: string;
   /** Quando true (Clínica e Spa), exibe 2ª linha de KPIs com Cliques e Taxa Conversa (engajamento). */
   conversasEngajamentoMode?: boolean;
   /** Quando true (Miguel Imóveis), exibe KPIs de Resultados totais + 2ª linha com breakdown Conversas vs Cadastros. */
@@ -166,7 +164,6 @@ export function DefaultPanel({
   ecommerceGoogleMode = false,
   agrupamento = "semanal",
   onAgrupamentoChange,
-  chartRevenueKey,
   conversasEngajamentoMode = false,
   miguelImoveisMode = false,
   miguelGoogleMode = false,
@@ -195,43 +192,37 @@ export function DefaultPanel({
         <>
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <KpiCard
-              title={canal === "google" ? "Investimento Google" : canal === "meta" ? "Investimento Meta" : "Investimento Total"}
+              title={canal === "google" ? "Investimento Google" : canal === "meta" ? "Investimento Meta" : "Investimento"}
               value={formatCurrency(resumo.investimento)}
-              sub={`${resumo.periodo ?? ""} selecionados`}
               icon={DollarSign}
             />
             <KpiCard
-              title="Compras no Site"
+              title={canal === "google" ? "Compras pelo Google" : canal === "meta" ? "Compras pelo Meta" : "Compras pelos anúncios"}
               value={purchases.toLocaleString("pt-BR")}
-              sub={canal === "geral" ? "Pedidos atribuídos (Google + Meta) no período" : canal === "meta" ? "Pedidos atribuídos às campanhas Meta no período" : "Pedidos atribuídos às campanhas Google no período"}
               icon={ShoppingCart}
             />
             <KpiCard
-              title="Custo por Compra"
+              title="Custo por compra"
               value={custoPorCompra > 0 ? formatCurrency(custoPorCompra) : "—"}
-              sub="Investimento ÷ compras atribuídas"
               icon={Target}
               accentValue
             />
             <KpiCard
               title="ROAS"
               value={roas > 0 ? `${roas.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}x` : "—"}
-              sub="Retorno sobre investimento em anúncios (receita ÷ custo)"
               icon={Repeat2}
               tone={roas <= 0 ? undefined : roas >= 1 ? "positive" : "negative"}
             />
           </section>
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
             <KpiCard
-              title="Faturamento (Valor Conv.)"
+              title={canal === "google" ? "Faturamento pelo Google" : canal === "meta" ? "Faturamento pelo Meta" : "Faturamento pelos anúncios"}
               value={valorConversao > 0 ? formatCurrency(valorConversao) : "—"}
-              sub={canal === "geral" ? "Receita de compras atribuída (Google + Meta) no período" : canal === "meta" ? "Receita de compras atribuída às campanhas Meta no período" : "Receita de compras atribuída às campanhas Google no período"}
               icon={ReceiptText}
             />
             <KpiCard
-              title="Ticket Médio"
+              title="Ticket médio"
               value={ticketMedio > 0 ? formatCurrency(ticketMedio) : "—"}
-              sub="Valor médio por pedido (faturamento ÷ compras)"
               icon={TrendingUp}
             />
           </section>
@@ -242,57 +233,29 @@ export function DefaultPanel({
           <KpiCard
             title={canal === "google" ? "Investimento Google" : "Investimento"}
             value={formatCurrency(resumo.investimento)}
-            sub={`${resumo.periodo ?? ""} selecionados`}
             icon={DollarSign}
           />
           <KpiCard
-            title={canal === "google" ? "Conversões (Google Ads)" : comprasMode ? "Compras" : visitasMode ? "Visitas ao perfil" : miguelImoveisMode ? "Resultados (Total)" : conversasMode ? "Conversas" : kombuchaMode ? "Adições ao Carrinho" : lpViewsMode ? "Views de LP" : "Leads"}
+            title={canal === "google" ? "Conversões Google" : comprasMode ? "Compras" : visitasMode ? "Visitas ao perfil" : miguelImoveisMode ? "Conversas + cadastros" : conversasMode ? "Conversas" : kombuchaMode ? "Adições ao carrinho" : lpViewsMode ? "Views de LP" : "Leads"}
             value={resumo.leads.toLocaleString("pt-BR")}
-            sub={
-              canal === "google"
-                ? "Total do período (métrica principal do relatório de campanhas)"
-                : comprasMode
-                  ? "Compras no site atribuídas ao período"
-                  : visitasMode
-                    ? "Visitas ao perfil do Instagram no período"
-                    : miguelImoveisMode
-                      ? "Conversas iniciadas + cadastros via formulário no período"
-                      : conversasMode
-                        ? "Conversas por mensagem iniciadas no período"
-                        : kombuchaMode
-                          ? "Adições ao carrinho atribuídas ao período"
-                          : lpViewsMode
-                            ? "Visualizações da página de destino no período"
-                            : "Total do período"
-            }
             icon={Users}
           />
           <KpiCard
-            title={canal === "google" ? "Custo / conversão" : comprasMode ? "Custo / Compra" : visitasMode ? "Custo / Visita" : miguelImoveisMode ? "Custo / Resultado" : conversasMode ? "Custo / Conversa" : kombuchaMode ? "Custo / Carrinho" : lpViewsMode ? "Custo / View LP" : "CPL"}
+            title={canal === "google" ? "Custo / conversão" : comprasMode ? "Custo / compra" : visitasMode ? "Custo / visita" : miguelImoveisMode ? "Custo / resultado" : conversasMode ? "Custo / conversa" : kombuchaMode ? "Custo / carrinho" : lpViewsMode ? "Custo / view LP" : "CPL"}
             value={formatCurrency(resumo.cpl)}
-            sub={canal === "google" ? "Investimento ÷ conversões" : comprasMode ? "Investimento ÷ compras no site" : visitasMode ? "Investimento ÷ visitas ao perfil" : miguelImoveisMode ? "Investimento ÷ total de resultados (conversas + cadastros)" : conversasMode ? "Investimento ÷ conversas iniciadas" : kombuchaMode ? "Investimento ÷ adições ao carrinho" : lpViewsMode ? "Investimento ÷ views da página de destino" : "Custo por lead"}
             icon={Target}
             accentValue
           />
-          {miguelGoogleMode ? (
+          {miguelGoogleMode || miguelImoveisMode ? (
             <KpiCard
               title="Cliques"
               value={(resumo.cliques ?? 0).toLocaleString("pt-BR")}
-              sub="Total de cliques nos anúncios de pesquisa no período"
-              icon={MousePointerClick}
-            />
-          ) : miguelImoveisMode ? (
-            <KpiCard
-              title="Cliques"
-              value={(resumo.cliques ?? 0).toLocaleString("pt-BR")}
-              sub="Total de cliques gerados pelos anúncios no período (Meta + Google)"
               icon={MousePointerClick}
             />
           ) : (
             <KpiCard
               title={canal === "google" ? "CPM Google" : "CPM"}
               value={formatCurrency(resumo.cpm)}
-              sub="Custo por mil impressões"
               icon={Zap}
             />
           )}
@@ -303,13 +266,12 @@ export function DefaultPanel({
       {!ecommerceGoogleMode && miguelGoogleMode && (
         <section className="grid gap-4 sm:grid-cols-2">
           <KpiCard
-            title="CTR (Cliques / Impressões)"
+            title="CTR"
             value={
               (resumo.impressoes ?? 0) > 0
                 ? `${(((resumo.cliques ?? 0) / (resumo.impressoes ?? 1)) * 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`
                 : "—"
             }
-            sub="Percentual de impressões que geraram cliques nos anúncios"
             icon={BarChart3}
           />
           <KpiCard
@@ -319,7 +281,6 @@ export function DefaultPanel({
                 ? `${((resumo.leads / (resumo.cliques ?? 1)) * 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`
                 : "—"
             }
-            sub="Percentual de cliques que resultaram em conversões (formulários, chamadas, contatos)"
             icon={Target}
           />
         </section>
@@ -331,7 +292,6 @@ export function DefaultPanel({
           <KpiCard
             title="Cliques (Engajamento)"
             value={(resumo.cliques ?? 0).toLocaleString("pt-BR")}
-            sub="Total de interações geradas pelos anúncios no período"
             icon={MousePointerClick}
           />
           <KpiCard
@@ -341,7 +301,6 @@ export function DefaultPanel({
                 ? `${(((resumo.leads ?? 0) / (resumo.cliques ?? 0)) * 100).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`
                 : "—"
             }
-            sub="Percentual de cliques que converteram em conversas iniciadas"
             icon={MessageCircle}
           />
         </section>
@@ -353,13 +312,11 @@ export function DefaultPanel({
           <KpiCard
             title="Conversas (Mensagem)"
             value={(resumo.conversasMensagem ?? 0).toLocaleString("pt-BR")}
-            sub="WhatsApp e mensagens diretas iniciadas no período"
             icon={MessageCircle}
           />
           <KpiCard
             title="Cadastros (Formulário)"
             value={(resumo.leadsForm ?? 0).toLocaleString("pt-BR")}
-            sub="Leads via formulário e contato no site no período"
             icon={Users}
           />
         </section>
@@ -371,7 +328,6 @@ export function DefaultPanel({
           <KpiCard
             title="Visitas ao Perfil"
             value={(resumo.profileVisits ?? 0).toLocaleString("pt-BR")}
-            sub="Visitas ao perfil do Instagram atribuídas às campanhas de engajamento"
             icon={Eye}
           />
           <KpiCard
@@ -381,7 +337,6 @@ export function DefaultPanel({
                 ? formatCurrency(resumo.custoPorVisita ?? 0)
                 : "—"
             }
-            sub="Investimento dividido pelo total de visitas ao perfil do Instagram"
             icon={Activity}
           />
           <KpiCard
@@ -391,7 +346,6 @@ export function DefaultPanel({
                 ? `${(((resumo.profileVisits ?? 0) / (resumo.impressoes ?? 1)) * 1000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`
                 : "—"
             }
-            sub="Taxa de entrega de visitas por mil impressões (eficiência de engajamento)"
             icon={TrendingUp}
           />
         </section>
@@ -403,7 +357,6 @@ export function DefaultPanel({
           <KpiCard
             title="Conversas B2B (Mensagem)"
             value={(resumo.conversasB2b ?? 0).toLocaleString("pt-BR")}
-            sub="Conversas iniciadas via mensagem pelas campanhas B2B no período"
             icon={MessageCircle}
           />
           <KpiCard
@@ -413,7 +366,6 @@ export function DefaultPanel({
                 ? formatCurrency(resumo.custoPorConversaB2b ?? 0)
                 : "—"
             }
-            sub="Investimento ÷ conversas B2B iniciadas"
             icon={Target}
           />
         </section>
@@ -507,11 +459,10 @@ export function DefaultPanel({
                     tickLine={false}
                     axisLine={false}
                   />
-                  {chartRevenueKey && <YAxis yAxisId="revenue" hide={true} />}
                   <YAxis yAxisId="cpl" hide={true} />
                   <Tooltip
                     formatter={(value: number, name: string) => {
-                      if (name === "Investimento" || name === cplLabel || name === chartRevenueKey) {
+                      if (name === "Investimento" || name === cplLabel) {
                         return [formatCurrency(Number(value)), name];
                       }
                       return [Number(value).toLocaleString("pt-BR"), name];
@@ -529,19 +480,6 @@ export function DefaultPanel({
                     fill="var(--chart-spend)"
                     radius={[6, 6, 0, 0]}
                   />
-                  {chartRevenueKey && (
-                    <Line
-                      yAxisId="revenue"
-                      type="monotone"
-                      dataKey={chartRevenueKey}
-                      name={chartRevenueKey}
-                      stroke="var(--chart-revenue)"
-                      strokeWidth={2}
-                      strokeDasharray="5 4"
-                      dot={{ fill: "var(--chart-revenue)", r: 3, strokeWidth: 0 }}
-                      activeDot={{ r: 5, strokeWidth: 0, fill: "var(--chart-revenue)" }}
-                    />
-                  )}
                   <Line
                     yAxisId="right"
                     type="monotone"

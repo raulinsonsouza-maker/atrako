@@ -4,6 +4,7 @@
 
 import { prisma } from "@/lib/db";
 import { upsertPersonAndLead } from "@/lib/atrako/person";
+import { withStageHistory } from "@/lib/crm/stage-history";
 
 export const STAGE_ROLE_ENTRY = "ENTRY";
 export const STAGE_ROLE_WON = "WON";
@@ -510,11 +511,26 @@ export async function updateLeadStage(input: {
   if (!lead) throw new Error("Lead não encontrado");
 
   const status = isWonStage(stage) ? "WON" : isLostStage(stage) ? "LOST" : "OPEN";
+  const nextStageId = stage?.id ?? null;
+  const meta =
+    lead.metadata && typeof lead.metadata === "object" && !Array.isArray(lead.metadata)
+      ? (lead.metadata as Record<string, unknown>)
+      : {};
   return prisma.nativeLead.update({
     where: { id: lead.id },
     data: {
-      stageId: stage?.id ?? null,
+      stageId: nextStageId,
       status,
+      ...(nextStageId !== lead.stageId
+        ? {
+            metadata: withStageHistory(meta, {
+              stageId: nextStageId,
+              stage: stage?.name ?? null,
+              role: (stage as { role?: string | null } | null)?.role ?? null,
+              by: "manual",
+            }) as never,
+          }
+        : {}),
     },
     include: { contact: true, stage: true },
   });

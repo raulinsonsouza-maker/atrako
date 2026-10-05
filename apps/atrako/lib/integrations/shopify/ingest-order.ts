@@ -153,6 +153,8 @@ async function syncShopifyAbandonment(input: {
       quantity: i.quantity,
       unitPriceCents: i.unitPriceCents,
       sku: i.sku,
+      imageUrl: i.imageUrl ?? null,
+      productUrl: i.productUrl ?? null,
     })),
   }).catch((err) => console.error("[shopify-abandoned-cart]", err));
 }

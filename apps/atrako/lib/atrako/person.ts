@@ -5,7 +5,10 @@
  */
 
 import { prisma } from "@/lib/db";
-import { orderStatusLabel } from "@/lib/commerce-attribution/order-status";
+import { isRevenueOrder, orderStatusLabel } from "@/lib/commerce-attribution/order-status";
+import { describeOrderOrigin } from "@/lib/commerce-attribution/describe";
+import { CHANNEL_LABELS, type OrderChannel } from "@/lib/commerce-attribution/store-source";
+import { LOST_REASON_LABELS, readStageHistory, type LostReason } from "@/lib/crm/stage-history";
 
 export function normalizePersonPhone(raw?: string | null): string | null {
   if (!raw) return null;
@@ -384,7 +387,86 @@ export type JourneyItem = {
   meta?: Record<string, unknown>;
 };
 
-/** Timeline unificada da pessoa (CRM / WA / Commerce / Agenda). */
+const TZ = "America/Sao_Paulo";
+
+function dayKey(d: Date) {
+  return d.toLocaleDateString("pt-BR", { timeZone: TZ });
+}
+
+/** "14:30" no mesmo dia da referência; "12/10 14:30" em outro dia. */
+function clock(d: Date, ref: Date) {
+  const time = d.toLocaleTimeString("pt-BR", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
+  if (dayKey(d) === dayKey(ref)) return time;
+  return `${d.toLocaleDateString("pt-BR", { timeZone: TZ, day: "2-digit", month: "2-digit" })} ${time}`;
+}
+
+function asMeta(raw: unknown): Record<string, unknown> {
+  return raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+}
+
+const FLOW_EXIT_REASONS: Record<string, string> = {
+  removed_manually: "removido manualmente",
+  purchased: "comprou",
+  cart_removed: "carrinho fechado",
+  wa_optout: "saiu do WhatsApp",
+  wa_stop: "pediu para parar",
+  unsubscribe: "descadastrou",
+  bounce: "e-mail inválido",
+  complaint: "marcou como spam",
+};
+
+const BOOKING_STATUS: Record<string, string> = {
+  PENDING: "Pendente",
+  CONFIRMED: "Confirmado",
+  CANCELLED: "Cancelado",
+  CANCELED: "Cancelado",
+  COMPLETED: "Realizado",
+  NO_SHOW: "Não compareceu",
+};
+
+const WA_MEDIA: Record<string, string> = {
+  image: "Imagem",
+  audio: "Áudio",
+  voice: "Áudio",
+  video: "Vídeo",
+  document: "Documento",
+  sticker: "Figurinha",
+  location: "Localização",
+  contacts: "Contato",
+  reaction: "Reação",
+};
+
+/** Desempate no mesmo instante: causa antes de efeito. */
+const TYPE_ORDER: Record<string, number> = {
+  "contact.created": 0,
+  "lead.created": 1,
+  "form.completed": 2,
+  "flow.enrolled": 3,
+  "flow.converted": 8,
+  "flow.exited": 8,
+  "flow.completed": 8,
+  "lead.won": 9,
+  "lead.lost": 9,
+};
+
+const MESSAGE_SENT = new Set(["SENT", "DELIVERED", "OPENED", "CLICKED", "CONVERTED"]);
+const MESSAGE_FAILED = new Set(["BOUNCED", "COMPLAINED", "FAILED"]);
+
+function orderTitle(externalId: string, status: string | null | undefined, cents: number) {
+  const label = orderStatusLabel(status)?.toLowerCase();
+  if (isRevenueOrder(status)) return `Pedido #${externalId} pago · ${brl(cents)}`;
+  return `Pedido #${externalId}${label ? ` ${label}` : ""} · ${brl(cents)}`;
+}
+
+function itemsSummary(items: Array<{ title: string; quantity?: number | null }>) {
+  return (
+    items
+      .map((i) => (i.quantity && i.quantity > 1 ? `${i.quantity}× ${i.title}` : i.title))
+      .join(", ") || null
+  );
+}
+
+/** Timeline unificada da pessoa (CRM / mensagens / WA / pedidos / agenda). */
 export async function getPersonJourney(workspaceId: string, contactId: string): Promise<{
   contact: {
     id: string;
@@ -404,60 +486,77 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
   const phone = contact.phone;
   const email = contact.email;
 
-  const [leads, conversations, orders, bookings, marketplaceOrders] = await Promise.all([
-    prisma.nativeLead.findMany({
-      where: { clienteId: workspaceId, contactId },
-      include: { stage: true },
-      orderBy: { createdAt: "asc" },
-    }),
-    prisma.waConversation.findMany({
-      where: {
-        clienteId: workspaceId,
-        OR: [{ contactId }, ...(phone ? [{ phone }] : [])],
-      },
-      include: {
-        messages: { orderBy: { createdAt: "asc" }, take: 50 },
-      },
-    }),
-    prisma.commerceOrder.findMany({
-      where: {
-        clienteId: workspaceId,
-        OR: [
-          { contactId },
-          ...(email ? [{ email }] : []),
-          ...(phone ? [{ phone }] : []),
-        ],
-      },
-      include: { items: true },
-      orderBy: { createdAt: "asc" },
-    }),
-    prisma.agendaBooking.findMany({
-      where: {
-        clienteId: workspaceId,
-        OR: [
-          ...(email ? [{ customerEmail: email }] : []),
-          ...(phone
-            ? [{ customerPhone: phone }, { customerPhone: { contains: phone.slice(-8) } }]
-            : []),
-        ],
-      },
-      include: { service: true },
-      orderBy: { createdAt: "asc" },
-    }),
-    prisma.marketplaceOrder.findMany({
-      where: {
-        clienteId: workspaceId,
-        OR: [
-          { contactId },
-          ...(email ? [{ buyerEmail: email }] : []),
-          ...(phone ? [{ buyerPhone: phone }] : []),
-        ],
-      },
-      include: { items: { take: 10 } },
-      orderBy: { occurredAt: "asc" },
-      take: 50,
-    }),
-  ]);
+  const [leads, conversations, orders, bookings, marketplaceOrders, deliveries, enrollments, carts] =
+    await Promise.all([
+      prisma.nativeLead.findMany({
+        where: { clienteId: workspaceId, contactId },
+        include: { stage: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.waConversation.findMany({
+        where: {
+          clienteId: workspaceId,
+          OR: [{ contactId }, ...(phone ? [{ phone }] : [])],
+        },
+        include: {
+          messages: { orderBy: { createdAt: "desc" }, take: 100 },
+        },
+      }),
+      prisma.commerceOrder.findMany({
+        where: {
+          clienteId: workspaceId,
+          OR: [
+            { contactId },
+            ...(email ? [{ email }] : []),
+            ...(phone ? [{ phone }] : []),
+          ],
+        },
+        include: { items: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.agendaBooking.findMany({
+        where: {
+          clienteId: workspaceId,
+          OR: [
+            ...(email ? [{ customerEmail: email }] : []),
+            ...(phone
+              ? [{ customerPhone: phone }, { customerPhone: { contains: phone.slice(-8) } }]
+              : []),
+          ],
+        },
+        include: { service: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.marketplaceOrder.findMany({
+        where: {
+          clienteId: workspaceId,
+          OR: [
+            { contactId },
+            ...(email ? [{ buyerEmail: email }] : []),
+            ...(phone ? [{ buyerPhone: phone }] : []),
+          ],
+        },
+        include: { items: { take: 10 }, source: true },
+        orderBy: { occurredAt: "asc" },
+        take: 50,
+      }),
+      prisma.messageDelivery.findMany({
+        where: { clienteId: workspaceId, contactId, isTest: false },
+        orderBy: { createdAt: "desc" },
+        take: 100,
+      }),
+      prisma.messageFlowEnrollment.findMany({
+        where: { clienteId: workspaceId, contactId },
+        include: { flow: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 30,
+      }),
+      prisma.abandonedCart.findMany({
+        where: { clienteId: workspaceId, contactId, status: { in: ["OPEN", "RECOVERED", "EXPIRED"] } },
+        orderBy: { abandonedAt: "desc" },
+        take: 20,
+      }),
+    ]);
 
   const leadIds = leads.map((l) => l.id);
   const ledger =
@@ -476,31 +575,156 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
         })
       : [];
 
-  const items: JourneyItem[] = [];
+  const flowIds = Array.from(new Set(deliveries.map((d) => d.flowId).filter((v): v is string => !!v)));
+  const campaignIds = Array.from(new Set(deliveries.map((d) => d.campaignId).filter((v): v is string => !!v)));
+  const [flows, campaigns] = await Promise.all([
+    flowIds.length
+      ? prisma.messageFlow.findMany({ where: { id: { in: flowIds } }, select: { id: true, name: true } })
+      : [],
+    campaignIds.length
+      ? prisma.messageCampaign.findMany({ where: { id: { in: campaignIds } }, select: { id: true, name: true } })
+      : [],
+  ]);
+  const flowName = new Map(flows.map((f) => [f.id, f.name]));
+  const campaignName = new Map(campaigns.map((c) => [c.id, c.name]));
 
-  items.push({
-    at: contact.createdAt.toISOString(),
-    type: "contact.created",
-    title: "Contato na base",
-    detail: [contact.email, contact.phone].filter(Boolean).join(" · ") || undefined,
-  });
+  const items: JourneyItem[] = [];
+  const orderKey = (provider: string, externalId: string) => `${provider}:${externalId}`.toUpperCase();
+
+  // --- Mensagens automáticas (e-mail / WhatsApp de fluxos e campanhas) ---
+  const shownDeliveries = deliveries.filter(
+    (d) => (MESSAGE_SENT.has(d.status) && (d.sentAt || d.deliveredAt)) || MESSAGE_FAILED.has(d.status),
+  );
+  const deliveryWamids = new Set(
+    shownDeliveries.filter((d) => d.channel === "WHATSAPP" && d.providerMessageId).map((d) => d.providerMessageId!),
+  );
+  /** Pedido → mensagem que levou à compra (anotada no próprio pedido). */
+  const conversionByOrder = new Map<string, string>();
+  const channelName = (ch: string) => (ch === "EMAIL" ? "e-mail" : "WhatsApp");
+
+  for (const d of shownDeliveries) {
+    const at = d.sentAt ?? d.deliveredAt ?? d.failedAt ?? d.bouncedAt ?? d.createdAt;
+    const origin = d.flowId
+      ? flowName.get(d.flowId)
+        ? `Fluxo ${flowName.get(d.flowId)}`
+        : null
+      : d.campaignId
+        ? campaignName.get(d.campaignId)
+          ? `Campanha ${campaignName.get(d.campaignId)}`
+          : null
+        : "Envio avulso";
+    const sourceName = (d.flowId && flowName.get(d.flowId)) || (d.campaignId && campaignName.get(d.campaignId)) || null;
+    const name = d.subject?.trim() || sourceName || d.templateName || null;
+    const channel = d.channel === "EMAIL" ? "E-mail" : "WhatsApp";
+    const failed = MESSAGE_FAILED.has(d.status) && !d.deliveredAt;
+
+    const trail: string[] = [];
+    if (d.deliveredAt) trail.push(`entregue ${clock(d.deliveredAt, at)}`);
+    if (d.openedAt) trail.push(`${d.channel === "WHATSAPP" ? "lido" : "aberto"} ${clock(d.openedAt, at)}`);
+    if (d.clickedAt) trail.push(`clicou ${clock(d.clickedAt, at)}`);
+    if (d.complainedAt) trail.push("marcou como spam");
+
+    const failure = failed
+      ? d.status === "BOUNCED"
+        ? "endereço inválido"
+        : d.error?.slice(0, 120) || null
+      : null;
+
+    items.push({
+      at: at.toISOString(),
+      type: d.channel === "EMAIL" ? "message.email" : "message.whatsapp",
+      title: `${channel}${failed ? " não entregue" : ""}${name ? ` · ${name}` : ""}`,
+      detail:
+        [
+          name === sourceName ? null : origin,
+          trail.join(" · ") || null,
+          d.couponCode ? `cupom ${d.couponCode}` : null,
+          failure,
+        ]
+          .filter(Boolean)
+          .join(" · ") || undefined,
+      meta: { deliveryId: d.id, status: d.status, flowId: d.flowId, campaignId: d.campaignId },
+    });
+
+    if (d.convertedAt && d.convertedOrderRef) {
+      const label = name ? `${channelName(d.channel)} «${name}»` : `o ${channelName(d.channel)}`;
+      const note =
+        d.conversionKind === "ATTRIBUTED"
+          ? `Comprou pelo ${label}`
+          : `Recebeu o ${label} antes de comprar`;
+      const key = d.convertedOrderRef.toUpperCase();
+      if (!conversionByOrder.has(key) || d.conversionKind === "ATTRIBUTED") conversionByOrder.set(key, note);
+    }
+  }
+
+  // --- Fluxos: entrada e saída ---
+  for (const e of enrollments) {
+    const name = e.flow.name;
+    items.push({
+      at: e.createdAt.toISOString(),
+      type: "flow.enrolled",
+      title: `Entrou no fluxo ${name}`,
+      detail: e.holdout ? "Grupo de controle: não recebe mensagens" : undefined,
+      meta: { enrollmentId: e.id, flowId: e.flowId },
+    });
+    if (e.status === "CONVERTED") {
+      items.push({
+        at: (e.convertedAt ?? e.updatedAt).toISOString(),
+        type: "flow.converted",
+        title: `Saiu do fluxo ${name} · comprou`,
+        detail: e.convertedCents ? brl(e.convertedCents) : undefined,
+        meta: { enrollmentId: e.id },
+      });
+    } else if (e.status === "EXITED") {
+      items.push({
+        at: e.updatedAt.toISOString(),
+        type: "flow.exited",
+        title: `Saiu do fluxo ${name}`,
+        detail: e.exitReason ? FLOW_EXIT_REASONS[e.exitReason] ?? e.exitReason : undefined,
+        meta: { enrollmentId: e.id },
+      });
+    } else if (e.status === "COMPLETED") {
+      items.push({
+        at: e.updatedAt.toISOString(),
+        type: "flow.completed",
+        title: `Concluiu o fluxo ${name}`,
+        meta: { enrollmentId: e.id },
+      });
+    }
+  }
+
+  // --- Contato e CRM ---
+  const leadCreatedTimes = leads.map((l) => l.createdAt.getTime());
+  if (!leadCreatedTimes.some((t) => Math.abs(t - contact.createdAt.getTime()) < 2 * 60_000)) {
+    items.push({
+      at: contact.createdAt.toISOString(),
+      type: "contact.created",
+      title: "Contato criado",
+      detail: [contact.email, contact.phone].filter(Boolean).join(" · ") || undefined,
+    });
+  }
+
+  const paidOrderMoments = [
+    ...marketplaceOrders
+      .filter((mo) => isRevenueOrder(mo.status))
+      .map((mo) => ({ at: mo.occurredAt ?? mo.createdAt, ref: `#${mo.externalId}` })),
+    ...orders
+      .filter((o) => o.status === "APPROVED")
+      .map((o) => ({ at: o.approvedAt ?? o.createdAt, ref: null as string | null })),
+  ].sort((a, b) => a.at.getTime() - b.at.getTime());
 
   for (const lead of leads) {
-    const meta =
-      lead.metadata && typeof lead.metadata === "object" && !Array.isArray(lead.metadata)
-        ? (lead.metadata as Record<string, unknown>)
-        : {};
+    const meta = asMeta(lead.metadata);
     const attrDetail = formatAttributionDetail(meta);
     const sourcePart = lead.source
-      ? `Fonte: ${STORE_PROVIDER_LABELS[lead.source.toUpperCase()] ?? lead.source}`
+      ? `Origem: ${STORE_PROVIDER_LABELS[lead.source.toUpperCase()] ?? lead.source}`
       : undefined;
-    const leadDetail = [sourcePart, attrDetail].filter(Boolean).join(" · ") || undefined;
 
     items.push({
       at: lead.createdAt.toISOString(),
       type: "lead.created",
       title: "Entrou no CRM",
-      detail: leadDetail,
+      detail: [sourcePart, attrDetail].filter(Boolean).join(" · ") || undefined,
       href: `/crm/leads/${lead.id}`,
       meta: {
         leadId: lead.id,
@@ -513,45 +737,54 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
     });
 
     if (typeof meta.formId === "string" && meta.formId) {
-      const formAt =
-        typeof meta.convertedAt === "string"
-          ? meta.convertedAt
-          : lead.createdAt.toISOString();
       const formLabel =
         (typeof meta.formName === "string" && meta.formName) ||
         (typeof meta.formSlug === "string" && meta.formSlug) ||
         "Formulário";
       items.push({
-        at: formAt,
+        at: typeof meta.convertedAt === "string" ? meta.convertedAt : lead.createdAt.toISOString(),
         type: "form.completed",
         title: `Formulário · ${formLabel}`,
         detail: attrDetail,
         href: `/crm/leads/${lead.id}`,
-        meta: {
-          leadId: lead.id,
-          formId: meta.formId,
-          formSlug: meta.formSlug,
-          pageSlug: meta.pageSlug,
-        },
+        meta: { leadId: lead.id, formId: meta.formId, formSlug: meta.formSlug, pageSlug: meta.pageSlug },
       });
     }
 
-    if (lead.status === "WON" || lead.stage?.role === "WON") {
-      const wonAt = lead.updatedAt?.toISOString() || lead.createdAt.toISOString();
-      const deal =
-        lead.dealValue != null ? Number(lead.dealValue) : null;
+    const history = readStageHistory(meta);
+    for (const h of history) {
       items.push({
-        at: wonAt,
+        at: h.at,
+        type: h.role === "WON" ? "lead.won" : h.role === "LOST" ? "lead.lost" : "lead.stage",
+        title: `Movido para ${h.stage ?? "sem etapa"}`,
+        detail: [h.by === "auto" ? "automático" : null, h.reason ?? null].filter(Boolean).join(" · ") || undefined,
+        meta: { leadId: lead.id, stageId: h.stageId },
+      });
+    }
+
+    const wonStageName = lead.stage?.role === "WON" ? lead.stage.name : "Ganho";
+    if ((lead.status === "WON" || lead.stage?.role === "WON") && !history.some((h) => h.role === "WON")) {
+      const fromOrder = paidOrderMoments.find((p) => p.at.getTime() >= lead.createdAt.getTime() - 60_000);
+      items.push({
+        at: (fromOrder?.at ?? lead.updatedAt).toISOString(),
         type: "lead.won",
-        title: deal != null ? `Marcado como ganho · ${brl(Math.round(deal * 100))}` : "Marcado como ganho",
-        href: `/crm/leads/${lead.id}`,
-        meta: {
-          leadId: lead.id,
-          dealValue: deal,
-          pageSlug: meta.pageSlug,
-          formId: meta.formId,
-          formName: meta.formName,
-        },
+        title: `Movido para ${wonStageName}`,
+        detail: fromOrder ? `automático · compra${fromOrder.ref ? ` ${fromOrder.ref}` : ""}` : undefined,
+        meta: { leadId: lead.id },
+      });
+    }
+
+    if (lead.status === "LOST" && typeof meta.lostAt === "string" && !history.some((h) => h.role === "LOST")) {
+      const reason = typeof meta.lostReason === "string" ? meta.lostReason : null;
+      items.push({
+        at: meta.lostAt,
+        type: "lead.lost",
+        title: `Movido para ${lead.stage?.name ?? "Perdido"}`,
+        detail:
+          ["automático", reason ? LOST_REASON_LABELS[reason as LostReason] ?? reason : null]
+            .filter(Boolean)
+            .join(" · ") || undefined,
+        meta: { leadId: lead.id },
       });
     }
   }
@@ -559,48 +792,133 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
   // Atribuição do lead mais recente com form/LP (para anexar em compra/finance)
   const attributionFromLeads = (() => {
     for (let i = leads.length - 1; i >= 0; i--) {
-      const m =
-        leads[i].metadata &&
-        typeof leads[i].metadata === "object" &&
-        !Array.isArray(leads[i].metadata)
-          ? (leads[i].metadata as Record<string, unknown>)
-          : null;
-      if (m && (m.pageSlug || m.formId || m.formSlug)) return m;
+      const m = asMeta(leads[i].metadata);
+      if (m.pageSlug || m.formId || m.formSlug) return m;
     }
     return null;
   })();
   const leadAttrDetail = formatAttributionDetail(attributionFromLeads ?? undefined);
 
+  // --- WhatsApp (inbox): mensagens seguidas no mesmo sentido viram um item ---
+  const outboundTimes: number[] = [];
   for (const conv of conversations) {
-    items.push({
-      at: (conv.createdAt ?? conv.lastMessageAt ?? new Date()).toISOString(),
-      type: "whatsapp.conversation",
-      title: `WhatsApp · ${conv.status}`,
-      detail: conv.phone,
-      href: "/whatsapp",
-      meta: { conversationId: conv.id },
-    });
-    for (const m of conv.messages) {
+    const messages = conv.messages
+      .filter((m) => !(m.wamid && deliveryWamids.has(m.wamid)))
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    if (!messages.length && !conv.messages.length) {
       items.push({
-        at: m.createdAt.toISOString(),
-        type: m.direction === "INBOUND" ? "whatsapp.inbound" : "whatsapp.outbound",
-        title: m.direction === "INBOUND" ? "WA recebido" : "WA enviado",
-        detail: (m.body || m.type || "").slice(0, 120),
+        at: (conv.createdAt ?? conv.lastMessageAt ?? new Date()).toISOString(),
+        type: "whatsapp.conversation",
+        title: "Conversa no WhatsApp",
+        href: "/whatsapp",
+        meta: { conversationId: conv.id },
       });
+      continue;
+    }
+    let group: { at: Date; last: Date; inbound: boolean; texts: string[] } | null = null;
+    const flush = () => {
+      if (!group) return;
+      items.push({
+        at: group.at.toISOString(),
+        type: group.inbound ? "whatsapp.inbound" : "whatsapp.outbound",
+        title: group.inbound
+          ? group.texts.length > 1
+            ? `Cliente enviou ${group.texts.length} mensagens`
+            : "Cliente enviou mensagem"
+          : group.texts.length > 1
+            ? `${group.texts.length} mensagens enviadas no WhatsApp`
+            : "Mensagem enviada no WhatsApp",
+        detail: group.texts.join(" / ").slice(0, 220) || undefined,
+        href: "/whatsapp",
+        meta: { conversationId: conv.id },
+      });
+      group = null;
+    };
+    for (const m of messages) {
+      const inbound = m.direction === "INBOUND";
+      if (!inbound) outboundTimes.push(m.createdAt.getTime());
+      const text =
+        m.body?.trim() ||
+        (m.templateName ? `Modelo ${m.templateName}` : WA_MEDIA[m.type] ?? null) ||
+        "";
+      if (group && group.inbound === inbound && m.createdAt.getTime() - group.last.getTime() < 10 * 60_000) {
+        if (text) group.texts.push(text);
+        group.last = m.createdAt;
+        continue;
+      }
+      flush();
+      group = { at: m.createdAt, last: m.createdAt, inbound, texts: text ? [text] : [] };
+    }
+    flush();
+  }
+
+  // --- Carrinhos: pedido não pago já aparece como pedido; aqui só checkout e recuperação ---
+  const shownOrderKeys = new Set(marketplaceOrders.map((mo) => orderKey(mo.provider, mo.externalId)));
+  const recoveredByOrder = new Map<string, true>();
+  const waSentTimes = [
+    ...outboundTimes,
+    ...shownDeliveries.filter((d) => d.channel === "WHATSAPP").map((d) => (d.sentAt ?? d.createdAt).getTime()),
+  ];
+
+  for (const cart of carts) {
+    const orderId = cart.kind === "order" ? cart.externalId.replace(/^order:/, "") : null;
+    const linkedShown = orderId ? shownOrderKeys.has(orderKey(cart.provider, orderId)) : false;
+    const cartItems = Array.isArray(cart.items) ? (cart.items as Array<{ title: string; quantity?: number }>) : [];
+
+    if (!linkedShown) {
+      items.push({
+        at: cart.abandonedAt.toISOString(),
+        type: "cart.abandoned",
+        title: orderId
+          ? `Pedido #${orderId} não pago · ${brl(cart.totalCents)}`
+          : `Abandonou o carrinho · ${brl(cart.totalCents)}`,
+        detail: [storeProviderLabel(cart.provider), itemsSummary(cartItems)].filter(Boolean).join(" · ") || undefined,
+      });
+    }
+
+    if (cart.notifiedAt) {
+      const t = cart.notifiedAt.getTime();
+      if (!waSentTimes.some((s) => Math.abs(s - t) < 10 * 60_000)) {
+        items.push({
+          at: cart.notifiedAt.toISOString(),
+          type: "cart.notified",
+          title: "WhatsApp de recuperação enviado",
+        });
+      }
+    }
+
+    if (cart.status === "RECOVERED" && cart.recoveredAt) {
+      const ref = cart.recoveredOrderId?.toUpperCase();
+      if (ref && shownOrderKeys.has(ref)) {
+        recoveredByOrder.set(ref, true);
+      } else {
+        items.push({
+          at: cart.recoveredAt.toISOString(),
+          type: "cart.recovered",
+          title: `Carrinho recuperado · ${brl(cart.recoveredCents ?? cart.totalCents)}`,
+        });
+      }
     }
   }
 
+  // --- Pedidos ---
   for (const order of orders) {
     const utm = [order.utmSource, order.utmMedium, order.utmCampaign].filter(Boolean).join("/");
+    const approved = order.status === "APPROVED";
+    const conversion = approved ? conversionByOrder.get(`COMMERCE:${order.id}`.toUpperCase()) : undefined;
     items.push({
-      at: order.createdAt.toISOString(),
-      type: order.status === "APPROVED" ? "commerce.purchase" : "commerce.order",
-      title:
-        order.status === "APPROVED"
-          ? `Compra · ${brl(order.totalCents)}`
-          : `Pedido ${orderStatusLabel(order.status)?.toLowerCase() ?? ""} · ${brl(order.totalCents)}`,
+      at: (approved ? order.approvedAt ?? order.createdAt : order.createdAt).toISOString(),
+      type: approved ? "commerce.purchase" : "commerce.order",
+      title: approved
+        ? `Compra · ${brl(order.totalCents)}`
+        : `Pedido ${orderStatusLabel(order.status)?.toLowerCase() ?? ""} · ${brl(order.totalCents)}`,
       detail:
-        [order.items.map((i) => i.name).join(", "), leadAttrDetail, utm || null]
+        [
+          "Checkout próprio",
+          itemsSummary(order.items.map((i) => ({ title: i.name, quantity: i.quantity }))),
+          conversion ?? null,
+          utm || leadAttrDetail || null,
+        ]
           .filter(Boolean)
           .join(" · ") || undefined,
       href: order.productId ? `/checkout/${order.productId}` : undefined,
@@ -614,28 +932,40 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
         formName: attributionFromLeads?.formName,
       },
     });
-    if (order.approvedAt) {
-      items.push({
-        at: order.approvedAt.toISOString(),
-        type: "commerce.approved",
-        title: "Pagamento aprovado",
-        detail: [order.id, leadAttrDetail].filter(Boolean).join(" · ") || undefined,
-      });
-    }
   }
 
   for (const mo of marketplaceOrders) {
     const cents = mo.totalCents ?? 0;
+    const key = orderKey(mo.provider, mo.externalId);
+    const s = mo.source;
+    const origin =
+      s && s.channel !== "unknown"
+        ? describeOrderOrigin({
+            channel: s.channel,
+            channelLabel: CHANNEL_LABELS[s.channel as OrderChannel] ?? s.channel,
+            storeSource: s.storeSource,
+            storeMedium: s.storeMedium,
+            storeContent: s.storeContent,
+            adMethod: s.adMethod,
+            adConfidence: s.adConfidence,
+            adWindow: s.adWindow,
+            campaignName: s.metaCampaignName,
+            adsetName: s.metaAdsetName,
+            adName: s.metaAdName,
+          }).title
+        : null;
     items.push({
       at: (mo.occurredAt ?? mo.createdAt).toISOString(),
       type: "marketplace.order",
-      title: `Pedido #${mo.externalId} · ${brl(cents)}`,
+      title: orderTitle(mo.externalId, mo.status, cents),
       detail:
         [
           storeProviderLabel(mo.provider),
-          orderStatusLabel(mo.status),
-          mo.items.map((i) => i.title).join(", ") || null,
-          leadAttrDetail,
+          itemsSummary(mo.items),
+          origin ? `Origem: ${origin}` : null,
+          isRevenueOrder(mo.status) ? conversionByOrder.get(key) ?? null : null,
+          recoveredByOrder.has(key) && isRevenueOrder(mo.status) ? "pago depois de ficar pendente" : null,
+          origin ? null : leadAttrDetail,
         ]
           .filter(Boolean)
           .join(" · ") || undefined,
@@ -658,19 +988,13 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
   for (const entry of ledger) {
     if (entry.sourceRef && shownOrderRefs.has(entry.sourceRef)) continue;
     if (entry.description && shownOrderTags.some((tag) => entry.description!.endsWith(tag))) continue;
-    const entryMeta =
-      entry.metadata && typeof entry.metadata === "object" && !Array.isArray(entry.metadata)
-        ? (entry.metadata as Record<string, unknown>)
-        : {};
-    const entryAttr =
-      formatAttributionDetail(entryMeta) || leadAttrDetail;
+    const entryMeta = asMeta(entry.metadata);
+    const entryAttr = formatAttributionDetail(entryMeta) || leadAttrDetail;
     items.push({
       at: entry.occurredAt.toISOString(),
       type: "finance.income",
       title: `Entrada no caixa · ${brl(Math.round(Number(entry.amount) * 100))}`,
-      detail: [entry.description || entry.source, entryAttr]
-        .filter(Boolean)
-        .join(" · ") || undefined,
+      detail: [entry.description || entry.source, entryAttr].filter(Boolean).join(" · ") || undefined,
       href: "/finance",
       meta: {
         ledgerId: entry.id,
@@ -687,44 +1011,17 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
     items.push({
       at: b.createdAt.toISOString(),
       type: "agenda.booking",
-      title: `Agenda · ${b.service?.title || "Reserva"}`,
-      detail: `${b.status} · ${b.startAt.toLocaleString("pt-BR")}`,
+      title: `Agendou · ${b.service?.title || "Reserva"}`,
+      detail: `${BOOKING_STATUS[b.status] ?? b.status} · para ${clock(b.startAt, new Date(0))}`,
       href: "/agenda",
     });
   }
 
-  const carts = await prisma.abandonedCart.findMany({
-    where: { clienteId: workspaceId, contactId, status: { in: ["OPEN", "RECOVERED", "EXPIRED"] } },
-    orderBy: { abandonedAt: "desc" },
-    take: 20,
-  });
-  for (const cart of carts) {
-    items.push({
-      at: cart.abandonedAt.toISOString(),
-      type: "cart.abandoned",
-      title:
-        cart.kind === "order"
-          ? `Pedido #${cart.externalId.replace(/^order:/, "")} não pago · ${brl(cart.totalCents)}`
-          : `Carrinho abandonado · ${brl(cart.totalCents)}`,
-      detail: storeProviderLabel(cart.provider),
-    });
-    if (cart.notifiedAt) {
-      items.push({
-        at: cart.notifiedAt.toISOString(),
-        type: "cart.notified",
-        title: "WhatsApp de recuperação enviado",
-      });
-    }
-    if (cart.status === "RECOVERED" && cart.recoveredAt) {
-      items.push({
-        at: cart.recoveredAt.toISOString(),
-        type: "cart.recovered",
-        title: `Carrinho recuperado · ${brl(cart.recoveredCents ?? cart.totalCents)}`,
-      });
-    }
-  }
-
-  items.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+  items.sort(
+    (a, b) =>
+      new Date(a.at).getTime() - new Date(b.at).getTime() ||
+      (TYPE_ORDER[a.type] ?? 5) - (TYPE_ORDER[b.type] ?? 5),
+  );
 
   return {
     contact: {

@@ -70,6 +70,18 @@ export async function GET(request: NextRequest, ctx: Ctx) {
       const linked = orderExternalId
         ? orderRows.find((o) => o.provider === c.provider && o.externalId === orderExternalId)
         : null;
+      const rawItems = Array.isArray(c.items) ? (c.items as AbandonedCartItem[]) : [];
+      const items = rawItems.map((item, idx) => {
+        if (item.imageUrl && item.productUrl) return item;
+        const match =
+          linked?.items.find((li) => li.title === item.title) ??
+          (linked?.items.length === rawItems.length ? linked.items[idx] : undefined);
+        return {
+          ...item,
+          imageUrl: item.imageUrl ?? match?.imageUrl ?? null,
+          productUrl: item.productUrl ?? match?.productUrl ?? null,
+        };
+      });
       return {
         id: c.id,
         provider: c.provider,
@@ -80,7 +92,7 @@ export async function GET(request: NextRequest, ctx: Ctx) {
         orderStatus: linked?.status ?? null,
         totalCents: c.totalCents,
         currency: c.currency,
-        items: Array.isArray(c.items) ? (c.items as AbandonedCartItem[]) : [],
+        items,
         recoveryUrl: c.recoveryUrl,
         abandonedAt: c.abandonedAt.toISOString(),
         recoveredAt: c.recoveredAt?.toISOString() ?? null,

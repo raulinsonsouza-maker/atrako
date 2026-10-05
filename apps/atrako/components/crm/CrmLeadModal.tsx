@@ -36,6 +36,8 @@ type CartItem = {
   quantity: number;
   unitPriceCents?: number;
   sku?: string | null;
+  imageUrl?: string | null;
+  productUrl?: string | null;
 };
 
 type LeadCart = {
@@ -161,16 +163,6 @@ function recoveryMessage(name: string, cart: LeadCart, withLink: boolean) {
     : `${hi} Ainda está disponível — posso te ajudar a concluir?`;
 }
 
-/** Jornada sem eventos que repetem o mesmo momento (contato + lead criados juntos). */
-function cleanJourney(items: JourneyItem[]) {
-  const leadCreated = items.filter((i) => i.type === "lead.created").map((i) => new Date(i.at).getTime());
-  return items.filter(
-    (i) =>
-      i.type !== "contact.created" ||
-      !leadCreated.some((t) => Math.abs(t - new Date(i.at).getTime()) < 2 * 60_000),
-  );
-}
-
 function CopyButton({ text, label }: { text: string; label: string }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -213,24 +205,61 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
   );
 }
 
+function ProductThumb({ src }: { src?: string | null }) {
+  return src ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      className="h-14 w-14 shrink-0 rounded-[var(--radius-xs)] bg-[var(--canvas-parchment)] object-cover"
+    />
+  ) : (
+    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[var(--radius-xs)] bg-[var(--canvas-parchment)] text-[var(--ink-muted-48)]">
+      <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
+    </span>
+  );
+}
+
 function ItemList({ items, currency }: { items: CartItem[]; currency: string }) {
   if (!items.length) {
     return <p className="type-fine-print text-[var(--ink-muted-48)]">A loja não enviou os itens</p>;
   }
   return (
-    <ul className="divide-y divide-[var(--hairline)]">
-      {items.map((item, idx) => (
-        <li key={`${item.sku ?? item.title}-${idx}`} className="flex items-baseline justify-between gap-3 py-1.5">
-          <p className="min-w-0 type-caption text-[var(--ink)]">
-            <span className="tabular-nums text-[var(--ink-muted-48)]">{item.quantity || 1}×</span> {item.title}
-          </p>
-          {item.unitPriceCents ? (
-            <p className="shrink-0 type-caption tabular-nums text-[var(--ink-muted-80)]">
-              {fmtCents(item.unitPriceCents * (item.quantity || 1), currency)}
-            </p>
-          ) : null}
-        </li>
-      ))}
+    <ul className="space-y-3">
+      {items.map((item, idx) => {
+        const qty = item.quantity || 1;
+        return (
+          <li key={`${item.sku ?? item.title}-${idx}`} className="flex items-center gap-3">
+            <ProductThumb src={item.imageUrl} />
+            <div className="min-w-0 flex-1">
+              {item.productUrl ? (
+                <a
+                  href={item.productUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="line-clamp-2 type-caption-strong text-[var(--ink)] hover:text-[var(--primary)]"
+                >
+                  {item.title}
+                </a>
+              ) : (
+                <p className="line-clamp-2 type-caption-strong text-[var(--ink)]">{item.title}</p>
+              )}
+              {item.unitPriceCents ? (
+                <p className="type-fine-print tabular-nums text-[var(--ink-muted-48)]">
+                  {qty}× {fmtCents(item.unitPriceCents, currency)}
+                </p>
+              ) : (
+                <p className="type-fine-print tabular-nums text-[var(--ink-muted-48)]">{qty}×</p>
+              )}
+            </div>
+            {item.unitPriceCents ? (
+              <p className="shrink-0 type-caption tabular-nums text-[var(--ink)]">
+                {fmtCents(item.unitPriceCents * qty, currency)}
+              </p>
+            ) : null}
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -242,36 +271,37 @@ function CartBlock({ cart, leadName }: { cart: LeadCart; leadName: string }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="type-caption-strong text-[var(--ink)]">{cartTitle(cart)}</p>
-          <p className="type-fine-print text-[var(--ink-muted-48)]">
-            {cart.providerLabel} · {fmtRelative(cart.abandonedAt)}
-          </p>
-        </div>
-        <p className="shrink-0 type-body-strong tabular-nums text-[var(--ink)]">
-          {fmtCents(cart.totalCents || itemsCents, cart.currency)}
+      <div className="min-w-0">
+        <p className="type-caption-strong text-[var(--ink)]">{cartTitle(cart)}</p>
+        <p className="type-fine-print text-[var(--ink-muted-48)]">
+          {cart.providerLabel} · {fmtRelative(cart.abandonedAt)}
         </p>
       </div>
 
       <ItemList items={cart.items} currency={cart.currency} />
 
-      {itemsCents > 0 && cart.totalCents > itemsCents ? (
+      <div className="space-y-1 border-t border-[var(--hairline)] pt-3">
+        {itemsCents > 0 && cart.totalCents > itemsCents ? (
+          <div className="flex items-baseline justify-between">
+            <p className="type-caption text-[var(--ink-muted-48)]">Frete e taxas</p>
+            <p className="type-caption tabular-nums text-[var(--ink-muted-80)]">
+              {fmtCents(cart.totalCents - itemsCents, cart.currency)}
+            </p>
+          </div>
+        ) : null}
         <div className="flex items-baseline justify-between">
-          <p className="type-caption text-[var(--ink-muted-48)]">Frete e taxas</p>
-          <p className="type-caption tabular-nums text-[var(--ink-muted-80)]">
-            {fmtCents(cart.totalCents - itemsCents, cart.currency)}
+          <p className="type-caption text-[var(--ink-muted-48)]">Total</p>
+          <p className="type-body-strong tabular-nums text-[var(--ink)]">
+            {fmtCents(cart.totalCents || itemsCents, cart.currency)}
           </p>
         </div>
-      ) : null}
+      </div>
 
-      <p className="type-fine-print text-[var(--ink-muted-48)]">
-        {closed
-          ? "A loja cancelou o pedido e o link de pagamento não funciona mais. Para recuperar, fale direto com o cliente."
-          : cart.notifiedAt
-            ? `WhatsApp de recuperação enviado ${fmtRelative(cart.notifiedAt)}`
-            : "Nenhum WhatsApp de recuperação enviado ainda — vale um contato manual."}
-      </p>
+      {cart.notifiedAt ? (
+        <p className="type-fine-print text-[var(--ink-muted-48)]">
+          WhatsApp de recuperação enviado {fmtRelative(cart.notifiedAt)}
+        </p>
+      ) : null}
 
       <div className="flex flex-wrap gap-2">
         {canPay ? (
@@ -445,7 +475,7 @@ export function CrmLeadModal({
   const orders = (data?.orders ?? []).filter((o) => !o.fromCart).slice(0, 5);
   const paidOrders = (data?.orders ?? []).filter((o) => o.paid);
   const profile = data?.communications?.profile ?? null;
-  const journey = cleanJourney([...(data?.journey ?? [])]).reverse();
+  const journey = [...(data?.journey ?? [])].reverse();
 
   const boughtCount = profile?.ordersCount || paidOrders.length;
   const boughtCents = profile?.ordersCount
@@ -630,6 +660,7 @@ export function CrmLeadModal({
                     leadId={leadId}
                     data={data.communications}
                     showProfile={false}
+                    showHistory={false}
                   />
                 </div>
               ) : null}

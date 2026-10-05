@@ -308,7 +308,7 @@ export function MarketplacePanel({
               { label: "Pedidos", value: String(data.kpis.orders) },
               { label: "GMV", value: formatBrl(data.kpis.gmvCents) },
               { label: "Ticket médio", value: formatBrl(data.kpis.avgTicketCents) },
-              { label: "Líquido estimado", value: formatBrl(data.kpis.netCents), hint: `${data.kpis.marginPct}% do GMV` },
+              { label: "Líquido", value: formatBrl(data.kpis.netCents), hint: `${data.kpis.marginPct}% do GMV` },
               { label: "Taxas ML", value: formatBrl(data.kpis.feesCents) },
               { label: "Frete (custo)", value: formatBrl(data.kpis.shippingCostCents) },
             ].map((kpi) => (

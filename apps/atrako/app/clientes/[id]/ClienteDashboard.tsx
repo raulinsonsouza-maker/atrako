@@ -757,12 +757,8 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
       [chartConversionKey]: conv,
       CPL: conv > 0 ? Math.round((s.investimento / conv) * 100) / 100 : 0,
     };
-    if (isEcommerceMode) {
-      entry["Faturamento"] = Math.round((s.valorConversao ?? 0) * 100) / 100;
-    }
     return entry;
   });
-  const chartRevenueKey = isEcommerceMode ? "Faturamento" : undefined;
 
   const canalLabels: Record<string, string> = {
     geral: "Geral",
@@ -790,7 +786,7 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
               : "Conversões atribuídas ao período.";
     const taxaDesc =
       canal === "google"
-        ? "Conversões em relação aos cliques (taxa de conversão aproximada)."
+        ? "Conversões em relação aos cliques."
         : isComprasPanel
           ? "Percentual de compras sobre os cliques gerados."
           : isVisitasPanel
@@ -1472,7 +1468,6 @@ function formatPercentage(value: number) {
           ecommerceGoogleMode={isEcommerceMode}
           agrupamento={chartAgrupamento}
           onAgrupamentoChange={isLongPeriod ? undefined : (ag) => setChartAgrupamento(ag)}
-          chartRevenueKey={chartRevenueKey}
           conversasEngajamentoMode={isClinicaESpaPanel}
           academyEngajamentoMode={isAcademyPanel || isClinicaESpaPanel}
           kombuchaMode={isKombuchaPanel}

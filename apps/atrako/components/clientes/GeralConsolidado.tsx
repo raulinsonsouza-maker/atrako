@@ -66,21 +66,14 @@ function EcommerceGeral({ data }: { data: Consolidado }) {
         <Kpi
           label="Receita"
           value={brl(totais.receita)}
-          hint={`${totais.pedidos.toLocaleString("pt-BR")} pedidos · ticket ${brl(totais.ticketMedio)}${
-            data.cancelados ? ` · ${data.cancelados} cancelados ou não pagos fora` : ""
-          }`}
+          hint={`${totais.pedidos.toLocaleString("pt-BR")} pedidos pagos`}
         />
-        <Kpi label="Investimento" value={brl(totais.investimento)} hint={midiaLabel || "Sem anúncios no período"} />
-        <Kpi
-          label="Retorno geral"
-          value={roasText(totais.roas)}
-          tone={roasTone(totais.roas)}
-          hint="Receita da loja ÷ investimento"
-        />
+        <Kpi label="Investimento" value={brl(totais.investimento)} hint={midiaLabel || undefined} />
+        <Kpi label="Retorno geral" value={roasText(totais.roas)} tone={roasTone(totais.roas)} />
         <Kpi
           label="Custo por pedido"
           value={totais.pedidos > 0 && totais.investimento > 0 ? brl(totais.investimento / totais.pedidos) : "—"}
-          hint="Investimento ÷ pedidos da loja"
+          hint={totais.pedidos > 0 ? `ticket ${brl(totais.ticketMedio)}` : undefined}
         />
       </div>
 
@@ -127,27 +120,21 @@ function EcommerceGeral({ data }: { data: Consolidado }) {
         {meta ? (
           <div className="mt-5 grid gap-4 border-t border-[var(--divider-soft)] pt-4 sm:grid-cols-3">
             <div>
-              <p className="type-fine-print text-[var(--muted-foreground)]">Meta reportou</p>
+              <p className="type-fine-print text-[var(--muted-foreground)]">Compras no Meta</p>
               <p className="mt-1 type-body-strong tabular-nums text-[var(--foreground)]">
                 {meta.comprasReportadas} · {brl(meta.valorReportado)}
               </p>
             </div>
             <div>
-              <p className="type-fine-print text-[var(--muted-foreground)]">Achamos na loja</p>
+              <p className="type-fine-print text-[var(--muted-foreground)]">Confirmadas na loja</p>
               <p className="mt-1 type-body-strong tabular-nums text-[var(--foreground)]">
-                {meta.identificadas} de {meta.comprasReportadas}
-                <span className="ml-2 type-caption font-normal text-[var(--muted-foreground)]">
-                  {meta.pedidos} pagos · {brl(meta.receita)}
-                </span>
+                {meta.pedidos} · {brl(meta.receita)}
               </p>
             </div>
             <div>
-              <p className="type-fine-print text-[var(--muted-foreground)]">Retorno real do Meta</p>
+              <p className="type-fine-print text-[var(--muted-foreground)]">Retorno do Meta</p>
               <p className={`mt-1 type-body-strong tabular-nums ${meta.roas != null && meta.roas >= 1 ? "text-positive" : meta.roas != null && meta.roas > 0 ? "text-negative" : "text-[var(--foreground)]"}`}>
                 {roasText(meta.roas)}
-                <span className="ml-2 type-caption font-normal text-[var(--muted-foreground)]">
-                  {brl(meta.investimento)} investidos
-                </span>
               </p>
             </div>
           </div>
@@ -180,7 +167,7 @@ function Kpi({
 }: {
   label: string;
   value: string;
-  hint: string;
+  hint?: string;
   tone?: "positive" | "negative";
 }) {
   const valueColor =
@@ -191,7 +178,7 @@ function Kpi({
         {label}
       </p>
       <p className={`mt-2 type-tagline tabular-nums ${valueColor}`}>{value}</p>
-      <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">{hint}</p>
+      {hint ? <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">{hint}</p> : null}
     </div>
   );
 }
@@ -234,32 +221,23 @@ export function GeralConsolidado({
         <Kpi
           label="Receita"
           value={brl(totais.receita)}
-          hint={
-            vendasDosAnuncios
-              ? "Compras atribuídas pelos anúncios (sem loja conectada)"
-              : `${canaisVenda.length} canal(is) de venda no período`
-          }
+          hint={vendasDosAnuncios ? "Compras pelos anúncios" : undefined}
         />
         <Kpi
           label="Pedidos"
           value={totais.pedidos.toLocaleString("pt-BR")}
-          hint={`Ticket médio ${brl(totais.ticketMedio)}`}
+          hint={`ticket ${brl(totais.ticketMedio)}`}
         />
         <Kpi
           label="Leads"
           value={totais.leadsCrm.toLocaleString("pt-BR")}
-          hint={`CRM (sem compradores) · ${totais.leadsMidia.toLocaleString("pt-BR")} de anúncios`}
+          hint={`${totais.leadsMidia.toLocaleString("pt-BR")} pelos anúncios`}
         />
-        <Kpi
-          label="Investimento"
-          value={brl(totais.investimento)}
-          hint={`${canaisMidia.length} canal(is) de mídia`}
-        />
+        <Kpi label="Investimento" value={brl(totais.investimento)} />
         <Kpi
           label="ROAS geral"
           value={totais.roas != null ? `${totais.roas.toLocaleString("pt-BR")}x` : "—"}
           tone={roasTone(totais.roas)}
-          hint="Receita de todos os canais ÷ investimento"
         />
         <Kpi
           label="Custo por pedido"
@@ -268,7 +246,6 @@ export function GeralConsolidado({
               ? brl(totais.investimento / totais.pedidos)
               : "—"
           }
-          hint="Investimento ÷ pedidos"
         />
       </div>
 
@@ -277,20 +254,19 @@ export function GeralConsolidado({
           <Kpi
             label="Receita via relacionamento"
             value={brl(rel.receitaAtribuida)}
-            hint={`${rel.pedidosAtribuidos.toLocaleString("pt-BR")} pedidos atribuídos a e-mail/WhatsApp${
+            hint={`${rel.pedidosAtribuidos.toLocaleString("pt-BR")} pedidos${
               rel.participacao != null ? ` · ${rel.participacao.toLocaleString("pt-BR")}% da receita` : ""
-            } · já incluída na receita acima`}
+            }`}
           />
           <Kpi
-            label="Influenciada"
+            label="Influenciada por mensagem"
             value={brl(rel.receitaInfluenciada)}
-            hint={`${rel.pedidosInfluenciados.toLocaleString("pt-BR")} pedidos de quem recebeu mensagem sem clicar`}
+            hint={`${rel.pedidosInfluenciados.toLocaleString("pt-BR")} pedidos`}
           />
           <Kpi
             label="ROAS só da mídia"
             value={totais.roasSemRelacionamento != null ? `${totais.roasSemRelacionamento.toLocaleString("pt-BR")}x` : "—"}
             tone={roasTone(totais.roasSemRelacionamento)}
-            hint={`Receita sem a parte do relacionamento ÷ investimento · WhatsApp ${brl(rel.custoWhatsApp)}`}
           />
         </div>
       ) : null}

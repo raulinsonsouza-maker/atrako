@@ -21,8 +21,10 @@ import {
   ensureLostStage,
   STAGE_ROLE_ABANDONED,
   STAGE_ROLE_ENTRY,
+  STAGE_ROLE_LOST,
   STAGE_ROLE_WON,
 } from "@/lib/modules/crm";
+import { LOST_REASON_LABELS, withStageHistory, type LostReason } from "@/lib/crm/stage-history";
 import { enrichItemsFromCatalog } from "@/lib/flows/catalog-enrich";
 
 export const ABANDON_AFTER_MINUTES = 60;
@@ -100,7 +102,7 @@ export async function trackOrderPayment(
       ownExternalId: externalId,
       provider: input.provider,
     });
-    if (input.leadId) await moveLeadToWon(input.workspaceId, input.leadId, input.totalCents);
+    if (input.leadId) await moveLeadToWon(input.workspaceId, input.leadId, input.totalCents, input.occurredAt);
     const { onOrderPaid } = await import("@/lib/flows/attribution");
     await onOrderPaid({
       workspaceId: input.workspaceId,
@@ -303,7 +305,7 @@ export async function markCartsRecovered(input: {
     if (cart.status === "PENDING" || input.paidAt < cart.abandonedAt) {
       await prisma.abandonedCart.delete({ where: { id: cart.id } });
       if (cart.status === "OPEN" && cart.leadId) {
-        await moveLeadToWon(input.workspaceId, cart.leadId, input.totalCents);
+        await moveLeadToWon(input.workspaceId, cart.leadId, input.totalCents, input.paidAt);
       }
       continue;
     }
@@ -317,7 +319,7 @@ export async function markCartsRecovered(input: {
       },
     });
     if (cart.leadId) {
-      await moveLeadToWon(input.workspaceId, cart.leadId, input.totalCents, {
+      await moveLeadToWon(input.workspaceId, cart.leadId, input.totalCents, input.paidAt, {
         recoveredFromAbandoned: true,
         recoveredAt: input.paidAt.toISOString(),
       });
@@ -331,6 +333,7 @@ async function moveLeadToWon(
   workspaceId: string,
   leadId: string,
   totalCents: number,
+  paidAt: Date,
   extraMeta?: Record<string, unknown>,
 ) {
   const lead = await prisma.nativeLead.findFirst({ where: { id: leadId, clienteId: workspaceId } });
@@ -338,18 +341,22 @@ async function moveLeadToWon(
   const pipeline = await ensureDefaultPipeline(workspaceId);
   const won = pipeline.stages.find((s) => s.role === STAGE_ROLE_WON);
   const prev = asRecord(lead.metadata);
+  const meta = {
+    ...prev,
+    orderPending: false,
+    paidAt: prev.paidAt ?? paidAt.toISOString(),
+    ...(extraMeta ?? {}),
+  };
+  const moved = won && lead.stageId !== won.id;
   await prisma.nativeLead.update({
     where: { id: lead.id },
     data: {
       status: "WON",
       stageId: won?.id ?? lead.stageId,
       dealValue: lead.dealValue ?? new Prisma.Decimal(totalCents / 100),
-      metadata: {
-        ...prev,
-        orderPending: false,
-        paidAt: prev.paidAt ?? new Date().toISOString(),
-        ...(extraMeta ?? {}),
-      } as Prisma.InputJsonValue,
+      metadata: (moved
+        ? withStageHistory(meta, { stageId: won.id, stage: won.name, role: STAGE_ROLE_WON, at: paidAt, by: "auto", reason: "compra" })
+        : meta) as Prisma.InputJsonValue,
     },
   });
 }
@@ -408,7 +415,7 @@ export async function promoteDueCarts(opts?: { limit?: number; now?: Date; notif
       where: { id: cart.id },
       data: { status: "OPEN", contactId, leadId },
     });
-    await moveLeadToAbandoned(cart.clienteId, leadId, cart.totalCents, leadMeta);
+    await moveLeadToAbandoned(cart.clienteId, leadId, cart.totalCents, leadMeta, cart.abandonedAt, cart.kind);
     promoted++;
 
     const fresh = now.getTime() - cart.abandonedAt.getTime() < NOTIFY_MAX_AGE_HOURS * 3_600_000;
@@ -487,6 +494,8 @@ async function moveLeadToAbandoned(
   leadId: string,
   totalCents: number,
   meta: Record<string, unknown>,
+  abandonedAt: Date,
+  kind: string,
 ) {
   const lead = await prisma.nativeLead.findFirst({ where: { id: leadId, clienteId: workspaceId } });
   if (!lead || (lead.status !== "OPEN" && lead.status !== "LOST")) return;
@@ -495,17 +504,27 @@ async function moveLeadToAbandoned(
   const movable =
     lead.status === "LOST" || !lead.stageId || current?.role === STAGE_ROLE_ENTRY;
   const stage = movable ? await ensureAbandonedStage(workspaceId) : null;
+  const merged = { ...asRecord(lead.metadata), ...meta };
   await prisma.nativeLead.update({
     where: { id: lead.id },
     data: {
       ...(stage ? { stageId: stage.id, status: "OPEN" } : {}),
       dealValue: lead.dealValue ?? (totalCents > 0 ? new Prisma.Decimal(totalCents / 100) : null),
-      metadata: { ...asRecord(lead.metadata), ...meta } as Prisma.InputJsonValue,
+      metadata: (stage && stage.id !== lead.stageId
+        ? withStageHistory(merged, {
+            stageId: stage.id,
+            stage: stage.name,
+            role: STAGE_ROLE_ABANDONED,
+            at: abandonedAt,
+            by: "auto",
+            reason: kind === "order" ? "pedido não pago" : "carrinho abandonado",
+          })
+        : merged) as Prisma.InputJsonValue,
     },
   });
 }
 
-export type LostReason = "pedido_nao_pago" | "carrinho_expirado" | "reembolso";
+export type { LostReason } from "@/lib/crm/stage-history";
 
 /**
  * Lead aberto em Novo / Carrinho abandonado → Perdido, com motivo para reativação.
@@ -526,18 +545,22 @@ export async function markLeadLost(
   if (lead.stageId && role !== STAGE_ROLE_ENTRY && role !== STAGE_ROLE_ABANDONED) return false;
 
   const stage = await ensureLostStage(workspaceId);
+  const now = new Date();
   await prisma.nativeLead.update({
     where: { id: lead.id },
     data: {
       status: "LOST",
       stageId: stage.id,
-      metadata: {
-        ...asRecord(lead.metadata),
-        lostReason: reason,
-        lostAt: new Date().toISOString(),
-        orderPending: false,
-        ...(extraMeta ?? {}),
-      } as Prisma.InputJsonValue,
+      metadata: withStageHistory(
+        {
+          ...asRecord(lead.metadata),
+          lostReason: reason,
+          lostAt: now.toISOString(),
+          orderPending: false,
+          ...(extraMeta ?? {}),
+        },
+        { stageId: stage.id, stage: stage.name, role: STAGE_ROLE_LOST, at: now, by: "auto", reason: LOST_REASON_LABELS[reason] },
+      ) as Prisma.InputJsonValue,
     },
   });
   if (lead.contactId && reason !== "reembolso") {

@@ -1575,7 +1575,6 @@ function CrmTopKpiCards({
         <p className="text-2xl font-semibold tabular-nums text-[var(--foreground)]">
           {custoVenda != null ? formatCurrencyBR(Math.round(custoVenda)) : "—"}
         </p>
-        <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">investimento ÷ vendas</p>
       </div>
       {/* Visitas */}
       <div className="group relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 transition-all hover:border-[color-mix(in_srgb,var(--primary)_20%,var(--border))]">
@@ -1597,7 +1596,6 @@ function CrmTopKpiCards({
         <p className="text-2xl font-semibold tabular-nums text-[var(--foreground)]">
           {custoVisita != null ? formatCurrencyBR(Math.round(custoVisita)) : "—"}
         </p>
-        <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">investimento ÷ visitas</p>
       </div>
     </div>
   );

@@ -103,11 +103,14 @@ export function LeadCommunications({
   leadId,
   data,
   showProfile = true,
+  showHistory = true,
 }: {
   workspaceId: string;
   leadId: string;
   data: LeadCommunicationsData;
   showProfile?: boolean;
+  /** Envios e fluxos encerrados — desligado quando a Jornada já mostra o histórico. */
+  showHistory?: boolean;
 }) {
   const qc = useQueryClient();
   const [busy, setBusy] = useState<string | null>(null);
@@ -180,26 +183,27 @@ export function LeadCommunications({
       <div className="panel-modal-section space-y-3">
         <p className="type-caption-strong text-[var(--ink)]">Comunicações</p>
 
-        <div className="flex flex-wrap gap-1.5">
-          <span className="rel-badge type-micro-legal" data-tone={emailBlocked ? "bad" : c.email ? "ok" : undefined}>
-            <Mail className="h-3 w-3" strokeWidth={1.75} />
-            {emailBlocked ?? (c.email ? "E-mail ok" : "Sem e-mail")}
-          </span>
-          <span className="rel-badge type-micro-legal" data-tone={waBlocked ? "bad" : c.phone ? "ok" : undefined}>
-            <MessageCircle className="h-3 w-3" strokeWidth={1.75} />
-            {waBlocked ?? (c.phone ? "WhatsApp ok" : "Sem telefone")}
-          </span>
-          <button
-            type="button"
-            className="rel-badge type-micro-legal active:scale-95"
-            data-tone={c.marketingConsentAt ? "ok" : "warn"}
-            disabled={busy === "consent"}
-            onClick={() => void act({ action: "consent", value: !c.marketingConsentAt }, "consent")}
-            title="Consentimento para comunicações de marketing (LGPD)"
-          >
-            {c.marketingConsentAt ? `Consentiu (${c.consentSource ?? "—"})` : "Sem consentimento registrado"}
-          </button>
-        </div>
+        {emailBlocked || waBlocked || c.marketingConsentAt ? (
+          <div className="flex flex-wrap gap-1.5">
+            {emailBlocked ? (
+              <span className="rel-badge type-micro-legal" data-tone="bad">
+                <Mail className="h-3 w-3" strokeWidth={1.75} />
+                {emailBlocked}
+              </span>
+            ) : null}
+            {waBlocked ? (
+              <span className="rel-badge type-micro-legal" data-tone="bad">
+                <MessageCircle className="h-3 w-3" strokeWidth={1.75} />
+                {waBlocked}
+              </span>
+            ) : null}
+            {c.marketingConsentAt ? (
+              <span className="rel-badge type-micro-legal" data-tone="ok">
+                Aceitou receber ofertas
+              </span>
+            ) : null}
+          </div>
+        ) : null}
 
         {c.flowsPausedUntil ? (
           <div className="flex items-center justify-between gap-2 rounded-[var(--radius-xs)] bg-[var(--canvas-parchment)] px-3 py-2">
@@ -250,7 +254,7 @@ export function LeadCommunications({
             </div>
           </div>
         ))}
-        {past.map((e) => (
+        {showHistory && past.map((e) => (
           <p key={e.id} className="type-fine-print text-[var(--ink-muted-48)]">
             {e.flowName}: {ENROLLMENT_STATUS[e.status] ?? e.status}
             {e.exitReason ? ` (${EXIT_REASONS[e.exitReason] ?? e.exitReason})` : ""}
@@ -258,7 +262,7 @@ export function LeadCommunications({
           </p>
         ))}
 
-        {data.deliveries.length ? (
+        {!showHistory ? null : data.deliveries.length ? (
           <ul className="divide-y divide-[var(--divider-soft)]">
             {data.deliveries.slice(0, 12).map((d) => (
               <li key={d.id} className="space-y-0.5 py-2">

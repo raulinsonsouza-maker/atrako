@@ -18,6 +18,7 @@ export type ClientIdentity = {
   nome?: string | null;
   slug?: string | null;
   perfilPanel?: string | null;
+  objetivoMidia?: string | null;
 };
 
 function normalizeText(value?: string | null) {
@@ -192,6 +193,17 @@ export function isVitoBalducci(client?: ClientIdentity | null) {
     slug === VITO_BALDUCCI_SLUG ||
     nome === "vito balducci"
   );
+}
+
+/**
+ * Painel de vendas (compras, faturamento, ROAS, ticket médio).
+ * `objetivoMidia` é a fonte principal: vem em todas as rotas do dashboard (portal/público),
+ * enquanto `perfilPanel` só chega no acesso interno.
+ */
+export function isEcommerceCliente(client?: ClientIdentity | null) {
+  if (!client) return false;
+  if (client.objetivoMidia === "ecommerce") return true;
+  return isDor(client) || isGranarolo(client) || isVitoBalducci(client);
 }
 
 export function isKombucha(client?: ClientIdentity | null) {

@@ -462,6 +462,33 @@ function ClienteForm({
               </FormField>
             ) : null}
 
+            <FormField
+              label="Tipo de resultado do painel"
+              hint="Define as métricas das abas Geral, Meta e Google, do resumo no Telegram e dos alertas. Vale também para a área do cliente."
+            >
+              <div className="grid gap-2 sm:grid-cols-2">
+                {[
+                  { value: "leads", title: "Leads", desc: "Leads, CPL, formulários e conversas" },
+                  { value: "ecommerce", title: "E-commerce / vendas", desc: "Compras, faturamento, ROAS e ticket médio" },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setObjetivoMidia(opt.value)}
+                    aria-pressed={objetivoMidia === opt.value}
+                    className={`rounded-xl border px-4 py-3 text-left transition ${
+                      objetivoMidia === opt.value
+                        ? "border-[var(--primary)] bg-[var(--primary)]/5"
+                        : "border-[var(--border)] bg-[var(--background)]"
+                    }`}
+                  >
+                    <span className="block text-sm font-semibold text-[var(--foreground)]">{opt.title}</span>
+                    <span className="mt-0.5 block text-xs text-[var(--muted-foreground)]">{opt.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </FormField>
+
             {/* ── Google Ads ── */}
             <div className="space-y-3 rounded-xl border border-[var(--border)] bg-[var(--muted)]/20 p-4">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">Google Ads</p>
@@ -672,12 +699,15 @@ function ClienteForm({
               </FormField>
             </div>
 
-            <FormField label="Perfil de painel especial" hint="Define o tipo de dashboard customizado. Imune a mudanças de nome ou slug.">
+            <FormField label="Perfil de painel especial" hint="Layout customizado por segmento (hotel, imobiliária…). As métricas de vendas vêm de “Tipo de resultado do painel”.">
               <PillSelect
                 className="w-full"
                 size="field"
                 value={perfilPanel}
-                onChange={setPerfilPanel}
+                onChange={(value) => {
+                  setPerfilPanel(value);
+                  if (value === "ecommerce") setObjetivoMidia("ecommerce");
+                }}
                 options={[
                   { value: "", label: "(padrão — detecta por slug/nome)" },
                   { value: "ecommerce", label: "E-commerce" },
@@ -708,20 +738,6 @@ function ClienteForm({
                   { value: "3", label: "Squad 3" },
                 ]}
                 aria-label="Squad"
-              />
-            </FormField>
-
-            <FormField label="Objetivo de mídia" hint="Define quais métricas são exibidas no resumo diário do Telegram e nos alertas automáticos.">
-              <PillSelect
-                className="w-full"
-                size="field"
-                value={objetivoMidia}
-                onChange={setObjetivoMidia}
-                options={[
-                  { value: "leads", label: "Geração de Leads (CPL)" },
-                  { value: "ecommerce", label: "E-commerce / Vendas (CPA)" },
-                ]}
-                aria-label="Objetivo de mídia"
               />
             </FormField>
 

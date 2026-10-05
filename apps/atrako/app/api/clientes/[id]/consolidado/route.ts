@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireClienteAccess } from "@/lib/portalSession";
+import { isEcommerceCliente } from "@/lib/clientProfiles";
 
 const PROVIDER_LABELS: Record<string, string> = {
   TRAY: "Tray",
@@ -50,7 +51,11 @@ export async function GET(
   dataFim.setHours(23, 59, 59, 999);
   const range = { gte: dataInicio, lte: dataFim };
 
-  const [midia, pedidos, checkout, crmLeads, relConv, relCost] = await Promise.all([
+  const [cliente, midia, pedidos, checkout, crmLeads, relConv, relCost] = await Promise.all([
+    prisma.cliente.findUnique({
+      where: { id },
+      select: { nome: true, slug: true, perfilPanel: true, objetivoMidia: true },
+    }),
     prisma.fatoMidiaDiario.groupBy({
       by: ["canal"],
       where: { clienteId: id, data: range },
@@ -120,6 +125,25 @@ export async function GET(
     }))
     .sort((a, b) => b.investimento - a.investimento);
 
+  // Sem vendas de loja/marketplace/checkout no período, as compras atribuídas pelos
+  // anúncios viram a fonte de vendas. Com loja, ela é a fonte (evita contar o pedido duas vezes).
+  let fonteVendas: "lojas" | "anuncios" = "lojas";
+  if (canaisVenda.length === 0 && isEcommerceCliente(cliente)) {
+    for (const m of canaisMidia) {
+      if (m.compras <= 0 && m.receitaAtribuida <= 0) continue;
+      canaisVenda.push({
+        id: `ADS_${m.id}`,
+        label: `${m.label} (atribuído)`,
+        pedidos: m.compras,
+        receitaCents: Math.round(m.receitaAtribuida * 100),
+      });
+    }
+    if (canaisVenda.length > 0) {
+      fonteVendas = "anuncios";
+      canaisVenda.sort((a, b) => b.receitaCents - a.receitaCents);
+    }
+  }
+
   const receitaCents = canaisVenda.reduce((s, c) => s + c.receitaCents, 0);
   const totalPedidos = canaisVenda.reduce((s, c) => s + c.pedidos, 0);
   const investimento = canaisMidia.reduce((s, c) => s + c.investimento, 0);
@@ -134,6 +158,8 @@ export async function GET(
 
   return NextResponse.json({
     periodo: { dataInicio: dataInicio.toISOString(), dataFim: dataFim.toISOString() },
+    fonteVendas,
+    ecommerce: isEcommerceCliente(cliente),
     totais: {
       receita,
       pedidos: totalPedidos,

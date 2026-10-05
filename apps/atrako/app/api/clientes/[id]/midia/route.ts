@@ -56,7 +56,7 @@ export async function GET(
 
   // For profile-visit clients, use profileVisits as the primary outcome metric
   const usesProfileVisits = isFlorien(cliente);
-  const isComprasCliente = isDor(cliente) || isGranarolo(cliente);
+  const isComprasCliente = isDor(cliente) || isGranarolo(cliente) || cliente.objetivoMidia === "ecommerce";
   const isKombuchaCliente = isKombucha(cliente);
   const isBeBlueCliente = isBeBlueSchool(cliente);
   const getLeads = (f: (typeof fatos)[number]) =>

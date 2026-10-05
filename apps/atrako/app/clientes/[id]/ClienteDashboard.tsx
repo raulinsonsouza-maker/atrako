@@ -24,7 +24,7 @@ import { VarellaMotosPanel } from "@/components/clientes/VarellaMotosPanel";
 import { CampanhasPanel } from "@/components/clientes/CampanhasPanel";
 import { GoogleCampanhasPanel } from "@/components/clientes/GoogleCampanhasPanel";
 import { LinkedInCampanhasPanel } from "@/components/clientes/LinkedInCampanhasPanel";
-import { isHotelFazendaSaoJoao, isTertulia, isVarellaMotos, isMiguelImoveis, isDrFernandoGuena, isClinicaESpa, isDor, isGranarolo, isFlorien, isAcademyAmericana, isVitoBalducci, isKombucha, isBeBlueSchool, isSouIcarai, isImobClient, isSocialMediaOnly } from "@/lib/clientProfiles";
+import { isHotelFazendaSaoJoao, isTertulia, isVarellaMotos, isMiguelImoveis, isDrFernandoGuena, isClinicaESpa, isEcommerceCliente, isFlorien, isAcademyAmericana, isKombucha, isBeBlueSchool, isSouIcarai, isImobClient, isSocialMediaOnly } from "@/lib/clientProfiles";
 import {
   Bar,
   XAxis,
@@ -672,12 +672,12 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
   const isMiguelGooglePanel = isMiguelImoveis(cliente) && canal === "google";
   const isMiguelPanel = isDrFernandoGuena(cliente) && canal !== "google";
   const isClinicaESpaPanel = isClinicaESpa(cliente) && !isImobClient(cliente) && canal !== "google";
-  const isComprasPanel = (isDor(cliente) || isGranarolo(cliente) || isVitoBalducci(cliente)) && canal !== "google";
+  const isComprasPanel = isEcommerceCliente(cliente) && canal !== "google";
   const isVisitasPanel = isFlorien(cliente) && canal !== "google";
   const isAcademyPanel = isAcademyAmericana(cliente) && canal !== "google";
   const isKombuchaPanel = isKombucha(cliente) && canal !== "google";
   const isBeBluePanel = isBeBlueSchool(cliente) && canal !== "google";
-  const isEcommerceMode = isGranarolo(cliente) || isDor(cliente) || isVitoBalducci(cliente);
+  const isEcommerceMode = isEcommerceCliente(cliente);
   const convLabels = React.useMemo(() => isComprasPanel
     ? { singular: "compra", plural: "compras", metric: "Custo/Compra", metricFull: "Custo / Compra", kpi: "Meta Custo/Compra", dbKey: "COMPRAS", taxa: "TAXA COMPRA", cust: "CUSTO / COMPRA", semResult: "sem compras", crLabel: "CR (clique→compra)", chartKey: "Compras", sub: "Total do período" }
     : isVisitasPanel

@@ -4,6 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
 type Consolidado = {
+  /** "anuncios" quando não há loja e as vendas vêm das compras atribuídas pelos anúncios. */
+  fonteVendas?: "lojas" | "anuncios";
+  ecommerce?: boolean;
   totais: {
     receita: number;
     pedidos: number;
@@ -75,6 +78,7 @@ export function GeralConsolidado({
   }
 
   const { totais, canaisVenda, canaisMidia, relacionamento: rel } = data;
+  const vendasDosAnuncios = data.fonteVendas === "anuncios";
   const showRel = Boolean(rel && (rel.pedidosAtribuidos > 0 || rel.pedidosInfluenciados > 0 || rel.custoWhatsApp > 0));
   const maxReceita = Math.max(1, ...canaisVenda.map((c) => c.receitaCents));
 
@@ -84,7 +88,11 @@ export function GeralConsolidado({
         <Kpi
           label="Receita"
           value={brl(totais.receita)}
-          hint={`${canaisVenda.length} canal(is) de venda no período`}
+          hint={
+            vendasDosAnuncios
+              ? "Compras atribuídas pelos anúncios (sem loja conectada)"
+              : `${canaisVenda.length} canal(is) de venda no período`
+          }
         />
         <Kpi
           label="Pedidos"
@@ -189,7 +197,9 @@ export function GeralConsolidado({
                   <span className="type-caption tabular-nums text-[var(--foreground)]">
                     {brl(c.investimento)}
                     <span className="ml-2 text-[var(--muted-foreground)]">
-                      {c.leads.toLocaleString("pt-BR")} leads
+                      {data.ecommerce
+                        ? `${c.compras.toLocaleString("pt-BR")} compras · ${brl(c.receitaAtribuida)}`
+                        : `${c.leads.toLocaleString("pt-BR")} leads`}
                     </span>
                   </span>
                 </li>

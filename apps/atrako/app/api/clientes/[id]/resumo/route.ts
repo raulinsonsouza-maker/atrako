@@ -68,7 +68,7 @@ export async function GET(
   });
 
   const isVisitasCliente = isFlorien(cliente);
-  const isComprasCliente = isDor(cliente) || isGranarolo(cliente);
+  const isComprasCliente = isDor(cliente) || isGranarolo(cliente) || cliente.objetivoMidia === "ecommerce";
   const isKombuchaCliente = isKombucha(cliente);
   const isBeBlueCliente = isBeBlueSchool(cliente);
   const isAcademyCliente = isAcademyAmericana(cliente);

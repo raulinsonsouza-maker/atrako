@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { syncMetaAdPurchases, type MetaPurchaseSyncResult } from "./meta-purchases";
 import { reconcileOrderSources, type ReconcileResult } from "./reconcile";
+import { backfillOrderDetails } from "./backfill";
 
 export { reconcileOrderSources } from "./reconcile";
 export { CHANNEL_LABELS, type OrderChannel } from "./store-source";
@@ -18,6 +19,7 @@ export type CommerceAttributionResult = {
   skipped?: string;
   meta?: MetaPurchaseSyncResult;
   reconcile?: ReconcileResult;
+  backfill?: { items: number; sources: number };
 };
 
 /** Sincroniza compras do Meta e reconcilia com os pedidos do site. Seguro para rodar todo dia. */
@@ -50,7 +52,11 @@ export async function refreshCommerceAttribution(
     }));
   }
   const reconcile = await reconcileOrderSources(clienteId, { dateFrom, dateTo });
-  return { meta, reconcile };
+  const backfill = await backfillOrderDetails(clienteId).catch((e) => {
+    console.error("[order-backfill]", clienteId, e instanceof Error ? e.message : e);
+    return undefined;
+  });
+  return { meta, reconcile, backfill };
 }
 
 /** Etapa do sync diário: todos os clientes com pedidos de loja. */

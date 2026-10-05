@@ -15,7 +15,12 @@ import {
   ShoppingCart,
   X,
 } from "lucide-react";
-import { describeOrderOrigin, type OrderSourceView } from "@/lib/commerce-attribution/describe";
+import {
+  describeOrderOrigin,
+  describeVisit,
+  type OrderSourceView,
+  type OrderVisitView,
+} from "@/lib/commerce-attribution/describe";
 import { isClosedOrder, orderStatusLabel } from "@/lib/commerce-attribution/order-status";
 import { PillSelect } from "@/components/ui/pill-select";
 import { Button, buttonClass } from "@/components/ui/button";
@@ -77,6 +82,7 @@ type LeadOrder = {
     productUrl: string | null;
   }>;
   source: (OrderSourceView & { deviceType: string | null; adId: string | null }) | null;
+  visit: OrderVisitView | null;
 };
 
 type LeadDetail = {
@@ -264,7 +270,7 @@ function ItemList({ items, currency }: { items: CartItem[]; currency: string }) 
   );
 }
 
-function CartBlock({ cart, leadName }: { cart: LeadCart; leadName: string }) {
+function CartBlock({ cart, leadName, order }: { cart: LeadCart; leadName: string; order?: LeadOrder }) {
   const closed = cartClosed(cart);
   const canPay = !closed && !!cart.recoveryUrl;
   const itemsCents = cart.items.reduce((sum, i) => sum + (i.unitPriceCents ?? 0) * (i.quantity || 1), 0);
@@ -296,6 +302,8 @@ function CartBlock({ cart, leadName }: { cart: LeadCart; leadName: string }) {
           </p>
         </div>
       </div>
+
+      {order?.source ? <OriginBox order={order} label="Como chegou" /> : null}
 
       {cart.notifiedAt ? (
         <p className="type-fine-print text-[var(--ink-muted-48)]">
@@ -329,7 +337,6 @@ function hasKnownOrigin(source: LeadOrder["source"]) {
 }
 
 function OrderBlock({ order }: { order: LeadOrder }) {
-  const origin = hasKnownOrigin(order.source) ? describeOrderOrigin(order.source) : null;
   const status = orderStatusLabel(order.status);
   return (
     <div className="space-y-3">
@@ -396,9 +403,19 @@ function OrderBlock({ order }: { order: LeadOrder }) {
         </ul>
       ) : null}
 
+      <OriginBox order={order} />
+    </div>
+  );
+}
+
+function OriginBox({ order, label = "Origem da compra" }: { order: LeadOrder; label?: string }) {
+  const origin = hasKnownOrigin(order.source) ? describeOrderOrigin(order.source) : null;
+  const visit = order.visit ? describeVisit(order.visit) : null;
+  return (
+    <>
       {origin ? (
         <div className="rounded-[var(--radius-xs)] bg-[var(--canvas-parchment)] px-3 py-2">
-          <p className="type-micro-legal text-[var(--ink-muted-48)]">Origem da compra</p>
+          <p className="type-micro-legal text-[var(--ink-muted-48)]">{label}</p>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <p className="type-caption-strong text-[var(--ink)]">{origin.title}</p>
             {origin.badge ? (
@@ -407,7 +424,11 @@ function OrderBlock({ order }: { order: LeadOrder }) {
               </span>
             ) : null}
           </div>
-          {origin.detail ? <p className="type-fine-print text-[var(--ink-muted-80)]">{origin.detail}</p> : null}
+          {origin.detail && order.source?.adMethod ? (
+            <p className="type-fine-print text-[var(--ink-muted-80)]">{origin.detail}</p>
+          ) : null}
+          {visit?.arrival ? <p className="type-fine-print text-[var(--ink-muted-80)]">{visit.arrival}</p> : null}
+          {visit?.session ? <p className="type-micro-legal text-[var(--ink-muted-48)]">{visit.session}</p> : null}
           {origin.lastVisit ? (
             <p className="mt-1 type-micro-legal text-[var(--ink-muted-48)]">{origin.lastVisit}</p>
           ) : null}
@@ -415,9 +436,10 @@ function OrderBlock({ order }: { order: LeadOrder }) {
       ) : (
         <p className="type-fine-print text-[var(--ink-muted-48)]">
           {order.source ? "A loja não informa a origem deste pedido." : "Origem ainda não calculada."}
+          {visit?.session ? ` ${visit.session}.` : ""}
         </p>
       )}
-    </div>
+    </>
   );
 }
 
@@ -634,7 +656,13 @@ export function CrmLeadModal({
                   <SectionTitle icon={ShoppingCart}>Compra não finalizada</SectionTitle>
                   {openCarts.map((cart, idx) => (
                     <div key={cart.id} className={idx > 0 ? "border-t border-[var(--hairline)] pt-4" : undefined}>
-                      <CartBlock cart={cart} leadName={lead.name} />
+                      <CartBlock
+                        cart={cart}
+                        leadName={lead.name}
+                        order={(data?.orders ?? []).find(
+                          (o) => o.provider === cart.provider && o.externalId === cart.orderExternalId,
+                        )}
+                      />
                     </div>
                   ))}
                 </div>

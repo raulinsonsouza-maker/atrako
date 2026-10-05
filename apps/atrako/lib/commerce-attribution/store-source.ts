@@ -13,6 +13,7 @@ export type OrderChannel =
   | "whatsapp"
   | "direct"
   | "referral"
+  | "admin"
   | "other"
   | "unknown";
 
@@ -91,6 +92,7 @@ export function classifyChannel(input: {
   const referrer = (input.referrer ?? "").toLowerCase();
   const paid = PAID_MEDIUMS.has(medium) || input.metaIdInUtm;
 
+  if (input.sourceType === "admin") return "admin";
   if (input.hasGclid || (paid && source.includes("google"))) return "google_ads";
   if (paid && (META_SOURCES.test(source) || META_REFERRERS.test(referrer) || META_ID.test(source))) return "meta_ads";
   if (medium === "email" || source.includes("email") || source.includes("newsletter")) return "email";
@@ -174,6 +176,28 @@ export const CHANNEL_LABELS: Record<OrderChannel, string> = {
   whatsapp: "WhatsApp",
   direct: "Direto",
   referral: "Outro site",
+  admin: "Criado no painel da loja",
   other: "Outro",
   unknown: "Não informado pela loja",
 };
+
+/** "2026-08-30 20:16:41" (GMT, como o Woo grava) → Date. */
+function parseWooGmt(raw: string | null | undefined): Date | null {
+  if (!raw || !/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(raw)) return null;
+  const d = new Date(`${raw.replace(" ", "T").slice(0, 19)}Z`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** Dados da sessão que não ficam em `MarketplaceOrderSource`: início da visita e navegador. */
+export function wooVisitExtras(order: {
+  date_created_gmt?: string;
+  meta_data?: MetaRow[];
+}): { userAgent: string | null; minutesOnSite: number | null } {
+  const start = parseWooGmt(metaValue(order.meta_data, "_wc_order_attribution_session_start_time"));
+  const placed = parseWooGmt(order.date_created_gmt);
+  const minutes = start && placed ? Math.round((placed.getTime() - start.getTime()) / 60_000) : null;
+  return {
+    userAgent: metaValue(order.meta_data, "_wc_order_attribution_user_agent"),
+    minutesOnSite: minutes != null && minutes >= 0 && minutes <= 24 * 60 ? minutes : null,
+  };
+}

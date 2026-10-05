@@ -6,7 +6,7 @@ import { getPersonJourney, storeProviderLabel } from "@/lib/atrako/person";
 import type { AbandonedCartItem } from "@/lib/crm/abandoned-cart";
 import { ensureDefaultPipeline } from "@/lib/modules/crm";
 import { leadCommunications } from "@/lib/flows/lead-card";
-import { CHANNEL_LABELS, type OrderChannel } from "@/lib/commerce-attribution/store-source";
+import { CHANNEL_LABELS, wooVisitExtras, type OrderChannel } from "@/lib/commerce-attribution/store-source";
 import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -119,6 +119,19 @@ export async function GET(request: NextRequest, ctx: Ctx) {
       imageUrl: i.imageUrl,
       productUrl: i.productUrl,
     })),
+    visit: o.source
+      ? {
+          storeCampaign: o.source.storeCampaign,
+          storeContent: o.source.storeContent,
+          referrer: o.source.referrer,
+          landingUrl: o.source.landingUrl,
+          deviceType: o.source.deviceType,
+          sessionPages: o.source.sessionPages,
+          ...(o.provider === "WOOCOMMERCE"
+            ? wooVisitExtras((o.rawPayload as { order?: Parameters<typeof wooVisitExtras>[0] } | null)?.order ?? {})
+            : { userAgent: null, minutesOnSite: null }),
+        }
+      : null,
     source: o.source
       ? {
           channel: o.source.channel,

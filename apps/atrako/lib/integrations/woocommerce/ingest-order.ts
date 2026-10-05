@@ -24,7 +24,7 @@ import {
 } from "./orders";
 
 /** MarketplaceOrderItem com foto/link — base de recomendações, recompra e itens no e-mail. */
-async function syncWooOrderItems(workspaceId: string, orderId: string, wooOrder: WooOrder) {
+export async function syncWooOrderItems(workspaceId: string, orderId: string, wooOrder: WooOrder) {
   const items = await wooOrderItemsEnriched(workspaceId, wooOrder);
   if (!items.length) return;
   await prisma.$transaction([

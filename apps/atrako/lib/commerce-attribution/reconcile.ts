@@ -26,7 +26,7 @@ function shiftDay(day: string, delta: number) {
 type RawWoo = { order?: { date_created?: string; meta_data?: Array<{ key?: string; value?: unknown }> } };
 
 /** Dia local do pedido. Woo grava `date_created` no fuso da loja — é quando o Pixel dispara no obrigado. */
-function orderDay(o: { provider: string; rawPayload: unknown; occurredAt: Date | null; createdAt: Date }) {
+export function orderDay(o: { provider: string; rawPayload: unknown; occurredAt: Date | null; createdAt: Date }) {
   if (o.provider === "WOOCOMMERCE") {
     const created = (o.rawPayload as RawWoo | null)?.order?.date_created;
     if (typeof created === "string" && /^\d{4}-\d{2}-\d{2}/.test(created)) return created.slice(0, 10);

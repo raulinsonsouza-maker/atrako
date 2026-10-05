@@ -102,7 +102,7 @@ export function CrmLeadCard({
         </span>
         <div className="pipeline-lead-card-main">
           <div className="pipeline-lead-card-title-row">
-            <span className="pipeline-lead-name type-caption-strong">{lead.name}</span>
+            <span className="pipeline-lead-name type-caption-strong" title={lead.name}>{lead.name}</span>
             {hasValue ? (
               <span className="pipeline-lead-value type-caption-strong tabular-nums">
                 {formatCurrency(lead.dealValue!)}

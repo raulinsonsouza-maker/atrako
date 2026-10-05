@@ -104,6 +104,23 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
     enabled: Boolean(workspaceId),
   });
 
+  const boardRef = useRef<HTMLDivElement | null>(null);
+  const [boardHeight, setBoardHeight] = useState<number | null>(null);
+  const boardReady = tab === "pipeline" && !!data;
+  const hasCartsLine = Boolean(data?.abandonedCarts);
+  useEffect(() => {
+    if (!boardReady) return;
+    const fit = () => {
+      const el = boardRef.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      setBoardHeight(Math.max(360, Math.floor(window.innerHeight - top - 24)));
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [boardReady, showNew, hasCartsLine]);
+
   const handleDrop = useCallback(
     async (leadId: string, fromStageId: string, toStageId: string) => {
       if (!leadId || !toStageId || fromStageId === toStageId || !data) return;
@@ -311,9 +328,12 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
         </div>
       ) : tab === "pipeline" ? (
         <div
+          ref={boardRef}
           className="pipeline-board"
           style={{
-            gridTemplateColumns: `repeat(${Math.max(boardCols, 1)}, minmax(200px, 1fr))`,
+            gridTemplateColumns: `repeat(${Math.max(boardCols, 1)}, minmax(280px, 1fr))`,
+            height: boardHeight ?? undefined,
+            flex: boardHeight ? "none" : undefined,
           }}
         >
           {(data?.stages ?? []).map((stage) => {

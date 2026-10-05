@@ -501,21 +501,26 @@
   border-radius: var(--radius-full);
 }
 /* ── CRM pipeline (superfícies legíveis no AppShell) ── */
+/* Altura presa à tela (via JS): colunas rolam por dentro e a barra lateral fica sempre à vista. */
 .pipeline-board {
   display: grid;
+  grid-template-rows: minmax(0, 1fr);
   gap: var(--space-sm);
-  min-height: 0;
+  min-height: 360px;
   flex: 1;
   overflow-x: auto;
-  padding-bottom: 4px;
-  scrollbar-width: thin;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
 }
 
 .pipeline-column {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  min-height: 280px;
+  min-height: 0;
+  scroll-snap-align: start;
   border-radius: var(--radius-lg);
   border: 1px solid var(--hairline);
   background: var(--canvas-parchment);
@@ -634,8 +639,10 @@
 .pipeline-lead-name {
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
   color: var(--ink);
 }
 

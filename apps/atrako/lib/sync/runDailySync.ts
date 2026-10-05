@@ -14,6 +14,7 @@ import { syncLinkedinTodosClientes } from "@/lib/sync/linkedinApiSync";
 import { syncAnalyticsTodosClientes } from "@/lib/sync/analyticsApiSync";
 import { syncCrmTodosClientes } from "@/lib/sync/crmSync";
 import { syncInstagramTodosClientes } from "@/lib/sync/syncInstagram";
+import { refreshCommerceAttributionTodosClientes } from "@/lib/commerce-attribution";
 import { runDailyAlerts } from "@/lib/alerts/sendAlerts";
 import { sendTelegramSummaries } from "@/lib/telegram/sendTelegramSummaries";
 import { logInfo, logWarn, logError } from "@/lib/logger";
@@ -127,6 +128,7 @@ export async function runDailySync(options?: {
   const linkedin = await runStage("LinkedIn Ads", () => syncLinkedinTodosClientes(opts));
   const ga4 = await runStage("Google Analytics", () => syncAnalyticsTodosClientes(opts));
   await runStage("CRM", () => syncCrmTodosClientes());
+  await runStage("Vendas × anúncios", () => refreshCommerceAttributionTodosClientes());
 
   let fatalCount = [meta, instagram, google, linkedin, ga4].filter((r) => r.fatal).length;
 

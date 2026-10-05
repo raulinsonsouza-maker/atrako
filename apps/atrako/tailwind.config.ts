@@ -1,5 +1,10 @@
 import type { Config } from "tailwindcss";
 
+// Tokens são hex em CSS vars; color-mix permite modificador de opacidade (`bg-primary/10`).
+// `bg-[var(--x)]/10` não gera CSS no Tailwind 3 — use a forma nomeada.
+const token = (name: string) =>
+  `color-mix(in srgb, var(${name}) calc(<alpha-value> * 100%), transparent)`;
+
 const config: Config = {
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -23,26 +28,29 @@ const config: Config = {
         prose: "980px",
       },
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        canvas: "var(--canvas)",
-        parchment: "var(--canvas-parchment)",
-        ink: "var(--ink)",
-        card: "var(--card)",
-        "card-foreground": "var(--card-foreground)",
+        background: token("--background"),
+        foreground: token("--foreground"),
+        canvas: token("--canvas"),
+        parchment: token("--canvas-parchment"),
+        pearl: token("--surface-pearl"),
+        ink: token("--ink"),
+        card: token("--card"),
+        "card-foreground": token("--card-foreground"),
         primary: {
-          DEFAULT: "var(--primary)",
-          focus: "var(--primary-focus)",
-          "on-dark": "var(--primary-on-dark)",
-          foreground: "var(--primary-foreground)",
+          DEFAULT: token("--primary"),
+          focus: token("--primary-focus"),
+          "on-dark": token("--primary-on-dark"),
+          foreground: token("--primary-foreground"),
         },
         muted: {
-          DEFAULT: "var(--muted)",
-          foreground: "var(--muted-foreground)",
+          DEFAULT: token("--muted"),
+          foreground: token("--muted-foreground"),
         },
-        border: "var(--border)",
-        hairline: "var(--hairline)",
-        accent: "var(--accent)",
+        border: token("--border"),
+        hairline: token("--hairline"),
+        accent: token("--accent"),
+        positive: token("--positive"),
+        negative: token("--negative"),
       },
       borderRadius: {
         none: "var(--radius-none)",

@@ -134,7 +134,7 @@ function SectionHeader({ sub, title }: { sub: string; title: string }) {
       <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">{sub}</p>
-        <h2 className="text-xl font-extrabold tracking-tight text-[var(--foreground)]">{title}</h2>
+        <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">{title}</h2>
       </div>
     </div>
   );
@@ -146,14 +146,14 @@ function KpiCard({ icon, label, value, sub }: { icon: React.ReactNode; label: st
       <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--primary)] opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-[0.05]" />
       <div className="mb-2 flex items-center gap-2 text-[var(--primary)]">{icon}</div>
       <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">{label}</p>
-      <p className="mt-0.5 text-2xl font-extrabold tracking-tight text-[var(--foreground)]">{value}</p>
+      <p className="mt-0.5 text-2xl font-semibold tracking-tight text-[var(--foreground)]">{value}</p>
       {sub && <p className="mt-0.5 text-[11px] text-[var(--muted-foreground)]">{sub}</p>}
     </div>
   );
 }
 
 function SkeletonCard({ h = 24 }: { h?: number }) {
-  return <div className={`h-${h} animate-pulse rounded-2xl bg-[var(--muted)]/40`} />;
+  return <div className={`h-${h} animate-pulse rounded-2xl bg-muted/40`} />;
 }
 
 // ── Custom Tooltip ─────────────────────────────────────────────────────────
@@ -174,7 +174,7 @@ const CustomTooltip = ({
       {payload.map((p, i) => (
         <p key={i} style={{ color: p.color }}>
           {i === 0 ? (valueLabel ?? p.name) : (secondaryLabel ?? p.name)}:{" "}
-          <span className="font-bold">{fmtFull(p.value)}</span>
+          <span className="font-semibold">{fmtFull(p.value)}</span>
         </p>
       ))}
     </div>
@@ -186,10 +186,10 @@ const CustomTooltip = ({
 function MediaBadge({ type }: { type: string }) {
   const map: Record<string, { label: string; cls: string }> = {
     VIDEO: { label: "Reel", cls: "bg-purple-500/15 text-purple-400" },
-    CAROUSEL_ALBUM: { label: "Carrossel", cls: "bg-blue-500/15 text-blue-400" },
-    IMAGE: { label: "Imagem", cls: "bg-[var(--muted)]/60 text-[var(--muted-foreground)]" },
+    CAROUSEL_ALBUM: { label: "Carrossel", cls: "bg-blue-500/15 text-primary" },
+    IMAGE: { label: "Imagem", cls: "bg-muted/60 text-[var(--muted-foreground)]" },
   };
-  const cfg = map[type] ?? { label: type, cls: "bg-[var(--muted)]/60 text-[var(--muted-foreground)]" };
+  const cfg = map[type] ?? { label: type, cls: "bg-muted/60 text-[var(--muted-foreground)]" };
   return (
     <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${cfg.cls}`}>
       {cfg.label}
@@ -211,13 +211,13 @@ function PostModal({ post, onClose }: { post: Post; onClose: () => void }) {
       >
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 z-10 rounded-full bg-[var(--muted)]/80 p-1.5 text-[var(--muted-foreground)] transition hover:text-[var(--foreground)]"
+          className="absolute right-4 top-4 z-10 rounded-full bg-muted/80 p-1.5 text-[var(--muted-foreground)] transition hover:text-[var(--foreground)]"
         >
           <X className="h-4 w-4" />
         </button>
 
         {/* Image */}
-        <div className="relative aspect-square w-full overflow-hidden rounded-t-3xl bg-[var(--muted)]/30">
+        <div className="relative aspect-square w-full overflow-hidden rounded-t-3xl bg-muted/30">
           {post.thumbnailUrl ? (
             <img
               src={post.thumbnailUrl}
@@ -227,7 +227,7 @@ function PostModal({ post, onClose }: { post: Post; onClose: () => void }) {
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              <Instagram className="h-16 w-16 text-[var(--muted-foreground)]/30" />
+              <Instagram className="h-16 w-16 text-muted-foreground/30" />
             </div>
           )}
           <div className="absolute bottom-3 left-3 rounded-lg bg-black/60 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
@@ -248,9 +248,9 @@ function PostModal({ post, onClose }: { post: Post; onClose: () => void }) {
               { label: "Compart.", value: fmt(post.compartilhamentos) },
               { label: "Taxa Eng.", value: fmtPct(post.taxaEngajamento) },
             ].map(({ label, value }) => (
-              <div key={label} className="rounded-xl bg-[var(--muted)]/30 p-2.5 text-center">
+              <div key={label} className="rounded-xl bg-muted/30 p-2.5 text-center">
                 <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">{label}</p>
-                <p className="mt-0.5 text-sm font-extrabold text-[var(--foreground)]">{value}</p>
+                <p className="mt-0.5 text-sm font-semibold text-[var(--foreground)]">{value}</p>
               </div>
             ))}
           </div>
@@ -283,10 +283,10 @@ function MiniChart({ data, dataKey, title, sub, valueLabel, color = "var(--prima
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
       <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-[var(--primary)]">{sub}</p>
-      <p className="mb-4 text-base font-bold text-[var(--foreground)]">{title}</p>
+      <p className="mb-4 text-base font-semibold text-[var(--foreground)]">{title}</p>
       <ResponsiveContainer width="100%" height={140}>
         <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-          <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.5} />
+          <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
           <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fontSize: 9, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false}
             tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} />
@@ -335,26 +335,26 @@ function OrganicPerformanceSection({ data, periodData }: { data: MonthRow[] | un
       {/* ── Header ── */}
       <div className="px-5 pt-5 pb-4 border-b border-[var(--border)]">
         <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">Evolução mensal · últimos 12 meses</p>
-        <h3 className="text-lg font-extrabold tracking-tight text-[var(--foreground)]">Performance orgânica</h3>
+        <h3 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">Performance orgânica</h3>
       </div>
 
       {/* ── KPI strip ── */}
       <div className="grid grid-cols-3 divide-x divide-[var(--border)] border-b border-[var(--border)]">
         <div className="px-5 py-3">
           <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Taxa média</p>
-          <p className="text-2xl font-extrabold text-[var(--primary)]">
+          <p className="text-2xl font-semibold text-[var(--primary)]">
             {avgTaxa.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
           </p>
           <p className="text-[10px] text-[var(--muted-foreground)]">{stripLabel}</p>
         </div>
         <div className="px-5 py-3">
           <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Total engajadas</p>
-          <p className="text-2xl font-extrabold text-[var(--foreground)]">{fmt(totalEng)}</p>
+          <p className="text-2xl font-semibold text-[var(--foreground)]">{fmt(totalEng)}</p>
           <p className="text-[10px] text-[var(--muted-foreground)]">{stripLabel}</p>
         </div>
         <div className="px-5 py-3">
           <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Melhor taxa</p>
-          <p className="text-2xl font-extrabold text-[var(--foreground)]">
+          <p className="text-2xl font-semibold text-[var(--foreground)]">
             {peakEng.taxaEngajamento.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
           </p>
           <p className="text-[10px] text-[var(--muted-foreground)]">{peakEng.label}</p>
@@ -371,7 +371,7 @@ function OrganicPerformanceSection({ data, periodData }: { data: MonthRow[] | un
                 <stop offset="100%" stopColor="var(--primary)" stopOpacity={0.55} />
               </linearGradient>
             </defs>
-            <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.5} />
+            <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
             <XAxis dataKey="label" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
             <YAxis yAxisId="left" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false}
               tickFormatter={(v: number) => fmt(v)} width={52} />
@@ -384,11 +384,11 @@ function OrganicPerformanceSection({ data, periodData }: { data: MonthRow[] | un
                 return (
                   <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-xs shadow-xl min-w-[168px]">
                     <p className="mb-1.5 font-semibold text-[var(--foreground)]">{lbl}</p>
-                    <p style={{ color: "var(--primary)" }}>Alcance: <span className="font-bold">{fmtFull(d?.alcance ?? 0)}</span></p>
-                    <p className="text-blue-400">Taxa de engaj.: <span className="font-bold">{(d?.taxaEngajamento ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span></p>
-                    <p className="text-[var(--muted-foreground)]">Interações: <span className="font-bold">{fmtFull(d?.engajamento ?? 0)}</span></p>
+                    <p style={{ color: "var(--primary)" }}>Alcance: <span className="font-semibold">{fmtFull(d?.alcance ?? 0)}</span></p>
+                    <p className="text-primary">Taxa de engaj.: <span className="font-semibold">{(d?.taxaEngajamento ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span></p>
+                    <p className="text-[var(--muted-foreground)]">Interações: <span className="font-semibold">{fmtFull(d?.engajamento ?? 0)}</span></p>
                     {d?.momAlc != null && (
-                      <p className={`mt-1 ${d.momAlc >= 0 ? "text-green-400" : "text-red-400"}`}>
+                      <p className={`mt-1 ${d.momAlc >= 0 ? "text-positive" : "text-negative"}`}>
                         MoM: {d.momAlc >= 0 ? "+" : ""}{d.momAlc.toFixed(1)}%
                       </p>
                     )}
@@ -439,10 +439,10 @@ function ActivityChart({ data, dataKey, labelKey, title, sub, color = "#3b82f6" 
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
       <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-[var(--primary)]">{sub}</p>
-      <p className="mb-4 text-base font-bold text-[var(--foreground)]">{title}</p>
+      <p className="mb-4 text-base font-semibold text-[var(--foreground)]">{title}</p>
       <ResponsiveContainer width="100%" height={140}>
         <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-          <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.4} />
+          <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
           <XAxis dataKey={labelKey} tick={{ fontSize: 9, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fontSize: 9, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false}
             tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} />
@@ -521,7 +521,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
         </div>
         <SkeletonCard h={64} />
         <div className="grid gap-4 sm:grid-cols-2">
-          {[1, 2].map((i) => <div key={i} className="h-52 animate-pulse rounded-2xl bg-[var(--muted)]/40" />)}
+          {[1, 2].map((i) => <div key={i} className="h-52 animate-pulse rounded-2xl bg-muted/40" />)}
         </div>
       </div>
     );
@@ -531,8 +531,8 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
     const msg = data?.error ?? (error instanceof Error ? error.message : "Erro desconhecido");
     return (
       <div className="rounded-2xl border border-red-500/20 bg-red-500/6 px-6 py-10 text-center">
-        <p className="text-sm font-medium text-red-400">{msg}</p>
-        <p className="mt-1 text-xs text-red-400/60">Verifique se o token Meta tem permissões de Instagram Insights.</p>
+        <p className="text-sm font-medium text-negative">{msg}</p>
+        <p className="mt-1 text-xs text-negative/60">Verifique se o token Meta tem permissões de Instagram Insights.</p>
       </div>
     );
   }
@@ -540,7 +540,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
   if (!data?.configured) {
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--border)] bg-[var(--card)] px-6 py-16 text-center">
-        <Instagram className="mb-4 h-10 w-10 text-[var(--muted-foreground)]/40" />
+        <Instagram className="mb-4 h-10 w-10 text-muted-foreground/40" />
         <p className="text-base font-semibold text-[var(--foreground)]">Instagram não configurado</p>
         <p className="mt-2 max-w-sm text-sm text-[var(--muted-foreground)]">
           Adicione o <strong>Instagram Business Account ID</strong> no cadastro deste cliente.
@@ -681,14 +681,14 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
           <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">Seguidores</p>
-              <h3 className="text-lg font-bold text-[var(--foreground)]">Ganho de seguidores</h3>
+              <h3 className="text-lg font-semibold text-[var(--foreground)]">Ganho de seguidores</h3>
               <p className="text-xs text-[var(--muted-foreground)]">
                 Barras = ganho · Linha = total acumulado
               </p>
             </div>
             {/* Granularity toggle — hidden when YTD (forced mensal) */}
             {isYtd ? (
-              <span className="rounded-full border border-[var(--border)] bg-[var(--muted)]/60 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
+              <span className="rounded-full border border-[var(--border)] bg-muted/60 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
                 Mensal
               </span>
             ) : (
@@ -700,7 +700,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                     className={`px-2.5 py-1.5 font-semibold transition-colors ${
                       effectiveGranularity === g
                         ? "bg-[var(--primary)] text-white"
-                        : "text-[var(--muted-foreground)] hover:bg-[var(--muted)]/50 hover:text-[var(--foreground)]"
+                        : "text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"
                     }`}
                   >
                     {g === "diario" ? "Diário" : g === "semanal" ? "Semanal" : "Mensal"}
@@ -730,7 +730,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                     <stop offset="100%" stopColor="var(--muted)" stopOpacity={0.8} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.4} />
+                <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
                 <XAxis
                   dataKey="label"
                   tick={{ fontSize: effectiveGranularity === "semanal" ? 9 : 10, fill: "var(--muted-foreground)" }}
@@ -796,7 +796,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                 <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
                   <div className="mb-3 flex items-center gap-2">
                     <Instagram className="h-4 w-4 text-[var(--primary)]" />
-                    <p className="text-base font-bold text-[var(--foreground)]">Gênero</p>
+                    <p className="text-base font-semibold text-[var(--foreground)]">Gênero</p>
                   </div>
                   <div className="flex items-center gap-4">
                     <ResponsiveContainer width={180} height={180}>
@@ -845,7 +845,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                             />
                             <span className="text-xs text-[var(--muted-foreground)]">{entry.name}</span>
                           </div>
-                          <p className="pl-4 text-sm font-bold text-[var(--foreground)]">{fmtFull(entry.value)}</p>
+                          <p className="pl-4 text-sm font-semibold text-[var(--foreground)]">{fmtFull(entry.value)}</p>
                           <p className="pl-4 text-[10px] text-[var(--muted-foreground)]">{((entry.value / totalGenero) * 100).toFixed(1)}%</p>
                         </div>
                       ))}
@@ -859,7 +859,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                 <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
                   <div className="mb-3 flex items-center gap-2">
                     <Instagram className="h-4 w-4 text-[var(--primary)]" />
-                    <p className="text-base font-bold text-[var(--foreground)]">Faixa Etária</p>
+                    <p className="text-base font-semibold text-[var(--foreground)]">Faixa Etária</p>
                   </div>
                   <ResponsiveContainer width="100%" height={190}>
                     <BarChart data={faixaEtariaData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
@@ -869,7 +869,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                           <stop offset="100%" stopColor="var(--primary)" stopOpacity={0.5} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.3} />
+                      <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
                       <XAxis
                         dataKey="label"
                         tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
@@ -903,14 +903,14 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
               <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] overflow-hidden">
                 <div className="border-b border-[var(--border)] px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-[var(--foreground)]">Seguidores por Cidade</p>
+                    <p className="text-sm font-semibold text-[var(--foreground)]">Seguidores por Cidade</p>
                   </div>
                 </div>
                 <div className="divide-y divide-[var(--border)]">
                   {demographics.cidades.map(({ cidade, seguidores }) => (
-                    <div key={cidade} className="flex items-center justify-between px-4 py-2.5 hover:bg-[var(--muted)]/20">
+                    <div key={cidade} className="flex items-center justify-between px-4 py-2.5 hover:bg-muted/20">
                       <span className="text-xs text-[var(--foreground)]">{cidade}</span>
-                      <span className="text-xs font-bold text-[var(--foreground)]">{fmtFull(seguidores)}</span>
+                      <span className="text-xs font-semibold text-[var(--foreground)]">{fmtFull(seguidores)}</span>
                     </div>
                   ))}
                 </div>
@@ -994,7 +994,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                 return (
                   <table className="w-full min-w-[860px] text-sm">
                     <thead>
-                      <tr className="border-b border-[var(--border)] bg-[var(--muted)]/30">
+                      <tr className="border-b border-[var(--border)] bg-muted/30">
                         <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
                           Publicação
                         </th>
@@ -1028,12 +1028,12 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                         return (
                           <tr
                             key={post.id}
-                            className={`cursor-pointer transition-colors hover:bg-[var(--primary)]/5 ${idx % 2 === 0 ? "" : "bg-[var(--muted)]/5"}`}
+                            className={`cursor-pointer transition-colors hover:bg-primary/5 ${idx % 2 === 0 ? "" : "bg-muted/5"}`}
                             onClick={() => setSelectedPost(post)}
                           >
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-3">
-                                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-[var(--muted)]/40">
+                                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted/40">
                                   {post.thumbnailUrl ? (
                                     <img
                                       src={post.thumbnailUrl}
@@ -1043,10 +1043,10 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                                     />
                                   ) : (
                                     <div className="flex h-full w-full items-center justify-center">
-                                      <ImageIcon className="h-5 w-5 text-[var(--muted-foreground)]/40" />
+                                      <ImageIcon className="h-5 w-5 text-muted-foreground/40" />
                                     </div>
                                   )}
-                                  <div className="absolute left-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--primary)] text-[9px] font-extrabold text-white">
+                                  <div className="absolute left-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--primary)] text-[9px] font-semibold text-white">
                                     {idx + 1}
                                   </div>
                                 </div>
@@ -1059,11 +1059,11 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                                   </p>
                                   <p className="mt-0.5 text-[10px] text-[var(--muted-foreground)]">{fmtDate(post.timestamp)}</p>
                                 </div>
-                                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[var(--muted-foreground)]/40" />
+                                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
                               </div>
                             </td>
                             <td className="px-4 py-3 text-right">
-                              <span className="text-sm font-bold text-[var(--primary)]">
+                              <span className="text-sm font-semibold text-[var(--primary)]">
                                 {fmt(post.videoViews ?? post.alcance)}
                               </span>
                             </td>
@@ -1073,7 +1073,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                             <td className="px-4 py-3 text-right text-xs text-[var(--foreground)]">{fmt(post.compartilhamentos)}</td>
                             <td className="px-4 py-3 text-right text-xs font-semibold text-[var(--foreground)]">{fmt(interacoes)}</td>
                             <td className="px-4 py-3 text-right">
-                              <span className="rounded-full bg-[var(--primary)]/10 px-2.5 py-0.5 text-xs font-bold text-[var(--primary)]">
+                              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-[var(--primary)]">
                                 {fmtPct(peso)}
                               </span>
                             </td>
@@ -1102,7 +1102,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                 return (
                   <table className="w-full min-w-[860px] text-sm">
                     <thead>
-                      <tr className="border-b border-[var(--border)] bg-[var(--muted)]/30">
+                      <tr className="border-b border-[var(--border)] bg-muted/30">
                         <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
                           Publicação
                         </th>
@@ -1136,12 +1136,12 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                         return (
                           <tr
                             key={post.id}
-                            className={`cursor-pointer transition-colors hover:bg-[var(--primary)]/5 ${idx % 2 === 0 ? "" : "bg-[var(--muted)]/5"}`}
+                            className={`cursor-pointer transition-colors hover:bg-primary/5 ${idx % 2 === 0 ? "" : "bg-muted/5"}`}
                             onClick={() => setSelectedPost(post)}
                           >
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-3">
-                                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-[var(--muted)]/40">
+                                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted/40">
                                   {post.thumbnailUrl ? (
                                     <img
                                       src={post.thumbnailUrl}
@@ -1151,10 +1151,10 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                                     />
                                   ) : (
                                     <div className="flex h-full w-full items-center justify-center">
-                                      <ImageIcon className="h-5 w-5 text-[var(--muted-foreground)]/40" />
+                                      <ImageIcon className="h-5 w-5 text-muted-foreground/40" />
                                     </div>
                                   )}
-                                  <div className="absolute left-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--primary)] text-[9px] font-extrabold text-white">
+                                  <div className="absolute left-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--primary)] text-[9px] font-semibold text-white">
                                     {idx + 1}
                                   </div>
                                 </div>
@@ -1167,11 +1167,11 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                                   </p>
                                   <p className="mt-0.5 text-[10px] text-[var(--muted-foreground)]">{fmtDate(post.timestamp)}</p>
                                 </div>
-                                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[var(--muted-foreground)]/40" />
+                                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
                               </div>
                             </td>
                             <td className="px-4 py-3 text-right">
-                              <span className="text-sm font-bold text-[var(--primary)]">
+                              <span className="text-sm font-semibold text-[var(--primary)]">
                                 {fmt(post.alcance)}
                               </span>
                             </td>
@@ -1181,7 +1181,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                             <td className="px-4 py-3 text-right text-xs text-[var(--foreground)]">{fmt(post.compartilhamentos)}</td>
                             <td className="px-4 py-3 text-right text-xs font-semibold text-[var(--foreground)]">{fmt(interacoes)}</td>
                             <td className="px-4 py-3 text-right">
-                              <span className="rounded-full bg-[var(--primary)]/10 px-2.5 py-0.5 text-xs font-bold text-[var(--primary)]">
+                              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-[var(--primary)]">
                                 {fmtPct(peso)}
                               </span>
                             </td>
@@ -1208,7 +1208,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
         {allPosts.length === 0 && postsLoading && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {[1,2,3,4].map(i => (
-              <div key={i} className="aspect-square animate-pulse rounded-xl bg-[var(--muted)]/40" />
+              <div key={i} className="aspect-square animate-pulse rounded-xl bg-muted/40" />
             ))}
           </div>
         )}

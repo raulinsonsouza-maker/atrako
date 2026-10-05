@@ -44,7 +44,7 @@ function KpiCard({
   return (
     <Card className="group relative overflow-hidden rounded-2xl border-[var(--border)] transition-all hover:border-[color-mix(in_srgb,var(--primary)_20%,var(--border))]">
       <CardContent className="flex items-start gap-4 p-5">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-600">
           <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
@@ -52,7 +52,7 @@ function KpiCard({
             {title}
           </p>
           <p
-            className={`mt-1 text-2xl font-extrabold tabular-nums leading-none ${
+            className={`mt-1 text-2xl font-semibold tabular-nums leading-none ${
               accentValue ? "text-[var(--primary)]" : "text-[var(--foreground)]"
             }`}
           >
@@ -100,14 +100,14 @@ export function AnalyticsGA4Section({ data }: { data: AnalyticsGA4Data }) {
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-lg font-bold tracking-tight text-[var(--foreground)]">
+            <h2 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
               Comportamento (GA4)
             </h2>
             <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
               Sessões, usuários ativos e engajamento do site
             </p>
           </div>
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-600">
             <Activity className="h-4 w-4" />
           </div>
         </div>
@@ -161,7 +161,7 @@ export function AnalyticsGA4Section({ data }: { data: AnalyticsGA4Data }) {
                     <stop offset="100%" stopColor="var(--muted)" stopOpacity={0.8} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.5} />
+                <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
                 <XAxis
                   dataKey="periodo"
                   stroke="var(--muted-foreground)"

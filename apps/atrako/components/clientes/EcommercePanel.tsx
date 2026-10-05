@@ -117,7 +117,7 @@ export function EcommercePanel({
 
   if (isError) {
     return (
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8 text-center type-fine-print text-red-400">
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8 text-center type-fine-print text-negative">
         Não foi possível carregar os dados do e-commerce.
       </div>
     );
@@ -270,7 +270,7 @@ export function EcommercePanel({
               </thead>
               <tbody>
                 {data.orders.map((order) => (
-                  <tr key={order.id} className="border-b border-[var(--border)]/60">
+                  <tr key={order.id} className="border-b border-border/60">
                     <td className="px-4 py-3 tabular-nums text-[var(--foreground)]">
                       #{order.externalId}
                       {order.leadId ? (

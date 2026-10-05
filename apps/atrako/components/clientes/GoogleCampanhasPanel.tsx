@@ -58,7 +58,7 @@ function Th({ label, col, sortKey, dir, onSort, right = true }: {
 }) {
   return (
     <th
-      className={`px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest text-[var(--muted-foreground)] cursor-pointer select-none hover:text-[var(--foreground)] transition-colors ${right ? "text-right" : "text-left"}`}
+      className={`px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] cursor-pointer select-none hover:text-[var(--foreground)] transition-colors ${right ? "text-right" : "text-left"}`}
       onClick={() => onSort(col)}
     >
       <span className={`inline-flex items-center gap-1 ${right ? "justify-end" : ""}`}>
@@ -88,19 +88,19 @@ function normCampType(raw: string | null | undefined): string {
 
 function campTypeBadge(nome: string, campaignType?: string | null) {
   const type = normCampType(campaignType);
-  if (type === "PERFORMANCE_MAX") return { label: "PMax", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" };
-  if (type === "SEARCH") return { label: "Search", color: "bg-sky-500/10 text-sky-400 border-sky-500/20" };
+  if (type === "PERFORMANCE_MAX") return { label: "PMax", color: "bg-emerald-500/10 text-positive border-emerald-500/20" };
+  if (type === "SEARCH") return { label: "Search", color: "bg-sky-500/10 text-primary border-sky-500/20" };
   if (type === "DISPLAY") return { label: "Display", color: "bg-pink-500/10 text-pink-400 border-pink-500/20" };
-  if (type === "VIDEO") return { label: "Video", color: "bg-red-500/10 text-red-400 border-red-500/20" };
+  if (type === "VIDEO") return { label: "Video", color: "bg-red-500/10 text-negative border-red-500/20" };
   if (type === "SHOPPING") return { label: "Shopping", color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" };
-  if (type === "DEMAND_GEN" || type === "DISCOVERY") return { label: "DemGen", color: "bg-violet-500/10 text-violet-400 border-violet-500/20" };
+  if (type === "DEMAND_GEN" || type === "DISCOVERY") return { label: "DemGen", color: "bg-violet-500/10 text-violet-600 border-violet-500/20" };
   const lower = nome.toLowerCase();
-  if (lower.includes("pmax") || lower.includes("p.max") || lower.includes("performance max")) return { label: "PMax", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" };
-  if (lower.includes("search") || lower.includes("pesquisa")) return { label: "Search", color: "bg-sky-500/10 text-sky-400 border-sky-500/20" };
+  if (lower.includes("pmax") || lower.includes("p.max") || lower.includes("performance max")) return { label: "PMax", color: "bg-emerald-500/10 text-positive border-emerald-500/20" };
+  if (lower.includes("search") || lower.includes("pesquisa")) return { label: "Search", color: "bg-sky-500/10 text-primary border-sky-500/20" };
   if (lower.includes("display")) return { label: "Display", color: "bg-pink-500/10 text-pink-400 border-pink-500/20" };
-  if (lower.includes("video") || lower.includes("youtube")) return { label: "Video", color: "bg-red-500/10 text-red-400 border-red-500/20" };
+  if (lower.includes("video") || lower.includes("youtube")) return { label: "Video", color: "bg-red-500/10 text-negative border-red-500/20" };
   if (lower.includes("shopping")) return { label: "Shopping", color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" };
-  return { label: "Google", color: "bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20" };
+  return { label: "Google", color: "bg-primary/10 text-[var(--primary)] border-primary/20" };
 }
 
 const CAMP_STATUS_MAP: Record<string, string> = { "2": "ENABLED", "3": "PAUSED", "4": "REMOVED" };
@@ -111,9 +111,9 @@ function normStatus(raw: string | null | undefined): string {
 function statusBadge(status: string | null) {
   if (!status) return null;
   const s = normStatus(status);
-  if (s === "ENABLED") return { label: "Ativa", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", dot: "bg-emerald-400" };
-  if (s === "PAUSED") return { label: "Pausada", color: "bg-amber-500/10 text-amber-400 border-amber-500/20", dot: "bg-amber-400" };
-  if (s === "REMOVED") return { label: "Removida", color: "bg-red-500/10 text-red-400 border-red-500/20", dot: "bg-red-400" };
+  if (s === "ENABLED") return { label: "Ativa", color: "bg-emerald-500/10 text-positive border-emerald-500/20", dot: "bg-emerald-400" };
+  if (s === "PAUSED") return { label: "Pausada", color: "bg-amber-500/10 text-amber-600 border-amber-500/20", dot: "bg-amber-400" };
+  if (s === "REMOVED") return { label: "Removida", color: "bg-red-500/10 text-negative border-red-500/20", dot: "bg-red-400" };
   return null;
 }
 
@@ -173,13 +173,13 @@ export function GoogleCampanhasPanel({ clienteId, filter, comparePrevious = fals
   return (
     <div className="space-y-4">
       {/* header */}
-      <div className="rounded-xl border border-[var(--border)] bg-white/[0.02] px-4 py-3 flex items-center gap-3">
-        <div className="w-7 h-7 rounded-lg bg-[var(--primary)]/10 flex items-center justify-center shrink-0">
+      <div className="rounded-xl border border-[var(--border)] bg-pearl px-4 py-3 flex items-center gap-3">
+        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
           <BarChart3 className="w-4 h-4 text-[var(--primary)]" />
         </div>
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--primary)]">Google Ads</p>
-          <p className="text-sm font-extrabold text-[var(--foreground)] uppercase tracking-wider">Campanhas · Análise por período</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--primary)]">Google Ads</p>
+          <p className="text-sm font-semibold text-[var(--foreground)] uppercase tracking-wider">Campanhas · Análise por período</p>
         </div>
       </div>
 
@@ -188,7 +188,7 @@ export function GoogleCampanhasPanel({ clienteId, filter, comparePrevious = fals
           <p className="text-sm text-[var(--muted-foreground)]">Carregando campanhas…</p>
         </div>
       ) : error ? (
-        <div className="flex items-center justify-center py-16"><p className="text-sm text-red-400">{error instanceof Error ? error.message : "Erro ao carregar campanhas Google."}</p></div>
+        <div className="flex items-center justify-center py-16"><p className="text-sm text-negative">{error instanceof Error ? error.message : "Erro ao carregar campanhas Google."}</p></div>
       ) : data?.connection?.status === "DISCONNECTED" ? (
         <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
           <BarChart3 className="w-8 h-8 text-[var(--muted-foreground)] opacity-30" />
@@ -205,7 +205,7 @@ export function GoogleCampanhasPanel({ clienteId, filter, comparePrevious = fals
         </div>
       ) : data?.connection?.lastSyncError ? (
         <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
-          <p className="text-sm text-red-400">{data.connection.lastSyncError}</p>
+          <p className="text-sm text-negative">{data.connection.lastSyncError}</p>
           <p className="text-xs text-[var(--muted-foreground)]">Tente novamente em Configurações → Conexões.</p>
         </div>
       ) : sorted.length === 0 ? (
@@ -217,7 +217,7 @@ export function GoogleCampanhasPanel({ clienteId, filter, comparePrevious = fals
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-[var(--border)]">
           <table className="w-full min-w-[640px]">
-            <thead className="bg-white/[0.02]">
+            <thead className="bg-pearl">
               <tr>
                 <Th label="Campanha" col="nome" sortKey={key} dir={dir} onSort={toggle} right={false} />
                 <Th label="Status" col="statusOrder" sortKey={key} dir={dir} onSort={toggle} right={false} />
@@ -241,20 +241,20 @@ export function GoogleCampanhasPanel({ clienteId, filter, comparePrevious = fals
                 return (
                   <tr
                     key={c.nome}
-                    className={`border-t border-[var(--border)] ${isTop ? "bg-[var(--primary)]/[0.05]" : "bg-white/[0.02]"}`}
+                    className={`border-t border-[var(--border)] ${isTop ? "bg-primary/[0.05]" : "bg-pearl"}`}
                   >
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-2 min-w-0">
                         {isTop && (
-                          <span className="shrink-0 rounded-full bg-[var(--primary)]/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-[var(--primary)]">#1</span>
+                          <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-[var(--primary)]">#1</span>
                         )}
-                        <span className={`shrink-0 text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full border whitespace-nowrap ${badge.color}`}>{badge.label}</span>
+                        <span className={`shrink-0 text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded-full border whitespace-nowrap ${badge.color}`}>{badge.label}</span>
                         <p className="text-sm font-semibold text-[var(--foreground)] truncate" title={c.nome}>{c.nome}</p>
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      {c.comparison?.state === "stopped" ? <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">Sem veiculação</span> : (() => { const sb = statusBadge(c.campaignStatus); return sb ? (
-                        <span className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full border whitespace-nowrap ${sb.color}`}>
+                      {c.comparison?.state === "stopped" ? <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Sem veiculação</span> : (() => { const sb = statusBadge(c.campaignStatus); return sb ? (
+                        <span className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-widest px-2 py-1 rounded-full border whitespace-nowrap ${sb.color}`}>
                           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${sb.dot}`} />
                           {sb.label}
                         </span>
@@ -262,7 +262,7 @@ export function GoogleCampanhasPanel({ clienteId, filter, comparePrevious = fals
                     </td>
                     <td className="px-3 py-3 text-right">
                       <span className="text-sm font-semibold tabular-nums text-[var(--primary)]">{fmtBrl(c.investimento)}</span>
-                      {c.comparison && <span className={`block text-[9px] font-semibold ${c.comparison.state === "stopped" ? "text-white/40" : c.comparison.investimento == null ? "text-sky-400" : c.comparison.investimento >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                      {c.comparison && <span className={`block text-[9px] font-semibold ${c.comparison.state === "stopped" ? "text-muted-foreground/70" : c.comparison.investimento == null ? "text-primary" : c.comparison.investimento >= 0 ? "text-positive" : "text-negative"}`}>
                         {c.comparison.state === "stopped" ? "Sem veiculação" : c.comparison.investimento == null ? "Nova" : `${c.comparison.investimento >= 0 ? "▲" : "▼"} ${Math.abs(c.comparison.investimento).toFixed(1)}%`}
                       </span>}
                     </td>
@@ -281,37 +281,37 @@ export function GoogleCampanhasPanel({ clienteId, filter, comparePrevious = fals
               })}
             </tbody>
             <tfoot>
-              <tr className="border-t-2 border-[var(--primary)]/30 bg-[var(--primary)]/[0.06]">
+              <tr className="border-t-2 border-primary/30 bg-primary/[0.06]">
                 <td className="px-3 py-3" colSpan={2}>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[var(--primary)]">Total · {campanhas.length} campanhas</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--primary)]">Total · {campanhas.length} campanhas</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-extrabold text-[var(--foreground)]">{fmtBrl(totais.investimento)}</span>
+                  <span className="text-sm font-semibold text-[var(--foreground)]">{fmtBrl(totais.investimento)}</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-bold text-[var(--muted-foreground)]">{fmt(totais.impressoes)}</span>
+                  <span className="text-sm font-semibold text-[var(--muted-foreground)]">{fmt(totais.impressoes)}</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-bold text-[var(--foreground)]">{fmt(totais.cliques)}</span>
+                  <span className="text-sm font-semibold text-[var(--foreground)]">{fmt(totais.cliques)}</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-bold text-[var(--muted-foreground)]">{ctrTotal != null ? fmtPct(ctrTotal) : dash}</span>
+                  <span className="text-sm font-semibold text-[var(--muted-foreground)]">{ctrTotal != null ? fmtPct(ctrTotal) : dash}</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-bold text-[var(--foreground)]">{cpcTotal != null ? fmtBrl(cpcTotal) : dash}</span>
+                  <span className="text-sm font-semibold text-[var(--foreground)]">{cpcTotal != null ? fmtBrl(cpcTotal) : dash}</span>
                 </td>
                 {hasConv && <>
                   <td className="px-3 py-3 text-right">
-                    <span className="text-sm font-bold text-[var(--foreground)]">{fmt(totais.conversoes, 1)}</span>
+                    <span className="text-sm font-semibold text-[var(--foreground)]">{fmt(totais.conversoes, 1)}</span>
                   </td>
                   <td className="px-3 py-3 text-right">
-                    <span className="text-sm font-bold text-[var(--foreground)]">{cpaTotal != null ? fmtBrl(cpaTotal) : dash}</span>
+                    <span className="text-sm font-semibold text-[var(--foreground)]">{cpaTotal != null ? fmtBrl(cpaTotal) : dash}</span>
                   </td>
                   {hasValorConv && <td className="px-3 py-3 text-right">
-                    <span className="text-sm font-extrabold text-[var(--primary)]">{fmtBrl(totais.conversaoValor)}</span>
+                    <span className="text-sm font-semibold text-[var(--primary)]">{fmtBrl(totais.conversaoValor)}</span>
                   </td>}
                   {hasValorConv && <td className="px-3 py-3 text-right">
-                    <span className="text-sm font-extrabold text-[var(--primary)]">{roasTotal != null ? fmt(roasTotal, 2) + "x" : dash}</span>
+                    <span className="text-sm font-semibold text-[var(--primary)]">{roasTotal != null ? fmt(roasTotal, 2) + "x" : dash}</span>
                   </td>}
                 </>}
               </tr>

@@ -135,13 +135,13 @@ function KpiCard({
       />
       <div className="mb-2 flex items-center gap-2">
         <Icon
-          className={`h-4 w-4 ${highlight ? "text-green-400" : accent ? "text-[var(--primary)]" : "text-[var(--muted-foreground)]"}`}
+          className={`h-4 w-4 ${highlight ? "text-positive" : accent ? "text-[var(--primary)]" : "text-[var(--muted-foreground)]"}`}
         />
-        <span className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${highlight ? "text-green-400" : "text-[var(--muted-foreground)]"}`}>
+        <span className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${highlight ? "text-positive" : "text-[var(--muted-foreground)]"}`}>
           {title}
         </span>
       </div>
-      <p className={`text-2xl font-extrabold tabular-nums ${highlight ? "text-green-400" : "text-[var(--foreground)]"}`}>
+      <p className={`text-2xl font-semibold tabular-nums ${highlight ? "text-positive" : "text-[var(--foreground)]"}`}>
         {value}
       </p>
       <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">{sub}</p>
@@ -240,7 +240,7 @@ function SectionHeader({ sub, title }: { sub: string; title: string }) {
       <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">{sub}</p>
-        <h2 className="text-xl font-extrabold tracking-tight text-[var(--foreground)]">{title}</h2>
+        <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">{title}</h2>
       </div>
     </div>
   );
@@ -355,7 +355,7 @@ export function ImobLeadScoringPanel({
   if (error) {
     return (
       <div className="rounded-2xl border border-red-500/20 bg-red-500/6 px-6 py-10 text-center">
-        <p className="text-sm text-red-400">{error instanceof Error ? error.message : "Erro ao carregar leads."}</p>
+        <p className="text-sm text-negative">{error instanceof Error ? error.message : "Erro ao carregar leads."}</p>
       </div>
     );
   }
@@ -397,8 +397,8 @@ export function ImobLeadScoringPanel({
       {syncMsg && (
         <div className={`-mt-6 rounded-xl border px-4 py-2.5 text-xs ${
           syncStatus === "error"
-            ? "border-red-500/20 bg-red-500/6 text-red-400"
-            : "border-green-500/20 bg-green-500/6 text-green-400"
+            ? "border-red-500/20 bg-red-500/6 text-negative"
+            : "border-green-500/20 bg-green-500/6 text-positive"
         }`}>
           {syncMsg}
         </div>
@@ -415,13 +415,13 @@ export function ImobLeadScoringPanel({
               onClick={() => { setSelectedFormId(null); setGradeFilter(null); }}
               className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-all ${
                 !selectedFormId
-                  ? "border-[var(--primary)]/40 bg-[var(--primary)]/10 text-[var(--foreground)]"
-                  : "border-[var(--border)] bg-[var(--muted)]/30 text-[var(--muted-foreground)] hover:border-[var(--primary)]/20 hover:text-[var(--foreground)]"
+                  ? "border-primary/40 bg-primary/10 text-[var(--foreground)]"
+                  : "border-[var(--border)] bg-muted/30 text-[var(--muted-foreground)] hover:border-primary/20 hover:text-[var(--foreground)]"
               }`}
             >
               <span className={`h-1.5 w-1.5 rounded-full ${!selectedFormId ? "bg-[var(--primary)]" : "bg-[var(--muted-foreground)]"}`} />
               Todos os formulários
-              <span className={`rounded-full px-1.5 py-0.5 text-[10px] tabular-nums ${!selectedFormId ? "bg-[var(--primary)]/15 text-[var(--primary)]" : "bg-[var(--muted)] text-[var(--muted-foreground)]"}`}>
+              <span className={`rounded-full px-1.5 py-0.5 text-[10px] tabular-nums ${!selectedFormId ? "bg-primary/15 text-[var(--primary)]" : "bg-[var(--muted)] text-[var(--muted-foreground)]"}`}>
                 {formsRanking.reduce((s, f) => s + f.total, 0)}
               </span>
             </button>
@@ -434,16 +434,16 @@ export function ImobLeadScoringPanel({
                   onClick={() => { setSelectedFormId(isActive ? null : f.formId); setGradeFilter(null); }}
                   className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-all ${
                     isActive
-                      ? "border-[var(--primary)]/40 bg-[var(--primary)]/10 text-[var(--foreground)]"
-                      : "border-[var(--border)] bg-[var(--muted)]/30 text-[var(--muted-foreground)] hover:border-[var(--primary)]/20 hover:text-[var(--foreground)]"
+                      ? "border-primary/40 bg-primary/10 text-[var(--foreground)]"
+                      : "border-[var(--border)] bg-muted/30 text-[var(--muted-foreground)] hover:border-primary/20 hover:text-[var(--foreground)]"
                   }`}
                 >
                   <span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-[var(--primary)]" : "bg-[var(--muted-foreground)]"}`} />
                   <span className="max-w-[200px] truncate">{f.formName ?? f.formId}</span>
-                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] tabular-nums ${isActive ? "bg-[var(--primary)]/15 text-[var(--primary)]" : "bg-[var(--muted)] text-[var(--muted-foreground)]"}`}>
+                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] tabular-nums ${isActive ? "bg-primary/15 text-[var(--primary)]" : "bg-[var(--muted)] text-[var(--muted-foreground)]"}`}>
                     {f.total}
                   </span>
-                  <span className="text-[10px] text-green-400">{mqlPct}% MQL</span>
+                  <span className="text-[10px] text-positive">{mqlPct}% MQL</span>
                 </button>
               );
             })}
@@ -453,7 +453,7 @@ export function ImobLeadScoringPanel({
 
       {!hasData ? (
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-8 py-16 text-center">
-          <Building2 className="mx-auto mb-4 h-10 w-10 text-[var(--muted-foreground)]/40" />
+          <Building2 className="mx-auto mb-4 h-10 w-10 text-muted-foreground/40" />
           <p className="text-base font-semibold text-[var(--foreground)]">Nenhum lead encontrado</p>
           <p className="mt-1 text-sm text-[var(--muted-foreground)]">
             Use o botão abaixo para importar os leads dos formulários Meta.
@@ -463,17 +463,17 @@ export function ImobLeadScoringPanel({
             disabled={syncStatus === "syncing"}
             className={`mt-5 inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-semibold transition-all ${
               syncStatus === "syncing"
-                ? "border-[var(--primary)]/40 bg-[var(--primary)]/8 text-[var(--primary)] cursor-wait"
+                ? "border-primary/40 bg-primary/8 text-[var(--primary)] cursor-wait"
                 : syncStatus === "error"
-                ? "border-red-500/40 bg-red-500/8 text-red-400"
-                : "border-[var(--primary)]/30 bg-[var(--primary)]/8 text-[var(--primary)] hover:bg-[var(--primary)]/15"
+                ? "border-red-500/40 bg-red-500/8 text-negative"
+                : "border-primary/30 bg-primary/8 text-[var(--primary)] hover:bg-primary/15"
             }`}
           >
             <RefreshCw className={`h-4 w-4 ${syncStatus === "syncing" ? "animate-spin" : ""}`} />
             {syncStatus === "syncing" ? "Sincronizando formulários Meta…" : "Sincronizar leads agora"}
           </button>
           {syncMsg && (
-            <p className={`mt-3 text-xs ${syncStatus === "error" ? "text-red-400" : "text-green-400"}`}>
+            <p className={`mt-3 text-xs ${syncStatus === "error" ? "text-negative" : "text-positive"}`}>
               {syncMsg}
             </p>
           )}
@@ -534,19 +534,19 @@ export function ImobLeadScoringPanel({
                       <div className="mb-4 flex items-center justify-between">
                         <div>
                           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">Volume</p>
-                          <h3 className="mt-0.5 text-base font-extrabold tracking-tight text-[var(--foreground)]">Performance geral</h3>
+                          <h3 className="mt-0.5 text-base font-semibold tracking-tight text-[var(--foreground)]">Performance geral</h3>
                         </div>
                         {onAgrupamentoChange && (
                           <div className="flex overflow-hidden rounded-lg border border-[var(--border)] text-xs">
                             <button
                               onClick={() => onAgrupamentoChange("diario")}
-                              className={`px-2.5 py-1.5 font-semibold transition-colors ${isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-[var(--muted)]/50 hover:text-[var(--foreground)]"}`}
+                              className={`px-2.5 py-1.5 font-semibold transition-colors ${isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"}`}
                             >
                               Diário
                             </button>
                             <button
                               onClick={() => onAgrupamentoChange("semanal")}
-                              className={`px-2.5 py-1.5 font-semibold transition-colors ${!isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-[var(--muted)]/50 hover:text-[var(--foreground)]"}`}
+                              className={`px-2.5 py-1.5 font-semibold transition-colors ${!isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"}`}
                             >
                               Semanal
                             </button>
@@ -567,7 +567,7 @@ export function ImobLeadScoringPanel({
                                   <stop offset="100%" stopColor="var(--muted)" stopOpacity={0.8} />
                                 </linearGradient>
                               </defs>
-                              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.5} />
+                              <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
                               <XAxis
                                 dataKey="periodo"
                                 stroke="var(--muted-foreground)"
@@ -627,7 +627,7 @@ export function ImobLeadScoringPanel({
                       <div className="mt-0.5 h-7 w-1 shrink-0 rounded-full bg-gradient-to-b from-[var(--primary)] to-[color-mix(in_srgb,var(--primary)_40%,transparent)]" />
                       <div>
                         <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">Qualificação</p>
-                        <h3 className="mt-0.5 text-lg font-extrabold tracking-tight text-[var(--foreground)]">
+                        <h3 className="mt-0.5 text-lg font-semibold tracking-tight text-[var(--foreground)]">
                           {isAcademy ? "Taxa de qualificados" : "Taxa MQL"}
                         </h3>
                       </div>
@@ -704,38 +704,38 @@ export function ImobLeadScoringPanel({
 
                       {/* Legend stat cards */}
                       <div className={isAcademy ? "grid w-full max-w-[260px] grid-cols-2 gap-2" : "flex w-full flex-1 flex-col gap-2.5"}>
-                        <div className="rounded-xl border border-[var(--border)] bg-[var(--muted)]/30 px-3.5 py-2.5">
+                        <div className="rounded-xl border border-[var(--border)] bg-muted/30 px-3.5 py-2.5">
                           <div className="flex items-center gap-1.5">
                             <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: gaugeColor, boxShadow: `0 0 6px ${gaugeColor}` }} />
-                            <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--muted-foreground)]">{isAcademy ? "Qualif." : "MQL"}</span>
+                            <span className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">{isAcademy ? "Qualif." : "MQL"}</span>
                           </div>
                           <div className="mt-0.5 flex items-baseline justify-between gap-2">
-                            <p className="text-2xl font-black tabular-nums leading-none" style={{ color: gaugeColor }}>{kpis.totalMql.toLocaleString("pt-BR")}</p>
+                            <p className="text-2xl font-semibold tabular-nums leading-none" style={{ color: gaugeColor }}>{kpis.totalMql.toLocaleString("pt-BR")}</p>
                             {!isAcademy && (
                               <span className="text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">{mqlPct.toFixed(0)}% do total</span>
                             )}
                           </div>
                         </div>
-                        <div className="rounded-xl border border-[var(--border)] bg-[var(--muted)]/30 px-3.5 py-2.5">
+                        <div className="rounded-xl border border-[var(--border)] bg-muted/30 px-3.5 py-2.5">
                           <div className="flex items-center gap-1.5">
-                            <span className="h-1.5 w-1.5 rounded-full bg-[var(--muted-foreground)]/40" />
-                            <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--muted-foreground)]">Leads totais</span>
+                            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
+                            <span className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Leads totais</span>
                           </div>
                           <div className="mt-0.5 flex items-baseline justify-between gap-2">
-                            <p className="text-2xl font-black tabular-nums leading-none text-[var(--foreground)]">{kpis.totalLeads.toLocaleString("pt-BR")}</p>
+                            <p className="text-2xl font-semibold tabular-nums leading-none text-[var(--foreground)]">{kpis.totalLeads.toLocaleString("pt-BR")}</p>
                             {!isAcademy && (
                               <span className="text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">no período</span>
                             )}
                           </div>
                         </div>
                         {!isAcademy && (
-                          <div className="rounded-xl border border-[var(--border)] bg-[var(--muted)]/30 px-3.5 py-2.5">
+                          <div className="rounded-xl border border-[var(--border)] bg-muted/30 px-3.5 py-2.5">
                             <div className="flex items-center gap-1.5">
-                              <span className="h-1.5 w-1.5 rounded-full bg-[var(--muted-foreground)]/40" />
-                              <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--muted-foreground)]">Não qualificados</span>
+                              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
+                              <span className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Não qualificados</span>
                             </div>
                             <div className="mt-0.5 flex items-baseline justify-between gap-2">
-                              <p className="text-2xl font-black tabular-nums leading-none text-[var(--muted-foreground)]">{(kpis.totalLeads - kpis.totalMql).toLocaleString("pt-BR")}</p>
+                              <p className="text-2xl font-semibold tabular-nums leading-none text-[var(--muted-foreground)]">{(kpis.totalLeads - kpis.totalMql).toLocaleString("pt-BR")}</p>
                               <span className="text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">{(100 - mqlPct).toFixed(0)}%</span>
                             </div>
                           </div>
@@ -757,25 +757,25 @@ export function ImobLeadScoringPanel({
                                 onClick={() => setGradeFilter(isActive ? null : g.grade)}
                                 className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold transition-all ${
                                   isActive
-                                    ? "border-[var(--primary)]/40 bg-[var(--primary)]/10 text-[var(--foreground)]"
-                                    : "border-[var(--border)] bg-[var(--muted)]/40 text-[var(--muted-foreground)] hover:border-[var(--primary)]/20 hover:text-[var(--foreground)]"
+                                    ? "border-primary/40 bg-primary/10 text-[var(--foreground)]"
+                                    : "border-[var(--border)] bg-muted/40 text-[var(--muted-foreground)] hover:border-primary/20 hover:text-[var(--foreground)]"
                                 }`}
                               >
                                 <span
-                                  className="inline-flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-black text-white"
+                                  className="inline-flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-semibold text-white"
                                   style={{ backgroundColor: color }}
                                 >
                                   {g.grade}
                                 </span>
                                 {g.total}
-                                {g.isMql && <span className="text-green-400">●</span>}
+                                {g.isMql && <span className="text-positive">●</span>}
                               </button>
                             );
                           })}
                           {gradeFilter && (
                             <button
                               onClick={() => setGradeFilter(null)}
-                              className="rounded-full border border-[var(--primary)]/30 px-2 py-1 text-[10px] text-[var(--primary)] hover:bg-[var(--primary)]/8 transition-colors"
+                              className="rounded-full border border-primary/30 px-2 py-1 text-[10px] text-[var(--primary)] hover:bg-primary/8 transition-colors"
                             >
                               ✕ limpar
                             </button>
@@ -798,15 +798,15 @@ export function ImobLeadScoringPanel({
                               onClick={() => setGradeFilter(isActive ? null : grade)}
                               className={`flex-1 rounded-xl border p-3 text-left transition-all ${
                                 isActive
-                                  ? "border-[var(--primary)]/40 bg-[var(--primary)]/8"
-                                  : "border-[var(--border)] bg-[var(--muted)]/30 hover:border-[var(--primary)]/20"
+                                  ? "border-primary/40 bg-primary/8"
+                                  : "border-[var(--border)] bg-muted/30 hover:border-primary/20"
                               }`}
                             >
                               <div className="flex items-center gap-1.5">
                                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
                                 <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">{label}</span>
                               </div>
-                              <p className="mt-1 text-2xl font-black tabular-nums" style={{ color }}>{count}</p>
+                              <p className="mt-1 text-2xl font-semibold tabular-nums" style={{ color }}>{count}</p>
                             </button>
                           );
                         })}
@@ -824,7 +824,7 @@ export function ImobLeadScoringPanel({
                           <div className="mt-0.5 h-7 w-1 shrink-0 rounded-full bg-gradient-to-b from-[var(--primary)] to-[color-mix(in_srgb,var(--primary)_40%,transparent)]" />
                           <div>
                             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">Critério de qualificação</p>
-                            <h3 className="mt-0.5 text-lg font-extrabold tracking-tight text-[var(--foreground)]">Formação acadêmica dos leads</h3>
+                            <h3 className="mt-0.5 text-lg font-semibold tracking-tight text-[var(--foreground)]">Formação acadêmica dos leads</h3>
                           </div>
                         </div>
                         {(degreeDistribuicao ?? []).length === 0 ? (
@@ -838,13 +838,13 @@ export function ImobLeadScoringPanel({
                           return (
                             <>
                               {top && (
-                                <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--muted)]/30 px-4 py-2.5">
+                                <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-muted/30 px-4 py-2.5">
                                   <div className="min-w-0">
-                                    <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--muted-foreground)]">Formação predominante</p>
-                                    <p className="mt-0.5 truncate text-sm font-bold text-[var(--foreground)]">{top.degree}</p>
+                                    <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Formação predominante</p>
+                                    <p className="mt-0.5 truncate text-sm font-semibold text-[var(--foreground)]">{top.degree}</p>
                                   </div>
                                   <div className="text-right">
-                                    <p className="text-2xl font-black tabular-nums leading-none" style={{ color: topColor }}>{topPct.toFixed(0)}%</p>
+                                    <p className="text-2xl font-semibold tabular-nums leading-none" style={{ color: topColor }}>{topPct.toFixed(0)}%</p>
                                     <p className="text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">{top.total} leads</p>
                                   </div>
                                 </div>
@@ -854,18 +854,18 @@ export function ImobLeadScoringPanel({
                                   const pct = kpis.totalLeads > 0 ? (d.total / kpis.totalLeads) * 100 : 0;
                                   const color = DEGREE_COLORS[d.degree] ?? "#94a3b8";
                                   return (
-                                    <div key={d.degree} className="group/row -mx-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-white/[0.025]">
+                                    <div key={d.degree} className="group/row -mx-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-pearl">
                                       <div className="mb-1.5 flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                           <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}80` }} />
                                           <span className="text-[12.5px] font-medium text-[var(--foreground)]">{d.degree}</span>
                                         </div>
                                         <div className="flex items-baseline gap-2">
-                                          <span className="text-[15px] font-extrabold tabular-nums text-[var(--foreground)]">{d.total}</span>
-                                          <span className="rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-[var(--muted-foreground)]">{pct.toFixed(0)}%</span>
+                                          <span className="text-[15px] font-semibold tabular-nums text-[var(--foreground)]">{d.total}</span>
+                                          <span className="rounded-md bg-parchment px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">{pct.toFixed(0)}%</span>
                                         </div>
                                       </div>
-                                      <div className="relative h-3 w-full overflow-hidden rounded-full bg-[var(--muted)]/40">
+                                      <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted/40">
                                         <div
                                           className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
                                           style={{
@@ -891,7 +891,7 @@ export function ImobLeadScoringPanel({
                             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">
                               {isMirante ? "Previsão de compra" : "Intenção de compra"}
                             </p>
-                            <h3 className="mt-0.5 text-lg font-extrabold tracking-tight text-[var(--foreground)]">
+                            <h3 className="mt-0.5 text-lg font-semibold tracking-tight text-[var(--foreground)]">
                               {isMirante ? "Qual é sua previsão para compra?" : "Quando pretende adquirir?"}
                             </h3>
                           </div>
@@ -906,13 +906,13 @@ export function ImobLeadScoringPanel({
                           return (
                             <>
                               {top && (
-                                <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--muted)]/30 px-4 py-2.5">
+                                <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-muted/30 px-4 py-2.5">
                                   <div className="min-w-0">
-                                    <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--muted-foreground)]">Maior previsão</p>
-                                    <p className="mt-0.5 truncate text-sm font-bold text-[var(--foreground)]">{top.timing}</p>
+                                    <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Maior previsão</p>
+                                    <p className="mt-0.5 truncate text-sm font-semibold text-[var(--foreground)]">{top.timing}</p>
                                   </div>
                                   <div className="text-right">
-                                    <p className="text-2xl font-black tabular-nums leading-none" style={{ color: topColor }}>{topPct.toFixed(0)}%</p>
+                                    <p className="text-2xl font-semibold tabular-nums leading-none" style={{ color: topColor }}>{topPct.toFixed(0)}%</p>
                                     <p className="text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">{top.total} leads</p>
                                   </div>
                                 </div>
@@ -922,18 +922,18 @@ export function ImobLeadScoringPanel({
                                   const pct = kpis.totalLeads > 0 ? (t.total / kpis.totalLeads) * 100 : 0;
                                   const color = TIMING_COLORS[t.timing] ?? "#94a3b8";
                                   return (
-                                    <div key={t.timing} className="group/row -mx-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-white/[0.025]">
+                                    <div key={t.timing} className="group/row -mx-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-pearl">
                                       <div className="mb-1.5 flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                           <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}80` }} />
                                           <span className="text-[12.5px] font-medium text-[var(--foreground)]">{t.timing}</span>
                                         </div>
                                         <div className="flex items-baseline gap-2">
-                                          <span className="text-[15px] font-extrabold tabular-nums text-[var(--foreground)]">{t.total}</span>
-                                          <span className="rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-[var(--muted-foreground)]">{pct.toFixed(0)}%</span>
+                                          <span className="text-[15px] font-semibold tabular-nums text-[var(--foreground)]">{t.total}</span>
+                                          <span className="rounded-md bg-parchment px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">{pct.toFixed(0)}%</span>
                                         </div>
                                       </div>
-                                      <div className="relative h-3 w-full overflow-hidden rounded-full bg-[var(--muted)]/40">
+                                      <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted/40">
                                         <div
                                           className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
                                           style={{
@@ -965,7 +965,7 @@ export function ImobLeadScoringPanel({
                         <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">
                           Capacidade financeira
                         </p>
-                        <h3 className="mt-0.5 text-lg font-extrabold tracking-tight text-[var(--foreground)]">
+                        <h3 className="mt-0.5 text-lg font-semibold tracking-tight text-[var(--foreground)]">
                           Quanto pretende investir?
                         </h3>
                       </div>
@@ -976,18 +976,18 @@ export function ImobLeadScoringPanel({
                         const color = INVEST_COLORS[t.invest] ?? "#94a3b8";
                         const maxCount = Math.max(...investDistribuicao.map((x) => x.total), 1);
                         return (
-                          <div key={t.invest} className="group/row -mx-2 rounded-lg px-2 py-2 transition-colors hover:bg-white/[0.025]">
+                          <div key={t.invest} className="group/row -mx-2 rounded-lg px-2 py-2 transition-colors hover:bg-pearl">
                             <div className="mb-1.5 flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}80` }} />
                                 <span className="text-[12.5px] font-medium text-[var(--foreground)]">{t.invest}</span>
                               </div>
                               <div className="flex items-baseline gap-2">
-                                <span className="text-[15px] font-extrabold tabular-nums text-[var(--foreground)]">{t.total}</span>
-                                <span className="rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-[var(--muted-foreground)]">{pct.toFixed(0)}%</span>
+                                <span className="text-[15px] font-semibold tabular-nums text-[var(--foreground)]">{t.total}</span>
+                                <span className="rounded-md bg-parchment px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">{pct.toFixed(0)}%</span>
                               </div>
                             </div>
-                            <div className="relative h-3 w-full overflow-hidden rounded-full bg-[var(--muted)]/40">
+                            <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted/40">
                               <div
                                 className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
                                 style={{
@@ -1029,21 +1029,21 @@ export function ImobLeadScoringPanel({
               <div className="flex flex-wrap items-center gap-2">
                 {/* Chips de filtros ativos */}
                 {selectedCamp && (
-                  <span className="flex items-center gap-1.5 rounded-full border border-[var(--primary)]/30 bg-[var(--primary)]/8 px-2.5 py-1 text-[11px] font-medium text-[var(--foreground)]">
+                  <span className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 px-2.5 py-1 text-[11px] font-medium text-[var(--foreground)]">
                     <span className="text-[var(--primary)]">Campanha:</span>
                     <span className="max-w-[140px] truncate">{selectedCamp.campaignName}</span>
                     <button onClick={() => { setSelectedCamp(null); setSelectedAdset(null); }} className="ml-0.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)]">✕</button>
                   </span>
                 )}
                 {selectedAdset && (
-                  <span className="flex items-center gap-1.5 rounded-full border border-[var(--primary)]/30 bg-[var(--primary)]/8 px-2.5 py-1 text-[11px] font-medium text-[var(--foreground)]">
+                  <span className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 px-2.5 py-1 text-[11px] font-medium text-[var(--foreground)]">
                     <span className="text-[var(--primary)]">Conjunto:</span>
                     <span className="max-w-[120px] truncate">{selectedAdset.adsetName}</span>
                     <button onClick={() => setSelectedAdset(null)} className="ml-0.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)]">✕</button>
                   </span>
                 )}
                 {selectedFormId && (
-                  <span className="flex items-center gap-1.5 rounded-full border border-[var(--primary)]/30 bg-[var(--primary)]/8 px-2.5 py-1 text-[11px] font-medium text-[var(--foreground)]">
+                  <span className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 px-2.5 py-1 text-[11px] font-medium text-[var(--foreground)]">
                     <span className="text-[var(--primary)]">Form:</span>
                     <span className="max-w-[120px] truncate">{formsRanking.find((f) => f.formId === selectedFormId)?.formName ?? selectedFormId}</span>
                     <button onClick={() => setSelectedFormId(null)} className="ml-0.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)]">✕</button>
@@ -1071,7 +1071,7 @@ export function ImobLeadScoringPanel({
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
                   {visibleLeads.map((lead) => (
-                    <tr key={lead.id} className="hover:bg-[var(--muted)]/30 transition-colors">
+                    <tr key={lead.id} className="hover:bg-muted/30 transition-colors">
                       <td className="py-2.5 pr-3 text-xs tabular-nums text-[var(--muted-foreground)] whitespace-nowrap">
                         {new Date(lead.createdTime).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
                       </td>
@@ -1086,7 +1086,7 @@ export function ImobLeadScoringPanel({
                       {isAcademy ? (
                         <td className="py-2.5 pr-3">
                           <span
-                            className="rounded-full px-2 py-0.5 text-[10px] font-bold whitespace-nowrap"
+                            className="rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap"
                             style={
                               lead.isMql
                                 ? { backgroundColor: "#22c55e20", color: "#22c55e" }
@@ -1100,13 +1100,13 @@ export function ImobLeadScoringPanel({
                         <td className="py-2.5 pr-3">
                           <div className="flex items-center gap-1.5">
                             <span
-                              className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black text-white"
+                              className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold text-white"
                               style={{ backgroundColor: getGradeColor(lead.grade, isMirante) }}
                             >
                               {lead.grade}
                             </span>
                             {lead.isMql && (
-                              <span className="rounded-full bg-green-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-green-400">
+                              <span className="rounded-full bg-green-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-positive">
                                 MQL
                               </span>
                             )}
@@ -1241,7 +1241,7 @@ export function ImobLeadScoringPanel({
                 ).map((item) => (
                   <div key={item.grade} className="flex items-start gap-2">
                     <span
-                      className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black text-white"
+                      className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"
                       style={{ backgroundColor: item.color }}
                     >
                       {item.grade}

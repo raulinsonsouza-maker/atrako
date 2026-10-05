@@ -127,36 +127,31 @@ function ResortChartTooltip({
 
   return (
     <div
-      className="rounded-[14px] border px-4 py-3"
-      style={{
-        background: "linear-gradient(180deg, rgba(22,22,28,0.98), rgba(14,14,18,0.98))",
-        borderColor: "rgba(255, 106, 0, 0.18)",
-        boxShadow: "0 18px 40px rgba(0,0,0,0.38)",
-      }}
+      className="rounded-[10px] border border-[var(--border)] bg-[var(--card)] px-4 py-3"
     >
-      <p className="mb-2 text-sm font-extrabold text-[#f5f5f5]">{label}</p>
+      <p className="mb-2 text-sm font-semibold text-[var(--foreground)]">{label}</p>
       <div className="space-y-2 text-[13px]">
         <div className="flex items-center justify-between gap-5">
-          <span className="font-semibold text-[#ff7f1f]">Faturamento</span>
-          <span className="font-extrabold text-[#ff7f1f]">
+          <span className="font-semibold text-[var(--primary)]">Faturamento</span>
+          <span className="font-semibold text-[var(--primary)]">
             {formatCurrency(fat)}
           </span>
         </div>
         <div className="flex items-center justify-between gap-5">
-          <span className="font-medium text-[var(--foreground)]/80">Investimento</span>
+          <span className="font-medium text-foreground/80">Investimento</span>
           <span className="font-semibold text-[var(--foreground)]">
             {formatCurrency(invest)}
           </span>
         </div>
         <div className="flex items-center justify-between gap-5">
-          <span className="font-medium text-[var(--foreground)]/80">Vendas</span>
+          <span className="font-medium text-foreground/80">Vendas</span>
           <span className="font-semibold text-[var(--foreground)]">
             {formatInteger(Number(chartPoint?.Vendas ?? 0))}
           </span>
         </div>
-        <div className="flex items-center justify-between gap-5 border-t border-white/10 pt-2">
-          <span className="font-medium text-[var(--foreground)]/60 text-[11px]">Invest. / Fat.</span>
-          <span className={`font-bold text-[11px] ${pct < 10 ? "text-emerald-400" : pct < 15 ? "text-amber-400" : "text-red-400"}`}>
+        <div className="flex items-center justify-between gap-5 border-t border-border pt-2">
+          <span className="font-medium text-foreground/60 text-[11px]">Invest. / Fat.</span>
+          <span className={`font-semibold text-[11px] ${pct < 10 ? "text-positive" : pct < 15 ? "text-amber-600" : "text-negative"}`}>
             {formatPercentage(pct, 1)}
             <span className="ml-1 opacity-60">{pct < 10 ? "✓" : "↑"}</span>
           </span>
@@ -182,7 +177,7 @@ function ResortKpi({
   return (
     <Card className="overflow-hidden rounded-2xl border-[var(--border)] bg-[var(--card)]">
       <CardContent className="flex items-start gap-4 p-5">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--primary)]/10 text-[var(--primary)]">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[var(--primary)]">
           <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
@@ -190,7 +185,7 @@ function ResortKpi({
             {title}
           </p>
           <p
-            className={`mt-1 text-xl font-extrabold leading-none tabular-nums ${
+            className={`mt-1 text-xl font-semibold leading-none tabular-nums ${
               accent ? "text-[var(--primary)]" : "text-[var(--foreground)]"
             }`}
           >
@@ -216,19 +211,19 @@ function MetricCard({
 }) {
   const valueColor =
     highlight === "ok"
-      ? "text-emerald-400"
+      ? "text-positive"
       : highlight === "warn"
-        ? "text-amber-400"
+        ? "text-amber-600"
         : highlight === "danger"
-          ? "text-red-400"
+          ? "text-negative"
           : "text-[var(--foreground)]";
 
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--muted)]/20 p-4">
+    <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
         {label}
       </p>
-      <p className={`mt-2 text-xl font-bold tabular-nums ${valueColor}`}>
+      <p className={`mt-2 text-xl font-semibold tabular-nums ${valueColor}`}>
         {value}
       </p>
       <p className="mt-1 text-[11px] text-[var(--muted-foreground)] leading-snug">{sub}</p>
@@ -314,7 +309,7 @@ export function HotelFazendaSaoJoaoPanel({
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-lg font-bold tracking-tight text-[var(--foreground)]">
+                <h3 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
                   Performance de receita {isMensal ? "mensal" : isDiario ? "diária" : "semanal"}
                 </h3>
                 <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
@@ -330,19 +325,19 @@ export function HotelFazendaSaoJoaoPanel({
                   <div className="flex overflow-hidden rounded-lg border border-[var(--border)] text-xs">
                     <button
                       onClick={() => onAgrupamentoChange("diario")}
-                      className={`px-2.5 py-1.5 font-semibold transition-colors ${isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-[var(--muted)]/50 hover:text-[var(--foreground)]"}`}
+                      className={`px-2.5 py-1.5 font-semibold transition-colors ${isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"}`}
                     >
                       Diário
                     </button>
                     <button
                       onClick={() => onAgrupamentoChange("semanal")}
-                      className={`px-2.5 py-1.5 font-semibold transition-colors ${!isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-[var(--muted)]/50 hover:text-[var(--foreground)]"}`}
+                      className={`px-2.5 py-1.5 font-semibold transition-colors ${!isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"}`}
                     >
                       Semanal
                     </button>
                   </div>
                 )}
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--primary)]/10 text-[var(--primary)]">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-[var(--primary)]">
                   <ReceiptText className="h-4 w-4" />
                 </div>
               </div>
@@ -350,22 +345,22 @@ export function HotelFazendaSaoJoaoPanel({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--muted)]/20 px-3 py-1 text-[11px] font-medium text-[var(--muted-foreground)]">
-                <span className="h-2 w-2 rounded-full bg-[rgba(255,106,0,0.55)]" />
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-muted/20 px-3 py-1 text-[11px] font-medium text-[var(--muted-foreground)]">
+                <span className="h-2 w-2 rounded-full bg-[var(--chart-spend)]" />
                 Investimento em mídia (barras)
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--muted)]/20 px-3 py-1 text-[11px] font-medium text-[var(--muted-foreground)]">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-muted/20 px-3 py-1 text-[11px] font-medium text-[var(--muted-foreground)]">
                 <span className="h-2 w-2 rounded-full bg-[var(--primary)]" />
                 Faturamento gerado (linha)
               </span>
-              <span className="inline-flex items-center rounded-full border border-[var(--primary)]/20 bg-[var(--primary)]/8 px-3 py-1 text-[11px] font-medium text-[var(--foreground)]">
+              <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/8 px-3 py-1 text-[11px] font-medium text-[var(--foreground)]">
                 {formatInteger(data.resumo.purchases)} vendas no período
               </span>
             </div>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={chartData} margin={{ right: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.45} />
+                  <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
                   <XAxis
                     dataKey="periodo"
                     stroke="var(--muted-foreground)"
@@ -391,7 +386,7 @@ export function HotelFazendaSaoJoaoPanel({
                   <YAxis
                     yAxisId="inv"
                     orientation="right"
-                    stroke="rgba(255,106,0,0.4)"
+                    stroke="var(--muted-foreground)"
                     fontSize={10}
                     tickLine={false}
                     axisLine={false}
@@ -402,20 +397,21 @@ export function HotelFazendaSaoJoaoPanel({
                   <Bar
                     yAxisId="inv"
                     dataKey="Investimento"
-                    fill="rgba(255, 106, 0, 0.42)"
+                    fill="var(--chart-spend)"
+                    maxBarSize={48}
                     radius={[6, 6, 0, 0]}
                   />
                   <Line
                     yAxisId="fat"
                     type="monotone"
                     dataKey="Faturamento"
-                    stroke="#ff7f1f"
-                    strokeWidth={3.2}
-                    dot={{ fill: "#ff7f1f", r: 4.5, strokeWidth: 0 }}
+                    stroke="var(--chart-result)"
+                    strokeWidth={2.5}
+                    dot={{ fill: "var(--chart-result)", r: 3.5, strokeWidth: 0 }}
                     activeDot={{
                       r: 6,
-                      fill: "#ff7f1f",
-                      stroke: "rgba(255,255,255,0.16)",
+                      fill: "var(--chart-result)",
+                      stroke: "var(--canvas)",
                       strokeWidth: 2,
                     }}
                   />
@@ -423,22 +419,22 @@ export function HotelFazendaSaoJoaoPanel({
               </ResponsiveContainer>
             </div>
             <div className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--muted)]/20 p-4">
+              <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
                   {isMensal ? "Maior receita mensal" : isDiario ? "Maior receita diária" : "Melhor semana de receita"}
                 </p>
-                <p className="mt-2 text-lg font-bold text-[var(--foreground)]">
+                <p className="mt-2 text-lg font-semibold text-[var(--foreground)]">
                   {topFaturamentoWeek ? formatCurrency(topFaturamentoWeek.faturamento) : "—"}
                 </p>
                 <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
                   {topFaturamentoWeek?.periodo ?? "Sem dados"}
                 </p>
               </div>
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--muted)]/20 p-4">
+              <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
                   {isMensal ? "Melhor ROAS mensal" : isDiario ? "Melhor ROAS diário" : "Melhor ROAS semanal"}
                 </p>
-                <p className="mt-2 text-lg font-bold text-[var(--foreground)]">
+                <p className="mt-2 text-lg font-semibold text-[var(--foreground)]">
                   {topRoasWeek
                     ? `${topRoasWeek.roas.toLocaleString("pt-BR", {
                         minimumFractionDigits: 2,
@@ -450,11 +446,11 @@ export function HotelFazendaSaoJoaoPanel({
                   {topRoasWeek?.periodo ?? "Sem dados"}
                 </p>
               </div>
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--muted)]/20 p-4">
+              <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
                   {isMensal ? "Pico de vendas mensal" : isDiario ? "Pico de vendas diário" : "Pico de vendas semanais"}
                 </p>
-                <p className="mt-2 text-lg font-bold text-[var(--foreground)]">
+                <p className="mt-2 text-lg font-semibold text-[var(--foreground)]">
                   {topSalesWeek ? formatInteger(topSalesWeek.purchases) : "—"}
                 </p>
                 <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
@@ -470,7 +466,7 @@ export function HotelFazendaSaoJoaoPanel({
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-lg font-bold tracking-tight text-[var(--foreground)]">
+                <h3 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
                   Funil & Eficiência
                 </h3>
                 <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
@@ -507,26 +503,26 @@ export function HotelFazendaSaoJoaoPanel({
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
                   Investimento / Faturamento
                 </p>
-                <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                <span className={`text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full ${
                   pctHighlight === "ok"
-                    ? "text-emerald-400 bg-emerald-500/15"
+                    ? "text-positive bg-emerald-500/15"
                     : pctHighlight === "warn"
-                      ? "text-amber-400 bg-amber-500/15"
-                      : "text-red-400 bg-red-500/15"
+                      ? "text-amber-600 bg-amber-500/15"
+                      : "text-negative bg-red-500/15"
                 }`}>
                   {pctHighlight === "ok" ? "✓ Dentro da meta" : "↑ Acima da meta"}
                 </span>
               </div>
-              <p className={`text-xl font-bold tabular-nums ${
+              <p className={`text-xl font-semibold tabular-nums ${
                 pctHighlight === "ok"
-                  ? "text-emerald-400"
+                  ? "text-positive"
                   : pctHighlight === "warn"
-                    ? "text-amber-400"
-                    : "text-red-400"
+                    ? "text-amber-600"
+                    : "text-negative"
               }`}>
                 {formatPercentage(pctInvestFaturamento, 1)}
               </p>
-              <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div className="mt-2 h-1.5 rounded-full bg-parchment overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${
                     pctHighlight === "ok" ? "bg-emerald-500" : pctHighlight === "warn" ? "bg-amber-500" : "bg-red-500"
@@ -546,14 +542,14 @@ export function HotelFazendaSaoJoaoPanel({
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
           <CardContent className="flex items-start gap-3 p-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--primary)]/10 text-[var(--primary)]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[var(--primary)]">
               <Globe className="h-4 w-4" />
             </div>
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
                 Leads via Site
               </p>
-              <p className="mt-1 text-lg font-bold text-[var(--foreground)]">
+              <p className="mt-1 text-lg font-semibold text-[var(--foreground)]">
                 {formatInteger(data.leadMix.websiteLeads)}
               </p>
               <p className="mt-0.5 text-[11px] text-[var(--muted-foreground)]">
@@ -565,14 +561,14 @@ export function HotelFazendaSaoJoaoPanel({
 
         <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
           <CardContent className="flex items-start gap-3 p-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--primary)]/10 text-[var(--primary)]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[var(--primary)]">
               <Users className="h-4 w-4" />
             </div>
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
                 Leads Instantâneos
               </p>
-              <p className="mt-1 text-lg font-bold text-[var(--foreground)]">
+              <p className="mt-1 text-lg font-semibold text-[var(--foreground)]">
                 {formatInteger(data.leadMix.onFacebookLeads)}
               </p>
               <p className="mt-0.5 text-[11px] text-[var(--muted-foreground)]">
@@ -584,14 +580,14 @@ export function HotelFazendaSaoJoaoPanel({
 
         <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
           <CardContent className="flex items-start gap-3 p-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--primary)]/10 text-[var(--primary)]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[var(--primary)]">
               <MessageSquareMore className="h-4 w-4" />
             </div>
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
                 Conversas Iniciadas
               </p>
-              <p className="mt-1 text-lg font-bold text-[var(--foreground)]">
+              <p className="mt-1 text-lg font-semibold text-[var(--foreground)]">
                 {formatInteger(data.leadMix.messagingConversationsStarted)}
               </p>
               <p className="mt-0.5 text-[11px] text-[var(--muted-foreground)]">
@@ -603,14 +599,14 @@ export function HotelFazendaSaoJoaoPanel({
 
         <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
           <CardContent className="flex items-start gap-3 p-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--primary)]/10 text-[var(--primary)]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[var(--primary)]">
               <BadgeDollarSign className="h-4 w-4" />
             </div>
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
                 Receita por Lead
               </p>
-              <p className="mt-1 text-lg font-bold text-[var(--foreground)]">
+              <p className="mt-1 text-lg font-semibold text-[var(--foreground)]">
                 {formatCurrency(receitaPorLead)}
               </p>
               <p className="mt-0.5 text-[11px] text-[var(--muted-foreground)]">
@@ -624,12 +620,12 @@ export function HotelFazendaSaoJoaoPanel({
       {/* ── Weekly breakdown table ── */}
       {latestFiveSeries.length > 0 && (
         <Card className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)]">
-          <CardHeader className="border-b border-[var(--border)]/60 px-6 pb-5 pt-6 sm:px-8">
+          <CardHeader className="border-b border-border/60 px-6 pb-5 pt-6 sm:px-8">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h3 className="text-xl font-black uppercase tracking-tight text-[var(--foreground)] sm:text-2xl">
+                <h3 className="text-xl font-semibold uppercase tracking-tight text-[var(--foreground)] sm:text-2xl">
                   Resultado comercial
-                  <span className="ml-2 bg-[linear-gradient(90deg,var(--accent),var(--primary))] bg-clip-text text-transparent">
+                  <span className="ml-2 text-primary">
                     {isMensal ? "Mês a mês" : isDiario ? "Dia a dia" : "Semana a semana"}
                   </span>
                 </h3>
@@ -637,7 +633,7 @@ export function HotelFazendaSaoJoaoPanel({
                   Foco em receita, vendas e eficiência para o resort.
                 </p>
               </div>
-              <span className="rounded-full border border-[var(--primary)]/25 bg-[var(--primary)]/12 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--foreground)]">
+              <span className="rounded-full border border-primary/25 bg-primary/12 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--foreground)]">
                 {latestFiveSeries.length} {isMensal ? "meses" : isDiario ? "dias" : "semanas"}
               </span>
             </div>
@@ -661,7 +657,7 @@ export function HotelFazendaSaoJoaoPanel({
                         >
                           <div className="flex flex-col items-center gap-1">
                             <span
-                              className={`text-[10px] font-bold uppercase tracking-[0.2em] ${
+                              className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
                                 isLatest ? "text-[var(--primary)]" : "text-[var(--muted-foreground)]"
                               }`}
                             >
@@ -701,7 +697,7 @@ export function HotelFazendaSaoJoaoPanel({
                   ].map((metric, metricIdx) => (
                     <tr key={metric.label}>
                       <td className="rounded-l-2xl bg-[var(--muted)] px-4 py-4">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--foreground)]">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--foreground)]">
                           {metric.label}
                         </p>
                       </td>
@@ -713,23 +709,23 @@ export function HotelFazendaSaoJoaoPanel({
                         const pctColor =
                           rawValue !== null
                             ? rawValue < 10
-                              ? "text-emerald-400"
+                              ? "text-positive"
                               : rawValue < 15
-                                ? "text-amber-400"
-                                : "text-red-400"
+                                ? "text-amber-600"
+                                : "text-negative"
                             : null;
                         return (
                           <td
                             key={`${metric.label}-${item.periodo}`}
                             className={`px-4 py-4 text-center ${
                               isLatest
-                                ? "bg-[linear-gradient(180deg,rgba(255,106,0,0.12),rgba(255,106,0,0.05))]"
+                                ? "bg-primary/[0.06]"
                                 : metricIdx % 2 === 0
                                   ? "bg-[var(--muted)]"
-                                  : "bg-[var(--muted)]/50"
+                                  : "bg-muted/50"
                             }`}
                           >
-                            <span className={`block text-sm font-bold tabular-nums ${pctColor ?? "text-[var(--foreground)]"}`}>
+                            <span className={`block text-sm font-semibold tabular-nums ${pctColor ?? "text-[var(--foreground)]"}`}>
                               {metric.render(item)}
                             </span>
                           </td>

@@ -82,20 +82,20 @@ export interface AdsetDetail {
 // ── Label maps ─────────────────────────────────────────────────────────────────
 
 const OBJECTIVE_LABELS: Record<string, { label: string; color: string }> = {
-  OUTCOME_LEADS:         { label: "Geração de Leads",        color: "bg-[var(--primary)]/20 text-[var(--primary)]" },
-  OUTCOME_SALES:         { label: "Vendas",                   color: "bg-emerald-500/20 text-emerald-400" },
-  OUTCOME_AWARENESS:     { label: "Reconhecimento",           color: "bg-violet-500/20 text-violet-400" },
-  OUTCOME_ENGAGEMENT:    { label: "Engajamento",              color: "bg-sky-500/20 text-sky-400" },
-  OUTCOME_TRAFFIC:       { label: "Tráfego",                  color: "bg-blue-500/20 text-blue-400" },
+  OUTCOME_LEADS:         { label: "Geração de Leads",        color: "bg-primary/20 text-[var(--primary)]" },
+  OUTCOME_SALES:         { label: "Vendas",                   color: "bg-emerald-500/20 text-positive" },
+  OUTCOME_AWARENESS:     { label: "Reconhecimento",           color: "bg-violet-500/20 text-violet-600" },
+  OUTCOME_ENGAGEMENT:    { label: "Engajamento",              color: "bg-sky-500/20 text-primary" },
+  OUTCOME_TRAFFIC:       { label: "Tráfego",                  color: "bg-blue-500/20 text-primary" },
   OUTCOME_APP_PROMOTION: { label: "Promoção de App",          color: "bg-pink-500/20 text-pink-400" },
-  LEAD_GENERATION:       { label: "Geração de Leads",        color: "bg-[var(--primary)]/20 text-[var(--primary)]" },
-  CONVERSIONS:           { label: "Conversões",               color: "bg-emerald-500/20 text-emerald-400" },
-  LINK_CLICKS:           { label: "Cliques no Link",         color: "bg-blue-500/20 text-blue-400" },
-  BRAND_AWARENESS:       { label: "Reconhecimento de Marca", color: "bg-violet-500/20 text-violet-400" },
+  LEAD_GENERATION:       { label: "Geração de Leads",        color: "bg-primary/20 text-[var(--primary)]" },
+  CONVERSIONS:           { label: "Conversões",               color: "bg-emerald-500/20 text-positive" },
+  LINK_CLICKS:           { label: "Cliques no Link",         color: "bg-blue-500/20 text-primary" },
+  BRAND_AWARENESS:       { label: "Reconhecimento de Marca", color: "bg-violet-500/20 text-violet-600" },
   REACH:                 { label: "Alcance",                  color: "bg-slate-500/20 text-slate-400" },
-  VIDEO_VIEWS:           { label: "Visualizações de Vídeo",  color: "bg-sky-500/20 text-sky-400" },
-  MESSAGES:              { label: "Mensagens",                color: "bg-sky-500/20 text-sky-300" },
-  PAGE_LIKES:            { label: "Curtidas na Página",      color: "bg-blue-500/20 text-blue-400" },
+  VIDEO_VIEWS:           { label: "Visualizações de Vídeo",  color: "bg-sky-500/20 text-primary" },
+  MESSAGES:              { label: "Mensagens",                color: "bg-sky-500/20 text-primary" },
+  PAGE_LIKES:            { label: "Curtidas na Página",      color: "bg-blue-500/20 text-primary" },
 };
 
 const OPT_GOAL_LABELS: Record<string, string> = {
@@ -122,9 +122,9 @@ const BILLING_EVENT_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLE: Record<string, string> = {
-  ACTIVE:   "text-emerald-400 bg-emerald-400/10",
-  PAUSED:   "text-amber-400 bg-amber-400/10",
-  DELETED:  "text-red-400 bg-red-400/10",
+  ACTIVE:   "text-positive bg-emerald-400/10",
+  PAUSED:   "text-amber-600 bg-amber-400/10",
+  DELETED:  "text-negative bg-red-400/10",
   ARCHIVED: "text-slate-400 bg-slate-400/10",
 };
 
@@ -193,10 +193,10 @@ const TOOLTIP = {
 
 function Section({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4 space-y-3">
+    <div className="rounded-2xl border border-border bg-pearl p-4 space-y-3">
       <div className="flex items-center gap-2">
         <Icon className="w-3.5 h-3.5 text-[var(--primary)] flex-shrink-0" />
-        <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--primary)]">{title}</span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">{title}</span>
       </div>
       {children}
     </div>
@@ -207,25 +207,25 @@ function Row({ label: lbl, value, accent }: { label: string; value: React.ReactN
   return (
     <div className="flex items-start justify-between gap-3">
       <span className="text-[12px] text-[var(--muted-foreground)] shrink-0">{lbl}</span>
-      <span className={`text-[12px] font-medium text-right ${accent ? "text-[var(--foreground)]" : "text-[var(--foreground)]/80"}`}>{value}</span>
+      <span className={`text-[12px] font-medium text-right ${accent ? "text-[var(--foreground)]" : "text-foreground/80"}`}>{value}</span>
     </div>
   );
 }
 
 function Pill({ text, color }: { text: string; color?: string }) {
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold ${color ?? "bg-white/[0.08] text-white/60"}`}>
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${color ?? "bg-parchment text-muted-foreground"}`}>
       {text}
     </span>
   );
 }
 
 function ChipList({ items, empty = "Nenhum" }: { items: string[]; empty?: string }) {
-  if (!items.length) return <span className="text-[12px] text-white/30 italic">{empty}</span>;
+  if (!items.length) return <span className="text-[12px] text-muted-foreground/50 italic">{empty}</span>;
   return (
     <div className="flex flex-wrap gap-1.5 mt-0.5">
       {items.map((t, i) => (
-        <span key={i} className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-0.5 text-[11px] text-[var(--foreground)]/70">
+        <span key={i} className="rounded-full border border-border bg-parchment px-2.5 py-0.5 text-[11px] text-foreground/70">
           {t}
         </span>
       ))}
@@ -253,9 +253,9 @@ function TabBtn({ active, onClick, icon: Icon, children }: {
 
 function KpiCard({ title, value, sub }: { title: string; value: React.ReactNode; sub?: string }) {
   return (
-    <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-3 flex-1 min-w-0">
-      <p className="text-[9px] font-bold uppercase tracking-[0.20em] text-[var(--muted-foreground)] truncate">{title}</p>
-      <p className="text-base font-extrabold text-[var(--foreground)] mt-1 leading-none truncate">{value}</p>
+    <div className="rounded-xl border border-border bg-pearl p-3 flex-1 min-w-0">
+      <p className="text-[9px] font-semibold uppercase tracking-[0.20em] text-[var(--muted-foreground)] truncate">{title}</p>
+      <p className="text-base font-semibold text-[var(--foreground)] mt-1 leading-none truncate">{value}</p>
       {sub && <p className="text-[10px] text-[var(--muted-foreground)] mt-1 truncate">{sub}</p>}
     </div>
   );
@@ -265,8 +265,8 @@ function RankedRow({ lbl, value, max, right }: { lbl: string; value: number; max
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
     <div className="flex items-center gap-2">
-      <span className="w-28 text-[11px] text-[var(--foreground)]/70 truncate shrink-0">{lbl}</span>
-      <div className="flex-1 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+      <span className="w-28 text-[11px] text-foreground/70 truncate shrink-0">{lbl}</span>
+      <div className="flex-1 h-1.5 bg-parchment rounded-full overflow-hidden">
         <div className="h-full bg-[var(--primary)] rounded-full" style={{ width: `${pct}%` }} />
       </div>
       <span className="text-[11px] font-semibold text-[var(--foreground)] w-14 text-right shrink-0">{right}</span>
@@ -341,7 +341,7 @@ function PerfTab({ insights }: { insights: InsightsData }) {
         <Section icon={TrendingUp} title="Leads por Dia">
           <ResponsiveContainer width="100%" height={140}>
             <LineChart data={insights.daily} margin={{ top: 4, right: 8, bottom: 0, left: -28 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+              <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
               <XAxis
                 dataKey="date"
                 tickFormatter={fmtDay}
@@ -380,7 +380,7 @@ function PerfTab({ insights }: { insights: InsightsData }) {
           {hasDemoLeads ? (
             <ResponsiveContainer width="100%" height={160}>
               <BarChart data={demoByAge} margin={{ top: 4, right: 8, bottom: 0, left: -28 }} barSize={10}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
                 <XAxis
                   dataKey="age"
                   tick={{ fontSize: 9, fill: "rgba(255,255,255,0.35)" }}
@@ -407,7 +407,7 @@ function PerfTab({ insights }: { insights: InsightsData }) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-[12px] text-white/30 italic">
+            <p className="text-[12px] text-muted-foreground/50 italic">
               Dados demográficos de leads indisponíveis para este conjunto.
             </p>
           )}
@@ -429,7 +429,7 @@ function PerfTab({ insights }: { insights: InsightsData }) {
             ))}
           </div>
           {!hasLeads && (
-            <p className="text-[10px] text-white/25 italic mt-1">Exibindo investimento (sem leads registrados)</p>
+            <p className="text-[10px] text-muted-foreground/50 italic mt-1">Exibindo investimento (sem leads registrados)</p>
           )}
         </Section>
       )}
@@ -580,16 +580,16 @@ export function AdsetDetailModal({
 
         {/* Header */}
         <div className="px-5 py-4 border-b border-[var(--border)] flex items-start gap-3 flex-shrink-0">
-          <div className="w-8 h-8 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
             <Target className="w-4 h-4 text-[var(--primary)]" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">Conjunto de Anúncios</p>
-            <h2 className="text-[14px] font-bold text-[var(--foreground)] leading-snug mt-0.5 line-clamp-2">{adsetName}</h2>
+            <h2 className="text-[14px] font-semibold text-[var(--foreground)] leading-snug mt-0.5 line-clamp-2">{adsetName}</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-white/[0.08] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors flex-shrink-0"
+            className="p-1.5 rounded-lg hover:bg-parchment text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors flex-shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
@@ -620,7 +620,7 @@ export function AdsetDetailModal({
 
               {!loading && error && (
                 <div className="flex flex-col items-center justify-center py-16 gap-2 text-center">
-                  <Info className="w-8 h-8 text-red-400 opacity-50" />
+                  <Info className="w-8 h-8 text-negative opacity-50" />
                   <p className="text-sm font-medium text-[var(--foreground)]">Erro ao carregar detalhes</p>
                   <p className="text-[12px] text-[var(--muted-foreground)] max-w-[280px]">{error}</p>
                 </div>
@@ -641,7 +641,7 @@ export function AdsetDetailModal({
                         <span className="text-[12px] text-[var(--muted-foreground)]">Status</span>
                         <Pill
                           text={STATUS_LABELS[data.campaign.status] ?? data.campaign.status}
-                          color={STATUS_STYLE[data.campaign.status] ?? "bg-white/[0.08] text-white/60"}
+                          color={STATUS_STYLE[data.campaign.status] ?? "bg-parchment text-muted-foreground"}
                         />
                       </div>
                     )}
@@ -653,7 +653,7 @@ export function AdsetDetailModal({
                         <span className="text-[12px] text-[var(--muted-foreground)]">Status</span>
                         <Pill
                           text={STATUS_LABELS[effStatus] ?? effStatus}
-                          color={STATUS_STYLE[effStatus] ?? "bg-white/[0.08] text-white/60"}
+                          color={STATUS_STYLE[effStatus] ?? "bg-parchment text-muted-foreground"}
                         />
                       </div>
                     )}
@@ -682,7 +682,7 @@ export function AdsetDetailModal({
                       <Row label="Valor do lance" value={fmtBrl(data.bid_amount)} />
                     )}
                     {!data.daily_budget && !data.lifetime_budget && (
-                      <p className="text-[12px] text-white/30 italic">Orçamento definido na campanha</p>
+                      <p className="text-[12px] text-muted-foreground/50 italic">Orçamento definido na campanha</p>
                     )}
                   </Section>
 
@@ -690,13 +690,13 @@ export function AdsetDetailModal({
                     <Row label="Início" value={fmtDate(data.start_time)} accent />
                     <Row
                       label="Término"
-                      value={data.end_time ? fmtDate(data.end_time) : <span className="text-white/30 italic">Sem data de encerramento</span>}
+                      value={data.end_time ? fmtDate(data.end_time) : <span className="text-muted-foreground/50 italic">Sem data de encerramento</span>}
                     />
                   </Section>
 
                   <Section icon={Users} title="Público">
                     {isAdvantage ? (
-                      <div className="flex items-center gap-2 rounded-xl bg-[var(--primary)]/8 border border-[var(--primary)]/20 px-3 py-2">
+                      <div className="flex items-center gap-2 rounded-xl bg-primary/8 border border-primary/20 px-3 py-2">
                         <Zap className="w-3.5 h-3.5 text-[var(--primary)] flex-shrink-0" />
                         <div>
                           <p className="text-[12px] font-semibold text-[var(--primary)]">Advantage+ Audience ativado</p>
@@ -706,7 +706,7 @@ export function AdsetDetailModal({
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 rounded-xl bg-white/[0.04] border border-white/[0.06] px-3 py-2">
+                      <div className="flex items-center gap-2 rounded-xl bg-parchment border border-border px-3 py-2">
                         <Settings2 className="w-3.5 h-3.5 text-[var(--muted-foreground)] flex-shrink-0" />
                         <p className="text-[12px] text-[var(--muted-foreground)]">Segmentação manual (controles definidos)</p>
                       </div>
@@ -750,13 +750,13 @@ export function AdsetDetailModal({
                     <Section icon={Users} title="Públicos Personalizados">
                       {inclAudiences.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400/70 mb-1.5">Incluir</p>
+                          <p className="text-[10px] font-semibold uppercase tracking-widest text-positive/70 mb-1.5">Incluir</p>
                           <ChipList items={inclAudiences} />
                         </div>
                       )}
                       {exclAudiences.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-red-400/70 mb-1.5">Excluir</p>
+                          <p className="text-[10px] font-semibold uppercase tracking-widest text-negative/70 mb-1.5">Excluir</p>
                           <ChipList items={exclAudiences} />
                         </div>
                       )}
@@ -780,7 +780,7 @@ export function AdsetDetailModal({
                     </Section>
                   )}
 
-                  <p className="text-center text-[10px] text-white/20 pb-2">ID do conjunto: {data.id}</p>
+                  <p className="text-center text-[10px] text-muted-foreground/50 pb-2">ID do conjunto: {data.id}</p>
                 </>
               )}
             </>
@@ -798,7 +798,7 @@ export function AdsetDetailModal({
 
               {!insightsLoading && insightsError && (
                 <div className="flex flex-col items-center justify-center py-16 gap-2 text-center">
-                  <Info className="w-8 h-8 text-red-400 opacity-50" />
+                  <Info className="w-8 h-8 text-negative opacity-50" />
                   <p className="text-sm font-medium text-[var(--foreground)]">Erro ao carregar métricas</p>
                   <p className="text-[12px] text-[var(--muted-foreground)] max-w-[280px]">{insightsError}</p>
                 </div>

@@ -83,6 +83,7 @@ model Cliente {
   commerceEntitlements       CommerceEntitlement[]
   captureForms               CaptureForm[]
   marketplaceOrders          MarketplaceOrder[]
+  metaAdPurchases            MetaAdPurchaseDaily[]
   marketplaceSellerSnapshots MarketplaceSellerSnapshot[]
   marketplaceCatalogItems    MarketplaceCatalogItem[]
   abandonedCarts             AbandonedCart[]
@@ -1579,11 +1580,75 @@ model MarketplaceOrder {
   cliente           Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   contact           NativeContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
   items             MarketplaceOrderItem[]
+  source            MarketplaceOrderSource?
 
   @@unique([clienteId, provider, externalId])
   @@index([clienteId, provider, occurredAt])
   @@index([clienteId, createdAt])
   @@index([clienteId, shippingId])
+}
+
+/// De onde veio cada pedido: origem gravada pela loja + anúncio Meta que o gerou.
+model MarketplaceOrderSource {
+  id               String    @id @default(cuid())
+  orderId          String    @unique
+  clienteId        String
+  /// meta_ads | google_ads | instagram | facebook | google_organic | email | whatsapp | direct | referral | other
+  channel          String    @db.VarChar(40)
+  storeSource      String?   @db.VarChar(200)
+  storeMedium      String?   @db.VarChar(120)
+  storeCampaign    String?   @db.VarChar(300)
+  storeContent     String?   @db.VarChar(300)
+  storeTerm        String?   @db.VarChar(300)
+  referrer         String?   @db.VarChar(500)
+  landingUrl       String?   @db.Text
+  deviceType       String?   @db.VarChar(40)
+  sessionPages     Int?
+  sessionCount     Int?
+  hasFbclid        Boolean   @default(false)
+  /// utm (clique gravado pela loja) | meta_match (valor + dia batem com compra reportada pelo Meta) | both
+  adMethod         String?   @db.VarChar(20)
+  /// confirmed | probable
+  adConfidence     String?   @db.VarChar(20)
+  /// click | view — janela em que o Meta contou a compra
+  adWindow         String?   @db.VarChar(10)
+  metaCampaignId   String?   @db.VarChar(40)
+  metaCampaignName String?   @db.VarChar(300)
+  metaAdsetId      String?   @db.VarChar(40)
+  metaAdsetName    String?   @db.VarChar(300)
+  metaAdId         String?   @db.VarChar(40)
+  metaAdName       String?   @db.VarChar(300)
+  matchedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  order            MarketplaceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([clienteId, channel])
+  @@index([clienteId, metaCampaignId])
+  @@index([clienteId, metaAdId])
+}
+
+/// Compras do Pixel reportadas pelo Meta por anúncio, no dia da conversão (action_report_time=conversion).
+model MetaAdPurchaseDaily {
+  id              String   @id @default(cuid())
+  clienteId       String
+  adAccountId     String   @db.VarChar(40)
+  date            DateTime @db.Date
+  campaignId      String   @db.VarChar(40)
+  campaignName    String   @db.VarChar(300)
+  adsetId         String   @db.VarChar(40)
+  adsetName       String   @db.VarChar(300)
+  adId            String   @db.VarChar(40)
+  adName          String   @db.VarChar(300)
+  clickPurchases  Int      @default(0)
+  clickValueCents Int      @default(0)
+  viewPurchases   Int      @default(0)
+  viewValueCents  Int      @default(0)
+  syncedAt        DateTime @default(now())
+  cliente         Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, adId, date])
+  @@index([clienteId, date])
 }
 
 /// Carrinho abandonado: checkout abandonado da loja (API) ou pedido não pago vencido.

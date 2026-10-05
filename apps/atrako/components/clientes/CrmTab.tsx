@@ -370,9 +370,9 @@ function isAlertaTag(tag: string): boolean {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 const STATUS_CFG: Record<string, { label: string; cls: string }> = {
-  won:     { label: "Ganho",        cls: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" },
-  lost:    { label: "Perdido",      cls: "bg-red-500/10 text-red-400 border border-red-500/20" },
-  ongoing: { label: "Em andamento", cls: "bg-blue-500/10 text-blue-400 border border-blue-500/20" },
+  won:     { label: "Ganho",        cls: "bg-emerald-500/10 text-positive border border-emerald-500/20" },
+  lost:    { label: "Perdido",      cls: "bg-red-500/10 text-negative border border-red-500/20" },
+  ongoing: { label: "Em andamento", cls: "bg-blue-500/10 text-primary border border-blue-500/20" },
   paused:  { label: "Pausado",      cls: "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20" },
 };
 
@@ -387,29 +387,29 @@ function StatusBadge({ status }: { status: string | null }) {
 }
 
 const CANAL_CFG: Record<string, { label: string; color: string; hex: string }> = {
-  META:      { label: "Meta",      color: "text-blue-400",                  hex: "#3b82f6" },
-  GOOGLE:    { label: "Google",    color: "text-red-400",                   hex: "#ef4444" },
-  ORGANICO:  { label: "Orgânico",  color: "text-emerald-400",               hex: "#10b981" },
+  META:      { label: "Meta",      color: "text-primary",                  hex: "#3b82f6" },
+  GOOGLE:    { label: "Google",    color: "text-negative",                   hex: "#ef4444" },
+  ORGANICO:  { label: "Orgânico",  color: "text-positive",               hex: "#10b981" },
   INDICACAO: { label: "Indicação", color: "text-purple-400",                hex: "#a855f7" },
   DIRETO:    { label: "Direto",    color: "text-amber-500",                 hex: "#f59e0b" },
   OUTRO:     { label: "Outro",     color: "text-[var(--muted-foreground)]", hex: "#6b7280" },
 };
 
 const PV_LABELS: Record<string, { label: string; color: string }> = {
-  "1": { label: "Muito baixa", color: "text-red-400/80" },
+  "1": { label: "Muito baixa", color: "text-negative/80" },
   "2": { label: "Baixa",       color: "text-orange-400/80" },
   "3": { label: "Média",       color: "text-yellow-400/80" },
   "4": { label: "Alta",        color: "text-lime-400" },
-  "5": { label: "Muito alta",  color: "text-emerald-400" },
+  "5": { label: "Muito alta",  color: "text-positive" },
 };
 
 const MOMENTO_LABELS: Record<string, { label: string; chip: string }> = {
-  "lead frio":    { label: "Lead Frio",   chip: "bg-sky-500/10 text-sky-400 border border-sky-500/20" },
-  "frio":         { label: "Lead Frio",   chip: "bg-sky-500/10 text-sky-400 border border-sky-500/20" },
-  "lead morno":   { label: "Lead Morno",  chip: "bg-amber-500/10 text-amber-400 border border-amber-500/20" },
-  "morno":        { label: "Lead Morno",  chip: "bg-amber-500/10 text-amber-400 border border-amber-500/20" },
-  "lead quente":  { label: "Lead Quente", chip: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" },
-  "quente":       { label: "Lead Quente", chip: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" },
+  "lead frio":    { label: "Lead Frio",   chip: "bg-sky-500/10 text-primary border border-sky-500/20" },
+  "frio":         { label: "Lead Frio",   chip: "bg-sky-500/10 text-primary border border-sky-500/20" },
+  "lead morno":   { label: "Lead Morno",  chip: "bg-amber-500/10 text-amber-600 border border-amber-500/20" },
+  "morno":        { label: "Lead Morno",  chip: "bg-amber-500/10 text-amber-600 border border-amber-500/20" },
+  "lead quente":  { label: "Lead Quente", chip: "bg-emerald-500/10 text-positive border border-emerald-500/20" },
+  "quente":       { label: "Lead Quente", chip: "bg-emerald-500/10 text-positive border border-emerald-500/20" },
   "sem momento":  { label: "Sem Momento", chip: "bg-[var(--muted)] text-[var(--muted-foreground)] border border-[var(--border)]" },
 };
 
@@ -436,8 +436,8 @@ function HorizontalBar({
       onClick={onClick}
       role={onClick ? "button" : undefined}
       className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 transition-colors ${
-        onClick ? "cursor-pointer hover:bg-[var(--primary)]/8" : ""
-      } ${isActive ? "bg-[var(--primary)]/10 ring-1 ring-inset ring-[var(--primary)]/20" : ""}`}
+        onClick ? "cursor-pointer hover:bg-primary/8" : ""
+      } ${isActive ? "bg-primary/10 ring-1 ring-inset ring-primary/20" : ""}`}
     >
       <span className={`w-28 shrink-0 truncate text-[11px] font-medium ${isActive ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`} title={label}>
         {label}
@@ -457,7 +457,7 @@ function HorizontalBar({
       <span className="w-10 shrink-0 text-right tabular-nums text-[10px] text-[var(--muted-foreground)]">
         {pct.toFixed(1)}%
       </span>
-      <span className={`w-8 shrink-0 text-right tabular-nums text-[11px] font-bold ${isActive ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
+      <span className={`w-8 shrink-0 text-right tabular-nums text-[11px] font-semibold ${isActive ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
         {value}
       </span>
     </div>
@@ -479,7 +479,7 @@ function DField({ label, value }: { label: string; value: React.ReactNode }) {
 function DSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
-      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--primary)]">{title}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--primary)]">{title}</p>
       <div className="grid grid-cols-2 gap-x-5 gap-y-3">{children}</div>
     </div>
   );
@@ -554,11 +554,11 @@ function LeadDetailDrawer({
               <div className="flex-1 min-w-0 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={lead.status} />
-                  <span className="rounded-full bg-[var(--primary)]/10 px-2 py-0.5 text-[11px] font-semibold text-[var(--primary)]">
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-[var(--primary)]">
                     {lead.etapa}
                   </span>
                 </div>
-                <h2 className="text-xl font-extrabold leading-tight text-[var(--foreground)]">
+                <h2 className="text-xl font-semibold leading-tight text-[var(--foreground)]">
                   {lead.nome ?? lead.email ?? lead.telefone ?? "Sem identificação"}
                 </h2>
                 {lead.nome && (lead.email ?? lead.telefone) && (
@@ -635,7 +635,7 @@ function LeadDetailDrawer({
                 <DSection title="Qualidade do Lead">
                   {cv?.score != null && (
                     <DField label="Score CV" value={
-                      <span className="font-bold text-[var(--primary)]">{cv.score}</span>
+                      <span className="font-semibold text-[var(--primary)]">{cv.score}</span>
                     } />
                   )}
                   {lead.momentoLead && (() => {
@@ -683,7 +683,7 @@ function LeadDetailDrawer({
                   )}
                   {lead.valor != null && (
                     <DField label="Valor" value={
-                      <span className="font-bold text-emerald-400">{formatCurrencyBR(lead.valor)}</span>
+                      <span className="font-semibold text-positive">{formatCurrencyBR(lead.valor)}</span>
                     } />
                   )}
                   {cv?.reserva && <DField label="Reserva" value={cv.reserva} />}
@@ -702,7 +702,7 @@ function LeadDetailDrawer({
               <>
                 <div className="h-px bg-[var(--border)]" />
                 <div className="space-y-2">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--primary)]">Tags</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--primary)]">Tags</p>
                   <div className="flex flex-wrap gap-1.5">
                     {[...cvTags]
                       .sort((a, b) => Number(isAlertaTag(b)) - Number(isAlertaTag(a)))
@@ -713,7 +713,7 @@ function LeadDetailDrawer({
                             key={tag}
                             className={
                               alerta
-                                ? "inline-flex items-center gap-1 rounded-full border border-red-500/25 bg-red-500/10 px-2.5 py-0.5 text-[11px] font-medium text-red-400"
+                                ? "inline-flex items-center gap-1 rounded-full border border-red-500/25 bg-red-500/10 px-2.5 py-0.5 text-[11px] font-medium text-negative"
                                 : "rounded-full border border-[var(--border)] bg-[var(--muted)] px-2.5 py-0.5 text-[11px] text-[var(--foreground)]"
                             }
                           >
@@ -732,15 +732,15 @@ function LeadDetailDrawer({
               <>
                 <div className="h-px bg-[var(--border)]" />
                 <div className="space-y-3 rounded-xl border border-red-500/20 bg-red-500/5 p-4">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-red-400">Motivo de Perda</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-negative">Motivo de Perda</p>
                   <div className="grid grid-cols-2 gap-x-5 gap-y-3">
-                    <DField label="Motivo" value={<span className="text-red-400">{cv.motivoCancelamento}</span>} />
+                    <DField label="Motivo" value={<span className="text-negative">{cv.motivoCancelamento}</span>} />
                     {cv.submotivoCancelamento && (
-                      <DField label="Submotivo" value={<span className="text-red-400">{cv.submotivoCancelamento}</span>} />
+                      <DField label="Submotivo" value={<span className="text-negative">{cv.submotivoCancelamento}</span>} />
                     )}
                     {cv.descricaoCancelamento && (
                       <div className="col-span-2">
-                        <DField label="Descrição" value={<span className="text-red-400">{cv.descricaoCancelamento}</span>} />
+                        <DField label="Descrição" value={<span className="text-negative">{cv.descricaoCancelamento}</span>} />
                       </div>
                     )}
                   </div>
@@ -754,7 +754,7 @@ function LeadDetailDrawer({
                 <div className="h-px bg-[var(--border)]" />
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--primary)]">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--primary)]">
                       Respostas do Formulário
                     </p>
                     {formName && (
@@ -832,7 +832,7 @@ function CampanhaSection({ data }: { data: AtribuicaoData }) {
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <span className={`inline-block h-2 w-2 rounded-full`} style={{ backgroundColor: cfg.hex }} />
-          <p className={`text-sm font-bold ${cfg.color}`}>{cfg.label}</p>
+          <p className={`text-sm font-semibold ${cfg.color}`}>{cfg.label}</p>
           <span className="text-xs text-[var(--muted-foreground)]">· {totalLeads} leads</span>
           {investCanal > 0 && (
             <span className="text-xs text-[var(--muted-foreground)]">
@@ -843,7 +843,7 @@ function CampanhaSection({ data }: { data: AtribuicaoData }) {
         <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
           <table className="min-w-[600px] w-full text-sm">
             <thead>
-              <tr className="border-b border-[var(--border)] bg-[var(--muted)]/30">
+              <tr className="border-b border-[var(--border)] bg-muted/30">
                 {["Conversão / Portal CRM", "Leads", "Visitou", "Em aberto", "Ganhos", "Conv%"].map((h) => (
                   <th key={h} className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted-foreground)]">
                     {h}
@@ -855,8 +855,8 @@ function CampanhaSection({ data }: { data: AtribuicaoData }) {
               {rows.map((row, i) => (
                 <tr
                   key={row.campanha}
-                  className={`border-b border-[var(--border)]/50 transition-colors hover:bg-[var(--muted)]/20 ${
-                    i % 2 === 0 ? "" : "bg-[var(--muted)]/10"
+                  className={`border-b border-border/50 transition-colors hover:bg-muted/20 ${
+                    i % 2 === 0 ? "" : "bg-muted/10"
                   }`}
                 >
                   <td className="px-4 py-2.5">
@@ -868,13 +868,13 @@ function CampanhaSection({ data }: { data: AtribuicaoData }) {
                   <td className="px-4 py-2.5 tabular-nums text-[var(--muted-foreground)]">
                     {row.visitou > 0 ? row.visitou : <span className="opacity-40">—</span>}
                   </td>
-                  <td className="px-4 py-2.5 tabular-nums text-blue-400">{row.andamento}</td>
-                  <td className="px-4 py-2.5 tabular-nums font-bold text-emerald-400">
+                  <td className="px-4 py-2.5 tabular-nums text-primary">{row.andamento}</td>
+                  <td className="px-4 py-2.5 tabular-nums font-semibold text-positive">
                     {row.ganhos > 0 ? row.ganhos : <span className="font-normal opacity-40">—</span>}
                   </td>
                   <td className="px-4 py-2.5">
                     {row.leads > 0 ? (
-                      <span className={`tabular-nums font-semibold ${row.taxaGanho > 0 ? "text-emerald-400" : "text-[var(--muted-foreground)]"}`}>
+                      <span className={`tabular-nums font-semibold ${row.taxaGanho > 0 ? "text-positive" : "text-[var(--muted-foreground)]"}`}>
                         {row.taxaGanho}%
                       </span>
                     ) : (
@@ -896,7 +896,7 @@ function CampanhaSection({ data }: { data: AtribuicaoData }) {
         <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">CRM</p>
-          <h2 className="text-xl font-extrabold tracking-tight text-[var(--foreground)]">Por Portal de Entrada</h2>
+          <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">Por Portal de Entrada</h2>
         </div>
       </div>
       <div className="space-y-6">
@@ -960,10 +960,10 @@ function AdPreviewModal({ adId, adName, onClose, staticImageUrl }: { adId: strin
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-sm rounded-3xl bg-[var(--card)] border border-white/[0.08] overflow-hidden shadow-2xl"
+        className="relative w-full max-w-sm rounded-3xl bg-[var(--card)] border border-border overflow-hidden shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-white/[0.06]">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
           <Eye className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />
           <p className="text-sm font-semibold text-[var(--foreground)] flex-1 min-w-0 truncate">{adName}</p>
           <button onClick={onClose} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors flex-shrink-0 p-1" aria-label="Fechar">✕</button>
@@ -1047,7 +1047,7 @@ function MetaHierarquiaSection({
         <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">CRM · Meta</p>
-          <h2 className="text-xl font-extrabold tracking-tight text-[var(--foreground)]">Análise Detalhada do Meta</h2>
+          <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">Análise Detalhada do Meta</h2>
         </div>
       </div>
 
@@ -1055,8 +1055,8 @@ function MetaHierarquiaSection({
       {totalGanhos > 0 && (
         <div className="flex flex-wrap gap-2">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-3 py-1.5">
-            <span className="text-xs font-semibold text-emerald-400">{totalGanhos} {isAgencia ? "fechamento" : "venda"}{totalGanhos !== 1 ? "s" : ""}</span>
-            {totalValor > 0 && <span className="text-xs text-emerald-400/60">· {formatCurrencyBR(totalValor)}</span>}
+            <span className="text-xs font-semibold text-positive">{totalGanhos} {isAgencia ? "fechamento" : "venda"}{totalGanhos !== 1 ? "s" : ""}</span>
+            {totalValor > 0 && <span className="text-xs text-positive/60">· {formatCurrencyBR(totalValor)}</span>}
           </div>
         </div>
       )}
@@ -1064,7 +1064,7 @@ function MetaHierarquiaSection({
       <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
         <table className="min-w-[980px] w-full text-sm">
           <thead>
-            <tr className="border-b border-[var(--border)] bg-[var(--muted)]/30">
+            <tr className="border-b border-[var(--border)] bg-muted/30">
               {(isAgencia
                 ? ["Campanha / Conjunto / Anúncio", "Leads", "Atend.", "Descartados", "Fechamentos", "Valor", "Conv%"]
                 : ["Campanha / Conjunto / Anúncio", "Leads", "Visitas", "Atend.", "Descartados", "Vendas", "Valor", "Conv%"]
@@ -1084,13 +1084,13 @@ function MetaHierarquiaSection({
               return (
                 <React.Fragment key={campKey}>
                   {/* Campaign row */}
-                  <tr className={`border-b border-[var(--border)]/60 transition-colors hover:bg-[var(--muted)]/20 ${campActive ? "bg-[var(--primary)]/[0.06]" : ""}`}>
+                  <tr className={`border-b border-border/60 transition-colors hover:bg-muted/20 ${campActive ? "bg-primary/[0.06]" : ""}`}>
                     <td className="px-4 py-2.5">
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => toggle(openCamp, campKey, setOpenCamp)}
-                          className="shrink-0 rounded p-0.5 text-[var(--muted-foreground)] hover:bg-[var(--muted)]/50 hover:text-[var(--foreground)]"
+                          className="shrink-0 rounded p-0.5 text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"
                           aria-label={campOpen ? "Recolher" : "Expandir"}
                         >
                           {campOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -1108,12 +1108,12 @@ function MetaHierarquiaSection({
                       </div>
                     </td>
                     <td className="px-4 py-2.5 text-right"><MetaHierStat value={camp.leads} cls="text-[var(--foreground)]" /></td>
-                    {!isAgencia && <td className="px-4 py-2.5 text-right"><MetaHierStat value={camp.visitou} cls="text-amber-400" dash /></td>}
-                    <td className="px-4 py-2.5 text-right"><MetaHierStat value={camp.andamento} cls="text-blue-400" dash /></td>
-                    <td className="px-4 py-2.5 text-right"><MetaHierStat value={camp.perdidos} cls="text-red-400" dash /></td>
-                    <td className="px-4 py-2.5 text-right"><MetaHierStat value={camp.ganhos} cls="text-emerald-400" dash /></td>
+                    {!isAgencia && <td className="px-4 py-2.5 text-right"><MetaHierStat value={camp.visitou} cls="text-amber-600" dash /></td>}
+                    <td className="px-4 py-2.5 text-right"><MetaHierStat value={camp.andamento} cls="text-primary" dash /></td>
+                    <td className="px-4 py-2.5 text-right"><MetaHierStat value={camp.perdidos} cls="text-negative" dash /></td>
+                    <td className="px-4 py-2.5 text-right"><MetaHierStat value={camp.ganhos} cls="text-positive" dash /></td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-[var(--muted-foreground)]">{camp.valor > 0 ? formatCurrencyBR(camp.valor) : <span className="opacity-25">—</span>}</td>
-                    <td className="px-4 py-2.5 text-right tabular-nums">{camp.leads > 0 ? <span className={camp.taxaGanho > 0 ? "font-semibold text-emerald-400" : "text-[var(--muted-foreground)]"}>{camp.taxaGanho}%</span> : <span className="opacity-25">—</span>}</td>
+                    <td className="px-4 py-2.5 text-right tabular-nums">{camp.leads > 0 ? <span className={camp.taxaGanho > 0 ? "font-semibold text-positive" : "text-[var(--muted-foreground)]"}>{camp.taxaGanho}%</span> : <span className="opacity-25">—</span>}</td>
                   </tr>
 
                   {/* Adset rows */}
@@ -1124,13 +1124,13 @@ function MetaHierarquiaSection({
                     const adsetCpl = cpl(as.spend, as.leads);
                     return (
                       <React.Fragment key={adsetKey}>
-                        <tr className={`border-b border-[var(--border)]/40 bg-[var(--muted)]/[0.08] transition-colors hover:bg-[var(--muted)]/20 ${adsetActive ? "bg-[var(--primary)]/[0.06]" : ""}`}>
+                        <tr className={`border-b border-border/40 bg-muted/[0.08] transition-colors hover:bg-muted/20 ${adsetActive ? "bg-primary/[0.06]" : ""}`}>
                           <td className="px-4 py-2">
                             <div className="flex items-center gap-1.5 pl-6">
                               <button
                                 type="button"
                                 onClick={() => toggle(openAdset, adsetKey, setOpenAdset)}
-                                className="shrink-0 rounded p-0.5 text-[var(--muted-foreground)] hover:bg-[var(--muted)]/50 hover:text-[var(--foreground)]"
+                                className="shrink-0 rounded p-0.5 text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"
                                 aria-label={adsetOpen ? "Recolher" : "Expandir"}
                               >
                                 {adsetOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
@@ -1147,12 +1147,12 @@ function MetaHierarquiaSection({
                             </div>
                           </td>
                           <td className="px-4 py-2 text-right"><MetaHierStat value={as.leads} cls="text-[var(--foreground)]" /></td>
-                          {!isAgencia && <td className="px-4 py-2 text-right"><MetaHierStat value={as.visitou} cls="text-amber-400" dash /></td>}
-                          <td className="px-4 py-2 text-right"><MetaHierStat value={as.andamento} cls="text-blue-400" dash /></td>
-                          <td className="px-4 py-2 text-right"><MetaHierStat value={as.perdidos} cls="text-red-400" dash /></td>
-                          <td className="px-4 py-2 text-right"><MetaHierStat value={as.ganhos} cls="text-emerald-400" dash /></td>
+                          {!isAgencia && <td className="px-4 py-2 text-right"><MetaHierStat value={as.visitou} cls="text-amber-600" dash /></td>}
+                          <td className="px-4 py-2 text-right"><MetaHierStat value={as.andamento} cls="text-primary" dash /></td>
+                          <td className="px-4 py-2 text-right"><MetaHierStat value={as.perdidos} cls="text-negative" dash /></td>
+                          <td className="px-4 py-2 text-right"><MetaHierStat value={as.ganhos} cls="text-positive" dash /></td>
                           <td className="px-4 py-2 text-right tabular-nums text-[var(--muted-foreground)]">{as.valor > 0 ? formatCurrencyBR(as.valor) : <span className="opacity-25">—</span>}</td>
-                          <td className="px-4 py-2 text-right tabular-nums">{as.leads > 0 ? <span className={as.taxaGanho > 0 ? "font-semibold text-emerald-400" : "text-[var(--muted-foreground)]"}>{as.taxaGanho}%</span> : <span className="opacity-25">—</span>}</td>
+                          <td className="px-4 py-2 text-right tabular-nums">{as.leads > 0 ? <span className={as.taxaGanho > 0 ? "font-semibold text-positive" : "text-[var(--muted-foreground)]"}>{as.taxaGanho}%</span> : <span className="opacity-25">—</span>}</td>
                         </tr>
 
                         {/* Ad rows */}
@@ -1161,10 +1161,10 @@ function MetaHierarquiaSection({
                           const adActive = isNodeActive("metaAd", ad.adId);
                           const adCpl = cpl(ad.spend, ad.leads);
                           return (
-                            <tr key={adKey} className={`border-b border-[var(--border)]/30 transition-colors hover:bg-[var(--muted)]/20 ${adActive ? "bg-[var(--primary)]/[0.06]" : ""}`}>
+                            <tr key={adKey} className={`border-b border-border/30 transition-colors hover:bg-muted/20 ${adActive ? "bg-primary/[0.06]" : ""}`}>
                               <td className="px-4 py-1.5">
                                 <div className="flex items-center gap-1.5 pl-[3.25rem]">
-                                  <span className="inline-block h-1 w-1 shrink-0 rounded-full bg-[var(--muted-foreground)]/40" />
+                                  <span className="inline-block h-1 w-1 shrink-0 rounded-full bg-muted-foreground/40" />
                                   <button
                                     type="button"
                                     disabled={ad.adId == null}
@@ -1178,7 +1178,7 @@ function MetaHierarquiaSection({
                                     <button
                                       type="button"
                                       onClick={() => setPreviewAd({ adId: ad.adId!, adName: ad.adName })}
-                                      className="shrink-0 rounded p-0.5 text-[var(--muted-foreground)]/50 hover:text-[var(--primary)] transition-colors"
+                                      className="shrink-0 rounded p-0.5 text-muted-foreground/50 hover:text-[var(--primary)] transition-colors"
                                       title="Ver criativo"
                                     >
                                       <Eye className="w-3 h-3" />
@@ -1187,12 +1187,12 @@ function MetaHierarquiaSection({
                                 </div>
                               </td>
                               <td className="px-4 py-1.5 text-right"><MetaHierStat value={ad.leads} cls="text-[var(--foreground)]" /></td>
-                              {!isAgencia && <td className="px-4 py-1.5 text-right"><MetaHierStat value={ad.visitou} cls="text-amber-400" dash /></td>}
-                              <td className="px-4 py-1.5 text-right"><MetaHierStat value={ad.andamento} cls="text-blue-400" dash /></td>
-                              <td className="px-4 py-1.5 text-right"><MetaHierStat value={ad.perdidos} cls="text-red-400" dash /></td>
-                              <td className="px-4 py-1.5 text-right"><MetaHierStat value={ad.ganhos} cls="text-emerald-400" dash /></td>
+                              {!isAgencia && <td className="px-4 py-1.5 text-right"><MetaHierStat value={ad.visitou} cls="text-amber-600" dash /></td>}
+                              <td className="px-4 py-1.5 text-right"><MetaHierStat value={ad.andamento} cls="text-primary" dash /></td>
+                              <td className="px-4 py-1.5 text-right"><MetaHierStat value={ad.perdidos} cls="text-negative" dash /></td>
+                              <td className="px-4 py-1.5 text-right"><MetaHierStat value={ad.ganhos} cls="text-positive" dash /></td>
                               <td className="px-4 py-1.5 text-right tabular-nums text-[var(--muted-foreground)]">{ad.valor > 0 ? formatCurrencyBR(ad.valor) : <span className="opacity-25">—</span>}</td>
-                              <td className="px-4 py-1.5 text-right tabular-nums">{ad.leads > 0 ? <span className={ad.taxaGanho > 0 ? "font-semibold text-emerald-400" : "text-[var(--muted-foreground)]"}>{ad.taxaGanho}%</span> : <span className="opacity-25">—</span>}</td>
+                              <td className="px-4 py-1.5 text-right tabular-nums">{ad.leads > 0 ? <span className={ad.taxaGanho > 0 ? "font-semibold text-positive" : "text-[var(--muted-foreground)]"}>{ad.taxaGanho}%</span> : <span className="opacity-25">—</span>}</td>
                             </tr>
                           );
                         })}
@@ -1245,15 +1245,15 @@ function GoogleUtmHierarquiaSection({
         <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">CRM · Google</p>
-          <h2 className="text-xl font-extrabold tracking-tight text-[var(--foreground)]">Análise Detalhada do Google</h2>
+          <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">Análise Detalhada do Google</h2>
         </div>
       </div>
 
       {totalGanhos > 0 && (
         <div className="flex flex-wrap gap-2">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-3 py-1.5">
-            <span className="text-xs font-semibold text-emerald-400">{totalGanhos} {isAgencia ? (totalGanhos === 1 ? "fechamento" : "fechamentos") : (totalGanhos === 1 ? "venda" : "vendas")}</span>
-            {totalValor > 0 && <span className="text-xs text-emerald-400/60">· {formatCurrencyBR(totalValor)}</span>}
+            <span className="text-xs font-semibold text-positive">{totalGanhos} {isAgencia ? (totalGanhos === 1 ? "fechamento" : "fechamentos") : (totalGanhos === 1 ? "venda" : "vendas")}</span>
+            {totalValor > 0 && <span className="text-xs text-positive/60">· {formatCurrencyBR(totalValor)}</span>}
           </div>
         </div>
       )}
@@ -1261,7 +1261,7 @@ function GoogleUtmHierarquiaSection({
       <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
         <table className="min-w-[620px] w-full text-sm">
           <thead>
-            <tr className="border-b border-[var(--border)] bg-[var(--muted)]/30">
+            <tr className="border-b border-[var(--border)] bg-muted/30">
               {(isAgencia
                 ? ["Campanha / Grupo de Anúncios", "Leads", "Atend.", "Fechamentos", "Valor", "Conv%"]
                 : ["Campanha / Grupo de Anúncios", "Leads", "Visitas", "Atend.", "Vendas", "Valor", "Conv%"]
@@ -1279,7 +1279,7 @@ function GoogleUtmHierarquiaSection({
               return (
                 <React.Fragment key={camp.campaignName}>
                   {/* Linha da campanha */}
-                  <tr className={`border-b border-[var(--border)]/60 transition-colors hover:bg-[var(--muted)]/20 ${isActive ? "bg-[var(--primary)]/[0.06]" : ""}`}>
+                  <tr className={`border-b border-border/60 transition-colors hover:bg-muted/20 ${isActive ? "bg-primary/[0.06]" : ""}`}>
                     <td className="px-4 py-2.5">
                       <div className="flex items-center gap-2">
                         <span className="inline-block h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: googleHex }} />
@@ -1299,18 +1299,18 @@ function GoogleUtmHierarquiaSection({
                     {!isAgencia && (
                       <td className="px-4 py-2.5 text-right">
                         {camp.visitou > 0
-                          ? <span className="tabular-nums font-semibold text-amber-400">{camp.visitou.toLocaleString("pt-BR")}</span>
+                          ? <span className="tabular-nums font-semibold text-amber-600">{camp.visitou.toLocaleString("pt-BR")}</span>
                           : <span className="opacity-25 text-[var(--muted-foreground)]">—</span>}
                       </td>
                     )}
                     <td className="px-4 py-2.5 text-right">
                       {camp.andamento > 0
-                        ? <span className="tabular-nums font-semibold text-blue-400">{camp.andamento.toLocaleString("pt-BR")}</span>
+                        ? <span className="tabular-nums font-semibold text-primary">{camp.andamento.toLocaleString("pt-BR")}</span>
                         : <span className="opacity-25 text-[var(--muted-foreground)]">—</span>}
                     </td>
                     <td className="px-4 py-2.5 text-right">
                       {camp.ganhos > 0
-                        ? <span className="tabular-nums font-semibold text-emerald-400">{camp.ganhos.toLocaleString("pt-BR")}</span>
+                        ? <span className="tabular-nums font-semibold text-positive">{camp.ganhos.toLocaleString("pt-BR")}</span>
                         : <span className="opacity-25 text-[var(--muted-foreground)]">—</span>}
                     </td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-[var(--muted-foreground)]">
@@ -1318,13 +1318,13 @@ function GoogleUtmHierarquiaSection({
                     </td>
                     <td className="px-4 py-2.5 text-right tabular-nums">
                       {camp.leads > 0
-                        ? <span className={camp.taxaGanho > 0 ? "font-semibold text-emerald-400" : "text-[var(--muted-foreground)]"}>{camp.taxaGanho}%</span>
+                        ? <span className={camp.taxaGanho > 0 ? "font-semibold text-positive" : "text-[var(--muted-foreground)]"}>{camp.taxaGanho}%</span>
                         : <span className="opacity-25">—</span>}
                     </td>
                   </tr>
                   {/* Linhas dos grupos de anúncios */}
                   {hasAdgroups && camp.adgroups!.map((ag) => (
-                    <tr key={ag.adgroupName} className="border-b border-[var(--border)]/40 bg-[var(--muted)]/[0.03] transition-colors hover:bg-[var(--muted)]/10">
+                    <tr key={ag.adgroupName} className="border-b border-border/40 bg-muted/[0.03] transition-colors hover:bg-muted/10">
                       <td className="py-2 pl-10 pr-4">
                         <div className="flex items-center gap-2">
                           <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full opacity-50" style={{ backgroundColor: googleHex }} />
@@ -1337,26 +1337,26 @@ function GoogleUtmHierarquiaSection({
                       {!isAgencia && (
                         <td className="py-2 pr-4 text-right">
                           {ag.visitou > 0
-                            ? <span className="tabular-nums text-xs text-amber-400/70">{ag.visitou.toLocaleString("pt-BR")}</span>
+                            ? <span className="tabular-nums text-xs text-amber-600/70">{ag.visitou.toLocaleString("pt-BR")}</span>
                             : <span className="opacity-20 text-[var(--muted-foreground)]">—</span>}
                         </td>
                       )}
                       <td className="py-2 pr-4 text-right">
                         {ag.andamento > 0
-                          ? <span className="tabular-nums text-xs text-blue-400/70">{ag.andamento.toLocaleString("pt-BR")}</span>
+                          ? <span className="tabular-nums text-xs text-primary/70">{ag.andamento.toLocaleString("pt-BR")}</span>
                           : <span className="opacity-20 text-[var(--muted-foreground)]">—</span>}
                       </td>
                       <td className="py-2 pr-4 text-right">
                         {ag.ganhos > 0
-                          ? <span className="tabular-nums text-xs font-semibold text-emerald-400">{ag.ganhos.toLocaleString("pt-BR")}</span>
+                          ? <span className="tabular-nums text-xs font-semibold text-positive">{ag.ganhos.toLocaleString("pt-BR")}</span>
                           : <span className="opacity-20 text-[var(--muted-foreground)]">—</span>}
                       </td>
-                      <td className="py-2 pr-4 text-right tabular-nums text-xs text-[var(--muted-foreground)]/70">
+                      <td className="py-2 pr-4 text-right tabular-nums text-xs text-muted-foreground/70">
                         {ag.valor > 0 ? formatCurrencyBR(ag.valor) : <span className="opacity-20">—</span>}
                       </td>
                       <td className="py-2 pr-4 text-right tabular-nums text-xs">
                         {ag.leads > 0
-                          ? <span className={ag.taxaGanho > 0 ? "font-semibold text-emerald-400" : "text-[var(--muted-foreground)]/70"}>{ag.taxaGanho}%</span>
+                          ? <span className={ag.taxaGanho > 0 ? "font-semibold text-positive" : "text-muted-foreground/70"}>{ag.taxaGanho}%</span>
                           : <span className="opacity-20">—</span>}
                       </td>
                     </tr>
@@ -1426,15 +1426,15 @@ function ReconversoesModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl rounded-3xl border border-white/[0.08] bg-[var(--card)] shadow-2xl overflow-hidden"
+        className="w-full max-w-2xl rounded-3xl border border-border bg-[var(--card)] shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start gap-3 px-5 pt-5 pb-4 border-b border-white/[0.06]">
+        <div className="flex items-start gap-3 px-5 pt-5 pb-4 border-b border-border">
           <div className="mt-1 h-8 w-1 shrink-0 rounded-full" style={{ backgroundColor: accentColor }} />
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: accentColor }}>{labelCanal}</p>
-            <h3 className="text-lg font-extrabold tracking-tight text-[var(--foreground)]">
+            <h3 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
               Reconversões · {rows.length}
             </h3>
             <p className="mt-0.5 text-xs text-[var(--muted-foreground)] leading-snug">
@@ -1456,7 +1456,7 @@ function ReconversoesModal({
         {/* Table */}
         <div className="overflow-x-auto max-h-[68vh] overflow-y-auto">
           <table className="min-w-[600px] w-full text-sm">
-            <thead className="sticky top-0 z-10 bg-[var(--card)] border-b border-white/[0.06]">
+            <thead className="sticky top-0 z-10 bg-[var(--card)] border-b border-border">
               <tr>
                 {["Lead", colAtrib, colConv, "No CRM desde", "Etapa atual"].map((h) => (
                   <th key={h} className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted-foreground)] text-left whitespace-nowrap">
@@ -1467,7 +1467,7 @@ function ReconversoesModal({
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.id} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors">
+                <tr key={r.id} className="border-b border-border hover:bg-pearl transition-colors">
                   <td className="px-5 py-3.5">
                     <p className="font-semibold text-[var(--foreground)] leading-tight">{r.nome || "—"}</p>
                     {r.email && <p className="text-[11px] text-[var(--muted-foreground)] mt-0.5">{r.email}</p>}
@@ -1547,10 +1547,10 @@ function CrmTopKpiCards({
       <div className="group relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 transition-all hover:border-emerald-500/40">
         <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-500 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-[0.07]" />
         <div className="mb-2 flex items-center gap-2">
-          <Banknote className="h-4 w-4 text-emerald-400" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Faturamento</span>
+          <Banknote className="h-4 w-4 text-positive" />
+          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-positive">Faturamento</span>
         </div>
-        <p className="text-2xl font-extrabold tabular-nums leading-tight text-emerald-400">
+        <p className="text-2xl font-semibold tabular-nums leading-tight text-positive">
           {faturamento > 0 ? formatCurrencyBR(faturamento) : "—"}
         </p>
         <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">valor total dos ganhos</p>
@@ -1559,10 +1559,10 @@ function CrmTopKpiCards({
       <div className="group relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 transition-all hover:border-emerald-500/40">
         <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-500 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-[0.07]" />
         <div className="mb-2 flex items-center gap-2">
-          <CheckCircle className="h-4 w-4 text-emerald-400" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400">Vendas</span>
+          <CheckCircle className="h-4 w-4 text-positive" />
+          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-positive">Vendas</span>
         </div>
-        <p className="text-2xl font-extrabold tabular-nums text-emerald-400">{vendas}</p>
+        <p className="text-2xl font-semibold tabular-nums text-positive">{vendas}</p>
         <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">negócios ganhos</p>
       </div>
       {/* Custo / Venda */}
@@ -1572,7 +1572,7 @@ function CrmTopKpiCards({
           <TrendingUp className="h-4 w-4 text-[var(--primary)]" />
           <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Custo / Venda</span>
         </div>
-        <p className="text-2xl font-extrabold tabular-nums text-[var(--foreground)]">
+        <p className="text-2xl font-semibold tabular-nums text-[var(--foreground)]">
           {custoVenda != null ? formatCurrencyBR(Math.round(custoVenda)) : "—"}
         </p>
         <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">investimento ÷ vendas</p>
@@ -1584,7 +1584,7 @@ function CrmTopKpiCards({
           <Home className="h-4 w-4 text-[var(--muted-foreground)]" />
           <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Visitas</span>
         </div>
-        <p className="text-2xl font-extrabold tabular-nums text-[var(--foreground)]">{visitas}</p>
+        <p className="text-2xl font-semibold tabular-nums text-[var(--foreground)]">{visitas}</p>
         <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">negociações com visita</p>
       </div>
       {/* Custo / Visita */}
@@ -1594,7 +1594,7 @@ function CrmTopKpiCards({
           <Wallet className="h-4 w-4 text-[var(--primary)]" />
           <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Custo / Visita</span>
         </div>
-        <p className="text-2xl font-extrabold tabular-nums text-[var(--foreground)]">
+        <p className="text-2xl font-semibold tabular-nums text-[var(--foreground)]">
           {custoVisita != null ? formatCurrencyBR(Math.round(custoVisita)) : "—"}
         </p>
         <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">investimento ÷ visitas</p>
@@ -1657,7 +1657,7 @@ function AtribuicaoSection({
         <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">CRM</p>
-          <h2 className="text-xl font-extrabold tracking-tight text-[var(--foreground)]">Análise de Origem</h2>
+          <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">Análise de Origem</h2>
         </div>
       </div>
 
@@ -1707,7 +1707,7 @@ function AtribuicaoSection({
                           onClick={() => isActive ? onFilter(null) : onFilter({ type: "canal", value: c.canal, label: `Canal: ${cfg.label}` })}
                           className={`group relative cursor-pointer overflow-hidden rounded-2xl border p-5 transition-all ${
                             isActive
-                              ? "border-[color-mix(in_srgb,var(--primary)_35%,var(--border))] bg-[var(--primary)]/5"
+                              ? "border-[color-mix(in_srgb,var(--primary)_35%,var(--border))] bg-primary/5"
                               : "border-[var(--border)] bg-[var(--card)] hover:border-[color-mix(in_srgb,var(--primary)_25%,var(--border))]"
                           }`}
                         >
@@ -1720,37 +1720,37 @@ function AtribuicaoSection({
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: cfg.hex }} />
-                              <span className="text-sm font-bold text-[var(--foreground)]">{cfg.label}</span>
+                              <span className="text-sm font-semibold text-[var(--foreground)]">{cfg.label}</span>
                               {c.canal === "META" && (data.totalLeadsMeta ?? 0) > 0 && (
-                                <span className="rounded-full bg-[var(--muted)]/40 px-2 py-0.5 text-[10px] font-semibold text-[var(--muted-foreground)]">
+                                <span className="rounded-full bg-muted/40 px-2 py-0.5 text-[10px] font-semibold text-[var(--muted-foreground)]">
                                   {data.totalLeadsMeta} forms
                                 </span>
                               )}
                             </div>
-                            <Filter className={`h-3.5 w-3.5 transition-colors ${isActive ? "fill-[var(--primary)] text-[var(--primary)]" : "text-[var(--muted-foreground)]/30 group-hover:text-[var(--muted-foreground)]/70"}`} />
+                            <Filter className={`h-3.5 w-3.5 transition-colors ${isActive ? "fill-[var(--primary)] text-[var(--primary)]" : "text-muted-foreground/30 group-hover:text-muted-foreground/70"}`} />
                           </div>
 
                           {/* ── Hero: leads CRM em destaque ── */}
                           <div className="mt-4">
                             <div>
                               <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted-foreground)]">Leads no CRM</p>
-                              <p className="mt-0.5 tabular-nums text-5xl font-black leading-none" style={{ color: cfg.hex }}>
+                              <p className="mt-0.5 tabular-nums text-5xl font-semibold leading-none" style={{ color: cfg.hex }}>
                                 {c.leads.toLocaleString("pt-BR")}
                               </p>
                             </div>
                           </div>
 
                           {/* ── Funil clicável ── */}
-                          <div className={`mt-5 grid gap-1 border-t border-[var(--border)]/50 pt-4 text-center ${isAgencia ? "grid-cols-3" : "grid-cols-4"}`}>
+                          <div className={`mt-5 grid gap-1 border-t border-border/50 pt-4 text-center ${isAgencia ? "grid-cols-3" : "grid-cols-4"}`}>
                             {(isAgencia ? [
                               { key: "leads",       label: "Leads",       val: c.leads,     cls: "text-[var(--foreground)]", dash: false },
-                              { key: "atendimento", label: "Atend.",       val: c.andamento, cls: "text-blue-400",            dash: true  },
-                              { key: "vendas",      label: "Fechamentos",  val: c.ganhos,    cls: "text-emerald-400",         dash: true  },
+                              { key: "atendimento", label: "Atend.",       val: c.andamento, cls: "text-primary",            dash: true  },
+                              { key: "vendas",      label: "Fechamentos",  val: c.ganhos,    cls: "text-positive",         dash: true  },
                             ] : [
                               { key: "leads",       label: "Leads",  val: c.leads,     cls: "text-[var(--foreground)]", dash: false },
-                              { key: "atendimento", label: "Atend.", val: c.andamento, cls: "text-blue-400",            dash: true  },
-                              { key: "visitas",     label: "Visitas",val: c.visitou,   cls: "text-amber-400",           dash: true  },
-                              { key: "vendas",      label: "Vendas", val: c.ganhos,    cls: "text-emerald-400",         dash: true  },
+                              { key: "atendimento", label: "Atend.", val: c.andamento, cls: "text-primary",            dash: true  },
+                              { key: "visitas",     label: "Visitas",val: c.visitou,   cls: "text-amber-600",           dash: true  },
+                              { key: "vendas",      label: "Vendas", val: c.ganhos,    cls: "text-positive",         dash: true  },
                             ]).map((s) => {
                               const stageActive = activeFilter?.type === "funil" && activeFilter.value === `${c.canal}|${s.key}`;
                               return (
@@ -1763,11 +1763,11 @@ function AtribuicaoSection({
                                   }}
                                   className={`rounded-lg px-1 py-1.5 transition-colors ${
                                     stageActive
-                                      ? "bg-[var(--primary)]/10 ring-1 ring-[var(--primary)]/30"
-                                      : "hover:bg-[var(--muted)]/40"
+                                      ? "bg-primary/10 ring-1 ring-primary/30"
+                                      : "hover:bg-muted/40"
                                   }`}
                                 >
-                                  <p className={`text-xl font-extrabold leading-none tabular-nums ${s.cls}`}>
+                                  <p className={`text-xl font-semibold leading-none tabular-nums ${s.cls}`}>
                                     {s.val > 0 ? s.val.toLocaleString("pt-BR") : (s.dash ? <span className="font-normal opacity-20 text-[var(--muted-foreground)]">—</span> : "0")}
                                   </p>
                                   <p className="mt-1.5 text-[9px] font-semibold uppercase leading-tight tracking-[0.06em] text-[var(--muted-foreground)]">{s.label}</p>
@@ -1782,8 +1782,8 @@ function AtribuicaoSection({
                               {ganhosPct > 0    && <div className="h-full bg-emerald-400"              style={{ width: `${ganhosPct}%` }} />}
                               {andamentoPct > 0 && <div className="h-full bg-blue-400"                 style={{ width: `${andamentoPct}%` }} />}
                               {!isAgencia && visitouPct > 0 && <div className="h-full bg-amber-400"   style={{ width: `${visitouPct}%` }} />}
-                              {perdidosPct > 0  && <div className="h-full bg-[var(--muted-foreground)]/30" style={{ width: `${perdidosPct}%` }} />}
-                              {c.leads === 0    && <div className="h-full w-full rounded-full bg-[var(--muted)]/30" />}
+                              {perdidosPct > 0  && <div className="h-full bg-muted-foreground/30" style={{ width: `${perdidosPct}%` }} />}
+                              {c.leads === 0    && <div className="h-full w-full rounded-full bg-muted/30" />}
                             </div>
                             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-[var(--muted-foreground)]">
                               {c.ganhos > 0 && (
@@ -1806,7 +1806,7 @@ function AtribuicaoSection({
                               )}
                               {perdidos > 0 && (
                                 <span className="flex items-center gap-1">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--muted-foreground)]/40" />
+                                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
                                   {perdidos} perdido{perdidos !== 1 ? "s" : ""} ({perdidosPct.toFixed(0)}%)
                                 </span>
                               )}
@@ -1821,7 +1821,7 @@ function AtribuicaoSection({
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); setReconversoesOpen(true); }}
-                                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/[0.07] px-3 py-1 text-[10px] font-semibold text-amber-400 transition-colors hover:bg-amber-400/[0.12]"
+                                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/[0.07] px-3 py-1 text-[10px] font-semibold text-amber-600 transition-colors hover:bg-amber-400/[0.12]"
                                 >
                                   <span className="h-1.5 w-1.5 rounded-full bg-amber-400/80" />
                                   {data.reconversoesMeta!.length} duplicado{data.reconversoesMeta!.length !== 1 ? "s" : ""}
@@ -1831,7 +1831,7 @@ function AtribuicaoSection({
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); setReconversoesGoogleOpen(true); }}
-                                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/[0.07] px-3 py-1 text-[10px] font-semibold text-amber-400 transition-colors hover:bg-amber-400/[0.12]"
+                                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/[0.07] px-3 py-1 text-[10px] font-semibold text-amber-600 transition-colors hover:bg-amber-400/[0.12]"
                                 >
                                   <span className="h-1.5 w-1.5 rounded-full bg-amber-400/80" />
                                   {data.reconversoesGoogle!.length} duplicado{data.reconversoesGoogle!.length !== 1 ? "s" : ""}
@@ -1843,8 +1843,8 @@ function AtribuicaoSection({
                           {/* ── Valor vendido ── */}
                           {c.ganhos > 0 && c.valor > 0 && (
                             <div className="mt-4 flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-2.5">
-                              <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-emerald-400/70">Valor Vendido</p>
-                              <p className="tabular-nums text-sm font-bold text-emerald-400">{formatCurrencyBR(c.valor)}</p>
+                              <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-positive/70">Valor Vendido</p>
+                              <p className="tabular-nums text-sm font-semibold text-positive">{formatCurrencyBR(c.valor)}</p>
                             </div>
                           )}
 
@@ -1860,12 +1860,12 @@ function AtribuicaoSection({
                               <div>
                                 <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--muted-foreground)]">CPL Real · CRM</p>
                                 {meta.cplPlat != null && (
-                                  <p className="mt-0.5 text-[10px] text-[var(--muted-foreground)]/55">
+                                  <p className="mt-0.5 text-[10px] text-muted-foreground/55">
                                     vs {formatCurrencyBR(meta.cplPlat)} plataforma
                                   </p>
                                 )}
                               </div>
-                              <p className="tabular-nums text-2xl font-black leading-none" style={{ color: cfg.hex }}>
+                              <p className="tabular-nums text-2xl font-semibold leading-none" style={{ color: cfg.hex }}>
                                 {formatCurrencyBR(meta.cpl)}
                               </p>
                             </div>
@@ -1874,14 +1874,14 @@ function AtribuicaoSection({
                           {/* ── Investimento + CAC ── */}
                           {meta.invest > 0 && (
                             <div className={`mt-2 grid gap-2 ${meta.cac != null ? "grid-cols-2" : "grid-cols-1"}`}>
-                              <div className="rounded-xl bg-[var(--muted)]/20 px-3 py-2.5">
+                              <div className="rounded-xl bg-muted/20 px-3 py-2.5">
                                 <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-[var(--muted-foreground)]">Investimento</p>
-                                <p className="mt-0.5 tabular-nums text-sm font-bold text-[var(--foreground)]">{formatCurrencyBR(meta.invest)}</p>
+                                <p className="mt-0.5 tabular-nums text-sm font-semibold text-[var(--foreground)]">{formatCurrencyBR(meta.invest)}</p>
                               </div>
                               {meta.cac != null && (
                                 <div className="rounded-xl bg-emerald-500/[0.07] px-3 py-2.5">
-                                  <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-emerald-400/80">CAC Real</p>
-                                  <p className="mt-0.5 tabular-nums text-sm font-bold text-emerald-400">{formatCurrencyBR(meta.cac)}</p>
+                                  <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-positive/80">CAC Real</p>
+                                  <p className="mt-0.5 tabular-nums text-sm font-semibold text-positive">{formatCurrencyBR(meta.cac)}</p>
                                 </div>
                               )}
                             </div>
@@ -1899,7 +1899,7 @@ function AtribuicaoSection({
                     <div className="mb-3 flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <Layers className="h-3.5 w-3.5 shrink-0 text-[var(--primary)]" />
-                        <p className="text-sm font-bold text-[var(--foreground)]">Fonte de Conversão</p>
+                        <p className="text-sm font-semibold text-[var(--foreground)]">Fonte de Conversão</p>
                       </div>
                       {leadsComConversao > 0 && (
                         <span className="shrink-0 text-[10px] text-[var(--muted-foreground)]">
@@ -1955,12 +1955,12 @@ function AtribuicaoSection({
                 <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">CRM · Meta</p>
-                  <h2 className="text-xl font-extrabold tracking-tight text-[var(--foreground)]">Análise Detalhada do Meta</h2>
+                  <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">Análise Detalhada do Meta</h2>
                 </div>
               </div>
               <div className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--card)] px-5 py-6 text-center">
                 <p className="text-sm text-[var(--muted-foreground)]">Nenhum lead com rastreamento de campanha Meta no período selecionado.</p>
-                <p className="mt-1 text-xs text-[var(--muted-foreground)]/60">Os IDs de campanha são gravados no momento da entrada do lead via formulário Meta. Tente um período mais amplo.</p>
+                <p className="mt-1 text-xs text-muted-foreground/60">Os IDs de campanha são gravados no momento da entrada do lead via formulário Meta. Tente um período mais amplo.</p>
               </div>
             </div>
           )
@@ -2070,21 +2070,21 @@ export function CrmTab({
   return (
     <div className="space-y-8">
       {syncMutation.isError && (
-        <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+        <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-negative">
           Erro ao sincronizar. Tente novamente.
         </div>
       )}
 
       {/* Clear filter banner */}
       {leadFilter && (
-        <div className="flex items-center gap-2 rounded-xl border border-[var(--primary)]/20 bg-[var(--primary)]/5 px-4 py-2.5">
+        <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5">
           <Filter className="h-3.5 w-3.5 shrink-0 text-[var(--primary)]" />
           <span className="text-[11px] text-[var(--muted-foreground)] flex-1 min-w-0 truncate">
             Filtro ativo: <span className="font-semibold text-[var(--primary)]">{leadFilter.label}</span>
           </span>
           <button
             onClick={() => setLeadFilter(null)}
-            className="flex items-center gap-1.5 rounded-lg border border-[var(--primary)]/30 bg-[var(--primary)]/10 px-2.5 py-1 text-[11px] font-semibold text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors shrink-0"
+            className="flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-[var(--primary)] hover:bg-primary/20 transition-colors shrink-0"
           >
             <X className="h-3 w-3" />
             Limpar filtro
@@ -2120,7 +2120,7 @@ export function CrmTab({
           <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">CRM</p>
-            <h2 className="text-xl font-extrabold tracking-tight text-[var(--foreground)]">Detalhamento dos Leads</h2>
+            <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">Detalhamento dos Leads</h2>
           </div>
         </div>
 
@@ -2128,11 +2128,11 @@ export function CrmTab({
         {leadFilter && (
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[11px] text-[var(--muted-foreground)]">Filtro ativo:</span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--primary)]/30 bg-[var(--primary)]/10 py-1 pl-3 pr-2 text-[11px] font-semibold text-[var(--primary)]">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 py-1 pl-3 pr-2 text-[11px] font-semibold text-[var(--primary)]">
               {leadFilter.label}
               <button
                 onClick={() => setLeadFilter(null)}
-                className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-[var(--primary)]/20 transition-colors"
+                className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-primary/20 transition-colors"
                 title="Limpar filtro"
               >
                 <X className="h-2.5 w-2.5" />
@@ -2203,7 +2203,7 @@ export function CrmTab({
             <div className="overflow-x-auto rounded-2xl border border-[var(--border)]">
               <table className="min-w-[680px] w-full text-sm">
                 <thead>
-                  <tr className="border-b border-[var(--border)] bg-[var(--muted)]/30">
+                  <tr className="border-b border-[var(--border)] bg-muted/30">
                     {["Etapa", "Contato", "Origem", "Entrada", "Valor"].map((h) => (
                       <th key={h} className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted-foreground)]">
                         {h}
@@ -2222,12 +2222,12 @@ export function CrmTab({
                       <tr
                         key={lead.id}
                         onClick={() => setSelectedLead(lead)}
-                        className={`cursor-pointer border-b border-[var(--border)]/50 transition-colors hover:bg-[var(--primary)]/5 ${
-                          i % 2 === 0 ? "" : "bg-[var(--muted)]/10"
+                        className={`cursor-pointer border-b border-border/50 transition-colors hover:bg-primary/5 ${
+                          i % 2 === 0 ? "" : "bg-muted/10"
                         }`}
                       >
                         <td className="px-4 py-2.5">
-                          <span className="max-w-[180px] block truncate rounded-full bg-[var(--primary)]/10 px-2 py-0.5 text-[11px] font-semibold text-[var(--primary)]">
+                          <span className="max-w-[180px] block truncate rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-[var(--primary)]">
                             {lead.etapa}
                           </span>
                         </td>
@@ -2253,7 +2253,7 @@ export function CrmTab({
                         <td className="px-4 py-2.5 tabular-nums text-[12px] text-[var(--muted-foreground)]">
                           {formatDateBR(lead.dataEntrada)}
                         </td>
-                        <td className="px-4 py-2.5 tabular-nums font-semibold text-emerald-400">
+                        <td className="px-4 py-2.5 tabular-nums font-semibold text-positive">
                           {lead.valor != null ? formatCurrencyBR(lead.valor) : "—"}
                         </td>
                       </tr>

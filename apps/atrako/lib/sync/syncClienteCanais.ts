@@ -7,6 +7,7 @@ import { syncInstagramCliente } from "@/lib/sync/syncInstagram";
 import { syncLinkedinCliente } from "@/lib/sync/linkedinApiSync";
 import { prisma } from "@/lib/db";
 import { isSyntheticDemoCliente } from "@/lib/demo/syntheticDemo";
+import { refreshCommerceAttribution } from "@/lib/commerce-attribution";
 
 export interface SyncClienteCanaisResult {
   ok: boolean;
@@ -134,6 +135,11 @@ export async function syncClienteCanais(
       linkedinResult = { ok: false, error: e instanceof Error ? e.message : String(e) };
     }
   }
+
+  // Depois do Meta: compras por anúncio × pedidos da loja (quem comprou por qual anúncio).
+  await refreshCommerceAttribution(clienteId).catch((e) =>
+    console.error("[commerce-attribution]", clienteId, e instanceof Error ? e.message : e),
+  );
 
   const igOk = !instagramResult?.error;
 

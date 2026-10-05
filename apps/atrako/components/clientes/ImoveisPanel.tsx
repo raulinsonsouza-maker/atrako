@@ -53,7 +53,7 @@ function formatBRL(v: number) {
 
 function Skeleton({ className }: { className?: string }) {
   return (
-    <div className={`animate-pulse rounded bg-white/5 ${className ?? ""}`} />
+    <div className={`animate-pulse rounded bg-parchment ${className ?? ""}`} />
   );
 }
 
@@ -66,11 +66,11 @@ function StatBadge({ icon: Icon, label, value, accent }: {
   return (
     <div className={`flex flex-col items-center gap-1 rounded-xl border px-4 py-3 text-center ${
       accent
-        ? "border-[var(--primary)]/30 bg-[var(--primary)]/10"
+        ? "border-primary/30 bg-primary/10"
         : "border-[var(--border)] bg-[var(--card)]"
     }`}>
       <Icon className={`h-4 w-4 ${accent ? "text-[var(--primary)]" : "text-[var(--muted-foreground)]"}`} />
-      <span className={`text-xl font-extrabold tabular-nums ${accent ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
+      <span className={`text-xl font-semibold tabular-nums ${accent ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
         {value}
       </span>
       <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">
@@ -91,17 +91,17 @@ function ImoveisTableRow({ rank, item, maxTotal }: ImoveisTableRowProps) {
   const noResults = item.total === 0;
 
   return (
-    <div className={`group relative overflow-hidden rounded-xl border transition-all hover:border-[var(--primary)]/40 ${
-      noResults ? "border-[var(--border)]/50 opacity-50" : "border-[var(--border)] bg-[var(--card)]"
+    <div className={`group relative overflow-hidden rounded-xl border transition-all hover:border-primary/40 ${
+      noResults ? "border-border/50 opacity-50" : "border-[var(--border)] bg-[var(--card)]"
     }`}>
       {!noResults && (
         <div
-          className="absolute inset-y-0 left-0 bg-[var(--primary)]/5 transition-all"
+          className="absolute inset-y-0 left-0 bg-primary/5 transition-all"
           style={{ width: `${pct}%` }}
         />
       )}
       <div className="relative flex items-center gap-3 px-4 py-3 sm:gap-4">
-        <span className={`w-6 shrink-0 text-center text-sm font-bold tabular-nums ${
+        <span className={`w-6 shrink-0 text-center text-sm font-semibold tabular-nums ${
           rank <= 3 ? "text-[var(--primary)]" : "text-[var(--muted-foreground)]"
         }`}>
           {rank}
@@ -109,7 +109,7 @@ function ImoveisTableRow({ rank, item, maxTotal }: ImoveisTableRowProps) {
 
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex items-center gap-2">
-            <span className="rounded bg-[var(--primary)]/15 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-[var(--primary)]">
+            <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--primary)]">
               #{item.id}
             </span>
             {item.anuncios > 0 && (
@@ -128,13 +128,13 @@ function ImoveisTableRow({ rank, item, maxTotal }: ImoveisTableRowProps) {
         <div className="flex shrink-0 items-center gap-4 sm:gap-6">
           <div className="hidden flex-col items-end sm:flex">
             <span className="text-xs text-[var(--muted-foreground)]">Conversas</span>
-            <span className="text-sm font-bold tabular-nums text-[var(--foreground)]">
+            <span className="text-sm font-semibold tabular-nums text-[var(--foreground)]">
               {item.conversas}
             </span>
           </div>
           <div className="hidden flex-col items-end sm:flex">
             <span className="text-xs text-[var(--muted-foreground)]">Leads</span>
-            <span className="text-sm font-bold tabular-nums text-[var(--foreground)]">
+            <span className="text-sm font-semibold tabular-nums text-[var(--foreground)]">
               {item.leads}
             </span>
           </div>
@@ -142,7 +142,7 @@ function ImoveisTableRow({ rank, item, maxTotal }: ImoveisTableRowProps) {
             <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
               Total
             </span>
-            <span className={`text-base font-extrabold tabular-nums ${
+            <span className={`text-base font-semibold tabular-nums ${
               noResults ? "text-[var(--muted-foreground)]" : "text-[var(--primary)]"
             }`}>
               {item.total}
@@ -161,9 +161,9 @@ interface ImoveisTableRowMobileProps {
 
 function SemIdRow({ item }: { item: ImoveisData["semId"] }) {
   return (
-    <div className="rounded-xl border border-dashed border-[var(--border)]/50 bg-[var(--card)]/50">
+    <div className="rounded-xl border border-dashed border-border/50 bg-card/50">
       <div className="flex items-center gap-3 px-4 py-3 sm:gap-4">
-        <span className="w-6 shrink-0 text-center text-sm font-bold text-[var(--muted-foreground)]">—</span>
+        <span className="w-6 shrink-0 text-center text-sm font-semibold text-[var(--muted-foreground)]">—</span>
         <div className="flex min-w-0 flex-1 flex-col">
           <span className="text-sm font-semibold text-[var(--muted-foreground)]">
             Anúncios sem ID de imóvel
@@ -177,15 +177,15 @@ function SemIdRow({ item }: { item: ImoveisData["semId"] }) {
         <div className="flex shrink-0 items-center gap-4 sm:gap-6">
           <div className="hidden flex-col items-end sm:flex">
             <span className="text-xs text-[var(--muted-foreground)]">Conversas</span>
-            <span className="text-sm font-bold tabular-nums text-[var(--muted-foreground)]">{item.conversas}</span>
+            <span className="text-sm font-semibold tabular-nums text-[var(--muted-foreground)]">{item.conversas}</span>
           </div>
           <div className="hidden flex-col items-end sm:flex">
             <span className="text-xs text-[var(--muted-foreground)]">Leads</span>
-            <span className="text-sm font-bold tabular-nums text-[var(--muted-foreground)]">{item.leads}</span>
+            <span className="text-sm font-semibold tabular-nums text-[var(--muted-foreground)]">{item.leads}</span>
           </div>
           <div className="flex flex-col items-end">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Total</span>
-            <span className="text-base font-extrabold tabular-nums text-[var(--muted-foreground)]">{item.total}</span>
+            <span className="text-base font-semibold tabular-nums text-[var(--muted-foreground)]">{item.total}</span>
           </div>
         </div>
       </div>
@@ -216,7 +216,7 @@ export function ImoveisPanel({
     const message = error instanceof Error ? error.message : "Erro desconhecido";
     return (
       <div className="flex flex-col items-center gap-4 rounded-2xl border border-red-500/20 bg-red-500/5 py-16 text-center">
-        <AlertCircle className="h-8 w-8 text-red-400" />
+        <AlertCircle className="h-8 w-8 text-negative" />
         <div>
           <p className="font-semibold text-[var(--foreground)]">Não foi possível carregar os dados</p>
           <p className="mt-1 text-sm text-[var(--muted-foreground)]">{message}</p>
@@ -237,11 +237,11 @@ export function ImoveisPanel({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--primary)]/15">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15">
             <Building2 className="h-5 w-5 text-[var(--primary)]" />
           </div>
           <div>
-            <h2 className="text-base font-extrabold text-[var(--foreground)]">
+            <h2 className="text-base font-semibold text-[var(--foreground)]">
               Resultados por Imóvel
             </h2>
             <p className="text-xs text-[var(--muted-foreground)]">
@@ -252,7 +252,7 @@ export function ImoveisPanel({
         <button
           onClick={() => refetch()}
           disabled={isFetching}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--muted-foreground)] transition-colors hover:border-[var(--primary)]/40 hover:text-[var(--primary)] disabled:opacity-40"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--muted-foreground)] transition-colors hover:border-primary/40 hover:text-[var(--primary)] disabled:opacity-40"
           title="Atualizar dados"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
@@ -315,11 +315,11 @@ export function ImoveisPanel({
           {(data.semId.conversas > 0 || data.semId.leads > 0 || data.semId.anuncios > 0) && (
             <>
               <div className="my-2 flex items-center gap-3">
-                <div className="h-px flex-1 bg-[var(--border)]/40" />
+                <div className="h-px flex-1 bg-border/40" />
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">
                   Sem ID atribuído
                 </span>
-                <div className="h-px flex-1 bg-[var(--border)]/40" />
+                <div className="h-px flex-1 bg-border/40" />
               </div>
               <SemIdRow item={data.semId} />
             </>

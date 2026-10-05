@@ -11,9 +11,11 @@ import {
   Mail,
   MessageCircle,
   Phone,
+  ShoppingBag,
   ShoppingCart,
   X,
 } from "lucide-react";
+import { describeOrderOrigin, type OrderSourceView } from "@/lib/commerce-attribution/describe";
 import { PillSelect } from "@/components/ui/pill-select";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -50,6 +52,25 @@ type LeadCart = {
   notifiedAt: string | null;
 };
 
+type LeadOrder = {
+  id: string;
+  externalId: string;
+  provider: string;
+  providerLabel: string;
+  status: string | null;
+  totalCents: number;
+  currency: string;
+  occurredAt: string;
+  items: Array<{
+    title: string;
+    quantity: number;
+    unitPriceCents: number;
+    imageUrl: string | null;
+    productUrl: string | null;
+  }>;
+  source: (OrderSourceView & { deviceType: string | null; adId: string | null }) | null;
+};
+
 type LeadDetail = {
   lead: {
     id: string;
@@ -70,7 +91,18 @@ type LeadDetail = {
   stages: Array<{ id: string; name: string; color: string }>;
   journey: JourneyItem[];
   carts: LeadCart[];
+  orders?: LeadOrder[];
   communications: LeadCommunicationsData | null;
+};
+
+const ORDER_STATUS: Record<string, string> = {
+  processing: "Pago",
+  completed: "Concluído",
+  "on-hold": "Aguardando pagamento",
+  pending: "Pendente",
+  cancelled: "Cancelado",
+  refunded: "Reembolsado",
+  failed: "Falhou",
 };
 
 const LOST_REASON_LABELS: Record<string, string> = {
@@ -234,6 +266,79 @@ function CartBlock({ cart, leadName }: { cart: LeadCart; leadName: string }) {
   );
 }
 
+function OrderBlock({ order }: { order: LeadOrder }) {
+  const origin = describeOrderOrigin(order.source);
+  return (
+    <div className="space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="type-caption-strong text-[var(--ink)]">
+            Pedido #{order.externalId} · {fmtCents(order.totalCents, order.currency)}
+          </p>
+          <p className="type-fine-print text-[var(--ink-muted-48)]">
+            {order.providerLabel} · {new Date(order.occurredAt).toLocaleString("pt-BR")}
+          </p>
+        </div>
+        {order.status ? (
+          <span className="shrink-0 rounded-[var(--radius-xs)] bg-[var(--canvas-parchment)] px-2 py-0.5 type-micro-legal text-[var(--ink-muted-80)]">
+            {ORDER_STATUS[order.status] ?? order.status}
+          </span>
+        ) : null}
+      </div>
+
+      {order.items.length ? (
+        <ul className="space-y-2">
+          {order.items.map((item, idx) => (
+            <li key={`${item.title}-${idx}`} className="flex items-center gap-3">
+              {item.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.imageUrl}
+                  alt=""
+                  className="h-10 w-10 shrink-0 rounded-[var(--radius-xs)] bg-[var(--canvas-parchment)] object-cover"
+                />
+              ) : (
+                <span className="h-10 w-10 shrink-0 rounded-[var(--radius-xs)] bg-[var(--canvas-parchment)]" />
+              )}
+              <div className="min-w-0 flex-1">
+                {item.productUrl ? (
+                  <a
+                    href={item.productUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block truncate type-caption text-[var(--ink)] hover:text-[var(--primary)]"
+                  >
+                    {item.title}
+                  </a>
+                ) : (
+                  <p className="truncate type-caption text-[var(--ink)]">{item.title}</p>
+                )}
+                <p className="type-micro-legal tabular-nums text-[var(--ink-muted-48)]">
+                  {item.quantity}× {fmtCents(item.unitPriceCents, order.currency)}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      <div className="rounded-[var(--radius-xs)] bg-[var(--canvas-parchment)] px-3 py-2">
+        <p className="type-micro-legal text-[var(--ink-muted-48)]">Origem da compra</p>
+        <p className="type-caption-strong text-[var(--ink)]">{origin.title}</p>
+        {origin.detail ? <p className="type-fine-print text-[var(--ink-muted-80)]">{origin.detail}</p> : null}
+        {origin.badge ? (
+          <span className="rel-badge mt-1.5 type-micro-legal" data-tone={origin.badge.tone}>
+            {origin.badge.label}
+          </span>
+        ) : null}
+        {origin.lastVisit ? (
+          <p className="mt-1 type-micro-legal text-[var(--ink-muted-48)]">{origin.lastVisit}</p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export function CrmLeadModal({
   workspaceId,
   leadId,
@@ -392,6 +497,20 @@ export function CrmLeadModal({
                       className={idx > 0 ? "border-t border-[var(--hairline)] pt-4" : undefined}
                     >
                       <CartBlock cart={cart} leadName={lead.name} />
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              {data?.orders?.length ? (
+                <div className="panel-modal-section space-y-4">
+                  <div className="flex items-center gap-2">
+                    <ShoppingBag className="h-4 w-4 text-[var(--ink-muted-48)]" strokeWidth={1.75} />
+                    <p className="type-caption-strong text-[var(--ink)]">Compras</p>
+                  </div>
+                  {data.orders.slice(0, 5).map((order, idx) => (
+                    <div key={order.id} className={idx > 0 ? "border-t border-[var(--hairline)] pt-4" : undefined}>
+                      <OrderBlock order={order} />
                     </div>
                   ))}
                 </div>

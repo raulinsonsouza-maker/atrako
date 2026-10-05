@@ -22,6 +22,7 @@ import { HotelAnalystPanel } from "@/components/clientes/HotelAnalystPanel";
 import { TertuliaPanel } from "@/components/clientes/TertuliaPanel";
 import { VarellaMotosPanel } from "@/components/clientes/VarellaMotosPanel";
 import { CampanhasPanel } from "@/components/clientes/CampanhasPanel";
+import { MetaVendasIdentificadas } from "@/components/clientes/MetaVendasIdentificadas";
 import { GoogleCampanhasPanel } from "@/components/clientes/GoogleCampanhasPanel";
 import { LinkedInCampanhasPanel } from "@/components/clientes/LinkedInCampanhasPanel";
 import { isHotelFazendaSaoJoao, isTertulia, isVarellaMotos, isMiguelImoveis, isDrFernandoGuena, isClinicaESpa, isEcommerceCliente, isFlorien, isAcademyAmericana, isKombucha, isBeBlueSchool, isSouIcarai, isImobClient, isSocialMediaOnly } from "@/lib/clientProfiles";
@@ -358,7 +359,7 @@ const tooltipStyle = {
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div>
-      <h2 className="text-lg font-bold tracking-tight text-[var(--foreground)]">{title}</h2>
+      <h2 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">{title}</h2>
       {subtitle ? <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">{subtitle}</p> : null}
     </div>
   );
@@ -645,6 +646,7 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
     queryFn: () => fetchFinanceiro(id, canal as "geral" | "meta" | "google"),
     enabled: !!id && !!cliente && !socialMediaOnly && canal !== "linkedin",
   });
+  const semOrcamento = Number(financeiro?.totalPlanejado ?? 0) <= 0;
   const { data: metaAdsData, isLoading: metaAdsLoading, error: metaAdsError } = useQuery({
     queryKey: ["meta-ads", id, dateFilter.periodo, dateFilter.dataInicio, dateFilter.dataFim, canUseAnalyst ? "internal" : "public"],
     queryFn: () => fetchMetaAds(id, dateFilter, canUseAnalyst),
@@ -1047,20 +1049,20 @@ function formatPercentage(value: number) {
             const isWarning  = !isGastoMes && saldoNum !== null && (saldoNum as number) >= 100 && (saldoNum as number) < 200;
 
             const containerClass = isCritical
-              ? "border-red-500/40 bg-red-500/8 text-red-400"
+              ? "border-red-500/40 bg-red-500/8 text-negative"
               : isWarning
-                ? "border-amber-400/40 bg-amber-400/8 text-amber-400"
+                ? "border-amber-400/40 bg-amber-400/8 text-amber-600"
                 : "border-[var(--border)] bg-[var(--card)] text-[var(--foreground)]";
 
             const labelClass = isCritical
-              ? "text-red-400/70"
+              ? "text-negative/70"
               : isWarning
-                ? "text-amber-400/70"
+                ? "text-amber-600/70"
                 : "text-[var(--muted-foreground)]";
 
             return (
               <div className={`flex items-center gap-2 rounded-xl border px-3 py-2 transition-all sm:gap-3 sm:px-4 sm:py-2.5 ${containerClass}`}>
-                <Wallet className={`h-4 w-4 shrink-0 ${isCritical ? "text-red-400" : isWarning ? "text-amber-400" : "text-[var(--primary)]"}`} />
+                <Wallet className={`h-4 w-4 shrink-0 ${isCritical ? "text-negative" : isWarning ? "text-amber-600" : "text-[var(--primary)]"}`} />
                 <div className="flex flex-col leading-tight">
                   <span className={`text-[9px] font-semibold uppercase tracking-widest sm:text-[10px] ${labelClass}`}>
                     {isGastoMes ? `Investido ${plataforma}` : `Saldo ${plataforma}`}
@@ -1068,7 +1070,7 @@ function formatPercentage(value: number) {
                   {isLoading ? (
                     <span className="text-xs animate-pulse text-[var(--muted-foreground)]">carregando…</span>
                   ) : displayValue != null ? (
-                    <span className="text-sm font-bold tabular-nums">
+                    <span className="text-sm font-semibold tabular-nums">
                       {saldoVisible ? formatCurrency(displayValue as number) : "R$ ••••••"}
                     </span>
                   ) : (
@@ -1076,7 +1078,7 @@ function formatPercentage(value: number) {
                   )}
                 </div>
                 {(isCritical || isWarning) && saldoVisible && (
-                  <AlertTriangle className={`h-3.5 w-3.5 shrink-0 ${isCritical ? "text-red-400" : "text-amber-400"}`} />
+                  <AlertTriangle className={`h-3.5 w-3.5 shrink-0 ${isCritical ? "text-negative" : "text-amber-600"}`} />
                 )}
                 <button
                   onClick={() => setSaldoVisible((v) => !v)}
@@ -1114,10 +1116,10 @@ function formatPercentage(value: number) {
               }
               className={`inline-flex self-stretch w-11 items-center justify-center rounded-xl border transition-all ${
                 syncStatus === "syncing"
-                  ? "border-[var(--primary)]/40 bg-[var(--primary)]/8 text-[var(--primary)] cursor-wait"
+                  ? "border-primary/40 bg-primary/8 text-[var(--primary)] cursor-wait"
                   : syncStatus === "error"
-                    ? "border-red-500/40 bg-red-500/8 text-red-400 hover:bg-red-500/12"
-                    : "border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] hover:bg-[var(--muted)]/60 hover:text-[var(--foreground)]"
+                    ? "border-red-500/40 bg-red-500/8 text-negative hover:bg-red-500/12"
+                    : "border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] hover:bg-muted/60 hover:text-[var(--foreground)]"
               }`}
             >
               <RefreshCw className={`h-4 w-4 shrink-0 ${syncStatus === "syncing" ? "animate-spin" : ""}`} />
@@ -1128,7 +1130,7 @@ function formatPercentage(value: number) {
           <div className="ml-auto">
             <button
               onClick={() => setFilterOpen((v) => !v)}
-              className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 text-xs transition-all hover:bg-[var(--muted)]/60 sm:gap-2.5 sm:px-4"
+              className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 text-xs transition-all hover:bg-muted/60 sm:gap-2.5 sm:px-4"
             >
               <CalendarDays className="h-4 w-4 shrink-0 text-[var(--primary)]" />
               <span className="min-w-0 truncate text-[var(--foreground)]">
@@ -1155,8 +1157,8 @@ function formatPercentage(value: number) {
                 onClick={() => setSubView(view)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-all sm:px-4 sm:py-2 ${
                   subView === view
-                    ? "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-md shadow-[var(--primary)]/20"
-                    : "text-[var(--muted-foreground)] hover:bg-[var(--muted)]/60 hover:text-[var(--foreground)]"
+                    ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
+                    : "text-[var(--muted-foreground)] hover:bg-muted/60 hover:text-[var(--foreground)]"
                 }`}
               >
                 {view === "dados" ? "Análise" : view === "criativos" ? "Criativos" : view === "social-media" ? "Social Media" : "Lead Scoring"}
@@ -1192,8 +1194,8 @@ function formatPercentage(value: number) {
                       key={value}
                       className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-all ${
                         presetPeriodo === value
-                          ? "bg-[var(--primary)]/10 font-medium text-[var(--primary)]"
-                          : "text-[var(--foreground)] hover:bg-[var(--muted)]/60"
+                          ? "bg-primary/10 font-medium text-[var(--primary)]"
+                          : "text-[var(--foreground)] hover:bg-muted/60"
                       }`}
                       onClick={() => setPresetPeriodo(value as PresetPeriodo)}
                     >
@@ -1201,7 +1203,7 @@ function formatPercentage(value: number) {
                       <span
                         className={`h-2 w-2 rounded-full transition-all ${
                           presetPeriodo === value
-                            ? "bg-[var(--primary)] shadow-sm shadow-[var(--primary)]/40"
+                            ? "bg-[var(--primary)]"
                             : "bg-[var(--border)]"
                         }`}
                       />
@@ -1262,10 +1264,10 @@ function formatPercentage(value: number) {
                                 onClick={() => handleDayClick(day)}
                                 className={`h-8 rounded-md text-xs font-medium transition-all ${
                                   selectedStart || selectedEnd
-                                    ? "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm shadow-[var(--primary)]/30"
+                                    ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
                                     : inRange
-                                      ? "bg-[var(--primary)]/10 text-[var(--primary)]"
-                                      : "text-[var(--foreground)] hover:bg-[var(--muted)]/60"
+                                      ? "bg-primary/10 text-[var(--primary)]"
+                                      : "text-[var(--foreground)] hover:bg-muted/60"
                                 }`}
                               >
                                 {day.getDate()}
@@ -1333,7 +1335,7 @@ function formatPercentage(value: number) {
             </div>
           ) : metaAdsError ? (
             <div className="rounded-2xl border border-red-500/20 bg-red-500/6 px-6 py-8 text-center">
-              <p className="text-sm text-red-400">
+              <p className="text-sm text-negative">
                 {metaAdsError instanceof Error ? metaAdsError.message : "Erro ao carregar anúncios META."}
               </p>
             </div>
@@ -1475,6 +1477,7 @@ function formatPercentage(value: number) {
           academyEngajamentoMode={isAcademyPanel || isClinicaESpaPanel}
           kombuchaMode={isKombuchaPanel}
           lpViewsMode={isBeBluePanel}
+          hideKpis={canal === "geral" && isEcommerceMode}
         />
       )}
 
@@ -1500,6 +1503,10 @@ function formatPercentage(value: number) {
           canalLabel={canal === "geral" ? "geral" : canal === "meta" ? "meta" : "google"}
           onAgrupamentoChange={isLongPeriod ? undefined : (ag) => setChartAgrupamento(ag)}
         />
+      )}
+
+      {!analystOpen && canal === "meta" && subView === "dados" && isEcommerceMode && (
+        <MetaVendasIdentificadas clienteId={id} query={buildQueryParams(dateFilter)} />
       )}
 
       {/* ── Painel de Campanhas Meta (só na aba Meta > Análise) ── */}
@@ -1529,12 +1536,17 @@ function formatPercentage(value: number) {
           <CardHeader>
             <div className="flex flex-wrap items-start justify-between gap-4">
               <SectionHeader
-                title="Acompanhamento financeiro · Plano x Real"
-                subtitle="Status de investimento no ano atual (planejado versus realizado em todos os canais)"
+                title={semOrcamento ? "Investimento por mês" : "Acompanhamento financeiro · Plano x Real"}
+                subtitle={
+                  semOrcamento
+                    ? "Quanto foi investido em mídia em cada mês do ano (todos os canais)"
+                    : "Status de investimento no ano atual (planejado versus realizado em todos os canais)"
+                }
               />
               <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--muted)]/30 px-3 py-1.5 text-xs">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--muted-foreground)]/60" />
+                {!semOrcamento && (
+                <div className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-muted/30 px-3 py-1.5 text-xs">
+                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--chart-plan)]" />
                   <span className="text-[var(--muted-foreground)]">Orçado</span>
                   <strong className="text-[var(--foreground)]">
                     R${" "}
@@ -1544,7 +1556,8 @@ function formatPercentage(value: number) {
                     })}
                   </strong>
                 </div>
-                <div className="inline-flex items-center gap-2 rounded-lg border border-[var(--primary)]/20 bg-[var(--primary)]/5 px-3 py-1.5 text-xs">
+                )}
+                <div className="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs">
                   <span className="h-2.5 w-2.5 rounded-full bg-[var(--primary)]" />
                   <span className="text-[var(--muted-foreground)]">Realizado</span>
                   <strong className="text-[var(--primary)]">
@@ -1572,17 +1585,7 @@ function formatPercentage(value: number) {
                     })
                   )}
                 >
-                  <defs>
-                    <linearGradient id="finBarGradSpecial" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--muted-foreground)" stopOpacity={0.2} />
-                      <stop offset="100%" stopColor="var(--muted)" stopOpacity={0.6} />
-                    </linearGradient>
-                    <linearGradient id="finRealGradSpecial" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="var(--primary)" stopOpacity={0.6} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.5} />
+                  <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
                   <XAxis
                     dataKey="mes"
                     stroke="var(--muted-foreground)"
@@ -1604,13 +1607,17 @@ function formatPercentage(value: number) {
                     ]}
                     {...tooltipStyle}
                   />
-                  <Legend
-                    iconType="circle"
-                    iconSize={8}
-                    wrapperStyle={{ paddingTop: 12, fontSize: 12 }}
-                  />
-                  <Bar dataKey="Orcado" fill="url(#finBarGradSpecial)" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="Realizado" fill="url(#finRealGradSpecial)" radius={[6, 6, 0, 0]} />
+                  {!semOrcamento && (
+                    <Legend
+                      iconType="circle"
+                      iconSize={8}
+                      wrapperStyle={{ paddingTop: 12, fontSize: 12 }}
+                    />
+                  )}
+                  {!semOrcamento && (
+                    <Bar dataKey="Orcado" name="Orçado" fill="var(--chart-plan)" radius={[6, 6, 0, 0]} maxBarSize={28} />
+                  )}
+                  <Bar dataKey="Realizado" fill="var(--chart-result)" radius={[6, 6, 0, 0]} maxBarSize={28} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
@@ -1635,47 +1642,47 @@ function formatPercentage(value: number) {
                 .toLocaleString("pt-BR", { month: "long" });
               const monthLabel = monthName.charAt(0).toUpperCase() + monthName.slice(1);
               return (
-                <div className="mt-5 rounded-2xl border border-[var(--border)]/60 bg-white/[0.025] p-4">
+                <div className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-pearl)] p-4">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">
                       Ritmo do mês · {monthLabel} — dia {dayOfMonth} de {daysInMonth}
                     </p>
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${isAhead ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${isAhead ? "bg-positive/10 text-[var(--positive)]" : "bg-negative/10 text-[var(--negative)]"}`}>
                       {isAhead ? "▲" : "▼"} {Math.abs(deltaPercent).toFixed(1)}% {isAhead ? "acima do ritmo" : "abaixo do ritmo"}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <div className="rounded-xl bg-white/[0.04] p-3">
+                    <div className="rounded-xl border border-[var(--border)] bg-[var(--canvas)] p-3">
                       <p className="mb-1 text-[10px] uppercase tracking-wider text-[var(--muted-foreground)]">Orçado no mês</p>
-                      <p className="text-[15px] font-bold text-[var(--foreground)]">{formatCurrency(cmd.planejadoTotal)}</p>
+                      <p className="text-[15px] font-semibold text-[var(--foreground)]">{formatCurrency(cmd.planejadoTotal)}</p>
                     </div>
-                    <div className="rounded-xl bg-[var(--primary)]/[0.06] p-3">
+                    <div className="rounded-xl border border-primary/15 bg-[var(--chart-current)] p-3">
                       <p className="mb-1 text-[10px] uppercase tracking-wider text-[var(--muted-foreground)]">Realizado até hoje</p>
-                      <p className="text-[15px] font-bold text-[var(--primary)]">{formatCurrency(cmd.realizadoTotal)}</p>
+                      <p className="text-[15px] font-semibold text-[var(--primary)]">{formatCurrency(cmd.realizadoTotal)}</p>
                     </div>
-                    <div className="rounded-xl bg-white/[0.04] p-3">
+                    <div className="rounded-xl border border-[var(--border)] bg-[var(--canvas)] p-3">
                       <p className="mb-1 text-[10px] uppercase tracking-wider text-[var(--muted-foreground)]">Ritmo esperado (dia {dayOfMonth})</p>
-                      <p className="text-[15px] font-bold text-[var(--foreground)]">{formatCurrency(paceIdeal)}</p>
+                      <p className="text-[15px] font-semibold text-[var(--foreground)]">{formatCurrency(paceIdeal)}</p>
                     </div>
-                    <div className={`rounded-xl p-3 ${isAhead ? "bg-emerald-500/[0.07]" : "bg-rose-500/[0.07]"}`}>
+                    <div className={`rounded-xl border p-3 ${isAhead ? "border-positive/20 bg-positive/[0.06]" : "border-negative/20 bg-negative/[0.06]"}`}>
                       <p className="mb-1 text-[10px] uppercase tracking-wider text-[var(--muted-foreground)]">Diferença do ritmo</p>
-                      <p className={`text-[15px] font-bold ${isAhead ? "text-emerald-400" : "text-rose-400"}`}>
+                      <p className={`text-[15px] font-semibold ${isAhead ? "text-[var(--positive)]" : "text-[var(--negative)]"}`}>
                         {isAhead ? "+" : ""}{formatCurrency(delta)}
                       </p>
                     </div>
                   </div>
-                  <div className="mt-3 relative h-2 overflow-hidden rounded-full bg-white/[0.06]">
-                    <div className="absolute top-0 bottom-0 w-0.5 bg-white/30 z-10" style={{ left: `${pctEsperado}%` }} />
+                  <div className="mt-3 relative h-2 overflow-hidden rounded-full bg-[var(--border)]">
+                    <div className="absolute top-0 bottom-0 w-0.5 bg-[var(--ink-muted-48)] z-10" style={{ left: `${pctEsperado}%` }} />
                     <div
-                      className={`absolute inset-y-0 left-0 rounded-full transition-all ${isAhead ? "bg-emerald-500/70" : "bg-[var(--primary)]/70"}`}
+                      className={`absolute inset-y-0 left-0 rounded-full transition-all ${isAhead ? "bg-[var(--positive)]" : "bg-[var(--primary)]"}`}
                       style={{ width: `${pctRealizado}%` }}
                     />
                   </div>
                   <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-4 text-[10px] text-[var(--muted-foreground)]">
                     <span>{pctRealizado.toFixed(0)}% realizado do mês</span>
-                    <span className="text-white/20">|</span>
+                    <span className="text-[var(--border)]">|</span>
                     <span>Ritmo esperado: {pctEsperado.toFixed(0)}%</span>
-                    <span className="text-white/20">|</span>
+                    <span className="text-[var(--border)]">|</span>
                     <span>{(100 - pctRealizado).toFixed(0)}% restante para fechar o mês</span>
                   </div>
                 </div>
@@ -1711,7 +1718,7 @@ function formatPercentage(value: number) {
             {!portalMode && canUseAnalyst && (
               <Link
                 href="/admin/clientes"
-                className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-[var(--primary)]/10 px-4 py-2 text-sm font-medium text-[var(--primary)] transition hover:bg-[var(--primary)]/20"
+                className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-4 py-2 text-sm font-medium text-[var(--primary)] transition hover:bg-primary/20"
               >
                 Ir para Administração
                 <ChevronRight className="h-3.5 w-3.5" />
@@ -1833,8 +1840,8 @@ function CriativoPreview({
   const posterUrl = upgradeFbCdnImageUrl(rawPosterUrl) || rawPosterUrl;
   const containerClass =
     mode === "featured"
-      ? "flex items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--muted)]/20"
-      : "flex h-56 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--muted)]/10 p-3";
+      ? "flex items-center justify-center rounded-2xl border border-[var(--border)] bg-muted/20"
+      : "flex h-56 items-center justify-center rounded-xl border border-[var(--border)] bg-muted/10 p-3";
 
   const Placeholder = ({ message = "Preview indisponível" }: { message?: string }) => (
     <div className={`${containerClass} flex-col gap-2 text-center text-[var(--muted-foreground)]`}>
@@ -2366,13 +2373,13 @@ function MetaCriativosGrid({
         <td className="px-5 py-4 text-right tabular-nums font-semibold text-[var(--foreground)]">{formatCurrency(metrics.spend)}</td>
         <td className="px-5 py-4 text-right tabular-nums text-[var(--muted-foreground)]">{metrics.impressions.toLocaleString("pt-BR")}</td>
         <td className="px-5 py-4 text-right tabular-nums text-[var(--muted-foreground)]">{metrics.clicks.toLocaleString("pt-BR")}</td>
-        <td className="px-5 py-4 text-right tabular-nums font-bold text-[var(--foreground)]">{metrics.leads || "—"}</td>
+        <td className="px-5 py-4 text-right tabular-nums font-semibold text-[var(--foreground)]">{metrics.leads || "—"}</td>
         <td className="px-5 py-4 text-right tabular-nums">
           {metrics.cpl !== null ? (
             <div className="flex flex-col items-end">
-              <span className="font-bold text-[var(--foreground)]">{formatCurrency(metrics.cpl)}</span>
+              <span className="font-semibold text-[var(--foreground)]">{formatCurrency(metrics.cpl)}</span>
               {level === "adset" && delta !== null && (
-                <span className={`text-[9px] font-semibold ${delta <= 0 ? "text-green-400" : "text-amber-400"}`}>
+                <span className={`text-[9px] font-semibold ${delta <= 0 ? "text-positive" : "text-amber-600"}`}>
                   {delta <= 0 ? "" : "+"}{delta.toFixed(0)}% vs. campanha
                 </span>
               )}
@@ -2381,24 +2388,24 @@ function MetaCriativosGrid({
         </td>
         {hasSalesCampaigns && (
           <>
-            <td className="px-5 py-4 text-right tabular-nums font-bold text-[var(--foreground)]">
+            <td className="px-5 py-4 text-right tabular-nums font-semibold text-[var(--foreground)]">
               {metrics.purchases > 0 ? metrics.purchases.toLocaleString("pt-BR") : <span className="opacity-40">—</span>}
             </td>
             <td className="px-5 py-4 text-right tabular-nums">
-              {metrics.cpa !== null ? <span className="font-bold text-blue-400">{formatCurrency(metrics.cpa)}</span> : <span className="opacity-40">—</span>}
+              {metrics.cpa !== null ? <span className="font-semibold text-primary">{formatCurrency(metrics.cpa)}</span> : <span className="opacity-40">—</span>}
             </td>
           </>
         )}
         {hasAttributedSalesValue && (
           <td className="px-5 py-4 text-right tabular-nums">
             {metrics.attributedSalesValue > 0
-              ? <span className="font-bold text-green-400">{formatCurrency(metrics.attributedSalesValue)}</span>
+              ? <span className="font-semibold text-positive">{formatCurrency(metrics.attributedSalesValue)}</span>
               : <span className="opacity-40">—</span>}
           </td>
         )}
         <td className="px-5 py-4 text-right tabular-nums text-[var(--foreground)]">{metrics.ctr.toFixed(2)}%</td>
         <td className="bg-[rgba(180,60,10,0.12)] px-5 py-4 text-center tabular-nums">
-          {metrics.leads > 0 ? <span className="font-black text-[var(--accent)]">{metrics.cr.toFixed(1)}%</span> : <span className="opacity-40">—</span>}
+          {metrics.leads > 0 ? <span className="font-semibold text-[var(--accent)]">{metrics.cr.toFixed(1)}%</span> : <span className="opacity-40">—</span>}
         </td>
       </>
     );
@@ -2432,7 +2439,7 @@ function MetaCriativosGrid({
           onClick={() => changeTableSort(key)}
           aria-label={`Ordenar por ${label}`}
           aria-pressed={active}
-          className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors ${align === "left" ? "-ml-2" : ""} ${active ? "bg-[var(--primary)]/12 text-[var(--primary)]" : highlighted ? "text-[var(--accent)] hover:bg-white/5" : "text-[var(--muted-foreground)] hover:bg-white/5 hover:text-[var(--foreground)]"}`}
+          className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors ${align === "left" ? "-ml-2" : ""} ${active ? "bg-primary/12 text-[var(--primary)]" : highlighted ? "text-[var(--accent)] hover:bg-parchment" : "text-[var(--muted-foreground)] hover:bg-parchment hover:text-[var(--foreground)]"}`}
         >
           {label}
           <SortIcon className={`h-3 w-3 ${active ? "opacity-100" : "opacity-45"}`} />
@@ -2482,7 +2489,7 @@ function MetaCriativosGrid({
     ESCALAR:   { label: "Escalar",      color: "text-green-500",  bg: "bg-green-500/10",  border: "border-green-500/30",  bar: "bg-green-500"  },
     OTIMIZAR:  { label: "Otimizar",     color: "text-amber-500",  bg: "bg-amber-500/10",  border: "border-amber-500/30",  bar: "bg-amber-500"  },
     PAUSAR:    { label: "Pausar",       color: "text-red-500",    bg: "bg-red-500/10",    border: "border-red-500/30",    bar: "bg-red-500"    },
-    VALIDANDO: { label: "Em Validação", color: "text-blue-400",   bg: "bg-blue-500/10",   border: "border-blue-500/30",   bar: "bg-blue-400"   },
+    VALIDANDO: { label: "Em Validação", color: "text-primary",   bg: "bg-blue-500/10",   border: "border-blue-500/30",   bar: "bg-blue-400"   },
   };
 
   return (
@@ -2490,14 +2497,14 @@ function MetaCriativosGrid({
 
       {/* ── Section header — mesma linguagem visual do Semana a Semana ── */}
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--accent),var(--primary))] text-white shadow-[0_12px_30px_rgba(220,38,38,0.25)]">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
           <BarChart3 className="h-5 w-5" />
         </div>
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Análise de Criativos</p>
-          <h2 className="text-xl font-black uppercase tracking-tight text-[var(--foreground)]">
+          <h2 className="text-xl font-semibold uppercase tracking-tight text-[var(--foreground)]">
             Criativos{" "}
-            <span className="bg-[linear-gradient(90deg,var(--accent),var(--primary))] bg-clip-text text-transparent">META</span>
+            <span className="text-primary">META</span>
           </h2>
         </div>
       </div>
@@ -2546,12 +2553,12 @@ function MetaCriativosGrid({
           >
             <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--primary)] opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-[0.05]" />
             <CardContent className="flex items-start gap-4 p-5">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--primary)]/10 text-[var(--primary)]">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[var(--primary)]">
                 <kpi.icon className="h-5 w-5" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">{kpi.label}</p>
-                <p className={`mt-1 text-2xl font-extrabold tabular-nums leading-none ${kpi.accent ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
+                <p className={`mt-1 text-2xl font-semibold tabular-nums leading-none ${kpi.accent ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
                   {kpi.value}
                 </p>
                 <p className="mt-1.5 text-[11px] text-[var(--muted-foreground)]">{kpi.sub}</p>
@@ -2563,17 +2570,17 @@ function MetaCriativosGrid({
 
       {/* 3. Tabela de criativos */}
       <div className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)]">
-        <div className="flex flex-col gap-3 border-b border-[var(--border)]/60 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-b border-border/60 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--primary)]/10 text-[var(--primary)]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[var(--primary)]">
               <BarChart3 className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-[var(--foreground)]">Performance por Criativo</p>
+              <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[var(--foreground)]">Performance por Criativo</p>
               <p className="text-[11px] text-[var(--muted-foreground)]">Compare os anúncios e clique nas colunas para ordenar.</p>
             </div>
           </div>
-          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--border)] bg-white/[0.025] px-3 py-1.5 text-[10px] text-[var(--muted-foreground)]">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--border)] bg-pearl px-3 py-1.5 text-[10px] text-[var(--muted-foreground)]">
             <ArrowUpDown className="h-3 w-3 text-[var(--primary)]" />
             Ordenado por <strong className="font-semibold text-[var(--foreground)]">{sortLabel[tableSort.key]}</strong>
             <span>{tableSort.direction === "desc" ? "maior primeiro" : "menor primeiro"}</span>
@@ -2603,7 +2610,7 @@ function MetaCriativosGrid({
                 const resultShare = totalLeads > 0 ? (campaign.metrics.leads / totalLeads) * 100 : 0;
                 return (
                   <React.Fragment key={campaign.id}>
-                    <tr className="border-b border-[var(--border)] bg-white/[0.045]">
+                    <tr className="border-b border-[var(--border)] bg-parchment">
                       <td className="pl-4 pr-4 py-4">
                         <button
                           type="button"
@@ -2611,11 +2618,11 @@ function MetaCriativosGrid({
                           aria-expanded={campaignOpen}
                           className="flex w-full min-w-[250px] items-center gap-3 text-left"
                         >
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--primary)]/15 text-[var(--primary)]">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-[var(--primary)]">
                             {campaignOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                           </span>
                           <span className="min-w-0">
-                            <span className="block truncate text-[12px] font-black uppercase tracking-[0.08em] text-[var(--foreground)]">{campaign.name}</span>
+                            <span className="block truncate text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--foreground)]">{campaign.name}</span>
                             <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
                               Campanha · {campaign.adsets.length} conjuntos · {campaign.items.length} anúncios · {spendShare.toFixed(0)}% verba · {resultShare.toFixed(0)}% resultados
                             </span>
@@ -2630,7 +2637,7 @@ function MetaCriativosGrid({
                       const adsetResultShare = campaign.metrics.leads > 0 ? (adset.metrics.leads / campaign.metrics.leads) * 100 : 0;
                       return (
                         <React.Fragment key={adset.id}>
-                          <tr className="border-b border-[var(--border)] bg-white/[0.018]">
+                          <tr className="border-b border-[var(--border)] bg-pearl">
                             <td className="pl-9 pr-4 py-3.5">
                               <button
                                 type="button"
@@ -2642,7 +2649,7 @@ function MetaCriativosGrid({
                                   {adsetOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                                 </span>
                                 <span className="min-w-0">
-                                  <span className="block truncate text-[11px] font-bold text-[var(--foreground)]">{adset.name}</span>
+                                  <span className="block truncate text-[11px] font-semibold text-[var(--foreground)]">{adset.name}</span>
                                   <span className="mt-0.5 block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]">
                                     Conjunto · {adset.items.length} anúncios · {adsetSpendShare.toFixed(0)}% verba · {adsetResultShare.toFixed(0)}% resultados
                                   </span>
@@ -2657,13 +2664,13 @@ function MetaCriativosGrid({
                             return (
                               <tr
                                 key={item.ad.id}
-                                className="group cursor-pointer border-b border-[var(--border)] transition-colors hover:bg-white/[0.03]"
+                                className="group cursor-pointer border-b border-[var(--border)] transition-colors hover:bg-pearl"
                                 onClick={() => setModalAdId(item.ad.id)}
                               >
                                 <td className="relative pl-16 pr-4 py-4">
                                   <span className="absolute bottom-0 left-[46px] top-0 w-px bg-[var(--border)]" />
                                   <div className="flex items-center gap-3">
-                                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[var(--muted)]/30">
+                                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-muted/30">
                                       {thumbUrl ? (
                                         // eslint-disable-next-line @next/next/no-img-element
                                         <img src={thumbUrl} alt={item.displayName} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
@@ -2675,7 +2682,7 @@ function MetaCriativosGrid({
                                       )}
                                     </div>
                                     <div className="min-w-0">
-                                      <p className="max-w-[170px] truncate font-bold uppercase tracking-wide text-[var(--foreground)]">{item.displayName}</p>
+                                      <p className="max-w-[170px] truncate font-semibold uppercase tracking-wide text-[var(--foreground)]">{item.displayName}</p>
                                       <p className="mt-0.5 text-[9px] text-[var(--muted-foreground)]">{item.mediaType === "video" ? "Vídeo" : "Imagem"} · Abrir detalhes</p>
                                     </div>
                                   </div>
@@ -2683,28 +2690,28 @@ function MetaCriativosGrid({
                                 <td className="px-5 py-4 text-right tabular-nums font-semibold text-[var(--foreground)]">{formatCurrency(item.spend)}</td>
                                 <td className="px-5 py-4 text-right tabular-nums text-[var(--muted-foreground)]">{item.impressions > 0 ? item.impressions.toLocaleString("pt-BR") : "—"}</td>
                                 <td className="px-5 py-4 text-right tabular-nums text-[var(--muted-foreground)]">{item.clicks > 0 ? item.clicks.toLocaleString("pt-BR") : "—"}</td>
-                                <td className="px-5 py-4 text-right tabular-nums font-bold text-[var(--foreground)]">{item.leads > 0 ? item.leads.toLocaleString("pt-BR") : "—"}</td>
+                                <td className="px-5 py-4 text-right tabular-nums font-semibold text-[var(--foreground)]">{item.leads > 0 ? item.leads.toLocaleString("pt-BR") : "—"}</td>
                                 <td className="px-5 py-4 text-right tabular-nums">
-                                  {item.leads > 0 ? <span className={`font-bold ${item.cpl <= cplAlvo ? "text-green-400" : item.cpl < cplLimite ? "text-amber-400" : "text-red-400"}`}>{formatCurrency(item.cpl)}</span> : <span className="opacity-40">—</span>}
+                                  {item.leads > 0 ? <span className={`font-semibold ${item.cpl <= cplAlvo ? "text-positive" : item.cpl < cplLimite ? "text-amber-600" : "text-negative"}`}>{formatCurrency(item.cpl)}</span> : <span className="opacity-40">—</span>}
                                 </td>
                                 {hasSalesCampaigns && (
                                   <>
-                                    <td className="px-5 py-4 text-right tabular-nums font-bold text-[var(--foreground)]">
+                                    <td className="px-5 py-4 text-right tabular-nums font-semibold text-[var(--foreground)]">
                                       {item.purchases > 0 ? item.purchases.toLocaleString("pt-BR") : <span className="opacity-40">—</span>}
                                     </td>
                                     <td className="px-5 py-4 text-right tabular-nums">
-                                      {item.purchases > 0 ? <span className="font-bold text-blue-400">{formatCurrency(item.cpa)}</span> : <span className="opacity-40">—</span>}
+                                      {item.purchases > 0 ? <span className="font-semibold text-primary">{formatCurrency(item.cpa)}</span> : <span className="opacity-40">—</span>}
                                     </td>
                                   </>
                                 )}
                                 {hasAttributedSalesValue && (
                                   <td className="px-5 py-4 text-right tabular-nums">
-                                    {item.attributedSalesValue > 0 ? <span className="font-bold text-green-400">{formatCurrency(item.attributedSalesValue)}</span> : <span className="opacity-40">—</span>}
+                                    {item.attributedSalesValue > 0 ? <span className="font-semibold text-positive">{formatCurrency(item.attributedSalesValue)}</span> : <span className="opacity-40">—</span>}
                                   </td>
                                 )}
                                 <td className="px-5 py-4 text-right tabular-nums text-[var(--foreground)]">{item.ctr.toFixed(2)}%</td>
                                 <td className="bg-[rgba(180,60,10,0.15)] px-5 py-4 text-center tabular-nums group-hover:bg-[rgba(180,60,10,0.22)]">
-                                  {item.leads > 0 ? <span className="font-black text-[var(--accent)]">{item.cr.toFixed(1)}%</span> : <span className="opacity-40">—</span>}
+                                  {item.leads > 0 ? <span className="font-semibold text-[var(--accent)]">{item.cr.toFixed(1)}%</span> : <span className="opacity-40">—</span>}
                                 </td>
                               </tr>
                             );
@@ -2722,15 +2729,15 @@ function MetaCriativosGrid({
 
       {/* 4. Eficiência da distribuição de verba */}
       <div className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)]">
-        <div className="flex items-start gap-4 border-b border-[var(--border)]/60 px-6 py-5">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--accent),var(--primary))] text-white shadow-[0_12px_30px_rgba(220,38,38,0.25)]">
+        <div className="flex items-start gap-4 border-b border-border/60 px-6 py-5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <SlidersHorizontal className="h-5 w-5" />
           </div>
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Leitura de eficiência</p>
-            <h2 className="text-xl font-black uppercase tracking-tight text-[var(--foreground)]">
+            <h2 className="text-xl font-semibold uppercase tracking-tight text-[var(--foreground)]">
               Verba{" "}
-              <span className="bg-[linear-gradient(90deg,var(--accent),var(--primary))] bg-clip-text text-transparent">versus Resultado</span>
+              <span className="text-primary">versus Resultado</span>
             </h2>
             <p className="mt-0.5 text-[12px] text-[var(--muted-foreground)]">Compare quanto cada campanha recebe com quanto ela devolve em resultados.</p>
           </div>
@@ -2750,15 +2757,15 @@ function MetaCriativosGrid({
                 const efficiency = spendShare > 0 ? resultShare / spendShare : 0;
                 const costPerResult = results > 0 ? campaign.metrics.spend / results : null;
                 const signal = efficiency >= 1.2
-                  ? { label: "Oportunidade de escala", detail: "Entrega mais resultado que a parcela de verba recebida.", color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/25", Icon: TrendingUp }
+                  ? { label: "Oportunidade de escala", detail: "Entrega mais resultado que a parcela de verba recebida.", color: "text-positive", bg: "bg-green-500/10", border: "border-green-500/25", Icon: TrendingUp }
                   : efficiency < 0.8
-                    ? { label: "Revisar alocação", detail: "Consome mais verba do que devolve em participação de resultado.", color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/25", Icon: AlertTriangle }
-                    : { label: "Distribuição equilibrada", detail: "Participação de verba e resultado estão próximas.", color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/25", Icon: CheckCircle2 };
+                    ? { label: "Revisar alocação", detail: "Consome mais verba do que devolve em participação de resultado.", color: "text-negative", bg: "bg-red-500/10", border: "border-red-500/25", Icon: AlertTriangle }
+                    : { label: "Distribuição equilibrada", detail: "Participação de verba e resultado estão próximas.", color: "text-primary", bg: "bg-blue-500/10", border: "border-blue-500/25", Icon: CheckCircle2 };
                 return (
-                  <div key={campaign.id} className="rounded-2xl border border-[var(--border)] bg-white/[0.02] p-4 transition-colors hover:bg-white/[0.035]">
+                  <div key={campaign.id} className="rounded-2xl border border-[var(--border)] bg-pearl p-4 transition-colors hover:bg-pearl">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0">
-                        <p className="truncate text-[12px] font-bold uppercase tracking-wide text-[var(--foreground)]">{campaign.name}</p>
+                        <p className="truncate text-[12px] font-semibold uppercase tracking-wide text-[var(--foreground)]">{campaign.name}</p>
                         <p className="mt-1 text-[10px] text-[var(--muted-foreground)]">
                           {campaign.adsets.length} conjuntos · {campaign.items.length} anúncios · {formatCurrency(campaign.metrics.spend)}
                           {costPerResult !== null ? ` · ${usePurchases ? "CPA" : convLabels.metric} ${formatCurrency(costPerResult)}` : ""}
@@ -2767,7 +2774,7 @@ function MetaCriativosGrid({
                       <div className={`flex shrink-0 items-start gap-2 rounded-xl border px-3 py-2 ${signal.bg} ${signal.border}`}>
                         <signal.Icon className={`mt-0.5 h-3.5 w-3.5 ${signal.color}`} />
                         <div>
-                          <p className={`text-[10px] font-bold uppercase tracking-wider ${signal.color}`}>{signal.label}</p>
+                          <p className={`text-[10px] font-semibold uppercase tracking-wider ${signal.color}`}>{signal.label}</p>
                           <p className="mt-0.5 max-w-[310px] text-[9px] text-[var(--muted-foreground)]">{signal.detail}</p>
                         </div>
                       </div>
@@ -2775,17 +2782,17 @@ function MetaCriativosGrid({
                     <div className="mt-4 grid gap-3">
                       <div className="grid grid-cols-[76px_1fr_46px] items-center gap-3">
                         <span className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Verba</span>
-                        <div className="h-2 overflow-hidden rounded-full bg-white/5">
+                        <div className="h-2 overflow-hidden rounded-full bg-parchment">
                           <div className="h-full rounded-full bg-[var(--primary)]" style={{ width: `${Math.min(100, spendShare)}%` }} />
                         </div>
-                        <span className="text-right text-[11px] font-bold tabular-nums text-[var(--foreground)]">{spendShare.toFixed(0)}%</span>
+                        <span className="text-right text-[11px] font-semibold tabular-nums text-[var(--foreground)]">{spendShare.toFixed(0)}%</span>
                       </div>
                       <div className="grid grid-cols-[76px_1fr_46px] items-center gap-3">
                         <span className="truncate text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]" title={resultLabel}>{resultLabel}</span>
-                        <div className="h-2 overflow-hidden rounded-full bg-white/5">
+                        <div className="h-2 overflow-hidden rounded-full bg-parchment">
                           <div className={`h-full rounded-full ${efficiency >= 1.2 ? "bg-green-500" : efficiency < 0.8 ? "bg-red-500" : "bg-blue-500"}`} style={{ width: `${Math.min(100, resultShare)}%` }} />
                         </div>
-                        <span className={`text-right text-[11px] font-bold tabular-nums ${signal.color}`}>{resultShare.toFixed(0)}%</span>
+                        <span className={`text-right text-[11px] font-semibold tabular-nums ${signal.color}`}>{resultShare.toFixed(0)}%</span>
                       </div>
                     </div>
                   </div>
@@ -2805,15 +2812,15 @@ function MetaCriativosGrid({
         if (!hasPlan) return null;
         return (
           <div className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)]">
-            <div className="flex items-start gap-4 border-b border-[var(--border)]/60 px-6 py-5">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--accent),var(--primary))] text-white shadow-[0_12px_30px_rgba(220,38,38,0.25)]">
+            <div className="flex items-start gap-4 border-b border-border/60 px-6 py-5">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 <TrendingUp className="h-5 w-5" />
               </div>
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Criativos META</p>
-                <h2 className="text-xl font-black uppercase tracking-tight text-[var(--foreground)]">
+                <h2 className="text-xl font-semibold uppercase tracking-tight text-[var(--foreground)]">
                   Plano{" "}
-                  <span className="bg-[linear-gradient(90deg,var(--accent),var(--primary))] bg-clip-text text-transparent">de Ação</span>
+                  <span className="text-primary">de Ação</span>
                 </h2>
                 <p className="mt-0.5 text-[12px] text-[var(--muted-foreground)]">Recomendações automáticas baseadas na performance do período.</p>
               </div>
@@ -2823,7 +2830,7 @@ function MetaCriativosGrid({
                 {/* Escalar */}
                 {acaoEscalar.length > 0 && (
                   <div>
-                    <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-green-500">↑ Aumentar verba</p>
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-green-500">↑ Aumentar verba</p>
                     <div className="grid gap-2 sm:grid-cols-2">
                       {acaoEscalar.map((item) => (
                         <button
@@ -2832,7 +2839,7 @@ function MetaCriativosGrid({
                           onClick={() => setModalAdId(item.ad.id)}
                           className="flex items-center gap-3 rounded-xl border border-green-500/25 bg-green-500/6 px-4 py-3 text-left transition hover:border-green-500/50 hover:bg-green-500/10"
                         >
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-500/15 text-green-500 text-[11px] font-bold">↑</span>
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-500/15 text-green-500 text-[11px] font-semibold">↑</span>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-xs font-semibold text-[var(--foreground)]">{item.displayName}</p>
                             <p className="mt-0.5 text-[10px] text-[var(--muted-foreground)]">
@@ -2849,7 +2856,7 @@ function MetaCriativosGrid({
                 {/* Otimizar */}
                 {acaoOtimizar.length > 0 && (
                   <div>
-                    <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-amber-500">⟳ Otimizar</p>
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-amber-500">⟳ Otimizar</p>
                     <div className="grid gap-2 sm:grid-cols-2">
                       {acaoOtimizar.map((item) => (
                         <button
@@ -2858,7 +2865,7 @@ function MetaCriativosGrid({
                           onClick={() => setModalAdId(item.ad.id)}
                           className="flex items-center gap-3 rounded-xl border border-amber-500/25 bg-amber-500/6 px-4 py-3 text-left transition hover:border-amber-500/50 hover:bg-amber-500/10"
                         >
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-500 text-[11px] font-bold">⟳</span>
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-500 text-[11px] font-semibold">⟳</span>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-xs font-semibold text-[var(--foreground)]">{item.displayName}</p>
                             <p className="mt-0.5 text-[10px] text-[var(--muted-foreground)]">
@@ -2866,7 +2873,7 @@ function MetaCriativosGrid({
                             </p>
                           </div>
                           {item.alerts[0] && (
-                            <span className="shrink-0 max-w-[100px] text-right text-[9px] font-medium text-amber-400 leading-tight">{item.alerts[0]}</span>
+                            <span className="shrink-0 max-w-[100px] text-right text-[9px] font-medium text-amber-600 leading-tight">{item.alerts[0]}</span>
                           )}
                         </button>
                       ))}
@@ -2877,7 +2884,7 @@ function MetaCriativosGrid({
                 {/* Pausar */}
                 {acaoPausar.length > 0 && (
                   <div>
-                    <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-red-500">✕ Pausar</p>
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-red-500">✕ Pausar</p>
                     <div className="grid gap-2 sm:grid-cols-2">
                       {acaoPausar.map((item) => (
                         <button
@@ -2886,7 +2893,7 @@ function MetaCriativosGrid({
                           onClick={() => setModalAdId(item.ad.id)}
                           className="flex items-center gap-3 rounded-xl border border-red-500/25 bg-red-500/6 px-4 py-3 text-left transition hover:border-red-500/50 hover:bg-red-500/10"
                         >
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-red-500 text-[11px] font-bold">✕</span>
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-red-500 text-[11px] font-semibold">✕</span>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-xs font-semibold text-[var(--foreground)]">{item.displayName}</p>
                             <p className="mt-0.5 text-[10px] text-[var(--muted-foreground)]">
@@ -2894,9 +2901,9 @@ function MetaCriativosGrid({
                             </p>
                           </div>
                           {item.alerts[0] ? (
-                            <span className="shrink-0 max-w-[100px] text-right text-[9px] font-medium text-red-400 leading-tight">{item.alerts[0]}</span>
+                            <span className="shrink-0 max-w-[100px] text-right text-[9px] font-medium text-negative leading-tight">{item.alerts[0]}</span>
                           ) : (
-                            <span className="shrink-0 text-[9px] font-medium text-red-400">Sem resultado</span>
+                            <span className="shrink-0 text-[9px] font-medium text-negative">Sem resultado</span>
                           )}
                         </button>
                       ))}
@@ -2906,13 +2913,13 @@ function MetaCriativosGrid({
 
                 {/* Redistribuição */}
                 {verbaPausar > 0 && acaoEscalar.length > 0 && (
-                  <div className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--muted)]/8 px-4 py-3">
+                  <div className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-muted/8 px-4 py-3">
                     <span className="text-base">→</span>
                     <p className="text-xs text-[var(--muted-foreground)]">
                       Redistribuir{" "}
-                      <span className="font-bold text-[var(--foreground)]">{formatCurrency(verbaPausar)}</span>
+                      <span className="font-semibold text-[var(--foreground)]">{formatCurrency(verbaPausar)}</span>
                       {" "}dos criativos pausados para{" "}
-                      <span className="font-bold text-green-500">{acaoEscalar.map((i) => i.displayName).join(", ")}</span>
+                      <span className="font-semibold text-green-500">{acaoEscalar.map((i) => i.displayName).join(", ")}</span>
                     </p>
                   </div>
                 )}
@@ -2934,7 +2941,7 @@ function MetaCriativosGrid({
           <div className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl">
             <div className="flex shrink-0 items-center justify-between border-b border-[var(--border)] px-5 py-4">
               <div>
-                <p className="font-bold text-[var(--foreground)]">{modalItem.displayName}</p>
+                <p className="font-semibold text-[var(--foreground)]">{modalItem.displayName}</p>
                 <p className="mt-0.5 text-[10px] text-[var(--muted-foreground)]">
                   {modalItem.mediaType === "video" ? "Vídeo" : "Imagem"}{modalItem.leads > 0 ? ` · ${modalItem.leads} lead${modalItem.leads > 1 ? "s" : ""} · CPL ${formatCurrency(modalItem.cpl)}` : " · sem leads"}
                 </p>
@@ -2978,9 +2985,9 @@ function MetaCriativosGrid({
 
               <div className="flex min-w-0 flex-1 flex-col gap-3">
                 {/* Investimento — destaque */}
-                <div className="rounded-xl border border-[var(--primary)]/30 bg-[var(--primary)]/8 px-4 py-3 flex items-center justify-between">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--primary)]/80">Investimento</p>
-                  <p className="text-xl font-bold tabular-nums text-[var(--primary)]">{formatCurrency(modalItem.spend)}</p>
+                <div className="rounded-xl border border-primary/30 bg-primary/8 px-4 py-3 flex items-center justify-between">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-primary/80">Investimento</p>
+                  <p className="text-xl font-semibold tabular-nums text-[var(--primary)]">{formatCurrency(modalItem.spend)}</p>
                 </div>
 
                 {/* Funil: Alcance → Engajamento → Resultado */}
@@ -3011,12 +3018,12 @@ function MetaCriativosGrid({
                   },
                 ].map((section) => (
                   <div key={section.label}>
-                    <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]/60">{section.label}</p>
+                    <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60">{section.label}</p>
                     <div className="grid grid-cols-3 gap-2">
                       {section.cols.map((m) => (
-                        <div key={m.label} className="rounded-xl border border-[var(--border)] bg-[var(--background)]/60 p-3 text-center">
+                        <div key={m.label} className="rounded-xl border border-[var(--border)] bg-background/60 p-3 text-center">
                           <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">{m.label}</p>
-                          <p className="mt-1 text-sm font-bold tabular-nums text-[var(--foreground)]">{m.value}</p>
+                          <p className="mt-1 text-sm font-semibold tabular-nums text-[var(--foreground)]">{m.value}</p>
                         </div>
                       ))}
                     </div>
@@ -3032,26 +3039,26 @@ function MetaCriativosGrid({
                           label: "Hook Rate",
                           desc: "Visualizações 3s / Impressões",
                           value: modalItem.hookRate > 0 ? `${modalItem.hookRate.toFixed(1)}%` : "—",
-                          color: modalItem.hookRate >= 25 ? "text-green-500" : modalItem.hookRate >= 15 ? "text-amber-500" : "text-red-400",
+                          color: modalItem.hookRate >= 25 ? "text-green-500" : modalItem.hookRate >= 15 ? "text-amber-500" : "text-negative",
                         },
                         {
                           label: "Hold Rate",
                           desc: "Conclusões 100% / Visualizações 3s",
                           value: modalItem.holdRate > 0 ? `${modalItem.holdRate.toFixed(1)}%` : "—",
-                          color: modalItem.holdRate >= 20 ? "text-green-500" : modalItem.holdRate >= 10 ? "text-amber-500" : "text-red-400",
+                          color: modalItem.holdRate >= 20 ? "text-green-500" : modalItem.holdRate >= 10 ? "text-amber-500" : "text-negative",
                         },
                       ].map((m) => (
-                        <div key={m.label} className="rounded-xl border border-[var(--border)] bg-[var(--background)]/60 p-3 text-center">
+                        <div key={m.label} className="rounded-xl border border-[var(--border)] bg-background/60 p-3 text-center">
                           <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">{m.label}</p>
-                          <p className="text-[8px] text-[var(--muted-foreground)]/60">{m.desc}</p>
-                          <p className={`mt-1 text-sm font-bold tabular-nums ${m.color}`}>{m.value}</p>
+                          <p className="text-[8px] text-muted-foreground/60">{m.desc}</p>
+                          <p className={`mt-1 text-sm font-semibold tabular-nums ${m.color}`}>{m.value}</p>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
                 {modalItem.primaryText && (
-                  <div className="rounded-xl border border-[var(--border)] bg-[var(--background)]/60 p-4">
+                  <div className="rounded-xl border border-[var(--border)] bg-background/60 p-4">
                     <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Texto do anúncio</p>
                     <p className="text-sm leading-relaxed text-[var(--foreground)]">{modalItem.primaryText}</p>
                   </div>
@@ -3061,7 +3068,7 @@ function MetaCriativosGrid({
                     <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Diagnóstico</p>
                     <div className="flex flex-wrap gap-1.5">
                       {modalItem.alerts.map((a) => (
-                        <span key={a} className="inline-flex items-center rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-1.5 text-xs font-medium text-amber-400">
+                        <span key={a} className="inline-flex items-center rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-1.5 text-xs font-medium text-amber-600">
                           {a}
                         </span>
                       ))}
@@ -3091,7 +3098,7 @@ type Tarefa = {
 
 const PRIO_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
   ALTA:  { label: "Alta",  color: "text-[var(--primary)]",  dot: "bg-[var(--primary)]" },
-  MEDIA: { label: "Média", color: "text-amber-400",          dot: "bg-amber-400" },
+  MEDIA: { label: "Média", color: "text-amber-600",          dot: "bg-amber-400" },
   BAIXA: { label: "Baixa", color: "text-[var(--muted-foreground)]", dot: "bg-[var(--muted-foreground)]" },
 };
 
@@ -3163,7 +3170,7 @@ function PautaDaSemana({ clienteId }: { clienteId: string }) {
     const prio = PRIO_CONFIG[tarefa.prioridade] ?? PRIO_CONFIG.MEDIA;
     const overdue = !done && isOverdue(tarefa.dataFim);
     return (
-      <li className={`group flex items-start gap-3 rounded-xl border px-4 py-3 text-sm transition-colors ${done ? "border-[var(--border)]/50 bg-transparent opacity-60" : "border-[var(--border)] bg-[var(--muted)]/20 hover:bg-[var(--muted)]/40"}`}>
+      <li className={`group flex items-start gap-3 rounded-xl border px-4 py-3 text-sm transition-colors ${done ? "border-border/50 bg-transparent opacity-60" : "border-[var(--border)] bg-muted/20 hover:bg-muted/40"}`}>
         {/* Complete / undo button */}
         <button
           title={done ? "Reabrir tarefa" : "Concluir tarefa"}
@@ -3186,7 +3193,7 @@ function PautaDaSemana({ clienteId }: { clienteId: string }) {
             </span>
             {/* Due date */}
             {tarefa.dataFim && (
-              <span className={`flex items-center gap-1 text-[10px] ${overdue ? "text-red-400 font-semibold" : "text-[var(--muted-foreground)]"}`}>
+              <span className={`flex items-center gap-1 text-[10px] ${overdue ? "text-negative font-semibold" : "text-[var(--muted-foreground)]"}`}>
                 <Clock className="h-3 w-3" />
                 {overdue ? "Vencida · " : ""}{formatDateBR(tarefa.dataFim)}
               </span>
@@ -3198,7 +3205,7 @@ function PautaDaSemana({ clienteId }: { clienteId: string }) {
         <button
           title="Apagar tarefa"
           onClick={() => deleteMutation.mutate(tarefa.id)}
-          className="mt-0.5 shrink-0 text-[var(--muted-foreground)] opacity-0 transition hover:text-red-400 group-hover:opacity-100"
+          className="mt-0.5 shrink-0 text-[var(--muted-foreground)] opacity-0 transition hover:text-negative group-hover:opacity-100"
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -3227,12 +3234,12 @@ function PautaDaSemana({ clienteId }: { clienteId: string }) {
 
       <CardContent className="space-y-4">
         {/* ── Add form ── */}
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--muted)]/10 p-3 space-y-2">
+        <div className="rounded-xl border border-[var(--border)] bg-muted/10 p-3 space-y-2">
           <div className="flex gap-2">
             <input
               type="text"
               placeholder="Descreva a tarefa ou pauta..."
-              className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm transition-colors focus:border-[var(--primary)]/50 focus:outline-none"
+              className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm transition-colors focus:border-primary/50 focus:outline-none"
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
@@ -3260,7 +3267,7 @@ function PautaDaSemana({ clienteId }: { clienteId: string }) {
                 type="date"
                 value={dataFim}
                 onChange={(e) => setDataFim(e.target.value)}
-                className="rounded-lg border border-[var(--border)] bg-[var(--background)] py-1.5 px-2 text-xs focus:outline-none focus:border-[var(--primary)]/50 cursor-pointer [color-scheme:dark]"
+                className="rounded-lg border border-[var(--border)] bg-[var(--background)] py-1.5 px-2 text-xs focus:outline-none focus:border-primary/50 cursor-pointer [color-scheme:dark]"
               />
             </div>
             <button

@@ -203,13 +203,13 @@ export function FunilCrmSection({
           ].map((kpi) => (
             <div
               key={kpi.label}
-              className="rounded-xl border border-[var(--border)] bg-[var(--muted)]/20 px-4 py-3 text-center"
+              className="rounded-xl border border-[var(--border)] bg-muted/20 px-4 py-3 text-center"
             >
               <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
                 {kpi.label}
               </p>
               <p
-                className="mt-1 text-lg font-extrabold tabular-nums"
+                className="mt-1 text-lg font-semibold tabular-nums"
                 style={{ color: kpi.color }}
               >
                 {kpi.value}
@@ -220,7 +220,7 @@ export function FunilCrmSection({
 
         {/* Donut ring + legend */}
         {grouped.length > 0 && (
-          <div className="flex items-center gap-5 rounded-xl border border-[var(--border)] bg-[var(--muted)]/10 px-4 py-4">
+          <div className="flex items-center gap-5 rounded-xl border border-[var(--border)] bg-muted/10 px-4 py-4">
             {/* Ring */}
             <div className="relative shrink-0" style={{ width: 112, height: 112 }}>
               <svg width={112} height={112}>
@@ -248,7 +248,7 @@ export function FunilCrmSection({
                 ))}
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-xl font-extrabold tabular-nums text-[var(--foreground)]">{totalLeads}</p>
+                <p className="text-xl font-semibold tabular-nums text-[var(--foreground)]">{totalLeads}</p>
                 <p className="text-[9px] uppercase tracking-wide text-[var(--muted-foreground)]">leads</p>
               </div>
             </div>
@@ -267,7 +267,7 @@ export function FunilCrmSection({
                     </div>
                     <div className="flex items-center gap-2">
                       <span
-                        className="text-[11px] font-bold tabular-nums"
+                        className="text-[11px] font-semibold tabular-nums"
                         style={{ color: macroColors[s.grupo] }}
                       >
                         {s.count.toLocaleString("pt-BR")}
@@ -297,13 +297,13 @@ export function FunilCrmSection({
 
         {/* Stacked distribution bar */}
         {grouped.length > 0 && totalLeads > 0 && (
-          <div className="rounded-xl overflow-hidden border border-[var(--border)]/60">
-            <div className="px-4 py-2.5 flex items-center gap-2 bg-[var(--muted)]/20 border-b border-[var(--border)]/50">
-              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">Distribuição por grupo</span>
+          <div className="rounded-xl overflow-hidden border border-border/60">
+            <div className="px-4 py-2.5 flex items-center gap-2 bg-muted/20 border-b border-border/50">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">Distribuição por grupo</span>
               <div className="flex-1" />
-              <span className="text-[10px] text-[var(--muted-foreground)]/60">{totalLeads.toLocaleString("pt-BR")} leads</span>
+              <span className="text-[10px] text-muted-foreground/60">{totalLeads.toLocaleString("pt-BR")} leads</span>
             </div>
-            <div className="p-3 space-y-2 bg-[var(--muted)]/5">
+            <div className="p-3 space-y-2 bg-muted/5">
               <div className="flex h-7 rounded-lg overflow-hidden gap-0.5">
                 {grouped.map((g) => {
                   const pct = totalLeads > 0 ? (g.count / totalLeads) * 100 : 0;
@@ -320,7 +320,7 @@ export function FunilCrmSection({
                       }}
                     >
                       {pct > 14 && (
-                        <span className="text-[10px] font-bold text-white drop-shadow">
+                        <span className="text-[10px] font-semibold text-white drop-shadow">
                           {Math.round(pct)}%
                         </span>
                       )}
@@ -336,7 +336,7 @@ export function FunilCrmSection({
                     <div key={g.grupo} className="flex items-center gap-1.5">
                       <span className="h-2 w-2 rounded-sm" style={{ background: color }} />
                       <span className="text-[10px] text-[var(--muted-foreground)]">{g.grupo}</span>
-                      <span className="text-[10px] font-bold tabular-nums" style={{ color }}>
+                      <span className="text-[10px] font-semibold tabular-nums" style={{ color }}>
                         {g.count.toLocaleString("pt-BR")}
                       </span>
                     </div>
@@ -370,12 +370,12 @@ export function FunilCrmSection({
                   >
                     <div className="flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-                      <p className="text-[11px] font-extrabold uppercase tracking-[0.16em]" style={{ color }}>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em]" style={{ color }}>
                         {grupo.grupo}
                       </p>
                     </div>
                     <div
-                      className="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums"
+                      className="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums"
                       style={{ background: `${color}20`, color }}
                     >
                       {grupo.count.toLocaleString("pt-BR")} {grupo.count === 1 ? "lead" : "leads"} · {pctGrupo < 1 ? pctGrupo.toFixed(1) : Math.round(pctGrupo)}%
@@ -407,7 +407,7 @@ export function FunilCrmSection({
                           aria-pressed={clickable ? isActive : undefined}
                           className={`group relative overflow-hidden rounded-lg border bg-[var(--card)] px-3 py-2 transition-all ${
                             clickable ? "cursor-pointer hover:border-[color-mix(in_srgb,var(--primary)_30%,var(--border))]" : ""
-                          } ${isActive ? "border-[var(--primary)] ring-1 ring-[var(--primary)]/40" : "border-[var(--border)]"}`}
+                          } ${isActive ? "border-[var(--primary)] ring-1 ring-primary/40" : "border-[var(--border)]"}`}
                         >
                           {/* Gradient fill bar */}
                           <div
@@ -444,7 +444,7 @@ export function FunilCrmSection({
                               {pctTotal < 1 ? pctTotal.toFixed(1) : Math.round(pctTotal)}%
                             </span>
                             <span
-                              className="w-12 shrink-0 text-right text-sm font-bold tabular-nums"
+                              className="w-12 shrink-0 text-right text-sm font-semibold tabular-nums"
                               style={{ color }}
                             >
                               {e.count.toLocaleString("pt-BR")}

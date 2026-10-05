@@ -109,7 +109,7 @@ interface Criativo {
   effectiveStatus: string | null;
 }
 
-const rowBg = (isTop: boolean) => isTop ? "bg-[var(--primary)]/[0.07]" : "bg-white/[0.03]";
+const rowBg = (isTop: boolean) => isTop ? "bg-primary/[0.07]" : "bg-pearl";
 
 // ── Campaign type detection ─────────────────────────────────────────────────
 type CampType = "vendas" | "leads" | "conversas" | "visitas" | "alcance" | "rmkt" | "eventos" | "outro";
@@ -130,14 +130,14 @@ function detectCampType(nome: string, leads: number, purchases: number, c?: Camp
 }
 
 const CAMP_TYPE_META: Record<CampType, { label: string; color: string }> = {
-  vendas:    { label: "Vendas",          color: "bg-emerald-500/20 text-emerald-400" },
-  leads:     { label: "Leads",           color: "bg-[var(--primary)]/20 text-[var(--primary)]" },
-  conversas: { label: "Conversas",       color: "bg-sky-500/20 text-sky-300" },
-  visitas:   { label: "Visitas ao Perfil", color: "bg-violet-500/20 text-violet-300" },
-  alcance:   { label: "Alcance",         color: "bg-white/[0.08] text-white/40" },
-  rmkt:      { label: "Remarketing",     color: "bg-violet-500/20 text-violet-400" },
-  eventos:   { label: "Eventos",         color: "bg-sky-500/20 text-sky-400" },
-  outro:     { label: "Outro",           color: "bg-white/[0.06] text-white/30" },
+  vendas:    { label: "Vendas",          color: "bg-emerald-500/20 text-positive" },
+  leads:     { label: "Leads",           color: "bg-primary/20 text-[var(--primary)]" },
+  conversas: { label: "Conversas",       color: "bg-sky-500/20 text-primary" },
+  visitas:   { label: "Visitas ao Perfil", color: "bg-violet-500/20 text-violet-600" },
+  alcance:   { label: "Alcance",         color: "bg-parchment text-muted-foreground/70" },
+  rmkt:      { label: "Remarketing",     color: "bg-violet-500/20 text-violet-600" },
+  eventos:   { label: "Eventos",         color: "bg-sky-500/20 text-primary" },
+  outro:     { label: "Outro",           color: "bg-parchment text-muted-foreground/50" },
 };
 const thClass = "px-4 pb-2 text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--muted-foreground)]";
 
@@ -274,7 +274,7 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
             {hasResultados && <SortTh col="resultados" label={resultadoLabel} {...st} />}
             {showMqlCol && (
               <th
-                className={`px-4 pb-2 text-[10px] font-semibold uppercase tracking-[0.20em] text-right whitespace-nowrap cursor-pointer select-none transition-colors ${sortCol === "mql" ? "text-emerald-300" : "text-emerald-400 hover:text-emerald-300"}`}
+                className={`px-4 pb-2 text-[10px] font-semibold uppercase tracking-[0.20em] text-right whitespace-nowrap cursor-pointer select-none transition-colors ${sortCol === "mql" ? "text-positive" : "text-positive hover:text-positive"}`}
                 onClick={() => handleSort("mql")}
                 title="Leads qualificados (MQL) — somente para campanhas de geração de leads"
               >
@@ -311,11 +311,11 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
                   <div className="flex items-start gap-2.5">
                     {/* Rank badge */}
                     {isTop ? (
-                      <span className="shrink-0 rounded-full bg-[var(--primary)]/20 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[var(--primary)] mt-0.5">
+                      <span className="shrink-0 rounded-full bg-primary/20 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--primary)] mt-0.5">
                         #1
                       </span>
                     ) : (
-                      <span className="text-[11px] font-bold text-white/20 tabular-nums shrink-0 w-5 text-right mt-0.5">
+                      <span className="text-[11px] font-semibold text-muted-foreground/50 tabular-nums shrink-0 w-5 text-right mt-0.5">
                         #{i + 1}
                       </span>
                     )}
@@ -324,7 +324,7 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
                         {c.nome}
                       </p>
                       {ctype !== "outro" && (
-                        <span className={`mt-1 inline-block text-[9px] font-bold uppercase tracking-[0.16em] px-1.5 py-0.5 rounded-full ${typeColor}`}>
+                        <span className={`mt-1 inline-block text-[9px] font-semibold uppercase tracking-[0.16em] px-1.5 py-0.5 rounded-full ${typeColor}`}>
                           {typeLabel}
                         </span>
                       )}
@@ -335,19 +335,19 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
                 {/* Status */}
                 <td className={`px-4 py-4 ${bg}`}>
                   {c.comparison?.state === "stopped" ? (
-                    <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/40">Sem veiculação</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70">Sem veiculação</span>
                   ) : c.status === "ATIVA" ? (
-                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-400">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-positive">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 animate-pulse" />
                       Ativa
                     </span>
                   ) : c.status === "PAUSADA" ? (
-                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-white/30">
-                      <span className="w-1.5 h-1.5 rounded-full bg-white/20 shrink-0" />
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/50">
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
                       Pausada
                     </span>
                   ) : (
-                    <span className="text-[11px] text-white/20">—</span>
+                    <span className="text-[11px] text-muted-foreground/50">—</span>
                   )}
                 </td>
 
@@ -366,7 +366,7 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
                 {/* Investido */}
                 <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>
                   {fmtBrl(c.investimento)}
-                  {c.comparison && <span className={`block text-[9px] font-semibold ${c.comparison.state === "stopped" ? "text-white/40" : c.comparison.investimento == null ? "text-sky-400" : c.comparison.investimento >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                  {c.comparison && <span className={`block text-[9px] font-semibold ${c.comparison.state === "stopped" ? "text-muted-foreground/70" : c.comparison.investimento == null ? "text-primary" : c.comparison.investimento >= 0 ? "text-positive" : "text-negative"}`}>
                     {c.comparison.state === "stopped" ? "Sem veiculação" : c.comparison.investimento == null ? "Nova" : `${c.comparison.investimento >= 0 ? "▲" : "▼"} ${Math.abs(c.comparison.investimento).toFixed(1)}%`}
                   </span>}
                 </td>
@@ -385,10 +385,10 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
                 {hasResultados && (
                   <td className={`px-4 py-4 text-right tabular-nums ${bg}`}>
                     {isNonConversion || !hasResult ? (
-                      <span className="text-[13px] text-white/20">—</span>
+                      <span className="text-[13px] text-muted-foreground/50">—</span>
                     ) : (
                       <div>
-                        <span className={`text-[14px] font-bold ${isTop ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
+                        <span className={`text-[14px] font-semibold ${isTop ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
                           {fmt(c.resultados ?? 0)}
                         </span>
                         {c.resultType && c.resultType !== dominantResultType && (
@@ -408,11 +408,11 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
                   return (
                     <td className={`px-4 py-4 text-right tabular-nums ${bg}`}>
                       {!isLead ? (
-                        <span className="text-[13px] text-white/15" title="MQL aplica-se apenas a campanhas de geração de leads">—</span>
+                        <span className="text-[13px] text-muted-foreground/50" title="MQL aplica-se apenas a campanhas de geração de leads">—</span>
                       ) : mql > 0 ? (
-                        <span className="text-[14px] font-bold text-emerald-400">{fmt(mql)}</span>
+                        <span className="text-[14px] font-semibold text-positive">{fmt(mql)}</span>
                       ) : (
-                        <span className="text-[13px] text-white/20">0</span>
+                        <span className="text-[13px] text-muted-foreground/50">0</span>
                       )}
                     </td>
                   );
@@ -422,7 +422,7 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
                 {hasResultados && (
                   <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>
                     {isNonConversion || !hasResult ? (
-                      <span className="text-white/20">—</span>
+                      <span className="text-muted-foreground/50">—</span>
                     ) : (
                       c.custoResultado !== null && c.custoResultado !== undefined ? fmtBrl(c.custoResultado) : "—"
                     )}
@@ -433,9 +433,9 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
                 {hasSales && (
                   <td className={`px-4 py-4 text-right tabular-nums ${bg}`}>
                     {isNonConversion ? (
-                      <span className="text-[13px] text-white/20">—</span>
+                      <span className="text-[13px] text-muted-foreground/50">—</span>
                     ) : (
-                      <span className={`text-[13px] font-bold ${isTop && c.faturamento > 0 ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
+                      <span className={`text-[13px] font-semibold ${isTop && c.faturamento > 0 ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
                         {c.faturamento > 0 ? fmtBrl(c.faturamento) : "—"}
                       </span>
                     )}
@@ -445,14 +445,14 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
                 {/* Ticket Médio */}
                 {hasSales && (
                   <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>
-                    {isNonConversion ? <span className="text-white/20">—</span> : (c.ticketMedio !== null ? fmtBrl(c.ticketMedio) : "—")}
+                    {isNonConversion ? <span className="text-muted-foreground/50">—</span> : (c.ticketMedio !== null ? fmtBrl(c.ticketMedio) : "—")}
                   </td>
                 )}
 
                 {/* ROAS */}
                 {hasSales && (
                   <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>
-                    {isNonConversion ? <span className="text-white/20">—</span> : (c.roas !== null ? fmt(c.roas, 2) + "x" : "—")}
+                    {isNonConversion ? <span className="text-muted-foreground/50">—</span> : (c.roas !== null ? fmt(c.roas, 2) + "x" : "—")}
                   </td>
                 )}
 
@@ -461,22 +461,22 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
                   const ratio = (c.faturamento ?? 0) > 0 ? (c.investimento / c.faturamento) * 100 : null;
                   const color =
                     ratio == null
-                      ? "text-white/20"
+                      ? "text-muted-foreground/50"
                       : ratio <= 10
-                        ? "text-emerald-400 font-semibold"
+                        ? "text-positive font-semibold"
                         : ratio <= 15
-                          ? "text-amber-400 font-semibold"
-                          : "text-red-400 font-semibold";
+                          ? "text-amber-600 font-semibold"
+                          : "text-negative font-semibold";
                   return (
                     <td className={`px-4 py-4 text-right tabular-nums text-[13px] ${color} ${bg}`} title="Investimento ÷ Faturamento (meta: abaixo de 10%)">
-                      {isNonConversion || ratio == null ? <span className="text-white/20">—</span> : `${fmt(ratio, 2)}%`}
+                      {isNonConversion || ratio == null ? <span className="text-muted-foreground/50">—</span> : `${fmt(ratio, 2)}%`}
                     </td>
                   );
                 })()}
 
                 {/* Chevron */}
                 <td className={`rounded-r-2xl px-3 py-4 ${bg}`}>
-                  <ChevronRight className="w-3.5 h-3.5 text-white/15 group-hover:text-[var(--primary)] transition-colors ml-auto" />
+                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50 group-hover:text-[var(--primary)] transition-colors ml-auto" />
                 </td>
               </tr>
             );
@@ -486,47 +486,47 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
         {/* Totals row */}
         <tfoot>
           <tr>
-            <td className="rounded-l-2xl bg-white/[0.06] px-4 py-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--foreground)]">Total</p>
+            <td className="rounded-l-2xl bg-parchment px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--foreground)]">Total</p>
             </td>
-            <td className="bg-white/[0.06] px-4 py-3" />
-            <td className="bg-white/[0.06] px-4 py-3" />
-            <td className="bg-white/[0.06] px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--foreground)]">
+            <td className="bg-parchment px-4 py-3" />
+            <td className="bg-parchment px-4 py-3" />
+            <td className="bg-parchment px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--foreground)]">
               {fmtBrl(totals.investimento)}
             </td>
-            <td className="bg-white/[0.06] px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--foreground)]">
+            <td className="bg-parchment px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--foreground)]">
               {fmt(totals.impressoes)}
             </td>
-            <td className="bg-white/[0.06] px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--foreground)]">
+            <td className="bg-parchment px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--foreground)]">
               {fmt(totals.cliques)}
             </td>
             {hasResultados && (
-              <td className="bg-white/[0.06] px-4 py-3 text-right tabular-nums text-[15px] font-black text-[var(--primary)]">
+              <td className="bg-parchment px-4 py-3 text-right tabular-nums text-[15px] font-semibold text-[var(--primary)]">
                 {fmt(totals.resultados)}
               </td>
             )}
             {showMqlCol && (
-              <td className="bg-white/[0.06] px-4 py-3 text-right tabular-nums text-[15px] font-black text-emerald-400">
+              <td className="bg-parchment px-4 py-3 text-right tabular-nums text-[15px] font-semibold text-positive">
                 {fmt(totals.mql)}
               </td>
             )}
             {hasResultados && (
-              <td className="bg-white/[0.06] px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--foreground)]">
+              <td className="bg-parchment px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--foreground)]">
                 {totalCustoResultado !== null ? fmtBrl(totalCustoResultado) : "—"}
               </td>
             )}
             {hasSales && (
-              <td className="bg-white/[0.06] px-4 py-3 text-right tabular-nums text-[13px] font-bold text-[var(--primary)]">
+              <td className="bg-parchment px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--primary)]">
                 {totals.faturamento > 0 ? fmtBrl(totals.faturamento) : "—"}
               </td>
             )}
             {hasSales && (
-              <td className="bg-white/[0.06] px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--foreground)]">
+              <td className="bg-parchment px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--foreground)]">
                 {totals.purchases > 0 && totals.faturamento > 0 ? fmtBrl(totals.faturamento / totals.purchases) : "—"}
               </td>
             )}
             {hasSales && (
-              <td className="bg-white/[0.06] px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--foreground)]">
+              <td className="bg-parchment px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--foreground)]">
                 {totalRoas !== null ? fmt(totalRoas, 2) + "x" : "—"}
               </td>
             )}
@@ -534,19 +534,19 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
               const ratio = totals.faturamento > 0 ? (totals.investimento / totals.faturamento) * 100 : null;
               const color =
                 ratio == null
-                  ? "text-white/40"
+                  ? "text-muted-foreground/70"
                   : ratio <= 10
-                    ? "text-emerald-400"
+                    ? "text-positive"
                     : ratio <= 15
-                      ? "text-amber-400"
-                      : "text-red-400";
+                      ? "text-amber-600"
+                      : "text-negative";
               return (
-                <td className={`bg-white/[0.06] px-4 py-3 text-right tabular-nums text-[13px] font-bold ${color}`} title="Investimento ÷ Faturamento (meta: abaixo de 10%)">
+                <td className={`bg-parchment px-4 py-3 text-right tabular-nums text-[13px] font-semibold ${color}`} title="Investimento ÷ Faturamento (meta: abaixo de 10%)">
                   {ratio == null ? "—" : `${fmt(ratio, 2)}%`}
                 </td>
               );
             })()}
-            <td className="rounded-r-2xl bg-white/[0.06] px-3 py-3" />
+            <td className="rounded-r-2xl bg-parchment px-3 py-3" />
           </tr>
         </tfoot>
       </table>
@@ -605,7 +605,7 @@ function ConjuntosTable({ conjuntos, onSelect, parentCampType, mqlByAdsetId, cli
             <SortTh col="cpc" label="CPC" {...st} />
             {hasLeads && <SortTh col="leads" label="Leads" {...st} />}
             {mqlByAdsetId && hasLeads && (
-              <th className="px-4 pb-2 text-[10px] font-semibold uppercase tracking-[0.20em] text-right whitespace-nowrap text-emerald-400">
+              <th className="px-4 pb-2 text-[10px] font-semibold uppercase tracking-[0.20em] text-right whitespace-nowrap text-positive">
                 MQL
               </th>
             )}
@@ -630,9 +630,9 @@ function ConjuntosTable({ conjuntos, onSelect, parentCampType, mqlByAdsetId, cli
                 <td className={`rounded-l-2xl px-4 py-4 ${bg}`}>
                   <div className="flex items-center gap-2.5">
                     {isTop ? (
-                      <span className="shrink-0 rounded-full bg-[var(--primary)]/20 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[var(--primary)]">#1</span>
+                      <span className="shrink-0 rounded-full bg-primary/20 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--primary)]">#1</span>
                     ) : (
-                      <span className="text-[11px] font-bold text-white/20 tabular-nums shrink-0 w-5 text-right">#{i + 1}</span>
+                      <span className="text-[11px] font-semibold text-muted-foreground/50 tabular-nums shrink-0 w-5 text-right">#{i + 1}</span>
                     )}
                     <p className="text-[12px] font-semibold leading-snug text-[var(--foreground)] line-clamp-2 max-w-[360px]">{c.adsetName}</p>
                   </div>
@@ -640,12 +640,12 @@ function ConjuntosTable({ conjuntos, onSelect, parentCampType, mqlByAdsetId, cli
                 <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>{fmtBrl(c.spend)}</td>
                 <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>{fmt(c.impressions)}</td>
                 <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>{fmt(c.clicks)}</td>
-                <td className={`px-4 py-4 text-right tabular-nums text-[13px] ${c.ctr !== null && c.ctr >= 1 ? "text-emerald-400 font-semibold" : "text-[var(--muted-foreground)]"} ${bg}`}>
+                <td className={`px-4 py-4 text-right tabular-nums text-[13px] ${c.ctr !== null && c.ctr >= 1 ? "text-positive font-semibold" : "text-[var(--muted-foreground)]"} ${bg}`}>
                   {c.ctr !== null ? fmtPct(c.ctr) : "—"}
                 </td>
                 <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>{c.cpc !== null ? fmtBrl(c.cpc) : "—"}</td>
                 {hasLeads && (
-                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] ${isTop && c.leads > 0 ? "text-[var(--primary)] font-bold text-[15px]" : "text-[var(--muted-foreground)]"} ${bg}`}>
+                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] ${isTop && c.leads > 0 ? "text-[var(--primary)] font-semibold text-[15px]" : "text-[var(--muted-foreground)]"} ${bg}`}>
                     {c.leads > 0 ? fmt(c.leads) : "—"}
                   </td>
                 )}
@@ -655,8 +655,8 @@ function ConjuntosTable({ conjuntos, onSelect, parentCampType, mqlByAdsetId, cli
                   return (
                     <td className={`px-4 py-4 text-right tabular-nums ${bg}`}>
                       {mql > 0
-                        ? <span className="text-[14px] font-bold text-emerald-400">{fmt(mql)}</span>
-                        : <span className="text-[13px] text-white/20">—</span>}
+                        ? <span className="text-[14px] font-semibold text-positive">{fmt(mql)}</span>
+                        : <span className="text-[13px] text-muted-foreground/50">—</span>}
                     </td>
                   );
                 })()}
@@ -666,7 +666,7 @@ function ConjuntosTable({ conjuntos, onSelect, parentCampType, mqlByAdsetId, cli
                   </td>
                 )}
                 {hasConversas && (
-                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] ${isTop && (c.conversas ?? 0) > 0 ? "text-[var(--primary)] font-bold text-[15px]" : (c.conversas ?? 0) > 0 ? "text-sky-300 font-semibold" : "text-white/30"} ${bg}`}>
+                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] ${isTop && (c.conversas ?? 0) > 0 ? "text-[var(--primary)] font-semibold text-[15px]" : (c.conversas ?? 0) > 0 ? "text-primary font-semibold" : "text-muted-foreground/50"} ${bg}`}>
                     {(c.conversas ?? 0) > 0 ? fmt(c.conversas) : "—"}
                   </td>
                 )}
@@ -676,7 +676,7 @@ function ConjuntosTable({ conjuntos, onSelect, parentCampType, mqlByAdsetId, cli
                   </td>
                 )}
                 {hasSales && (
-                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] ${isTop && c.purchases > 0 ? "text-[var(--primary)] font-bold text-[15px]" : c.purchases > 0 ? "text-[var(--foreground)]" : "text-white/30"} ${bg}`}>
+                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] ${isTop && c.purchases > 0 ? "text-[var(--primary)] font-semibold text-[15px]" : c.purchases > 0 ? "text-[var(--foreground)]" : "text-muted-foreground/50"} ${bg}`}>
                     {c.purchases > 0 ? fmt(c.purchases) : "—"}
                   </td>
                 )}
@@ -696,7 +696,7 @@ function ConjuntosTable({ conjuntos, onSelect, parentCampType, mqlByAdsetId, cli
                   </td>
                 )}
                 {hasSales && (
-                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] font-semibold ${c.roas !== null && c.roas >= 1 ? "text-emerald-400" : "text-[var(--muted-foreground)]"} ${bg}`}>
+                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] font-semibold ${c.roas !== null && c.roas >= 1 ? "text-positive" : "text-[var(--muted-foreground)]"} ${bg}`}>
                     {c.roas !== null ? fmt(c.roas, 2) + "x" : "—"}
                   </td>
                 )}
@@ -706,11 +706,11 @@ function ConjuntosTable({ conjuntos, onSelect, parentCampType, mqlByAdsetId, cli
                     <button
                       onClick={(e) => { e.stopPropagation(); setDetailAdset({ id: c.adsetId, name: c.adsetName }); }}
                       title="Ver detalhes do conjunto (público, orçamento, período)"
-                      className="p-1.5 rounded-lg text-white/20 hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 transition-all"
+                      className="p-1.5 rounded-lg text-muted-foreground/50 hover:text-[var(--primary)] hover:bg-primary/10 transition-all"
                     >
                       <Info className="w-3.5 h-3.5" />
                     </button>
-                    <ChevronRight className="w-3.5 h-3.5 text-white/15 group-hover:text-[var(--primary)] transition-colors" />
+                    <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50 group-hover:text-[var(--primary)] transition-colors" />
                   </div>
                 </td>
               </tr>
@@ -780,11 +780,11 @@ function VideoModal({ c, onClose }: { c: Criativo; onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-sm rounded-3xl bg-[var(--card)] border border-white/[0.08] overflow-hidden shadow-2xl"
+        className="relative w-full max-w-sm rounded-3xl bg-[var(--card)] border border-border overflow-hidden shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-white/[0.06]">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
           <Play className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />
           <p className="text-sm font-semibold text-[var(--foreground)] flex-1 min-w-0 truncate">{c.adName}</p>
           <button
@@ -912,7 +912,7 @@ function CriativosTable({ criativos, parentCampType, mqlByAdId }: { criativos: C
               <SortTh col="cpm" label="CPM" {...st} />
               {hasLeads && <SortTh col="leads" label="Leads" {...st} />}
               {mqlByAdId && hasLeads && (
-                <th className="px-4 pb-2 text-[10px] font-semibold uppercase tracking-[0.20em] text-right whitespace-nowrap text-emerald-400">
+                <th className="px-4 pb-2 text-[10px] font-semibold uppercase tracking-[0.20em] text-right whitespace-nowrap text-positive">
                   MQL
                 </th>
               )}
@@ -957,8 +957,8 @@ function CriativosTable({ criativos, parentCampType, mqlByAdId }: { criativos: C
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             {isVideo
-                              ? <Play className="w-4 h-4 text-white/30" />
-                              : <Eye className="w-4 h-4 text-white/30" />}
+                              ? <Play className="w-4 h-4 text-muted-foreground/50" />
+                              : <Eye className="w-4 h-4 text-muted-foreground/50" />}
                           </div>
                         )}
                         {/* Play overlay for videos */}
@@ -976,7 +976,7 @@ function CriativosTable({ criativos, parentCampType, mqlByAdId }: { criativos: C
                         {hasAdCopy && (
                           <div className="mt-1 space-y-0.5">
                             {c.title && (
-                              <p className="text-[11px] text-[var(--foreground)]/60 font-medium line-clamp-1 leading-snug">{c.title}</p>
+                              <p className="text-[11px] text-foreground/60 font-medium line-clamp-1 leading-snug">{c.title}</p>
                             )}
                             {c.body && (
                               <p className="text-[11px] text-[var(--muted-foreground)] line-clamp-2 leading-relaxed">{c.body}</p>
@@ -991,7 +991,7 @@ function CriativosTable({ criativos, parentCampType, mqlByAdId }: { criativos: C
                             : <><Eye className="w-2.5 h-2.5 flex-shrink-0" /> Imagem</>
                           }
                           <span className="opacity-30">·</span>
-                          <span className={isActive ? "text-emerald-400" : "text-amber-400/80"}>
+                          <span className={isActive ? "text-positive" : "text-amber-600/80"}>
                             {isActive ? "Ativo" : (c.effectiveStatus ?? "—")}
                           </span>
                           {c.daysActive > 1 && (
@@ -1016,7 +1016,7 @@ function CriativosTable({ criativos, parentCampType, mqlByAdId }: { criativos: C
                   <td className={`px-4 py-3 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
                     {fmt(c.clicks)}
                   </td>
-                  <td className={`px-4 py-3 text-right tabular-nums text-[13px] whitespace-nowrap ${bg} ${c.ctr !== null && c.ctr >= 1 ? "text-emerald-400" : "text-[var(--muted-foreground)]"}`}>
+                  <td className={`px-4 py-3 text-right tabular-nums text-[13px] whitespace-nowrap ${bg} ${c.ctr !== null && c.ctr >= 1 ? "text-positive" : "text-[var(--muted-foreground)]"}`}>
                     {c.ctr !== null ? fmtPct(c.ctr) : "—"}
                   </td>
                   <td className={`px-4 py-3 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
@@ -1026,7 +1026,7 @@ function CriativosTable({ criativos, parentCampType, mqlByAdId }: { criativos: C
                     {c.cpm !== null ? fmtBrl(c.cpm) : "—"}
                   </td>
                   {hasLeads && (
-                    <td className={`px-4 py-3 text-right tabular-nums text-[13px] whitespace-nowrap ${isTop && c.leads > 0 ? "text-[var(--primary)] font-bold text-[15px]" : "text-[var(--muted-foreground)]"} ${bg}`}>
+                    <td className={`px-4 py-3 text-right tabular-nums text-[13px] whitespace-nowrap ${isTop && c.leads > 0 ? "text-[var(--primary)] font-semibold text-[15px]" : "text-[var(--muted-foreground)]"} ${bg}`}>
                       {c.leads > 0 ? fmt(c.leads) : "—"}
                     </td>
                   )}
@@ -1036,8 +1036,8 @@ function CriativosTable({ criativos, parentCampType, mqlByAdId }: { criativos: C
                     return (
                       <td className={`px-4 py-3 text-right tabular-nums whitespace-nowrap ${bg}`}>
                         {mql > 0
-                          ? <span className="text-[14px] font-bold text-emerald-400">{fmt(mql)}</span>
-                          : <span className="text-[13px] text-white/20">—</span>}
+                          ? <span className="text-[14px] font-semibold text-positive">{fmt(mql)}</span>
+                          : <span className="text-[13px] text-muted-foreground/50">—</span>}
                       </td>
                     );
                   })()}
@@ -1047,7 +1047,7 @@ function CriativosTable({ criativos, parentCampType, mqlByAdId }: { criativos: C
                     </td>
                   )}
                   {hasConversas && (
-                    <td className={`px-4 py-3 text-right tabular-nums text-[13px] whitespace-nowrap ${isTop && (c.conversas ?? 0) > 0 ? "text-[var(--primary)] font-bold text-[15px]" : (c.conversas ?? 0) > 0 ? "text-sky-300 font-semibold" : "text-white/30"} ${bg}`}>
+                    <td className={`px-4 py-3 text-right tabular-nums text-[13px] whitespace-nowrap ${isTop && (c.conversas ?? 0) > 0 ? "text-[var(--primary)] font-semibold text-[15px]" : (c.conversas ?? 0) > 0 ? "text-primary font-semibold" : "text-muted-foreground/50"} ${bg}`}>
                       {(c.conversas ?? 0) > 0 ? fmt(c.conversas) : "—"}
                     </td>
                   )}
@@ -1057,7 +1057,7 @@ function CriativosTable({ criativos, parentCampType, mqlByAdId }: { criativos: C
                     </td>
                   )}
                   {hasSales && (
-                    <td className={`px-4 py-3 text-right tabular-nums text-[13px] whitespace-nowrap ${isTop && c.purchases > 0 ? "text-[var(--primary)] font-bold text-[15px]" : c.purchases > 0 ? "text-[var(--foreground)]" : "text-white/30"} ${bg}`}>
+                    <td className={`px-4 py-3 text-right tabular-nums text-[13px] whitespace-nowrap ${isTop && c.purchases > 0 ? "text-[var(--primary)] font-semibold text-[15px]" : c.purchases > 0 ? "text-[var(--foreground)]" : "text-muted-foreground/50"} ${bg}`}>
                       {c.purchases > 0 ? fmt(c.purchases) : "—"}
                     </td>
                   )}
@@ -1077,7 +1077,7 @@ function CriativosTable({ criativos, parentCampType, mqlByAdId }: { criativos: C
                     </td>
                   )}
                   {hasSales && (
-                    <td className={`rounded-r-2xl px-4 py-3 text-right tabular-nums text-[13px] font-semibold whitespace-nowrap ${c.roas !== null && c.roas >= 1 ? "text-emerald-400" : "text-[var(--muted-foreground)]"} ${bg}`}>
+                    <td className={`rounded-r-2xl px-4 py-3 text-right tabular-nums text-[13px] font-semibold whitespace-nowrap ${c.roas !== null && c.roas >= 1 ? "text-positive" : "text-[var(--muted-foreground)]"} ${bg}`}>
                       {c.roas !== null ? fmt(c.roas, 2) + "x" : "—"}
                     </td>
                   )}
@@ -1101,7 +1101,7 @@ function CriativoCard({ c }: { c: Criativo }) {
   return (
     <>
       {showModal && <VideoModal c={c} onClose={() => setShowModal(false)} />}
-      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] overflow-hidden flex flex-col">
+      <div className="rounded-2xl border border-border bg-pearl overflow-hidden flex flex-col">
         {/* Thumbnail / Preview */}
         <div
           className={`relative aspect-[4/3] bg-black/30 overflow-hidden flex-shrink-0 ${isVideo ? "cursor-pointer group" : ""}`}
@@ -1129,12 +1129,12 @@ function CriativoCard({ c }: { c: Criativo }) {
             {isVideo && (
               <button
                 onClick={(e) => { e.stopPropagation(); setShowModal(true); }}
-                className="text-[10px] font-bold bg-black/80 text-white px-2 py-1 rounded-full flex items-center gap-1 hover:bg-[var(--primary)] transition-colors"
+                className="text-[10px] font-semibold bg-black/80 text-white px-2 py-1 rounded-full flex items-center gap-1 hover:bg-[var(--primary)] transition-colors"
               >
                 <Play className="w-2.5 h-2.5" /> Assistir
               </button>
             )}
-            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${isActive ? "bg-emerald-500/25 text-emerald-400" : "bg-white/10 text-[var(--muted-foreground)]"}`}>
+            <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${isActive ? "bg-emerald-500/25 text-positive" : "bg-parchment text-[var(--muted-foreground)]"}`}>
               {isActive ? "Ativo" : (c.effectiveStatus ?? "—")}
             </span>
           </div>
@@ -1145,11 +1145,11 @@ function CriativoCard({ c }: { c: Criativo }) {
           <p className="text-sm font-semibold text-[var(--foreground)] line-clamp-2 leading-snug">{c.adName}</p>
           {(c.title || c.body) && (
             <div className="text-xs text-[var(--muted-foreground)] space-y-1">
-              {c.title && <p className="font-medium text-[var(--foreground)]/70 line-clamp-1">{c.title}</p>}
+              {c.title && <p className="font-medium text-foreground/70 line-clamp-1">{c.title}</p>}
               {c.body && <p className="line-clamp-2 leading-relaxed">{c.body}</p>}
             </div>
           )}
-          <div className="mt-auto pt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 border-t border-white/[0.06]">
+          <div className="mt-auto pt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 border-t border-border">
             {[
               { label: "Investido", value: fmtBrl(c.spend) },
               { label: "Impressões", value: fmt(c.impressions) },
@@ -1159,7 +1159,7 @@ function CriativoCard({ c }: { c: Criativo }) {
             ].map(({ label, value }) => (
               <div key={label} className="flex flex-col gap-1">
                 <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">{label}</span>
-                <span className="text-sm font-bold tabular-nums text-[var(--foreground)]">{value}</span>
+                <span className="text-sm font-semibold tabular-nums text-[var(--foreground)]">{value}</span>
               </div>
             ))}
           </div>
@@ -1243,9 +1243,9 @@ export function CampanhasPanel({ clienteId, dateFilter, canal = "geral", mqlByCa
   return (
     <div className="rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)] overflow-hidden">
       {/* ── Header ── */}
-      <div className="px-6 py-5 sm:px-8 border-b border-white/[0.05] flex items-center gap-4">
+      <div className="px-6 py-5 sm:px-8 border-b border-border flex items-center gap-4">
         {!isRoot && (
-          <button onClick={goBack} className="p-2 rounded-xl hover:bg-white/[0.06] transition-colors text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex-shrink-0">
+          <button onClick={goBack} className="p-2 rounded-xl hover:bg-parchment transition-colors text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex-shrink-0">
             <ArrowLeft className="w-4 h-4" />
           </button>
         )}
@@ -1275,7 +1275,7 @@ export function CampanhasPanel({ clienteId, dateFilter, canal = "geral", mqlByCa
             </nav>
           )}
 
-          <h3 className="text-xl font-black uppercase tracking-tight text-[var(--foreground)] sm:text-2xl flex items-center gap-2.5">
+          <h3 className="text-xl font-semibold uppercase tracking-tight text-[var(--foreground)] sm:text-2xl flex items-center gap-2.5">
             {isRoot && <BarChart3 className="w-5 h-5 text-[var(--primary)] flex-shrink-0" />}
             {nivel === "conjuntos" && <Target className="w-5 h-5 text-[var(--primary)] flex-shrink-0" />}
             {nivel === "criativos" && <Eye className="w-5 h-5 text-[var(--primary)] flex-shrink-0" />}
@@ -1292,7 +1292,7 @@ export function CampanhasPanel({ clienteId, dateFilter, canal = "geral", mqlByCa
                 ) : null}
               </>
             ) : nivel === "conjuntos" ? (
-              <>Conjuntos de <span className="bg-[linear-gradient(90deg,var(--accent),var(--primary))] bg-clip-text text-transparent">Anúncios</span></>
+              <>Conjuntos de <span className="text-primary">Anúncios</span></>
             ) : (
               <>Criativos</>
             )}
@@ -1305,7 +1305,7 @@ export function CampanhasPanel({ clienteId, dateFilter, canal = "geral", mqlByCa
         </div>
 
         {countLabel && !isLoading && (
-          <span className="rounded-full border border-[var(--primary)]/25 bg-[var(--primary)]/12 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--foreground)] flex-shrink-0">
+          <span className="rounded-full border border-primary/25 bg-primary/12 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--foreground)] flex-shrink-0">
             {countLabel}
           </span>
         )}

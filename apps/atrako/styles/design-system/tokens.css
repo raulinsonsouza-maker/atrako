@@ -57,6 +57,15 @@
   --badge-strategy: #0066cc;
   --badge-digital: #2997ff;
 
+  /* Data viz (dashboards) — derivados do accent, sem segundo brand */
+  --chart-result: #0066cc;
+  --chart-spend: #b8d3f0;
+  --chart-plan: #d2d2d7;
+  --chart-revenue: #16a34a;
+  --chart-current: rgba(0, 102, 204, 0.06);
+  --positive: #16a34a;
+  --negative: #dc2626;
+
   /* Radii */
   --radius-none: 0px;
   --radius-xs: 5px;

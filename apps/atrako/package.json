@@ -6,6 +6,7 @@
     "dev": "next dev -p 5000 -H 0.0.0.0 --turbo",
     "build": "next build",
     "test:analyst": "tsx --test tests/analyst-utils.test.ts tests/analyst-conversation-v2.test.ts tests/analyst-data-contract.test.ts tests/analyst-golden-conversations.test.ts tests/inpilot-rollout.test.ts tests/auth-security.test.ts",
+    "test:attribution": "tsx --test tests/commerce-attribution.test.ts",
     "test:flows": "tsx --require ./tests/helpers/stub-server-only.cjs --test tests/flows.test.ts",
     "start": "next start -p 5000 -H 0.0.0.0",
     "lint": "next lint",

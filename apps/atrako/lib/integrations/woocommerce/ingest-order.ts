@@ -8,6 +8,7 @@ import { prisma as socialPrisma } from "@/lib/db-social";
 import { upsertPersonAndLead } from "@/lib/atrako/person";
 import { publishAtrakoEvents } from "@/lib/atrako/events";
 import { ingestPurchase } from "@/lib/symbius/attribution/engine";
+import { reconcileOrderSources } from "@/lib/commerce-attribution/reconcile";
 import { markLeadLost, trackOrderPayment } from "@/lib/crm/abandoned-cart";
 import { birthDateFromStorePayload, upsertContactBirthday } from "@/lib/flows/important-dates";
 import {
@@ -136,6 +137,7 @@ export async function ingestWooCommerceOrder(input: {
       console.error("[woo-items]", err instanceof Error ? err.message : err),
     );
     await maybeAttributePurchase(input.workspaceId, wooOrder);
+    await refreshWooOrderSource(input.workspaceId, wooOrder);
     const updated = await prisma.marketplaceOrder.findUniqueOrThrow({
       where: { id: existing.id },
     });
@@ -265,6 +267,7 @@ async function persistWooOrder(input: {
   }
 
   await maybeAttributePurchase(input.workspaceId, input.wooOrder);
+  await refreshWooOrderSource(input.workspaceId, input.wooOrder);
   await syncWooOrderState({
     workspaceId: input.workspaceId,
     wooOrder: input.wooOrder,
@@ -274,6 +277,16 @@ async function persistWooOrder(input: {
   });
 
   return { order, created: true as const, contact, lead };
+}
+
+/** Origem do pedido (UTM da loja + anúncio Meta conciliado) para o dia em que foi criado. */
+async function refreshWooOrderSource(workspaceId: string, wooOrder: WooOrder) {
+  const day = /^\d{4}-\d{2}-\d{2}/.test(wooOrder.date_created ?? "")
+    ? wooOrder.date_created!.slice(0, 10)
+    : new Date().toISOString().slice(0, 10);
+  await reconcileOrderSources(workspaceId, { dateFrom: day, dateTo: day }).catch((err) =>
+    console.error("[woo-order-source]", err instanceof Error ? err.message : err),
+  );
 }
 
 async function maybeAttributePurchase(workspaceId: string, wooOrder: WooOrder) {

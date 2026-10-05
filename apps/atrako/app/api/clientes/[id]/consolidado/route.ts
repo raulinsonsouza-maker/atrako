@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireClienteAccess } from "@/lib/portalSession";
 import { isEcommerceCliente } from "@/lib/clientProfiles";
+import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
+import { CHANNEL_LABELS, type OrderChannel } from "@/lib/commerce-attribution/store-source";
+
+const SITE_PROVIDERS = new Set(["WOOCOMMERCE", "SHOPIFY", "NUVEMSHOP", "TRAY"]);
 
 const PROVIDER_LABELS: Record<string, string> = {
   TRAY: "Tray",
@@ -67,11 +71,14 @@ export async function GET(
         websitePurchasesConversionValue: true,
       },
     }),
-    prisma.marketplaceOrder.groupBy({
-      by: ["provider"],
+    prisma.marketplaceOrder.findMany({
       where: { clienteId: id, occurredAt: range },
-      _count: { _all: true },
-      _sum: { totalCents: true },
+      select: {
+        provider: true,
+        status: true,
+        totalCents: true,
+        source: { select: { channel: true, adMethod: true } },
+      },
     }),
     prisma.commerceOrder.aggregate({
       where: { clienteId: id, status: "APPROVED", createdAt: range },
@@ -97,19 +104,44 @@ export async function GET(
     }),
   ]);
 
-  const canaisVenda = pedidos.map((p) => ({
-    id: p.provider,
-    label: PROVIDER_LABELS[p.provider] ?? p.provider,
-    pedidos: p._count._all,
-    receitaCents: p._sum.totalCents ?? 0,
-  }));
+  type Bucket = { id: string; label: string; pedidos: number; receitaCents: number };
+  const add = (map: Map<string, Bucket>, id: string, label: string, cents: number) => {
+    const row = map.get(id) ?? { id, label, pedidos: 0, receitaCents: 0 };
+    row.pedidos += 1;
+    row.receitaCents += cents;
+    map.set(id, row);
+  };
+  const porLoja = new Map<string, Bucket>();
+  const porOrigem = new Map<string, Bucket>();
+  let cancelados = 0;
+  let metaIdentificadas = 0;
+  for (const o of pedidos) {
+    if (o.source?.adMethod === "meta_match" || o.source?.adMethod === "both") metaIdentificadas += 1;
+    if (!isRevenueOrder(o.status)) {
+      cancelados += 1;
+      continue;
+    }
+    const cents = o.totalCents ?? 0;
+    const lojaLabel = PROVIDER_LABELS[o.provider] ?? o.provider;
+    add(porLoja, o.provider, lojaLabel, cents);
+    if (!SITE_PROVIDERS.has(o.provider)) {
+      add(porOrigem, o.provider, lojaLabel, cents);
+      continue;
+    }
+    const ch = (o.source?.channel ?? "unknown") as OrderChannel;
+    add(porOrigem, ch, ch === "unknown" ? "Sem origem" : CHANNEL_LABELS[ch] ?? ch, cents);
+  }
+
+  const canaisVenda = [...porLoja.values()];
   if (checkout._count._all > 0) {
-    canaisVenda.push({
+    const row = {
       id: "CHECKOUT",
       label: PROVIDER_LABELS.CHECKOUT,
       pedidos: checkout._count._all,
       receitaCents: checkout._sum.totalCents ?? 0,
-    });
+    };
+    canaisVenda.push(row);
+    porOrigem.set(row.id, { ...row });
   }
   canaisVenda.sort((a, b) => b.receitaCents - a.receitaCents);
 
@@ -156,6 +188,10 @@ export async function GET(
   // Receita do relacionamento já está dentro da receita das lojas: só separa, não soma.
   const receitaSemRel = Math.max(0, receita - relReceita);
 
+  const metaMidia = canaisMidia.find((m) => m.id === "META");
+  const metaReceita = (porOrigem.get("meta_ads")?.receitaCents ?? 0) / 100;
+  const origens = fonteVendas === "lojas" ? [...porOrigem.values()].sort((a, b) => b.receitaCents - a.receitaCents) : [];
+
   return NextResponse.json({
     periodo: { dataInicio: dataInicio.toISOString(), dataFim: dataFim.toISOString() },
     fonteVendas,
@@ -181,5 +217,18 @@ export async function GET(
     },
     canaisVenda,
     canaisMidia,
+    cancelados,
+    origens,
+    meta: metaMidia
+      ? {
+          investimento: metaMidia.investimento,
+          comprasReportadas: metaMidia.compras,
+          valorReportado: metaMidia.receitaAtribuida,
+          identificadas: metaIdentificadas,
+          pedidos: porOrigem.get("meta_ads")?.pedidos ?? 0,
+          receita: metaReceita,
+          roas: metaMidia.investimento > 0 ? Math.round((metaReceita / metaMidia.investimento) * 100) / 100 : null,
+        }
+      : null,
   });
 }

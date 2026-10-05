@@ -27,6 +27,14 @@ colors:
   surface-chip-translucent: "#d2d2d7"
   on-primary: "#ffffff"
   on-dark: "#ffffff"
+  # Data viz (dashboards) — derivados do accent, sem segundo brand
+  chart-result: "#0066cc"
+  chart-spend: "#b8d3f0"
+  chart-plan: "#d2d2d7"
+  chart-revenue: "#16a34a"
+  chart-current: "#0066cc0f"
+  positive: "#16a34a"
+  negative: "#dc2626"
 
 typography:
   hero-display: { fontSize: 56px, fontWeight: 600, lineHeight: 1.07, letterSpacing: -0.28px }

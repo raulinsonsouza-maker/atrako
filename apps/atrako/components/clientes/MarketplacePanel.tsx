@@ -202,8 +202,8 @@ export function MarketplacePanel({
             onClick={() => onSubChange(key)}
             className={`rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-all sm:px-4 sm:py-2 ${
               sub === key
-                ? "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-md shadow-[var(--primary)]/20"
-                : "text-[var(--muted-foreground)] hover:bg-[var(--muted)]/60 hover:text-[var(--foreground)]"
+                ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
+                : "text-[var(--muted-foreground)] hover:bg-muted/60 hover:text-[var(--foreground)]"
             }`}
           >
             {SUB_LABELS[key]}
@@ -239,7 +239,7 @@ export function MarketplacePanel({
           Carregando vendas do canal…
         </div>
       ) : isError ? (
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8 text-center type-fine-print text-red-400">
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8 text-center type-fine-print text-negative">
           Não foi possível carregar os dados de {SUB_LABELS[sub]}.
         </div>
       ) : !data?.connected ? (
@@ -337,7 +337,7 @@ export function MarketplacePanel({
               <div className="h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={data.series}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
                     <XAxis dataKey="date" tickFormatter={(v) => String(v).slice(5)} fontSize={11} />
                     <YAxis yAxisId="money" tickFormatter={(v) => `R$${Math.round(Number(v) / 100)}`} fontSize={11} />
                     <YAxis yAxisId="orders" orientation="right" allowDecimals={false} fontSize={11} />
@@ -375,7 +375,7 @@ export function MarketplacePanel({
                     </thead>
                     <tbody>
                       {data.topProducts.map((p) => (
-                        <tr key={p.key} className="border-b border-[var(--border)]/60">
+                        <tr key={p.key} className="border-b border-border/60">
                           <td className="px-4 py-3">
                             <div className="text-[var(--foreground)] line-clamp-2">{p.title}</div>
                             <div className="type-fine-print text-[var(--muted-foreground)]">
@@ -410,7 +410,7 @@ export function MarketplacePanel({
                   Sem pedidos no período.
                 </p>
               ) : (
-                <ul className="divide-y divide-[var(--border)]/60">
+                <ul className="divide-y divide-border/60">
                   {data.byStatus.map((row) => (
                     <li
                       key={row.status}
@@ -442,7 +442,7 @@ export function MarketplacePanel({
                   Sem dados de envio ainda.
                 </p>
               ) : (
-                <ul className="divide-y divide-[var(--border)]/60">
+                <ul className="divide-y divide-border/60">
                   {data.byShipping.map((row) => (
                     <li
                       key={row.label}
@@ -487,7 +487,7 @@ export function MarketplacePanel({
                   </thead>
                   <tbody>
                     {data.orders.map((order) => (
-                      <tr key={order.id} className="border-b border-[var(--border)]/60">
+                      <tr key={order.id} className="border-b border-border/60">
                         <td className="px-4 py-3 tabular-nums text-[var(--foreground)]">
                           #{order.externalId}
                           {order.leadId ? (

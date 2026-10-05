@@ -30,6 +30,12 @@ function identitySpec(pageId: string, instagramActorId?: string) {
 }
 
 /** Monta payload Graph de AdCreative conforme tipo (imagem / vídeo / carrossel / post). */
+/**
+ * IDs dinâmicos que o Meta preenche no clique; a loja grava a URL de entrada e a conciliação
+ * de vendas lê campanha/conjunto/anúncio daqui. Chaves distintas das UTMs estáticas do link.
+ */
+export const ATRAKO_AD_URL_TAGS = "utm_id={{campaign.id}}&utm_term={{adset.id}}&atk_ad={{ad.id}}";
+
 export function buildCreativePayload(input: {
   adDraft: MetaAdDraft;
   pageId: string;
@@ -465,6 +471,7 @@ export async function publishDraft(input: {
             instagramActorId: draft.identity.instagramActorId,
             link,
           });
+          if (link && !/[?&]utm_id=/.test(link)) creativeBody.url_tags = ATRAKO_AD_URL_TAGS;
 
           let metaCreativeId: string;
           try {

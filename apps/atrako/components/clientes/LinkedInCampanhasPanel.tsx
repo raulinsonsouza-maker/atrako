@@ -54,7 +54,7 @@ function Th({ label, col, sortKey, dir, onSort, right = true }: {
 }) {
   return (
     <th
-      className={`px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest text-[var(--muted-foreground)] cursor-pointer select-none hover:text-[var(--foreground)] transition-colors ${right ? "text-right" : "text-left"}`}
+      className={`px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] cursor-pointer select-none hover:text-[var(--foreground)] transition-colors ${right ? "text-right" : "text-left"}`}
       onClick={() => onSort(col)}
     >
       <span className={`inline-flex items-center gap-1 ${right ? "justify-end" : ""}`}>
@@ -74,21 +74,21 @@ const n = (v: number | null, fn: (x: number) => string) => v != null && v > 0 ? 
 function statusBadge(status: string | null) {
   if (!status) return null;
   const s = status.toUpperCase();
-  if (s === "ACTIVE") return { label: "Ativa", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", dot: "bg-emerald-400" };
-  if (s === "PAUSED") return { label: "Pausada", color: "bg-amber-500/10 text-amber-400 border-amber-500/20", dot: "bg-amber-400" };
-  if (s === "COMPLETED") return { label: "Concluída", color: "bg-sky-500/10 text-sky-400 border-sky-500/20", dot: "bg-sky-400" };
-  if (s === "ARCHIVED" || s === "CANCELED") return { label: "Arquivada", color: "bg-red-500/10 text-red-400 border-red-500/20", dot: "bg-red-400" };
-  if (s === "DRAFT") return { label: "Rascunho", color: "bg-[var(--muted)]/40 text-[var(--muted-foreground)] border-[var(--border)]", dot: "bg-[var(--muted-foreground)]" };
+  if (s === "ACTIVE") return { label: "Ativa", color: "bg-emerald-500/10 text-positive border-emerald-500/20", dot: "bg-emerald-400" };
+  if (s === "PAUSED") return { label: "Pausada", color: "bg-amber-500/10 text-amber-600 border-amber-500/20", dot: "bg-amber-400" };
+  if (s === "COMPLETED") return { label: "Concluída", color: "bg-sky-500/10 text-primary border-sky-500/20", dot: "bg-sky-400" };
+  if (s === "ARCHIVED" || s === "CANCELED") return { label: "Arquivada", color: "bg-red-500/10 text-negative border-red-500/20", dot: "bg-red-400" };
+  if (s === "DRAFT") return { label: "Rascunho", color: "bg-muted/40 text-[var(--muted-foreground)] border-[var(--border)]", dot: "bg-[var(--muted-foreground)]" };
   return null;
 }
 
 function typeBadge(campaignType?: string | null) {
   const t = (campaignType ?? "").toUpperCase();
-  if (t === "SPONSORED_UPDATES") return { label: "Conteúdo", color: "bg-sky-500/10 text-sky-400 border-sky-500/20" };
+  if (t === "SPONSORED_UPDATES") return { label: "Conteúdo", color: "bg-sky-500/10 text-primary border-sky-500/20" };
   if (t === "TEXT_AD") return { label: "Texto", color: "bg-pink-500/10 text-pink-400 border-pink-500/20" };
-  if (t === "SPONSORED_INMAILS") return { label: "Mensagem", color: "bg-violet-500/10 text-violet-400 border-violet-500/20" };
-  if (t === "DYNAMIC") return { label: "Dinâmico", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" };
-  return { label: "LinkedIn", color: "bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20" };
+  if (t === "SPONSORED_INMAILS") return { label: "Mensagem", color: "bg-violet-500/10 text-violet-600 border-violet-500/20" };
+  if (t === "DYNAMIC") return { label: "Dinâmico", color: "bg-emerald-500/10 text-positive border-emerald-500/20" };
+  return { label: "LinkedIn", color: "bg-primary/10 text-[var(--primary)] border-primary/20" };
 }
 
 interface Props { clienteId: string; filter: DateFilter; }
@@ -132,13 +132,13 @@ export function LinkedInCampanhasPanel({ clienteId, filter }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-[var(--border)] bg-white/[0.02] px-4 py-3 flex items-center gap-3">
-        <div className="w-7 h-7 rounded-lg bg-[var(--primary)]/10 flex items-center justify-center shrink-0">
+      <div className="rounded-xl border border-[var(--border)] bg-pearl px-4 py-3 flex items-center gap-3">
+        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
           <BarChart3 className="w-4 h-4 text-[var(--primary)]" />
         </div>
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--primary)]">LinkedIn Ads</p>
-          <p className="text-sm font-extrabold text-[var(--foreground)] uppercase tracking-wider">Campanhas · Análise por período</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--primary)]">LinkedIn Ads</p>
+          <p className="text-sm font-semibold text-[var(--foreground)] uppercase tracking-wider">Campanhas · Análise por período</p>
         </div>
       </div>
 
@@ -155,7 +155,7 @@ export function LinkedInCampanhasPanel({ clienteId, filter }: Props) {
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-[var(--border)]">
           <table className="w-full min-w-[640px]">
-            <thead className="bg-white/[0.02]">
+            <thead className="bg-pearl">
               <tr>
                 <Th label="Campanha" col="nome" sortKey={key} dir={dir} onSort={toggle} right={false} />
                 <Th label="Status" col="statusOrder" sortKey={key} dir={dir} onSort={toggle} right={false} />
@@ -181,20 +181,20 @@ export function LinkedInCampanhasPanel({ clienteId, filter }: Props) {
                 return (
                   <tr
                     key={c.nome}
-                    className={`border-t border-[var(--border)] ${isTop ? "bg-[var(--primary)]/[0.05]" : "bg-white/[0.02]"}`}
+                    className={`border-t border-[var(--border)] ${isTop ? "bg-primary/[0.05]" : "bg-pearl"}`}
                   >
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-2 min-w-0">
                         {isTop && (
-                          <span className="shrink-0 rounded-full bg-[var(--primary)]/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-[var(--primary)]">#1</span>
+                          <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-[var(--primary)]">#1</span>
                         )}
-                        <span className={`shrink-0 text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full border whitespace-nowrap ${badge.color}`}>{badge.label}</span>
+                        <span className={`shrink-0 text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded-full border whitespace-nowrap ${badge.color}`}>{badge.label}</span>
                         <p className="text-sm font-semibold text-[var(--foreground)] truncate" title={c.nome}>{c.nome}</p>
                       </div>
                     </td>
                     <td className="px-3 py-3">
                       {(() => { const sb = statusBadge(c.campaignStatus); return sb ? (
-                        <span className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full border whitespace-nowrap ${sb.color}`}>
+                        <span className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-widest px-2 py-1 rounded-full border whitespace-nowrap ${sb.color}`}>
                           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${sb.dot}`} />
                           {sb.label}
                         </span>
@@ -218,39 +218,39 @@ export function LinkedInCampanhasPanel({ clienteId, filter }: Props) {
               })}
             </tbody>
             <tfoot>
-              <tr className="border-t-2 border-[var(--primary)]/30 bg-[var(--primary)]/[0.06]">
+              <tr className="border-t-2 border-primary/30 bg-primary/[0.06]">
                 <td className="px-3 py-3" colSpan={2}>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[var(--primary)]">Total · {campanhas.length} campanhas</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--primary)]">Total · {campanhas.length} campanhas</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-extrabold text-[var(--foreground)]">{fmtBrl(totais.investimento)}</span>
+                  <span className="text-sm font-semibold text-[var(--foreground)]">{fmtBrl(totais.investimento)}</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-bold text-[var(--muted-foreground)]">{fmt(totais.impressoes)}</span>
+                  <span className="text-sm font-semibold text-[var(--muted-foreground)]">{fmt(totais.impressoes)}</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-bold text-[var(--foreground)]">{fmt(totais.cliques)}</span>
+                  <span className="text-sm font-semibold text-[var(--foreground)]">{fmt(totais.cliques)}</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-bold text-[var(--muted-foreground)]">{ctrTotal != null ? fmtPct(ctrTotal) : dash}</span>
+                  <span className="text-sm font-semibold text-[var(--muted-foreground)]">{ctrTotal != null ? fmtPct(ctrTotal) : dash}</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-bold text-[var(--foreground)]">{cpcTotal != null ? fmtBrl(cpcTotal) : dash}</span>
+                  <span className="text-sm font-semibold text-[var(--foreground)]">{cpcTotal != null ? fmtBrl(cpcTotal) : dash}</span>
                 </td>
                 {hasLeads && <>
                   <td className="px-3 py-3 text-right">
-                    <span className="text-sm font-bold text-[var(--foreground)]">{fmt(totais.leads)}</span>
+                    <span className="text-sm font-semibold text-[var(--foreground)]">{fmt(totais.leads)}</span>
                   </td>
                   <td className="px-3 py-3 text-right">
-                    <span className="text-sm font-bold text-[var(--foreground)]">{cplTotal != null ? fmtBrl(cplTotal) : dash}</span>
+                    <span className="text-sm font-semibold text-[var(--foreground)]">{cplTotal != null ? fmtBrl(cplTotal) : dash}</span>
                   </td>
                 </>}
                 {hasConv && <>
                   <td className="px-3 py-3 text-right">
-                    <span className="text-sm font-bold text-[var(--foreground)]">{fmt(totais.conversoes, 1)}</span>
+                    <span className="text-sm font-semibold text-[var(--foreground)]">{fmt(totais.conversoes, 1)}</span>
                   </td>
                   <td className="px-3 py-3 text-right">
-                    <span className="text-sm font-bold text-[var(--foreground)]">{cpaTotal != null ? fmtBrl(cpaTotal) : dash}</span>
+                    <span className="text-sm font-semibold text-[var(--foreground)]">{cpaTotal != null ? fmtBrl(cpaTotal) : dash}</span>
                   </td>
                 </>}
               </tr>

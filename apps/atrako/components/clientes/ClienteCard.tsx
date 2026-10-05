@@ -38,7 +38,7 @@ export function ClienteCard({ cliente }: { cliente: ClienteCardData }) {
         <CardContent className="flex h-full flex-col gap-5 p-6">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--muted)] to-[var(--border)] text-sm font-bold text-[var(--muted-foreground)]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--muted)] to-[var(--border)] text-sm font-semibold text-[var(--muted-foreground)]">
                 {initials}
               </div>
               {cliente.segmento?.trim() && (
@@ -51,19 +51,19 @@ export function ClienteCard({ cliente }: { cliente: ClienteCardData }) {
                 </span>
               )}
               {cliente.squad && (
-                <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--muted)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)]">
+                <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--muted)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
                   S{cliente.squad}
                 </span>
               )}
             </div>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--muted-foreground)] transition-all group-hover:bg-[var(--primary)]/10 group-hover:text-[var(--primary)]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--muted-foreground)] transition-all group-hover:bg-primary/10 group-hover:text-[var(--primary)]">
               <ArrowUpRight className="h-4 w-4" />
             </div>
           </div>
 
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-bold leading-tight text-[var(--foreground)]">
+              <h3 className="text-lg font-semibold leading-tight text-[var(--foreground)]">
                 {cliente.nome}
               </h3>
               <AccountHealthDot status={cliente.healthStatus} />

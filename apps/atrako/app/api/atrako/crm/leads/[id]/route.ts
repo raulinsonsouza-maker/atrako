@@ -6,6 +6,7 @@ import { getPersonJourney, storeProviderLabel } from "@/lib/atrako/person";
 import type { AbandonedCartItem } from "@/lib/crm/abandoned-cart";
 import { ensureDefaultPipeline } from "@/lib/modules/crm";
 import { leadCommunications } from "@/lib/flows/lead-card";
+import { CHANNEL_LABELS, type OrderChannel } from "@/lib/commerce-attribution/store-source";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -64,8 +65,53 @@ export async function GET(request: NextRequest, ctx: Ctx) {
 
   const communications = lead.contactId ? await leadCommunications(workspaceId, lead.contactId) : null;
 
+  const orderRows = await prisma.marketplaceOrder.findMany({
+    where: {
+      clienteId: workspaceId,
+      OR: [{ leadId: lead.id }, ...(lead.contactId ? [{ contactId: lead.contactId }] : [])],
+    },
+    orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
+    take: 10,
+    include: { items: true, source: true },
+  });
+  const orders = orderRows.map((o) => ({
+    id: o.id,
+    externalId: o.externalId,
+    provider: o.provider,
+    providerLabel: storeProviderLabel(o.provider),
+    status: o.status,
+    totalCents: o.totalCents ?? 0,
+    currency: o.currency ?? "BRL",
+    occurredAt: (o.occurredAt ?? o.createdAt).toISOString(),
+    items: o.items.map((i) => ({
+      title: i.title,
+      quantity: i.quantity,
+      unitPriceCents: i.unitPriceCents,
+      imageUrl: i.imageUrl,
+      productUrl: i.productUrl,
+    })),
+    source: o.source
+      ? {
+          channel: o.source.channel,
+          channelLabel: CHANNEL_LABELS[o.source.channel as OrderChannel] ?? o.source.channel,
+          storeSource: o.source.storeSource,
+          storeMedium: o.source.storeMedium,
+          storeContent: o.source.storeContent,
+          deviceType: o.source.deviceType,
+          adMethod: o.source.adMethod,
+          adConfidence: o.source.adConfidence,
+          adWindow: o.source.adWindow,
+          campaignName: o.source.metaCampaignName,
+          adsetName: o.source.metaAdsetName,
+          adName: o.source.metaAdName,
+          adId: o.source.metaAdId,
+        }
+      : null,
+  }));
+
   return NextResponse.json({
     communications,
+    orders,
     lead: {
       id: lead.id,
       contactId: lead.contactId,

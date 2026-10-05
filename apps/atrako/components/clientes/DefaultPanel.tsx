@@ -21,7 +21,7 @@ const tooltipStyle = {
     border: "1px solid var(--border)",
     borderRadius: "10px",
     color: "var(--foreground)",
-    boxShadow: "0 8px 24px rgba(0,0,0,.35)",
+    boxShadow: "none",
     padding: "10px 14px",
   },
   labelStyle: { color: "var(--foreground)", fontWeight: 600, marginBottom: 4 },
@@ -34,32 +34,37 @@ function KpiCard({
   sub,
   icon: Icon,
   accentValue,
+  tone,
 }: {
   title: string;
   value: string;
   sub: string;
   icon: React.ElementType;
   accentValue?: boolean;
+  tone?: "positive" | "negative";
 }) {
+  const valueColor =
+    tone === "positive"
+      ? "text-[var(--positive)]"
+      : tone === "negative"
+        ? "text-[var(--negative)]"
+        : accentValue
+          ? "text-[var(--primary)]"
+          : "text-[var(--foreground)]";
   return (
-    <Card className="group relative overflow-hidden rounded-2xl border-[var(--border)] transition-all hover:border-[color-mix(in_srgb,var(--primary)_20%,var(--border))]">
-      <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--primary)] opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-[0.05]" />
+    <Card className="overflow-hidden rounded-2xl border-[var(--border)] bg-[var(--canvas)]">
       <CardContent className="flex items-start gap-4 p-5">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--primary)]/10 text-[var(--primary)]">
-          <Icon className="h-5 w-5" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--chart-current)] text-[var(--primary)]">
+          <Icon className="h-[18px] w-[18px]" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+          <p className="type-fine-print uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
             {title}
           </p>
-          <p
-            className={`mt-1 text-2xl font-extrabold tabular-nums leading-none ${
-              accentValue ? "text-[var(--primary)]" : "text-[var(--foreground)]"
-            }`}
-          >
+          <p className={`mt-2 whitespace-nowrap type-tagline tabular-nums ${valueColor}`}>
             {value}
           </p>
-          <p className="mt-1.5 text-[11px] text-[var(--muted-foreground)]">{sub}</p>
+          <p className="mt-1.5 type-fine-print leading-snug text-[var(--muted-foreground)]">{sub}</p>
         </div>
       </CardContent>
     </Card>
@@ -69,7 +74,7 @@ function KpiCard({
 function SectionHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div>
-      <h2 className="text-lg font-bold tracking-tight text-[var(--foreground)]">{title}</h2>
+      <h2 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">{title}</h2>
       <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">{subtitle}</p>
     </div>
   );
@@ -141,6 +146,8 @@ type DefaultPanelProps = {
   kombuchaMode?: boolean;
   /** Quando true (Be Blue School), usa labels de "View de LP" e mostra custo por view de LP. */
   lpViewsMode?: boolean;
+  /** Geral e-commerce: os números do topo vêm do consolidado; aqui fica só gráfico e tabela. */
+  hideKpis?: boolean;
 };
 
 export function DefaultPanel({
@@ -166,6 +173,7 @@ export function DefaultPanel({
   academyEngajamentoMode = false,
   kombuchaMode = false,
   lpViewsMode = false,
+  hideKpis = false,
 }: DefaultPanelProps) {
   const isMensal = agrupamento === "mensal";
   const isDiario = agrupamento === "diario";
@@ -180,6 +188,8 @@ export function DefaultPanel({
 
   return (
     <>
+      {!hideKpis && (
+      <>
       {/* KPI cards — modo e-commerce (Granarolo, D'or) */}
       {ecommerceGoogleMode ? (
         <>
@@ -208,6 +218,7 @@ export function DefaultPanel({
               value={roas > 0 ? `${roas.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}x` : "—"}
               sub="Retorno sobre investimento em anúncios (receita ÷ custo)"
               icon={Repeat2}
+              tone={roas <= 0 ? undefined : roas >= 1 ? "positive" : "negative"}
             />
           </section>
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
@@ -407,6 +418,8 @@ export function DefaultPanel({
           />
         </section>
       )}
+      </>
+      )}
 
       {/* Performance chart */}
       {chartData.length > 0 && (
@@ -445,19 +458,19 @@ export function DefaultPanel({
                   <div className="flex overflow-hidden rounded-lg border border-[var(--border)] text-xs">
                     <button
                       onClick={() => onAgrupamentoChange("diario")}
-                      className={`px-2.5 py-1.5 font-semibold transition-colors ${isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-[var(--muted)]/50 hover:text-[var(--foreground)]"}`}
+                      className={`px-2.5 py-1.5 font-semibold transition-colors ${isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"}`}
                     >
                       Diário
                     </button>
                     <button
                       onClick={() => onAgrupamentoChange("semanal")}
-                      className={`px-2.5 py-1.5 font-semibold transition-colors ${!isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-[var(--muted)]/50 hover:text-[var(--foreground)]"}`}
+                      className={`px-2.5 py-1.5 font-semibold transition-colors ${!isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"}`}
                     >
                       Semanal
                     </button>
                   </div>
                 )}
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--primary)]/10 text-[var(--primary)]">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--chart-current)] text-[var(--primary)]">
                   <TrendingUp className="h-4 w-4" />
                 </div>
               </div>
@@ -467,13 +480,7 @@ export function DefaultPanel({
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={chartData}>
-                  <defs>
-                    <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--muted-foreground)" stopOpacity={0.25} />
-                      <stop offset="100%" stopColor="var(--muted)" stopOpacity={0.8} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.5} />
+                  <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
                   <XAxis
                     dataKey="periodo"
                     stroke="var(--muted-foreground)"
@@ -519,8 +526,9 @@ export function DefaultPanel({
                   <Bar
                     yAxisId="left"
                     dataKey="Investimento"
-                    fill="url(#barGrad)"
+                    fill="var(--chart-spend)"
                     radius={[6, 6, 0, 0]}
+                    maxBarSize={56}
                   />
                   {chartRevenueKey && (
                     <Line
@@ -528,10 +536,11 @@ export function DefaultPanel({
                       type="monotone"
                       dataKey={chartRevenueKey}
                       name={chartRevenueKey}
-                      stroke="none"
-                      dot={false}
-                      activeDot={false}
-                      legendType="none"
+                      stroke="var(--chart-revenue)"
+                      strokeWidth={2}
+                      strokeDasharray="5 4"
+                      dot={{ fill: "var(--chart-revenue)", r: 3, strokeWidth: 0 }}
+                      activeDot={{ r: 5, strokeWidth: 0, fill: "var(--chart-revenue)" }}
                     />
                   )}
                   <Line
@@ -539,12 +548,12 @@ export function DefaultPanel({
                     type="monotone"
                     dataKey={chartConversionKey}
                     name={chartConversionKey}
-                    stroke="var(--primary)"
+                    stroke="var(--chart-result)"
                     strokeWidth={2.5}
-                    dot={{ fill: "var(--primary)", r: 4, strokeWidth: 0 }}
-                    activeDot={{ r: 6, strokeWidth: 0, fill: "var(--primary)" }}
+                    dot={{ fill: "var(--chart-result)", r: 4, strokeWidth: 0 }}
+                    activeDot={{ r: 6, strokeWidth: 0, fill: "var(--chart-result)" }}
                   />
-                  <Line yAxisId="cpl" dataKey="CPL" name={cplLabel} stroke="transparent" dot={false} activeDot={false} />
+                  <Line yAxisId="cpl" dataKey="CPL" name={cplLabel} stroke="transparent" dot={false} activeDot={false} legendType="none" />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
@@ -555,18 +564,18 @@ export function DefaultPanel({
       {/* Weekly breakdown table */}
       {latestFiveSeries.length > 0 && (
         <Card className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)]">
-          <CardHeader className="border-b border-[var(--border)]/60 px-6 pb-5 pt-6 sm:px-8">
+          <CardHeader className="border-b border-border/60 px-6 pb-5 pt-6 sm:px-8">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--accent),var(--primary))] text-white shadow-[0_12px_30px_rgba(220,38,38,0.25)]">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--chart-current)] text-[var(--primary)]">
                   <BarChart3 className="h-5 w-5" />
                 </div>
                 <div>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <h3 className="text-xl font-black uppercase tracking-tight text-[var(--foreground)] sm:text-2xl">
+                    <h3 className="type-tagline text-[var(--foreground)]">
                       {canal === "google" ? "Resultado Google" : `Resultado ${canalLabels[canal] ?? canal}`}
-                      <span className="ml-2 bg-[linear-gradient(90deg,var(--accent),var(--primary))] bg-clip-text text-transparent">
-                        {isMensal ? "Mês a mês" : isDiario ? "Dia a dia" : "Semana a semana"}
+                      <span className="ml-2 text-[var(--primary)]">
+                        {isMensal ? "mês a mês" : isDiario ? "dia a dia" : "semana a semana"}
                       </span>
                     </h3>
                     <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">
@@ -580,11 +589,11 @@ export function DefaultPanel({
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-[var(--border)] bg-[var(--muted)] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
+                <span className="rounded-full border border-[var(--border)] bg-[var(--canvas)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
                   {latestFiveSeries.length} {isMensal ? "meses" : isDiario ? "dias" : "semanas"}
                 </span>
                 {latestPeriod && (
-                  <span className="rounded-full border border-[var(--primary)]/25 bg-[var(--primary)]/12 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--foreground)]">
+                  <span className="rounded-full border border-primary/20 bg-[var(--chart-current)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--primary)]">
                     Atual: {latestPeriod}
                   </span>
                 )}
@@ -610,7 +619,7 @@ export function DefaultPanel({
                         >
                           <div className="flex flex-col items-center gap-1">
                             <span
-                              className={`text-[10px] font-bold uppercase tracking-[0.2em] ${
+                              className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
                                 isLatest ? "text-[var(--primary)]" : "text-[var(--muted-foreground)]"
                               }`}
                             >
@@ -624,19 +633,19 @@ export function DefaultPanel({
                   </tr>
                 </thead>
                 <tbody>
-                  {metricDefinitions.map((metric, metricIdx) => (
+                  {metricDefinitions.map((metric) => (
                     <tr key={metric.label} className="group">
-                      <td className={`rounded-l-2xl px-4 py-4 ${metric.isSubRow ? "bg-[var(--muted)]/50 pl-7" : "bg-[var(--muted)]"}`}>
+                      <td className={`rounded-l-2xl px-4 py-4 ${metric.isSubRow ? "bg-[var(--surface-pearl)] pl-7" : "bg-[var(--canvas-parchment)]"}`}>
                         <div className="flex items-center justify-between gap-3">
                           <div>
-                            <p className={`font-bold uppercase tracking-[0.18em] ${metric.isSubRow ? "text-[10px] text-[var(--muted-foreground)]" : "text-[11px] text-[var(--foreground)]"}`}>
+                            <p className={`font-semibold uppercase tracking-[0.18em] ${metric.isSubRow ? "text-[10px] text-[var(--muted-foreground)]" : "text-[11px] text-[var(--foreground)]"}`}>
                               {metric.isSubRow ? `↳ ${metric.label}` : metric.label}
                             </p>
                             <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
                               {metric.description}
                             </p>
                           </div>
-                          {!metric.isSubRow && <span className="hidden h-6 w-[2px] rounded-full bg-[linear-gradient(180deg,var(--accent),var(--primary))] opacity-70 md:block" />}
+                          {!metric.isSubRow && <span className="hidden h-6 w-[2px] rounded-full bg-primary/30 md:block" />}
                         </div>
                       </td>
                       {latestFiveSeries.map((s: MetricRow & { periodo: string }, periodIdx: number) => {
@@ -644,18 +653,16 @@ export function DefaultPanel({
                         return (
                           <td
                             key={`${metric.label}-${s.periodo}`}
-                            className={`px-4 py-4 text-center ${
+                            className={`px-4 py-4 text-center ${isLatest ? "rounded-r-2xl" : ""} ${
                               isLatest
-                                ? "bg-[linear-gradient(180deg,rgba(255,106,0,0.12),rgba(255,106,0,0.05))]"
+                                ? "bg-[var(--chart-current)]"
                                 : metric.isSubRow
-                                  ? "bg-[var(--muted)]/50"
-                                  : metricIdx % 2 === 0
-                                    ? "bg-[var(--muted)]"
-                                    : "bg-[var(--muted)]/50"
+                                  ? "bg-[var(--surface-pearl)]"
+                                  : "bg-[var(--canvas-parchment)]"
                             }`}
                           >
                             <div className="flex flex-col items-center gap-1">
-                              <span className={`tabular-nums font-bold ${metric.isSubRow ? "text-xs text-[var(--muted-foreground)]" : "text-sm text-[var(--foreground)]"}`}>
+                              <span className={`tabular-nums font-semibold ${metric.isSubRow ? "text-xs text-[var(--muted-foreground)]" : isLatest ? "text-sm text-[var(--primary)]" : "text-sm text-[var(--foreground)]"}`}>
                                 {metric.format(metric.value(s))}
                               </span>
                             </div>

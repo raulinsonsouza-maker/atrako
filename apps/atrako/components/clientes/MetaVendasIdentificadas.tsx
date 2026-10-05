@@ -7,7 +7,7 @@ import { describeOrderOrigin, type OrderSourceView } from "@/lib/commerce-attrib
 
 type VendasMeta = {
   meta: { purchases: number; valueCents: number; clickPurchases: number; viewPurchases: number };
-  identified: { orders: number; valueCents: number; countedByMeta: number; confirmed: number; probable: number };
+  identified: { orders: number; valueCents: number; countedByMeta: number; tracked: number; matched: number };
   semPar: number;
   byCampaign: Array<{
     campaignId: string;
@@ -95,9 +95,9 @@ export function MetaVendasIdentificadas({ clienteId, query }: { clienteId: strin
           hint={`${data.identified.orders} pedido(s) com origem Meta Ads`}
         />
         <Kpi
-          label="Confiança"
-          value={`${data.identified.confirmed} confirmadas`}
-          hint={`${data.identified.probable} prováveis (valor e dia batem com o Meta)`}
+          label="Como identificamos"
+          value={`${data.identified.tracked} por clique`}
+          hint={`${data.identified.matched} cruzadas com o Meta pelo valor e dia`}
         />
       </div>
 

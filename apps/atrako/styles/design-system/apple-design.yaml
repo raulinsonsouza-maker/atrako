@@ -32,7 +32,7 @@ colors:
   chart-spend: "#b8d3f0"
   chart-plan: "#d2d2d7"
   chart-revenue: "#16a34a"
-  chart-current: "#0066cc0f"
+  chart-current: "{colors.primary} @ 14%"
   positive: "#16a34a"
   negative: "#dc2626"
 

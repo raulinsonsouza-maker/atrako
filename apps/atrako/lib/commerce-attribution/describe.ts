@@ -30,14 +30,14 @@ export function describeOrderOrigin(s: OrderSourceView | null): OriginDescriptio
     const detail = [s.campaignName && `Campanha ${s.campaignName}`, s.adsetName && `Conjunto ${s.adsetName}`]
       .filter(Boolean)
       .join(" · ");
-    const confirmed = s.adConfidence === "confirmed";
+    const tracked = s.adConfidence === "confirmed";
     const how = s.adWindow === "view" ? "viu o anúncio" : "clicou no anúncio";
     return {
       title: `Meta Ads · ${s.adName ?? "anúncio"}`,
       detail: detail || null,
-      badge: confirmed
-        ? { label: "Confirmado: clique registrado na loja", tone: "ok" }
-        : { label: `Provável: Meta contou esta compra (${how})`, tone: "warn" },
+      badge: tracked
+        ? { label: "Clique rastreado na loja", tone: "ok" }
+        : { label: `Cruzado com o Meta · ${how}`, tone: "ok" },
       lastVisit: s.adMethod === "meta_match" && visit ? `Última visita antes da compra: ${visit}` : null,
     };
   }

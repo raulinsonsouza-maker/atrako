@@ -318,7 +318,6 @@ export function VarellaMotosPanel({
                     yAxisId="money"
                     dataKey="Investimento"
                     fill="var(--chart-spend)"
-                    maxBarSize={48}
                     radius={[6, 6, 0, 0]}
                   />
                   <Line

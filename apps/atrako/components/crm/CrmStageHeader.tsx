@@ -115,16 +115,23 @@ export function CrmStageHeader({
         aria-label={editable ? `Editar etapa ${name}` : name}
       >
         <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: color }} />
-        <h3 className="min-w-0 truncate type-caption-strong text-[var(--ink)]">{name}</h3>
-        {editable ? (
-          <Pencil
-            className="pipeline-column-edit h-3 w-3 shrink-0 text-[var(--ink-muted-48)] opacity-0 transition"
-            strokeWidth={1.75}
-          />
-        ) : null}
+        <span className="min-w-0">
+          <span className="flex items-center gap-1.5">
+            <h3 className="min-w-0 type-caption-strong leading-tight text-[var(--ink)]">{name}</h3>
+            {editable ? (
+              <Pencil
+                className="pipeline-column-edit h-3 w-3 shrink-0 text-[var(--ink-muted-48)] opacity-0 transition"
+                strokeWidth={1.75}
+              />
+            ) : null}
+          </span>
+          {valueLabel ? (
+            <span className="block type-fine-print tabular-nums text-[var(--ink-muted-48)]">{valueLabel}</span>
+          ) : null}
+        </span>
       </button>
-      <span className="shrink-0 type-fine-print tabular-nums text-[var(--ink-muted-48)]">
-        {valueLabel ? `${valueLabel} · ${count}` : count}
+      <span className="shrink-0 rounded-full bg-[var(--canvas-parchment)] px-2 py-0.5 type-fine-print tabular-nums text-[var(--ink-muted-80)]">
+        {count}
       </span>
 
       {open ? (

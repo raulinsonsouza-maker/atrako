@@ -528,7 +528,6 @@ export function DefaultPanel({
                     dataKey="Investimento"
                     fill="var(--chart-spend)"
                     radius={[6, 6, 0, 0]}
-                    maxBarSize={56}
                   />
                   {chartRevenueKey && (
                     <Line
@@ -655,7 +654,7 @@ export function DefaultPanel({
                             key={`${metric.label}-${s.periodo}`}
                             className={`px-4 py-4 text-center ${isLatest ? "rounded-r-2xl" : ""} ${
                               isLatest
-                                ? "bg-[var(--chart-current)]"
+                                ? "border-l-[3px] border-[var(--primary)] bg-[var(--chart-current)]"
                                 : metric.isSubRow
                                   ? "bg-[var(--surface-pearl)]"
                                   : "bg-[var(--canvas-parchment)]"

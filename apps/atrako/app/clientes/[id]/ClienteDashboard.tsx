@@ -1615,9 +1615,9 @@ function formatPercentage(value: number) {
                     />
                   )}
                   {!semOrcamento && (
-                    <Bar dataKey="Orcado" name="Orçado" fill="var(--chart-plan)" radius={[6, 6, 0, 0]} maxBarSize={28} />
+                    <Bar dataKey="Orcado" name="Orçado" fill="var(--chart-plan)" radius={[6, 6, 0, 0]} />
                   )}
-                  <Bar dataKey="Realizado" fill="var(--chart-result)" radius={[6, 6, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="Realizado" fill="var(--chart-result)" radius={[6, 6, 0, 0]} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>

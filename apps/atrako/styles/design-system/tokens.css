@@ -62,7 +62,7 @@
   --chart-spend: #b8d3f0;
   --chart-plan: #d2d2d7;
   --chart-revenue: #16a34a;
-  --chart-current: rgba(0, 102, 204, 0.06);
+  --chart-current: color-mix(in srgb, var(--primary) 14%, transparent);
   --positive: #16a34a;
   --negative: #dc2626;
 

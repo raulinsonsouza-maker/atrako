@@ -398,7 +398,6 @@ export function HotelFazendaSaoJoaoPanel({
                     yAxisId="inv"
                     dataKey="Investimento"
                     fill="var(--chart-spend)"
-                    maxBarSize={48}
                     radius={[6, 6, 0, 0]}
                   />
                   <Line

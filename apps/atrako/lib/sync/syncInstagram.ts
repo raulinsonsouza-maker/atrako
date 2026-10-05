@@ -23,6 +23,21 @@ function toUnix(date: Date): number {
   return Math.floor(date.getTime() / 1000);
 }
 
+// Insights API rejects since→until spans above 30 days (2592000 s).
+const MAX_INSIGHT_WINDOW_SECONDS = 28 * 24 * 60 * 60;
+
+function splitInsightWindows(since: Date, until: Date): Array<{ since: string; until: string }> {
+  const windows: Array<{ since: string; until: string }> = [];
+  let start = toUnix(since);
+  const end = toUnix(until);
+  while (start < end) {
+    const stop = Math.min(start + MAX_INSIGHT_WINDOW_SECONDS, end);
+    windows.push({ since: String(start), until: String(stop) });
+    start = stop;
+  }
+  return windows;
+}
+
 async function igGet(
   path: string,
   token: string,
@@ -66,9 +81,9 @@ export async function syncInstagramCliente(
     const followersTotal = (profileRaw.followers_count as number) ?? 0;
 
     // Instagram Insights API constraints (v22+):
-    // • since→until window must be ≤30 days → we use 28-day windows
-    // • reach: period=day, values[] array (daily values to sum) — valid for account + REELS
-    // • total_interactions: period=day + metric_type=total_value → data[0].total_value.value
+    // • since→until window must be ≤30 days → months are split into ≤28-day windows and summed
+    //   (reach/accounts_engaged are deduplicated per window, so a split month is an approximation)
+    // • reach / accounts_engaged / views: period=day + metric_type=total_value → data[0].total_value.value
     // • follower_count: period=day, values[] (daily new followers to sum); only last 30 days
     // • views: substitui `impressions`, removida dos insights de conta no Graph API v22
 
@@ -95,8 +110,7 @@ export async function syncInstagramCliente(
       if (since > now) continue;
       const nextMonth = new Date(since.getFullYear(), since.getMonth() + 1, 1);
       const until = new Date(Math.min(nextMonth.getTime() - 1000, now.getTime()));
-      const s = String(toUnix(since));
-      const u = String(toUnix(until));
+      const windows = splitInsightWindows(since, until);
       const ano = since.getFullYear();
       const mes = since.getMonth() + 1;
       const key = `${ano}-${String(mes).padStart(2, "0")}`;
@@ -122,55 +136,56 @@ export async function syncInstagramCliente(
         }
       };
 
-      const [r1, r2, r3, r4] = await Promise.all([
-        // reach with metric_type=total_value → deduplicated unique accounts for the period
-        // (same number the IG platform shows as "Contas alcançadas")
-        safeInsight("reach", {
-          period: "day",
-          metric_type: "total_value",
-          since: s,
-          until: u,
-        }),
-        safeInsight("accounts_engaged", {
-          period: "day",
-          since: s,
-          until: u,
-          metric_type: "total_value",
-        }),
-        // follower_count only supported for last ~30 days; older months silently return empty
-        safeInsight("follower_count", {
-          period: "day",
-          since: s,
-          until: u,
-        }),
-        safeInsight("views", {
-          period: "day",
-          since: s,
-          until: u,
-          metric_type: "total_value",
-        }),
-      ]);
-
       type DailyValue = { value: number; end_time: string };
       type TotalValueEntry = { total_value?: { value: number } };
 
-      // reach: now uses total_value (deduplicated period reach, matches IG platform)
-      const alcanceValue = ((r1?.data as TotalValueEntry[] | undefined)?.[0]?.total_value?.value);
+      const sumTotalValue = async (metric: string): Promise<number | null> => {
+        let total = 0;
+        let hasData = false;
+        for (const w of windows) {
+          const r = await safeInsight(metric, {
+            period: "day",
+            metric_type: "total_value",
+            since: w.since,
+            until: w.until,
+          });
+          const value = (r?.data as TotalValueEntry[] | undefined)?.[0]?.total_value?.value;
+          if (typeof value === "number") {
+            total += value;
+            hasData = true;
+          }
+        }
+        return hasData ? total : null;
+      };
+
+      const [alcanceValue, engagementValue, followerRaw, viewsValue] = await Promise.all([
+        // reach total_value = "Contas alcançadas" da plataforma IG
+        sumTotalValue("reach"),
+        sumTotalValue("accounts_engaged"),
+        // follower_count only supported for last ~30 days; older months are skipped
+        isWithin30Days
+          ? safeInsight("follower_count", {
+              period: "day",
+              since: String(toUnix(since)),
+              until: String(toUnix(until)),
+            })
+          : Promise.resolve(null),
+        sumTotalValue("views"),
+      ]);
+
       const alcance = alcanceValue ?? 0;
-      const hasReachData = typeof alcanceValue === "number";
+      const hasReachData = alcanceValue !== null;
 
-      const engagementValue = ((r2?.data as TotalValueEntry[] | undefined)?.[0]?.total_value?.value);
       const engajamento = engagementValue ?? 0;
-      const hasEngagementData = typeof engagementValue === "number";
+      const hasEngagementData = engagementValue !== null;
 
-      const followValues = (r3?.data as Array<{ values?: DailyValue[] }> | undefined)?.[0]?.values ?? [];
+      const followValues = (followerRaw?.data as Array<{ values?: DailyValue[] }> | undefined)?.[0]?.values ?? [];
       const novosSeguidores = followValues.reduce((sum, v) => sum + (v.value ?? 0), 0);
       const hasFollowerData = isWithin30Days && followValues.length > 0;
 
       // Persistido no campo legado `impressoes`, mas representa a métrica oficial `views`.
-      const viewsValue = ((r4?.data as TotalValueEntry[] | undefined)?.[0]?.total_value?.value);
       const impressoes = viewsValue ?? 0;
-      const hasViewsData = typeof viewsValue === "number";
+      const hasViewsData = viewsValue !== null;
 
       monthMap.set(key, {
         ano, mes, alcance, engajamento, novosSeguidores, impressoes,

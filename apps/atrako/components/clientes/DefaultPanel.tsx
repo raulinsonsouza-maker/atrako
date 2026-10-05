@@ -554,7 +554,7 @@ export function DefaultPanel({
 
       {/* Weekly breakdown table */}
       {latestFiveSeries.length > 0 && (
-        <Card className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[linear-gradient(180deg,rgba(20,21,26,0.98),rgba(12,12,16,1))] shadow-[0_24px_80px_rgba(0,0,0,0.38)]">
+        <Card className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)]">
           <CardHeader className="border-b border-[var(--border)]/60 px-6 pb-5 pt-6 sm:px-8">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="flex items-start gap-4">
@@ -580,7 +580,7 @@ export function DefaultPanel({
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-[var(--border)] bg-white/[0.02] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
+                <span className="rounded-full border border-[var(--border)] bg-[var(--muted)] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
                   {latestFiveSeries.length} {isMensal ? "meses" : isDiario ? "dias" : "semanas"}
                 </span>
                 {latestPeriod && (
@@ -626,7 +626,7 @@ export function DefaultPanel({
                 <tbody>
                   {metricDefinitions.map((metric, metricIdx) => (
                     <tr key={metric.label} className="group">
-                      <td className={`rounded-l-2xl px-4 py-4 ${metric.isSubRow ? "bg-white/[0.015] pl-7" : "bg-white/[0.03]"}`}>
+                      <td className={`rounded-l-2xl px-4 py-4 ${metric.isSubRow ? "bg-[var(--muted)]/50 pl-7" : "bg-[var(--muted)]"}`}>
                         <div className="flex items-center justify-between gap-3">
                           <div>
                             <p className={`font-bold uppercase tracking-[0.18em] ${metric.isSubRow ? "text-[10px] text-[var(--muted-foreground)]" : "text-[11px] text-[var(--foreground)]"}`}>
@@ -648,10 +648,10 @@ export function DefaultPanel({
                               isLatest
                                 ? "bg-[linear-gradient(180deg,rgba(255,106,0,0.12),rgba(255,106,0,0.05))]"
                                 : metric.isSubRow
-                                  ? "bg-white/[0.015]"
+                                  ? "bg-[var(--muted)]/50"
                                   : metricIdx % 2 === 0
-                                    ? "bg-white/[0.03]"
-                                    : "bg-white/[0.015]"
+                                    ? "bg-[var(--muted)]"
+                                    : "bg-[var(--muted)]/50"
                             }`}
                           >
                             <div className="flex flex-col items-center gap-1">

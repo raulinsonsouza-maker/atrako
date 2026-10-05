@@ -158,7 +158,7 @@ export function GoogleKeywordsPanel({ data, formatCurrency, isLoading }: Props) 
       </div>
 
       {/* ── Tabela — card flutuante ── */}
-      <Card className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[linear-gradient(180deg,rgba(20,21,26,0.98),rgba(12,12,16,1))] shadow-[0_24px_80px_rgba(0,0,0,0.38)]">
+      <Card className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)]">
         <CardHeader className="border-b border-[var(--border)]/60 px-6 pb-4 pt-5 sm:px-8">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">

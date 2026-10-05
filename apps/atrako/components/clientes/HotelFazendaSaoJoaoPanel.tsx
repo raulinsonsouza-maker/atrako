@@ -623,7 +623,7 @@ export function HotelFazendaSaoJoaoPanel({
 
       {/* ── Weekly breakdown table ── */}
       {latestFiveSeries.length > 0 && (
-        <Card className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[linear-gradient(180deg,rgba(20,21,26,0.98),rgba(12,12,16,1))] shadow-[0_24px_80px_rgba(0,0,0,0.38)]">
+        <Card className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)]">
           <CardHeader className="border-b border-[var(--border)]/60 px-6 pb-5 pt-6 sm:px-8">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
@@ -700,7 +700,7 @@ export function HotelFazendaSaoJoaoPanel({
                     { label: "Ticket médio", render: (item: PainelSerie) => formatCurrency(item.ticketMedio) },
                   ].map((metric, metricIdx) => (
                     <tr key={metric.label}>
-                      <td className="rounded-l-2xl bg-white/[0.03] px-4 py-4">
+                      <td className="rounded-l-2xl bg-[var(--muted)] px-4 py-4">
                         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--foreground)]">
                           {metric.label}
                         </p>
@@ -725,8 +725,8 @@ export function HotelFazendaSaoJoaoPanel({
                               isLatest
                                 ? "bg-[linear-gradient(180deg,rgba(255,106,0,0.12),rgba(255,106,0,0.05))]"
                                 : metricIdx % 2 === 0
-                                  ? "bg-white/[0.03]"
-                                  : "bg-white/[0.015]"
+                                  ? "bg-[var(--muted)]"
+                                  : "bg-[var(--muted)]/50"
                             }`}
                           >
                             <span className={`block text-sm font-bold tabular-nums ${pctColor ?? "text-[var(--foreground)]"}`}>

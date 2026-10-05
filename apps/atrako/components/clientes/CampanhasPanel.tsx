@@ -1241,7 +1241,7 @@ export function CampanhasPanel({ clienteId, dateFilter, canal = "geral", mqlByCa
       : null;
 
   return (
-    <div className="rounded-[2rem] border border-[var(--border)] bg-[linear-gradient(180deg,rgba(20,21,26,0.98),rgba(12,12,16,1))] shadow-[0_24px_80px_rgba(0,0,0,0.38)] overflow-hidden">
+    <div className="rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)] overflow-hidden">
       {/* ── Header ── */}
       <div className="px-6 py-5 sm:px-8 border-b border-white/[0.05] flex items-center gap-4">
         {!isRoot && (

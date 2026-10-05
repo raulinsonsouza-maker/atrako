@@ -2562,7 +2562,7 @@ function MetaCriativosGrid({
       </div>
 
       {/* 3. Tabela de criativos */}
-      <div className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[linear-gradient(180deg,rgba(20,21,26,0.98),rgba(12,12,16,1))] shadow-[0_24px_80px_rgba(0,0,0,0.38)]">
+      <div className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)]">
         <div className="flex flex-col gap-3 border-b border-[var(--border)]/60 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--primary)]/10 text-[var(--primary)]">
@@ -2721,7 +2721,7 @@ function MetaCriativosGrid({
       </div>
 
       {/* 4. Eficiência da distribuição de verba */}
-      <div className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[linear-gradient(180deg,rgba(20,21,26,0.98),rgba(12,12,16,1))] shadow-[0_24px_80px_rgba(0,0,0,0.38)]">
+      <div className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)]">
         <div className="flex items-start gap-4 border-b border-[var(--border)]/60 px-6 py-5">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--accent),var(--primary))] text-white shadow-[0_12px_30px_rgba(220,38,38,0.25)]">
             <SlidersHorizontal className="h-5 w-5" />
@@ -2804,7 +2804,7 @@ function MetaCriativosGrid({
         const hasPlan = acaoEscalar.length > 0 || acaoPausar.length > 0 || acaoOtimizar.length > 0;
         if (!hasPlan) return null;
         return (
-          <div className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[linear-gradient(180deg,rgba(20,21,26,0.98),rgba(12,12,16,1))] shadow-[0_24px_80px_rgba(0,0,0,0.38)]">
+          <div className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)]">
             <div className="flex items-start gap-4 border-b border-[var(--border)]/60 px-6 py-5">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--accent),var(--primary))] text-white shadow-[0_12px_30px_rgba(220,38,38,0.25)]">
                 <TrendingUp className="h-5 w-5" />

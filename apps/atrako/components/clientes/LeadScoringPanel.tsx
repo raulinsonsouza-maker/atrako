@@ -1097,7 +1097,7 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
               <p className="text-xs text-[var(--muted-foreground)]">Distribuição de leads por campanha com CPL estimado</p>
             </div>
           </div>
-          <Card className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[linear-gradient(180deg,rgba(20,21,26,0.98),rgba(12,12,16,1))]">
+          <Card className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)]">
             <CardContent className="px-3 pb-4 pt-4 sm:px-5">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[500px] border-separate [border-spacing:0_6px]">
@@ -1393,7 +1393,7 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
             </p>
           </div>
         ) : (
-          <Card className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[linear-gradient(180deg,rgba(20,21,26,0.98),rgba(12,12,16,1))] shadow-[0_24px_80px_rgba(0,0,0,0.38)]">
+          <Card className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)]">
             <CardContent className="px-3 pb-4 pt-4 sm:px-5">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[700px] border-separate [border-spacing:0_6px]">

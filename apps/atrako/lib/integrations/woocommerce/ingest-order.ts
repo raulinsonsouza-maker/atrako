@@ -27,9 +27,11 @@ import {
 export async function syncWooOrderItems(workspaceId: string, orderId: string, wooOrder: WooOrder) {
   const items = await wooOrderItemsEnriched(workspaceId, wooOrder);
   if (!items.length) return;
-  await prisma.$transaction([
-    prisma.marketplaceOrderItem.deleteMany({ where: { orderId } }),
-    prisma.marketplaceOrderItem.createMany({
+  // Webhook, sync e backfill podem gravar o mesmo pedido ao mesmo tempo: trava por pedido.
+  await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT 1 FROM (SELECT pg_advisory_xact_lock(hashtext(${orderId}))) AS l`;
+    await tx.marketplaceOrderItem.deleteMany({ where: { orderId } });
+    await tx.marketplaceOrderItem.createMany({
       data: items.map((it) => ({
         orderId,
         externalItemId: it.externalItemId,
@@ -41,8 +43,8 @@ export async function syncWooOrderItems(workspaceId: string, orderId: string, wo
         imageUrl: it.imageUrl?.slice(0, 1000) ?? null,
         productUrl: it.productUrl?.slice(0, 1000) ?? null,
       })),
-    }),
-  ]);
+    });
+  });
 }
 
 /** Pago → Ganho (+ recupera carrinho); não pago → carrinho abandonado; reembolso → Perdido. */

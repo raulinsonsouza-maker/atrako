@@ -33,22 +33,34 @@ export interface ButtonProps
     | "default"
     | "outline"
     | "ghost";
+  /** `toolbar`: 36px, mesma altura de SearchInput / PillSelect / SegmentedControl em barras de filtro. */
+  size?: "default" | "toolbar";
+}
+
+const TOOLBAR_SIZE = "h-9 px-3.5 py-0 type-caption-strong";
+
+/** Classes do Button para `<a>` / `<Link>` com o mesmo visual. */
+function buttonClass({
+  variant = "primary",
+  size = "default",
+  className,
+}: Pick<ButtonProps, "variant" | "size" | "className"> = {}) {
+  const resolved = (
+    variant === "default" ? "primary" : variant
+  ) as NonNullable<VariantProps<typeof buttonVariants>["variant"]>;
+  const base = buttonVariants({ variant: resolved });
+  return cn(
+    size === "toolbar" ? base.replace(/\btype-[\w-]+/g, "") : base,
+    size === "toolbar" && TOOLBAR_SIZE,
+    className,
+  );
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", ...props }, ref) => {
-    const resolved = (
-      variant === "default" ? "primary" : variant
-    ) as NonNullable<VariantProps<typeof buttonVariants>["variant"]>;
-    return (
-      <button
-        className={cn(buttonVariants({ variant: resolved }), className)}
-        ref={ref}
-        {...props}
-      />
-    );
-  },
+  ({ className, variant, size, ...props }, ref) => (
+    <button className={buttonClass({ variant, size, className })} ref={ref} {...props} />
+  ),
 );
 Button.displayName = "Button";
 
-export { Button, buttonVariants };
+export { Button, buttonVariants, buttonClass };

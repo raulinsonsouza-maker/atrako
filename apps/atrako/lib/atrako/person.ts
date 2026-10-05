@@ -5,6 +5,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { orderStatusLabel } from "@/lib/commerce-attribution/order-status";
 
 export function normalizePersonPhone(raw?: string | null): string | null {
   if (!raw) return null;
@@ -368,30 +369,7 @@ export function storeProviderLabel(provider: string) {
   return STORE_PROVIDER_LABELS[provider] ?? provider;
 }
 
-const ORDER_STATUS_LABELS: Record<string, string> = {
-  pending: "Aguardando pagamento",
-  "on-hold": "Aguardando pagamento",
-  processing: "Pago",
-  completed: "Concluído",
-  cancelled: "Cancelado",
-  failed: "Pagamento recusado",
-  refunded: "Reembolsado",
-  paid: "Pago",
-  partially_paid: "Pago parcialmente",
-  authorized: "Pagamento autorizado",
-  voided: "Cancelado",
-  expired: "Expirado",
-  abandoned: "Abandonado",
-};
-
-/** Status da loja em português (Tray já vem em PT, só normaliza a caixa). */
-export function orderStatusLabel(status: string | null | undefined) {
-  if (!status) return null;
-  const mapped = ORDER_STATUS_LABELS[status.toLowerCase()];
-  if (mapped) return mapped;
-  const lower = status.toLowerCase();
-  return lower.charAt(0).toUpperCase() + lower.slice(1);
-}
+export { orderStatusLabel };
 
 function brl(cents: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
@@ -513,13 +491,15 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
         ? (lead.metadata as Record<string, unknown>)
         : {};
     const attrDetail = formatAttributionDetail(meta);
-    const sourcePart = lead.source ? `Fonte: ${lead.source}` : undefined;
+    const sourcePart = lead.source
+      ? `Fonte: ${STORE_PROVIDER_LABELS[lead.source.toUpperCase()] ?? lead.source}`
+      : undefined;
     const leadDetail = [sourcePart, attrDetail].filter(Boolean).join(" · ") || undefined;
 
     items.push({
       at: lead.createdAt.toISOString(),
       type: "lead.created",
-      title: `Lead · ${lead.stage?.name || lead.status}`,
+      title: "Entrou no CRM",
       detail: leadDetail,
       href: `/crm/leads/${lead.id}`,
       meta: {
@@ -563,8 +543,7 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
       items.push({
         at: wonAt,
         type: "lead.won",
-        title: deal != null ? `Ganho · R$ ${deal.toFixed(2)}` : "Ganho no CRM",
-        detail: leadDetail,
+        title: deal != null ? `Marcado como ganho · ${brl(Math.round(deal * 100))}` : "Marcado como ganho",
         href: `/crm/leads/${lead.id}`,
         meta: {
           leadId: lead.id,
@@ -618,8 +597,8 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
       type: order.status === "APPROVED" ? "commerce.purchase" : "commerce.order",
       title:
         order.status === "APPROVED"
-          ? `Compra · R$ ${(order.totalCents / 100).toFixed(2)}`
-          : `Pedido ${order.status} · R$ ${(order.totalCents / 100).toFixed(2)}`,
+          ? `Compra · ${brl(order.totalCents)}`
+          : `Pedido ${orderStatusLabel(order.status)?.toLowerCase() ?? ""} · ${brl(order.totalCents)}`,
       detail:
         [order.items.map((i) => i.name).join(", "), leadAttrDetail, utm || null]
           .filter(Boolean)
@@ -650,9 +629,10 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
     items.push({
       at: (mo.occurredAt ?? mo.createdAt).toISOString(),
       type: "marketplace.order",
-      title: `${storeProviderLabel(mo.provider)} · ${brl(cents)}`,
+      title: `Pedido #${mo.externalId} · ${brl(cents)}`,
       detail:
         [
+          storeProviderLabel(mo.provider),
           orderStatusLabel(mo.status),
           mo.items.map((i) => i.title).join(", ") || null,
           leadAttrDetail,
@@ -669,7 +649,15 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
     });
   }
 
+  const shownOrderRefs = new Set<string>([
+    ...orders.map((o) => o.id),
+    ...marketplaceOrders.flatMap((mo) => [mo.id, mo.externalId]),
+  ]);
+  const shownOrderTags = marketplaceOrders.map((mo) => `#${mo.externalId}`);
+
   for (const entry of ledger) {
+    if (entry.sourceRef && shownOrderRefs.has(entry.sourceRef)) continue;
+    if (entry.description && shownOrderTags.some((tag) => entry.description!.endsWith(tag))) continue;
     const entryMeta =
       entry.metadata && typeof entry.metadata === "object" && !Array.isArray(entry.metadata)
         ? (entry.metadata as Record<string, unknown>)
@@ -679,7 +667,7 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
     items.push({
       at: entry.occurredAt.toISOString(),
       type: "finance.income",
-      title: `Entrada · R$ ${Number(entry.amount).toFixed(2)}`,
+      title: `Entrada no caixa · ${brl(Math.round(Number(entry.amount) * 100))}`,
       detail: [entry.description || entry.source, entryAttr]
         .filter(Boolean)
         .join(" · ") || undefined,
@@ -714,7 +702,10 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
     items.push({
       at: cart.abandonedAt.toISOString(),
       type: "cart.abandoned",
-      title: `Carrinho abandonado · ${brl(cart.totalCents)}`,
+      title:
+        cart.kind === "order"
+          ? `Pedido #${cart.externalId.replace(/^order:/, "")} não pago · ${brl(cart.totalCents)}`
+          : `Carrinho abandonado · ${brl(cart.totalCents)}`,
       detail: storeProviderLabel(cart.provider),
     });
     if (cart.notifiedAt) {

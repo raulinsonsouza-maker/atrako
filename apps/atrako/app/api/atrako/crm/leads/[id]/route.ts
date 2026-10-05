@@ -7,6 +7,7 @@ import type { AbandonedCartItem } from "@/lib/crm/abandoned-cart";
 import { ensureDefaultPipeline } from "@/lib/modules/crm";
 import { leadCommunications } from "@/lib/flows/lead-card";
 import { CHANNEL_LABELS, type OrderChannel } from "@/lib/commerce-attribution/store-source";
+import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -44,25 +45,6 @@ export async function GET(request: NextRequest, ctx: Ctx) {
     orderBy: { abandonedAt: "desc" },
     take: 5,
   });
-  const statusOrder: Record<string, number> = { OPEN: 0, PENDING: 1, RECOVERED: 2, EXPIRED: 3 };
-  const carts = cartRows
-    .sort((a, b) => (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9))
-    .map((c) => ({
-      id: c.id,
-      provider: c.provider,
-      providerLabel: storeProviderLabel(c.provider),
-      kind: c.kind,
-      status: c.status,
-      totalCents: c.totalCents,
-      currency: c.currency,
-      items: Array.isArray(c.items) ? (c.items as AbandonedCartItem[]) : [],
-      recoveryUrl: c.recoveryUrl,
-      abandonedAt: c.abandonedAt.toISOString(),
-      recoveredAt: c.recoveredAt?.toISOString() ?? null,
-      recoveredCents: c.recoveredCents,
-      notifiedAt: c.notifiedAt?.toISOString() ?? null,
-    }));
-
   const communications = lead.contactId ? await leadCommunications(workspaceId, lead.contactId) : null;
 
   const orderRows = await prisma.marketplaceOrder.findMany({
@@ -74,12 +56,47 @@ export async function GET(request: NextRequest, ctx: Ctx) {
     take: 10,
     include: { items: true, source: true },
   });
+
+  // Pedido não pago vira carrinho (`order:<id>`): o card mostra um só, com o status real do pedido.
+  const cartOrderKey = (provider: string, externalId: string) => `${provider}:${externalId}`;
+  const cartOrderKeys = new Set(
+    cartRows.filter((c) => c.kind === "order").map((c) => cartOrderKey(c.provider, c.externalId.replace(/^order:/, ""))),
+  );
+  const statusOrder: Record<string, number> = { OPEN: 0, PENDING: 1, RECOVERED: 2, EXPIRED: 3 };
+  const carts = cartRows
+    .sort((a, b) => (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9))
+    .map((c) => {
+      const orderExternalId = c.kind === "order" ? c.externalId.replace(/^order:/, "") : null;
+      const linked = orderExternalId
+        ? orderRows.find((o) => o.provider === c.provider && o.externalId === orderExternalId)
+        : null;
+      return {
+        id: c.id,
+        provider: c.provider,
+        providerLabel: storeProviderLabel(c.provider),
+        kind: c.kind,
+        status: c.status,
+        orderExternalId,
+        orderStatus: linked?.status ?? null,
+        totalCents: c.totalCents,
+        currency: c.currency,
+        items: Array.isArray(c.items) ? (c.items as AbandonedCartItem[]) : [],
+        recoveryUrl: c.recoveryUrl,
+        abandonedAt: c.abandonedAt.toISOString(),
+        recoveredAt: c.recoveredAt?.toISOString() ?? null,
+        recoveredCents: c.recoveredCents,
+        notifiedAt: c.notifiedAt?.toISOString() ?? null,
+      };
+    });
+
   const orders = orderRows.map((o) => ({
     id: o.id,
+    fromCart: cartOrderKeys.has(cartOrderKey(o.provider, o.externalId)),
     externalId: o.externalId,
     provider: o.provider,
     providerLabel: storeProviderLabel(o.provider),
     status: o.status,
+    paid: isRevenueOrder(o.status),
     totalCents: o.totalCents ?? 0,
     currency: o.currency ?? "BRL",
     occurredAt: (o.occurredAt ?? o.createdAt).toISOString(),

@@ -17,12 +17,22 @@ export type CrmBoardLead = {
 };
 
 const SOURCE_LABEL: Record<string, string> = {
+  woocommerce: "WooCommerce",
+  shopify: "Shopify",
+  tray: "Tray",
+  nuvemshop: "Nuvemshop",
+  mercado_livre: "Mercado Livre",
+  mercadolivre: "Mercado Livre",
+  shopee: "Shopee",
+  tiktok_shop: "TikTok Shop",
+  commerce: "Checkout próprio",
   whatsapp: "WhatsApp",
-  commerce: "Vendas",
-  lp: "Página",
-  manual: "Manual",
-  meta: "Meta",
+  meta: "Meta Ads",
+  meta_lead: "Formulário Meta",
   form: "Formulário",
+  lp: "Landing page",
+  manual: "Manual",
+  import: "Importação",
 };
 
 function formatCurrency(value: number) {
@@ -51,7 +61,7 @@ function initials(name: string) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-function formatPhone(phone: string) {
+export function formatPhone(phone: string) {
   const digits = phone.replace(/\D/g, "");
   if (digits.length === 13 && digits.startsWith("55")) {
     return `+55 ${digits.slice(2, 4)} ${digits.slice(4, 9)}-${digits.slice(9)}`;
@@ -62,9 +72,9 @@ function formatPhone(phone: string) {
   return phone;
 }
 
-function sourceLabel(source: string | null) {
+export function sourceLabel(source: string | null) {
   if (!source) return null;
-  return SOURCE_LABEL[source.toLowerCase()] ?? source;
+  return SOURCE_LABEL[source.toLowerCase()] ?? source.charAt(0).toUpperCase() + source.slice(1);
 }
 
 export function CrmLeadCard({

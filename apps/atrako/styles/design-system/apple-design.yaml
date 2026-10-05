@@ -96,7 +96,9 @@ components:
   button-dark-utility: { file: components/ui/button.tsx, variant: dark-utility }
   button-pearl-capsule: { file: components/ui/button.tsx, variant: pearl }
   button-store-hero: { file: components/ui/button.tsx, variant: store-hero }
-  button-icon-circular: { file: components/ui/icon-button.tsx }
+  button-icon-circular: { file: components/ui/icon-button.tsx, note: "size toolbar = 36px com borda, para utilitários (ex.: editar etapas) ao lado do CTA" }
+  segmented-control: { file: components/ui/segmented-control.tsx, css: ".segmented", note: "Alternar visualização (Funil/Lista) — pill 36px, mesma borda/tipo do pill-select" }
+  filter-toolbar: { css: ".crm-toolbar", note: "Esquerda = como ver os dados (search-input, pill-select, segmented-control, pill). Direita = ações (icon-button toolbar + Button toolbar primary, radius-xs)" }
   text-link: { file: components/ui/text-link.tsx }
   back-link: { file: components/ui/back-link.tsx, note: "Voltar canônico — ChevronLeft + rótulo; App shell" }
   search-input: { file: components/ui/search-input.tsx, note: "Única busca — size toolbar|field; nunca input reinventado" }

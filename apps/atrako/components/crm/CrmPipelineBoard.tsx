@@ -5,24 +5,15 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { clsx } from "clsx";
 import { Loader2, Plus, Settings2 } from "lucide-react";
-import { CrmLeadCard, type CrmBoardLead } from "./CrmLeadCard";
+import { CrmLeadCard, sourceLabel, type CrmBoardLead } from "./CrmLeadCard";
 import { CrmLeadModal } from "./CrmLeadModal";
 import { CrmFunnelConfigModal } from "./CrmFunnelConfigModal";
 import { CrmStageHeader } from "./CrmStageHeader";
 import { SearchInput } from "@/components/ui/search-input";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { PillSelect } from "@/components/ui/pill-select";
-
-const SOURCE_OPTIONS = [
-  { value: "", label: "Origem" },
-  { value: "whatsapp", label: "WhatsApp" },
-  { value: "commerce", label: "Vendas" },
-  { value: "lp", label: "Página" },
-  { value: "manual", label: "Manual" },
-  { value: "meta", label: "Meta" },
-  { value: "form", label: "Formulário" },
-  { value: "mercadolivre", label: "Mercado Livre" },
-];
+import { SegmentedControl } from "@/components/ui/segmented-control";
 
 type StageCol = {
   id: string;
@@ -36,6 +27,7 @@ type StageCol = {
 
 type PipelineData = {
   stages: StageCol[];
+  sources?: Array<{ value: string; count: number }>;
   totalCount: number;
   totalValue: number;
   newThisWeek: number;
@@ -202,17 +194,28 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
 
   const allLeads = data?.stages.flatMap((s) => s.leads) ?? [];
   const boardCols = data?.stages.length ?? 0;
+  const sourceOptions = useMemo(() => {
+    const opts = (data?.sources ?? []).map((s) => ({
+      value: s.value,
+      label: `${sourceLabel(s.value)} · ${s.count}`,
+    }));
+    if (source && !opts.some((o) => o.value === source)) {
+      opts.unshift({ value: source, label: sourceLabel(source) ?? source });
+    }
+    return [{ value: "", label: "Todas as origens" }, ...opts];
+  }, [data?.sources, source]);
+  const filtering = Boolean(qDebounced.trim() || source);
   const fieldClass =
-    "h-10 min-w-[120px] flex-1 rounded-[var(--radius-xs)] border border-[rgba(0,0,0,0.08)] bg-[var(--canvas)] px-4 type-caption text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary-focus)]";
+    "h-9 min-w-[120px] flex-1 rounded-[var(--radius-xs)] border border-[rgba(0,0,0,0.08)] bg-[var(--canvas)] px-4 type-caption text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary-focus)]";
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="crm-toolbar">
         <div className="crm-toolbar-filters">
-          <div className="w-full max-w-[240px] sm:w-[220px]">
+          <div className="crm-toolbar-search">
             <SearchInput
               size="toolbar"
-              placeholder="Buscar lead…"
+              placeholder="Buscar por nome, e-mail ou telefone"
               value={q}
               onChange={(e) => onSearch(e.target.value)}
             />
@@ -221,55 +224,32 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
             aria-label="Filtrar por origem"
             value={source}
             onChange={setSource}
-            options={SOURCE_OPTIONS}
-            placeholder="Origem"
+            options={sourceOptions}
+            placeholder="Todas as origens"
+          />
+          <SegmentedControl
+            aria-label="Visualização"
+            value={tab}
+            onChange={setTab}
+            options={[
+              { value: "pipeline", label: "Funil" },
+              { value: "list", label: "Lista" },
+            ]}
           />
         </div>
 
         <div className="crm-toolbar-actions">
-          <div
-            className="flex rounded-[var(--radius-xs)] border border-[rgba(0,0,0,0.08)] bg-[var(--canvas)] p-0.5"
-            role="group"
-            aria-label="Visualização"
-          >
-            {(
-              [
-                ["pipeline", "Funil"],
-                ["list", "Lista"],
-              ] as const
-            ).map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setTab(id)}
-                className={clsx(
-                  "rounded-[var(--radius-xs)] px-3 py-1 type-caption-strong transition active:scale-95",
-                  tab === id
-                    ? "bg-[var(--ink)] text-[var(--on-dark)]"
-                    : "text-[var(--ink-muted-48)]",
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
           {tab === "pipeline" ? (
-            <Button
-              type="button"
-              variant="secondary-pill"
+            <IconButton
+              size="toolbar"
               onClick={() => setFunnelConfigOpen(true)}
-              className="!gap-1.5 !px-3.5 !py-1.5 type-button-utility"
+              aria-label="Editar etapas do funil"
+              title="Editar etapas do funil"
             >
-              <Settings2 className="h-3.5 w-3.5" strokeWidth={1.75} />
-              Etapas
-            </Button>
+              <Settings2 className="h-4 w-4" strokeWidth={1.75} />
+            </IconButton>
           ) : null}
-          <Button
-            type="button"
-            variant="primary"
-            onClick={() => setShowNew((v) => !v)}
-            className="!gap-1 !px-3.5 !py-1.5 type-button-utility"
-          >
+          <Button type="button" variant="primary" size="toolbar" onClick={() => setShowNew((v) => !v)}>
             <Plus className="h-3.5 w-3.5" strokeWidth={2} />
             Novo lead
           </Button>
@@ -298,14 +278,32 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
           />
-          <Button type="submit" variant="primary" className="!px-4 !py-1.5 type-button-utility">
+          <Button type="submit" variant="primary" size="toolbar">
             Salvar
           </Button>
         </form>
       ) : null}
 
-      {data?.abandonedCarts &&
-      (data.abandonedCarts.openCount > 0 || data.abandonedCarts.recoveredMonthCount > 0) ? (
+      {filtering && data ? (
+        <p className="shrink-0 type-fine-print text-[var(--ink-muted-48)]">
+          <span className="tabular-nums text-[var(--ink)]">{data.totalCount}</span>{" "}
+          {data.totalCount === 1 ? "lead encontrado" : "leads encontrados"}
+          {source ? ` · origem ${sourceLabel(source)}` : ""}
+          {" · "}
+          <button
+            type="button"
+            className="text-[var(--primary)] active:scale-95"
+            onClick={() => {
+              setQ("");
+              setQDebounced("");
+              setSource("");
+            }}
+          >
+            Limpar filtros
+          </button>
+        </p>
+      ) : data?.abandonedCarts &&
+        (data.abandonedCarts.openCount > 0 || data.abandonedCarts.recoveredMonthCount > 0) ? (
         <p className="shrink-0 type-fine-print text-[var(--ink-muted-48)]">
           Carrinhos abandonados em aberto:{" "}
           <span className="tabular-nums text-[var(--ink)]">
@@ -434,7 +432,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
                       {l.email || l.phone || "—"}
                     </td>
                     <td className="px-3 py-2.5 type-fine-print text-[var(--ink-muted-48)]">
-                      {l.source || "—"}
+                      {sourceLabel(l.source) || "—"}
                     </td>
                     <td className="px-3 py-2.5 type-fine-print text-[var(--ink-muted-48)]">
                       {stageName}

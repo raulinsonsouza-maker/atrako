@@ -1,4 +1,4 @@
-export { Button, buttonVariants } from "./button";
+export { Button, buttonVariants, buttonClass } from "./button";
 export type { ButtonProps } from "./button";
 export { Card, CardHeader, CardTitle, CardContent } from "./card";
 export { TextLink } from "./text-link";
@@ -21,6 +21,7 @@ export { SiteFooter } from "./site-footer";
 export type { SiteFooterProps, FooterColumn } from "./site-footer";
 export { BrandColorPicker } from "./brand-color-picker";
 export { PillSelect } from "./pill-select";
+export { SegmentedControl } from "./segmented-control";
 export type { PillSelectOption, PillSelectSize } from "./pill-select";
 export { BrandLogo } from "./brand-logo";
 export { TextField } from "./text-field";

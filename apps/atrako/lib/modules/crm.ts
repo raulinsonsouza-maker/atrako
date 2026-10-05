@@ -369,7 +369,7 @@ export async function getPipelineBoard(clienteId: string, opts?: { q?: string; s
 
   const where = {
     clienteId,
-    ...(source ? { source: { contains: source, mode: "insensitive" as const } } : {}),
+    ...(source ? { source: { equals: source, mode: "insensitive" as const } } : {}),
     ...(q
       ? {
           OR: [
@@ -381,7 +381,7 @@ export async function getPipelineBoard(clienteId: string, opts?: { q?: string; s
       : {}),
   };
 
-  const [byStage, byStatus, newThisWeek] = await Promise.all([
+  const [byStage, byStatus, newThisWeek, bySource] = await Promise.all([
     prisma.nativeLead.groupBy({
       by: ["stageId"],
       where,
@@ -392,7 +392,12 @@ export async function getPipelineBoard(clienteId: string, opts?: { q?: string; s
     prisma.nativeLead.count({
       where: { ...where, createdAt: { gt: new Date(Date.now() - 7 * 86400000) } },
     }),
+    prisma.nativeLead.groupBy({ by: ["source"], where: { clienteId }, _count: { _all: true } }),
   ]);
+  const sources = bySource
+    .filter((r) => r.source)
+    .map((r) => ({ value: r.source as string, count: r._count._all }))
+    .sort((a, b) => b.count - a.count);
 
   const statsFor = (stageId: string | null) => {
     const row = byStage.find((r) => r.stageId === stageId);
@@ -441,6 +446,7 @@ export async function getPipelineBoard(clienteId: string, opts?: { q?: string; s
   return {
     pipelineId: pipeline.id,
     stages,
+    sources,
     totalCount: byStage.reduce((sum, r) => sum + r._count._all, 0),
     totalValue: byStage.reduce(
       (sum, r) => sum + (r._sum.dealValue != null ? Number(r._sum.dealValue) : 0),

@@ -102,10 +102,12 @@ export function LeadCommunications({
   workspaceId,
   leadId,
   data,
+  showProfile = true,
 }: {
   workspaceId: string;
   leadId: string;
   data: LeadCommunicationsData;
+  showProfile?: boolean;
 }) {
   const qc = useQueryClient();
   const [busy, setBusy] = useState<string | null>(null);
@@ -137,7 +139,7 @@ export function LeadCommunications({
 
   return (
     <>
-      {p && p.ordersCount > 0 ? (
+      {showProfile && p && p.ordersCount > 0 ? (
         <div className="panel-modal-section space-y-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">

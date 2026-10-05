@@ -22,9 +22,10 @@ export type OriginDescription = {
 /** Texto da origem do pedido para card do lead e dashboard. */
 export function describeOrderOrigin(s: OrderSourceView | null): OriginDescription {
   if (!s) return { title: "Origem ainda não calculada", detail: null, badge: null, lastVisit: null };
-  const visit = s.storeSource
-    ? [s.storeSource, s.storeMedium, s.storeContent].filter(Boolean).join(" / ")
-    : null;
+  const visitParts = [s.storeSource, s.storeMedium, s.storeContent].filter(
+    (v): v is string => !!v && !v.startsWith("("),
+  );
+  const visit = visitParts.length ? visitParts.join(" / ") : null;
 
   if (s.adMethod) {
     const detail = [s.campaignName && `Campanha ${s.campaignName}`, s.adsetName && `Conjunto ${s.adsetName}`]

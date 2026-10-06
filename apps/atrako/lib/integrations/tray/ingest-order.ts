@@ -15,6 +15,8 @@ import {
 import { ingestPurchase } from "@/lib/symbius/attribution/engine";
 import { markLeadLost, trackOrderPayment } from "@/lib/crm/abandoned-cart";
 import { enrichItemsFromCatalog } from "@/lib/flows/catalog-enrich";
+import { saveContactLocationFromOrder } from "@/lib/commerce/contact-location";
+import { contactLifetimeCents } from "@/lib/crm/lead-value";
 import {
   extractTrayBuyer,
   extractTrayLineItems,
@@ -57,13 +59,19 @@ async function markTrayBuyerInCrm(input: {
 
   const productNames = input.items.map((i) => i.title);
   const marketingEligible = Boolean(input.buyerPhone || input.buyerEmail);
+  // Cliente que já comprou: pedido novo não pago não muda status nem valor do card.
+  const dealCents = input.paid
+    ? Math.max(await contactLifetimeCents(input.workspaceId, lead.contactId), input.totalCents)
+    : lead.status === "WON" && lead.dealValue != null
+      ? Math.round(Number(lead.dealValue) * 100)
+      : input.totalCents;
 
   const updatedLead = await prisma.nativeLead.update({
     where: { id: lead.id },
     data: {
       status: input.paid ? "WON" : lead.status === "WON" ? "WON" : "OPEN",
       stageId: input.paid ? wonStage?.id ?? lead.stageId : lead.stageId,
-      dealValue: new Prisma.Decimal(input.totalCents / 100),
+      dealValue: new Prisma.Decimal(dealCents / 100),
       source: lead.source || "tray",
       metadata: {
         ...prevMeta,
@@ -219,6 +227,8 @@ export async function ingestTrayHubOrder(input: {
       }
     });
 
+    await saveContactLocationFromOrder(existing.contactId, "TRAY", { order: input.order }, { overwrite: false });
+
     if (existing.contactId && existing.leadId) {
       await markTrayBuyerInCrm({
         workspaceId: input.workspaceId,
@@ -319,6 +329,8 @@ export async function ingestTrayHubOrder(input: {
       },
     },
   });
+
+  await saveContactLocationFromOrder(contact.id, "TRAY", { order: input.order }, { overwrite: true });
 
   const wonLead = await markTrayBuyerInCrm({
     workspaceId: input.workspaceId,

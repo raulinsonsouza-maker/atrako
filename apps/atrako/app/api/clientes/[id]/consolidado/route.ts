@@ -4,6 +4,7 @@ import { requireClienteAccess } from "@/lib/portalSession";
 import { isEcommerceCliente } from "@/lib/clientProfiles";
 import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
 import { CHANNEL_LABELS, type OrderChannel } from "@/lib/commerce-attribution/store-source";
+import { getCartRecoveryMetrics, getRepurchaseMetrics } from "@/lib/commerce/customer-metrics";
 
 const SITE_PROVIDERS = new Set(["WOOCOMMERCE", "SHOPIFY", "NUVEMSHOP", "TRAY"]);
 
@@ -188,6 +189,21 @@ export async function GET(
   // Receita do relacionamento já está dentro da receita das lojas: só separa, não soma.
   const receitaSemRel = Math.max(0, receita - relReceita);
 
+  const ecommerce = isEcommerceCliente(cliente);
+  const [clientes, recuperacao] =
+    ecommerce && fonteVendas === "lojas"
+      ? await Promise.all([
+          getRepurchaseMetrics(id, range).catch((err) => {
+            console.warn("[consolidado] recompra", err instanceof Error ? err.message : err);
+            return null;
+          }),
+          getCartRecoveryMetrics(id, range).catch((err) => {
+            console.warn("[consolidado] recuperação", err instanceof Error ? err.message : err);
+            return null;
+          }),
+        ])
+      : [null, null];
+
   const metaMidia = canaisMidia.find((m) => m.id === "META");
   const metaReceita = (porOrigem.get("meta_ads")?.receitaCents ?? 0) / 100;
   const origens = fonteVendas === "lojas" ? [...porOrigem.values()].sort((a, b) => b.receitaCents - a.receitaCents) : [];
@@ -195,7 +211,9 @@ export async function GET(
   return NextResponse.json({
     periodo: { dataInicio: dataInicio.toISOString(), dataFim: dataFim.toISOString() },
     fonteVendas,
-    ecommerce: isEcommerceCliente(cliente),
+    ecommerce,
+    clientes,
+    recuperacao,
     totais: {
       receita,
       pedidos: totalPedidos,

@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
       getPipelineBoard(workspaceId, {
         q: request.nextUrl.searchParams.get("q") ?? undefined,
         source: request.nextUrl.searchParams.get("source") ?? undefined,
+        openCart: request.nextUrl.searchParams.get("openCart") === "1",
       }),
       getAbandonedCartSummary(workspaceId).catch(() => null),
     ]);

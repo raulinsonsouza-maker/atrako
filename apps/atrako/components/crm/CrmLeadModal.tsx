@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -9,6 +9,7 @@ import {
   ExternalLink,
   Loader2,
   Mail,
+  MapPin,
   MessageCircle,
   Phone,
   ShoppingBag,
@@ -22,6 +23,7 @@ import {
   type OrderVisitView,
 } from "@/lib/commerce-attribution/describe";
 import { isClosedOrder, orderStatusLabel } from "@/lib/commerce-attribution/order-status";
+import { formatLocation, type OrderDetails } from "@/lib/commerce/order-details";
 import { PillSelect } from "@/components/ui/pill-select";
 import { Button, buttonClass } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -83,6 +85,7 @@ type LeadOrder = {
   }>;
   source: (OrderSourceView & { deviceType: string | null; adId: string | null }) | null;
   visit: OrderVisitView | null;
+  details: OrderDetails | null;
 };
 
 type LeadDetail = {
@@ -99,6 +102,7 @@ type LeadDetail = {
     stageName: string | null;
     stageColor: string | null;
     sources: string[];
+    location: string | null;
     lostReason: string | null;
     lostAt: string | null;
     createdAt: string;
@@ -110,9 +114,11 @@ type LeadDetail = {
   communications: LeadCommunicationsData | null;
 };
 
+const ORDERS_PREVIEW = 3;
+
 const LOST_REASON_LABELS: Record<string, string> = {
   pedido_nao_pago: "Pedido não pago há mais de 30 dias",
-  carrinho_expirado: "Carrinho expirou sem compra (30 dias)",
+  carrinho_expirado: "Carrinho expirou sem compra (90 dias)",
   reembolso: "Pedido reembolsado",
 };
 
@@ -156,7 +162,7 @@ function cartClosed(cart: LeadCart) {
 function cartTitle(cart: LeadCart) {
   if (cart.kind !== "order") return "Carrinho abandonado";
   const id = cart.orderExternalId ? `Pedido #${cart.orderExternalId}` : "Pedido";
-  return cartClosed(cart) ? `${id} cancelado sem pagamento` : `${id} aguardando pagamento`;
+  return cartClosed(cart) ? `${id} · não pago` : `${id} aguardando pagamento`;
 }
 
 function recoveryMessage(name: string, cart: LeadCart, withLink: boolean) {
@@ -278,7 +284,14 @@ function CartBlock({ cart, leadName, order }: { cart: LeadCart; leadName: string
   return (
     <div className="space-y-3">
       <div className="min-w-0">
-        <p className="type-caption-strong text-[var(--ink)]">{cartTitle(cart)}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="type-caption-strong text-[var(--ink)]">{cartTitle(cart)}</p>
+          {cart.orderStatus && closed ? (
+            <span className="rel-badge type-micro-legal" data-tone="bad">
+              {orderStatusLabel(cart.orderStatus)}
+            </span>
+          ) : null}
+        </div>
         <p className="type-fine-print text-[var(--ink-muted-48)]">
           {cart.providerLabel} · {fmtRelative(cart.abandonedAt)}
         </p>
@@ -336,76 +349,105 @@ function hasKnownOrigin(source: LeadOrder["source"]) {
   return !!source && (!!source.adMethod || source.channel !== "unknown");
 }
 
-function OrderBlock({ order }: { order: LeadOrder }) {
+function OrderBlock({ order, leadLocation }: { order: LeadOrder; leadLocation: string | null }) {
   const status = orderStatusLabel(order.status);
+  const d = order.details;
+  const itemsCents = order.items.reduce((sum, i) => sum + i.unitPriceCents * (i.quantity || 1), 0);
+  const shipping = d?.shipping ?? null;
+  const shippingCents =
+    shipping?.cents ?? (itemsCents > 0 && order.totalCents > itemsCents ? order.totalCents - itemsCents : null);
+  const showMethodInRow =
+    shippingCents != null && !!shipping?.method && !(shippingCents === 0 && /gr[aá]tis/i.test(shipping.method));
+  const notes = orderNotes(order, d, shippingCents == null, leadLocation);
+
   return (
     <div className="space-y-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="type-caption-strong text-[var(--ink)]">Pedido #{order.externalId}</p>
-            {status ? (
-              <span className="rel-badge type-micro-legal" data-tone={order.paid ? "ok" : "bad"}>
-                {status}
-              </span>
-            ) : null}
-          </div>
-          <p className="type-fine-print text-[var(--ink-muted-48)]">
-            {order.providerLabel} · {fmtDateTime(order.occurredAt)}
-          </p>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="type-caption-strong text-[var(--ink)]">Pedido #{order.externalId}</p>
+          {status ? (
+            <span className="rel-badge type-micro-legal" data-tone={order.paid ? "ok" : "bad"}>
+              {status}
+            </span>
+          ) : null}
         </div>
-        <p
-          className={cn(
-            "shrink-0 type-body-strong tabular-nums",
-            order.paid ? "text-[var(--ink)]" : "text-[var(--ink-muted-48)] line-through",
-          )}
-        >
-          {fmtCents(order.totalCents, order.currency)}
+        <p className="type-fine-print text-[var(--ink-muted-48)]">
+          {order.providerLabel} · {fmtRelative(d?.createdAt ?? order.occurredAt)}
         </p>
       </div>
 
-      {order.items.length ? (
-        <ul className="grid grid-cols-2 gap-x-4 gap-y-2 phone:grid-cols-1">
-          {order.items.map((item, idx) => (
-            <li key={`${item.title}-${idx}`} className="flex min-w-0 items-center gap-3">
-              {item.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={item.imageUrl}
-                  alt=""
-                  className="h-10 w-10 shrink-0 rounded-[var(--radius-xs)] bg-[var(--canvas-parchment)] object-cover"
-                />
-              ) : (
-                <span className="h-10 w-10 shrink-0 rounded-[var(--radius-xs)] bg-[var(--canvas-parchment)]" />
-              )}
-              <div className="min-w-0 flex-1">
-                {item.productUrl ? (
-                  <a
-                    href={item.productUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block truncate type-caption text-[var(--ink)] hover:text-[var(--primary)]"
-                    title={item.title}
-                  >
-                    {item.title}
-                  </a>
-                ) : (
-                  <p className="truncate type-caption text-[var(--ink)]" title={item.title}>
-                    {item.title}
-                  </p>
-                )}
-                <p className="type-micro-legal tabular-nums text-[var(--ink-muted-48)]">
-                  {item.quantity}× {fmtCents(item.unitPriceCents, order.currency)}
-                </p>
-              </div>
-            </li>
+      <ItemList items={order.items} currency={order.currency} />
+
+      <div className="space-y-1 border-t border-[var(--hairline)] pt-3">
+        {shippingCents != null ? (
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="min-w-0 truncate type-caption text-[var(--ink-muted-48)]">
+              {showMethodInRow ? `Frete · ${shipping!.method}` : shipping ? "Frete" : "Frete e taxas"}
+            </p>
+            <p className="shrink-0 type-caption tabular-nums text-[var(--ink-muted-80)]">
+              {shippingCents === 0 ? "Grátis" : fmtCents(shippingCents, order.currency)}
+            </p>
+          </div>
+        ) : null}
+        <div className="flex items-baseline justify-between">
+          <p className="type-caption text-[var(--ink-muted-48)]">Total</p>
+          <p
+            className={cn(
+              "type-body-strong tabular-nums",
+              order.paid ? "text-[var(--ink)]" : "text-[var(--ink-muted-48)] line-through",
+            )}
+          >
+            {fmtCents(order.totalCents || itemsCents, order.currency)}
+          </p>
+        </div>
+      </div>
+
+      {notes.length ? (
+        <p className="type-fine-print text-[var(--ink-muted-80)]">
+          {notes.map((n, i) => (
+            <Fragment key={i}>
+              {i > 0 ? " · " : null}
+              {n}
+            </Fragment>
           ))}
-        </ul>
+        </p>
       ) : null}
 
       <OriginBox order={order} />
     </div>
   );
+}
+
+/** Pagamento, cupom, prazo, destino e presente numa linha curta abaixo do total. */
+function orderNotes(order: LeadOrder, d: OrderDetails | null, showMethod: boolean, leadLocation: string | null) {
+  if (!d) return [];
+  const notes: ReactNode[] = [];
+  if (d.paymentMethod) {
+    const installments = d.installments ? ` em ${d.installments}x` : "";
+    notes.push(order.paid ? `Pago com ${d.paymentMethod}${installments}` : `Escolheu ${d.paymentMethod}`);
+  }
+  if (d.coupons.length) {
+    for (const c of d.coupons) {
+      notes.push(`cupom ${c.code}${c.discountCents ? ` (−${fmtCents(c.discountCents, order.currency)})` : ""}`);
+    }
+  } else if (d.discountCents > 0) {
+    notes.push(`desconto de ${fmtCents(d.discountCents, order.currency)}`);
+  }
+  const s = d.shipping;
+  if (s?.method && showMethod) notes.push(s.method);
+  if (s?.days) notes.push(`prazo de ${s.days} ${s.days === 1 ? "dia útil" : "dias úteis"}`);
+  if (s?.estimatedDate) notes.push(`previsão ${s.estimatedDate.slice(8, 10)}/${s.estimatedDate.slice(5, 7)}`);
+  const place = formatLocation(d.location);
+  if (place && place !== leadLocation) notes.push(`entrega em ${place}`);
+  if (d.gift) notes.push(d.giftTo ? `presente para ${d.giftTo}` : "presente");
+  if (s?.trackingUrl) {
+    notes.push(
+      <a href={s.trackingUrl} target="_blank" rel="noopener noreferrer" className="text-[var(--primary)] hover:underline">
+        rastrear
+      </a>,
+    );
+  }
+  return notes;
 }
 
 function OriginBox({ order, label = "Origem da compra" }: { order: LeadOrder; label?: string }) {
@@ -453,6 +495,7 @@ export function CrmLeadModal({
   onClose: () => void;
 }) {
   const qc = useQueryClient();
+  const [showAllOrders, setShowAllOrders] = useState(false);
   const { data, isLoading, isError } = useQuery({
     queryKey: ["crm-lead", workspaceId, leadId],
     queryFn: async () => {
@@ -494,7 +537,8 @@ export function CrmLeadModal({
   const selfHref = `/crm/leads/${leadId}`;
 
   const openCarts = (data?.carts ?? []).filter(isOpenCart).slice(0, 3);
-  const orders = (data?.orders ?? []).filter((o) => !o.fromCart).slice(0, 5);
+  const allOrders = (data?.orders ?? []).filter((o) => !o.fromCart);
+  const orders = showAllOrders ? allOrders : allOrders.slice(0, ORDERS_PREVIEW);
   const paidOrders = (data?.orders ?? []).filter((o) => o.paid);
   const profile = data?.communications?.profile ?? null;
   const journey = [...(data?.journey ?? [])].reverse();
@@ -505,6 +549,8 @@ export function CrmLeadModal({
     : paidOrders.reduce((s, o) => s + o.totalCents, 0);
   const hasCommerce = boughtCount > 0 || (data?.orders?.length ?? 0) > 0 || (data?.carts?.length ?? 0) > 0;
 
+  const lastPurchaseAt = profile?.lastOrderAt ?? paidOrders[0]?.occurredAt ?? null;
+  const lastActivityAt = journey[0]?.at ?? null;
   const recoverable = openCarts.filter((c) => !cartClosed(c));
   const openCents = openCarts.reduce((s, c) => s + c.totalCents, 0);
 
@@ -560,6 +606,12 @@ export function CrmLeadModal({
                   {!lead.email && !lead.phone ? (
                     <span className="type-caption text-[var(--ink-muted-48)]">Sem e-mail ou telefone</span>
                   ) : null}
+                  {lead.location ? (
+                    <span className="inline-flex items-center gap-1.5 type-caption text-[var(--ink-muted-80)]">
+                      <MapPin className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+                      {lead.location}
+                    </span>
+                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -611,32 +663,50 @@ export function CrmLeadModal({
                     hint={lead.dealValue ? null : "não informado"}
                   />
                 )}
-                <Stat
-                  label="Não finalizado"
-                  value={openCarts.length ? fmtCents(openCents) : "—"}
-                  hint={
-                    openCarts.length
-                      ? recoverable.length
+                {openCarts.length ? (
+                  <Stat
+                    label="Não finalizado"
+                    value={fmtCents(openCents)}
+                    hint={
+                      recoverable.length
                         ? recoverable.length === 1 && recoverable[0].kind === "order"
                           ? "aguardando pagamento"
                           : "carrinho abandonado"
-                        : "pedido cancelado"
-                      : "nada pendente"
-                  }
-                />
+                        : "não pagou"
+                    }
+                  />
+                ) : lastPurchaseAt ? (
+                  <Stat label="Última compra" value={fmtDate(lastPurchaseAt)} hint={fmtRelative(lastPurchaseAt)} />
+                ) : (
+                  <Stat
+                    label="Última atividade"
+                    value={lastActivityAt ? fmtDate(lastActivityAt) : "—"}
+                    hint={lastActivityAt ? fmtRelative(lastActivityAt) : null}
+                  />
+                )}
                 <Stat label="Origem" value={originValue} hint={originHint} />
                 <Stat label="No CRM desde" value={fmtDate(lead.createdAt)} hint={fmtRelative(lead.createdAt)} />
               </div>
 
               {profile?.ordersCount ? (
-                <p className="mt-2 px-1 type-fine-print text-[var(--ink-muted-48)]">
-                  Primeira compra {profile.firstOrderAt ? fmtDate(profile.firstOrderAt) : "—"} · última{" "}
-                  {profile.lastOrderAt ? fmtDate(profile.lastOrderAt) : "—"}
-                  {profile.avgIntervalDays ? ` · compra a cada ~${Math.round(profile.avgIntervalDays)} dias` : ""}
-                  {profile.topProducts.length
-                    ? ` · mais comprados: ${profile.topProducts.slice(0, 3).map((t) => t.title).join(", ")}`
-                    : ""}
-                </p>
+                <div className="mt-2 space-y-0.5 px-1">
+                  <p className="type-fine-print text-[var(--ink-muted-80)]">
+                    Ticket médio {fmtCents(profile.avgTicketCents)}
+                    {profile.avgIntervalDays ? ` · compra a cada ~${Math.round(profile.avgIntervalDays)} dias` : ""}
+                    {profile.nextPurchaseAt
+                      ? new Date(profile.nextPurchaseAt).getTime() < Date.now()
+                        ? ` · recompra esperada em ${fmtDate(profile.nextPurchaseAt)}, ainda não voltou`
+                        : ` · próxima compra esperada em ${fmtDate(profile.nextPurchaseAt)}`
+                      : ""}
+                  </p>
+                  <p className="type-fine-print text-[var(--ink-muted-48)]">
+                    Primeira compra {profile.firstOrderAt ? fmtDate(profile.firstOrderAt) : "—"} · última{" "}
+                    {profile.lastOrderAt ? fmtDate(profile.lastOrderAt) : "—"}
+                    {profile.topProducts.length
+                      ? ` · mais comprados: ${profile.topProducts.slice(0, 3).map((t) => t.title).join(", ")}`
+                      : ""}
+                  </p>
+                </div>
               ) : null}
 
               {lead.status === "LOST" && lead.lostReason ? (
@@ -653,7 +723,9 @@ export function CrmLeadModal({
 
               {openCarts.length > 0 ? (
                 <div className="panel-modal-section mt-3 space-y-4">
-                  <SectionTitle icon={ShoppingCart}>Compra não finalizada</SectionTitle>
+                  <SectionTitle icon={ShoppingCart}>
+                    {lead.status === "WON" ? "Nova compra não finalizada" : "Compra não finalizada"}
+                  </SectionTitle>
                   {openCarts.map((cart, idx) => (
                     <div key={cart.id} className={idx > 0 ? "border-t border-[var(--hairline)] pt-4" : undefined}>
                       <CartBlock
@@ -671,13 +743,22 @@ export function CrmLeadModal({
               {orders.length ? (
                 <div className="panel-modal-section mt-3 space-y-4">
                   <SectionTitle icon={ShoppingBag}>
-                    {(data?.orders?.length ?? 0) > orders.length ? "Últimos pedidos" : "Pedidos"}
+                    {allOrders.length > 1 ? `Pedidos (${allOrders.length})` : "Pedido"}
                   </SectionTitle>
                   {orders.map((order, idx) => (
                     <div key={order.id} className={idx > 0 ? "border-t border-[var(--hairline)] pt-4" : undefined}>
-                      <OrderBlock order={order} />
+                      <OrderBlock order={order} leadLocation={lead.location} />
                     </div>
                   ))}
+                  {allOrders.length > ORDERS_PREVIEW ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllOrders((v) => !v)}
+                      className="type-caption text-[var(--primary)] hover:underline"
+                    >
+                      {showAllOrders ? "Mostrar só os últimos" : `Ver todos os ${allOrders.length} pedidos`}
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
 

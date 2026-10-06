@@ -5,7 +5,7 @@ import { GripVertical, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { STAGE_COLOR_PRESETS } from "@/components/crm/CrmStageHeader";
 
-type StageRole = "ENTRY" | "WON" | "ABANDONED" | "LOST";
+type StageRole = "ENTRY" | "WON" | "ABANDONED" | "ABANDONED_7" | "ABANDONED_30" | "ABANDONED_60" | "LOST";
 
 type StageDraft = {
   key: string;

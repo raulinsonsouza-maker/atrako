@@ -2,6 +2,7 @@
  * Pedidos Tray — listagem + dados completo.
  */
 
+import { parseStoreLocalTime } from "../store-time";
 import { trayFetch } from "./client";
 
 export type TrayCustomer = {
@@ -144,17 +145,14 @@ export function isTrayPaidStatus(order: TrayOrder): boolean {
   );
 }
 
+/** `date`/`hour`/`modified` vêm na hora da loja (Brasília), sem fuso. */
 export function trayOrderOccurredAt(order: TrayOrder): Date {
   if (order.date) {
     const time = order.hour && !order.hour.startsWith("00:00:00") ? order.hour : "00:00:00";
-    const d = new Date(`${order.date.trim()}T${time.trim()}`);
-    if (!Number.isNaN(d.getTime())) return d;
+    const d = parseStoreLocalTime(`${order.date.trim()} ${time.trim()}`);
+    if (d) return d;
   }
-  if (order.modified) {
-    const d = new Date(order.modified.replace(" ", "T"));
-    if (!Number.isNaN(d.getTime())) return d;
-  }
-  return new Date();
+  return parseStoreLocalTime(order.modified) ?? new Date();
 }
 
 export function extractTrayBuyer(order: TrayOrder): TrayBuyer {

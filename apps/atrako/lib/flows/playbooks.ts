@@ -33,6 +33,8 @@ export type PlaybookDef = {
   trigger: string;
   priority: number;
   settings?: Record<string, unknown>;
+  /** Nasce pausado mesmo quando os demais nascem ativos (texto novo para revisar). */
+  defaultStatus?: "PAUSED";
   steps: StepDef[];
 };
 
@@ -159,6 +161,112 @@ export const PLAYBOOKS: PlaybookDef[] = [
         channel: "WHATSAPP",
         conditions: { requiresPhone: true, requiresCoupon: true },
         whatsapp: () => wa("cart_coupon"),
+      },
+    ],
+  },
+  {
+    key: "cart_aging_7",
+    name: "Carrinho sem compra há 7 dias",
+    description: "E-mail com os itens que ficaram e produtos parecidos",
+    trigger: "cart_aging_7",
+    priority: 12,
+    defaultStatus: "PAUSED",
+    steps: [
+      {
+        copyKey: "aging7.email1",
+        delayMinutes: 0,
+        channel: "EMAIL",
+        email: (t) =>
+          email(
+            pick(t, { proximo: "{{primeiro_nome}}, seus itens ainda estão aqui", neutro: "Seus itens ainda estão aqui", formal: "Os itens que você escolheu continuam disponíveis" }),
+            "Separamos de novo o que você escolheu",
+            [
+              { type: "heading", text: pick(t, { proximo: "Ainda pensando?", neutro: "Seus itens ainda estão aqui", formal: "Seus itens continuam disponíveis" }) },
+              {
+                type: "text",
+                text: `${greet(t)} ${pick(t, {
+                  proximo: "Faz uma semana que você deixou estes itens na {{loja}}. Ainda dá tempo de levar.",
+                  neutro: "Os itens que você escolheu na {{loja}} há uma semana continuam disponíveis.",
+                  formal: "Os produtos que você selecionou na {{loja}} continuam disponíveis.",
+                })}`,
+              },
+              { type: "items" },
+              { type: "button", label: "Ver meus itens" },
+              { type: "recommendations", title: "Parecidos com o que você escolheu", limit: 3 },
+              { type: "signature" },
+            ],
+          ),
+      },
+    ],
+  },
+  {
+    key: "cart_aging_30",
+    name: "Carrinho sem compra há 30 dias",
+    description: "E-mail com novidades e mais vendidos; cupom leve se houver cupom confirmado",
+    trigger: "cart_aging_30",
+    priority: 14,
+    defaultStatus: "PAUSED",
+    steps: [
+      {
+        copyKey: "aging30.email1",
+        delayMinutes: 0,
+        channel: "EMAIL",
+        email: (t) =>
+          email(
+            pick(t, { proximo: "{{primeiro_nome}}, olha o que chegou na {{loja}}", neutro: "Novidades desde a sua última visita", formal: "Novidades da {{loja}} para você" }),
+            "Novidades e os mais vendidos do mês",
+            [
+              { type: "heading", text: pick(t, { proximo: "Tem novidade por aqui", neutro: "Novidades para você", formal: "Novidades selecionadas" }) },
+              {
+                type: "text",
+                text: `${greet(t)} ${pick(t, {
+                  proximo: "Desde que você passou pela {{loja}}, chegou muita coisa. Separamos os mais vendidos e o que você tinha escolhido.",
+                  neutro: "Separamos as novidades e os mais vendidos da {{loja}}, junto com os itens que você escolheu.",
+                  formal: "Selecionamos as novidades e os produtos mais procurados da {{loja}}, além dos itens que você escolheu.",
+                })}`,
+              },
+              { type: "items" },
+              { type: "coupon" },
+              { type: "button", label: "Ver novidades" },
+              { type: "recommendations", title: "Mais vendidos", limit: 3 },
+              { type: "signature" },
+            ],
+          ),
+      },
+    ],
+  },
+  {
+    key: "cart_aging_60",
+    name: "Carrinho sem compra há 60 dias",
+    description: "Última chamada: itens, cupom se houver cupom confirmado e convite para contar por que não comprou",
+    trigger: "cart_aging_60",
+    priority: 16,
+    defaultStatus: "PAUSED",
+    steps: [
+      {
+        copyKey: "aging60.email1",
+        delayMinutes: 0,
+        channel: "EMAIL",
+        email: (t) =>
+          email(
+            pick(t, { proximo: "{{primeiro_nome}}, uma última chance pra você", neutro: "Uma última chance para os seus itens", formal: "Seus itens na {{loja}}" }),
+            "Seus itens e uma pergunta rápida",
+            [
+              { type: "heading", text: pick(t, { proximo: "Última chamada", neutro: "Última chance", formal: "Seus itens continuam disponíveis" }) },
+              {
+                type: "text",
+                text: `${greet(t)} ${pick(t, {
+                  proximo: "O que você escolheu na {{loja}} ainda está aqui. E se algo te fez desistir, responde este e-mail contando. A gente lê tudo.",
+                  neutro: "Os itens que você escolheu na {{loja}} continuam disponíveis. Se algo fez você desistir, responda este e-mail: queremos entender.",
+                  formal: "Os produtos que você selecionou na {{loja}} continuam disponíveis. Caso algo tenha impedido a compra, responda esta mensagem; sua opinião é importante.",
+                })}`,
+              },
+              { type: "coupon" },
+              { type: "items" },
+              { type: "button", label: "Ver meus itens" },
+              { type: "signature" },
+            ],
+          ),
       },
     ],
   },
@@ -547,7 +655,7 @@ export async function ensureDefaultFlows(workspaceId: string, opts?: { status?: 
           key: p.key,
           name: p.name,
           trigger: p.trigger,
-          status: opts?.status ?? "ACTIVE",
+          status: p.defaultStatus ?? opts?.status ?? "ACTIVE",
           priority: p.priority,
           settings: (p.settings ?? {}) as Prisma.InputJsonValue,
           steps: {

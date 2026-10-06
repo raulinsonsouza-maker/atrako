@@ -2,8 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import type { CartRecoveryMetrics, RepurchaseMetrics } from "@/lib/commerce/customer-metrics";
 
 type Consolidado = {
+  clientes?: RepurchaseMetrics | null;
+  recuperacao?: CartRecoveryMetrics | null;
   /** "anuncios" quando não há loja e as vendas vêm das compras atribuídas pelos anúncios. */
   fonteVendas?: "lojas" | "anuncios";
   ecommerce?: boolean;
@@ -146,7 +149,95 @@ function EcommerceGeral({ data }: { data: Consolidado }) {
           </p>
         ) : null}
       </div>
+
+      {data.clientes || data.recuperacao ? (
+        <ClientesERecuperacao clientes={data.clientes ?? null} recuperacao={data.recuperacao ?? null} />
+      ) : null}
     </section>
+  );
+}
+
+const centsBrl = (cents: number) => brl(cents / 100);
+const pctText = (ratio: number | null | undefined) =>
+  ratio != null ? `${Math.round(ratio * 100)}%` : "—";
+const num = (n: number) => n.toLocaleString("pt-BR");
+
+function ClientesERecuperacao({
+  clientes: c,
+  recuperacao: r,
+}: {
+  clientes: RepurchaseMetrics | null;
+  recuperacao: CartRecoveryMetrics | null;
+}) {
+  const ageLine = r?.byAge.filter((b) => b.count > 0) ?? [];
+  return (
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+      <p className="type-caption-strong text-[var(--foreground)]">Clientes e recuperação</p>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {c ? (
+          <>
+            <Kpi
+              label="Receita de quem voltou"
+              value={centsBrl(c.repeatOrders.cents)}
+              hint={`${num(c.repeatOrders.count)} pedidos · ${pctText(c.repeatShare)} da receita`}
+            />
+            <Kpi
+              label="Clientes novos"
+              value={num(c.newBuyers)}
+              hint={`primeira compra · ${centsBrl(c.firstOrders.cents)}`}
+            />
+            <Kpi
+              label="Compradores recorrentes"
+              value={num(c.returningBuyers)}
+              hint={`${pctText(c.returningShare)} dos compradores${
+                c.avgGapDays != null ? ` · voltam em ~${num(c.avgGapDays)} dias` : ""
+              }`}
+            />
+          </>
+        ) : null}
+        {r ? (
+          <Kpi
+            label="Carrinho recuperado"
+            value={centsBrl(r.recovered.cents)}
+            hint={`${num(r.recovered.count)} pagos no período · ${num(r.cohortRecovered)} dos ${num(r.abandoned.count)} abandonados no período`}
+          />
+        ) : null}
+      </div>
+
+      {r && r.recovered.count > 0 ? (
+        <div className="mt-4 space-y-1 border-t border-[var(--divider-soft)] pt-4">
+          <p className="type-fine-print text-[var(--muted-foreground)]">
+            Pela mensagem <span className="tabular-nums text-[var(--foreground)]">{centsBrl(r.byMessage.cents)}</span>
+            {" · "}voltaram sozinhos <span className="tabular-nums text-[var(--foreground)]">{centsBrl(r.alone.cents)}</span>
+          </p>
+          <p className="type-fine-print text-[var(--muted-foreground)]">
+            De clientes <span className="tabular-nums text-[var(--foreground)]">{centsBrl(r.fromCustomers.cents)}</span>
+            {" · "}de novos <span className="tabular-nums text-[var(--foreground)]">{centsBrl(r.fromNew.cents)}</span>
+          </p>
+          {ageLine.length ? (
+            <p className="type-fine-print text-[var(--muted-foreground)]">
+              Pagou{" "}
+              {ageLine.map((b, i) => (
+                <span key={b.key}>
+                  {i > 0 ? " · " : ""}
+                  {b.label} <span className="tabular-nums text-[var(--foreground)]">{centsBrl(b.cents)}</span>
+                </span>
+              ))}{" "}
+              depois do abandono
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      <p className="mt-4 type-fine-print text-[var(--muted-foreground)]">
+        Recompra conta a partir do histórico importado da loja
+        {c && c.unidentified.count > 0
+          ? ` · ${num(c.unidentified.count)} pedidos sem contato identificado ficam fora`
+          : ""}
+        .
+      </p>
+    </div>
   );
 }
 

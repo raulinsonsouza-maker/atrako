@@ -8,12 +8,15 @@ export type CrmBoardLead = {
   name: string;
   email: string | null;
   phone: string | null;
+  location?: string | null;
   source: string | null;
   status: string;
   dealValue: number | null;
   stageId: string | null;
   createdAt: string;
   updatedAt: string;
+  openCartCents?: number | null;
+  openCartAt?: string | null;
 };
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -81,10 +84,13 @@ export function CrmLeadCard({
   lead,
   drag,
   onOpen,
+  showOpenCart = true,
 }: {
   lead: CrmBoardLead;
   drag?: boolean;
   onOpen?: (leadId: string) => void;
+  /** Colunas de abandono já dizem isso. */
+  showOpenCart?: boolean;
 }) {
   const contact = lead.phone
     ? formatPhone(lead.phone)
@@ -122,15 +128,29 @@ export function CrmLeadCard({
           {contact ? (
             <p className="pipeline-lead-contact type-fine-print">{contact}</p>
           ) : null}
+          {lead.location ? (
+            <p className="pipeline-lead-contact type-fine-print" title={lead.location}>{lead.location}</p>
+          ) : null}
         </div>
       </div>
 
       <div className="pipeline-lead-card-meta">
         <div className="pipeline-lead-meta-left">
           {source ? <span className="pipeline-lead-source">{source}</span> : null}
-          <span className="pipeline-lead-time type-micro-legal">
-            {formatTimeAgo(lead.updatedAt || lead.createdAt)}
-          </span>
+          {showOpenCart && lead.openCartCents ? (
+            <span className="rel-badge type-micro-legal" data-tone="bad">
+              Carrinho aberto · {formatCurrency(lead.openCartCents / 100)}
+            </span>
+          ) : null}
+          {!showOpenCart && lead.openCartAt ? (
+            <span className="pipeline-lead-time type-micro-legal" title="Abandonou o carrinho">
+              {formatTimeAgo(lead.openCartAt)}
+            </span>
+          ) : (
+            <span className="pipeline-lead-time type-micro-legal">
+              {formatTimeAgo(lead.updatedAt || lead.createdAt)}
+            </span>
+          )}
         </div>
         {lead.phone ? (
           <a

@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
-import { backfillOrderDetails } from "@/lib/commerce-attribution/backfill";
+import {
+  backfillContactLocations,
+  backfillOrderDetails,
+  backfillOrderTimes,
+} from "@/lib/commerce-attribution/backfill";
+import { mergeDuplicateLeads } from "@/lib/crm/merge-leads";
+import { reopenRecentExpiredCarts } from "@/lib/crm/abandoned-cart";
 
 export const maxDuration = 300;
 
 /**
- * Service-to-service: completa itens e origem de pedidos de loja já importados.
+ * Service-to-service: junta cards duplicados do mesmo contato, corrige horários e completa itens,
+ * origem e cidade de pedidos de loja já importados; reabre carrinhos expirados dentro dos 90 dias.
  *
  * Auth: Bearer ATRAKO_INTERNAL_TOKEN (fallback: ATRAKO_CONNECTIONS_TOKEN / ATRAKO_EVENTS_TOKEN).
  */
@@ -30,6 +37,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
   }
 
+  const leads = await mergeDuplicateLeads(workspaceId);
+  const times = await backfillOrderTimes(workspaceId);
   const result = await backfillOrderDetails(workspaceId);
-  return NextResponse.json({ ok: true, ...result });
+  const locations = await backfillContactLocations(workspaceId);
+  const carts = await reopenRecentExpiredCarts(workspaceId);
+  return NextResponse.json({ ok: true, leads, times, ...result, locations, carts });
 }

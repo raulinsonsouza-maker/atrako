@@ -21,9 +21,11 @@ type StageCol = {
   color: string;
   totalCount: number;
   totalValue: number;
-  role?: "ENTRY" | "WON" | "ABANDONED" | "LOST" | null;
+  role?: "ENTRY" | "WON" | "ABANDONED" | "ABANDONED_7" | "ABANDONED_30" | "ABANDONED_60" | "LOST" | null;
   leads: CrmBoardLead[];
 };
+
+const ABANDON_ROLES = new Set(["ABANDONED", "ABANDONED_7", "ABANDONED_30", "ABANDONED_60"]);
 
 type PipelineData = {
   stages: StageCol[];
@@ -57,6 +59,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
   const [q, setQ] = useState("");
   const [qDebounced, setQDebounced] = useState("");
   const [source, setSource] = useState("");
+  const [openCart, setOpenCart] = useState(false);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
   const [movingLeadId, setMovingLeadId] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
@@ -79,8 +82,8 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
   };
 
   const queryKey = useMemo(
-    () => ["crm-pipeline", workspaceId, qDebounced, source] as const,
-    [workspaceId, qDebounced, source],
+    () => ["crm-pipeline", workspaceId, qDebounced, source, openCart] as const,
+    [workspaceId, qDebounced, source, openCart],
   );
 
   const { data, isLoading } = useQuery({
@@ -89,6 +92,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
       const params = new URLSearchParams({ workspaceId, view: "pipeline" });
       if (qDebounced.trim()) params.set("q", qDebounced.trim());
       if (source) params.set("source", source);
+      if (openCart) params.set("openCart", "1");
       const r = await fetch(`/api/atrako/crm/leads?${params}`);
       if (!r.ok) throw new Error("fail");
       return r.json() as Promise<PipelineData>;
@@ -204,7 +208,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
     }
     return [{ value: "", label: "Todas as origens" }, ...opts];
   }, [data?.sources, source]);
-  const filtering = Boolean(qDebounced.trim() || source);
+  const filtering = Boolean(qDebounced.trim() || source || openCart);
   const fieldClass =
     "h-9 min-w-[120px] flex-1 rounded-[var(--radius-xs)] border border-[rgba(0,0,0,0.08)] bg-[var(--canvas)] px-4 type-caption text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary-focus)]";
 
@@ -288,6 +292,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
         <p className="shrink-0 type-fine-print text-[var(--ink-muted-48)]">
           <span className="tabular-nums text-[var(--ink)]">{data.totalCount}</span>{" "}
           {data.totalCount === 1 ? "lead encontrado" : "leads encontrados"}
+          {openCart ? " com carrinho aberto" : ""}
           {source ? ` · origem ${sourceLabel(source)}` : ""}
           {" · "}
           <button
@@ -297,6 +302,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
               setQ("");
               setQDebounced("");
               setSource("");
+              setOpenCart(false);
             }}
           >
             Limpar filtros
@@ -305,11 +311,25 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
       ) : data?.abandonedCarts &&
         (data.abandonedCarts.openCount > 0 || data.abandonedCarts.recoveredMonthCount > 0) ? (
         <p className="shrink-0 type-fine-print text-[var(--ink-muted-48)]">
-          Carrinhos abandonados em aberto:{" "}
-          <span className="tabular-nums text-[var(--ink)]">
-            {data.abandonedCarts.openCount} ·{" "}
-            {fmtCurrency(data.abandonedCarts.openValueCents / 100)}
-          </span>
+          {data.abandonedCarts.openCount > 0 ? (
+            <button
+              type="button"
+              className="active:scale-95"
+              title="Ver só quem tem carrinho aberto"
+              onClick={() => setOpenCart(true)}
+            >
+              Carrinhos abandonados em aberto:{" "}
+              <span className="tabular-nums text-[var(--primary)]">
+                {data.abandonedCarts.openCount} ·{" "}
+                {fmtCurrency(data.abandonedCarts.openValueCents / 100)}
+              </span>
+            </button>
+          ) : (
+            <>
+              Carrinhos abandonados em aberto:{" "}
+              <span className="tabular-nums text-[var(--ink)]">0</span>
+            </>
+          )}
           {"  ·  "}Recuperado no mês:{" "}
           <span className="tabular-nums text-[var(--ink)]">
             {fmtCurrency(data.abandonedCarts.recoveredMonthCents / 100)}
@@ -365,7 +385,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
                   color={stage.color}
                   count={stage.totalCount}
                   valueLabel={
-                    stage.role === "ABANDONED" && stage.totalValue > 0
+                    ABANDON_ROLES.has(stage.role ?? "") && stage.totalValue > 0
                       ? fmtCurrency(stage.totalValue)
                       : undefined
                   }
@@ -386,7 +406,12 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
                       onDragEnd={() => setDragOverStage(null)}
                       className={clsx(movingLeadId === lead.id && "pointer-events-none opacity-50")}
                     >
-                      <CrmLeadCard lead={lead} drag onOpen={setOpenLeadId} />
+                      <CrmLeadCard
+                        lead={lead}
+                        drag
+                        onOpen={setOpenLeadId}
+                        showOpenCart={!ABANDON_ROLES.has(stage.role ?? "")}
+                      />
                     </div>
                   ))}
                   {stage.totalCount > stage.leads.length ? (

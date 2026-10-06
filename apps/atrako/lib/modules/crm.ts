@@ -5,6 +5,8 @@
 import { prisma } from "@/lib/db";
 import { upsertPersonAndLead } from "@/lib/atrako/person";
 import { withStageHistory } from "@/lib/crm/stage-history";
+import { contactLocation, formatLocation } from "@/lib/commerce/order-details";
+import { isEcommerceCliente } from "@/lib/clientProfiles";
 
 export const STAGE_ROLE_ENTRY = "ENTRY";
 export const STAGE_ROLE_WON = "WON";
@@ -12,15 +14,34 @@ export const STAGE_ROLE_WON = "WON";
 export const STAGE_ROLE_ABANDONED = "ABANDONED";
 /** Criada sob demanda (pedido expirado / reembolso); fica fixa depois de Ganho. */
 export const STAGE_ROLE_LOST = "LOST";
+/** Carrinho aberto sem compra há +7 / +30 / +60 dias; criadas sob demanda, logo após Carrinho abandonado. */
+export const STAGE_ROLE_ABANDONED_7 = "ABANDONED_7";
+export const STAGE_ROLE_ABANDONED_30 = "ABANDONED_30";
+export const STAGE_ROLE_ABANDONED_60 = "ABANDONED_60";
 
-export type StageRole = "ENTRY" | "WON" | "ABANDONED" | "LOST";
+export type AgingRole = typeof STAGE_ROLE_ABANDONED_7 | typeof STAGE_ROLE_ABANDONED_30 | typeof STAGE_ROLE_ABANDONED_60;
+export type StageRole = "ENTRY" | "WON" | "ABANDONED" | AgingRole | "LOST";
+
+/** Da mais nova para a mais antiga; `minDays` = idade do abandono para entrar. */
+export const AGING_STAGES: ReadonlyArray<{ role: AgingRole; minDays: number; name: string; color: string }> = [
+  { role: STAGE_ROLE_ABANDONED_7, minDays: 7, name: "Abandonado há +7 dias", color: "#FF9F0A" },
+  { role: STAGE_ROLE_ABANDONED_30, minDays: 30, name: "Abandonado há +30 dias", color: "#FF6B00" },
+  { role: STAGE_ROLE_ABANDONED_60, minDays: 60, name: "Abandonado há +60 dias", color: "#C2410C" },
+];
+
+const ABANDON_FAMILY = new Set<string>([STAGE_ROLE_ABANDONED, ...AGING_STAGES.map((s) => s.role)]);
+
+/** Carrinho abandonado ou uma das janelas +7/+30/+60. */
+export function isAbandonFamilyRole(role: string | null | undefined) {
+  return ABANDON_FAMILY.has(role ?? "");
+}
 
 function isFixedRole(role: string | null | undefined) {
   return (
     role === STAGE_ROLE_ENTRY ||
     role === STAGE_ROLE_WON ||
-    role === STAGE_ROLE_ABANDONED ||
-    role === STAGE_ROLE_LOST
+    role === STAGE_ROLE_LOST ||
+    isAbandonFamilyRole(role)
   );
 }
 
@@ -106,17 +127,28 @@ async function createStageRow(data: {
 
 type PipelineWithStages = Awaited<ReturnType<typeof loadDefaultPipeline>>;
 
+/** `leads` semeia as colunas de inside sales; `ecommerce` só garante as colunas fixas. */
+export type PipelinePreset = "leads" | "ecommerce";
+
 async function loadDefaultPipeline(clienteId: string) {
-  const pipeline = await prisma.crmPipeline.findFirst({
-    where: { clienteId, isDefault: true },
-  });
+  const rows = await prisma.$queryRaw<Array<{ id: string; clienteId: string; preset: string | null }>>`
+    SELECT id, "clienteId", preset FROM "CrmPipeline"
+    WHERE "clienteId" = ${clienteId} AND "isDefault" = true
+    ORDER BY "createdAt" ASC LIMIT 1
+  `;
+  const pipeline = rows[0];
   if (!pipeline) return null;
   const stages = await loadStages(pipeline.id);
   return {
     id: pipeline.id,
     clienteId: pipeline.clienteId,
+    preset: (pipeline.preset === "ecommerce" ? "ecommerce" : "leads") as PipelinePreset,
     stages,
   };
+}
+
+export async function setPipelinePreset(pipelineId: string, preset: PipelinePreset) {
+  await prisma.$executeRaw`UPDATE "CrmPipeline" SET preset = ${preset} WHERE id = ${pipelineId}`;
 }
 
 /** Garante pipeline + colunas base; Novo (ENTRY) e Ganho (WON) sempre fixos. */
@@ -124,13 +156,18 @@ export async function ensureDefaultPipeline(clienteId: string) {
   let pipeline = await loadDefaultPipeline(clienteId);
 
   if (!pipeline) {
+    const cliente = await prisma.cliente.findUnique({
+      where: { id: clienteId },
+      select: { nome: true, slug: true, perfilPanel: true, objetivoMidia: true },
+    });
+    const ecommerce = isEcommerceCliente(cliente);
     const created = await prisma.crmPipeline.create({
       data: {
         clienteId,
         name: "Principal",
         isDefault: true,
         stages: {
-          create: ATRAKO_BASE_STAGES.map((s) => ({
+          create: ATRAKO_BASE_STAGES.filter((s) => !ecommerce || s.role).map((s) => ({
             name: s.name,
             order: s.order,
             color: s.color,
@@ -138,6 +175,7 @@ export async function ensureDefaultPipeline(clienteId: string) {
         },
       },
     });
+    if (ecommerce) await setPipelinePreset(created.id, "ecommerce");
     for (const s of ATRAKO_BASE_STAGES) {
       if (!s.role) continue;
       await prisma.$executeRaw`
@@ -190,6 +228,8 @@ async function ensureEssentialStages(pipeline: NonNullable<PipelineWithStages>) 
     }
   }
 
+  if (pipeline.preset === "ecommerce") return normalizeStageOrder(pipeline.clienteId);
+
   // Seed colunas intermediárias base (cria as que faltarem por nome)
   stages = (await loadDefaultPipeline(pipeline.clienteId))?.stages ?? stages;
   const middle = stages.filter((s) => !isFixedRole(s.role));
@@ -238,12 +278,15 @@ async function ensureEssentialStages(pipeline: NonNullable<PipelineWithStages>) 
 function stageRank(role: string | null | undefined) {
   if (role === STAGE_ROLE_ENTRY) return 0;
   if (role === STAGE_ROLE_ABANDONED) return 1;
-  if (role === STAGE_ROLE_WON) return 3;
-  if (role === STAGE_ROLE_LOST) return 4;
-  return 2;
+  if (role === STAGE_ROLE_ABANDONED_7) return 2;
+  if (role === STAGE_ROLE_ABANDONED_30) return 3;
+  if (role === STAGE_ROLE_ABANDONED_60) return 4;
+  if (role === STAGE_ROLE_WON) return 6;
+  if (role === STAGE_ROLE_LOST) return 7;
+  return 5;
 }
 
-/** Novo = 0, Carrinho abandonado = 1 (se existir), livres, Ganho, Perdido (se existir). */
+/** Novo, Carrinho abandonado, +7, +30, +60 (se existirem), livres, Ganho, Perdido (se existir). */
 async function normalizeStageOrder(clienteId: string) {
   const fresh = await loadDefaultPipeline(clienteId);
   if (!fresh) throw new Error("Pipeline não encontrado");
@@ -290,6 +333,24 @@ export async function ensureAbandonedStage(clienteId: string) {
 
 export function isAbandonedStage(stage: { role?: string | null } | null) {
   return stage?.role === STAGE_ROLE_ABANDONED;
+}
+
+/** Garante a coluna da janela (+7/+30/+60) sob demanda. */
+export async function ensureAgingStage(clienteId: string, role: AgingRole) {
+  const def = AGING_STAGES.find((s) => s.role === role);
+  if (!def) throw new Error(`Janela inválida: ${role}`);
+  const pipeline = await ensureDefaultPipeline(clienteId);
+  const existing = pipeline.stages.find((s) => s.role === role);
+  if (existing) return existing;
+  await createStageRow({
+    pipelineId: pipeline.id,
+    name: def.name,
+    order: 2,
+    color: def.color,
+    role,
+  });
+  const final = await normalizeStageOrder(clienteId);
+  return final.stages.find((s) => s.role === role)!;
 }
 
 /** Garante a coluna "Perdido" (reaproveita uma coluna livre com esse nome). */
@@ -363,13 +424,27 @@ export async function createNativeLead(input: {
 /** Cards carregados por coluna; contagem e valor da coluna são sempre do total. */
 const PIPELINE_LEADS_PER_STAGE = 100;
 
-export async function getPipelineBoard(clienteId: string, opts?: { q?: string; source?: string }) {
+export async function getPipelineBoard(
+  clienteId: string,
+  opts?: { q?: string; source?: string; openCart?: boolean },
+) {
   const pipeline = await ensureDefaultPipeline(clienteId);
   const q = opts?.q?.trim().toLowerCase();
   const source = opts?.source?.trim();
 
+  const openCartLeadIds = opts?.openCart
+    ? (
+        await prisma.abandonedCart.findMany({
+          where: { clienteId, status: "OPEN", leadId: { not: null } },
+          select: { leadId: true },
+          distinct: ["leadId"],
+        })
+      ).map((c) => c.leadId as string)
+    : null;
+
   const where = {
     clienteId,
+    ...(openCartLeadIds ? { id: { in: openCartLeadIds } } : {}),
     ...(source ? { source: { equals: source, mode: "insensitive" as const } } : {}),
     ...(q
       ? {
@@ -440,6 +515,24 @@ export async function getPipelineBoard(clienteId: string, opts?: { q?: string; s
     });
   }
 
+  const loadedIds = stages.flatMap((s) => s.leads.map((l) => l.id));
+  if (loadedIds.length) {
+    const carts = await prisma.abandonedCart.groupBy({
+      by: ["leadId"],
+      where: { clienteId, status: "OPEN", leadId: { in: loadedIds } },
+      _sum: { totalCents: true },
+      _max: { abandonedAt: true },
+    });
+    const byLead = new Map(carts.map((c) => [c.leadId, c]));
+    for (const s of stages) {
+      for (const l of s.leads) {
+        const cart = byLead.get(l.id);
+        l.openCartCents = cart ? cart._sum.totalCents ?? 0 : null;
+        l.openCartAt = cart?._max.abandonedAt?.toISOString() ?? null;
+      }
+    }
+  }
+
   const wonStageIds = new Set(pipeline.stages.filter((s) => isWonStage(s)).map((s) => s.id));
   const statusCount = (status: string) =>
     byStatus.find((r) => r.status === status)?._count._all ?? 0;
@@ -473,7 +566,7 @@ function mapLead(l: {
   stageId: string | null;
   createdAt: Date;
   updatedAt: Date;
-  contact: { name: string; email: string | null; phone: string | null } | null;
+  contact: { name: string; email: string | null; phone: string | null; metadata?: unknown } | null;
 }) {
   return {
     id: l.id,
@@ -481,12 +574,15 @@ function mapLead(l: {
     name: l.contact?.name ?? "Sem nome",
     email: l.contact?.email ?? null,
     phone: l.contact?.phone ?? null,
+    location: formatLocation(contactLocation(l.contact?.metadata)),
     source: l.source,
     status: l.status,
     dealValue: l.dealValue != null ? Number(l.dealValue) : null,
     stageId: l.stageId,
     createdAt: l.createdAt.toISOString(),
     updatedAt: l.updatedAt.toISOString(),
+    openCartCents: null as number | null,
+    openCartAt: null as string | null,
   };
 }
 
@@ -737,7 +833,7 @@ export async function deletePipelineStage(input: {
   const stage = pipeline.stages.find((s) => s.id === input.stageId);
   if (!stage) throw new Error("Etapa não encontrada");
   if (isFixedRole(stage.role)) {
-    throw new Error("Não é possível remover Novo, Carrinho abandonado, Ganho ou Perdido");
+    throw new Error("Não é possível remover Novo, as colunas de carrinho, Ganho ou Perdido");
   }
   const entry = pipeline.stages.find((s) => s.role === STAGE_ROLE_ENTRY);
   if (entry) {
@@ -747,6 +843,65 @@ export async function deletePipelineStage(input: {
     });
   }
   await prisma.crmStage.delete({ where: { id: stage.id } });
+}
+
+/**
+ * Troca o preset do funil. `ecommerce`: leads das colunas de inside sales padrão vão para Novo
+ * e essas colunas somem (colunas criadas à mão ficam). `dryRun` só conta.
+ */
+export async function applyPipelinePreset(
+  clienteId: string,
+  preset: PipelinePreset,
+  opts?: { dryRun?: boolean },
+) {
+  const pipeline = await ensureDefaultPipeline(clienteId);
+  const entry = pipeline.stages.find((s) => s.role === STAGE_ROLE_ENTRY);
+  if (!entry) throw new Error("Funil sem etapa de entrada");
+  const baseNames = new Set(ATRAKO_BASE_STAGES.filter((s) => !s.role).map((s) => s.name.toLowerCase()));
+  const targets =
+    preset === "ecommerce"
+      ? pipeline.stages.filter((s) => !isFixedRole(s.role) && baseNames.has(s.name.trim().toLowerCase()))
+      : [];
+
+  const leads = targets.length
+    ? await prisma.nativeLead.findMany({
+        where: { clienteId, stageId: { in: targets.map((s) => s.id) } },
+        select: { id: true, stageId: true, metadata: true },
+      })
+    : [];
+  const byStage = targets.map((s) => ({
+    stage: s.name,
+    leads: leads.filter((l) => l.stageId === s.id).length,
+  }));
+  if (opts?.dryRun) return { preset, dryRun: true, moved: leads.length, stages: byStage };
+
+  const now = new Date();
+  for (const lead of leads) {
+    const meta =
+      lead.metadata && typeof lead.metadata === "object" && !Array.isArray(lead.metadata)
+        ? (lead.metadata as Record<string, unknown>)
+        : {};
+    await prisma.nativeLead.update({
+      where: { id: lead.id },
+      data: {
+        stageId: entry.id,
+        status: "OPEN",
+        metadata: withStageHistory(meta, {
+          stageId: entry.id,
+          stage: entry.name,
+          role: STAGE_ROLE_ENTRY,
+          at: now,
+          by: "auto",
+          reason: "reorganização do funil",
+        }) as never,
+      },
+    });
+  }
+  for (const s of targets) await prisma.crmStage.delete({ where: { id: s.id } });
+  await setPipelinePreset(pipeline.id, preset);
+  if (preset === "leads") await ensureDefaultPipeline(clienteId);
+  else await normalizeStageOrder(clienteId);
+  return { preset, dryRun: false, moved: leads.length, stages: byStage };
 }
 
 /** Etapa de entrada (Novo) — onde o lead entra no funil. */

@@ -9,6 +9,7 @@ import { isRevenueOrder, orderStatusLabel } from "@/lib/commerce-attribution/ord
 import { describeOrderOrigin } from "@/lib/commerce-attribution/describe";
 import { CHANNEL_LABELS, type OrderChannel } from "@/lib/commerce-attribution/store-source";
 import { LOST_REASON_LABELS, readStageHistory, type LostReason } from "@/lib/crm/stage-history";
+import { orderDetails } from "@/lib/commerce/order-details";
 
 export function normalizePersonPhone(raw?: string | null): string | null {
   if (!raw) return null;
@@ -291,57 +292,60 @@ export function formatAttributionDetail(
   return parts.length ? parts.join(" · ") : undefined;
 }
 
-/** Garante um NativeLead OPEN para o contato (não cria duplicata aberta). */
+/**
+ * Um card por pessoa: reaproveita o lead do contato (aberto, ganho ou perdido) — nova compra,
+ * carrinho ou conversa entram no mesmo card. Só cria quando o contato ainda não tem lead.
+ */
 export async function ensureOpenNativeLead(input: {
   workspaceId: string;
   contactId: string;
   source?: string | null;
   metadata?: Record<string, unknown> | null;
 }) {
-  const open = await prisma.nativeLead.findFirst({
-    where: {
-      clienteId: input.workspaceId,
-      contactId: input.contactId,
-      status: "OPEN",
-    },
-    include: { contact: true, stage: true },
-    orderBy: { createdAt: "desc" },
-  });
-  if (open) {
-    if (input.source || input.metadata) {
-      const prev = (open.metadata as Record<string, unknown> | null) ?? {};
+  const pipeline = await ensurePipeline(input.workspaceId);
+  return prisma.$transaction(async (tx) => {
+    // Webhooks simultâneos do mesmo contato não podem criar dois cards.
+    await tx.$queryRaw`SELECT 1 FROM (SELECT pg_advisory_xact_lock(hashtext(${`lead:${input.contactId}`}))) AS l`;
+    const leads = await tx.nativeLead.findMany({
+      where: { clienteId: input.workspaceId, contactId: input.contactId },
+      include: { contact: true, stage: true },
+      orderBy: { updatedAt: "desc" },
+      take: 5,
+    });
+    const existing = leads.find((l) => l.status === "OPEN") ?? leads[0];
+    if (existing) {
+      if (!input.source && !input.metadata) return existing;
+      const prev = (existing.metadata as Record<string, unknown> | null) ?? {};
       const incoming = {
         ...(input.metadata ?? {}),
         ...(input.source ? { source: input.source } : {}),
       };
-      return prisma.nativeLead.update({
-        where: { id: open.id },
+      return tx.nativeLead.update({
+        where: { id: existing.id },
         data: {
-          source: open.source || input.source || undefined,
+          source: existing.source || input.source || undefined,
           metadata: mergeLeadAttributionMeta(prev, incoming) as never,
         },
         include: { contact: true, stage: true },
       });
     }
-    return open;
-  }
 
-  const pipeline = await ensurePipeline(input.workspaceId);
-  const stages = pipeline.stages as Array<{ id: string; name: string; role?: string | null }>;
-  const entryStage =
-    stages.find((s) => s.role === "ENTRY") ??
-    stages.find((s) => /^novo$/i.test(s.name)) ??
-    stages[0];
-  return prisma.nativeLead.create({
-    data: {
-      clienteId: input.workspaceId,
-      contactId: input.contactId,
-      stageId: entryStage?.id,
-      source: input.source ?? "inbound",
-      status: "OPEN",
-      metadata: input.metadata ?? undefined,
-    },
-    include: { contact: true, stage: true },
+    const stages = pipeline.stages as Array<{ id: string; name: string; role?: string | null }>;
+    const entryStage =
+      stages.find((s) => s.role === "ENTRY") ??
+      stages.find((s) => /^novo$/i.test(s.name)) ??
+      stages[0];
+    return tx.nativeLead.create({
+      data: {
+        clienteId: input.workspaceId,
+        contactId: input.contactId,
+        stageId: entryStage?.id,
+        source: input.source ?? "inbound",
+        status: "OPEN",
+        metadata: (input.metadata ?? undefined) as never,
+      },
+      include: { contact: true, stage: true },
+    });
   });
 }
 
@@ -394,6 +398,14 @@ function dayKey(d: Date) {
 }
 
 /** "14:30" no mesmo dia da referência; "12/10 14:30" em outro dia. */
+function fmtLag(ms: number) {
+  const min = Math.round(ms / 60000);
+  if (min < 60) return `${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 48) return `${h} h`;
+  return `${Math.round(h / 24)} dias`;
+}
+
 function clock(d: Date, ref: Date) {
   const time = d.toLocaleTimeString("pt-BR", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
   if (dayKey(d) === dayKey(ref)) return time;
@@ -537,8 +549,8 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
           ],
         },
         include: { items: { take: 10 }, source: true },
-        orderBy: { occurredAt: "asc" },
-        take: 50,
+        orderBy: { occurredAt: "desc" },
+        take: 100,
       }),
       prisma.messageDelivery.findMany({
         where: { clienteId: workspaceId, contactId, isTest: false },
@@ -937,6 +949,22 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
   for (const mo of marketplaceOrders) {
     const cents = mo.totalCents ?? 0;
     const key = orderKey(mo.provider, mo.externalId);
+    const at = mo.occurredAt ?? mo.createdAt;
+    const details = orderDetails(mo.provider, mo.rawPayload);
+    const createdAt = details?.createdAt ? new Date(details.createdAt) : null;
+    const paid = isRevenueOrder(mo.status);
+    const paidLater = paid && createdAt && at.getTime() - createdAt.getTime() >= 60_000 ? createdAt : null;
+    const method = details?.paymentMethod ?? null;
+    if (paidLater) {
+      items.push({
+        at: paidLater.toISOString(),
+        type: "marketplace.order.placed",
+        title: `Fez o pedido #${mo.externalId} · ${brl(cents)}`,
+        detail: [storeProviderLabel(mo.provider), method ? `escolheu ${method}` : null].filter(Boolean).join(" · "),
+        href: mo.leadId ? `/crm/leads/${mo.leadId}` : undefined,
+        meta: { provider: mo.provider, externalId: mo.externalId, orderId: mo.id, leadId: mo.leadId },
+      });
+    }
     const s = mo.source;
     const origin =
       s && s.channel !== "unknown"
@@ -955,12 +983,13 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
           }).title
         : null;
     items.push({
-      at: (mo.occurredAt ?? mo.createdAt).toISOString(),
+      at: at.toISOString(),
       type: "marketplace.order",
       title: orderTitle(mo.externalId, mo.status, cents),
       detail:
         [
           storeProviderLabel(mo.provider),
+          paid && method ? `pago com ${method}${paidLater ? ` ${fmtLag(at.getTime() - paidLater.getTime())} depois do pedido` : ""}` : null,
           itemsSummary(mo.items),
           origin ? `Origem: ${origin}` : null,
           isRevenueOrder(mo.status) ? conversionByOrder.get(key) ?? null : null,

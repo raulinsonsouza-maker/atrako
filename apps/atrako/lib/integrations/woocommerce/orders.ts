@@ -3,6 +3,7 @@
  * Doc: https://woocommerce.github.io/woocommerce-rest-api-docs/#orders
  */
 
+import { parseWooTime } from "../store-time";
 import { wcFetch } from "./client";
 
 export type WooBilling = {
@@ -10,13 +11,23 @@ export type WooBilling = {
   last_name?: string;
   email?: string;
   phone?: string;
+  city?: string;
+  state?: string;
 };
 
 export type WooShipping = {
   first_name?: string;
   last_name?: string;
   phone?: string;
+  city?: string;
+  state?: string;
 };
+
+type WooMeta = Array<{ key?: string; value?: unknown }>;
+
+export type WooCouponLine = { code?: string; discount?: string };
+
+export type WooShippingLine = { method_title?: string; total?: string; meta_data?: WooMeta };
 
 export type WooLineItem = {
   id?: number;
@@ -39,14 +50,39 @@ export type WooOrder = {
   date_created?: string;
   date_created_gmt?: string;
   date_paid?: string | null;
+  date_paid_gmt?: string | null;
+  date_completed?: string | null;
+  date_completed_gmt?: string | null;
+  payment_method_title?: string;
+  discount_total?: string;
+  shipping_total?: string;
+  coupon_lines?: WooCouponLine[];
+  shipping_lines?: WooShippingLine[];
   /** Link "pagar pedido" do Woo — usado na recuperação de carrinho. */
   payment_url?: string;
   billing?: WooBilling;
   shipping?: WooShipping;
   customer_id?: number;
   line_items?: WooLineItem[];
-  meta_data?: Array<{ key?: string; value?: unknown }>;
+  meta_data?: WooMeta;
 };
+
+export function wooCreatedAt(order: WooOrder): Date | null {
+  return parseWooTime(order.date_created_gmt, order.date_created);
+}
+
+export function wooPaidAt(order: WooOrder): Date | null {
+  return parseWooTime(order.date_paid_gmt, order.date_paid);
+}
+
+export function wooCompletedAt(order: WooOrder): Date | null {
+  return parseWooTime(order.date_completed_gmt, order.date_completed);
+}
+
+/** `MarketplaceOrder.occurredAt`: hora do pagamento; sem pagamento, hora do pedido. */
+export function wooOrderOccurredAt(order: WooOrder): Date | null {
+  return wooPaidAt(order) ?? wooCreatedAt(order);
+}
 
 export async function getWooOrder(workspaceId: string, orderId: string | number) {
   return wcFetch<WooOrder>(workspaceId, `/orders/${orderId}`);

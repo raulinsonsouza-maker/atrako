@@ -923,6 +923,8 @@ model CrmPipeline {
   clienteId  String
   name       String     @db.VarChar(120)
   isDefault  Boolean    @default(false)
+  /// leads (colunas de inside sales semeadas) | ecommerce (só Novo, carrinho e Ganho fixos)
+  preset     String     @default("leads") @db.VarChar(16)
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   cliente    Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
@@ -1893,7 +1895,7 @@ model MessageFlow {
   /// Chave do playbook padrão (cart_abandoned, order_unpaid…) — null = fluxo criado pela loja
   key            String?  @db.VarChar(60)
   name           String   @db.VarChar(160)
-  /// cart_abandoned | order_unpaid | order_paid | second_purchase | repurchase_due | winback | lead_lost | lead_welcome | date_based
+  /// cart_abandoned | cart_aging_7 | cart_aging_30 | cart_aging_60 | order_unpaid | order_paid | second_purchase | repurchase_due | winback | lead_lost | lead_welcome | date_based
   trigger        String   @db.VarChar(40)
   /// DRAFT | ACTIVE | PAUSED
   status         String   @default("ACTIVE") @db.VarChar(16)

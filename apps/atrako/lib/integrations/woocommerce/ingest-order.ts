@@ -11,13 +11,17 @@ import { ingestPurchase } from "@/lib/symbius/attribution/engine";
 import { reconcileOrderSources } from "@/lib/commerce-attribution/reconcile";
 import { markLeadLost, trackOrderPayment } from "@/lib/crm/abandoned-cart";
 import { birthDateFromStorePayload, upsertContactBirthday } from "@/lib/flows/important-dates";
+import { saveContactLocationFromOrder } from "@/lib/commerce/contact-location";
 import {
   extractWooBuyerContact,
   getWooOrder,
   isWooPaidOrder,
   isWooRefundedOrder,
   isWooUnpaidOrder,
+  wooCreatedAt,
   wooMetaValue,
+  wooOrderOccurredAt,
+  wooPaidAt,
   wooOrderItemsEnriched,
   wooOrderTotalCents,
   type WooOrder,
@@ -72,7 +76,7 @@ async function syncWooOrderState(input: {
       provider: "WOOCOMMERCE",
       externalOrderId: String(input.wooOrder.id),
       paid,
-      occurredAt: input.wooOrder.date_created ? new Date(input.wooOrder.date_created) : input.occurredAt,
+      occurredAt: (paid ? wooPaidAt(input.wooOrder) : null) ?? wooCreatedAt(input.wooOrder) ?? input.occurredAt,
       totalCents: wooOrderTotalCents(input.wooOrder),
       currency: input.wooOrder.currency,
       contactId: input.contactId,
@@ -124,11 +128,7 @@ export async function ingestWooCommerceOrder(input: {
         buyerName: buyer.name ?? existing.buyerName,
         buyerEmail: buyer.email ?? existing.buyerEmail,
         buyerPhone: buyer.phone ?? existing.buyerPhone,
-        occurredAt: wooOrder.date_paid
-          ? new Date(wooOrder.date_paid)
-          : wooOrder.date_created
-            ? new Date(wooOrder.date_created)
-            : existing.occurredAt,
+        occurredAt: wooOrderOccurredAt(wooOrder) ?? existing.occurredAt,
         rawPayload: {
           order: wooOrder,
           webhook: input.webhookPayload ?? null,
@@ -138,6 +138,7 @@ export async function ingestWooCommerceOrder(input: {
     await syncWooOrderItems(input.workspaceId, existing.id, wooOrder).catch((err) =>
       console.error("[woo-items]", err instanceof Error ? err.message : err),
     );
+    await saveContactLocationFromOrder(existing.contactId, "WOOCOMMERCE", { order: wooOrder }, { overwrite: false });
     await maybeAttributePurchase(input.workspaceId, wooOrder);
     await refreshWooOrderSource(input.workspaceId, wooOrder);
     const updated = await prisma.marketplaceOrder.findUniqueOrThrow({
@@ -173,11 +174,7 @@ async function persistWooOrder(input: {
   const externalId = String(input.wooOrder.id);
   const buyer = extractWooBuyerContact(input.wooOrder);
   const totalCents = wooOrderTotalCents(input.wooOrder);
-  const occurredAt = input.wooOrder.date_paid
-    ? new Date(input.wooOrder.date_paid)
-    : input.wooOrder.date_created
-      ? new Date(input.wooOrder.date_created)
-      : new Date();
+  const occurredAt = wooOrderOccurredAt(input.wooOrder) ?? new Date();
 
   const { contact, lead } = await upsertPersonAndLead({
     workspaceId: input.workspaceId,
@@ -217,6 +214,7 @@ async function persistWooOrder(input: {
   await syncWooOrderItems(input.workspaceId, order.id, input.wooOrder).catch((err) =>
     console.error("[woo-items]", err instanceof Error ? err.message : err),
   );
+  await saveContactLocationFromOrder(contact.id, "WOOCOMMERCE", { order: input.wooOrder }, { overwrite: true });
   const birth = birthDateFromStorePayload("WOOCOMMERCE", input.wooOrder);
   if (birth) {
     await upsertContactBirthday({ workspaceId: input.workspaceId, contactId: contact.id, raw: birth, source: "woocommerce" }).catch(
@@ -322,7 +320,7 @@ async function maybeAttributePurchase(workspaceId: string, wooOrder: WooOrder) {
         quantity: Number(it.quantity ?? 1),
         price: Number(it.total ?? 0) / Math.max(1, Number(it.quantity ?? 1)),
       })),
-      timestamp: wooOrder.date_paid || wooOrder.date_created || null,
+      timestamp: wooOrderOccurredAt(wooOrder)?.toISOString() ?? null,
       eventId: `woocommerce_${wooOrder.id}`,
       rawPayload: wooOrder as unknown as Record<string, unknown>,
     });

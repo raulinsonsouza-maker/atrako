@@ -15,7 +15,7 @@ export const STAGE_COLOR_PRESETS = [
   "#AF52DE",
 ];
 
-type StageRole = "ENTRY" | "WON" | "ABANDONED" | "LOST" | null;
+type StageRole = "ENTRY" | "WON" | "ABANDONED" | "ABANDONED_7" | "ABANDONED_30" | "ABANDONED_60" | "LOST" | null;
 
 type Props = {
   stageId: string;
@@ -33,9 +33,12 @@ const FIXED_ROLE_HINT: Record<Exclude<StageRole, null>, string> = {
   ENTRY: "Entrada do funil — o nome é só um rótulo.",
   ABANDONED:
     "Carrinho abandonado — pedidos não pagos e checkouts da loja entram aqui sozinhos.",
+  ABANDONED_7: "Carrinho aberto sem compra há mais de 7 dias — o card chega aqui sozinho.",
+  ABANDONED_30: "Carrinho aberto sem compra há mais de 30 dias — o card chega aqui sozinho.",
+  ABANDONED_60: "Carrinho aberto sem compra há mais de 60 dias — aos 90 dias vai para Perdido.",
   WON: "Fechamento (ganho) — o nome é só um rótulo.",
   LOST:
-    "Perdido — pedido não pago há mais de 30 dias, carrinho expirado ou reembolso. O contato segue na base para reativação.",
+    "Perdido — carrinho sem compra há mais de 90 dias ou reembolso. O contato segue na base para reativação.",
 };
 
 /** Header da coluna — ENTRY, ABANDONED, WON e LOST são fixos na posição; nomes editáveis. */
@@ -101,7 +104,7 @@ export function CrmStageHeader({
         "pipeline-column-header relative",
         role === "ENTRY" && "pipeline-column-header-entry",
         role === "WON" && "pipeline-column-header-won",
-        (role === "ABANDONED" || role === "LOST") && "pipeline-column-header-abandoned",
+        (role === "LOST" || role?.startsWith("ABANDONED")) && "pipeline-column-header-abandoned",
       )}
     >
       <button

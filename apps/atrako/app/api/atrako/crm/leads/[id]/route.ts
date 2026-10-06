@@ -8,6 +8,7 @@ import { ensureDefaultPipeline } from "@/lib/modules/crm";
 import { leadCommunications } from "@/lib/flows/lead-card";
 import { CHANNEL_LABELS, wooVisitExtras, type OrderChannel } from "@/lib/commerce-attribution/store-source";
 import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
+import { contactLocation, formatLocation, orderDetails } from "@/lib/commerce/order-details";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest, ctx: Ctx) {
       OR: [{ leadId: lead.id }, ...(lead.contactId ? [{ contactId: lead.contactId }] : [])],
     },
     orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
-    take: 10,
+    take: 50,
     include: { items: true, source: true },
   });
 
@@ -112,6 +113,7 @@ export async function GET(request: NextRequest, ctx: Ctx) {
     totalCents: o.totalCents ?? 0,
     currency: o.currency ?? "BRL",
     occurredAt: (o.occurredAt ?? o.createdAt).toISOString(),
+    details: orderDetails(o.provider, o.rawPayload),
     items: o.items.map((i) => ({
       title: i.title,
       quantity: i.quantity,
@@ -151,6 +153,8 @@ export async function GET(request: NextRequest, ctx: Ctx) {
       : null,
   }));
 
+  const location = contactLocation(lead.contact?.metadata) ?? orders.find((o) => o.details?.location)?.details?.location ?? null;
+
   return NextResponse.json({
     communications,
     orders,
@@ -167,6 +171,7 @@ export async function GET(request: NextRequest, ctx: Ctx) {
       stageName: lead.stage?.name ?? null,
       stageColor: lead.stage?.color ?? null,
       sources: Array.isArray(sources) ? sources : [],
+      location: formatLocation(location),
       lostReason: leadMeta.lostReason ?? null,
       lostAt: leadMeta.lostAt ?? null,
       createdAt: lead.createdAt.toISOString(),

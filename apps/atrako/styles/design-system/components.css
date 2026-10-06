@@ -864,6 +864,16 @@
   color: var(--ink-muted-48);
 }
 
+/* Temperatura: até 3 dias quente, até 14 morno, depois frio (cor base). */
+.pipeline-lead-time[data-heat="hot"] {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.pipeline-lead-time[data-heat="warm"] {
+  color: var(--ink-muted-80);
+}
+
 .pipeline-lead-wa {
   display: inline-flex;
   width: 28px;

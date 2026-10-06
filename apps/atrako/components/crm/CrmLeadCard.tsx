@@ -22,6 +22,8 @@ export type CrmBoardLead = {
   updatedAt: string;
   openCartCents?: number | null;
   openCartAt?: string | null;
+  /** Última atividade (entrada, carrinho ou pedido); ordena a coluna. */
+  activityAt?: string | null;
 };
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -51,15 +53,15 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
-function formatTimeAgo(date: string) {
-  const diffMs = Date.now() - new Date(date).getTime();
-  const mins = Math.floor(diffMs / 60000);
-  const hours = Math.floor(diffMs / 3600000);
-  const days = Math.floor(diffMs / 86400000);
-  if (mins < 60) return `${Math.max(0, mins)}min`;
-  if (hours < 24) return `${hours}h`;
-  if (days < 7) return `${days}d`;
-  return new Date(date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+const brtDay = (d: Date) => Date.parse(d.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }));
+
+/** Dias corridos (Brasília) desde a data, rótulo curto e temperatura do lead. */
+function leadAge(date: string) {
+  const days = Math.max(0, Math.round((brtDay(new Date()) - brtDay(new Date(date))) / 86400000));
+  const label = days === 0 ? "hoje" : days === 1 ? "ontem" : `há ${days} dias`;
+  const heat = days <= 3 ? "hot" : days <= 14 ? "warm" : "cold";
+  const on = new Date(date).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+  return { label, heat, on };
 }
 
 function initials(name: string) {
@@ -105,6 +107,8 @@ export function CrmLeadCard({
   const sourceTitle = lead.channelLabel && storeLabel ? `Veio por ${lead.channelLabel} · ${storeLabel}` : undefined;
   const sourceColor = lead.channelLabel ? channelColor(lead.channel) : null;
   const hasValue = lead.dealValue != null && lead.dealValue > 0;
+  const cartAge = lead.openCartAt ? leadAge(lead.openCartAt) : null;
+  const activityAge = leadAge(lead.activityAt ?? lead.updatedAt ?? lead.createdAt);
 
   return (
     <div
@@ -159,13 +163,13 @@ export function CrmLeadCard({
               Carrinho aberto · {formatCurrency(lead.openCartCents / 100)}
             </span>
           ) : null}
-          {!showOpenCart && lead.openCartAt ? (
-            <span className="pipeline-lead-time type-micro-legal" title="Abandonou o carrinho">
-              {formatTimeAgo(lead.openCartAt)}
+          {!showOpenCart && cartAge ? (
+            <span className="pipeline-lead-time type-micro-legal" data-heat={cartAge.heat} title={`Abandonou o carrinho em ${cartAge.on}`}>
+              Abandonado {cartAge.label}
             </span>
           ) : (
-            <span className="pipeline-lead-time type-micro-legal">
-              {formatTimeAgo(lead.updatedAt || lead.createdAt)}
+            <span className="pipeline-lead-time type-micro-legal" data-heat={activityAge.heat} title={`Última atividade em ${activityAge.on}`}>
+              {activityAge.label}
             </span>
           )}
         </div>

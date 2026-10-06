@@ -111,7 +111,8 @@ components:
   back-link: { file: components/ui/back-link.tsx, note: "Voltar canônico — ChevronLeft + rótulo; App shell" }
   search-input: { file: components/ui/search-input.tsx, note: "Única busca — size toolbar|field; nunca input reinventado" }
   product-tile: { file: components/ui/product-tile.tsx }
-  pipeline-column: { css: ".pipeline-column / .pipeline-lead-card", note: "CRM funil — coluna canvas + body parchment + card canvas/hairline" }
+  pipeline-column: { css: ".pipeline-column / .pipeline-lead-card", note: "CRM funil — coluna canvas + body parchment + card canvas/hairline; mais quente no topo" }
+  pipeline-lead-heat: { css: ".pipeline-lead-time[data-heat]", note: "Idade do lead em dias (hoje / ontem / há N dias; abandono nas colunas de carrinho). hot ≤3d danger 600, warm ≤14d ink-80, cold muted. Data exata só no title" }
   caixa-panel: { css: ".caixa-*", note: "Finance/Caixa — saldo tile escuro + KPIs canvas + extrato lista" }
   criar-catalog: { css: ".criar-platform-* / .criar-recipe-* / .criar-filter-*", note: "Hub Criar — plataformas + receitas; badges DS" }
   lp-phone-preview: { file: components/criar/LpPhonePreview.tsx, css: ".lp-preview / .lp-phone-*", note: "Preview iPhone da LP no Criar oferta + sucesso" }

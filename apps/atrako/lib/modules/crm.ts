@@ -574,13 +574,26 @@ export async function getPipelineBoard(
       totalValue: row?._sum.dealValue != null ? Number(row._sum.dealValue) : 0,
     };
   };
-  const leadsFor = (stageId: string | null) =>
-    prisma.nativeLead.findMany({
-      where: { ...where, stageId },
-      include: { contact: true },
-      orderBy: { updatedAt: "desc" },
-      take: PIPELINE_LEADS_PER_STAGE,
-    });
+  const heat = await getLeadHeat(clienteId);
+  const toLead = (l: Parameters<typeof mapLead>[0]) => ({
+    ...mapLead(l, acquisition.get(l.id)?.channel),
+    activityAt: (heat.get(l.id)?.activityAt ?? l.createdAt).toISOString(),
+  });
+  /** Mais quente primeiro: abandono mais recente nas colunas de carrinho, última atividade nas demais. */
+  const leadsFor = async (stageId: string | null, role?: string | null) => {
+    const abandon = isAbandonFamilyRole(role);
+    const key = (id: string) => {
+      const h = heat.get(id);
+      return ((abandon ? h?.openCartAt : null) ?? h?.activityAt)?.getTime() ?? 0;
+    };
+    const ids = (await prisma.nativeLead.findMany({ where: { ...where, stageId }, select: { id: true } }))
+      .map((r) => r.id)
+      .sort((a, b) => key(b) - key(a))
+      .slice(0, PIPELINE_LEADS_PER_STAGE);
+    const pos = new Map(ids.map((id, i) => [id, i]));
+    const rows = await prisma.nativeLead.findMany({ where: { id: { in: ids } }, include: { contact: true } });
+    return rows.sort((a, b) => pos.get(a.id)! - pos.get(b.id)!).map(toLead);
+  };
 
   const stages = await Promise.all(
     pipeline.stages.map(async (stage) => ({
@@ -590,7 +603,7 @@ export async function getPipelineBoard(
       order: stage.order,
       role: (stage.role as StageRole | null) ?? null,
       ...statsFor(stage.id),
-      leads: (await leadsFor(stage.id)).map((l) => mapLead(l, acquisition.get(l.id)?.channel)),
+      leads: await leadsFor(stage.id, stage.role),
     })),
   );
 
@@ -603,7 +616,7 @@ export async function getPipelineBoard(
       order: -1,
       role: null,
       ...unstagedStats,
-      leads: (await leadsFor(null)).map((l) => mapLead(l, acquisition.get(l.id)?.channel)),
+      leads: await leadsFor(null),
     });
   }
 
@@ -648,6 +661,34 @@ export async function getPipelineBoard(
     ),
     openCount: statusCount("OPEN"),
   };
+}
+
+/**
+ * Última atividade do lead (pedido ou carrinho; entrada só sem nenhum dos dois — `createdAt` de lead importado é a data da importação)
+ * e abandono mais recente ainda aberto.
+ */
+async function getLeadHeat(clienteId: string) {
+  const rows = await prisma.$queryRaw<{ id: string; activityAt: Date; openCartAt: Date | null }[]>`
+    with carts as (
+      select "leadId", max("abandonedAt") as last_at,
+        max("abandonedAt") filter (where status = 'OPEN') as open_at
+      from "AbandonedCart"
+      where "clienteId" = ${clienteId} and "leadId" is not null
+      group by 1
+    ),
+    orders as (
+      select "contactId", max("occurredAt") as last_at
+      from "MarketplaceOrder"
+      where "clienteId" = ${clienteId} and "contactId" is not null
+      group by 1
+    )
+    select l.id, coalesce(greatest(c.last_at, o.last_at), l."createdAt") as "activityAt", c.open_at as "openCartAt"
+    from "NativeLead" l
+    left join carts c on c."leadId" = l.id
+    left join orders o on o."contactId" = l."contactId"
+    where l."clienteId" = ${clienteId}
+  `;
+  return new Map(rows.map((r) => [r.id, r]));
 }
 
 function mapLead(l: {

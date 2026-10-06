@@ -6,9 +6,24 @@ import {
   sanitizeTrackingPatch,
 } from "@/lib/config/getWorkspaceConfig";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
-import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
+import { assertCanManageConfig, requireWorkspaceAccess } from "@/lib/tenancy/workspace";
+import { resolveModules, sanitizeModulesPatch } from "@/lib/modules/resolve";
 
 import { normalizePrimaryHex } from "@/lib/brand/primaryColor";
+
+async function configResponse(workspaceId: string) {
+  const config = await getWorkspaceConfig(workspaceId);
+  if (!config) return NextResponse.json(config);
+  const canManage = await assertCanManageConfig(workspaceId).then(
+    () => true,
+    () => false,
+  );
+  return NextResponse.json({
+    ...redactConfigSecrets(config),
+    modules: await resolveModules(workspaceId),
+    canManage,
+  });
+}
 
 export async function GET(request: NextRequest) {
   const workspaceId = request.nextUrl.searchParams.get("workspaceId")?.trim();
@@ -21,8 +36,7 @@ export async function GET(request: NextRequest) {
   const ws = await findWorkspaceById(workspaceId);
   if (!ws) return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
 
-  const config = await getWorkspaceConfig(workspaceId);
-  return NextResponse.json(config ? redactConfigSecrets(config) : config);
+  return configResponse(workspaceId);
 }
 
 export async function PATCH(request: NextRequest) {
@@ -58,6 +72,14 @@ export async function PATCH(request: NextRequest) {
     primaryColor = undefined;
   }
 
+  let modulesEnabled: Awaited<ReturnType<typeof sanitizeModulesPatch>> | null = null;
+  if (b.modulesEnabled !== undefined) {
+    modulesEnabled = await sanitizeModulesPatch(b.modulesEnabled);
+    if (!modulesEnabled.ok) {
+      return NextResponse.json({ error: modulesEnabled.error }, { status: 400 });
+    }
+  }
+
   await patchWorkspaceSettings(workspaceId, {
     timezone: typeof b.timezone === "string" ? b.timezone : undefined,
     currency: typeof b.currency === "string" ? b.currency : undefined,
@@ -73,10 +95,7 @@ export async function PATCH(request: NextRequest) {
     nome: typeof b.nome === "string" ? b.nome : undefined,
     logoUrl:
       typeof b.logoUrl === "string" ? b.logoUrl : b.logoUrl === null ? null : undefined,
-    modulesEnabled:
-      b.modulesEnabled && typeof b.modulesEnabled === "object"
-        ? (b.modulesEnabled as Record<string, boolean>)
-        : undefined,
+    modulesEnabled: modulesEnabled?.ok ? modulesEnabled.patch : undefined,
     tracking:
       b.tracking && typeof b.tracking === "object"
         ? sanitizeTrackingPatch(b.tracking as Record<string, unknown>)
@@ -99,6 +118,5 @@ export async function PATCH(request: NextRequest) {
         : undefined,
   });
 
-  const config = await getWorkspaceConfig(workspaceId);
-  return NextResponse.json(config ? redactConfigSecrets(config) : config);
+  return configResponse(workspaceId);
 }

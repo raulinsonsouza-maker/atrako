@@ -1,19 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { clsx } from "clsx";
-import { Loader2, Plus, Settings2 } from "lucide-react";
+import { Loader2, Plus, Settings2, ShoppingCart, X } from "lucide-react";
 import { CrmLeadCard, sourceLabel, type CrmBoardLead } from "./CrmLeadCard";
+import { channelColor } from "@/lib/commerce-attribution/channel-color";
 import { CrmLeadModal } from "./CrmLeadModal";
 import { CrmFunnelConfigModal } from "./CrmFunnelConfigModal";
 import { CrmStageHeader } from "./CrmStageHeader";
 import { SearchInput } from "@/components/ui/search-input";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
-import { PillSelect } from "@/components/ui/pill-select";
+import { PillMultiSelect, type PillSelectOption } from "@/components/ui/pill-select";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { DateRangeFilter, resolveDateRange, type DateRangeValue } from "@/components/ui/date-range-filter";
 
 type StageCol = {
   id: string;
@@ -31,6 +33,8 @@ const VALUE_ROLES = new Set([...ABANDON_ROLES, "WON", "LOST"]);
 type PipelineData = {
   stages: StageCol[];
   sources?: Array<{ value: string; count: number }>;
+  /** Canais de aquisição no período, com contagem. */
+  channels?: Array<{ value: string; label: string; count: number }>;
   totalCount: number;
   totalValue: number;
   newThisWeek: number;
@@ -53,13 +57,34 @@ function fmtCurrency(v: number) {
   }).format(v);
 }
 
+function fmtCompact(v: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(v);
+}
+
+const DATE_STORAGE_KEY = "atrako-crm-date-range";
+const ALL_TIME: DateRangeValue = { preset: "all", customInicio: "", customFim: "" };
+/** Prefixo das opções de loja no seletor de origem (o resto são canais de aquisição). */
+const STORE_PREFIX = "store:";
+
+function originLabelOf(origin: string, channels?: PipelineData["channels"]) {
+  if (origin.startsWith(STORE_PREFIX)) return `Loja ${sourceLabel(origin.slice(STORE_PREFIX.length))}`;
+  return channels?.find((c) => c.value === origin)?.label ?? origin;
+}
+
 export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
   const qc = useQueryClient();
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<"pipeline" | "list">("pipeline");
   const [q, setQ] = useState("");
   const [qDebounced, setQDebounced] = useState("");
-  const [source, setSource] = useState("");
+  /** Vazio = todas; `store:<source>` = loja; demais = canal de aquisição. Marcadas somam (OU). */
+  const [origins, setOrigins] = useState<string[]>([]);
+  const [dateRange, setDateRange] = useState<DateRangeValue>(ALL_TIME);
   const [openCart, setOpenCart] = useState(false);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
   const [movingLeadId, setMovingLeadId] = useState<string | null>(null);
@@ -76,6 +101,27 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
     if (fromUrl) setOpenLeadId(fromUrl);
   }, [searchParams]);
 
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(DATE_STORAGE_KEY) ?? "null") as DateRangeValue | null;
+      if (saved?.preset) setDateRange(saved);
+    } catch {
+      /* valor antigo/corrompido: fica em "Todo o período" */
+    }
+  }, []);
+
+  const changeDateRange = (v: DateRangeValue) => {
+    setDateRange(v);
+    localStorage.setItem(DATE_STORAGE_KEY, JSON.stringify(v));
+  };
+
+  const period = resolveDateRange(dateRange);
+  const source = origins
+    .filter((o) => o.startsWith(STORE_PREFIX))
+    .map((o) => o.slice(STORE_PREFIX.length))
+    .join(",");
+  const channel = origins.filter((o) => !o.startsWith(STORE_PREFIX)).join(",");
+
   const onSearch = (value: string) => {
     setQ(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -83,22 +129,36 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
   };
 
   const queryKey = useMemo(
-    () => ["crm-pipeline", workspaceId, qDebounced, source, openCart] as const,
-    [workspaceId, qDebounced, source, openCart],
+    () =>
+      [
+        "crm-pipeline",
+        workspaceId,
+        qDebounced,
+        source,
+        channel,
+        period.dataInicio ?? "",
+        period.dataFim ?? "",
+        openCart,
+      ] as const,
+    [workspaceId, qDebounced, source, channel, period.dataInicio, period.dataFim, openCart],
   );
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isPlaceholderData } = useQuery({
     queryKey,
     queryFn: async () => {
       const params = new URLSearchParams({ workspaceId, view: "pipeline" });
       if (qDebounced.trim()) params.set("q", qDebounced.trim());
       if (source) params.set("source", source);
+      if (channel) params.set("channel", channel);
+      if (period.dataInicio) params.set("from", period.dataInicio);
+      if (period.dataFim) params.set("to", period.dataFim);
       if (openCart) params.set("openCart", "1");
       const r = await fetch(`/api/atrako/crm/leads?${params}`);
       if (!r.ok) throw new Error("fail");
       return r.json() as Promise<PipelineData>;
     },
     enabled: Boolean(workspaceId),
+    placeholderData: keepPreviousData,
   });
 
   const boardRef = useRef<HTMLDivElement | null>(null);
@@ -199,17 +259,49 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
 
   const allLeads = data?.stages.flatMap((s) => s.leads) ?? [];
   const boardCols = data?.stages.length ?? 0;
-  const sourceOptions = useMemo(() => {
-    const opts = (data?.sources ?? []).map((s) => ({
-      value: s.value,
-      label: `${sourceLabel(s.value)} · ${s.count}`,
+  const originOptions = useMemo(() => {
+    const opts: PillSelectOption[] = (data?.channels ?? []).map((c) => ({
+      value: c.value,
+      label: c.label,
+      count: c.count,
+      color: channelColor(c.value),
     }));
-    if (source && !opts.some((o) => o.value === source)) {
-      opts.unshift({ value: source, label: sourceLabel(source) ?? source });
+    const stores = data?.sources ?? [];
+    if (stores.length > 1) {
+      for (const s of stores) {
+        opts.push({ value: `${STORE_PREFIX}${s.value}`, label: `Loja ${sourceLabel(s.value)}`, count: s.count });
+      }
     }
-    return [{ value: "", label: "Todas as origens" }, ...opts];
-  }, [data?.sources, source]);
-  const filtering = Boolean(qDebounced.trim() || source || openCart);
+    for (const o of origins) {
+      if (!opts.some((x) => x.value === o)) opts.push({ value: o, label: originLabelOf(o, data?.channels), count: 0 });
+    }
+    return opts;
+  }, [data?.channels, data?.sources, origins]);
+
+  const filters: Array<{ key: string; label: string; clear: () => void }> = [];
+  if (dateRange.preset !== "all") {
+    filters.push({ key: "date", label: period.label, clear: () => changeDateRange(ALL_TIME) });
+  }
+  for (const o of origins) {
+    filters.push({
+      key: `origin:${o}`,
+      label: originLabelOf(o, data?.channels),
+      clear: () => setOrigins((prev) => prev.filter((x) => x !== o)),
+    });
+  }
+  if (openCart) filters.push({ key: "cart", label: "Carrinho aberto", clear: () => setOpenCart(false) });
+  if (qDebounced.trim()) {
+    filters.push({
+      key: "q",
+      label: `“${qDebounced.trim()}”`,
+      clear: () => {
+        setQ("");
+        setQDebounced("");
+      },
+    });
+  }
+  const filtering = filters.length > 0;
+  const carts = data?.abandonedCarts;
   const fieldClass =
     "h-9 min-w-[120px] flex-1 rounded-[var(--radius-xs)] border border-[rgba(0,0,0,0.08)] bg-[var(--canvas)] px-4 type-caption text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary-focus)]";
 
@@ -225,12 +317,13 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
               onChange={(e) => onSearch(e.target.value)}
             />
           </div>
-          <PillSelect
-            aria-label="Filtrar por origem"
-            value={source}
-            onChange={setSource}
-            options={sourceOptions}
-            placeholder="Todas as origens"
+          <DateRangeFilter value={dateRange} onChange={changeDateRange} allowAll />
+          <PillMultiSelect
+            aria-label="Filtrar por origem do lead"
+            value={origins}
+            onChange={setOrigins}
+            options={originOptions}
+            allLabel="Todas as origens"
           />
           <SegmentedControl
             aria-label="Visualização"
@@ -289,56 +382,77 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
         </form>
       ) : null}
 
-      {filtering && data ? (
-        <p className="shrink-0 type-fine-print text-[var(--ink-muted-48)]">
-          <span className="tabular-nums text-[var(--ink)]">{data.totalCount}</span>{" "}
-          {data.totalCount === 1 ? "lead encontrado" : "leads encontrados"}
-          {openCart ? " com carrinho aberto" : ""}
-          {source ? ` · origem ${sourceLabel(source)}` : ""}
-          {" · "}
-          <button
-            type="button"
-            className="text-[var(--primary)] active:scale-95"
-            onClick={() => {
-              setQ("");
-              setQDebounced("");
-              setSource("");
-              setOpenCart(false);
-            }}
-          >
-            Limpar filtros
-          </button>
-        </p>
-      ) : data?.abandonedCarts &&
-        (data.abandonedCarts.openCount > 0 || data.abandonedCarts.recoveredMonthCount > 0) ? (
-        <p className="shrink-0 type-fine-print text-[var(--ink-muted-48)]">
-          {data.abandonedCarts.openCount > 0 ? (
+      {data ? (
+        <div className={clsx("crm-filter-strip", isPlaceholderData && "opacity-60")}>
+          {carts && carts.openCount > 0 && !openCart ? (
             <button
               type="button"
-              className="active:scale-95"
-              title="Ver só quem tem carrinho aberto"
+              className="crm-filter-chip"
               onClick={() => setOpenCart(true)}
+              title="Ver só quem tem carrinho aberto"
             >
-              Carrinhos abandonados em aberto:{" "}
-              <span className="tabular-nums text-[var(--primary)]">
-                {data.abandonedCarts.openCount} ·{" "}
-                {fmtCurrency(data.abandonedCarts.openValueCents / 100)}
-              </span>
+              <ShoppingCart className="h-3.5 w-3.5" strokeWidth={1.75} />
+              {filtering ? (
+                "Com carrinho aberto"
+              ) : (
+                <>
+                  <span className="tabular-nums">{carts.openCount}</span> carrinhos abertos
+                  <span className="tabular-nums text-[var(--ink-muted-48)]">
+                    {fmtCompact(carts.openValueCents / 100)}
+                  </span>
+                </>
+              )}
             </button>
-          ) : (
-            <>
-              Carrinhos abandonados em aberto:{" "}
-              <span className="tabular-nums text-[var(--ink)]">0</span>
-            </>
-          )}
-          {"  ·  "}Recuperado no mês:{" "}
-          <span className="tabular-nums text-[var(--ink)]">
-            {fmtCurrency(data.abandonedCarts.recoveredMonthCents / 100)}
-          </span>
-          {data.abandonedCarts.recoveryRate != null
-            ? ` (${Math.round(data.abandonedCarts.recoveryRate * 100)}% recuperados)`
-            : null}
-        </p>
+          ) : null}
+          {filters.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              className="crm-filter-chip"
+              data-active="true"
+              onClick={f.clear}
+              aria-label={`Remover filtro ${f.label}`}
+            >
+              {f.label}
+              <X className="h-3 w-3" strokeWidth={2} />
+            </button>
+          ))}
+
+          <p className="ml-auto type-fine-print text-[var(--ink-muted-48)]">
+            {filtering ? (
+              <>
+                <span className="tabular-nums text-[var(--ink)]">{data.totalCount}</span>{" "}
+                {data.totalCount === 1 ? "lead" : "leads"}
+                {data.totalValue > 0 ? (
+                  <>
+                    {" · "}
+                    <span className="tabular-nums text-[var(--ink)]">{fmtCompact(data.totalValue)}</span>
+                  </>
+                ) : null}
+                {filters.length > 1 ? (
+                  <>
+                    {" · "}
+                    <button
+                      type="button"
+                      className="text-[var(--primary)] active:scale-95"
+                      onClick={() => {
+                        for (const f of filters) f.clear();
+                      }}
+                    >
+                      Limpar
+                    </button>
+                  </>
+                ) : null}
+              </>
+            ) : carts && carts.recoveredMonthCents > 0 ? (
+              <>
+                Recuperado no mês{" "}
+                <span className="tabular-nums text-[var(--ink)]">{fmtCompact(carts.recoveredMonthCents / 100)}</span>
+                {carts.recoveryRate != null ? ` · ${Math.round(carts.recoveryRate * 100)}%` : null}
+              </>
+            ) : null}
+          </p>
+        </div>
       ) : null}
 
       {isLoading && !data ? (

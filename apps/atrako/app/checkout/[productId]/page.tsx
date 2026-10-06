@@ -6,6 +6,8 @@ import { notFound } from "next/navigation";
 import { CheckoutForm } from "@/components/commerce/CheckoutForm";
 import { BrandThemeScope } from "@/components/brand/BrandThemeScope";
 import { BackLink } from "@/components/ui/back-link";
+import { PublicUnavailable } from "@/components/modules/PublicUnavailable";
+import { isPublicModuleEnabled } from "@/lib/modules/resolve";
 
 export default async function CheckoutPage({
   params,
@@ -18,6 +20,9 @@ export default async function CheckoutPage({
   const sp = await searchParams;
   const product = await prisma.commerceProduct.findUnique({ where: { id: productId } });
   if (!product || !product.active || product.status !== "PUBLISHED") notFound();
+  if (!(await isPublicModuleEnabled(product.clienteId, "commerce"))) {
+    return <PublicUnavailable />;
+  }
 
   const [config, publicKey, bumpOffer] = await Promise.all([
     getWorkspaceConfig(product.clienteId),

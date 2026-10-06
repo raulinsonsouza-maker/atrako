@@ -7,6 +7,7 @@ import { AppPage } from "@/components/layout/AppPage";
 import { BackLink } from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
+import type { ModulesMap } from "@/lib/modules/registry";
 
 export type WorkspaceConfig = {
   workspace: { id: string; name: string; slug: string | null; logoUrl: string | null };
@@ -23,6 +24,9 @@ export type WorkspaceConfig = {
     messagingPrefs: Record<string, unknown>;
   };
   connections: Array<{ provider: string; status: string; hasCredentials: boolean }>;
+  modules: ModulesMap;
+  /** OWNER/ADMIN do workspace ou staff ADMIN. */
+  canManage: boolean;
 };
 
 export function useConfigWorkspace() {

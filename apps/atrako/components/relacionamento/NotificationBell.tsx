@@ -75,11 +75,13 @@ export function NotificationBell({ collapsed }: { collapsed?: boolean }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative inline-flex h-8 w-8 items-center justify-center rounded-sm text-[var(--ink-muted-48)] hover:bg-[var(--surface-tile-2)] hover:text-[var(--on-dark)] active:scale-95"
+        className={`relative inline-flex items-center justify-center rounded-sm text-[var(--ink-muted-48)] hover:bg-[var(--surface-tile-2)] hover:text-[var(--on-dark)] active:scale-95 ${
+          collapsed ? "h-10 w-10" : "h-8 w-8"
+        }`}
         aria-label={unread ? `Notificações (${unread} não lidas)` : "Notificações"}
         title="Notificações"
       >
-        <Bell className="h-4 w-4" strokeWidth={1.75} />
+        <Bell className={collapsed ? "h-5 w-5" : "h-4 w-4"} strokeWidth={1.75} />
         {unread ? <span className="rel-bell-count">{unread > 99 ? "99+" : unread}</span> : null}
       </button>
       {open ? (

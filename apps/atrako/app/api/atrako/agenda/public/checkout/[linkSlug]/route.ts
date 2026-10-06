@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { hasOnlinePayment } from "@/lib/agenda/payments";
 import { getMpPublicKey } from "@/lib/integrations/mercadopago/payments";
+import { isPublicModuleEnabled } from "@/lib/modules/resolve";
 
 export async function GET(
   _req: Request,
@@ -26,7 +27,11 @@ export async function GET(
       },
     },
   });
-  if (!link || !link.product.isActive) {
+  if (
+    !link ||
+    !link.product.isActive ||
+    !(await isPublicModuleEnabled(link.product.clienteId, "agenda"))
+  ) {
     return NextResponse.json({ error: "Link não encontrado" }, { status: 404 });
   }
 

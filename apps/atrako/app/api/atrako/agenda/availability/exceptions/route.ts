@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
+import { requireModuleApi } from "@/lib/modules/resolve";
 
 export async function GET(request: NextRequest) {
   const workspaceId = request.nextUrl.searchParams.get("workspaceId")?.trim();
@@ -14,6 +15,8 @@ export async function GET(request: NextRequest) {
   }
   const access = await requireWorkspaceAccess(workspaceId, "operate");
   if (!access.ok) return access.response;
+  const moduleOff = await requireModuleApi(workspaceId, "agenda");
+  if (moduleOff) return moduleOff;
   if (!(await findWorkspaceById(workspaceId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
@@ -59,6 +62,8 @@ export async function PUT(request: NextRequest) {
     const body = putSchema.parse(await request.json());
     const access = await requireWorkspaceAccess(body.workspaceId, "operate");
     if (!access.ok) return access.response;
+    const moduleOff = await requireModuleApi(body.workspaceId, "agenda");
+    if (moduleOff) return moduleOff;
     if (!(await findWorkspaceById(body.workspaceId))) {
       return NextResponse.json({ error: "not found" }, { status: 404 });
     }

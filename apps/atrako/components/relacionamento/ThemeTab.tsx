@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, Loader2 } from "lucide-react";
-import { Button, OptionChip, PillSelect } from "@/components/ui";
+import { Button, InfoHint, OptionChip, PillSelect } from "@/components/ui";
 import { api, dateBR } from "@/components/relacionamento/format";
 import type { EmailThemeConfig } from "@/lib/flows/theme";
 
@@ -177,16 +177,19 @@ export function ThemeTab({ workspaceId }: { workspaceId: string }) {
     <div className="flex flex-col gap-4">
       <section className="rel-card flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="type-body-strong text-[var(--ink)]">Tema único de todos os e-mails</h2>
+          <div className="flex items-center gap-1">
+            <h2 className="type-body-strong text-[var(--ink)]">Tema do e-mail</h2>
+            <InfoHint>Um visual só para todos os e-mails (fluxos e campanhas). Envie um teste antes de publicar.</InfoHint>
+          </div>
           <p className="type-fine-print text-[var(--ink-muted-48)]">
-            {data.publishedAt ? `Publicado em ${dateBR(data.publishedAt, true)}` : "Ainda não publicado — os e-mails usam a marca de Config → Empresa"}
-            {data.hasUnpublished || dirty ? " · há alterações não publicadas" : ""}
+            {data.publishedAt ? `Publicado em ${dateBR(data.publishedAt, true)}` : "Não publicado · usando a marca de Config → Empresa"}
+            {data.hasUnpublished || dirty ? " · alterações pendentes" : ""}
           </p>
           <p className="type-fine-print text-[var(--ink-muted-48)]">
             {autosave === "saving" || (dirty && autosave !== "error")
               ? "Salvando rascunho…"
               : autosave === "error"
-                ? "Não foi possível salvar o rascunho — clique em Salvar rascunho"
+                ? "Rascunho não salvo — clique em Salvar"
                 : autosave === "saved"
                   ? "Rascunho salvo"
                   : null}
@@ -211,7 +214,7 @@ export function ThemeTab({ workspaceId }: { workspaceId: string }) {
           ) : null}
           <Button variant="outline" className="px-4 py-2" disabled={!!busy || !dirty} onClick={() => run("save", async () => (await saveDraft(), "Rascunho salvo."))}>
             {busy === "save" ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Salvar rascunho
+            Salvar
           </Button>
           <Button
             className="px-4 py-2"
@@ -303,6 +306,7 @@ export function ThemeTab({ workspaceId }: { workspaceId: string }) {
                   options={[
                     { value: "0", label: "Retos" },
                     { value: "4", label: "Leve" },
+                    { value: "6", label: "Padrão" },
                     { value: "8", label: "Arredondados" },
                     { value: "24", label: "Pílula" },
                   ]}

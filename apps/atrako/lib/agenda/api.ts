@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
+import { requireModuleApi } from "@/lib/modules/resolve";
 
 export async function requireWorkspace(workspaceId: string | null | undefined) {
   const id = typeof workspaceId === "string" ? workspaceId.trim() : "";
@@ -11,6 +12,8 @@ export async function requireWorkspace(workspaceId: string | null | undefined) {
   }
   const access = await requireWorkspaceAccess(id, "operate");
   if (!access.ok) return { error: access.response } as const;
+  const moduleOff = await requireModuleApi(id, "agenda");
+  if (moduleOff) return { error: moduleOff } as const;
   if (!(await findWorkspaceById(id))) {
     return {
       error: NextResponse.json({ error: "not found" }, { status: 404 }),

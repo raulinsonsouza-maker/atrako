@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
+import { requireModuleApi } from "@/lib/modules/resolve";
 import { resolveBrand, getWorkspaceConfig } from "@/lib/config/getWorkspaceConfig";
 import { resolveMercadoPago } from "@/lib/config/resolveConnection";
 
@@ -87,6 +88,11 @@ export async function POST(request: NextRequest) {
   if (!access.ok) return access.response;
   if (!(await findWorkspaceById(workspaceId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
+  }
+
+  if (action === "offer" || action === "coupon") {
+    const moduleOff = await requireModuleApi(workspaceId, "commerce");
+    if (moduleOff) return moduleOff;
   }
 
   if (action === "offer") {

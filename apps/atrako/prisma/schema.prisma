@@ -567,6 +567,14 @@ model PlatformApp {
   updatedAt      DateTime @updatedAt
 }
 
+/// Release global de cada módulo (lib/modules/registry.ts). Sem linha = defaultRelease do registro.
+model PlatformModule {
+  key       String   @id @db.VarChar(40)
+  /// AVAILABLE | BETA | HIDDEN
+  release   String   @default("AVAILABLE") @db.VarChar(16)
+  updatedAt DateTime @updatedAt
+}
+
 model SyncState {
   id        String    @id
   attemptAt DateTime?
@@ -846,7 +854,8 @@ model WorkspaceSettings {
   customDomain    String?  @db.VarChar(255)
   /// SOLO = um profissional implícito; SALON = múltiplos profissionais
   businessMode    String   @default("SOLO") @db.VarChar(16)
-  modulesEnabled  Json     @default("{\"crm\":true,\"agenda\":true,\"commerce\":true,\"social\":true,\"finance\":true,\"forms\":true,\"insights\":true}")
+  /// Só escolhas explícitas do workspace; ausência = padrão do release (lib/modules/registry.ts).
+  modulesEnabled  Json     @default("{}")
   tracking        Json     @default("{}")
   financePrefs    Json     @default("{}")
   notifyPrefs     Json     @default("{}")

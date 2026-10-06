@@ -3,10 +3,16 @@ import { prisma } from "@/lib/db";
 import { requireClienteAccess } from "@/lib/portalSession";
 import { isEcommerceCliente } from "@/lib/clientProfiles";
 import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
-import { CHANNEL_LABELS, type OrderChannel } from "@/lib/commerce-attribution/store-source";
+import { CHANNEL_LABELS, orderOriginKey, type OrderChannel } from "@/lib/commerce-attribution/store-source";
 import { getCartRecoveryMetrics, getRepurchaseMetrics } from "@/lib/commerce/customer-metrics";
 
 const SITE_PROVIDERS = new Set(["WOOCOMMERCE", "SHOPIFY", "NUVEMSHOP", "TRAY"]);
+
+/** Origens pagas → canal de mídia cujo investimento entra no retorno da origem. */
+const ORIGIN_MEDIA: Record<string, string> = { meta_ads: "META", google_ads: "GOOGLE" };
+
+const DAY_MS = 86_400_000;
+const brtDay = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
 
 const PROVIDER_LABELS: Record<string, string> = {
   TRAY: "Tray",
@@ -55,6 +61,8 @@ export async function GET(
   }
   dataFim.setHours(23, 59, 59, 999);
   const range = { gte: dataInicio, lte: dataFim };
+  const origemParam = sp.get("origem")?.trim() ?? "";
+  const origem = /^[A-Za-z0-9_]{1,40}$/.test(origemParam) ? origemParam : null;
 
   const [cliente, midia, pedidos, checkout, crmLeads, relConv, relCost] = await Promise.all([
     prisma.cliente.findUnique({
@@ -78,13 +86,13 @@ export async function GET(
         provider: true,
         status: true,
         totalCents: true,
+        occurredAt: true,
         source: { select: { channel: true, adMethod: true } },
       },
     }),
-    prisma.commerceOrder.aggregate({
+    prisma.commerceOrder.findMany({
       where: { clienteId: id, status: "APPROVED", createdAt: range },
-      _count: { _all: true },
-      _sum: { totalCents: true },
+      select: { totalCents: true, createdAt: true },
     }),
     prisma.nativeLead.count({
       where: {
@@ -114,6 +122,15 @@ export async function GET(
   };
   const porLoja = new Map<string, Bucket>();
   const porOrigem = new Map<string, Bucket>();
+  const vendasDia = new Map<string, { receitaCents: number; pedidos: number }>();
+  const addDia = (at: Date | null, cents: number) => {
+    if (!at) return;
+    const key = brtDay(at);
+    const row = vendasDia.get(key) ?? { receitaCents: 0, pedidos: 0 };
+    row.receitaCents += cents;
+    row.pedidos += 1;
+    vendasDia.set(key, row);
+  };
   let cancelados = 0;
   let metaIdentificadas = 0;
   for (const o of pedidos) {
@@ -124,25 +141,31 @@ export async function GET(
     }
     const cents = o.totalCents ?? 0;
     const lojaLabel = PROVIDER_LABELS[o.provider] ?? o.provider;
+    const key = orderOriginKey(o.provider, o.source?.channel);
+    const label = !SITE_PROVIDERS.has(o.provider)
+      ? lojaLabel
+      : key === "unknown"
+        ? "Sem origem"
+        : CHANNEL_LABELS[key as OrderChannel] ?? key;
+    add(porOrigem, key, label, cents);
+    if (origem && key !== origem) continue;
     add(porLoja, o.provider, lojaLabel, cents);
-    if (!SITE_PROVIDERS.has(o.provider)) {
-      add(porOrigem, o.provider, lojaLabel, cents);
-      continue;
-    }
-    const ch = (o.source?.channel ?? "unknown") as OrderChannel;
-    add(porOrigem, ch, ch === "unknown" ? "Sem origem" : CHANNEL_LABELS[ch] ?? ch, cents);
+    addDia(o.occurredAt, cents);
   }
 
   const canaisVenda = [...porLoja.values()];
-  if (checkout._count._all > 0) {
+  if (checkout.length > 0) {
     const row = {
       id: "CHECKOUT",
       label: PROVIDER_LABELS.CHECKOUT,
-      pedidos: checkout._count._all,
-      receitaCents: checkout._sum.totalCents ?? 0,
+      pedidos: checkout.length,
+      receitaCents: checkout.reduce((s, c) => s + (c.totalCents ?? 0), 0),
     };
-    canaisVenda.push(row);
     porOrigem.set(row.id, { ...row });
+    if (!origem || origem === row.id) {
+      canaisVenda.push(row);
+      for (const c of checkout) addDia(c.createdAt, c.totalCents ?? 0);
+    }
   }
   canaisVenda.sort((a, b) => b.receitaCents - a.receitaCents);
 
@@ -161,7 +184,7 @@ export async function GET(
   // Sem vendas de loja/marketplace/checkout no período, as compras atribuídas pelos
   // anúncios viram a fonte de vendas. Com loja, ela é a fonte (evita contar o pedido duas vezes).
   let fonteVendas: "lojas" | "anuncios" = "lojas";
-  if (canaisVenda.length === 0 && isEcommerceCliente(cliente)) {
+  if (porOrigem.size === 0 && isEcommerceCliente(cliente)) {
     for (const m of canaisMidia) {
       if (m.compras <= 0 && m.receitaAtribuida <= 0) continue;
       canaisVenda.push({
@@ -177,9 +200,15 @@ export async function GET(
     }
   }
 
+  const filtro = fonteVendas === "lojas" ? origem : null;
   const receitaCents = canaisVenda.reduce((s, c) => s + c.receitaCents, 0);
   const totalPedidos = canaisVenda.reduce((s, c) => s + c.pedidos, 0);
-  const investimento = canaisMidia.reduce((s, c) => s + c.investimento, 0);
+  const midiaDaOrigem = filtro ? ORIGIN_MEDIA[filtro] ?? null : null;
+  const investimento = !filtro
+    ? canaisMidia.reduce((s, c) => s + c.investimento, 0)
+    : midiaDaOrigem
+      ? canaisMidia.find((c) => c.id === midiaDaOrigem)?.investimento ?? 0
+      : 0;
   const leadsMidia = canaisMidia.reduce((s, c) => s + c.leads, 0);
   const receita = receitaCents / 100;
 
@@ -193,25 +222,53 @@ export async function GET(
   const [clientes, recuperacao] =
     ecommerce && fonteVendas === "lojas"
       ? await Promise.all([
-          getRepurchaseMetrics(id, range).catch((err) => {
+          getRepurchaseMetrics(id, range, filtro).catch((err) => {
             console.warn("[consolidado] recompra", err instanceof Error ? err.message : err);
             return null;
           }),
-          getCartRecoveryMetrics(id, range).catch((err) => {
+          getCartRecoveryMetrics(id, range, filtro).catch((err) => {
             console.warn("[consolidado] recuperação", err instanceof Error ? err.message : err);
             return null;
           }),
         ])
       : [null, null];
 
-  const metaMidia = canaisMidia.find((m) => m.id === "META");
+  const metaMidia = !filtro || filtro === "meta_ads" ? canaisMidia.find((m) => m.id === "META") : undefined;
   const metaReceita = (porOrigem.get("meta_ads")?.receitaCents ?? 0) / 100;
   const origens = fonteVendas === "lojas" ? [...porOrigem.values()].sort((a, b) => b.receitaCents - a.receitaCents) : [];
+
+  // Série de vendas: por dia até ~2 meses, por semana (segunda) acima disso.
+  const start = new Date(Date.UTC(dataInicio.getFullYear(), dataInicio.getMonth(), dataInicio.getDate()));
+  const end = new Date(Date.UTC(dataFim.getFullYear(), dataFim.getMonth(), dataFim.getDate()));
+  const semanal = (end.getTime() - start.getTime()) / DAY_MS > 62;
+  const bucketOf = (dayKey: string) => {
+    if (!semanal) return dayKey;
+    const d = new Date(`${dayKey}T00:00:00Z`);
+    return new Date(d.getTime() - ((d.getUTCDay() + 6) % 7) * DAY_MS).toISOString().slice(0, 10);
+  };
+  const serieMap = new Map<string, { data: string; receitaCents: number; pedidos: number }>();
+  for (let t = start.getTime(); t <= end.getTime(); t += DAY_MS) {
+    const key = bucketOf(new Date(t).toISOString().slice(0, 10));
+    if (!serieMap.has(key)) serieMap.set(key, { data: key, receitaCents: 0, pedidos: 0 });
+  }
+  const firstDay = start.toISOString().slice(0, 10);
+  const lastDay = end.toISOString().slice(0, 10);
+  for (const [day, v] of vendasDia) {
+    const clamped = day < firstDay ? firstDay : day > lastDay ? lastDay : day;
+    const row = serieMap.get(bucketOf(clamped));
+    if (!row) continue;
+    row.receitaCents += v.receitaCents;
+    row.pedidos += v.pedidos;
+  }
 
   return NextResponse.json({
     periodo: { dataInicio: dataInicio.toISOString(), dataFim: dataFim.toISOString() },
     fonteVendas,
     ecommerce,
+    origem: filtro,
+    midiaDaOrigem,
+    serie: fonteVendas === "lojas" ? [...serieMap.values()] : [],
+    serieAgrupamento: semanal ? "semana" : "dia",
     clientes,
     recuperacao,
     totais: {

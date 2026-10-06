@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@/lib/generated/prisma";
-import { bad, gate, readBody, str, flowActor } from "@/lib/flows/api";
+import { bad, gate, parseRange, readBody, str, flowActor } from "@/lib/flows/api";
 import { ensureDefaultFlows, refreshDefaultCopy, resetStepCopy, playbookByKey } from "@/lib/flows/playbooks";
 import { emailContentProblems, sanitizeEmailContent } from "@/lib/flows/render-email";
 import { previewEmail } from "@/lib/flows/preview";
@@ -9,14 +9,12 @@ import { isEmailContent, type WhatsAppContent } from "@/lib/flows/types";
 import { sampleContact } from "@/lib/flows/campaigns";
 import { sendEmailMessage, sendWhatsAppMessage } from "@/lib/flows/send";
 
-const DAY = 86_400_000;
-
 export async function GET(request: NextRequest) {
   const g = await gate(request);
   if (!g.ok) return g.response;
   const ws = g.workspaceId;
-  const days = Math.min(365, Math.max(1, Number(request.nextUrl.searchParams.get("days")) || 30));
-  const since = new Date(Date.now() - days * DAY);
+  const { since, until, days } = parseRange(request);
+  const range = { gte: since, lte: until };
 
   const [flows, stepStats, active, conv] = await Promise.all([
     prisma.messageFlow.findMany({
@@ -26,18 +24,18 @@ export async function GET(request: NextRequest) {
     }),
     prisma.messageDelivery.groupBy({
       by: ["stepId"],
-      where: { clienteId: ws, isTest: false, flowId: { not: null }, createdAt: { gte: since } },
+      where: { clienteId: ws, isTest: false, flowId: { not: null }, createdAt: range },
       _count: { _all: true, sentAt: true, openedAt: true, clickedAt: true, convertedAt: true },
       _sum: { convertedCents: true, costMicros: true },
     }),
     prisma.messageFlowEnrollment.groupBy({
       by: ["flowId", "status", "holdout"],
-      where: { clienteId: ws, createdAt: { gte: since } },
+      where: { clienteId: ws, createdAt: range },
       _count: { _all: true, convertedAt: true },
     }),
     prisma.messageDelivery.groupBy({
       by: ["flowId", "conversionKind"],
-      where: { clienteId: ws, isTest: false, convertedAt: { gte: since }, flowId: { not: null } },
+      where: { clienteId: ws, isTest: false, convertedAt: range, flowId: { not: null } },
       _count: { _all: true },
       _sum: { convertedCents: true },
     }),

@@ -334,7 +334,7 @@ export function EmailBlockEditor({
                   ) : null}
                 </div>
               ) : b.type === "signature" ? (
-                <span className="type-fine-print text-[var(--ink-muted-48)]">Assinatura e rodapé vêm do tema (Config → Empresa e aba Tema).</span>
+                <span className="type-fine-print text-[var(--ink-muted-48)]">Assinatura e rodapé vêm do tema (Conteúdo → E-mail).</span>
               ) : null}
             </li>
           ))}

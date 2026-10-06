@@ -262,7 +262,7 @@ async function handleTemplateChange(workspaceId: string, field: string, v: Templ
         : v.event === "APPROVED"
           ? "Os fluxos que usam este template já podem enviar pelo WhatsApp."
           : null,
-      href: "/relacionamento?tab=modelos",
+      href: "/relacionamento?tab=conteudo&sub=whatsapp",
       severity: v.event === "DISABLED" ? "urgente" : bad ? "aviso" : "info",
       dedupeKey: `tpl:${metaId ?? v.message_template_name}:${v.event}:${new Date().toISOString().slice(0, 10)}`,
     });
@@ -275,7 +275,7 @@ async function handleTemplateChange(workspaceId: string, field: string, v: Templ
         type: "wa.template.quality",
         title: `Qualidade do template ${v.message_template_name ?? ""} caiu (${v.new_quality_score})`,
         body: "Muitos bloqueios ou denúncias. Revise o texto e a frequência antes que a Meta pause o template.",
-        href: "/relacionamento?tab=modelos",
+        href: "/relacionamento?tab=conteudo&sub=whatsapp",
         severity: v.new_quality_score === "RED" ? "urgente" : "aviso",
         dedupeKey: `tplq:${metaId}:${v.new_quality_score}:${new Date().toISOString().slice(0, 10)}`,
       });
@@ -290,7 +290,7 @@ async function handleTemplateChange(workspaceId: string, field: string, v: Templ
         type: "wa.template.category",
         title: `Template ${v.message_template_name ?? ""} recategorizado para Marketing`,
         body: "O custo por mensagem subiu e passa a contar no limite de marketing. Crie uma versão estritamente transacional se quiser voltar a Utilidade.",
-        href: "/relacionamento?tab=modelos",
+        href: "/relacionamento?tab=conteudo&sub=whatsapp",
         severity: "aviso",
         dedupeKey: `tplc:${metaId}:${next}`,
       });

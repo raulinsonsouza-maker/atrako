@@ -26,6 +26,9 @@ export async function GET(request: NextRequest) {
         q: request.nextUrl.searchParams.get("q") ?? undefined,
         source: request.nextUrl.searchParams.get("source") ?? undefined,
         openCart: request.nextUrl.searchParams.get("openCart") === "1",
+        channel: request.nextUrl.searchParams.get("channel") ?? undefined,
+        from: request.nextUrl.searchParams.get("from") ?? undefined,
+        to: request.nextUrl.searchParams.get("to") ?? undefined,
       }),
       getAbandonedCartSummary(workspaceId).catch(() => null),
     ]);

@@ -10,6 +10,7 @@ import { logoutEverywhere } from "@/lib/auth/logoutClient";
 const ADMIN_NAV = [
   { href: "/admin/clientes", label: "Workspaces" },
   { href: "/admin/apps", label: "Apps" },
+  { href: "/admin/modulos", label: "Módulos" },
   { href: "/admin/usuarios", label: "Usuários" },
   { href: "/admin/configuracoes", label: "Ops / alertas" },
 ] as const;

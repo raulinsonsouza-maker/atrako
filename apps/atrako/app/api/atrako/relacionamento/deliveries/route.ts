@@ -100,8 +100,8 @@ export async function GET(request: NextRequest) {
       { contact: { name: { contains: q, mode: "insensitive" } } },
     ];
   }
-  const from = sp.get("from");
-  const to = sp.get("to");
+  const from = sp.get("dataInicio") ?? sp.get("from");
+  const to = sp.get("dataFim") ?? sp.get("to");
   if (from || to) {
     where.createdAt = {
       ...(from ? { gte: new Date(`${from}T00:00:00`) } : {}),

@@ -5,6 +5,7 @@
 
 import { prisma } from "@/lib/db";
 import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
+import { orderOriginKey } from "@/lib/commerce-attribution/store-source";
 
 export type DateRange = { gte: Date; lte: Date };
 type Money = { count: number; cents: number };
@@ -47,13 +48,26 @@ function lastBefore(dates: Date[] | undefined, at: Date) {
   return found;
 }
 
-export async function getRepurchaseMetrics(clienteId: string, range: DateRange) {
+/** `origem`: só pedidos dessa origem (`orderOriginKey`); o histórico de recompra segue com todos. */
+export async function getRepurchaseMetrics(clienteId: string, range: DateRange, origem?: string | null) {
   const orders = await prisma.marketplaceOrder.findMany({
     where: { clienteId, occurredAt: range },
-    select: { contactId: true, status: true, totalCents: true, occurredAt: true },
+    select: {
+      contactId: true,
+      status: true,
+      totalCents: true,
+      occurredAt: true,
+      provider: true,
+      source: { select: { channel: true } },
+    },
     orderBy: { occurredAt: "asc" },
   });
-  const paid = orders.filter((o) => isRevenueOrder(o.status) && o.occurredAt);
+  const paid = orders.filter(
+    (o) =>
+      isRevenueOrder(o.status) &&
+      o.occurredAt &&
+      (!origem || orderOriginKey(o.provider, o.source?.channel) === origem),
+  );
   const paidCents = paid.reduce((s, o) => s + (o.totalCents ?? 0), 0);
 
   const unidentified: Money = { count: 0, cents: 0 };
@@ -113,8 +127,27 @@ export const RECOVERY_AGE_BUCKETS = [
   { key: "d180", label: "90 dias a 6 meses", maxDays: Infinity },
 ] as const;
 
-export async function getCartRecoveryMetrics(clienteId: string, range: DateRange) {
-  const [cohort, recovered] = await Promise.all([
+/** Origem do pedido que pagou cada carrinho recuperado. */
+async function recoveredOrigins(
+  clienteId: string,
+  carts: Array<{ id: string; provider: string; recoveredOrderId: string | null }>,
+) {
+  const externalIds = [...new Set(carts.map((c) => c.recoveredOrderId).filter(Boolean) as string[])];
+  const orders = externalIds.length
+    ? await prisma.marketplaceOrder.findMany({
+        where: { clienteId, externalId: { in: externalIds } },
+        select: { provider: true, externalId: true, source: { select: { channel: true } } },
+      })
+    : [];
+  const channelOf = new Map(orders.map((o) => [`${o.provider}:${o.externalId}`, o.source?.channel ?? null]));
+  return new Map(
+    carts.map((c) => [c.id, orderOriginKey(c.provider, channelOf.get(`${c.provider}:${c.recoveredOrderId}`))]),
+  );
+}
+
+/** `origem`: só carrinhos pagos por pedido dessa origem; a coorte de abandono não tem origem e sai do resultado. */
+export async function getCartRecoveryMetrics(clienteId: string, range: DateRange, origem?: string | null) {
+  const [cohort, allRecovered] = await Promise.all([
     prisma.abandonedCart.groupBy({
       by: ["status"],
       where: { clienteId, status: { in: ["OPEN", "RECOVERED", "EXPIRED"] }, abandonedAt: range },
@@ -125,6 +158,8 @@ export async function getCartRecoveryMetrics(clienteId: string, range: DateRange
       where: { clienteId, status: "RECOVERED", recoveredAt: range },
       select: {
         id: true,
+        provider: true,
+        recoveredOrderId: true,
         contactId: true,
         totalCents: true,
         recoveredCents: true,
@@ -140,7 +175,13 @@ export async function getCartRecoveryMetrics(clienteId: string, range: DateRange
     cents: cohort.reduce((s, r) => s + (r._sum.totalCents ?? 0), 0),
   };
   const cohortRecovered = cohort.find((r) => r.status === "RECOVERED")?._count._all ?? 0;
-  if (!abandoned.count && !recovered.length) return null;
+  if (!abandoned.count && !allRecovered.length) return null;
+
+  let recovered = allRecovered;
+  if (origem) {
+    const originOf = await recoveredOrigins(clienteId, allRecovered);
+    recovered = allRecovered.filter((c) => originOf.get(c.id) === origem);
+  }
 
   const cartIds = recovered.map((c) => c.id);
   const enrollments = cartIds.length
@@ -206,10 +247,11 @@ export async function getCartRecoveryMetrics(clienteId: string, range: DateRange
   }
 
   return {
-    abandoned,
+    /** null quando filtrado por origem: carrinho abandonado não tem origem. */
+    abandoned: origem ? null : abandoned,
     recovered: total,
     cohortRecovered,
-    cohortRate: abandoned.count ? cohortRecovered / abandoned.count : null,
+    cohortRate: !origem && abandoned.count ? cohortRecovered / abandoned.count : null,
     byMessage,
     alone,
     fromCustomers,

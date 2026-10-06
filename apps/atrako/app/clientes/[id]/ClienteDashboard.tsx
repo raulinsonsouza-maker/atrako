@@ -7,6 +7,7 @@ import { AppPage } from "@/components/layout/AppPage";
 import { BackLink } from "@/components/ui/back-link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PillSelect } from "@/components/ui/pill-select";
+import { DateRangeFilter, resolveDateRange, type DatePreset } from "@/components/ui/date-range-filter";
 import { DefaultPanel } from "@/components/clientes/DefaultPanel";
 import { GoogleKeywordsPanel } from "@/components/clientes/GoogleKeywordsPanel";
 import { AnalyticsGA4Section } from "@/components/clientes/AnalyticsGA4Section";
@@ -36,7 +37,7 @@ import {
   ResponsiveContainer,
   ComposedChart,
 } from "recharts";
-import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, ChevronLeft, ChevronRight, SlidersHorizontal, BarChart3, Play, TrendingUp, X, Wallet, AlertTriangle, Zap, Target, Film, MousePointerClick, Eye, EyeOff, CheckCircle2, Circle, Trash2, Flag, Clock, ChevronDown, RefreshCw } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight, SlidersHorizontal, BarChart3, Play, TrendingUp, X, Wallet, AlertTriangle, Zap, Target, Film, MousePointerClick, Eye, EyeOff, CheckCircle2, ChevronDown, RefreshCw } from "lucide-react";
 import { upgradeFbCdnImageUrl } from "@/lib/utils";
 
 /* ─── data fetchers (unchanged) ─── */
@@ -188,155 +189,17 @@ async function fetchAnalytics(id: string, filter: DateFilter) {
   return res.json();
 }
 
-/* ─── date helpers (unchanged) ─── */
+/* ─── date helpers ─── */
 
-type PresetPeriodo =
-  | "hoje"
-  | "ontem"
-  | "7d"
-  | "14d"
-  | "30d"
-  | "60d"
-  | "90d"
-  | "180d"
-  | "365d"
-  | "mesAtual"
-  | "mesAnterior"
-  | "trimestreAtual"
-  | "semestreAtual"
-  | "ytd"
-  | "custom";
-
-function toDateInputValue(date: Date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function fromDateInputValue(value?: string) {
-  if (!value) return null;
-  const [y, m, d] = value.split("-").map(Number);
-  if (!y || !m || !d) return null;
-  const parsed = new Date(y, m - 1, d);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
-
-function formatDatePt(value?: string) {
-  const date = fromDateInputValue(value);
-  if (!date) return "—";
-  return date.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function isSameDay(a: Date, b: Date) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
-
-function buildMonthGrid(monthDate: Date) {
-  const firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-  const startWeekday = (firstDay.getDay() + 6) % 7;
-  const daysInMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
-  const cells: Array<Date | null> = [];
-  for (let i = 0; i < startWeekday; i++) cells.push(null);
-  for (let day = 1; day <= daysInMonth; day++) {
-    cells.push(new Date(monthDate.getFullYear(), monthDate.getMonth(), day));
-  }
-  while (cells.length % 7 !== 0) cells.push(null);
-  return cells;
-}
-
-function dateDiffInDays(start: Date, end: Date) {
-  const ms = end.getTime() - start.getTime();
-  return Math.max(1, Math.floor(ms / (24 * 60 * 60 * 1000)) + 1);
-}
+type PresetPeriodo = Exclude<DatePreset, "all">;
 
 function getDateFilterFromPreset(
   preset: PresetPeriodo,
   customInicio?: string,
   customFim?: string
 ): DateFilter & { label: string } {
-  const hoje = new Date();
-  const fim = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
-  const inicio = new Date(fim);
-
-  const make = (start: Date, end: Date, label: string): DateFilter & { label: string } => ({
-    periodo: String(dateDiffInDays(start, end)),
-    dataInicio: toDateInputValue(start),
-    dataFim: toDateInputValue(end),
-    label,
-  });
-
-  if (preset === "custom" && customInicio && customFim) {
-    const [y1, m1, d1] = customInicio.split("-").map(Number);
-    const [y2, m2, d2] = customFim.split("-").map(Number);
-    if (y1 && m1 && d1 && y2 && m2 && d2) {
-      const start = new Date(y1, m1 - 1, d1);
-      const end = new Date(y2, m2 - 1, d2);
-      if (start <= end) {
-        return {
-          ...make(start, end, "Personalizado"),
-          label: `${formatDatePt(customInicio)} - ${formatDatePt(customFim)}`,
-        };
-      }
-    }
-  }
-
-  switch (preset) {
-    case "hoje": {
-      return make(fim, fim, "Hoje");
-    }
-    case "ontem": {
-      const ontem = new Date(fim);
-      ontem.setDate(fim.getDate() - 1);
-      return make(ontem, ontem, "Ontem");
-    }
-    case "7d":
-    case "14d":
-    case "30d":
-    case "60d":
-    case "90d":
-    case "180d":
-    case "365d": {
-      const dias = parseInt(preset.replace("d", ""), 10);
-      inicio.setDate(fim.getDate() - (dias - 1));
-      return make(inicio, fim, `Últimos ${dias} dias`);
-    }
-    case "mesAtual": {
-      const start = new Date(fim.getFullYear(), fim.getMonth(), 1);
-      return make(start, fim, "Mês atual");
-    }
-    case "mesAnterior": {
-      const start = new Date(fim.getFullYear(), fim.getMonth() - 1, 1);
-      const end = new Date(fim.getFullYear(), fim.getMonth(), 0);
-      return make(start, end, "Mês anterior");
-    }
-    case "trimestreAtual": {
-      const quarterStartMonth = Math.floor(fim.getMonth() / 3) * 3;
-      const start = new Date(fim.getFullYear(), quarterStartMonth, 1);
-      return make(start, fim, "Trimestre atual");
-    }
-    case "semestreAtual": {
-      const semesterStartMonth = fim.getMonth() < 6 ? 0 : 6;
-      const start = new Date(fim.getFullYear(), semesterStartMonth, 1);
-      return make(start, fim, "Semestre atual");
-    }
-    case "ytd": {
-      const start = new Date(fim.getFullYear(), 0, 1);
-      return make(start, fim, "Ano atual (YTD)");
-    }
-    default: {
-      inicio.setDate(fim.getDate() - 89);
-      return make(inicio, fim, "Últimos 90 dias");
-    }
-  }
+  const r = resolveDateRange({ preset, customInicio: customInicio ?? "", customFim: customFim ?? "" });
+  return { periodo: r.periodo ?? "90", dataInicio: r.dataInicio, dataFim: r.dataFim, label: r.label };
 }
 
 /* ─── shared tooltip style ─── */
@@ -391,12 +254,6 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
     const fim = localStorage.getItem("inout-date-custom-fim");
     if (fim) setCustomFim(fim);
   }, []);
-  const [filterOpen, setFilterOpen] = React.useState(false);
-  const [visibleMonth, setVisibleMonth] = React.useState(() => {
-    const today = new Date();
-    return new Date(today.getFullYear(), today.getMonth() - 1, 1);
-  });
-  const filterRef = React.useRef<HTMLDivElement | null>(null);
 
   // ── Sync state ──
   const [syncStatus, setSyncStatus] = React.useState<"idle" | "syncing" | "done" | "error">("idle");
@@ -500,59 +357,6 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
     () => getDateFilterFromPreset(presetPeriodo, customInicio, customFim),
     [presetPeriodo, customInicio, customFim]
   );
-
-  React.useEffect(() => {
-    function onClickOutside(event: MouseEvent) {
-      if (!filterOpen) return;
-      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
-        setFilterOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
-  }, [filterOpen]);
-
-  React.useEffect(() => {
-    const end = fromDateInputValue(dateFilter.dataFim);
-    if (end) {
-      setVisibleMonth(new Date(end.getFullYear(), end.getMonth() - 1, 1));
-    }
-  }, [dateFilter.dataFim]);
-
-  const leftMonth = visibleMonth;
-  const rightMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1);
-  const startSelected = fromDateInputValue(customInicio);
-  const endSelected = fromDateInputValue(customFim);
-
-  const topRangeLabelFull =
-    presetPeriodo === "custom" && customInicio && customFim
-      ? `Personalizado: ${formatDatePt(customInicio)} a ${formatDatePt(customFim)}`
-      : `${dateFilter.label}: ${formatDatePt(dateFilter.dataInicio)} a ${formatDatePt(dateFilter.dataFim)}`;
-
-  const topRangeLabelShort = dateFilter.label;
-
-  const handleDayClick = (day: Date) => {
-    const clicked = toDateInputValue(day);
-    if (!startSelected || (startSelected && endSelected)) {
-      setPresetPeriodo("custom");
-      setCustomInicio(clicked);
-      setCustomFim("");
-      return;
-    }
-    if (day < startSelected) {
-      setPresetPeriodo("custom");
-      setCustomInicio(clicked);
-      setCustomFim(toDateInputValue(startSelected));
-      return;
-    }
-    setPresetPeriodo("custom");
-    setCustomFim(clicked);
-  };
-
-  const isInRange = (day: Date) => {
-    if (!startSelected || !endSelected) return false;
-    return day >= startSelected && day <= endSelected;
-  };
 
   const { data: cliente, isLoading: clienteLoading } = useQuery({
     queryKey: ["cliente", id],
@@ -1027,7 +831,7 @@ function formatPercentage(value: number) {
 
       <div className="flex min-h-0 flex-col gap-6">
       {/* ── Date filter + sub-aba Criativos / Análise de dados (Meta/Google) ── */}
-      <div className="flex flex-col gap-2" ref={filterRef}>
+      <div className="flex flex-col gap-2">
         {/* Linha 1: Saldo chip (esquerda) + Filtro de data (direita) */}
         <div className="flex items-center gap-2">
           {/* Saldo chip — temporariamente oculto */}
@@ -1123,19 +927,16 @@ function formatPercentage(value: number) {
           )}
 
           {/* Filtro de data — direita */}
-          <div className="ml-auto">
-            <button
-              onClick={() => setFilterOpen((v) => !v)}
-              className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 text-xs transition-all hover:bg-muted/60 sm:gap-2.5 sm:px-4"
-            >
-              <CalendarDays className="h-4 w-4 shrink-0 text-[var(--primary)]" />
-              <span className="min-w-0 truncate text-[var(--foreground)]">
-                <span className="sm:hidden">{topRangeLabelShort}</span>
-                <span className="hidden sm:inline max-w-[280px] truncate">{topRangeLabelFull}</span>
-              </span>
-              <SlidersHorizontal className="h-3.5 w-3.5 shrink-0 text-[var(--muted-foreground)]" />
-            </button>
-          </div>
+          <DateRangeFilter
+            variant="panel"
+            className="ml-auto"
+            value={{ preset: presetPeriodo, customInicio, customFim }}
+            onChange={(v) => {
+              setPresetPeriodo(v.preset as PresetPeriodo);
+              setCustomInicio(v.customInicio);
+              setCustomFim(v.customFim);
+            }}
+          />
         </div>
 
         {/* Linha 2: Toggle Análise / Criativos / Lead Scoring — só em Meta e Google */}
@@ -1160,160 +961,6 @@ function formatPercentage(value: number) {
                 {view === "dados" ? "Análise" : view === "criativos" ? "Criativos" : view === "social-media" ? "Social Media" : "Lead Scoring"}
               </button>
             ))}
-          </div>
-        )}
-
-        {filterOpen && (
-          <div className="absolute right-4 top-28 z-40 w-[min(920px,100%-2rem)] overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl shadow-black/40">
-            <div className="grid md:grid-cols-[260px_1fr]">
-              {/* Presets sidebar */}
-              <div className="border-b border-[var(--border)] p-4 md:border-b-0 md:border-r">
-                <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
-                  Períodos predefinidos
-                </p>
-                <div className="space-y-0.5">
-                  {[
-                    ["hoje", "Hoje"],
-                    ["ontem", "Ontem"],
-                    ["7d", "Últimos 7 dias"],
-                    ["14d", "Últimos 14 dias"],
-                    ["30d", "Últimos 30 dias"],
-                    ["60d", "Últimos 60 dias"],
-                    ["90d", "Últimos 90 dias"],
-                    ["mesAtual", "Este mês"],
-                    ["mesAnterior", "Mês passado"],
-                    ["trimestreAtual", "Este trimestre"],
-                    ["ytd", "Ano atual (YTD)"],
-                    ["custom", "Personalizado"],
-                  ].map(([value, label]) => (
-                    <button
-                      key={value}
-                      className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-all ${
-                        presetPeriodo === value
-                          ? "bg-primary/10 font-medium text-[var(--primary)]"
-                          : "text-[var(--foreground)] hover:bg-muted/60"
-                      }`}
-                      onClick={() => setPresetPeriodo(value as PresetPeriodo)}
-                    >
-                      <span>{label}</span>
-                      <span
-                        className={`h-2 w-2 rounded-full transition-all ${
-                          presetPeriodo === value
-                            ? "bg-[var(--primary)]"
-                            : "bg-[var(--border)]"
-                        }`}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Calendar */}
-              <div className="p-5">
-                <div className="mb-4 flex items-center justify-between">
-                  <button
-                    onClick={() =>
-                      setVisibleMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
-                    }
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--muted-foreground)] transition hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <p className="text-xs font-medium text-[var(--muted-foreground)]">
-                    {formatDatePt(customInicio)} {customFim ? `a ${formatDatePt(customFim)}` : ""}
-                  </p>
-                  <button
-                    onClick={() =>
-                      setVisibleMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))
-                    }
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--muted-foreground)] transition hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
-
-                <div className="grid gap-5 lg:grid-cols-2">
-                  {[leftMonth, rightMonth].map((monthDate) => {
-                    const grid = buildMonthGrid(monthDate);
-                    return (
-                      <div
-                        key={`${monthDate.getFullYear()}-${monthDate.getMonth()}`}
-                        className="rounded-xl border border-[var(--border)] p-3"
-                      >
-                        <p className="mb-2 text-sm font-semibold capitalize text-[var(--foreground)]">
-                          {monthDate.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
-                        </p>
-                        <div className="mb-1.5 grid grid-cols-7 text-center text-[10px] font-medium uppercase tracking-wider text-[var(--muted-foreground)]">
-                          {["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"].map((d) => (
-                            <span key={d}>{d}</span>
-                          ))}
-                        </div>
-                        <div className="grid grid-cols-7 gap-0.5">
-                          {grid.map((day, idx) => {
-                            if (!day) return <span key={idx} className="h-8" />;
-                            const selectedStart = !!startSelected && isSameDay(day, startSelected);
-                            const selectedEnd = !!endSelected && isSameDay(day, endSelected);
-                            const inRange = isInRange(day);
-                            return (
-                              <button
-                                key={toDateInputValue(day)}
-                                onClick={() => handleDayClick(day)}
-                                className={`h-8 rounded-md text-xs font-medium transition-all ${
-                                  selectedStart || selectedEnd
-                                    ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
-                                    : inRange
-                                      ? "bg-primary/10 text-[var(--primary)]"
-                                      : "text-[var(--foreground)] hover:bg-muted/60"
-                                }`}
-                              >
-                                {day.getDate()}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border)] pt-4">
-                  <div className="flex gap-2">
-                    <input
-                      type="date"
-                      value={customInicio}
-                      onChange={(e) => {
-                        setPresetPeriodo("custom");
-                        setCustomInicio(e.target.value);
-                      }}
-                      className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-1.5 text-sm"
-                    />
-                    <input
-                      type="date"
-                      value={customFim}
-                      onChange={(e) => {
-                        setPresetPeriodo("custom");
-                        setCustomFim(e.target.value);
-                      }}
-                      className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-1.5 text-sm"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setFilterOpen(false)}
-                      className="rounded-lg border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--muted-foreground)] transition hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      onClick={() => setFilterOpen(false)}
-                      className="rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-medium text-[var(--primary-foreground)] transition hover:opacity-90"
-                    >
-                      Atualizar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         )}
       </div>
@@ -1691,9 +1338,6 @@ function formatPercentage(value: number) {
       {!analystOpen && canal !== "imoveis" && canal !== "crm" && canal !== "marketplaces" && canal !== "ecommerce" && (canal === "geral" || subView === "dados") && analytics?.hasAnalytics && (
         <AnalyticsGA4Section data={analytics} />
       )}
-
-      {/* ── Pauta da semana (geral only, internal only, not social-media-only clients) ── */}
-      {!analystOpen && id && canal === "geral" && !portalMode && canUseAnalyst && !socialMediaOnly && <PautaDaSemana clienteId={id} />}
 
       {/* ── Empty state ── */}
       {!analystOpen && id && canal !== "geral" && subView === "dados" && resumo && resumo.leads === 0 && Number(resumo.investimento) === 0 && (
@@ -3077,233 +2721,5 @@ function MetaCriativosGrid({
       )}
 
     </div>
-  );
-}
-
-/* ─── Pauta da Semana — Task Manager ─── */
-
-type Tarefa = {
-  id: string;
-  titulo: string;
-  status: string;
-  prioridade: string;
-  dataFim: string | null;
-  createdAt: string;
-};
-
-const PRIO_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
-  ALTA:  { label: "Alta",  color: "text-[var(--primary)]",  dot: "bg-[var(--primary)]" },
-  MEDIA: { label: "Média", color: "text-amber-600",          dot: "bg-amber-400" },
-  BAIXA: { label: "Baixa", color: "text-[var(--muted-foreground)]", dot: "bg-[var(--muted-foreground)]" },
-};
-
-function formatDateBR(iso: string | null) {
-  if (!iso) return null;
-  const d = new Date(iso);
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
-}
-
-function isOverdue(iso: string | null) {
-  if (!iso) return false;
-  return new Date(iso) < new Date(new Date().toDateString());
-}
-
-function PautaDaSemana({ clienteId }: { clienteId: string }) {
-  const [titulo, setTitulo] = React.useState("");
-  const [prioridade, setPrioridade] = React.useState("MEDIA");
-  const [dataFim, setDataFim] = React.useState("");
-  const [showConcluidas, setShowConcluidas] = React.useState(false);
-  const queryClient = useQueryClient();
-
-  const { data: tarefas = [] } = useQuery<Tarefa[]>({
-    queryKey: ["pautas", clienteId],
-    queryFn: () =>
-      fetch(`/api/clientes/${clienteId}/pautas`).then((r) => (r.ok ? r.json() : [])),
-  });
-
-  const abertas = tarefas.filter((t) => t.status === "ABERTA");
-  const concluidas = tarefas.filter((t) => t.status === "CONCLUIDA");
-
-  const addMutation = useMutation({
-    mutationFn: (body: { titulo: string; prioridade: string; dataFim?: string }) =>
-      fetch(`/api/clientes/${clienteId}/pautas`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pautas", clienteId] });
-      setTitulo("");
-      setPrioridade("MEDIA");
-      setDataFim("");
-    },
-  });
-
-  const patchMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Tarefa> }) =>
-      fetch(`/api/clientes/${clienteId}/pautas/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["pautas", clienteId] }),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) =>
-      fetch(`/api/clientes/${clienteId}/pautas/${id}`, { method: "DELETE" }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["pautas", clienteId] }),
-  });
-
-  function handleAdd() {
-    const t = titulo.trim();
-    if (!t) return;
-    addMutation.mutate({ titulo: t, prioridade, dataFim: dataFim || undefined });
-  }
-
-  function TarefaRow({ tarefa, done }: { tarefa: Tarefa; done: boolean }) {
-    const prio = PRIO_CONFIG[tarefa.prioridade] ?? PRIO_CONFIG.MEDIA;
-    const overdue = !done && isOverdue(tarefa.dataFim);
-    return (
-      <li className={`group flex items-start gap-3 rounded-xl border px-4 py-3 text-sm transition-colors ${done ? "border-border/50 bg-transparent opacity-60" : "border-[var(--border)] bg-muted/20 hover:bg-muted/40"}`}>
-        {/* Complete / undo button */}
-        <button
-          title={done ? "Reabrir tarefa" : "Concluir tarefa"}
-          onClick={() => patchMutation.mutate({ id: tarefa.id, data: { status: done ? "ABERTA" : "CONCLUIDA" } })}
-          className="mt-0.5 shrink-0 text-[var(--muted-foreground)] transition hover:text-[var(--primary)]"
-        >
-          {done ? <CheckCircle2 className="h-4 w-4 text-[var(--primary)]" /> : <Circle className="h-4 w-4" />}
-        </button>
-
-        {/* Content */}
-        <div className="min-w-0 flex-1">
-          <span className={`break-words leading-snug ${done ? "line-through text-[var(--muted-foreground)]" : "text-[var(--foreground)]"}`}>
-            {tarefa.titulo}
-          </span>
-          <div className="mt-1.5 flex flex-wrap items-center gap-2">
-            {/* Priority */}
-            <span className={`flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider ${prio.color}`}>
-              <span className={`inline-block h-1.5 w-1.5 rounded-full ${prio.dot}`} />
-              {prio.label}
-            </span>
-            {/* Due date */}
-            {tarefa.dataFim && (
-              <span className={`flex items-center gap-1 text-[10px] ${overdue ? "text-negative font-semibold" : "text-[var(--muted-foreground)]"}`}>
-                <Clock className="h-3 w-3" />
-                {overdue ? "Vencida · " : ""}{formatDateBR(tarefa.dataFim)}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Delete */}
-        <button
-          title="Apagar tarefa"
-          onClick={() => deleteMutation.mutate(tarefa.id)}
-          className="mt-0.5 shrink-0 text-[var(--muted-foreground)] opacity-0 transition hover:text-negative group-hover:opacity-100"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </li>
-    );
-  }
-
-  return (
-    <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-1 rounded-full bg-[var(--primary)]" />
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--primary)]">
-                Acompanhamento estratégico
-              </p>
-              <CardTitle className="mt-0">Pauta da Semana</CardTitle>
-            </div>
-          </div>
-          <span className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--muted-foreground)]">
-            {abertas.length} aberta{abertas.length !== 1 ? "s" : ""}
-          </span>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        {/* ── Add form ── */}
-        <div className="rounded-xl border border-[var(--border)] bg-muted/10 p-3 space-y-2">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Descreva a tarefa ou pauta..."
-              className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm transition-colors focus:border-primary/50 focus:outline-none"
-              value={titulo}
-              onChange={(e) => setTitulo(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
-            />
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {/* Priority */}
-            <div className="relative flex items-center gap-1.5">
-              <Flag className="h-3.5 w-3.5 text-[var(--muted-foreground)]" />
-              <PillSelect
-                value={prioridade}
-                onChange={setPrioridade}
-                options={[
-                  { value: "ALTA", label: "Alta prioridade" },
-                  { value: "MEDIA", label: "Média prioridade" },
-                  { value: "BAIXA", label: "Baixa prioridade" },
-                ]}
-                aria-label="Prioridade"
-              />
-            </div>
-            {/* Due date */}
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-[var(--muted-foreground)]" />
-              <input
-                type="date"
-                value={dataFim}
-                onChange={(e) => setDataFim(e.target.value)}
-                className="rounded-lg border border-[var(--border)] bg-[var(--background)] py-1.5 px-2 text-xs focus:outline-none focus:border-primary/50 cursor-pointer [color-scheme:dark]"
-              />
-            </div>
-            <button
-              onClick={handleAdd}
-              disabled={!titulo.trim() || addMutation.isPending}
-              className="ml-auto rounded-lg bg-[var(--primary)] px-4 py-1.5 text-xs font-semibold text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-50"
-            >
-              {addMutation.isPending ? "…" : "+ Adicionar"}
-            </button>
-          </div>
-        </div>
-
-        {/* ── Open tasks ── */}
-        {abertas.length === 0 ? (
-          <p className="py-4 text-center text-xs text-[var(--muted-foreground)]">
-            Nenhuma tarefa em aberto. Adicione uma acima.
-          </p>
-        ) : (
-          <ul className="space-y-2">
-            {abertas.map((t) => <TarefaRow key={t.id} tarefa={t} done={false} />)}
-          </ul>
-        )}
-
-        {/* ── Completed tasks (collapsible) ── */}
-        {concluidas.length > 0 && (
-          <div>
-            <button
-              onClick={() => setShowConcluidas((v) => !v)}
-              className="flex items-center gap-1.5 text-[11px] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition"
-            >
-              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showConcluidas ? "" : "-rotate-90"}`} />
-              {concluidas.length} concluída{concluidas.length !== 1 ? "s" : ""}
-            </button>
-            {showConcluidas && (
-              <ul className="mt-2 space-y-2">
-                {concluidas.map((t) => <TarefaRow key={t.id} tarefa={t} done={true} />)}
-              </ul>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
   );
 }

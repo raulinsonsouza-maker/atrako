@@ -7,6 +7,7 @@ import {
   Building2,
   ChevronRight,
   Crosshair,
+  LayoutGrid,
   Link2,
   Loader2,
   Users,
@@ -50,6 +51,18 @@ const GROUPS: Array<{ title: string; links: HubLink[] }> = [
             : memberCount === 1
               ? "1 pessoa"
               : `${memberCount} pessoas`,
+      },
+      {
+        href: "/config/modulos",
+        label: "Módulos",
+        desc: "O que aparece no menu do workspace",
+        icon: LayoutGrid,
+        status: ({ config }) => {
+          if (!config?.modules) return null;
+          const n = Object.values(config.modules).filter((m) => m.enabled && !m.locked).length;
+          if (n === 0) return "Só o núcleo";
+          return n === 1 ? "1 ativo" : `${n} ativos`;
+        },
       },
     ],
   },

@@ -6,31 +6,15 @@
 
 import { prisma } from "@/lib/db";
 import { listWorkspaceConnections } from "@/lib/atrako/workspace-connections";
+import { readExplicitModules, type ModuleKey } from "@/lib/modules/registry";
 
-export type ModulesEnabled = {
-  crm: boolean;
-  agenda: boolean;
-  commerce: boolean;
-  social: boolean;
-  finance: boolean;
-  forms: boolean;
-  insights: boolean;
-};
-
-const DEFAULT_MODULES: ModulesEnabled = {
-  crm: true,
-  agenda: true,
-  commerce: true,
-  social: true,
-  finance: true,
-  forms: true,
-  insights: true,
-};
+/** Escolhas explícitas do workspace; estado efetivo via `resolveModules` (lib/modules/resolve). */
+export type ModulesEnabled = Partial<Record<ModuleKey, boolean>>;
 
 export async function ensureWorkspaceSettings(clienteId: string) {
   return prisma.workspaceSettings.upsert({
     where: { clienteId },
-    create: { clienteId, modulesEnabled: DEFAULT_MODULES },
+    create: { clienteId, modulesEnabled: {} },
     update: {},
   });
 }
@@ -43,12 +27,7 @@ export async function getWorkspaceConfig(workspaceId: string) {
   const settings = await ensureWorkspaceSettings(workspaceId);
   const connections = await listWorkspaceConnections(workspaceId);
 
-  const modulesEnabled = {
-    ...DEFAULT_MODULES,
-    ...(typeof settings.modulesEnabled === "object" && settings.modulesEnabled
-      ? (settings.modulesEnabled as Partial<ModulesEnabled>)
-      : {}),
-  };
+  const modulesEnabled = readExplicitModules(settings.modulesEnabled);
 
   return {
     workspace: {
@@ -84,7 +63,8 @@ export async function patchWorkspaceSettings(
     locale?: string;
     primaryColor?: string | null;
     customDomain?: string | null;
-    modulesEnabled?: Partial<ModulesEnabled>;
+    /** Já validado por `sanitizeModulesPatch`. */
+    modulesEnabled?: ModulesEnabled;
     tracking?: Record<string, unknown>;
     financePrefs?: Record<string, unknown>;
     notifyPrefs?: Record<string, unknown>;
@@ -121,7 +101,7 @@ export async function patchWorkspaceSettings(
       customDomain: patch.customDomain === undefined ? undefined : patch.customDomain,
       onboardingStep: patch.onboardingStep ?? undefined,
       modulesEnabled: patch.modulesEnabled
-        ? { ...DEFAULT_MODULES, ...(current.modulesEnabled as object), ...patch.modulesEnabled }
+        ? { ...readExplicitModules(current.modulesEnabled), ...patch.modulesEnabled }
         : undefined,
       tracking: patch.tracking
         ? { ...(current.tracking as object), ...patch.tracking }

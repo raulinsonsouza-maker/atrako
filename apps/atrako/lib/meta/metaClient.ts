@@ -1174,6 +1174,79 @@ async function fetchVideoDetails(
 }
 
 const DELIVERY_ACTIVE_STATUSES = ["ACTIVE", "IN_PROCESS"] as const;
+/** Sem ACTIVE/IN_PROCESS. Insights não devolve ARCHIVED/DELETED se não forem pedidos explicitamente. */
+const INACTIVE_AD_STATUSES = [
+  "PAUSED",
+  "CAMPAIGN_PAUSED",
+  "ADSET_PAUSED",
+  "ARCHIVED",
+  "DELETED",
+  "WITH_ISSUES",
+  "PENDING_REVIEW",
+  "DISAPPROVED",
+  "PREAPPROVED",
+  "PENDING_BILLING_INFO",
+] as const;
+
+/** GET na Graph API com até 3 novas tentativas em erro transitório (10s, 20s, 30s). */
+async function getMetaJsonWithRetry<T extends { error?: { message?: string } }>(
+  url: string,
+  label: string,
+): Promise<T> {
+  const backoffs = [10000, 20000, 30000];
+  let lastMsg = "";
+  for (let attempt = 0; attempt <= 3; attempt++) {
+    if (attempt > 0) {
+      const waitMs = backoffs[attempt - 1] ?? 10000;
+      console.warn(`[${label}] retry ${attempt}/3 in ${waitMs / 1000}s after: ${lastMsg}`);
+      await new Promise((r) => setTimeout(r, waitMs));
+    }
+    const res = await fetch(url);
+    const d = (await res.json()) as T;
+    const errMsg = d?.error?.message ?? (res.ok ? "" : `HTTP ${res.status}`);
+    if (!res.ok || d.error) {
+      lastMsg = errMsg;
+      if (isTransientMetaError(errMsg) && attempt < 3) continue;
+      throw new Error(errMsg || `Meta API error: ${res.status}`);
+    }
+    return d;
+  }
+  throw new Error(lastMsg || "Max retries exceeded");
+}
+
+/** IDs de anúncios fora de veiculação (pausados, arquivados…) que tiveram entrega no período. */
+async function fetchDeliveredInactiveAdIds(
+  actId: string,
+  token: string,
+  since: string,
+  until: string,
+): Promise<string[]> {
+  const params = new URLSearchParams({
+    access_token: token,
+    level: "ad",
+    fields: "ad_id,spend,impressions",
+    time_range: JSON.stringify({ since, until }),
+    filtering: JSON.stringify([
+      { field: "ad.effective_status", operator: "IN", value: [...INACTIVE_AD_STATUSES] },
+    ]),
+    limit: "500",
+  });
+  const ids = new Set<string>();
+  let url: string | null = `${GRAPH_BASE}/${actId}/insights?${params.toString()}`;
+  while (url) {
+    const data: {
+      data?: Array<{ ad_id?: string; spend?: string; impressions?: string }>;
+      paging?: { next?: string };
+      error?: { message?: string };
+    } = await getMetaJsonWithRetry(url, "fetchDeliveredInactiveAdIds");
+    for (const row of data.data ?? []) {
+      const delivered = Number(row.spend ?? 0) > 0 || Number(row.impressions ?? 0) > 0;
+      if (row.ad_id && delivered) ids.add(row.ad_id);
+    }
+    url = data.paging?.next ?? null;
+  }
+  return Array.from(ids);
+}
 
 const PAGE_COVER_OBJECTIVES = ["PAGE_LIKES", "OUTCOME_PAGE_LIKES"];
 
@@ -1275,8 +1348,10 @@ function resolveCreativePosterUrl(creative: MetaAdCreative): string | null {
 
 /**
  * Fetch all ads with creatives and insights, following paging.next.
- * Only returns ads with status de veiculação ativo: ACTIVE (inclui em aprendizado e
- * aprendizado limitado) ou IN_PROCESS. Exclui desativados (PAUSED, DELETED, etc.).
+ * Por padrão só anúncios em veiculação: ACTIVE (inclui em aprendizado e
+ * aprendizado limitado) ou IN_PROCESS. Com `includeInactive` (sync histórico),
+ * também os pausados/arquivados que tiveram entrega em cada janela — sem eles o
+ * gasto por anúncio fica abaixo do gasto da campanha.
  * Exclui anúncios que promovem publicações existentes (object_story_id) — somente
  * criativos de anúncios dedicados (link_data, photo_data, video_data).
  * Enriches creatives with video_source_url when video_id is present.
@@ -1284,12 +1359,31 @@ function resolveCreativePosterUrl(creative: MetaAdCreative): string | null {
 export async function fetchAdsWithCreatives(
   accountId: string,
   token: string,
-  options?: { maxPages?: number; dateFrom?: string; dateTo?: string }
+  options?: { maxPages?: number; dateFrom?: string; dateTo?: string; includeInactive?: boolean }
 ): Promise<MetaAd[]> {
   const actId = ensureActPrefix(accountId);
   const maxPages = options?.maxPages ?? 50;
   const allAds: MetaAd[] = [];
   const adsById = new Map<string, MetaAd>();
+
+  const acceptAd = (ad: MetaAd, requireDelivering: boolean) => {
+    const status = ad.effective_status;
+    if (requireDelivering && (!status || !(DELIVERY_ACTIVE_STATUSES as readonly string[]).includes(status))) return;
+    const creative = ad.adcreatives?.data?.[0];
+    if (!creative) return;
+    if (creative.object_story_id) return;
+    if (isPageCoverOrLikeAd(ad)) return;
+    if (!hasDedicatedCreativePayload(creative)) return;
+    const existing = adsById.get(ad.id);
+    if (existing) {
+      const existingRows = existing.insights?.data ?? [];
+      const newRows = ad.insights?.data ?? [];
+      existing.insights = { data: [...existingRows, ...newRows] };
+    } else {
+      adsById.set(ad.id, ad);
+      allAds.push(ad);
+    }
+  };
 
   // Break the date range into 30-day windows so the Meta API payload (ads × days × metrics)
   // does not exceed Meta's "Please reduce the amount of data" limit on accounts with many ads.
@@ -1313,50 +1407,23 @@ export async function fetchAdsWithCreatives(
     ]);
     let url: string | null = `${GRAPH_BASE}/${actId}/ads?access_token=${encodeURIComponent(token)}&fields=${encodeURIComponent(fields)}&filtering=${encodeURIComponent(filtering)}&limit=50`;
 
+    const label = `fetchAdsWithCreatives chunk ${chunkIdx + 1}/${dateChunks.length}`;
     for (let page = 0; page < maxPages && url; page++) {
-      const currentUrl = url;
-      let data: MetaAdsResponse | null = null;
-      let lastMsg = "";
-      const backoffs = [10000, 20000, 30000];
-      for (let attempt = 0; attempt <= 3; attempt++) {
-        if (attempt > 0) {
-          const waitMs = backoffs[attempt - 1] ?? 10000;
-          console.warn(`[fetchAdsWithCreatives] retry ${attempt}/3 in ${waitMs / 1000}s (chunk ${chunkIdx + 1}/${dateChunks.length}) after: ${lastMsg}`);
-          await new Promise((r) => setTimeout(r, waitMs));
-        }
-        const res = await fetch(currentUrl);
-        const d = (await res.json()) as MetaAdsResponse;
-        const errMsg = d?.error?.message ?? (res.ok ? "" : `HTTP ${res.status}`);
-        if (!res.ok || d.error) {
-          lastMsg = errMsg;
-          if (isTransientMetaError(errMsg) && attempt < 3) continue;
-          throw new Error(errMsg || `Meta API error: ${res.status}`);
-        }
-        data = d;
-        break;
-      }
-      if (!data) throw new Error(lastMsg || "Max retries exceeded");
-      if (data.data?.length) {
-        for (const ad of data.data) {
-          const status = ad.effective_status;
-          if (!status || !(DELIVERY_ACTIVE_STATUSES as readonly string[]).includes(status)) continue;
-          const creative = ad.adcreatives?.data?.[0];
-          if (!creative) continue;
-          if (creative.object_story_id) continue;
-          if (isPageCoverOrLikeAd(ad)) continue;
-          if (!hasDedicatedCreativePayload(creative)) continue;
-          const existing = adsById.get(ad.id);
-          if (existing) {
-            const existingRows = existing.insights?.data ?? [];
-            const newRows = ad.insights?.data ?? [];
-            existing.insights = { data: [...existingRows, ...newRows] };
-          } else {
-            adsById.set(ad.id, ad);
-            allAds.push(ad);
-          }
-        }
-      }
+      const data: MetaAdsResponse = await getMetaJsonWithRetry(url, label);
+      for (const ad of data.data ?? []) acceptAd(ad, true);
       url = data.paging?.next ?? null;
+    }
+
+    if (options?.includeInactive && chunk) {
+      const inactiveIds = await fetchDeliveredInactiveAdIds(actId, token, chunk[0], chunk[1]);
+      for (let i = 0; i < inactiveIds.length; i += 50) {
+        const ids = inactiveIds.slice(i, i + 50).join(",");
+        const byId: Record<string, unknown> & { error?: { message?: string } } = await getMetaJsonWithRetry(
+          `${GRAPH_BASE}/?ids=${ids}&access_token=${encodeURIComponent(token)}&fields=${encodeURIComponent(fields)}`,
+          `${label} inactive`,
+        );
+        for (const ad of Object.values(byId)) acceptAd(ad as MetaAd, false);
+      }
     }
     // Pause between date chunks to ease Meta API pressure
     if (chunkIdx < dateChunks.length - 1) {

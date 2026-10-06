@@ -10,6 +10,7 @@ import {
 import { createMercadoPagoOrder } from "@/lib/commerce/mp";
 import { resolveMercadoPago } from "@/lib/config/resolveConnection";
 import { upsertPersonAndLead } from "@/lib/atrako/person";
+import { isPublicModuleEnabled } from "@/lib/modules/resolve";
 import { createEvent, publishEventBatch } from "@atrako/events";
 
 export async function POST(request: NextRequest) {
@@ -34,7 +35,12 @@ export async function POST(request: NextRequest) {
     }
 
     const product = await prisma.commerceProduct.findUnique({ where: { id: productId } });
-    if (!product || !product.active || product.status !== "PUBLISHED") {
+    if (
+      !product ||
+      !product.active ||
+      product.status !== "PUBLISHED" ||
+      !(await isPublicModuleEnabled(product.clienteId, "commerce"))
+    ) {
       return NextResponse.json({ error: "Produto indisponível" }, { status: 404 });
     }
 

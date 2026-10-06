@@ -15,6 +15,8 @@ import {
   type CriarRecipe,
 } from "@/lib/criar/catalog";
 import type { CriarMode } from "@/lib/criar/modules";
+import { useModules } from "@/hooks/useModules";
+import { moduleForCriarPlatform } from "@/lib/modules/registry";
 
 function recipeRank(r: CriarRecipe) {
   if (r.recommended) return 0;
@@ -109,7 +111,10 @@ function PlatformCatalogInner() {
   const sp = useSearchParams();
   const raw = String(params.platform ?? "");
   const mode: CriarMode = sp.get("mode") === "ai" ? "ai" : "manual";
-  const valid = isCriarPlatformId(raw);
+  const { isEnabled, isReady: modulesReady } = useModules();
+  const platformModule = moduleForCriarPlatform(raw);
+  const moduleOff = Boolean(platformModule && modulesReady && !isEnabled(platformModule.key));
+  const valid = isCriarPlatformId(raw) && !moduleOff;
 
   /** Loja unificada no hub Minhas páginas. */
   useEffect(() => {
@@ -203,7 +208,9 @@ function PlatformCatalogInner() {
           </div>
         ) : (
           <p className="type-caption text-[var(--ink-muted-48)]">
-            Plataforma não encontrada.{" "}
+            {moduleOff
+              ? `${platformModule!.label} está desativado neste workspace.`
+              : "Plataforma não encontrada."}{" "}
             <Link href="/criar" className="text-[var(--primary)]">
               Voltar ao Criar
             </Link>

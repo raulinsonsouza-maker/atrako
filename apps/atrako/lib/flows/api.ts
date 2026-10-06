@@ -55,3 +55,34 @@ export async function gate(
 }
 
 export const bad = (error: string, status = 400) => NextResponse.json({ error }, { status });
+
+const DAY = 86_400_000;
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+export type DateRange = { since: Date; until: Date; days: number };
+
+/**
+ * Período do filtro (`dataInicio`/`dataFim` em YYYY-MM-DD, fim inclusivo) com fallback
+ * para o legado `days` (últimos N dias até agora).
+ */
+export function parseRange(request: NextRequest, defaultDays = 30): DateRange {
+  const sp = request.nextUrl.searchParams;
+  const ini = sp.get("dataInicio") ?? "";
+  const fim = sp.get("dataFim") ?? "";
+  if (ISO_DATE.test(ini) && ISO_DATE.test(fim)) {
+    const since = new Date(`${ini}T00:00:00`);
+    const until = new Date(`${fim}T23:59:59.999`);
+    if (!Number.isNaN(since.getTime()) && !Number.isNaN(until.getTime()) && since <= until) {
+      return { since, until, days: Math.max(1, Math.round((until.getTime() - since.getTime()) / DAY)) };
+    }
+  }
+  const days = Math.min(730, Math.max(1, Number(sp.get("days")) || defaultDays));
+  const until = new Date();
+  return { since: new Date(until.getTime() - days * DAY), until, days };
+}
+
+/** Mesmo comprimento, imediatamente antes — base da variação "vs período anterior". */
+export function previousRange(r: DateRange): DateRange {
+  const len = r.until.getTime() - r.since.getTime();
+  return { since: new Date(r.since.getTime() - len - 1), until: new Date(r.since.getTime() - 1), days: r.days };
+}

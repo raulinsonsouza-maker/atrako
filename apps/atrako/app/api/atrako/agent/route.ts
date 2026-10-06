@@ -6,6 +6,8 @@ import {
 import { createFormFromBrief, previewForm } from "@atrako/forms";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
+import { requireModuleApi } from "@/lib/modules/resolve";
+import { moduleForAgentTool } from "@/lib/modules/registry";
 
 const registry = createDefaultAgentToolRegistry();
 
@@ -61,6 +63,11 @@ export async function POST(request: NextRequest) {
     const workspace = await findWorkspaceById(workspaceId).catch(() => null);
     if (!workspace) {
       return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
+    }
+    const toolModule = moduleForAgentTool(toolName);
+    if (toolModule) {
+      const moduleOff = await requireModuleApi(workspaceId, toolModule.key);
+      if (moduleOff) return moduleOff;
     }
   }
 

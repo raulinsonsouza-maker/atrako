@@ -1,6 +1,8 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { MessageCircle } from "lucide-react";
+import { channelColor } from "@/lib/commerce-attribution/channel-color";
 
 export type CrmBoardLead = {
   id: string;
@@ -10,6 +12,9 @@ export type CrmBoardLead = {
   phone: string | null;
   location?: string | null;
   source: string | null;
+  /** Canal de aquisição (meta_ads, instagram, direct…); null quando não se sabe. */
+  channel?: string | null;
+  channelLabel?: string | null;
   status: string;
   dealValue: number | null;
   stageId: string | null;
@@ -95,7 +100,10 @@ export function CrmLeadCard({
   const contact = lead.phone
     ? formatPhone(lead.phone)
     : lead.email;
-  const source = sourceLabel(lead.source);
+  const storeLabel = sourceLabel(lead.source);
+  const source = lead.channelLabel ?? storeLabel;
+  const sourceTitle = lead.channelLabel && storeLabel ? `Veio por ${lead.channelLabel} · ${storeLabel}` : undefined;
+  const sourceColor = lead.channelLabel ? channelColor(lead.channel) : null;
   const hasValue = lead.dealValue != null && lead.dealValue > 0;
 
   return (
@@ -136,7 +144,16 @@ export function CrmLeadCard({
 
       <div className="pipeline-lead-card-meta">
         <div className="pipeline-lead-meta-left">
-          {source ? <span className="pipeline-lead-source">{source}</span> : null}
+          {source ? (
+            <span
+              className="pipeline-lead-source"
+              title={sourceTitle}
+              data-channel={sourceColor ? lead.channel ?? undefined : undefined}
+              style={sourceColor ? ({ "--channel": sourceColor } as CSSProperties) : undefined}
+            >
+              {source}
+            </span>
+          ) : null}
           {showOpenCart && lead.openCartCents ? (
             <span className="rel-badge type-micro-legal" data-tone="bad">
               Carrinho aberto · {formatCurrency(lead.openCartCents / 100)}

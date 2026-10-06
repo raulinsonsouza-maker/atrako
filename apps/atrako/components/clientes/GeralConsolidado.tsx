@@ -1,7 +1,9 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CartRecoveryMetrics, RepurchaseMetrics } from "@/lib/commerce/customer-metrics";
 
 type Consolidado = {
@@ -10,6 +12,12 @@ type Consolidado = {
   /** "anuncios" quando não há loja e as vendas vêm das compras atribuídas pelos anúncios. */
   fonteVendas?: "lojas" | "anuncios";
   ecommerce?: boolean;
+  /** Origem filtrada (mesma chave de `origens[].id`); null = todas. */
+  origem?: string | null;
+  /** Canal de mídia cujo investimento conta para a origem filtrada (META, GOOGLE). */
+  midiaDaOrigem?: string | null;
+  serie?: Array<{ data: string; receitaCents: number; pedidos: number }>;
+  serieAgrupamento?: "dia" | "semana";
   totais: {
     receita: number;
     pedidos: number;
@@ -54,25 +62,52 @@ type Consolidado = {
 const pct = (part: number, total: number) => (total > 0 ? Math.round((part / total) * 100) : 0);
 const roasText = (roas: number | null | undefined) => (roas != null ? `${roas.toLocaleString("pt-BR")}x` : "—");
 
+const MEDIA_LABELS: Record<string, string> = { META: "Meta Ads", GOOGLE: "Google Ads" };
+
 /** Geral de loja: resultado real da loja + de onde vieram as vendas (atribuição cruzada). */
-function EcommerceGeral({ data }: { data: Consolidado }) {
+function EcommerceGeral({
+  data,
+  origem,
+  onOrigem,
+  fetching,
+}: {
+  data: Consolidado;
+  origem: string | null;
+  onOrigem: (id: string | null) => void;
+  fetching: boolean;
+}) {
   const { totais, canaisMidia, canaisVenda } = data;
   const origens = data.origens ?? [];
   const meta = data.meta;
   const totalCents = origens.reduce((s, o) => s + o.receitaCents, 0);
+  const totalPedidosOrigens = origens.reduce((s, o) => s + o.pedidos, 0);
   const semOrigem = origens.find((o) => o.id === "unknown");
-  const midiaLabel = canaisMidia.map((c) => c.label).join(" + ");
+  const origemLabel = origem ? origens.find((o) => o.id === origem)?.label ?? "Origem selecionada" : null;
+  const midiaLabel = origem
+    ? data.midiaDaOrigem
+      ? MEDIA_LABELS[data.midiaDaOrigem] ?? data.midiaDaOrigem
+      : null
+    : canaisMidia.map((c) => c.label).join(" + ");
+  const semMidia = Boolean(origem && !data.midiaDaOrigem);
 
   return (
-    <section className="space-y-4">
+    <section className={`space-y-4 transition-opacity ${fetching ? "opacity-60" : ""}`}>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Kpi
           label="Receita"
           value={brl(totais.receita)}
-          hint={`${totais.pedidos.toLocaleString("pt-BR")} pedidos pagos`}
+          hint={`${totais.pedidos.toLocaleString("pt-BR")} pedidos pagos${origemLabel ? ` · ${origemLabel}` : ""}`}
         />
-        <Kpi label="Investimento" value={brl(totais.investimento)} hint={midiaLabel || undefined} />
-        <Kpi label="Retorno geral" value={roasText(totais.roas)} tone={roasTone(totais.roas)} />
+        <Kpi
+          label="Investimento"
+          value={semMidia ? "—" : brl(totais.investimento)}
+          hint={semMidia ? "origem sem custo de mídia" : midiaLabel || undefined}
+        />
+        <Kpi
+          label={origem ? "Retorno da origem" : "Retorno geral"}
+          value={roasText(totais.roas)}
+          tone={roasTone(totais.roas)}
+        />
         <Kpi
           label="Custo por pedido"
           value={totais.pedidos > 0 && totais.investimento > 0 ? brl(totais.investimento / totais.pedidos) : "—"}
@@ -80,10 +115,20 @@ function EcommerceGeral({ data }: { data: Consolidado }) {
         />
       </div>
 
+      <VendasSerie data={data} origemLabel={origemLabel} />
+
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <p className="type-caption-strong text-[var(--foreground)]">De onde vieram as vendas</p>
-          {canaisVenda.length > 1 ? (
+          {origem ? (
+            <button
+              type="button"
+              onClick={() => onOrigem(null)}
+              className="type-caption text-[var(--primary)] underline-offset-2 hover:underline"
+            >
+              Ver todas as origens
+            </button>
+          ) : canaisVenda.length > 1 ? (
             <p className="type-fine-print text-[var(--muted-foreground)]">
               {canaisVenda.map((c) => `${c.label} ${brl(c.receitaCents / 100)}`).join(" · ")}
             </p>
@@ -93,27 +138,49 @@ function EcommerceGeral({ data }: { data: Consolidado }) {
         {origens.length === 0 ? (
           <p className="mt-3 type-fine-print text-[var(--muted-foreground)]">Nenhuma venda no período.</p>
         ) : (
-          <ul className="mt-4 space-y-3">
+          <ul className="mt-3 space-y-1">
             {origens.map((o) => {
               const share = pct(o.receitaCents, totalCents);
               const muted = o.id === "unknown";
+              const selected = origem === o.id;
+              const dimmed = Boolean(origem) && !selected;
               return (
-                <li key={o.id} className="grid grid-cols-[minmax(0,9rem)_1fr_auto] items-center gap-3">
-                  <span className={`truncate type-caption ${muted ? "text-[var(--muted-foreground)]" : "text-[var(--foreground)]"}`}>
-                    {o.label}
-                  </span>
-                  <div className="h-2 overflow-hidden rounded-full bg-[var(--divider-soft)]">
-                    <div
-                      className={`h-full rounded-full ${o.id === "meta_ads" ? "bg-[var(--primary)]" : muted ? "bg-[var(--border)]" : "bg-muted-foreground/40"}`}
-                      style={{ width: `${Math.max(2, share)}%` }}
-                    />
-                  </div>
-                  <span className="type-caption tabular-nums text-[var(--foreground)]">
-                    {brl(o.receitaCents / 100)}
-                    <span className="ml-2 inline-block w-16 text-right text-[var(--muted-foreground)]">
-                      {o.pedidos} · {share}%
+                <li key={o.id}>
+                  <button
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => onOrigem(selected ? null : o.id)}
+                    title={selected ? "Ver todas as origens" : `Filtrar a tela por ${o.label}`}
+                    className={`grid w-full grid-cols-[minmax(0,9rem)_1fr_auto] items-center gap-3 rounded-[var(--radius-xs)] px-2 py-1.5 text-left transition active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-focus)] ${
+                      selected ? "bg-[var(--divider-soft)]" : "hover:bg-[var(--divider-soft)]"
+                    } ${dimmed ? "opacity-50" : ""}`}
+                  >
+                    <span
+                      className={`truncate ${selected ? "type-caption-strong" : "type-caption"} ${
+                        muted && !selected ? "text-[var(--muted-foreground)]" : "text-[var(--foreground)]"
+                      }`}
+                    >
+                      {o.label}
                     </span>
-                  </span>
+                    <div className="h-2 overflow-hidden rounded-full bg-[var(--divider-soft)]">
+                      <div
+                        className={`h-full rounded-full ${
+                          selected || o.id === "meta_ads"
+                            ? "bg-[var(--primary)]"
+                            : muted
+                              ? "bg-[var(--border)]"
+                              : "bg-muted-foreground/40"
+                        }`}
+                        style={{ width: `${Math.max(2, share)}%` }}
+                      />
+                    </div>
+                    <span className="type-caption tabular-nums text-[var(--foreground)]">
+                      {brl(o.receitaCents / 100)}
+                      <span className="ml-2 inline-block w-16 text-right text-[var(--muted-foreground)]">
+                        {o.pedidos} · {share}%
+                      </span>
+                    </span>
+                  </button>
                 </li>
               );
             })}
@@ -143,7 +210,7 @@ function EcommerceGeral({ data }: { data: Consolidado }) {
           </div>
         ) : null}
 
-        {semOrigem && semOrigem.pedidos === totais.pedidos ? (
+        {semOrigem && semOrigem.pedidos === totalPedidosOrigens ? (
           <p className="mt-4 type-fine-print text-[var(--muted-foreground)]">
             A origem dos pedidos é calculada na próxima sincronização.
           </p>
@@ -169,7 +236,9 @@ function ClientesERecuperacao({
   clientes: RepurchaseMetrics | null;
   recuperacao: CartRecoveryMetrics | null;
 }) {
-  const ageLine = r?.byAge.filter((b) => b.count > 0) ?? [];
+  const ages = r?.byAge.filter((b) => b.cents > 0) ?? [];
+  const note =
+    c && c.unidentified.count > 0 ? `${num(c.unidentified.count)} pedidos sem contato ficam fora da recompra` : null;
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
       <p className="type-caption-strong text-[var(--foreground)]">Clientes e recuperação</p>
@@ -178,21 +247,15 @@ function ClientesERecuperacao({
         {c ? (
           <>
             <Kpi
-              label="Receita de quem voltou"
+              label="Receita recorrente"
               value={centsBrl(c.repeatOrders.cents)}
-              hint={`${num(c.repeatOrders.count)} pedidos · ${pctText(c.repeatShare)} da receita`}
+              hint={`${pctText(c.repeatShare)} da receita`}
             />
+            <Kpi label="Clientes novos" value={num(c.newBuyers)} hint={centsBrl(c.firstOrders.cents)} />
             <Kpi
-              label="Clientes novos"
-              value={num(c.newBuyers)}
-              hint={`primeira compra · ${centsBrl(c.firstOrders.cents)}`}
-            />
-            <Kpi
-              label="Compradores recorrentes"
+              label="Recorrentes"
               value={num(c.returningBuyers)}
-              hint={`${pctText(c.returningShare)} dos compradores${
-                c.avgGapDays != null ? ` · voltam em ~${num(c.avgGapDays)} dias` : ""
-              }`}
+              hint={c.avgGapDays != null ? `voltam em ~${num(c.avgGapDays)} dias` : `${pctText(c.returningShare)} dos compradores`}
             />
           </>
         ) : null}
@@ -200,49 +263,139 @@ function ClientesERecuperacao({
           <Kpi
             label="Carrinho recuperado"
             value={centsBrl(r.recovered.cents)}
-            hint={`${num(r.recovered.count)} pagos no período · ${num(r.cohortRecovered)} dos ${num(r.abandoned.count)} abandonados no período`}
+            hint={`${num(r.recovered.count)} ${r.recovered.count === 1 ? "pedido" : "pedidos"}`}
           />
         ) : null}
       </div>
 
-      {r && r.recovered.count > 0 ? (
-        <div className="mt-4 space-y-1 border-t border-[var(--divider-soft)] pt-4">
-          <p className="type-fine-print text-[var(--muted-foreground)]">
-            Pela mensagem <span className="tabular-nums text-[var(--foreground)]">{centsBrl(r.byMessage.cents)}</span>
-            {" · "}voltaram sozinhos <span className="tabular-nums text-[var(--foreground)]">{centsBrl(r.alone.cents)}</span>
-          </p>
-          <p className="type-fine-print text-[var(--muted-foreground)]">
-            De clientes <span className="tabular-nums text-[var(--foreground)]">{centsBrl(r.fromCustomers.cents)}</span>
-            {" · "}de novos <span className="tabular-nums text-[var(--foreground)]">{centsBrl(r.fromNew.cents)}</span>
-          </p>
-          {ageLine.length ? (
-            <p className="type-fine-print text-[var(--muted-foreground)]">
-              Pagou{" "}
-              {ageLine.map((b, i) => (
-                <span key={b.key}>
-                  {i > 0 ? " · " : ""}
-                  {b.label} <span className="tabular-nums text-[var(--foreground)]">{centsBrl(b.cents)}</span>
-                </span>
-              ))}{" "}
-              depois do abandono
-            </p>
+      {r && r.recovered.cents > 0 ? (
+        <div className="mt-4 grid gap-3 border-t border-[var(--divider-soft)] pt-4 sm:grid-cols-3">
+          <SplitBar
+            title="Recuperação"
+            parts={[
+              { label: "Mensagem", cents: r.byMessage.cents },
+              { label: "Sozinho", cents: r.alone.cents },
+            ]}
+          />
+          <SplitBar
+            title="Quem voltou"
+            parts={[
+              { label: "Cliente", cents: r.fromCustomers.cents },
+              { label: "Novo", cents: r.fromNew.cents },
+            ]}
+          />
+          {ages.length ? (
+            <SplitBar title="Pagou em" parts={ages.map((b) => ({ label: AGE_SHORT[b.key] ?? b.label, cents: b.cents }))} />
           ) : null}
         </div>
       ) : null}
 
-      <p className="mt-4 type-fine-print text-[var(--muted-foreground)]">
-        Recompra conta a partir do histórico importado da loja
-        {c && c.unidentified.count > 0
-          ? ` · ${num(c.unidentified.count)} pedidos sem contato identificado ficam fora`
-          : ""}
-        .
-      </p>
+      {note ? <p className="mt-3 type-fine-print text-[var(--muted-foreground)]">{note}</p> : null}
+    </div>
+  );
+}
+
+const AGE_SHORT: Record<string, string> = { d30: "30d", d60: "60d", d90: "90d", d180: "6m" };
+const SPLIT_TONES = ["var(--primary)", "color-mix(in srgb, var(--primary) 45%, transparent)", "color-mix(in srgb, var(--primary) 22%, transparent)", "var(--border)"];
+
+/** Proporção em uma barra: título, barra segmentada e legenda com valores. */
+function SplitBar({ title, parts }: { title: string; parts: Array<{ label: string; cents: number }> }) {
+  const total = parts.reduce((s, p) => s + p.cents, 0);
+  return (
+    <div>
+      <p className="type-fine-print uppercase tracking-[0.18em] text-[var(--muted-foreground)]">{title}</p>
+      <div className="mt-2 flex h-2 overflow-hidden rounded-full bg-[var(--divider-soft)]">
+        {total > 0
+          ? parts.map((p, i) =>
+              p.cents > 0 ? (
+                <div key={p.label} style={{ width: `${(p.cents / total) * 100}%`, background: SPLIT_TONES[i] }} />
+              ) : null,
+            )
+          : null}
+      </div>
+      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+        {parts.map((p, i) => (
+          <span key={p.label} className="inline-flex items-center gap-1.5 type-fine-print text-[var(--muted-foreground)]">
+            <span className="h-2 w-2 rounded-full" style={{ background: SPLIT_TONES[i] }} />
+            {p.label}
+            <span className="tabular-nums text-[var(--foreground)]">{centsBrl(p.cents)}</span>
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
 
 function brl(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+const chartTooltip = {
+  contentStyle: {
+    backgroundColor: "var(--card)",
+    border: "1px solid var(--border)",
+    borderRadius: "10px",
+    color: "var(--foreground)",
+    boxShadow: "none",
+    padding: "10px 14px",
+  },
+  labelStyle: { color: "var(--foreground)", fontWeight: 600, marginBottom: 4 },
+  itemStyle: { color: "var(--foreground)", fontSize: 13 },
+};
+
+function VendasSerie({ data, origemLabel }: { data: Consolidado; origemLabel: string | null }) {
+  const serie = data.serie ?? [];
+  if (serie.length < 2) return null;
+  const semanal = data.serieAgrupamento === "semana";
+  const rows = serie.map((s) => {
+    const [, m, d] = s.data.split("-");
+    return { periodo: `${d}/${m}`, receita: s.receitaCents / 100, pedidos: s.pedidos };
+  });
+  const tickEvery = rows.length > 16 ? Math.ceil(rows.length / 16) - 1 : 0;
+
+  return (
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="type-caption-strong text-[var(--foreground)]">
+          {semanal ? "Vendas por semana" : "Vendas por dia"}
+        </p>
+        <p className="type-fine-print text-[var(--muted-foreground)]">{origemLabel ?? "Todas as origens"}</p>
+      </div>
+      <div className="mt-4 h-48">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={rows}>
+            <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
+            <XAxis
+              dataKey="periodo"
+              stroke="var(--muted-foreground)"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              interval={tickEvery}
+            />
+            <YAxis
+              stroke="var(--muted-foreground)"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              width={56}
+              tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 1000)} mil` : String(v))}
+            />
+            <Tooltip
+              cursor={{ fill: "var(--divider-soft)" }}
+              labelFormatter={(label: string) => (semanal ? `Semana de ${label}` : label)}
+              formatter={(value: number, _name: string, item: { payload?: { pedidos?: number } }) => [
+                `${brl(Number(value))} · ${item.payload?.pedidos ?? 0} pedidos`,
+                "Receita",
+              ]}
+              {...chartTooltip}
+            />
+            <Bar dataKey="receita" name="Receita" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
 }
 
 function roasTone(roas: number | null | undefined): "positive" | "negative" | undefined {
@@ -282,13 +435,16 @@ export function GeralConsolidado({
   /** Mesmos params de período do resumo (periodo, dataInicio, dataFim). */
   query: string;
 }) {
-  const { data, isLoading } = useQuery({
-    queryKey: ["cliente-consolidado", clienteId, query],
+  const [origem, setOrigem] = useState<string | null>(null);
+  const { data, isLoading, isPlaceholderData } = useQuery({
+    queryKey: ["cliente-consolidado", clienteId, query, origem],
     queryFn: async () => {
-      const res = await fetch(`/api/clientes/${clienteId}/consolidado?${query}`);
+      const qs = origem ? `${query}&origem=${encodeURIComponent(origem)}` : query;
+      const res = await fetch(`/api/clientes/${clienteId}/consolidado?${qs}`);
       if (!res.ok) throw new Error("Falha ao carregar visão geral");
       return (await res.json()) as Consolidado;
     },
+    placeholderData: keepPreviousData,
   });
 
   if (isLoading || !data) {
@@ -299,7 +455,9 @@ export function GeralConsolidado({
     );
   }
 
-  if (data.ecommerce && data.fonteVendas !== "anuncios" && data.origens) return <EcommerceGeral data={data} />;
+  if (data.ecommerce && data.fonteVendas !== "anuncios" && data.origens) {
+    return <EcommerceGeral data={data} origem={origem} onOrigem={setOrigem} fetching={isPlaceholderData} />;
+  }
 
   const { totais, canaisVenda, canaisMidia, relacionamento: rel } = data;
   const vendasDosAnuncios = data.fonteVendas === "anuncios";

@@ -294,7 +294,7 @@ export function StepEditor({
                 />
               )}
               <p className="type-micro-legal mt-1 text-[var(--ink-muted-48)]">
-                Só modelos APROVADOS são enviados. Pausado pela Meta: cai no e-mail. Gerencie em Modelos WhatsApp.
+                Só modelos APROVADOS são enviados. Pausado pela Meta: cai no e-mail. Gerencie em Conteúdo → WhatsApp.
               </p>
             </div>
             <OptionChip

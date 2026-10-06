@@ -6,6 +6,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, X } from "lucide-react";
 import { Button, OptionChip, PillSelect, SearchInput } from "@/components/ui";
 import { DELIVERY_STATUS_LABEL, api, brl, brlMicros, dateBR, deliveryTone, num } from "@/components/relacionamento/format";
+import type { RelPeriod } from "@/components/relacionamento/period";
+import { ChannelIcon, RelEmpty, RelLoading, RelSection } from "@/components/relacionamento/ui";
 
 type Row = {
   id: string;
@@ -72,23 +74,6 @@ const EVENT_LABEL: Record<string, string> = {
   replied: "Respondeu",
 };
 
-export function DeliveriesTab({ workspaceId }: { workspaceId: string }) {
-  const [view, setView] = useState<"list" | "suppression">("list");
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex gap-1.5">
-        <OptionChip className="px-3 py-1.5" selected={view === "list"} onClick={() => setView("list")}>
-          Envios
-        </OptionChip>
-        <OptionChip className="px-3 py-1.5" selected={view === "suppression"} onClick={() => setView("suppression")}>
-          Supressão
-        </OptionChip>
-      </div>
-      {view === "list" ? <DeliveryList workspaceId={workspaceId} /> : <SuppressionList workspaceId={workspaceId} />}
-    </div>
-  );
-}
-
 function useDebounced<T>(value: T, ms = 350) {
   const [v, setV] = useState(value);
   useEffect(() => {
@@ -98,7 +83,8 @@ function useDebounced<T>(value: T, ms = 350) {
   return v;
 }
 
-function DeliveryList({ workspaceId }: { workspaceId: string }) {
+/** Histórico de envios (Desempenho → Histórico), recortado pelo período global. */
+export function DeliveryList({ workspaceId, period }: { workspaceId: string; period: RelPeriod }) {
   const qc = useQueryClient();
   const [channel, setChannel] = useState("");
   const [status, setStatus] = useState("");
@@ -116,12 +102,14 @@ function DeliveryList({ workspaceId }: { workspaceId: string }) {
   if (origin.startsWith("c:")) params.set("campaignId", origin.slice(2));
   if (dq) params.set("q", dq);
   if (tests) params.set("tests", "1");
+  if (period.dataInicio) params.set("dataInicio", period.dataInicio);
+  if (period.dataFim) params.set("dataFim", period.dataFim);
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["rel-deliveries", params.toString()],
     queryFn: () => api<ListData>(`/api/atrako/relacionamento/deliveries?${params.toString()}`),
     placeholderData: (prev) => prev,
   });
-  useEffect(() => setPage(1), [channel, status, origin, dq, tests]);
+  useEffect(() => setPage(1), [channel, status, origin, dq, tests, period.qs]);
   const sync = useMutation({
     mutationFn: () => api<{ checked: number; updated: number }>("/api/atrako/relacionamento/deliveries", { body: { workspaceId, action: "sync" } }),
     onSuccess: (r) => {
@@ -162,20 +150,18 @@ function DeliveryList({ workspaceId }: { workspaceId: string }) {
           ]}
         />
         <OptionChip className="px-3 py-1.5" selected={tests} onClick={() => setTests((v) => !v)}>
-          Incluir testes
+          Testes
         </OptionChip>
-        <Button variant="outline" className="px-4 py-2" disabled={sync.isPending} onClick={() => sync.mutate()}>
+        <Button variant="outline" size="toolbar" disabled={sync.isPending} onClick={() => sync.mutate()}>
           {sync.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Sincronizar agora
+          Sincronizar
         </Button>
       </div>
       {msg ? <p className="type-caption text-[var(--ink)]">{msg}</p> : null}
 
       <section className="rel-card">
         {isLoading || !data ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="h-5 w-5 animate-spin text-[var(--primary)]" />
-          </div>
+          <RelLoading compact />
         ) : data.rows.length ? (
           <>
             <table className="rel-table type-caption" style={isFetching ? { opacity: 0.6 } : undefined}>
@@ -197,9 +183,12 @@ function DeliveryList({ workspaceId }: { workspaceId: string }) {
                       <span className="block text-[var(--ink)]">{r.contact?.name || r.toAddress || "—"}</span>
                       {r.contact?.name && r.toAddress ? <span className="type-micro-legal text-[var(--ink-muted-48)]">{r.toAddress}</span> : null}
                     </td>
-                    <td className="max-w-[260px] truncate">
-                      {r.channel === "EMAIL" ? r.subject ?? "E-mail" : `WhatsApp · ${r.templateName ?? "modelo"}`}
-                      {r.isTest ? <span className="rel-badge type-micro-legal ml-1">teste</span> : null}
+                    <td className="max-w-[280px]">
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <ChannelIcon channel={r.channel} />
+                        <span className="truncate">{r.channel === "EMAIL" ? r.subject ?? "E-mail" : r.templateName ?? "Modelo"}</span>
+                        {r.isTest ? <span className="rel-badge type-micro-legal">teste</span> : null}
+                      </span>
                     </td>
                     <td>{r.origin}</td>
                     <td>
@@ -237,7 +226,7 @@ function DeliveryList({ workspaceId }: { workspaceId: string }) {
             </div>
           </>
         ) : (
-          <p className="type-caption text-[var(--ink-muted-48)]">Nenhum envio com estes filtros.</p>
+          <RelEmpty text="Nenhum envio com estes filtros." />
         )}
       </section>
       {openId ? <DeliveryPanel workspaceId={workspaceId} id={openId} onClose={() => setOpenId(null)} /> : null}
@@ -341,7 +330,8 @@ function DeliveryPanel({ workspaceId, id, onClose }: { workspaceId: string; id: 
   );
 }
 
-function SuppressionList({ workspaceId }: { workspaceId: string }) {
+/** Supressão (Contatos): quem não recebe mais e por quê. */
+export function SuppressionList({ workspaceId }: { workspaceId: string }) {
   const qc = useQueryClient();
   const [kind, setKind] = useState("all");
   const [q, setQ] = useState("");
@@ -359,8 +349,12 @@ function SuppressionList({ workspaceId }: { workspaceId: string }) {
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["rel-suppression", workspaceId] }),
   });
   return (
-    <>
-      <div className="flex flex-wrap items-center gap-2">
+    <RelSection
+      title="Não recebem mais"
+      info="Descadastros, e-mails inválidos (bounce), marcações de spam e quem saiu do WhatsApp. Só reative com pedido do próprio cliente. Spam não pode ser revertido."
+      action={data ? <span className="type-fine-print tabular-nums text-[var(--ink-muted-48)]">{num(data.total)}</span> : null}
+    >
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="min-w-[220px] flex-1">
           <SearchInput size="toolbar" placeholder="Buscar contato" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
@@ -376,12 +370,9 @@ function SuppressionList({ workspaceId }: { workspaceId: string }) {
           ]}
         />
       </div>
-      <p className="type-fine-print text-[var(--ink-muted-48)]">
-        Contatos que não recebem mais. Só reative com pedido do próprio cliente. Marcação de spam não pode ser revertida.
-      </p>
-      <section className="rel-card">
+      <div>
         {isLoading || !data ? (
-          <Loader2 className="h-5 w-5 animate-spin text-[var(--primary)]" />
+          <RelLoading compact />
         ) : data.rows.length ? (
           <table className="rel-table type-caption">
             <thead>
@@ -434,12 +425,12 @@ function SuppressionList({ workspaceId }: { workspaceId: string }) {
             </tbody>
           </table>
         ) : (
-          <p className="type-caption text-[var(--ink-muted-48)]">Ninguém na lista de supressão.</p>
+          <RelEmpty text="Ninguém bloqueado." />
         )}
         {data && data.total > data.rows.length ? (
           <p className="type-fine-print mt-2 text-[var(--ink-muted-48)]">Mostrando {num(data.rows.length)} de {num(data.total)}.</p>
         ) : null}
-      </section>
-    </>
+      </div>
+    </RelSection>
   );
 }

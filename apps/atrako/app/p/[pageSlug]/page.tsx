@@ -6,6 +6,8 @@ import type { Metadata } from "next";
 import { SubNavFrosted } from "@/components/ui/sub-nav-frosted";
 import { SiteFooter } from "@/components/ui/site-footer";
 import { BrandThemeScope } from "@/components/brand/BrandThemeScope";
+import { PublicUnavailable } from "@/components/modules/PublicUnavailable";
+import { isPublicModuleEnabled } from "@/lib/modules/resolve";
 import { SalesPageView } from "@/components/commerce/SalesPageView";
 import { SalesPagePuckView } from "@/components/commerce/SalesPagePuckView";
 import {
@@ -91,6 +93,9 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
   const pageV2 = isV2 ? salesRaw : null;
   const pageV1 = isV2 ? null : normalizeSalesPage(salesRaw);
   const goal = pageV2?.goal ?? pageV1!.goal;
+  if (goal !== "leads" && !(await isPublicModuleEnabled(product.clienteId, "commerce"))) {
+    return <PublicUnavailable brandName={brandName} />;
+  }
   const ctaHref = goal === "leads" ? "#form" : "#checkout";
   const ctaLabel = goal === "leads" ? "Quero receber" : "Comprar";
 

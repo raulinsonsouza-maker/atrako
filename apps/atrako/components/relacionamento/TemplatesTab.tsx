@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { Button, OptionChip, PillSelect } from "@/components/ui";
+import { Button, InfoHint, OptionChip, PillSelect, buttonClass } from "@/components/ui";
 import { api, brlMicros, dateBR, num, pct } from "@/components/relacionamento/format";
+import { RelEmpty, RelLoading } from "@/components/relacionamento/ui";
 
 type TemplateEvent = { id: string; field: string; event: string | null; detail: string | null; createdAt: string };
 type Template = {
@@ -131,20 +133,18 @@ export function TemplatesTab({ workspaceId }: { workspaceId: string }) {
     onError: (e: Error) => setMsg(e.message),
   });
 
-  if (isLoading || !data) {
-    return (
-      <div className="flex justify-center py-16">
-        <Loader2 className="h-5 w-5 animate-spin text-[var(--primary)]" />
-      </div>
-    );
-  }
+  if (isLoading || !data) return <RelLoading />;
   if (!data.connected) {
     return (
-      <section className="rel-card space-y-2">
-        <h2 className="type-body-strong text-[var(--ink)]">WhatsApp oficial não conectado</h2>
-        <p className="type-caption text-[var(--ink-muted-80)]">
-          Conecte o número da loja (API oficial da Meta) em Config → Conexões. Sem ele, os passos de WhatsApp enviam o e-mail alternativo.
-        </p>
+      <section className="rel-card">
+        <RelEmpty
+          text="WhatsApp oficial não conectado. Sem ele, os passos de WhatsApp enviam o e-mail."
+          action={
+            <Link href="/config/conexoes" className={buttonClass({ variant: "outline" })}>
+              Conectar
+            </Link>
+          }
+        />
       </section>
     );
   }
@@ -159,27 +159,29 @@ export function TemplatesTab({ workspaceId }: { workspaceId: string }) {
       <section className="rel-card space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
-            <h2 className="type-body-strong text-[var(--ink)]">Conta WhatsApp</h2>
+            <div className="flex items-center gap-1">
+              <h2 className="type-body-strong text-[var(--ink)]">Conta WhatsApp</h2>
+              <InfoHint>
+                Marketing Messages API: {mm === "ONBOARDED" ? "ativa (entrega otimizada de marketing)" : mm ? mm.toLowerCase() : "não ativada — marketing sai pela Cloud API"}.
+                Limite = conversas iniciadas em 24 h.
+              </InfoHint>
+            </div>
             <p className="type-caption text-[var(--ink-muted-80)]">
-              Qualidade do número: {QUALITY[String(acc.phoneQuality ?? "UNKNOWN")] ?? String(acc.phoneQuality)} · Limite: {String(acc.messagingLimit ?? "—")} conversas/24h
-            </p>
-            <p className="type-fine-print text-[var(--ink-muted-48)]">
-              Marketing Messages API: {mm === "ONBOARDED" ? "ativa (entrega otimizada de marketing)" : mm ? mm.toLowerCase() : "não ativada — marketing sai pela Cloud API"}
-              {" · "}Custo 30 dias: {brlMicros(totalCost)}
+              Qualidade {QUALITY[String(acc.phoneQuality ?? "UNKNOWN")] ?? String(acc.phoneQuality)} · Limite {String(acc.messagingLimit ?? "—")} · Custo 30 dias {brlMicros(totalCost)}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" className="px-4 py-2" disabled={post.isPending} onClick={() => post.mutate({ action: "sync" })}>
-              Sincronizar com a Meta
+              Sincronizar
             </Button>
             <Button className="px-4 py-2" disabled={post.isPending} onClick={() => post.mutate({ action: "ensure_defaults" })}>
-              Criar modelos recomendados
+              Criar recomendados
             </Button>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="ghost" onClick={() => setCheckSubs(true)}>
-            Verificar eventos do webhook
+            Verificar webhook
           </Button>
           {data.subscriptions ? (
             <span className="rel-badge type-micro-legal" data-tone={data.subscriptions.ok ? "ok" : "bad"}>
@@ -196,7 +198,7 @@ export function TemplatesTab({ workspaceId }: { workspaceId: string }) {
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <OptionChip className="px-3 py-1.5" selected={showOld} onClick={() => setShowOld((v) => !v)}>
-          Mostrar versões antigas
+          Versões antigas
         </OptionChip>
         <Button variant="outline" className="px-4 py-2" onClick={() => setCreating((v) => !v)}>
           Novo modelo
@@ -209,7 +211,14 @@ export function TemplatesTab({ workspaceId }: { workspaceId: string }) {
         visible.map((t) => <TemplateCard key={t.id} workspaceId={workspaceId} t={t} busy={post.isPending} onNewVersion={(b) => post.mutate({ action: "new_version", refId: t.id, ...b })} />)
       ) : (
         <section className="rel-card">
-          <p className="type-caption text-[var(--ink-muted-48)]">Nenhum modelo ainda. Clique em “Criar modelos recomendados”.</p>
+          <RelEmpty
+            text="Nenhum modelo ainda."
+            action={
+              <Button disabled={post.isPending} onClick={() => post.mutate({ action: "ensure_defaults" })}>
+                Criar recomendados
+              </Button>
+            }
+          />
         </section>
       )}
     </div>

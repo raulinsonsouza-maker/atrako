@@ -73,8 +73,8 @@ export async function syncMetaCliente(
 
   // Criativos: insights agregados desde DEFAULT_DATE_FROM até hoje, para que cada
   // snapshot contenha o total de vida do anúncio (e não só os últimos 7 dias).
-  // O filtro `effective_status` em fetchAdsWithCreatives garante que ads ativos
-  // sejam capturados independentemente da janela de insights.
+  // Ads ativos entram sempre; pausados/arquivados entram nas janelas em que tiveram
+  // entrega (`includeInactive`), para o gasto por anúncio fechar com o da campanha.
   const creativeDateFrom = options?.creativeDateFrom ?? DEFAULT_DATE_FROM;
   const creativeDateTo = options?.creativeDateTo ?? today;
 
@@ -178,6 +178,7 @@ export async function syncMetaCliente(
       ads = await fetchAdsWithCreatives(accountId, token, {
         dateFrom: creativeDateFrom,
         dateTo: creativeDateTo,
+        includeInactive: true,
       });
     } catch (creativeErr) {
       const creativeMsg = creativeErr instanceof Error ? creativeErr.message : String(creativeErr);

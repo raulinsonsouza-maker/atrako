@@ -4,6 +4,7 @@ import { addMinutes } from "date-fns";
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/db";
 import { hasOnlinePayment } from "@/lib/agenda/payments";
+import { isPublicModuleEnabled } from "@/lib/modules/resolve";
 
 const schema = z.object({
   customerName: z.string().min(2),
@@ -23,7 +24,11 @@ export async function POST(
       where: { slug: linkSlug, isActive: true },
       include: { product: true },
     });
-    if (!link || !link.product.isActive) {
+    if (
+      !link ||
+      !link.product.isActive ||
+      !(await isPublicModuleEnabled(link.product.clienteId, "agenda"))
+    ) {
       return NextResponse.json({ error: "Link não encontrado" }, { status: 404 });
     }
 

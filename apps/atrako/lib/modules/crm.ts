@@ -2,11 +2,14 @@
  * CRM nativo — leads do workspace (NativeLead + Person hub).
  */
 
+import type { Prisma } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/db";
 import { upsertPersonAndLead } from "@/lib/atrako/person";
 import { withStageHistory } from "@/lib/crm/stage-history";
 import { contactLocation, formatLocation } from "@/lib/commerce/order-details";
 import { isEcommerceCliente } from "@/lib/clientProfiles";
+import { brtDayBounds, getLeadAcquisition } from "@/lib/crm/lead-channel";
+import { originLabel } from "@/lib/commerce-attribution/store-source";
 
 export const STAGE_ROLE_ENTRY = "ENTRY";
 export const STAGE_ROLE_WON = "WON";
@@ -465,35 +468,81 @@ const PIPELINE_LEADS_PER_STAGE = 100;
 
 export async function getPipelineBoard(
   clienteId: string,
-  opts?: { q?: string; source?: string; openCart?: boolean },
+  opts?: {
+    q?: string;
+    /** Lojas (`NativeLead.source`), separadas por vírgula. */
+    source?: string;
+    openCart?: boolean;
+    /** Canais de aquisição (`getLeadAcquisition`), separados por vírgula. Somam com `source` (OU). */
+    channel?: string;
+    /** Entrada no funil, dias de Brasília `YYYY-MM-DD`. */
+    from?: string;
+    to?: string;
+  },
 ) {
   const pipeline = await ensureDefaultPipeline(clienteId);
   const q = opts?.q?.trim().toLowerCase();
-  const source = opts?.source?.trim();
+  const csv = (v?: string) => (v ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  const storeSources = csv(opts?.source);
+  const channelSet = new Set(csv(opts?.channel));
+  const range = brtDayBounds(opts?.from, opts?.to);
 
-  const openCartLeadIds = opts?.openCart
-    ? (
-        await prisma.abandonedCart.findMany({
-          where: { clienteId, status: "OPEN", leadId: { not: null } },
-          select: { leadId: true },
-          distinct: ["leadId"],
-        })
-      ).map((c) => c.leadId as string)
-    : null;
+  const [openCartLeadIds, acquisition] = await Promise.all([
+    opts?.openCart
+      ? prisma.abandonedCart
+          .findMany({
+            where: { clienteId, status: "OPEN", leadId: { not: null } },
+            select: { leadId: true },
+            distinct: ["leadId"],
+          })
+          .then((rows) => rows.map((c) => c.leadId as string))
+      : Promise.resolve(null),
+    getLeadAcquisition(clienteId),
+  ]);
 
-  const where = {
+  const inRange = (d: Date) =>
+    (!range.gte || d >= range.gte) && (!range.lte || d <= range.lte);
+  const channelCounts = new Map<string, number>();
+  const ranged = Boolean(range.gte || range.lte);
+  const rangeIds: string[] = [];
+  const channelIds: string[] = [];
+  for (const [id, a] of acquisition) {
+    if (!inRange(a.enteredAt)) continue;
+    if (ranged) rangeIds.push(id);
+    channelCounts.set(a.channel, (channelCounts.get(a.channel) ?? 0) + 1);
+    if (channelSet.has(a.channel)) channelIds.push(id);
+  }
+  const channels = [...channelCounts.entries()]
+    .map(([value, count]) => ({ value, label: originLabel(value), count }))
+    .sort((a, b) => (a.value === "unknown" ? 1 : b.value === "unknown" ? -1 : b.count - a.count));
+
+  let idFilter: string[] | null = ranged ? rangeIds : null;
+  if (openCartLeadIds) {
+    const cartSet = new Set(openCartLeadIds);
+    idFilter = idFilter ? idFilter.filter((id) => cartSet.has(id)) : openCartLeadIds;
+  }
+
+  const originOr: Prisma.NativeLeadWhereInput[] = [
+    ...(channelSet.size ? [{ id: { in: channelIds } }] : []),
+    ...(storeSources.length ? [{ source: { in: storeSources } }] : []),
+  ];
+  const where: Prisma.NativeLeadWhereInput = {
     clienteId,
-    ...(openCartLeadIds ? { id: { in: openCartLeadIds } } : {}),
-    ...(source ? { source: { equals: source, mode: "insensitive" as const } } : {}),
-    ...(q
-      ? {
-          OR: [
-            { contact: { name: { contains: q, mode: "insensitive" as const } } },
-            { contact: { email: { contains: q, mode: "insensitive" as const } } },
-            { contact: { phone: { contains: q } } },
-          ],
-        }
-      : {}),
+    ...(idFilter ? { id: { in: idFilter } } : {}),
+    AND: [
+      ...(originOr.length ? [{ OR: originOr }] : []),
+      ...(q
+        ? [
+            {
+              OR: [
+                { contact: { name: { contains: q, mode: "insensitive" as const } } },
+                { contact: { email: { contains: q, mode: "insensitive" as const } } },
+                { contact: { phone: { contains: q } } },
+              ],
+            },
+          ]
+        : []),
+    ],
   };
 
   const [byStage, byStatus, newThisWeek, bySource] = await Promise.all([
@@ -507,7 +556,11 @@ export async function getPipelineBoard(
     prisma.nativeLead.count({
       where: { ...where, createdAt: { gt: new Date(Date.now() - 7 * 86400000) } },
     }),
-    prisma.nativeLead.groupBy({ by: ["source"], where: { clienteId }, _count: { _all: true } }),
+    prisma.nativeLead.groupBy({
+      by: ["source"],
+      where: { clienteId, ...(ranged ? { id: { in: rangeIds } } : {}) },
+      _count: { _all: true },
+    }),
   ]);
   const sources = bySource
     .filter((r) => r.source)
@@ -537,7 +590,7 @@ export async function getPipelineBoard(
       order: stage.order,
       role: (stage.role as StageRole | null) ?? null,
       ...statsFor(stage.id),
-      leads: (await leadsFor(stage.id)).map((l) => mapLead(l)),
+      leads: (await leadsFor(stage.id)).map((l) => mapLead(l, acquisition.get(l.id)?.channel)),
     })),
   );
 
@@ -550,7 +603,7 @@ export async function getPipelineBoard(
       order: -1,
       role: null,
       ...unstagedStats,
-      leads: (await leadsFor(null)).map((l) => mapLead(l)),
+      leads: (await leadsFor(null)).map((l) => mapLead(l, acquisition.get(l.id)?.channel)),
     });
   }
 
@@ -580,6 +633,7 @@ export async function getPipelineBoard(
     pipelineId: pipeline.id,
     stages,
     sources,
+    channels,
     totalCount: byStage.reduce((sum, r) => sum + r._count._all, 0),
     totalValue: byStage.reduce(
       (sum, r) => sum + (r._sum.dealValue != null ? Number(r._sum.dealValue) : 0),
@@ -606,7 +660,7 @@ function mapLead(l: {
   createdAt: Date;
   updatedAt: Date;
   contact: { name: string; email: string | null; phone: string | null; metadata?: unknown } | null;
-}) {
+}, channel?: string) {
   return {
     id: l.id,
     contactId: l.contactId,
@@ -615,6 +669,8 @@ function mapLead(l: {
     phone: l.contact?.phone ?? null,
     location: formatLocation(contactLocation(l.contact?.metadata)),
     source: l.source,
+    channel: channel && channel !== "unknown" ? channel : null,
+    channelLabel: channel && channel !== "unknown" ? originLabel(channel) : null,
     status: l.status,
     dealValue: l.dealValue != null ? Number(l.dealValue) : null,
     stageId: l.stageId,

@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight, Loader2, Mail, MessageCircle } from "lucide-react";
-import { Button, PillSelect } from "@/components/ui";
+import { Button, InfoHint, PillSelect, Switch } from "@/components/ui";
 import { api, brl, brlMicros, delayLabel, num, pct } from "@/components/relacionamento/format";
+import type { RelPeriod } from "@/components/relacionamento/period";
 import { StepEditor, type FlowStep } from "@/components/relacionamento/StepEditor";
 import { NativeRecoveryChecklistCard } from "@/components/relacionamento/NativeRecoveryChecklistCard";
+import { RelEmpty, RelLoading } from "@/components/relacionamento/ui";
 
 export type Flow = {
   id: string;
@@ -42,32 +44,28 @@ const TRIGGER_LABEL: Record<string, string> = {
   date_based: "Data importante",
 };
 
-export function FlowsTab({ workspaceId }: { workspaceId: string }) {
+export function FlowsTab({ workspaceId, period }: { workspaceId: string; period: RelPeriod }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ flowId: string; stepId: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const key = ["rel-flows", workspaceId];
   const { data, isLoading } = useQuery({
-    queryKey: key,
-    queryFn: () => api<{ flows: Flow[] }>(`/api/atrako/relacionamento/flows?workspaceId=${workspaceId}&days=30`),
+    queryKey: [...key, period.qs],
+    queryFn: () => api<{ flows: Flow[] }>(`/api/atrako/relacionamento/flows?workspaceId=${workspaceId}&${period.qs}`),
+    placeholderData: (prev) => prev,
   });
   const post = useMutation({
     mutationFn: (body: Record<string, unknown>) => api("/api/atrako/relacionamento/flows", { body: { workspaceId, ...body } }),
     onSuccess: () => {
       setError(null);
       void qc.invalidateQueries({ queryKey: key });
+      void qc.invalidateQueries({ queryKey: ["rel-overview", workspaceId] });
     },
     onError: (e: Error) => setError(e.message),
   });
 
-  if (isLoading || !data) {
-    return (
-      <div className="flex justify-center py-16">
-        <Loader2 className="h-5 w-5 animate-spin text-[var(--primary)]" />
-      </div>
-    );
-  }
+  if (isLoading || !data) return <RelLoading />;
 
   const editFlow = editing ? data.flows.find((f) => f.id === editing.flowId) : null;
   const editStep = editFlow?.steps.find((s) => s.id === editing?.stepId);
@@ -85,33 +83,40 @@ export function FlowsTab({ workspaceId }: { workspaceId: string }) {
 
   if (!data.flows.length) {
     return (
-      <section className="rel-card space-y-3">
-        <h2 className="type-body-strong text-[var(--ink)]">Fluxos automáticos</h2>
-        <p className="type-caption text-[var(--ink-muted-80)]">
-          Carrinho abandonado, pedido não pago, pós-compra, segunda compra, recompra, reativação, nutrição de perdidos, boas-vindas e aniversário —
-          prontos com o texto e o visual da sua loja. Eles começam pausados para você revisar.
-        </p>
-        <Button disabled={post.isPending} onClick={() => post.mutate({ action: "ensure_defaults" })}>
-          {post.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Criar fluxos padrão
-        </Button>
-        {error ? <p className="type-caption text-[var(--ink)]">{error}</p> : null}
+      <section className="rel-card">
+        <RelEmpty
+          text="Carrinho, pós-compra, recompra, aniversário e mais — prontos com o visual da sua loja. Começam pausados."
+          action={
+            <Button disabled={post.isPending} onClick={() => post.mutate({ action: "ensure_defaults" })}>
+              {post.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Criar fluxos
+            </Button>
+          }
+        />
+        {error ? <p className="type-caption text-center text-[var(--ink)]">{error}</p> : null}
       </section>
     );
   }
 
+  const activeCount = data.flows.filter((f) => f.status === "ACTIVE").length;
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="type-caption text-[var(--ink-muted-80)]">
-          Cada contato fica em um fluxo por vez (o de maior prioridade). Comprou, respondeu ou descadastrou: sai do fluxo.
-        </p>
+        <div className="flex items-center gap-1">
+          <span className="type-caption text-[var(--ink-muted-80)]">
+            {activeCount} de {data.flows.length} ativos
+          </span>
+          <InfoHint>
+            Cada contato fica em um fluxo por vez (o de maior prioridade). Comprou, respondeu ou descadastrou: sai do fluxo. Passos com rascunho só vão ao ar
+            depois de testar e publicar.
+          </InfoHint>
+        </div>
         <Button variant="ghost" disabled={post.isPending} onClick={() => post.mutate({ action: "ensure_defaults" })}>
-          Adicionar fluxos que faltam
+          Completar fluxos
         </Button>
       </div>
       {error ? <p className="rel-card type-caption text-[var(--ink)]">{error}</p> : null}
-      <NativeRecoveryChecklistCard workspaceId={workspaceId} />
 
       {data.flows.map((f) => {
         const expanded = open === f.id;
@@ -120,6 +125,7 @@ export function FlowsTab({ workspaceId }: { workspaceId: string }) {
         const clicked = f.steps.reduce((s, st) => s + st.stats.clicked, 0);
         const cost = f.steps.reduce((s, st) => s + st.stats.costMicros, 0);
         const active = (f.enrollments.ACTIVE ?? 0) + (f.enrollments.PAUSED ?? 0);
+        const pausedByError = f.status === "PAUSED" && Boolean(f.pausedReason) && f.pausedReason !== "Pausado manualmente";
         return (
           <section key={f.id} className="rel-card">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -128,42 +134,41 @@ export function FlowsTab({ workspaceId }: { workspaceId: string }) {
                 <span className="min-w-0">
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="type-body-strong text-[var(--ink)]">{f.name}</span>
-                    <span className="rel-badge type-micro-legal" data-tone={f.status === "ACTIVE" ? "ok" : f.pausedReason && f.pausedReason !== "Pausado manualmente" ? "warn" : undefined}>
-                      {f.status === "ACTIVE" ? "Ativo" : f.status === "PAUSED" ? "Pausado" : "Rascunho"}
-                    </span>
+                    {f.status === "DRAFT" ? <span className="rel-badge type-micro-legal">Rascunho</span> : null}
+                    {pausedByError ? <span className="rel-badge type-micro-legal" data-tone="bad">Pausado</span> : null}
                     {drafts ? <span className="rel-badge type-micro-legal" data-tone="warn">{drafts} rascunho{drafts > 1 ? "s" : ""}</span> : null}
                   </span>
-                  <span className="type-fine-print block text-[var(--ink-muted-48)]">
-                    {TRIGGER_LABEL[f.trigger] ?? f.trigger}
-                    {f.description ? ` · ${f.description}` : ""}
-                  </span>
-                  {f.status === "PAUSED" && f.pausedReason && f.pausedReason !== "Pausado manualmente" ? (
-                    <span className="type-fine-print block text-[var(--ink)]">{f.pausedReason}</span>
-                  ) : null}
+                  <span className="type-fine-print block text-[var(--ink-muted-48)]">{TRIGGER_LABEL[f.trigger] ?? f.trigger}</span>
+                  {pausedByError ? <span className="type-fine-print block text-[var(--ink)]">{f.pausedReason}</span> : null}
                 </span>
               </button>
               <div className="flex items-center gap-2">
-                <Button
-                  variant={f.status === "ACTIVE" ? "outline" : "primary"}
-                  className="px-4 py-2"
+                <span className="type-fine-print text-[var(--ink-muted-48)]">{f.status === "ACTIVE" ? "Ativo" : "Pausado"}</span>
+                <Switch
+                  checked={f.status === "ACTIVE"}
                   disabled={post.isPending}
-                  onClick={() => post.mutate({ action: "flow_update", flowId: f.id, status: f.status === "ACTIVE" ? "PAUSED" : "ACTIVE" })}
-                >
-                  {f.status === "ACTIVE" ? "Pausar" : "Ativar"}
-                </Button>
+                  onChange={(on) => post.mutate({ action: "flow_update", flowId: f.id, status: on ? "ACTIVE" : "PAUSED" })}
+                  aria-label={`${f.name} ativo`}
+                />
               </div>
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-5">
+            <div className={`mt-3 grid gap-3 ${expanded ? "grid-cols-2 sm:grid-cols-5" : "grid-cols-3"}`}>
               <Stat label="Em andamento" value={num(active)} />
-              <Stat label="Entraram (30d)" value={num(f.entered)} />
+              {expanded ? <Stat label="Entraram" value={num(f.entered)} /> : null}
               <Stat label="Cliques" value={pct(clicked, sent)} />
-              <Stat label="Receita atribuída" value={brl(f.attributed.cents)} />
-              <Stat label="Custo WhatsApp" value={brlMicros(cost)} />
+              <Stat label="Receita" value={brl(f.attributed.cents)} />
+              {expanded ? <Stat label="Custo WhatsApp" value={brlMicros(cost)} /> : null}
             </div>
 
             {expanded ? (
               <div className="mt-3">
+                {f.description ? <p className="mb-3 type-fine-print text-[var(--ink-muted-48)]">{f.description}</p> : null}
+                {f.trigger === "cart_abandoned" ? (
+                  <div className="mb-3">
+                    <NativeRecoveryChecklistCard workspaceId={workspaceId} />
+                  </div>
+                ) : null}
                 {f.steps.map((s) => (
                   <div key={s.id} className="rel-step" style={s.enabled ? undefined : { opacity: 0.55 }}>
                     <span className="rel-step-dot">
@@ -186,7 +191,10 @@ export function FlowsTab({ workspaceId }: { workspaceId: string }) {
                   </div>
                 ))}
                 <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-[var(--divider-soft)] pt-3">
-                  <span className="type-fine-print text-[var(--ink-muted-48)]">Grupo de controle (não recebe, para medir o efeito real):</span>
+                  <span className="inline-flex items-center gap-0.5 type-fine-print text-[var(--ink-muted-48)]">
+                    Grupo de controle
+                    <InfoHint>Uma parte sorteada não recebe nada. Comparar com quem recebeu mostra o efeito real do fluxo (veja em Desempenho).</InfoHint>
+                  </span>
                   <PillSelect
                     value={String(f.holdoutPercent)}
                     onChange={(v) => post.mutate({ action: "flow_update", flowId: f.id, holdoutPercent: Number(v) })}
@@ -195,7 +203,7 @@ export function FlowsTab({ workspaceId }: { workspaceId: string }) {
                   />
                   {f.holdoutPercent > 0 && f.holdout.control.n ? (
                     <span className="type-fine-print text-[var(--ink-muted-80)]">
-                      Compraram: {pct(f.holdout.treated.converted, f.holdout.treated.n)} com mensagens vs {pct(f.holdout.control.converted, f.holdout.control.n)} sem
+                      {pct(f.holdout.treated.converted, f.holdout.treated.n)} compraram com mensagens vs {pct(f.holdout.control.converted, f.holdout.control.n)} sem
                     </span>
                   ) : null}
                 </div>

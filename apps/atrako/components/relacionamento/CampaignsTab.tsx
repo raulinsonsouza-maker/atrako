@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
-import { Button, OptionChip, PillSelect } from "@/components/ui";
+import { Loader2, X } from "lucide-react";
+import { Button, PillSelect, SegmentedControl } from "@/components/ui";
 import { api, dateBR, daysUntil, num } from "@/components/relacionamento/format";
+import { CalendarSettings } from "@/components/relacionamento/CalendarSettings";
+import { ChannelIcon, RelEmpty, RelLoading, RelSection } from "@/components/relacionamento/ui";
 
 type CampaignRow = {
   id: string;
@@ -39,6 +41,7 @@ export function CampaignsTab({ workspaceId }: { workspaceId: string }) {
   const qc = useQueryClient();
   const [filter, setFilter] = useState<"open" | "done" | "all">("open");
   const [creating, setCreating] = useState(false);
+  const [datesOpen, setDatesOpen] = useState(false);
   const [name, setName] = useState("");
   const [channel, setChannel] = useState("EMAIL");
   const [eventDate, setEventDate] = useState("");
@@ -57,13 +60,7 @@ export function CampaignsTab({ workspaceId }: { workspaceId: string }) {
     onError: (e: Error) => setError(e.message),
   });
 
-  if (isLoading || !data) {
-    return (
-      <div className="flex justify-center py-16">
-        <Loader2 className="h-5 w-5 animate-spin text-[var(--primary)]" />
-      </div>
-    );
-  }
+  if (isLoading || !data) return <RelLoading />;
 
   const rows = data.campaigns.filter((c) =>
     filter === "all" ? true : filter === "open" ? OPEN_STATUSES.includes(c.status) : !OPEN_STATUSES.includes(c.status),
@@ -71,58 +68,66 @@ export function CampaignsTab({ workspaceId }: { workspaceId: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <section className="rel-card space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 className="type-body-strong text-[var(--ink)]">Calendário de datas</h2>
-            <p className="type-fine-print text-[var(--ink-muted-48)]">
-              A campanha de cada data é criada sozinha 30 dias antes; você recebe avisos até a aprovação. Ajuste as datas em Públicos → Datas.
-            </p>
+      <RelSection
+        title="Datas"
+        info="Para cada data ligada, a campanha nasce sozinha com a antecedência escolhida e a equipe é avisada até a aprovação. Clique numa data para abrir ou criar a campanha."
+        action={
+          <button type="button" className="type-fine-print text-[var(--primary)]" onClick={() => setDatesOpen(true)}>
+            Configurar datas
+          </button>
+        }
+      >
+        {data.upcoming.length ? (
+          <div className="rel-strip">
+            {data.upcoming.map((d) => {
+              const left = daysUntil(d.date);
+              return (
+                <button
+                  key={d.key}
+                  type="button"
+                  className="rel-date-chip active:scale-95"
+                  data-soon={!d.campaignId && left <= d.leadDays}
+                  disabled={create.isPending}
+                  title={d.hint ?? undefined}
+                  onClick={() =>
+                    d.campaignId
+                      ? router.push(`/relacionamento/campanhas/${d.campaignId}`)
+                      : create.mutate({ name: d.label, eventDate: d.date, calendarKey: d.key, channel: "EMAIL" })
+                  }
+                >
+                  <span className="type-caption-strong text-[var(--ink)]">{d.label}</span>
+                  <span className="type-fine-print tabular-nums text-[var(--ink-muted-48)]">
+                    {dateBR(d.date)} · {left <= 0 ? "hoje" : `${left} dias`}
+                  </span>
+                  <span className="type-micro-legal text-[var(--primary)]">{d.campaignId ? "Abrir" : "Criar campanha"}</span>
+                </button>
+              );
+            })}
           </div>
-        </div>
-        <div className="rel-strip">
-          {data.upcoming.map((d) => {
-            const left = daysUntil(d.date);
-            return (
-              <button
-                key={d.key}
-                type="button"
-                className="rel-date-chip"
-                data-soon={!d.campaignId && left <= d.leadDays}
-                disabled={create.isPending}
-                onClick={() =>
-                  d.campaignId
-                    ? router.push(`/relacionamento/campanhas/${d.campaignId}`)
-                    : create.mutate({ name: d.label, eventDate: d.date, calendarKey: d.key, channel: "EMAIL" })
-                }
-              >
-                <span className="type-caption-strong text-[var(--ink)]">{d.label}</span>
-                <span className="type-fine-print text-[var(--ink-muted-48)]">
-                  {dateBR(d.date)} · {left <= 0 ? "hoje" : `${left} dias`}
-                </span>
-                <span className="type-micro-legal text-[var(--primary)]">{d.campaignId ? "Abrir campanha" : "Criar campanha agora"}</span>
-                {d.hint ? <span className="type-micro-legal text-[var(--ink-muted-48)]">{d.hint}</span> : null}
-              </button>
-            );
-          })}
-        </div>
-      </section>
+        ) : (
+          <RelEmpty
+            text="Nenhuma data ligada."
+            action={
+              <Button variant="outline" className="px-4 py-2" onClick={() => setDatesOpen(true)}>
+                Escolher datas
+              </Button>
+            }
+          />
+        )}
+      </RelSection>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex gap-1.5">
-          {(
-            [
-              ["open", "Em andamento"],
-              ["done", "Enviadas e perdidas"],
-              ["all", "Todas"],
-            ] as const
-          ).map(([k, l]) => (
-            <OptionChip key={k} className="px-3 py-1.5" selected={filter === k} onClick={() => setFilter(k)}>
-              {l}
-            </OptionChip>
-          ))}
-        </div>
-        <Button className="px-4 py-2" onClick={() => setCreating((v) => !v)}>
+        <SegmentedControl
+          aria-label="Filtrar campanhas"
+          value={filter}
+          onChange={setFilter}
+          options={[
+            { value: "open", label: "Em andamento" },
+            { value: "done", label: "Encerradas" },
+            { value: "all", label: "Todas" },
+          ]}
+        />
+        <Button size="toolbar" onClick={() => setCreating((v) => !v)}>
           Nova campanha
         </Button>
       </div>
@@ -144,7 +149,7 @@ export function CampaignsTab({ workspaceId }: { workspaceId: string }) {
             />
           </div>
           <label>
-            <span className="rel-label type-fine-print">Data do envio (opcional)</span>
+            <span className="rel-label type-fine-print">Data (opcional)</span>
             <input className="rel-input type-caption" type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
           </label>
           <Button
@@ -161,43 +166,85 @@ export function CampaignsTab({ workspaceId }: { workspaceId: string }) {
 
       <section className="rel-card">
         {rows.length ? (
-          <table className="rel-table type-caption">
-            <thead>
-              <tr>
-                <th>Campanha</th>
-                <th>Etapa</th>
-                <th>Data</th>
-                <th>Canal</th>
-                <th>Responsável</th>
-                <th>Destinatários</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((c) => (
-                <tr key={c.id} data-clickable="true" onClick={() => router.push(`/relacionamento/campanhas/${c.id}`)}>
-                  <td className="text-[var(--ink)]">{c.name}</td>
-                  <td>
-                    <span className="rel-badge type-micro-legal" data-tone={statusTone(c.status)}>
-                      {c.statusLabel}
-                    </span>
-                  </td>
-                  <td className="tabular-nums">
-                    {dateBR(c.scheduledAt ?? c.eventDate)}
-                    {c.eventDate && OPEN_STATUSES.includes(c.status) && daysUntil(c.eventDate) >= 0 ? (
-                      <span className="type-micro-legal block text-[var(--ink-muted-48)]">em {daysUntil(c.eventDate)} dias</span>
-                    ) : null}
-                  </td>
-                  <td>{CHANNEL_LABEL[c.channel] ?? c.channel}</td>
-                  <td>{c.ownerName ?? "—"}</td>
-                  <td className="tabular-nums">{c.recipientsCount != null ? num(c.recipientsCount) : "—"}</td>
+          <div className="overflow-x-auto">
+            <table className="rel-table type-caption">
+              <thead>
+                <tr>
+                  <th>Campanha</th>
+                  <th>Etapa</th>
+                  <th>Data</th>
+                  <th>Responsável</th>
+                  <th>Destinatários</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows.map((c) => (
+                  <tr key={c.id} data-clickable="true" onClick={() => router.push(`/relacionamento/campanhas/${c.id}`)}>
+                    <td className="text-[var(--ink)]">
+                      <span className="flex items-center gap-1.5">
+                        <ChannelIcon channel={c.channel} />
+                        {c.name}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="rel-badge type-micro-legal" data-tone={statusTone(c.status)}>
+                        {c.statusLabel}
+                      </span>
+                    </td>
+                    <td className="tabular-nums">
+                      {dateBR(c.scheduledAt ?? c.eventDate)}
+                      {c.eventDate && OPEN_STATUSES.includes(c.status) && daysUntil(c.eventDate) >= 0 ? (
+                        <span className="type-micro-legal block text-[var(--ink-muted-48)]">em {daysUntil(c.eventDate)} dias</span>
+                      ) : null}
+                    </td>
+                    <td>{c.ownerName ?? "—"}</td>
+                    <td className="tabular-nums">{c.recipientsCount != null ? num(c.recipientsCount) : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
-          <p className="type-caption text-[var(--ink-muted-48)]">Nenhuma campanha aqui.</p>
+          <RelEmpty text={filter === "open" ? "Nenhuma campanha em andamento." : "Nenhuma campanha aqui."} />
         )}
       </section>
+
+      {datesOpen ? <DatesPanel workspaceId={workspaceId} onClose={() => setDatesOpen(false)} /> : null}
+    </div>
+  );
+}
+
+function DatesPanel({ workspaceId, onClose }: { workspaceId: string; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div className="panel-modal-backdrop" role="presentation" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <aside className="panel-modal" style={{ width: "min(560px, 100%)" }} role="dialog" aria-modal="true" aria-label="Datas do calendário">
+        <div className="panel-modal-header">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="type-tagline text-[var(--ink)]">Datas do calendário</h2>
+              <p className="type-fine-print mt-1 text-[var(--ink-muted-48)]">Ligue as datas e escolha a antecedência da campanha.</p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center text-[var(--ink-muted-48)] active:scale-95"
+              aria-label="Fechar"
+            >
+              <X className="h-4 w-4" strokeWidth={1.75} />
+            </button>
+          </div>
+        </div>
+        <div className="panel-modal-body">
+          <div className="panel-modal-section">
+            <CalendarSettings workspaceId={workspaceId} />
+          </div>
+        </div>
+      </aside>
     </div>
   );
 }

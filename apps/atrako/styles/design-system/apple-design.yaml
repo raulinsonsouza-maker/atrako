@@ -98,7 +98,15 @@ components:
   button-store-hero: { file: components/ui/button.tsx, variant: store-hero }
   button-icon-circular: { file: components/ui/icon-button.tsx, note: "size toolbar = 36px com borda, para utilitários (ex.: editar etapas) ao lado do CTA" }
   segmented-control: { file: components/ui/segmented-control.tsx, css: ".segmented", note: "Alternar visualização (Funil/Lista) — pill 36px, mesma borda/tipo do pill-select" }
-  filter-toolbar: { css: ".crm-toolbar", note: "Esquerda = como ver os dados (search-input, pill-select, segmented-control, pill). Direita = ações (icon-button toolbar + Button toolbar primary, radius-xs)" }
+  toggle-switch: { file: components/ui/switch.tsx, css: ".toggle-switch", note: "Liga/desliga de configuração (Config → Módulos) — 44x26, ligado = --primary; nunca checkbox nativo" }
+  info-hint: { file: components/ui/info-hint.tsx, css: ".info-hint / .info-hint-pop", note: "Ícone 'i' ao lado do título abre balão curto (máx. 280px, hairline, sem sombra). Explicação longa vai aqui — nunca parágrafo fixo na tela" }
+  filter-toolbar: { css: ".crm-toolbar", note: "Esquerda = como ver os dados (search-input, date-range-filter, pill-select, segmented-control, pill). Direita = ações (icon-button toolbar + Button toolbar primary, radius-xs)" }
+  pill-select-multi: { file: components/ui/pill-select.tsx, export: PillMultiSelect, css: ".pill-select-check", note: "Múltipla escolha no mesmo filtro — menu fica aberto, primeira opção limpa; trigger 'Meta Ads +2'" }
+  channel-color: { file: lib/commerce-attribution/channel-color.ts, tokens: "--channel-*", note: "Cor por canal de aquisição — só identificação (ponto + tinta 12% no chip do lead, swatch no filtro). Nunca em botão/CTA" }
+  global-nav-collapsed: { file: components/layout/AppSidebar.tsx, css: ".nav-collapsed-divider / .nav-tip", note: "Menu recolhido (72px): ícones 40px centrados, separador no lugar do título, rótulo + descrição flutuante à direita, iniciais da conta; preferência salva no navegador" }
+  pill-select-count: { file: components/ui/pill-select.tsx, note: "option.count — número à direita só no menu; o trigger fica limpo" }
+  filter-strip: { css: ".crm-filter-strip / .crm-filter-chip", note: "Linha sob a filter-toolbar: filtros ativos como chips removíveis (×) + resumo curto à direita. Sem frases longas" }
+  date-range-filter: { file: components/ui/date-range-filter.tsx, note: "Único filtro de período — presets + 2 meses. variant toolbar (pill 36px) | panel (topo do dashboard); allowAll = 'Todo o período'" }
   text-link: { file: components/ui/text-link.tsx }
   back-link: { file: components/ui/back-link.tsx, note: "Voltar canônico — ChevronLeft + rótulo; App shell" }
   search-input: { file: components/ui/search-input.tsx, note: "Única busca — size toolbar|field; nunca input reinventado" }
@@ -108,7 +116,7 @@ components:
   criar-catalog: { css: ".criar-platform-* / .criar-recipe-* / .criar-filter-*", note: "Hub Criar — plataformas + receitas; badges DS" }
   lp-phone-preview: { file: components/criar/LpPhonePreview.tsx, css: ".lp-preview / .lp-phone-*", note: "Preview iPhone da LP no Criar oferta + sucesso" }
   panel-modal: { css: ".panel-modal-*", note: "Sheet lateral de detalhe (CRM lead) — mantém contexto da tela" }
-  relacionamento: { css: ".rel-*", note: "Fluxos/campanhas/envios — KPIs canvas, tabela hairline, badges ok/warn/bad, editor + preview, sino de notificações" }
+  relacionamento: { file: components/relacionamento/ui.tsx, css: ".rel-*", note: "Fluxos/campanhas/envios — RelSection (título curto + info-hint + ação), RelKpi (número + detalhe + variação), lista de pendências, status de canais, badges ok/warn/bad, editor + preview, sino de notificações" }
   store-utility-card: { file: components/ui/card.tsx }
   sub-nav-frosted: { file: components/ui/sub-nav-frosted.tsx }
   floating-sticky-bar: { file: components/ui/floating-sticky-bar.tsx }

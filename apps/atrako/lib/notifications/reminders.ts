@@ -209,7 +209,7 @@ export async function runHealthChecks(now = new Date()) {
           type: "email.reputation",
           title: "Bounce ou spam acima do limite",
           body: `Últimas 24h: ${bounced} bounces e ${complained} reclamações em ${sent24} envios. Limpe a base e reduza campanhas para proteger o domínio.`,
-          href: "/relacionamento?tab=envios",
+          href: "/relacionamento?tab=desempenho&sub=envios",
           severity: "urgente",
           dedupeKey: `email-reputation:${today}`,
         });

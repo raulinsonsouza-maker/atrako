@@ -15,6 +15,8 @@ import {
 } from "@/components/relacionamento/ResendConnectionCard";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 import { useOAuthPopup } from "@/hooks/useOAuthPopup";
+import { useModules } from "@/hooks/useModules";
+import { moduleForConnection } from "@/lib/modules/registry";
 import type { AtrakoOAuthMessage } from "@/lib/oauth/openOAuthPopup";
 import { parseGoogleAdsConnectionMetadata } from "@/lib/googleAds/types";
 import { ConfigPage } from "../_components";
@@ -273,6 +275,7 @@ function ConexoesHubInner() {
   const qc = useQueryClient();
   const searchParams = useSearchParams();
   const { workspaceId, setWorkspaceId, isLoading: loadingClientes } = useActiveWorkspace();
+  const { isEnabled: isModuleEnabled } = useModules();
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [selectedAdAccount, setSelectedAdAccount] = useState("");
   const [selectingAd, setSelectingAd] = useState(false);
@@ -1076,6 +1079,10 @@ function ConexoesHubInner() {
           {CATEGORIES.map((cat) => {
             const list = items
               .filter((i) => i.category === cat.id)
+              .filter((i) => {
+                const mod = moduleForConnection(i.category, i.provider);
+                return !mod || isModuleEnabled(mod.key);
+              })
               .sort(compareItems);
             if (!list.length) return null;
             const active = list.filter((i) => i.state !== "off").length;

@@ -181,6 +181,26 @@ export const CHANNEL_LABELS: Record<OrderChannel, string> = {
   unknown: "Não informado pela loja",
 };
 
+const SITE_PROVIDERS = new Set(["WOOCOMMERCE", "SHOPIFY", "NUVEMSHOP", "TRAY"]);
+
+/** Chave de origem do dashboard: canal da sessão para lojas próprias, o próprio provider para marketplaces. */
+export function orderOriginKey(provider: string, channel: string | null | undefined): string {
+  return SITE_PROVIDERS.has(provider) ? channel || "unknown" : provider;
+}
+
+const ORIGIN_PROVIDER_LABELS: Record<string, string> = {
+  MERCADO_LIVRE: "Mercado Livre",
+  SHOPEE: "Shopee",
+  TIKTOK_SHOP: "TikTok Shop",
+  CHECKOUT: "Checkout Atrako",
+};
+
+/** Rótulo curto de uma chave de `orderOriginKey` (ou canal do lead). */
+export function originLabel(key: string): string {
+  if (key === "unknown") return "Sem origem";
+  return CHANNEL_LABELS[key as OrderChannel] ?? ORIGIN_PROVIDER_LABELS[key] ?? key;
+}
+
 /** "2026-08-30 20:16:41" (GMT, como o Woo grava) → Date. */
 function parseWooGmt(raw: string | null | undefined): Date | null {
   if (!raw || !/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(raw)) return null;

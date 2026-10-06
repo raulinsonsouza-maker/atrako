@@ -3,6 +3,7 @@ import { addDays, parseISO, startOfDay, endOfDay } from "date-fns";
 import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
+import { requireModuleApi } from "@/lib/modules/resolve";
 import {
   getAvailableSlots,
   getTheoreticalSlots,
@@ -24,6 +25,8 @@ export async function GET(request: NextRequest) {
   }
   const access = await requireWorkspaceAccess(workspaceId, "operate");
   if (!access.ok) return access.response;
+  const moduleOff = await requireModuleApi(workspaceId, "agenda");
+  if (moduleOff) return moduleOff;
   if (!(await findWorkspaceById(workspaceId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }

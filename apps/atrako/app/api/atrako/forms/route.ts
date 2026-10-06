@@ -10,6 +10,7 @@ import {
 import { createNativeLead } from "@/lib/modules/crm";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
+import { isPublicModuleEnabled, requireModuleApi } from "@/lib/modules/resolve";
 import { getWorkspaceConfig } from "@/lib/config/getWorkspaceConfig";
 import { previewForm, type FormStep } from "@atrako/forms";
 import { publicPath } from "@/lib/criar/slug";
@@ -23,7 +24,9 @@ export async function GET(request: NextRequest) {
 
   if (slug) {
     const form = await getCaptureFormBySlug(slug);
-    if (!form) return NextResponse.json({ error: "not found" }, { status: 404 });
+    if (!form || !(await isPublicModuleEnabled(form.clienteId, "forms"))) {
+      return NextResponse.json({ error: "Formulário não encontrado" }, { status: 404 });
+    }
     return NextResponse.json({
       form: {
         id: form.id,
@@ -41,6 +44,8 @@ export async function GET(request: NextRequest) {
   }
   const access = await requireWorkspaceAccess(workspaceId, "operate");
   if (!access.ok) return access.response;
+  const moduleOff = await requireModuleApi(workspaceId, "forms");
+  if (moduleOff) return moduleOff;
   if (!(await findWorkspaceById(workspaceId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
@@ -78,6 +83,10 @@ export async function POST(request: NextRequest) {
     const slug = typeof input.slug === "string" ? input.slug : "";
     const answers = Array.isArray(input.answers) ? input.answers : [];
     if (!slug) return NextResponse.json({ error: "slug required" }, { status: 400 });
+    const target = await getCaptureFormBySlug(slug);
+    if (target && !(await isPublicModuleEnabled(target.clienteId, "forms"))) {
+      return NextResponse.json({ error: "Formulário indisponível" }, { status: 404 });
+    }
     try {
       const result = await completeCaptureForm({
         slug,
@@ -161,6 +170,8 @@ export async function POST(request: NextRequest) {
   }
   const access = await requireWorkspaceAccess(workspaceId, "operate");
   if (!access.ok) return access.response;
+  const moduleOff = await requireModuleApi(workspaceId, "forms");
+  if (moduleOff) return moduleOff;
   if (!(await findWorkspaceById(workspaceId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }

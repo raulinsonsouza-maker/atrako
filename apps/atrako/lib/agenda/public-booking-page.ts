@@ -1,9 +1,18 @@
 import { prisma } from "@/lib/db";
+import { isPublicModuleEnabled } from "@/lib/modules/resolve";
 
+/** Página pública de agendamento; `null` também quando o módulo Agenda está desligado. */
 export async function findPublicBookingPage(
   workspaceSlug: string,
   pageSlug: string,
 ) {
+  const page = await loadPublicBookingPage(workspaceSlug, pageSlug);
+  if (!page) return null;
+  if (!(await isPublicModuleEnabled(page.cliente.id, "agenda"))) return null;
+  return page;
+}
+
+function loadPublicBookingPage(workspaceSlug: string, pageSlug: string) {
   return prisma.agendaBookingPage.findFirst({
     where: {
       slug: pageSlug,

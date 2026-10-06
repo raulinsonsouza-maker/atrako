@@ -8,11 +8,13 @@ import { Loader2, Sparkles } from "lucide-react";
 import { AppPage } from "@/components/layout/AppPage";
 import { CopyLinkButton } from "@/components/criar/CopyLinkButton";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
+import { useModules } from "@/hooks/useModules";
 import {
   CRIAR_PLATFORMS,
   platformCounts,
   platformHref,
 } from "@/lib/criar/catalog";
+import { moduleForCriarPlatform } from "@/lib/modules/registry";
 
 type RecentItem = {
   id: string;
@@ -41,6 +43,11 @@ function CriarHomeInner() {
   const assistente = sp.get("assistente") === "1";
 
   const { workspaceId, isLoading: loadingWs } = useActiveWorkspace();
+  const { isEnabled } = useModules();
+  const platforms = CRIAR_PLATFORMS.filter((p) => {
+    const mod = moduleForCriarPlatform(p.id);
+    return !mod || isEnabled(mod.key);
+  });
 
   const { data, isLoading } = useQuery({
     queryKey: ["criar-recent", workspaceId],
@@ -85,7 +92,7 @@ function CriarHomeInner() {
             Plataformas
           </h2>
           <div className="criar-platform-grid">
-            {CRIAR_PLATFORMS.map((p) => {
+            {platforms.map((p) => {
               const Icon = p.icon;
               const counts = platformCounts(p.id);
               const href = assistente

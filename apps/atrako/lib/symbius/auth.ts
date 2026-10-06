@@ -54,6 +54,8 @@ export async function clearSessionCookie(): Promise<void> {
 }
 
 export async function getSession(): Promise<SymbiusSession | null> {
+  const { isActiveModuleEnabled } = await import("@/lib/modules/page");
+  if (!(await isActiveModuleEnabled("social"))) return null;
   // No Atrako unificado o Social sempre usa sessão de workspace (sem login silo).
   const { getOrCreateEmbedSession, ensureEmbedIgFromHub } = await import("./atrako-embed");
   const session = await getOrCreateEmbedSession();

@@ -1,74 +1,72 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { AppPage } from "@/components/layout/AppPage";
+import { DateRangeFilter } from "@/components/ui";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
-import { OverviewTab } from "@/components/relacionamento/OverviewTab";
+import { LEGACY_TABS, PERIOD_TABS, REL_TABS, relHref, type RelTab } from "@/components/relacionamento/nav";
+import { useRelPeriod } from "@/components/relacionamento/period";
+import { RelLoading } from "@/components/relacionamento/ui";
+import { InicioTab } from "@/components/relacionamento/InicioTab";
 import { FlowsTab } from "@/components/relacionamento/FlowsTab";
 import { CampaignsTab } from "@/components/relacionamento/CampaignsTab";
-import { TemplatesTab } from "@/components/relacionamento/TemplatesTab";
-import { AudiencesTab } from "@/components/relacionamento/AudiencesTab";
-import { ResultsTab } from "@/components/relacionamento/ResultsTab";
-import { DeliveriesTab } from "@/components/relacionamento/DeliveriesTab";
-import { ThemeTab } from "@/components/relacionamento/ThemeTab";
-
-const TABS = [
-  { key: "visao", label: "Visão geral" },
-  { key: "fluxos", label: "Fluxos" },
-  { key: "campanhas", label: "Campanhas" },
-  { key: "modelos", label: "Modelos WhatsApp" },
-  { key: "publicos", label: "Públicos" },
-  { key: "resultados", label: "Resultados" },
-  { key: "envios", label: "Envios" },
-  { key: "tema", label: "Tema do e-mail" },
-] as const;
-
-type TabKey = (typeof TABS)[number]["key"];
+import { ConteudoTab } from "@/components/relacionamento/ConteudoTab";
+import { ContatosTab } from "@/components/relacionamento/ContatosTab";
+import { DesempenhoTab } from "@/components/relacionamento/DesempenhoTab";
 
 function Body({ workspaceId }: { workspaceId: string }) {
   const sp = useSearchParams();
   const router = useRouter();
-  const tab = (TABS.find((t) => t.key === sp.get("tab"))?.key ?? "visao") as TabKey;
-  const go = (key: TabKey) => router.replace(`/relacionamento?tab=${key}`, { scroll: false });
+  const { value, change, period } = useRelPeriod();
+  const raw = sp.get("tab") ?? "";
+  const legacy = LEGACY_TABS[raw];
+  const tab: RelTab = legacy?.tab ?? REL_TABS.find((t) => t.key === raw)?.key ?? "inicio";
+  const sub = sp.get("sub") ?? legacy?.sub;
+
+  useEffect(() => {
+    if (legacy) router.replace(relHref(legacy.tab, legacy.sub), { scroll: false });
+  }, [legacy, router]);
+
+  const go = (key: RelTab, nextSub?: string) => router.replace(relHref(key, nextSub), { scroll: false });
 
   return (
-    <>
+    <AppPage
+      title="Relacionamento"
+      actions={PERIOD_TABS.has(tab) ? <DateRangeFilter value={value} onChange={change} /> : undefined}
+    >
       <nav className="lp-detail-tabs" aria-label="Seções de relacionamento">
-        {TABS.map((t) => (
+        {REL_TABS.map((t) => (
           <button key={t.key} type="button" className="lp-detail-tab" data-active={tab === t.key} onClick={() => go(t.key)}>
             {t.label}
           </button>
         ))}
       </nav>
       <div className="flex flex-col gap-4">
-        {tab === "visao" ? <OverviewTab workspaceId={workspaceId} onGo={go} /> : null}
-        {tab === "fluxos" ? <FlowsTab workspaceId={workspaceId} /> : null}
+        {tab === "inicio" ? <InicioTab workspaceId={workspaceId} period={period} onGo={go} /> : null}
+        {tab === "fluxos" ? <FlowsTab workspaceId={workspaceId} period={period} /> : null}
         {tab === "campanhas" ? <CampaignsTab workspaceId={workspaceId} /> : null}
-        {tab === "modelos" ? <TemplatesTab workspaceId={workspaceId} /> : null}
-        {tab === "publicos" ? <AudiencesTab workspaceId={workspaceId} /> : null}
-        {tab === "resultados" ? <ResultsTab workspaceId={workspaceId} /> : null}
-        {tab === "envios" ? <DeliveriesTab workspaceId={workspaceId} /> : null}
-        {tab === "tema" ? <ThemeTab workspaceId={workspaceId} /> : null}
+        {tab === "conteudo" ? <ConteudoTab workspaceId={workspaceId} sub={sub} onSub={(s) => go("conteudo", s)} /> : null}
+        {tab === "contatos" ? <ContatosTab workspaceId={workspaceId} period={period} /> : null}
+        {tab === "desempenho" ? <DesempenhoTab workspaceId={workspaceId} period={period} sub={sub} onSub={(s) => go("desempenho", s)} /> : null}
       </div>
-    </>
+    </AppPage>
   );
 }
 
 export default function RelacionamentoPage() {
   const { workspaceId, isLoading } = useActiveWorkspace();
-  const spinner = (
-    <div className="flex flex-1 items-center justify-center py-20">
-      <Loader2 className="h-5 w-5 animate-spin text-[var(--primary)]" />
-    </div>
-  );
-  return (
-    <AppPage title="Relacionamento">
-      {isLoading ? (
-        spinner
-      ) : !workspaceId ? (
+  if (isLoading) {
+    return (
+      <AppPage title="Relacionamento">
+        <RelLoading />
+      </AppPage>
+    );
+  }
+  if (!workspaceId) {
+    return (
+      <AppPage title="Relacionamento">
         <div className="flex flex-1 items-center justify-center py-20">
           <Link
             href="/config"
@@ -77,11 +75,18 @@ export default function RelacionamentoPage() {
             Criar empresa
           </Link>
         </div>
-      ) : (
-        <Suspense fallback={spinner}>
-          <Body workspaceId={workspaceId} />
-        </Suspense>
-      )}
-    </AppPage>
+      </AppPage>
+    );
+  }
+  return (
+    <Suspense
+      fallback={
+        <AppPage title="Relacionamento">
+          <RelLoading />
+        </AppPage>
+      }
+    >
+      <Body workspaceId={workspaceId} />
+    </Suspense>
   );
 }

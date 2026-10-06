@@ -63,6 +63,20 @@
   --chart-plan: #d2d2d7;
   --chart-revenue: #16a34a;
   --chart-current: color-mix(in srgb, var(--primary) 14%, transparent);
+
+  /* Canal de aquisição (só identificação de dado: ponto + tinta clara; nunca CTA) */
+  --channel-meta-ads: #0866ff;
+  --channel-google-ads: #f9ab00;
+  --channel-instagram: #e1306c;
+  --channel-facebook: #4267b2;
+  --channel-google-organic: #34a853;
+  --channel-email: #af52de;
+  --channel-whatsapp: #25d366;
+  --channel-direct: #6e6e73;
+  --channel-referral: #ff9500;
+  --channel-mercado-livre: #e6c300;
+  --channel-shopee: #ee4d2d;
+  --channel-tiktok: #1d1d1f;
   --positive: #16a34a;
   --negative: #dc2626;
 

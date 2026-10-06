@@ -39,6 +39,8 @@ import {
 } from "recharts";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight, SlidersHorizontal, BarChart3, Play, TrendingUp, X, Wallet, AlertTriangle, Zap, Target, Film, MousePointerClick, Eye, EyeOff, CheckCircle2, ChevronDown, RefreshCw } from "lucide-react";
 import { upgradeFbCdnImageUrl } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { formatCompactNumber, mobileTickInterval } from "@/lib/chart-mobile";
 
 /* ─── data fetchers (unchanged) ─── */
 
@@ -245,6 +247,18 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
   const [chartAgrupamento, setChartAgrupamento] = React.useState<"diario" | "semanal" | "mensal">("semanal");
   const [customInicio, setCustomInicio] = React.useState("");
   const [customFim, setCustomFim] = React.useState("");
+  const channelTabsRef = React.useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+
+  /** Celular: abas viram faixa rolável; a ativa precisa ficar à vista. */
+  React.useEffect(() => {
+    const strip = channelTabsRef.current;
+    if (!strip || strip.scrollWidth <= strip.clientWidth) return;
+    const active = strip.querySelector<HTMLElement>('[data-active="true"]');
+    if (!active) return;
+    const target = active.offsetLeft - (strip.clientWidth - active.offsetWidth) / 2;
+    strip.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
+  }, [canal, analystOpen]);
 
   React.useEffect(() => {
     const stored = localStorage.getItem("inout-date-preset") as PresetPeriodo | null;
@@ -731,7 +745,10 @@ function formatPercentage(value: number) {
       </span>
     </div>
   ) : (
-    <div className="flex flex-wrap items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--card)] p-1">
+    <div
+      ref={channelTabsRef}
+      className="mobile-scroll-strip relative flex flex-wrap items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--card)] p-1"
+    >
       {([
         "geral",
         "meta",
@@ -745,6 +762,7 @@ function formatPercentage(value: number) {
         <button
           key={c}
           type="button"
+          data-active={canal === c && !analystOpen ? "true" : undefined}
           onClick={() => {
             setCanal(c as typeof canal);
             setSubView("dados");
@@ -764,6 +782,7 @@ function formatPercentage(value: number) {
       {hotelPilotEnabled && (
         <button
           type="button"
+          data-active={analystOpen ? "true" : undefined}
           onClick={() => {
             setCanal("geral");
             setSubView("dados");
@@ -786,7 +805,7 @@ function formatPercentage(value: number) {
       title={
         <div className="min-w-0 space-y-2">
           {!portalMode && (
-            <BackLink href="/clientes">Central de clientes</BackLink>
+            <BackLink href="/clientes" className="hidden md:inline-flex">Central de clientes</BackLink>
           )}
           <div>
             <h1 className="type-tagline text-[var(--ink)]">
@@ -929,7 +948,7 @@ function formatPercentage(value: number) {
           {/* Filtro de data — direita */}
           <DateRangeFilter
             variant="panel"
-            className="ml-auto"
+            className="date-range-fill ml-auto flex-1 md:flex-initial"
             value={{ preset: presetPeriodo, customInicio, customFim }}
             onChange={(v) => {
               setPresetPeriodo(v.preset as PresetPeriodo);
@@ -1214,7 +1233,7 @@ function formatPercentage(value: number) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
+            <div className="h-64 md:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart
                   data={financeiro.meses.map(
@@ -1234,13 +1253,15 @@ function formatPercentage(value: number) {
                     fontSize={11}
                     tickLine={false}
                     axisLine={false}
+                    interval={isMobile ? mobileTickInterval(financeiro.meses.length) : undefined}
                   />
                   <YAxis
                     stroke="var(--muted-foreground)"
                     fontSize={11}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(value) => formatCurrency(Number(value))}
+                    width={isMobile ? 44 : 60}
+                    tickFormatter={(value) => (isMobile ? formatCompactNumber(Number(value)) : formatCurrency(Number(value)))}
                   />
                   <Tooltip
                     formatter={(value: number, name: string) => [
@@ -2226,7 +2247,7 @@ function MetaCriativosGrid({
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className={`w-full text-left text-xs ${hasSalesCampaigns ? "min-w-[1120px]" : hasAttributedSalesValue ? "min-w-[900px]" : "min-w-[760px]"}`}>
+          <table className={`table-sticky-first w-full text-left text-xs ${hasSalesCampaigns ? "min-w-[1120px]" : hasAttributedSalesValue ? "min-w-[900px]" : "min-w-[760px]"}`}>
             <thead>
               <tr className="border-b-2 border-[var(--border)]">
                 {sortableHeader("name", "Criativo", "left")}
@@ -2255,7 +2276,7 @@ function MetaCriativosGrid({
                           type="button"
                           onClick={() => toggleExpanded(setExpandedCampaigns, campaign.id)}
                           aria-expanded={campaignOpen}
-                          className="flex w-full min-w-[250px] items-center gap-3 text-left"
+                          className="flex w-full min-w-[170px] items-center gap-3 text-left sm:min-w-[250px]"
                         >
                           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-[var(--primary)]">
                             {campaignOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -2282,7 +2303,7 @@ function MetaCriativosGrid({
                                 type="button"
                                 onClick={() => toggleExpanded(setExpandedAdsets, adset.id)}
                                 aria-expanded={adsetOpen}
-                                className="flex w-full min-w-[225px] items-center gap-3 text-left"
+                                className="flex w-full min-w-[150px] items-center gap-3 text-left sm:min-w-[225px]"
                               >
                                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-[var(--border)] text-[var(--muted-foreground)]">
                                   {adsetOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}

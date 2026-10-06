@@ -581,7 +581,7 @@ export function CrmLeadModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="panel-modal-header">
-          <div className="flex items-start justify-between gap-3">
+          <div className="panel-modal-head-row flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <h2 className="type-tagline text-[var(--ink)]">{isLoading ? "…" : lead?.name ?? "Lead"}</h2>
               {lead ? (
@@ -616,9 +616,10 @@ export function CrmLeadModal({
                 </div>
               ) : null}
             </div>
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="panel-modal-head-actions flex shrink-0 items-center gap-2">
               {lead && data?.stages.length ? (
                 <PillSelect
+                  className="panel-modal-stage"
                   aria-label="Etapa"
                   value={lead.stageId ?? ""}
                   onChange={moveStage}
@@ -628,7 +629,7 @@ export function CrmLeadModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-[var(--ink-muted-48)] hover:bg-[var(--canvas-parchment)] hover:text-[var(--ink)] active:scale-95"
+                className="panel-modal-close inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-[var(--ink-muted-48)] hover:bg-[var(--canvas-parchment)] hover:text-[var(--ink)] active:scale-95"
                 aria-label="Fechar"
               >
                 <X className="h-4 w-4" strokeWidth={1.75} />

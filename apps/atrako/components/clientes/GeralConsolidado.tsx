@@ -5,6 +5,8 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CartRecoveryMetrics, RepurchaseMetrics } from "@/lib/commerce/customer-metrics";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { mobileTickInterval } from "@/lib/chart-mobile";
 
 type Consolidado = {
   clientes?: RepurchaseMetrics | null;
@@ -92,7 +94,7 @@ function EcommerceGeral({
 
   return (
     <section className={`space-y-4 transition-opacity ${fetching ? "opacity-60" : ""}`}>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="kpi-grid grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Kpi
           label="Receita"
           value={brl(totais.receita)}
@@ -243,7 +245,7 @@ function ClientesERecuperacao({
     <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
       <p className="type-caption-strong text-[var(--foreground)]">Clientes e recuperação</p>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="kpi-grid mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {c ? (
           <>
             <Kpi
@@ -344,6 +346,7 @@ const chartTooltip = {
 };
 
 function VendasSerie({ data, origemLabel }: { data: Consolidado; origemLabel: string | null }) {
+  const isMobile = useIsMobile();
   const serie = data.serie ?? [];
   if (serie.length < 2) return null;
   const semanal = data.serieAgrupamento === "semana";
@@ -351,7 +354,7 @@ function VendasSerie({ data, origemLabel }: { data: Consolidado; origemLabel: st
     const [, m, d] = s.data.split("-");
     return { periodo: `${d}/${m}`, receita: s.receitaCents / 100, pedidos: s.pedidos };
   });
-  const tickEvery = rows.length > 16 ? Math.ceil(rows.length / 16) - 1 : 0;
+  const tickEvery = isMobile ? mobileTickInterval(rows.length) : rows.length > 16 ? Math.ceil(rows.length / 16) - 1 : 0;
 
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
@@ -417,11 +420,11 @@ function Kpi({
   const valueColor =
     tone === "positive" ? "text-positive" : tone === "negative" ? "text-negative" : "text-[var(--foreground)]";
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
+    <div className="kpi-card-content rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
       <p className="type-fine-print uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
         {label}
       </p>
-      <p className={`mt-2 type-tagline tabular-nums ${valueColor}`}>{value}</p>
+      <p className={`kpi-card-value mt-2 type-tagline tabular-nums ${valueColor}`}>{value}</p>
       {hint ? <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">{hint}</p> : null}
     </div>
   );
@@ -466,7 +469,7 @@ export function GeralConsolidado({
 
   return (
     <section className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="kpi-grid grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <Kpi
           label="Receita"
           value={brl(totais.receita)}
@@ -499,7 +502,7 @@ export function GeralConsolidado({
       </div>
 
       {showRel && rel ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="kpi-grid grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Kpi
             label="Receita via relacionamento"
             value={brl(rel.receitaAtribuida)}

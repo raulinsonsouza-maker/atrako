@@ -9,7 +9,6 @@ import {
   LogOut,
   Plus,
   Settings2,
-  PanelLeft,
   PanelLeftOpen,
 } from "lucide-react";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
@@ -58,10 +57,15 @@ function initials(nome: string) {
 
 type Tip = { label: string; desc?: string; top: number };
 
-export function AppSidebar() {
+export function AppSidebar({
+  mobileOpen,
+  onMobileOpenChange: setMobileOpen,
+}: {
+  mobileOpen: boolean;
+  onMobileOpenChange: (open: boolean) => void;
+}) {
   const pathname = usePathname();
   const [collapsedPref, setCollapsedPref] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [tip, setTip] = useState<Tip | null>(null);
   /** A gaveta do celular é sempre aberta; recolher é só no desktop. */
@@ -344,15 +348,6 @@ export function AppSidebar() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setMobileOpen(true)}
-        className="fixed left-3 top-3 z-40 inline-flex h-11 w-11 items-center justify-center rounded-sm border border-[var(--hairline)] bg-[var(--canvas)] text-[var(--ink)] md:hidden active:scale-95"
-        aria-label="Abrir menu"
-      >
-        <PanelLeft className="h-4 w-4" />
-      </button>
-
       <div className="hidden md:block">{sidebarBody}</div>
 
       {mobileOpen ? (

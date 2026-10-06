@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import { MessageCircle } from "lucide-react";
 import { channelColor } from "@/lib/commerce-attribution/channel-color";
+import { PillSelect, type PillSelectOption } from "@/components/ui/pill-select";
 
 export type CrmBoardLead = {
   id: string;
@@ -92,12 +93,19 @@ export function CrmLeadCard({
   drag,
   onOpen,
   showOpenCart = true,
+  stages,
+  stageId,
+  onMove,
 }: {
   lead: CrmBoardLead;
   drag?: boolean;
   onOpen?: (leadId: string) => void;
   /** Colunas de abandono já dizem isso. */
   showOpenCart?: boolean;
+  /** Celular: arrastar não funciona no toque, então o card mostra um seletor de etapa (oculto no desktop via CSS). */
+  stages?: PillSelectOption[];
+  stageId?: string;
+  onMove?: (toStageId: string) => void;
 }) {
   const contact = lead.phone
     ? formatPhone(lead.phone)
@@ -185,6 +193,24 @@ export function CrmLeadCard({
           </a>
         ) : null}
       </div>
+
+      {stages?.length && onMove ? (
+        <div
+          className="pipeline-lead-move"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          <PillSelect
+            aria-label={`Mover ${lead.name} para outra etapa`}
+            placeholder="Mover para…"
+            value={stageId ?? ""}
+            onChange={(to) => {
+              if (to && to !== stageId) onMove(to);
+            }}
+            options={stages}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

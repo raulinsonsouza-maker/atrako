@@ -262,7 +262,7 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-separate [border-spacing:0_6px]" style={{ minWidth: hasSales ? 1200 : hasResultados ? 920 : 760 }}>
+      <table className="table-sticky-first w-full border-separate [border-spacing:0_6px]" style={{ minWidth: hasSales ? 1200 : hasResultados ? 920 : 760 }}>
         <thead>
           <tr>
             <SortTh col="nome" label="Campanha" align="left" {...st} />
@@ -594,7 +594,7 @@ function ConjuntosTable({ conjuntos, onSelect, parentCampType, mqlByAdsetId, cli
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-separate [border-spacing:0_6px]" style={{ minWidth: minW }}>
+      <table className="table-sticky-first w-full border-separate [border-spacing:0_6px]" style={{ minWidth: minW }}>
         <thead>
           <tr>
             <SortTh col="adsetName" label="Conjunto de Anúncios" align="left" {...st} />
@@ -900,7 +900,7 @@ function CriativosTable({ criativos, parentCampType, mqlByAdId }: { criativos: C
     <>
       {modalCriativo && <VideoModal c={modalCriativo} onClose={() => setModalCriativo(null)} />}
       <div className="overflow-x-auto">
-        <table className="w-full border-separate [border-spacing:0_6px]" style={{ minWidth: minW }}>
+        <table className="table-sticky-first w-full border-separate [border-spacing:0_6px]" style={{ minWidth: minW }}>
           <thead>
             <tr>
               <SortTh col="adName" label="Criativo" align="left" {...st} />

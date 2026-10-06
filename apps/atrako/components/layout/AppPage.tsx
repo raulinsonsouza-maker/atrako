@@ -22,13 +22,13 @@ export function AppPage({
     <div className="flex min-h-0 flex-1 flex-col bg-[var(--canvas-parchment)]">
       <div
         className={cn(
-          "flex min-h-0 w-full flex-1 flex-col gap-4 px-5 py-5 md:gap-4 md:px-6 md:py-5",
+          "flex min-h-0 w-full flex-1 flex-col gap-4 px-4 py-4 md:gap-4 md:px-6 md:py-5",
           narrow && "mx-auto max-w-3xl",
           className,
         )}
       >
         {title != null || actions ? (
-          <header className="flex shrink-0 items-center justify-between gap-3">
+          <header className="flex shrink-0 flex-col items-stretch gap-3 md:flex-row md:items-center md:justify-between">
             {title != null ? (
               typeof title === "string" ? (
                 <h1 className="type-tagline text-[var(--ink)]">{title}</h1>
@@ -36,9 +36,9 @@ export function AppPage({
                 title
               )
             ) : (
-              <span />
+              <span className="hidden md:block" />
             )}
-            {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
+            {actions ? <div className="flex min-w-0 items-center gap-2 md:shrink-0">{actions}</div> : null}
           </header>
         ) : null}
         {children}

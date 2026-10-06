@@ -16,6 +16,7 @@ import { IconButton } from "@/components/ui/icon-button";
 import { PillMultiSelect, type PillSelectOption } from "@/components/ui/pill-select";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { DateRangeFilter, resolveDateRange, type DateRangeValue } from "@/components/ui/date-range-filter";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 type StageCol = {
   id: string;
@@ -161,22 +162,58 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
     placeholderData: keepPreviousData,
   });
 
+  const isMobile = useIsMobile();
   const boardRef = useRef<HTMLDivElement | null>(null);
+  const stageStripRef = useRef<HTMLDivElement | null>(null);
   const [boardHeight, setBoardHeight] = useState<number | null>(null);
+  const [visibleStageId, setVisibleStageId] = useState<string | null>(null);
   const boardReady = tab === "pipeline" && !!data;
   const hasCartsLine = Boolean(data?.abandonedCarts);
+  const stageKey = data?.stages.map((s) => s.id).join(",") ?? "";
   useEffect(() => {
     if (!boardReady) return;
     const fit = () => {
       const el = boardRef.current;
       if (!el) return;
       const top = el.getBoundingClientRect().top + window.scrollY;
-      setBoardHeight(Math.max(360, Math.floor(window.innerHeight - top - 24)));
+      setBoardHeight(Math.max(isMobile ? 280 : 360, Math.floor(window.innerHeight - top - (isMobile ? 16 : 24))));
     };
     fit();
     window.addEventListener("resize", fit);
     return () => window.removeEventListener("resize", fit);
-  }, [boardReady, showNew, hasCartsLine]);
+  }, [boardReady, showNew, hasCartsLine, isMobile]);
+
+  /** Celular: uma coluna por tela; a faixa de etapas acompanha qual está à vista. */
+  useEffect(() => {
+    const board = boardRef.current;
+    if (!isMobile || !boardReady || !board) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) setVisibleStageId((e.target as HTMLElement).dataset.stageId ?? null);
+        }
+      },
+      { root: board, threshold: 0.6 },
+    );
+    board.querySelectorAll<HTMLElement>("[data-stage-id]").forEach((col) => io.observe(col));
+    return () => io.disconnect();
+  }, [isMobile, boardReady, stageKey]);
+
+  useEffect(() => {
+    const strip = stageStripRef.current;
+    if (!strip || !visibleStageId) return;
+    const chip = strip.querySelector<HTMLElement>(`[data-chip-stage="${CSS.escape(visibleStageId)}"]`);
+    if (!chip) return;
+    strip.scrollTo({ left: Math.max(0, chip.offsetLeft - (strip.clientWidth - chip.offsetWidth) / 2), behavior: "smooth" });
+  }, [visibleStageId]);
+
+  const scrollToStage = (stageId: string) => {
+    const board = boardRef.current;
+    const col = board?.querySelector<HTMLElement>(`[data-stage-id="${CSS.escape(stageId)}"]`);
+    if (!board || !col) return;
+    const left = col.getBoundingClientRect().left - board.getBoundingClientRect().left + board.scrollLeft;
+    board.scrollTo({ left, behavior: "smooth" });
+  };
 
   const handleDrop = useCallback(
     async (leadId: string, fromStageId: string, toStageId: string) => {
@@ -259,6 +296,13 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
 
   const allLeads = data?.stages.flatMap((s) => s.leads) ?? [];
   const boardCols = data?.stages.length ?? 0;
+  const stageOptions = useMemo<PillSelectOption[]>(
+    () =>
+      (data?.stages ?? [])
+        .filter((s) => s.id !== "_none")
+        .map((s) => ({ value: s.id, label: s.name, color: s.color })),
+    [data?.stages],
+  );
   const originOptions = useMemo(() => {
     const opts: PillSelectOption[] = (data?.channels ?? []).map((c) => ({
       value: c.value,
@@ -317,7 +361,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
               onChange={(e) => onSearch(e.target.value)}
             />
           </div>
-          <DateRangeFilter value={dateRange} onChange={changeDateRange} allowAll />
+          <DateRangeFilter className="date-range-fill" value={dateRange} onChange={changeDateRange} allowAll />
           <PillMultiSelect
             aria-label="Filtrar por origem do lead"
             value={origins}
@@ -460,6 +504,26 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
           <Loader2 className="h-5 w-5 animate-spin text-[var(--primary)]" />
         </div>
       ) : tab === "pipeline" ? (
+        <>
+        {data?.stages.length ? (
+          <div ref={stageStripRef} className="pipeline-stage-strip" aria-label="Etapas do funil">
+            {data.stages.map((stage) => (
+              <button
+                key={stage.id}
+                type="button"
+                className="crm-filter-chip"
+                data-chip-stage={stage.id}
+                data-active={(visibleStageId ?? data.stages[0]?.id) === stage.id ? "true" : "false"}
+                style={{ ["--stage-color" as string]: stage.color }}
+                onClick={() => scrollToStage(stage.id)}
+              >
+                <span className="pipeline-stage-dot" aria-hidden />
+                {stage.name}
+                <span className="tabular-nums">{stage.totalCount}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
         <div
           ref={boardRef}
           className="pipeline-board"
@@ -476,6 +540,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
               <div
                 key={stage.id}
                 className="pipeline-column group"
+                data-stage-id={stage.id}
                 data-drop={isDrop ? "true" : "false"}
                 style={{ ["--stage-color" as string]: stage.color }}
                 onDragOver={(e) => {
@@ -526,6 +591,9 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
                         drag
                         onOpen={setOpenLeadId}
                         showOpenCart={!ABANDON_ROLES.has(stage.role ?? "")}
+                        stages={stageOptions}
+                        stageId={stage.id}
+                        onMove={(to) => void handleDrop(lead.id, stage.id, to)}
                       />
                     </div>
                   ))}
@@ -539,8 +607,28 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
             );
           })}
         </div>
+        </>
       ) : (
-        <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-[var(--hairline)] bg-[var(--canvas)]">
+        <>
+        <div className="crm-list-cards md:hidden">
+          {(data?.stages ?? []).flatMap((stage) =>
+            stage.leads.map((lead) => (
+              <div key={lead.id} className={clsx(movingLeadId === lead.id && "pointer-events-none opacity-50")}>
+                <CrmLeadCard
+                  lead={lead}
+                  onOpen={setOpenLeadId}
+                  stages={stageOptions}
+                  stageId={stage.id}
+                  onMove={(to) => void handleDrop(lead.id, stage.id, to)}
+                />
+              </div>
+            )),
+          )}
+          {!allLeads.length ? (
+            <p className="py-12 text-center type-caption text-[var(--ink-muted-48)]">Nenhum lead</p>
+          ) : null}
+        </div>
+        <div className="hidden min-h-0 flex-1 overflow-auto rounded-lg border border-[var(--hairline)] bg-[var(--canvas)] md:block">
           <table className="w-full text-left">
             <thead className="sticky top-0 bg-[var(--canvas)] type-fine-print text-[var(--ink-muted-48)]">
               <tr>
@@ -596,6 +684,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {openLeadId ? (

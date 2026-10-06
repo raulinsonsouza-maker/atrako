@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
+import { MobileTopBar } from "@/components/layout/MobileTopBar";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
   /** Páginas públicas / autenticação — sem sidebar do app. */
   const bare =
     pathname === "/" ||
@@ -48,10 +51,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div
       className={`flex bg-[var(--canvas-parchment)] ${fillViewport ? "h-screen overflow-hidden" : "min-h-screen"}`}
     >
-      <AppSidebar />
+      <AppSidebar mobileOpen={mobileOpen} onMobileOpenChange={setMobileOpen} />
       <div
         className={`flex min-w-0 flex-1 flex-col ${fillViewport ? "min-h-0 overflow-hidden" : ""}`}
       >
+        <MobileTopBar onOpenMenu={() => setMobileOpen(true)} />
         {children}
       </div>
     </div>

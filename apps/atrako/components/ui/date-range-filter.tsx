@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { Button } from "./button";
 
 export type DatePreset =
@@ -181,6 +182,7 @@ export function DateRangeFilter({ value, onChange, allowAll = false, variant = "
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const isMobile = useIsMobile();
   const resolved = resolveDateRange(value);
   const [visibleMonth, setVisibleMonth] = useState(() => {
     const end = fromDateInputValue(resolved.dataFim) ?? new Date();
@@ -284,7 +286,7 @@ export function DateRangeFilter({ value, onChange, allowAll = false, variant = "
           aria-haspopup="dialog"
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 type-fine-print transition active:scale-95 sm:gap-2.5 sm:px-4"
+          className="date-range-trigger inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 type-fine-print transition active:scale-95 sm:gap-2.5 sm:px-4"
         >
           <CalendarDays className="h-4 w-4 shrink-0 text-[var(--primary)]" />
           <span className="min-w-0 truncate text-[var(--foreground)]">
@@ -302,7 +304,7 @@ export function DateRangeFilter({ value, onChange, allowAll = false, variant = "
           aria-label={`Período: ${resolved.label}`}
           data-open={open ? "true" : "false"}
           onClick={() => setOpen((v) => !v)}
-          className="pill-select-trigger type-caption"
+          className="date-range-trigger pill-select-trigger type-caption"
         >
           <span className="flex min-w-0 flex-1 items-center gap-2">
             <CalendarDays className="h-3.5 w-3.5 shrink-0 text-[var(--primary)]" strokeWidth={1.75} />
@@ -315,19 +317,26 @@ export function DateRangeFilter({ value, onChange, allowAll = false, variant = "
         </button>
       )}
 
+      {open && isMobile ? (
+        <div className="date-range-backdrop" aria-hidden onClick={() => setOpen(false)} />
+      ) : null}
       {open && pos ? (
         <div
           role="dialog"
           aria-label="Escolher período"
-          className="fixed z-50 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)]"
-          style={{ top: pos.top, left: pos.left, width: pos.width }}
+          className={
+            isMobile
+              ? "date-range-sheet"
+              : "fixed z-50 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)]"
+          }
+          style={isMobile ? undefined : { top: pos.top, left: pos.left, width: pos.width }}
         >
           <div className="grid md:grid-cols-[220px_1fr]">
             <div className="border-b border-[var(--border)] p-3 md:border-b-0 md:border-r">
               <p className="mb-2 px-3 type-fine-print uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
                 Períodos
               </p>
-              <div className="space-y-0.5">
+              <div className="date-range-presets space-y-0.5">
                 {presets.map(([preset, label]) => {
                   const active = value.preset === preset;
                   return (
@@ -426,7 +435,7 @@ export function DateRangeFilter({ value, onChange, allowAll = false, variant = "
                 })}
               </div>
 
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border)] pt-3">
+              <div className="date-range-footer mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border)] pt-3">
                 <div className="flex gap-2">
                   <input
                     type="date"

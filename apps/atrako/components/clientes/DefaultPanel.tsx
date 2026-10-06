@@ -13,6 +13,8 @@ import {
   Line,
   ComposedChart,
 } from "recharts";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { formatCompactNumber, mobileTickInterval } from "@/lib/chart-mobile";
 import { DollarSign, Target, TrendingUp, Users, Zap, BarChart3, ShoppingCart, ReceiptText, Repeat2, MousePointerClick, MessageCircle, Eye, Activity } from "lucide-react";
 
 const tooltipStyle = {
@@ -53,15 +55,15 @@ function KpiCard({
           : "text-[var(--foreground)]";
   return (
     <Card className="overflow-hidden rounded-2xl border-[var(--border)] bg-[var(--canvas)]">
-      <CardContent className="flex items-start gap-4 p-5">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--chart-current)] text-[var(--primary)]">
+      <CardContent className="kpi-card-content flex items-start gap-4 p-5">
+        <div className="kpi-card-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--chart-current)] text-[var(--primary)]">
           <Icon className="h-[18px] w-[18px]" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="type-fine-print uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
             {title}
           </p>
-          <p className={`mt-2 whitespace-nowrap type-tagline tabular-nums ${valueColor}`}>
+          <p className={`kpi-card-value mt-2 whitespace-nowrap type-tagline tabular-nums ${valueColor}`}>
             {value}
           </p>
           {sub ? <p className="mt-1.5 type-fine-print leading-snug text-[var(--muted-foreground)]">{sub}</p> : null}
@@ -172,6 +174,7 @@ export function DefaultPanel({
   lpViewsMode = false,
   hideKpis = false,
 }: DefaultPanelProps) {
+  const isMobile = useIsMobile();
   const isMensal = agrupamento === "mensal";
   const isDiario = agrupamento === "diario";
   const latestPeriod = latestFiveSeries[latestFiveSeries.length - 1]?.periodo;
@@ -190,7 +193,7 @@ export function DefaultPanel({
       {/* KPI cards — modo e-commerce (Granarolo, D'or) */}
       {ecommerceGoogleMode ? (
         <>
-          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <section className="kpi-grid grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <KpiCard
               title={canal === "google" ? "Investimento Google" : canal === "meta" ? "Investimento Meta" : "Investimento"}
               value={formatCurrency(resumo.investimento)}
@@ -214,7 +217,7 @@ export function DefaultPanel({
               tone={roas <= 0 ? undefined : roas >= 1 ? "positive" : "negative"}
             />
           </section>
-          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+          <section className="kpi-grid grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
             <KpiCard
               title={canal === "google" ? "Faturamento pelo Google" : canal === "meta" ? "Faturamento pelo Meta" : "Faturamento pelos anúncios"}
               value={valorConversao > 0 ? formatCurrency(valorConversao) : "—"}
@@ -229,7 +232,7 @@ export function DefaultPanel({
         </>
       ) : (
         /* KPI cards — modo padrão */
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="kpi-grid grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard
             title={canal === "google" ? "Investimento Google" : "Investimento"}
             value={formatCurrency(resumo.investimento)}
@@ -264,7 +267,7 @@ export function DefaultPanel({
 
       {/* KPI row extra — modo Miguel Google (CTR + Taxa de Conversão) */}
       {!ecommerceGoogleMode && miguelGoogleMode && (
-        <section className="grid gap-4 sm:grid-cols-2">
+        <section className="kpi-grid grid gap-4 sm:grid-cols-2">
           <KpiCard
             title="CTR"
             value={
@@ -288,7 +291,7 @@ export function DefaultPanel({
 
       {/* KPI row extra — modo conversas + engajamento (Clínica e Spa) */}
       {!ecommerceGoogleMode && conversasEngajamentoMode && (
-        <section className="grid gap-4 sm:grid-cols-2">
+        <section className="kpi-grid grid gap-4 sm:grid-cols-2">
           <KpiCard
             title="Cliques (Engajamento)"
             value={(resumo.cliques ?? 0).toLocaleString("pt-BR")}
@@ -308,7 +311,7 @@ export function DefaultPanel({
 
       {/* KPI row extra — breakdown de resultados (Miguel Imóveis) */}
       {!ecommerceGoogleMode && miguelImoveisMode && (
-        <section className="grid gap-4 sm:grid-cols-2">
+        <section className="kpi-grid grid gap-4 sm:grid-cols-2">
           <KpiCard
             title="Conversas (Mensagem)"
             value={(resumo.conversasMensagem ?? 0).toLocaleString("pt-BR")}
@@ -324,7 +327,7 @@ export function DefaultPanel({
 
       {/* KPI row extra — engajamento Instagram (Academy Americana) */}
       {!ecommerceGoogleMode && academyEngajamentoMode && (resumo.profileVisits ?? 0) > 0 && (
-        <section className="grid gap-4 sm:grid-cols-3">
+        <section className="kpi-grid grid gap-4 sm:grid-cols-3">
           <KpiCard
             title="Visitas ao Perfil"
             value={(resumo.profileVisits ?? 0).toLocaleString("pt-BR")}
@@ -353,7 +356,7 @@ export function DefaultPanel({
 
       {/* KPI row extra — Conversas B2B (Kombucha da Cá) */}
       {!ecommerceGoogleMode && kombuchaMode && (resumo.conversasB2b ?? 0) > 0 && (
-        <section className="grid gap-4 sm:grid-cols-2">
+        <section className="kpi-grid grid gap-4 sm:grid-cols-2">
           <KpiCard
             title="Conversas B2B (Mensagem)"
             value={(resumo.conversasB2b ?? 0).toLocaleString("pt-BR")}
@@ -429,7 +432,7 @@ export function DefaultPanel({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
+            <div className="h-64 md:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={chartData}>
                   <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
@@ -439,10 +442,14 @@ export function DefaultPanel({
                     fontSize={11}
                     tickLine={false}
                     axisLine={false}
-                    interval={isDiario && chartData.length > 14 ? Math.ceil(chartData.length / 14) - 1 : 0}
-                    angle={isDiario && chartData.length > 14 ? -45 : 0}
-                    textAnchor={isDiario && chartData.length > 14 ? "end" : "middle"}
-                    height={isDiario && chartData.length > 14 ? 50 : 30}
+                    interval={
+                      isMobile
+                        ? mobileTickInterval(chartData.length)
+                        : isDiario && chartData.length > 14 ? Math.ceil(chartData.length / 14) - 1 : 0
+                    }
+                    angle={!isMobile && isDiario && chartData.length > 14 ? -45 : 0}
+                    textAnchor={!isMobile && isDiario && chartData.length > 14 ? "end" : "middle"}
+                    height={!isMobile && isDiario && chartData.length > 14 ? 50 : 30}
                   />
                   <YAxis
                     yAxisId="left"
@@ -450,6 +457,8 @@ export function DefaultPanel({
                     fontSize={11}
                     tickLine={false}
                     axisLine={false}
+                    width={isMobile ? 40 : 60}
+                    tickFormatter={isMobile ? formatCompactNumber : undefined}
                   />
                   <YAxis
                     yAxisId="right"
@@ -458,6 +467,8 @@ export function DefaultPanel({
                     fontSize={11}
                     tickLine={false}
                     axisLine={false}
+                    width={isMobile ? 32 : 60}
+                    tickFormatter={isMobile ? formatCompactNumber : undefined}
                   />
                   <YAxis yAxisId="cpl" hide={true} />
                   <Tooltip
@@ -501,7 +512,7 @@ export function DefaultPanel({
       {/* Weekly breakdown table */}
       {latestFiveSeries.length > 0 && (
         <Card className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)]">
-          <CardHeader className="border-b border-border/60 px-6 pb-5 pt-6 sm:px-8">
+          <CardHeader className="border-b border-border/60 px-4 pb-5 pt-6 sm:px-8">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="flex items-start gap-4">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--chart-current)] text-[var(--primary)]">
@@ -539,10 +550,10 @@ export function DefaultPanel({
           </CardHeader>
           <CardContent className="px-3 pb-4 pt-4 sm:px-5 sm:pb-5">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[860px] border-separate [border-spacing:0_10px]">
+              <table className="table-sticky-first w-full min-w-[860px] border-separate [border-spacing:0_10px]">
                 <thead>
                   <tr>
-                    <th className="w-[220px] px-3 text-left text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">
+                    <th className="w-[150px] px-3 sm:w-[220px] text-left text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">
                       Métrica
                     </th>
                     {latestFiveSeries.map((s: { periodo: string }, periodIdx: number) => {

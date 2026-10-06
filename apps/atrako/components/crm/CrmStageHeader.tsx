@@ -15,7 +15,7 @@ export const STAGE_COLOR_PRESETS = [
   "#AF52DE",
 ];
 
-type StageRole = "ENTRY" | "WON" | "ABANDONED" | "ABANDONED_7" | "ABANDONED_30" | "ABANDONED_60" | "LOST" | null;
+type StageRole = "ENTRY" | "WON" | "ABANDONED" | "ABANDONED_30" | "ABANDONED_60" | "ABANDONED_90" | "LOST" | null;
 
 type Props = {
   stageId: string;
@@ -32,13 +32,13 @@ type Props = {
 const FIXED_ROLE_HINT: Record<Exclude<StageRole, null>, string> = {
   ENTRY: "Entrada do funil — o nome é só um rótulo.",
   ABANDONED:
-    "Carrinho abandonado — pedidos não pagos e checkouts da loja entram aqui sozinhos.",
-  ABANDONED_7: "Carrinho aberto sem compra há mais de 7 dias — o card chega aqui sozinho.",
+    "Carrinho abandonado — pedidos não pagos e checkouts da loja entram aqui sozinhos e ficam até 30 dias.",
   ABANDONED_30: "Carrinho aberto sem compra há mais de 30 dias — o card chega aqui sozinho.",
-  ABANDONED_60: "Carrinho aberto sem compra há mais de 60 dias — aos 90 dias vai para Perdido.",
+  ABANDONED_60: "Carrinho aberto sem compra há mais de 60 dias — o card chega aqui sozinho.",
+  ABANDONED_90: "Carrinho aberto sem compra há mais de 90 dias — aos 6 meses vai para Perdido.",
   WON: "Fechamento (ganho) — o nome é só um rótulo.",
   LOST:
-    "Perdido — carrinho sem compra há mais de 90 dias ou reembolso. O contato segue na base para reativação.",
+    "Perdido — 6 meses sem compra, e-mail e WhatsApp que não chegam ou reembolso. O contato segue na base para reativação.",
 };
 
 /** Header da coluna — ENTRY, ABANDONED, WON e LOST são fixos na posição; nomes editáveis. */

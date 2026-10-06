@@ -160,6 +160,8 @@ export const WA_ERROR = {
   TEMPLATE_PAUSED: 132015,
   TEMPLATE_DISABLED: 132016,
   OUTSIDE_WINDOW: 131047,
+  /** Número sem WhatsApp (ou versão antiga) — mensagem não entregável */
+  UNDELIVERABLE: 131026,
 } as const;
 
 /** Aplica efeitos de erro WA no contato. Retorna se deve cair para e-mail / re-enfileirar. */
@@ -187,5 +189,14 @@ export async function applyWaErrorToContact(
     return { fallbackEmail: true, requeue: false, blocked: true };
   }
   if (code === WA_ERROR.PACING_DROPPED) return { fallbackEmail: false, requeue: true, blocked: false };
+  if (code === WA_ERROR.UNDELIVERABLE && contactId) {
+    const contact = await prisma.nativeContact.update({
+      where: { id: contactId },
+      data: { waUndeliverableAt: new Date() },
+      select: { clienteId: true },
+    });
+    const { markLostIfUnreachable } = await import("@/lib/crm/abandoned-cart");
+    await markLostIfUnreachable(contact.clienteId, contactId).catch(() => 0);
+  }
   return { fallbackEmail: true, requeue: false, blocked: false };
 }

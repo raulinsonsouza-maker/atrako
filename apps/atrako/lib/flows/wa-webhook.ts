@@ -73,6 +73,12 @@ export async function handleFlowStatuses(workspaceId: string, statuses: WaStatus
       providerEventId: `wa:${s.id}:${s.status}`,
       extra,
     });
+    if (fresh && (event === "delivered" || event === "opened") && delivery.contactId) {
+      await prisma.nativeContact.updateMany({
+        where: { id: delivery.contactId, waUndeliverableAt: { not: null } },
+        data: { waUndeliverableAt: null },
+      });
+    }
     if (fresh && event === "failed" && err?.code) {
       const effect = await applyWaErrorToContact(delivery.contactId, err.code);
       if (effect.fallbackEmail || effect.requeue) await handleAsyncWaFailure(delivery.id, effect);

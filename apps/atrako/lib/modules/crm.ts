@@ -14,24 +14,26 @@ export const STAGE_ROLE_WON = "WON";
 export const STAGE_ROLE_ABANDONED = "ABANDONED";
 /** Criada sob demanda (pedido expirado / reembolso); fica fixa depois de Ganho. */
 export const STAGE_ROLE_LOST = "LOST";
-/** Carrinho aberto sem compra há +7 / +30 / +60 dias; criadas sob demanda, logo após Carrinho abandonado. */
-export const STAGE_ROLE_ABANDONED_7 = "ABANDONED_7";
+/** Carrinho aberto sem compra há +30 / +60 / +90 dias; criadas sob demanda, logo após Carrinho abandonado. */
 export const STAGE_ROLE_ABANDONED_30 = "ABANDONED_30";
 export const STAGE_ROLE_ABANDONED_60 = "ABANDONED_60";
+export const STAGE_ROLE_ABANDONED_90 = "ABANDONED_90";
+/** Janela de 7 dias (descontinuada): `retireLegacyAgingStages` devolve os leads para Carrinho abandonado. */
+const LEGACY_AGING_ROLES = ["ABANDONED_7"];
 
-export type AgingRole = typeof STAGE_ROLE_ABANDONED_7 | typeof STAGE_ROLE_ABANDONED_30 | typeof STAGE_ROLE_ABANDONED_60;
+export type AgingRole = typeof STAGE_ROLE_ABANDONED_30 | typeof STAGE_ROLE_ABANDONED_60 | typeof STAGE_ROLE_ABANDONED_90;
 export type StageRole = "ENTRY" | "WON" | "ABANDONED" | AgingRole | "LOST";
 
 /** Da mais nova para a mais antiga; `minDays` = idade do abandono para entrar. */
 export const AGING_STAGES: ReadonlyArray<{ role: AgingRole; minDays: number; name: string; color: string }> = [
-  { role: STAGE_ROLE_ABANDONED_7, minDays: 7, name: "Abandonado há +7 dias", color: "#FF9F0A" },
-  { role: STAGE_ROLE_ABANDONED_30, minDays: 30, name: "Abandonado há +30 dias", color: "#FF6B00" },
-  { role: STAGE_ROLE_ABANDONED_60, minDays: 60, name: "Abandonado há +60 dias", color: "#C2410C" },
+  { role: STAGE_ROLE_ABANDONED_30, minDays: 30, name: "Abandonado há +30 dias", color: "#FF9F0A" },
+  { role: STAGE_ROLE_ABANDONED_60, minDays: 60, name: "Abandonado há +60 dias", color: "#FF6B00" },
+  { role: STAGE_ROLE_ABANDONED_90, minDays: 90, name: "Abandonado há +90 dias", color: "#C2410C" },
 ];
 
-const ABANDON_FAMILY = new Set<string>([STAGE_ROLE_ABANDONED, ...AGING_STAGES.map((s) => s.role)]);
+const ABANDON_FAMILY = new Set<string>([STAGE_ROLE_ABANDONED, ...AGING_STAGES.map((s) => s.role), ...LEGACY_AGING_ROLES]);
 
-/** Carrinho abandonado ou uma das janelas +7/+30/+60. */
+/** Carrinho abandonado ou uma das janelas +30/+60/+90. */
 export function isAbandonFamilyRole(role: string | null | undefined) {
   return ABANDON_FAMILY.has(role ?? "");
 }
@@ -278,15 +280,16 @@ async function ensureEssentialStages(pipeline: NonNullable<PipelineWithStages>) 
 function stageRank(role: string | null | undefined) {
   if (role === STAGE_ROLE_ENTRY) return 0;
   if (role === STAGE_ROLE_ABANDONED) return 1;
-  if (role === STAGE_ROLE_ABANDONED_7) return 2;
-  if (role === STAGE_ROLE_ABANDONED_30) return 3;
-  if (role === STAGE_ROLE_ABANDONED_60) return 4;
+  if (role && LEGACY_AGING_ROLES.includes(role)) return 1;
+  if (role === STAGE_ROLE_ABANDONED_30) return 2;
+  if (role === STAGE_ROLE_ABANDONED_60) return 3;
+  if (role === STAGE_ROLE_ABANDONED_90) return 4;
   if (role === STAGE_ROLE_WON) return 6;
   if (role === STAGE_ROLE_LOST) return 7;
   return 5;
 }
 
-/** Novo, Carrinho abandonado, +7, +30, +60 (se existirem), livres, Ganho, Perdido (se existir). */
+/** Novo, Carrinho abandonado, +30, +60, +90 (se existirem), livres, Ganho, Perdido (se existir). */
 async function normalizeStageOrder(clienteId: string) {
   const fresh = await loadDefaultPipeline(clienteId);
   if (!fresh) throw new Error("Pipeline não encontrado");
@@ -335,7 +338,43 @@ export function isAbandonedStage(stage: { role?: string | null } | null) {
   return stage?.role === STAGE_ROLE_ABANDONED;
 }
 
-/** Garante a coluna da janela (+7/+30/+60) sob demanda. */
+/**
+ * Colunas de janela descontinuadas (+7 dias): os leads voltam para Carrinho abandonado e a coluna sai.
+ * O próximo `ageOpenCarts` recoloca cada um na janela certa.
+ */
+export async function retireLegacyAgingStages(clienteId?: string) {
+  const stages = await prisma.crmStage.findMany({
+    where: { role: { in: LEGACY_AGING_ROLES }, ...(clienteId ? { pipeline: { clienteId } } : {}) },
+    select: { id: true, pipeline: { select: { clienteId: true } } },
+  });
+  let moved = 0;
+  for (const legacy of stages) {
+    const target = await ensureAbandonedStage(legacy.pipeline.clienteId);
+    const leads = await prisma.nativeLead.findMany({ where: { stageId: legacy.id }, select: { id: true, metadata: true } });
+    for (const lead of leads) {
+      await prisma.nativeLead.update({
+        where: { id: lead.id },
+        data: {
+          stageId: target.id,
+          metadata: withStageHistory((lead.metadata ?? {}) as Record<string, unknown>, {
+            stageId: target.id,
+            stage: target.name,
+            role: STAGE_ROLE_ABANDONED,
+            at: new Date(),
+            by: "auto",
+            reason: "colunas de carrinho reorganizadas",
+          }) as never,
+        },
+      });
+      moved++;
+    }
+    await prisma.crmStage.delete({ where: { id: legacy.id } });
+    await normalizeStageOrder(legacy.pipeline.clienteId);
+  }
+  return { stages: stages.length, moved };
+}
+
+/** Garante a coluna da janela (+30/+60/+90) sob demanda. */
 export async function ensureAgingStage(clienteId: string, role: AgingRole) {
   const def = AGING_STAGES.find((s) => s.role === role);
   if (!def) throw new Error(`Janela inválida: ${role}`);

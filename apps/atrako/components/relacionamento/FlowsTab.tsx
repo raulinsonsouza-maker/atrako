@@ -29,9 +29,9 @@ export type Flow = {
 
 const TRIGGER_LABEL: Record<string, string> = {
   cart_abandoned: "Carrinho abandonado",
-  cart_aging_7: "Carrinho sem compra há 7 dias",
   cart_aging_30: "Carrinho sem compra há 30 dias",
   cart_aging_60: "Carrinho sem compra há 60 dias",
+  cart_aging_90: "Carrinho sem compra há 90 dias",
   order_unpaid: "Pedido aguardando pagamento",
   order_paid: "Pedido pago",
   second_purchase: "Depois da 1ª compra",

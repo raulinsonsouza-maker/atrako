@@ -117,8 +117,9 @@ type LeadDetail = {
 const ORDERS_PREVIEW = 3;
 
 const LOST_REASON_LABELS: Record<string, string> = {
-  pedido_nao_pago: "Pedido não pago há mais de 30 dias",
-  carrinho_expirado: "Carrinho expirou sem compra (90 dias)",
+  pedido_nao_pago: "Pedido não pago há mais de 6 meses",
+  carrinho_expirado: "6 meses sem compra depois do carrinho",
+  contato_invalido: "E-mail e WhatsApp não chegam",
   reembolso: "Pedido reembolsado",
 };
 

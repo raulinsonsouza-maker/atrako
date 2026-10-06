@@ -165,15 +165,15 @@ export const PLAYBOOKS: PlaybookDef[] = [
     ],
   },
   {
-    key: "cart_aging_7",
-    name: "Carrinho sem compra há 7 dias",
+    key: "cart_aging_30",
+    name: "Carrinho sem compra há 30 dias",
     description: "E-mail com os itens que ficaram e produtos parecidos",
-    trigger: "cart_aging_7",
+    trigger: "cart_aging_30",
     priority: 12,
     defaultStatus: "PAUSED",
     steps: [
       {
-        copyKey: "aging7.email1",
+        copyKey: "aging30.email1",
         delayMinutes: 0,
         channel: "EMAIL",
         email: (t) =>
@@ -185,8 +185,8 @@ export const PLAYBOOKS: PlaybookDef[] = [
               {
                 type: "text",
                 text: `${greet(t)} ${pick(t, {
-                  proximo: "Faz uma semana que você deixou estes itens na {{loja}}. Ainda dá tempo de levar.",
-                  neutro: "Os itens que você escolheu na {{loja}} há uma semana continuam disponíveis.",
+                  proximo: "Faz um mês que você deixou estes itens na {{loja}}. Ainda dá tempo de levar.",
+                  neutro: "Os itens que você escolheu na {{loja}} há um mês continuam disponíveis.",
                   formal: "Os produtos que você selecionou na {{loja}} continuam disponíveis.",
                 })}`,
               },
@@ -200,15 +200,15 @@ export const PLAYBOOKS: PlaybookDef[] = [
     ],
   },
   {
-    key: "cart_aging_30",
-    name: "Carrinho sem compra há 30 dias",
+    key: "cart_aging_60",
+    name: "Carrinho sem compra há 60 dias",
     description: "E-mail com novidades e mais vendidos; cupom leve se houver cupom confirmado",
-    trigger: "cart_aging_30",
+    trigger: "cart_aging_60",
     priority: 14,
     defaultStatus: "PAUSED",
     steps: [
       {
-        copyKey: "aging30.email1",
+        copyKey: "aging60.email1",
         delayMinutes: 0,
         channel: "EMAIL",
         email: (t) =>
@@ -236,23 +236,23 @@ export const PLAYBOOKS: PlaybookDef[] = [
     ],
   },
   {
-    key: "cart_aging_60",
-    name: "Carrinho sem compra há 60 dias",
-    description: "Última chamada: itens, cupom se houver cupom confirmado e convite para contar por que não comprou",
-    trigger: "cart_aging_60",
+    key: "cart_aging_90",
+    name: "Carrinho sem compra há 90 dias",
+    description: "Itens, cupom se houver cupom confirmado e convite para contar por que não comprou",
+    trigger: "cart_aging_90",
     priority: 16,
     defaultStatus: "PAUSED",
     steps: [
       {
-        copyKey: "aging60.email1",
+        copyKey: "aging90.email1",
         delayMinutes: 0,
         channel: "EMAIL",
         email: (t) =>
           email(
-            pick(t, { proximo: "{{primeiro_nome}}, uma última chance pra você", neutro: "Uma última chance para os seus itens", formal: "Seus itens na {{loja}}" }),
+            pick(t, { proximo: "{{primeiro_nome}}, ainda quer esses itens?", neutro: "Seus itens continuam aqui", formal: "Seus itens na {{loja}}" }),
             "Seus itens e uma pergunta rápida",
             [
-              { type: "heading", text: pick(t, { proximo: "Última chamada", neutro: "Última chance", formal: "Seus itens continuam disponíveis" }) },
+              { type: "heading", text: pick(t, { proximo: "Ainda dá tempo", neutro: "Seus itens continuam aqui", formal: "Seus itens continuam disponíveis" }) },
               {
                 type: "text",
                 text: `${greet(t)} ${pick(t, {
@@ -648,36 +648,91 @@ export async function ensureDefaultFlows(workspaceId: string, opts?: { status?: 
   let created = 0;
   for (const p of PLAYBOOKS) {
     if (have.has(p.key)) continue;
-    try {
-      await prisma.messageFlow.create({
-        data: {
-          clienteId: workspaceId,
-          key: p.key,
-          name: p.name,
-          trigger: p.trigger,
-          status: p.defaultStatus ?? opts?.status ?? "ACTIVE",
-          priority: p.priority,
-          settings: (p.settings ?? {}) as Prisma.InputJsonValue,
-          steps: {
-            create: p.steps.map((s, i) => ({
-              position: i,
-              delayMinutes: s.delayMinutes,
-              channel: s.channel,
-              enabled: s.enabled ?? true,
-              content: stepContent(s, tone) as Prisma.InputJsonValue,
-              conditions: (s.conditions ?? {}) as Prisma.InputJsonValue,
-              copyKey: s.copyKey,
-              publishedAt: new Date(),
-            })),
-          },
-        },
-      });
-      created++;
-    } catch (err) {
-      if ((err as { code?: string }).code !== "P2002") throw err;
-    }
+    if (await createPlaybookFlow(workspaceId, p, tone, p.defaultStatus ?? opts?.status ?? "ACTIVE")) created++;
   }
   return { created };
+}
+
+async function createPlaybookFlow(workspaceId: string, p: PlaybookDef, tone: Tone, status: string) {
+  try {
+    await prisma.messageFlow.create({
+      data: {
+        clienteId: workspaceId,
+        key: p.key,
+        name: p.name,
+        trigger: p.trigger,
+        status,
+        priority: p.priority,
+        settings: (p.settings ?? {}) as Prisma.InputJsonValue,
+        steps: {
+          create: p.steps.map((s, i) => ({
+            position: i,
+            delayMinutes: s.delayMinutes,
+            channel: s.channel,
+            enabled: s.enabled ?? true,
+            content: stepContent(s, tone) as Prisma.InputJsonValue,
+            conditions: (s.conditions ?? {}) as Prisma.InputJsonValue,
+            copyKey: s.copyKey,
+            publishedAt: new Date(),
+          })),
+        },
+      },
+    });
+    return true;
+  } catch (err) {
+    if ((err as { code?: string }).code !== "P2002") throw err;
+    return false;
+  }
+}
+
+/**
+ * Janelas de carrinho passaram de +7/+30/+60 para +30/+60/+90: remove o fluxo de 7 dias (ou pausa, se
+ * já matriculou alguém), reescreve o texto não personalizado de 30/60 e cria o de 90 pausado.
+ */
+export async function migrateAgingFlows(workspaceId: string) {
+  const flows = await prisma.messageFlow.findMany({
+    where: { clienteId: workspaceId, key: { in: ["cart_aging_7", "cart_aging_30", "cart_aging_60", "cart_aging_90"] } },
+    select: { id: true, key: true, _count: { select: { enrollments: true } } },
+  });
+  if (!flows.length) return { removed: 0, paused: 0, rewritten: 0, created: 0 };
+  const { theme } = await loadEmailTheme(workspaceId);
+  let removed = 0;
+  let paused = 0;
+  let rewritten = 0;
+  for (const f of flows) {
+    if (f.key === "cart_aging_7") {
+      if (f._count.enrollments) {
+        await prisma.messageFlow.update({ where: { id: f.id }, data: { status: "PAUSED" } });
+        paused++;
+      } else {
+        await prisma.messageFlow.delete({ where: { id: f.id } });
+        removed++;
+      }
+      continue;
+    }
+    const def = playbookByKey(f.key!);
+    if (!def) continue;
+    const steps = await prisma.messageFlowStep.findMany({
+      where: { flowId: f.id, customized: false },
+      select: { id: true, copyKey: true },
+    });
+    for (const s of steps) {
+      const stepDef = def.steps.find((d) => d.copyKey === s.copyKey) ?? (steps.length === 1 ? def.steps[0] : null);
+      if (!stepDef) continue;
+      await prisma.messageFlowStep.update({
+        where: { id: s.id },
+        data: { content: stepContent(stepDef, theme.tone) as Prisma.InputJsonValue, copyKey: stepDef.copyKey },
+      });
+      rewritten++;
+    }
+  }
+  const have = new Set(flows.map((f) => f.key));
+  let created = 0;
+  for (const key of ["cart_aging_30", "cart_aging_60", "cart_aging_90"]) {
+    const p = playbookByKey(key);
+    if (p && !have.has(key) && (await createPlaybookFlow(workspaceId, p, theme.tone, "PAUSED"))) created++;
+  }
+  return { removed, paused, rewritten, created };
 }
 
 /** Tom de voz mudou: reescreve passos padrão não personalizados. */

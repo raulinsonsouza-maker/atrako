@@ -47,7 +47,11 @@ export type SendContact = {
   waMarketingOptOutAt?: Date | null;
   waMarketingBlockedUntil?: Date | null;
   waOptOutAt?: Date | null;
+  waUndeliverableAt?: Date | null;
 };
+
+/** Número sem WhatsApp: tenta de novo só depois disso (a pessoa pode ter instalado). */
+const WA_UNDELIVERABLE_RETRY_MS = 30 * 86_400_000;
 
 export type SendOrigin = {
   flowId?: string | null;
@@ -286,6 +290,10 @@ export async function sendWhatsAppMessage(input: {
   if (phone.length < 10) return { status: "SKIPPED", reason: "no_phone", fallbackEmail: true };
   if (input.contact.waOptOutAt && !input.isTest) {
     return { status: "SKIPPED", reason: "wa_opt_out", fallbackEmail: true };
+  }
+  const undeliverable = input.contact.waUndeliverableAt;
+  if (undeliverable && !input.isTest && Date.now() - undeliverable.getTime() < WA_UNDELIVERABLE_RETRY_MS) {
+    return { status: "SKIPPED", reason: "wa_undeliverable", fallbackEmail: true };
   }
 
   const ref = input.content.templateRefId

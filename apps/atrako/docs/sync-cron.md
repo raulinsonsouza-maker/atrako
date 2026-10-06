@@ -89,7 +89,7 @@ As credenciais das integrações ficam **no banco** (tabela de configuração de
 
 ## Carrinho abandonado — a cada 15 minutos
 
-Puxa checkouts abandonados (Shopify `abandonedCheckouts`, Nuvemshop `/checkouts`, Tray `/carts`), promove pedidos não pagos / checkouts com mais de 60 min para a coluna **Carrinho abandonado** do CRM, dispara o WhatsApp de recuperação (só carrinhos com menos de 24h) e expira os com mais de 30 dias.
+Puxa checkouts abandonados (Shopify `abandonedCheckouts`, Nuvemshop `/checkouts`, Tray `/carts`), promove pedidos não pagos / checkouts com mais de 60 min para a coluna **Carrinho abandonado** do CRM, dispara o WhatsApp de recuperação (só carrinhos com menos de 24h), avança os cards pelas colunas **+30**, **+60** e **+90 dias** pela idade do carrinho e expira os com mais de 6 meses.
 
 | Agendamento | Cron (UTC) | Chamada |
 |---|---|---|
@@ -105,9 +105,9 @@ Na VPS: `CRON_SECRET` fica em `/opt/apps/atrako/.env` (repassado pelo `stack.yml
 
 Último erro por loja (ex.: escopo sem `read_orders`, API de carrinhos desativada) fica em `WorkspaceConnection.metadata.abandonedCheckoutsError`.
 
-Pedido não pago há mais de 30 dias, carrinho expirado e reembolso vão para a coluna **Perdido** (com `metadata.lostReason`); o contato fica na base para reativação, e um carrinho novo traz o lead de volta.
+Vão para a coluna **Perdido** (com `metadata.lostReason`): 6 meses sem compra depois do carrinho ou do pedido não pago, contato que não recebe e-mail (bounce, endereço inválido) nem WhatsApp (erro 131026, número de teste ou ausente) e reembolso. O contato fica na base para reativação, e um carrinho novo traz o lead de volta.
 
-**Primeira vez em produção:** rode o backfill (histórico de pedidos → Ganho / Carrinho / Perdido; checkouts de 30 dias; sem WhatsApp) em dry-run e depois com `--apply`:
+**Primeira vez em produção:** rode o backfill (histórico de pedidos → Ganho / Carrinho / Perdido; checkouts de 6 meses; sem WhatsApp) em dry-run e depois com `--apply`:
 
 ```bash
 npx tsx scripts/backfill-abandoned-carts.ts            # dry-run

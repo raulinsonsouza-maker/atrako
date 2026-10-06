@@ -16,9 +16,9 @@ import { resendReady, resolveResend } from "@/lib/integrations/resend/connection
 
 export const FLOW_TRIGGERS = [
   "cart_abandoned",
-  "cart_aging_7",
   "cart_aging_30",
   "cart_aging_60",
+  "cart_aging_90",
   "order_unpaid",
   "order_paid",
   "second_purchase",
@@ -33,9 +33,9 @@ export type FlowTrigger = (typeof FLOW_TRIGGERS)[number];
 /** Fluxos de venda: qualquer compra encerra. Pós-compra (order_paid) não. */
 export const SALES_TRIGGERS: FlowTrigger[] = [
   "cart_abandoned",
-  "cart_aging_7",
   "cart_aging_30",
   "cart_aging_60",
+  "cart_aging_90",
   "order_unpaid",
   "second_purchase",
   "repurchase_due",

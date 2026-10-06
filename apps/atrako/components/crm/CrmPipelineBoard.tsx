@@ -21,11 +21,11 @@ type StageCol = {
   color: string;
   totalCount: number;
   totalValue: number;
-  role?: "ENTRY" | "WON" | "ABANDONED" | "ABANDONED_7" | "ABANDONED_30" | "ABANDONED_60" | "LOST" | null;
+  role?: "ENTRY" | "WON" | "ABANDONED" | "ABANDONED_30" | "ABANDONED_60" | "ABANDONED_90" | "LOST" | null;
   leads: CrmBoardLead[];
 };
 
-const ABANDON_ROLES = new Set(["ABANDONED", "ABANDONED_7", "ABANDONED_30", "ABANDONED_60"]);
+const ABANDON_ROLES = new Set(["ABANDONED", "ABANDONED_30", "ABANDONED_60", "ABANDONED_90"]);
 
 type PipelineData = {
   stages: StageCol[];

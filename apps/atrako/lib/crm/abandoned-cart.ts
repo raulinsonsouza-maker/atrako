@@ -22,6 +22,7 @@ import {
   ensureDefaultPipeline,
   ensureLostStage,
   isAbandonFamilyRole,
+  retireLegacyAgingStages,
   STAGE_ROLE_ABANDONED,
   STAGE_ROLE_ENTRY,
   STAGE_ROLE_LOST,
@@ -34,13 +35,19 @@ import { enrichItemsFromCatalog } from "@/lib/flows/catalog-enrich";
 
 export const ABANDON_AFTER_MINUTES = 60;
 export const NOTIFY_MAX_AGE_HOURS = 24;
-/** Carrinho fica aberto (janelas +7/+30/+60) até virar Perdido. */
-export const RECOVERY_WINDOW_DAYS = 90;
+/** Carrinho fica aberto (janelas +30/+60/+90) até virar Perdido: 6 meses sem compra. */
+export const RECOVERY_WINDOW_DAYS = 180;
 /** Só matricula no fluxo da janela quem a cruzou há pouco (deploy/backfill não dispara para antigos). */
 const AGING_ENROLL_GRACE_HOURS = 48;
 
 const MINUTE = 60_000;
 const DAY = 86_400_000;
+
+const CART_PROVIDERS = ["WOOCOMMERCE", "SHOPIFY", "NUVEMSHOP", "TRAY", "COMMERCE"];
+/** Pedido que ficou sem pagamento (Pix/boleto vencido, cancelado pela loja); reembolso não entra. */
+const UNPAID_ORDER_RE = /pending|on-hold|fail|falh|cancel|aguardando|pendente|expired|expirad|void|abandon|unpaid/i;
+/** Perdido por tempo volta quando a janela reabre; reembolso e contato inválido não. */
+const REVIVABLE_LOST_REASONS = new Set(["pedido_nao_pago", "carrinho_expirado"]);
 
 export type AbandonedCartProvider =
   | "WOOCOMMERCE"
@@ -128,7 +135,7 @@ export async function trackOrderPayment(
     return;
   }
 
-  // Pedido antigo demais para recuperar não vira carrinho; sai de "Novo" e fica na base para reativação.
+  // Pedido com mais de 6 meses não vira carrinho; sai de "Novo" e fica na base para reativação.
   if (Date.now() - input.occurredAt.getTime() > RECOVERY_WINDOW_DAYS * DAY) {
     if (input.leadId) {
       await markLeadLost(input.workspaceId, input.leadId, "pedido_nao_pago", {
@@ -507,12 +514,13 @@ async function moveLeadToAbandoned(
   meta: Record<string, unknown>,
   abandonedAt: Date,
   kind: string,
+  reason?: string,
 ) {
   const lead = await prisma.nativeLead.findFirst({ where: { id: leadId, clienteId: workspaceId } });
   if (!lead || (lead.status !== "OPEN" && lead.status !== "LOST")) return;
   const pipeline = await ensureDefaultPipeline(workspaceId);
   const current = pipeline.stages.find((s) => s.id === lead.stageId);
-  // Carrinho novo de quem estava numa janela (+7/+30/+60) é intenção nova: volta para a coluna de abandono.
+  // Carrinho novo de quem estava numa janela (+30/+60/+90) é intenção nova: volta para a coluna de abandono.
   const movable =
     lead.status === "LOST" ||
     !lead.stageId ||
@@ -520,6 +528,10 @@ async function moveLeadToAbandoned(
     (isAbandonFamilyRole(current?.role) && current?.role !== STAGE_ROLE_ABANDONED);
   const stage = movable ? await ensureAbandonedStage(workspaceId) : null;
   const merged = { ...asRecord(lead.metadata), ...meta };
+  if (stage && lead.status === "LOST") {
+    delete merged.lostReason;
+    delete merged.lostAt;
+  }
   await prisma.nativeLead.update({
     where: { id: lead.id },
     data: {
@@ -532,7 +544,7 @@ async function moveLeadToAbandoned(
             role: STAGE_ROLE_ABANDONED,
             at: abandonedAt,
             by: "auto",
-            reason: kind === "order" ? "pedido não pago" : "carrinho abandonado",
+            reason: reason ?? (kind === "order" ? "pedido não pago" : "carrinho abandonado"),
           })
         : merged) as Prisma.InputJsonValue,
     },
@@ -578,7 +590,7 @@ export async function markLeadLost(
       ) as Prisma.InputJsonValue,
     },
   });
-  if (lead.contactId && reason !== "reembolso") {
+  if (lead.contactId && reason !== "reembolso" && reason !== "contato_invalido") {
     const { enrollContact } = await import("@/lib/flows/engine");
     await enrollContact({
       clienteId: workspaceId,
@@ -591,6 +603,47 @@ export async function markLeadLost(
     }).catch((err) => console.warn("[flows] lead_lost enroll", err instanceof Error ? err.message : err));
   }
   return true;
+}
+
+type ReachFields = {
+  email: string | null;
+  phone: string | null;
+  emailBouncedAt: Date | null;
+  waUndeliverableAt: Date | null;
+};
+
+const REACH_SELECT = { email: true, phone: true, emailBouncedAt: true, waUndeliverableAt: true } as const;
+
+/** Número de cadastro de teste (99999-9999, 00000-0000…): parte local toda com o mesmo dígito. */
+function isPlaceholderPhone(digits: string) {
+  const local = digits.replace(/^55(?=\d{10,11}$)/, "").slice(2);
+  return /^(\d)\1+$/.test(local);
+}
+
+/** Não chega por nenhum canal: e-mail ausente/inválido/com bounce E telefone ausente/de teste/sem WhatsApp. */
+export function isContactUnreachable(c: ReachFields) {
+  const emailDead = !normalizePersonEmail(c.email) || Boolean(c.emailBouncedAt);
+  const digits = normalizePersonPhone(c.phone);
+  const phoneDead = !digits || isPlaceholderPhone(digits) || Boolean(c.waUndeliverableAt);
+  return emailDead && phoneDead;
+}
+
+/** Bounce / número sem WhatsApp: se nenhum canal chega, os leads abertos do contato vão para Perdido. */
+export async function markLostIfUnreachable(workspaceId: string, contactId: string) {
+  const contact = await prisma.nativeContact.findFirst({
+    where: { id: contactId, clienteId: workspaceId },
+    select: REACH_SELECT,
+  });
+  if (!contact || !isContactUnreachable(contact)) return 0;
+  const leads = await prisma.nativeLead.findMany({
+    where: { clienteId: workspaceId, contactId, status: "OPEN" },
+    select: { id: true },
+  });
+  let lost = 0;
+  for (const lead of leads) {
+    if (await markLeadLost(workspaceId, lead.id, "contato_invalido")) lost++;
+  }
+  return lost;
 }
 
 async function emitCheckoutAbandoned(cart: {
@@ -680,12 +733,14 @@ async function trackPendingCommerceOrders() {
 }
 
 /**
- * Carrinho aberto sem compra avança para +7 / +30 / +60 dias pela idade do carrinho mais recente do lead.
+ * Carrinho aberto sem compra avança para +30 / +60 / +90 dias pela idade do carrinho mais recente do lead.
  * Só avança: nunca volta, não mexe em Ganho nem em coluna livre. O fluxo da janela vale também para
- * cliente em Ganho, mas só para quem cruzou a janela nas últimas 48h.
+ * cliente em Ganho, mas só para quem cruzou a janela nas últimas 48h. Contato que não recebe e-mail
+ * nem WhatsApp vai para Perdido.
  */
 export async function ageOpenCarts(opts?: { now?: Date; notify?: boolean; workspaceId?: string }) {
   const now = opts?.now ?? new Date();
+  await retireLegacyAgingStages(opts?.workspaceId);
   const carts = await prisma.abandonedCart.findMany({
     where: {
       status: "OPEN",
@@ -702,16 +757,21 @@ export async function ageOpenCarts(opts?: { now?: Date; notify?: boolean; worksp
 
   let moved = 0;
   let enrolled = 0;
+  let unreachable = 0;
   for (const cart of newestByLead.values()) {
+    const lead = await prisma.nativeLead.findFirst({
+      where: { id: cart.leadId!, clienteId: cart.clienteId },
+      include: { stage: true, contact: { select: REACH_SELECT } },
+    });
+    if (!lead) continue;
+    if (lead.status === "OPEN" && lead.contact && isContactUnreachable(lead.contact)) {
+      if (await markLeadLost(cart.clienteId, lead.id, "contato_invalido")) unreachable++;
+      continue;
+    }
+
     const ageDays = (now.getTime() - cart.abandonedAt.getTime()) / DAY;
     const window = [...AGING_STAGES].reverse().find((s) => ageDays >= s.minDays);
     if (!window) continue;
-
-    const lead = await prisma.nativeLead.findFirst({
-      where: { id: cart.leadId!, clienteId: cart.clienteId },
-      include: { stage: true },
-    });
-    if (!lead) continue;
     const role = (lead.stage as { role?: string | null } | null)?.role ?? null;
     const rank = (r: string | null) => (r === STAGE_ROLE_ENTRY ? 0 : r === STAGE_ROLE_ABANDONED ? 1 : 2 + AGING_STAGES.findIndex((s) => s.role === r));
     const canMove =
@@ -743,7 +803,7 @@ export async function ageOpenCarts(opts?: { now?: Date; notify?: boolean; worksp
       if (await enrollCartAging(cart, window.minDays)) enrolled++;
     }
   }
-  return { moved, enrolled, scanned: newestByLead.size };
+  return { moved, enrolled, unreachable, scanned: newestByLead.size };
 }
 
 async function enrollCartAging(
@@ -767,7 +827,7 @@ async function enrollCartAging(
     const items = Array.isArray(cart.items) ? (cart.items as AbandonedCartItem[]) : [];
     const { enrolled } = await enrollContact({
       clienteId: cart.clienteId,
-      trigger: `cart_aging_${days}` as "cart_aging_7" | "cart_aging_30" | "cart_aging_60",
+      trigger: `cart_aging_${days}` as "cart_aging_30" | "cart_aging_60" | "cart_aging_90",
       contactId: cart.contactId!,
       leadId: cart.leadId,
       refType: "cart",
@@ -790,53 +850,111 @@ async function enrollCartAging(
 }
 
 /**
- * Uma vez (backfill da janela de 90 dias): carrinho expirado nos últimos 90 dias e sem compra depois
- * volta a OPEN; lead em Perdido por "carrinho expirado" volta para a coluna de abandono. Sem mensagens.
+ * Backfill da janela de 6 meses, sem mensagens: carrinho expirado e pedido não pago dos últimos 180 dias,
+ * sem compra depois, voltam a ser carrinho aberto; o lead perdido por tempo volta e cai na janela certa.
  */
 export async function reopenRecentExpiredCarts(workspaceId: string) {
   const since = new Date(Date.now() - RECOVERY_WINDOW_DAYS * DAY);
-  const carts = await prisma.abandonedCart.findMany({
+  const paidAfter = async (contactId: string | null, at: Date) => {
+    if (!contactId) return false;
+    const after = await prisma.marketplaceOrder.findMany({
+      where: { clienteId: workspaceId, contactId, occurredAt: { gt: at } },
+      select: { status: true },
+    });
+    return after.some((o) => isRevenueOrder(o.status));
+  };
+  const toRevive: Array<{ leadId: string; totalCents: number; abandonedAt: Date; kind: string; cartId: string }> = [];
+
+  const expired = await prisma.abandonedCart.findMany({
     where: { clienteId: workspaceId, status: "EXPIRED", abandonedAt: { gte: since } },
   });
   let reopened = 0;
-  let leads = 0;
-  for (const cart of carts) {
-    if (cart.contactId) {
-      const after = await prisma.marketplaceOrder.findMany({
-        where: { clienteId: workspaceId, contactId: cart.contactId, occurredAt: { gt: cart.abandonedAt } },
-        select: { status: true },
-      });
-      if (after.some((o) => isRevenueOrder(o.status))) continue;
-    }
+  for (const cart of expired) {
+    if (await paidAfter(cart.contactId, cart.abandonedAt)) continue;
     await prisma.abandonedCart.update({ where: { id: cart.id }, data: { status: "OPEN" } });
     reopened++;
-    if (!cart.leadId) continue;
-    const lead = await prisma.nativeLead.findFirst({ where: { id: cart.leadId, clienteId: workspaceId } });
-    const meta = asRecord(lead?.metadata);
-    if (!lead || lead.status !== "LOST" || meta.lostReason !== "carrinho_expirado") continue;
-    const stage = await ensureAbandonedStage(workspaceId);
-    const rest = { ...meta };
-    delete rest.lostReason;
-    delete rest.lostAt;
-    await prisma.nativeLead.update({
-      where: { id: lead.id },
+    if (cart.leadId) toRevive.push({ leadId: cart.leadId, totalCents: cart.totalCents, abandonedAt: cart.abandonedAt, kind: cart.kind, cartId: cart.id });
+  }
+
+  // Pedido não pago que virou Perdido pela regra antiga (30 dias) sem passar por carrinho: o mais recente da pessoa vira carrinho.
+  const orders = await prisma.marketplaceOrder.findMany({
+    where: { clienteId: workspaceId, contactId: { not: null }, occurredAt: { gte: since }, provider: { in: CART_PROVIDERS } },
+    include: { items: true },
+    orderBy: { occurredAt: "desc" },
+  });
+  const newestUnpaid = new Map<string, (typeof orders)[number]>();
+  for (const o of orders) {
+    if (newestUnpaid.has(o.contactId!) || isRevenueOrder(o.status) || !UNPAID_ORDER_RE.test(o.status ?? "")) continue;
+    newestUnpaid.set(o.contactId!, o);
+  }
+  let fromOrders = 0;
+  for (const [contactId, order] of newestUnpaid) {
+    if (await paidAfter(contactId, order.occurredAt!)) continue;
+    const active = await prisma.abandonedCart.count({
+      where: { clienteId: workspaceId, contactId, status: { in: ["PENDING", "OPEN"] } },
+    });
+    if (active) continue;
+    const externalId = `order:${order.externalId}`;
+    const exists = await prisma.abandonedCart.findUnique({
+      where: { clienteId_provider_externalId: { clienteId: workspaceId, provider: order.provider, externalId } },
+      select: { id: true },
+    });
+    if (exists) continue;
+    const lead = await prisma.nativeLead.findFirst({
+      where: { clienteId: workspaceId, contactId },
+      orderBy: { updatedAt: "desc" },
+      select: { id: true },
+    });
+    const abandonedAt = abandonDeadline(order.occurredAt!);
+    const cart = await prisma.abandonedCart.create({
       data: {
+        clienteId: workspaceId,
+        provider: order.provider,
+        kind: "order",
+        externalId,
         status: "OPEN",
-        stageId: stage.id,
-        metadata: withStageHistory(rest, {
-          stageId: stage.id,
-          stage: stage.name,
-          role: STAGE_ROLE_ABANDONED,
-          at: new Date(),
-          by: "auto",
-          reason: "carrinho reaberto (janela de 90 dias)",
-        }) as Prisma.InputJsonValue,
+        abandonedAt,
+        contactId,
+        leadId: lead?.id ?? null,
+        name: order.buyerName,
+        email: normalizePersonEmail(order.buyerEmail),
+        phone: normalizePersonPhone(order.buyerPhone),
+        totalCents: order.totalCents ?? 0,
+        currency: (order.currency || "BRL").toUpperCase().slice(0, 8),
+        items: order.items.map((i) => ({
+          title: i.title,
+          quantity: i.quantity,
+          unitPriceCents: i.unitPriceCents ?? undefined,
+          sku: i.sku,
+          imageUrl: i.imageUrl,
+          productUrl: i.productUrl,
+        })) as Prisma.InputJsonValue,
       },
     });
-    leads++;
+    fromOrders++;
+    if (lead) toRevive.push({ leadId: lead.id, totalCents: cart.totalCents, abandonedAt, kind: "order", cartId: cart.id });
+  }
+
+  let leads = 0;
+  for (const r of toRevive) {
+    const lead = await prisma.nativeLead.findFirst({ where: { id: r.leadId, clienteId: workspaceId }, select: { status: true, metadata: true } });
+    if (!lead) continue;
+    const reason = asRecord(lead.metadata).lostReason;
+    if (lead.status === "LOST" && !REVIVABLE_LOST_REASONS.has(String(reason))) continue;
+    if (lead.status !== "OPEN" && lead.status !== "LOST") continue;
+    await moveLeadToAbandoned(
+      workspaceId,
+      r.leadId,
+      r.totalCents,
+      { abandonedCart: true, abandonedCartId: r.cartId, abandonedAt: r.abandonedAt.toISOString() },
+      r.abandonedAt,
+      r.kind,
+      "reaberto: janela de 6 meses",
+    );
+    if (lead.status === "LOST") leads++;
   }
   const aged = await ageOpenCarts({ workspaceId, notify: false });
-  return { reopened, leads, aged: aged.moved };
+  return { reopened, fromOrders, leads, aged: aged.moved, unreachable: aged.unreachable };
 }
 
 /** Varredura periódica (cron): checkout próprio → promoção → janelas → expiração. */
@@ -869,7 +987,16 @@ export async function runAbandonedCartSweep(opts?: { notify?: boolean }) {
       if (moved) lost++;
     }
   }
-  return { commerceTracked, promoted, notified, aged: aging.moved, agingEnrolled: aging.enrolled, expired: stale.length, lost };
+  return {
+    commerceTracked,
+    promoted,
+    notified,
+    aged: aging.moved,
+    agingEnrolled: aging.enrolled,
+    unreachable: aging.unreachable,
+    expired: stale.length,
+    lost,
+  };
 }
 
 /** Números da coluna / receita recuperada para o CRM. */

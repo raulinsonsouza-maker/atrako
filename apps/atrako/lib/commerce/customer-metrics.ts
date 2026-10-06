@@ -107,10 +107,10 @@ export async function getRepurchaseMetrics(clienteId: string, range: DateRange) 
 }
 
 export const RECOVERY_AGE_BUCKETS = [
-  { key: "d7", label: "até 7 dias", maxDays: 7 },
-  { key: "d30", label: "7 a 30 dias", maxDays: 30 },
+  { key: "d30", label: "até 30 dias", maxDays: 30 },
   { key: "d60", label: "30 a 60 dias", maxDays: 60 },
-  { key: "d90", label: "60 a 90 dias", maxDays: Infinity },
+  { key: "d90", label: "60 a 90 dias", maxDays: 90 },
+  { key: "d180", label: "90 dias a 6 meses", maxDays: Infinity },
 ] as const;
 
 export async function getCartRecoveryMetrics(clienteId: string, range: DateRange) {

@@ -5,7 +5,7 @@ import { GripVertical, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { STAGE_COLOR_PRESETS } from "@/components/crm/CrmStageHeader";
 
-type StageRole = "ENTRY" | "WON" | "ABANDONED" | "ABANDONED_7" | "ABANDONED_30" | "ABANDONED_60" | "LOST";
+type StageRole = "ENTRY" | "WON" | "ABANDONED" | "ABANDONED_30" | "ABANDONED_60" | "ABANDONED_90" | "LOST";
 
 type StageDraft = {
   key: string;
@@ -346,8 +346,8 @@ export function CrmFunnelConfigModal({
             <section className="funnel-config-section">
               <p className="type-caption-strong text-[var(--ink)]">Perdido</p>
               <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
-                Pedido não pago há mais de 30 dias, carrinho expirado ou reembolso. O contato
-                continua na base para campanhas de reativação.
+                6 meses sem compra depois do carrinho, e-mail e WhatsApp que não chegam ou reembolso.
+                O contato continua na base para campanhas de reativação.
               </p>
               <StageRow
                 draft={lost}

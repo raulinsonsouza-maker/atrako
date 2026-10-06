@@ -965,6 +965,8 @@ model NativeContact {
   waMarketingOptOutAt     DateTime?
   /// 131049 — limite de marketing por usuário: não reenviar antes disso
   waMarketingBlockedUntil DateTime?
+  /// 131026 — número sem WhatsApp / não entregável; limpo quando uma mensagem é entregue
+  waUndeliverableAt       DateTime?
   marketingConsentAt      DateTime?
   consentSource           String?      @db.VarChar(40)
   phoneE164               String?      @db.VarChar(20)
@@ -1895,7 +1897,7 @@ model MessageFlow {
   /// Chave do playbook padrão (cart_abandoned, order_unpaid…) — null = fluxo criado pela loja
   key            String?  @db.VarChar(60)
   name           String   @db.VarChar(160)
-  /// cart_abandoned | cart_aging_7 | cart_aging_30 | cart_aging_60 | order_unpaid | order_paid | second_purchase | repurchase_due | winback | lead_lost | lead_welcome | date_based
+  /// cart_abandoned | cart_aging_30 | cart_aging_60 | cart_aging_90 | order_unpaid | order_paid | second_purchase | repurchase_due | winback | lead_lost | lead_welcome | date_based
   trigger        String   @db.VarChar(40)
   /// DRAFT | ACTIVE | PAUSED
   status         String   @default("ACTIVE") @db.VarChar(16)

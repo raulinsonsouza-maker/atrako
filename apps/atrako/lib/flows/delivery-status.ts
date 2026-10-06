@@ -166,7 +166,7 @@ export async function suppressContactEmail(
   reason: "bounce" | "complaint" | "unsubscribe",
 ) {
   const now = new Date();
-  await prisma.nativeContact.update({
+  const contact = await prisma.nativeContact.update({
     where: { id: contactId },
     data:
       reason === "bounce"
@@ -174,5 +174,10 @@ export async function suppressContactEmail(
         : reason === "complaint"
           ? { emailComplainedAt: now, emailOptOutAt: now }
           : { emailOptOutAt: now },
+    select: { clienteId: true },
   });
+  if (reason === "bounce") {
+    const { markLostIfUnreachable } = await import("@/lib/crm/abandoned-cart");
+    await markLostIfUnreachable(contact.clienteId, contactId).catch(() => 0);
+  }
 }

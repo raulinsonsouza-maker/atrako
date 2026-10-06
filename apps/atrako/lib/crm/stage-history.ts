@@ -9,11 +9,12 @@ export type StageHistoryEntry = {
   reason?: string;
 };
 
-export type LostReason = "pedido_nao_pago" | "carrinho_expirado" | "reembolso";
+export type LostReason = "pedido_nao_pago" | "carrinho_expirado" | "contato_invalido" | "reembolso";
 
 export const LOST_REASON_LABELS: Record<LostReason, string> = {
-  pedido_nao_pago: "pedido não pago",
-  carrinho_expirado: "carrinho não recuperado",
+  pedido_nao_pago: "pedido não pago há 6 meses",
+  carrinho_expirado: "sem compra há 6 meses",
+  contato_invalido: "e-mail e WhatsApp não chegam",
   reembolso: "reembolso",
 };
 

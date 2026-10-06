@@ -26,6 +26,7 @@ type StageCol = {
 };
 
 const ABANDON_ROLES = new Set(["ABANDONED", "ABANDONED_30", "ABANDONED_60", "ABANDONED_90"]);
+const VALUE_ROLES = new Set([...ABANDON_ROLES, "WON", "LOST"]);
 
 type PipelineData = {
   stages: StageCol[];
@@ -385,7 +386,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
                   color={stage.color}
                   count={stage.totalCount}
                   valueLabel={
-                    ABANDON_ROLES.has(stage.role ?? "") && stage.totalValue > 0
+                    VALUE_ROLES.has(stage.role ?? "") && stage.totalValue > 0
                       ? fmtCurrency(stage.totalValue)
                       : undefined
                   }

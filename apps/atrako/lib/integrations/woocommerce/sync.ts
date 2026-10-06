@@ -2,6 +2,7 @@ import { ingestWooCommerceOrder } from "./ingest-order";
 import { prisma } from "@/lib/db";
 import { wcFetch, touchWooConnection } from "./client";
 import type { WooOrder } from "./orders";
+import { backfillWooLedger } from "./ledger";
 
 export async function syncWooCommerceWorkspace(
   workspaceId: string,
@@ -32,6 +33,10 @@ export async function syncWooCommerceWorkspace(
     }
     if (orders.length < 100) break;
   }
+
+  await backfillWooLedger(workspaceId).catch((err) =>
+    console.error("[woo-ledger]", err instanceof Error ? err.message : err),
+  );
 
   const connection = await prisma.workspaceConnection.findUnique({
     where: { clienteId_provider: { clienteId: workspaceId, provider: "WOOCOMMERCE" } },

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { backfillTrayLedger } from "@/lib/integrations/tray/ledger";
+import { backfillWooLedger } from "@/lib/integrations/woocommerce/ledger";
 
 /**
  * Service-to-service: reconstrói o Caixa a partir de pedidos já importados.
@@ -29,5 +30,6 @@ export async function POST(request: NextRequest) {
   }
 
   const tray = await backfillTrayLedger(workspaceId);
-  return NextResponse.json({ ok: true, tray });
+  const woocommerce = await backfillWooLedger(workspaceId);
+  return NextResponse.json({ ok: true, tray, woocommerce });
 }

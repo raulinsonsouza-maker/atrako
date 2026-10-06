@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
   const to = toRaw ? new Date(toRaw) : undefined;
 
   const [summary, entries] = await Promise.all([
-    summarizeLedger(workspaceId, from, to),
+    summarizeLedger(workspaceId, from, to, source),
     listLedgerEntries({ clienteId: workspaceId, from, to, source, take: 200 }),
   ]);
 

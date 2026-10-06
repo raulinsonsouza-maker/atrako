@@ -84,8 +84,8 @@ export async function listLedgerEntries(input: {
   });
 }
 
-export async function summarizeLedger(clienteId: string, from?: Date, to?: Date) {
-  const entries = await listLedgerEntries({ clienteId, from, to, take: 5000 });
+export async function summarizeLedger(clienteId: string, from?: Date, to?: Date, source?: string) {
+  const entries = await listLedgerEntries({ clienteId, from, to, source, take: 5000 });
   let income = 0;
   let expense = 0;
   let refund = 0;

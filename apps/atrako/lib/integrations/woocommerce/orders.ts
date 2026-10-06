@@ -53,6 +53,8 @@ export type WooOrder = {
   date_paid_gmt?: string | null;
   date_completed?: string | null;
   date_completed_gmt?: string | null;
+  date_modified?: string | null;
+  date_modified_gmt?: string | null;
   payment_method_title?: string;
   discount_total?: string;
   shipping_total?: string;
@@ -73,6 +75,10 @@ export function wooCreatedAt(order: WooOrder): Date | null {
 
 export function wooPaidAt(order: WooOrder): Date | null {
   return parseWooTime(order.date_paid_gmt, order.date_paid);
+}
+
+export function wooModifiedAt(order: WooOrder): Date | null {
+  return parseWooTime(order.date_modified_gmt, order.date_modified);
 }
 
 export function wooCompletedAt(order: WooOrder): Date | null {

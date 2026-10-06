@@ -26,6 +26,7 @@ import {
   wooOrderTotalCents,
   type WooOrder,
 } from "./orders";
+import { syncWooOrderLedger } from "./ledger";
 
 /** MarketplaceOrderItem com foto/link — base de recomendações, recompra e itens no e-mail. */
 export async function syncWooOrderItems(workspaceId: string, orderId: string, wooOrder: WooOrder) {
@@ -151,6 +152,9 @@ export async function ingestWooCommerceOrder(input: {
       leadId: updated.leadId,
       occurredAt: updated.occurredAt ?? updated.createdAt,
     });
+    await syncWooOrderLedger(input.workspaceId, updated, wooOrder).catch((err) =>
+      console.error("[woo-ledger]", err instanceof Error ? err.message : err),
+    );
     return { order: updated, created: false as const };
   }
 
@@ -275,6 +279,9 @@ async function persistWooOrder(input: {
     leadId: lead.id,
     occurredAt,
   });
+  await syncWooOrderLedger(input.workspaceId, order, input.wooOrder).catch((err) =>
+    console.error("[woo-ledger]", err instanceof Error ? err.message : err),
+  );
 
   return { order, created: true as const, contact, lead };
 }

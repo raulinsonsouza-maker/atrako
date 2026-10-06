@@ -3,24 +3,25 @@ set -e
 
 echo "[entrypoint] waiting for database…"
 i=1
-while [ "$i" -le 30 ]; do
-  if npx prisma db push --skip-generate; then
-    echo "[entrypoint] prisma db push OK"
-    break
+until echo "SELECT 1;" | npx prisma db execute --stdin --schema prisma/schema.prisma >/dev/null 2>&1; do
+  if [ "$i" -ge 30 ]; then
+    echo "[entrypoint] FATAL: database unreachable"
+    exit 1
   fi
-  echo "[entrypoint] db push failed (attempt $i/30) — retrying…"
   i=$((i + 1))
   sleep 2
 done
 
-if [ "$i" -gt 30 ]; then
-  echo "[entrypoint] FATAL: could not sync schema"
-  exit 1
+# Migrations antes do db push: se o push criar as tabelas primeiro, o SQL da migration falha com
+# "já existe" e o histórico trava (seeds das migrations também deixam de rodar).
+if npx prisma migrate deploy; then
+  echo "[entrypoint] prisma migrate deploy OK"
+else
+  echo "[entrypoint] WARNING: prisma migrate deploy FAILED — corrija com prisma migrate resolve"
 fi
 
-# Melhor esforço: marca migrations como applied quando o histórico estiver incompleto
-npx prisma migrate deploy 2>/dev/null || \
-  echo "[entrypoint] migrate deploy skipped/failed (schema already via db push)"
+npx prisma db push --skip-generate
+echo "[entrypoint] prisma db push OK"
 
 if [ -f /app/prisma/social.schema.prisma ]; then
   echo "[entrypoint] prisma db push (social / symbius schema)…"

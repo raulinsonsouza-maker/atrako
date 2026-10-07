@@ -6,6 +6,7 @@ import { Check, ExternalLink, X } from "lucide-react";
 import { Button, SegmentedControl } from "@/components/ui";
 import { buttonClass } from "@/components/ui/button";
 import { ChartCard } from "@/components/ui/chart-card";
+import { ContactCard } from "./ContactCard";
 import type {
   Artifact,
   FormPreviewArtifact,
@@ -314,6 +315,8 @@ export function ArtifactList({ artifacts, ...ctx }: Ctx & { artifacts: Artifact[
             return <TestResultCard key={a.id} artifact={a} />;
           case "resource_created":
             return previewed.has(a.resourceId) ? null : <ResourceCreatedRow key={a.id} artifact={a} />;
+          case "contact_card":
+            return <ContactCard key={a.id} artifact={a} onAsk={ctx.onAsk} />;
         }
       })}
     </div>

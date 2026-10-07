@@ -117,6 +117,8 @@ export const ATRAKO_RESPONSE_RULES = [
   "Formato: parágrafo curto com a resposta + bullets ou tabela markdown curta quando houver 3+ números. Sem títulos ou rótulos como 'Próximo passo:', 'Próximos passos' ou 'Próxima verificação'; quando houver sugestão, ela é uma frase natural no fim (no máximo uma).",
   "Não repita conselhos que você já deu nesta conversa (ex.: conectar a mesma fonte de novo); traga só o que for novo.",
   "Máximo ~180 palavras, salvo se o usuário pedir detalhe.",
+  "Pergunta sobre registros específicos (o último carrinho, os maiores, o lead de fulano, quem está parado em Proposta) → carrinhos_lista, leads_lista ou buscar_pessoa + jornada_pessoa. Você TEM esse detalhe: nunca diga que o Atrako não mostra o registro individual.",
+  "Quando o cartão do cliente aparece na conversa, ele já mostra nome, contato, etapa, itens e valores: não repita isso. Comente o que importa (o que estava no carrinho, há quanto tempo, se já recebeu mensagem, histórico de compra) e sugira o próximo passo concreto.",
   "Dados pessoais chegam mascarados; tokens [contato#N] representam e-mail/telefone — repita o token, nunca tente adivinhar o valor.",
   "Nunca mostre IDs internos, tokens ou chaves no texto (use-os só nos argumentos das ferramentas); não fale de outros workspaces.",
 ] as const;

@@ -74,13 +74,44 @@ export type ResourceCreatedArtifact = {
   publicPath?: string;
 };
 
+export type ContactCartItem = { title: string; quantity: number; unitPriceCents: number | null; imageUrl: string | null };
+
+/** Cartão do cliente (mesmo card do CRM) com o carrinho e o histórico de compra. */
+export type ContactCardArtifact = {
+  kind: "contact_card";
+  id: string;
+  contactId: string | null;
+  leadId: string | null;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  location: string | null;
+  stage: string | null;
+  source: string | null;
+  dealValue: number | null;
+  createdAt: string;
+  activityAt: string;
+  customer: { lifecycle: string; orders: number; totalSpentCents: number; lastOrderAt: string | null } | null;
+  cart: {
+    status: "OPEN" | "RECOVERED" | "EXPIRED";
+    store: string;
+    totalCents: number;
+    abandonedAt: string;
+    notifiedAt: string | null;
+    recoveredAt: string | null;
+    items: ContactCartItem[];
+    recoveryUrl: string | null;
+  } | null;
+};
+
 export type Artifact =
   | ChartArtifact
   | ReferencesArtifact
   | LpPreviewArtifact
   | FormPreviewArtifact
   | TestResultArtifact
-  | ResourceCreatedArtifact;
+  | ResourceCreatedArtifact
+  | ContactCardArtifact;
 
 export const MAX_ARTIFACTS_PER_ANSWER = 6;
 
@@ -107,6 +138,8 @@ export function artifactSummary(a: Artifact): string {
       return `Resultado do teste "${a.title}" exibido na conversa (${a.ok ? "tudo certo" : "com problemas"}).`;
     case "resource_created":
       return `${a.resource === "form" ? "Formulário" : a.resource === "product" ? "Produto" : "Landing page"} "${a.name}" (id ${a.resourceId}) gravado como ${a.status === "PUBLISHED" ? "publicado" : "rascunho"}.`;
+    case "contact_card":
+      return `Cartão do cliente "${a.name}" exibido na conversa (contato, etapa${a.cart ? ", itens do carrinho" : ""}${a.customer ? ", compras" : ""} e botão para abrir no CRM) — não repita esses dados.`;
   }
 }
 
@@ -118,6 +151,7 @@ export function historyNote(artifacts: Artifact[] | undefined): string {
       if (a.kind === "form_preview") return `formulário "${a.name}" id=${a.formId} status=${a.status}`;
       if (a.kind === "resource_created" && a.resource !== "landing_page")
         return `${a.resource === "form" ? "formulário" : "produto"} "${a.name}" id=${a.resourceId} status=${a.status}`;
+      if (a.kind === "contact_card" && a.contactId) return `cliente "${a.name}" contactId=${a.contactId}`;
       return null;
     })
     .filter(Boolean);

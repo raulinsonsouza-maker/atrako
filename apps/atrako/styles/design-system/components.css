@@ -7921,6 +7921,74 @@ button.rel-list-row:active {
   background: var(--canvas);
 }
 
+/* Cartão do cliente na conversa: o card do CRM + fatos de compra + carrinho. */
+.assistant-contact-card {
+  display: grid;
+  gap: 10px;
+  max-width: 560px;
+  padding: 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--canvas-parchment);
+}
+
+.assistant-contact-card .pipeline-lead-card {
+  cursor: pointer;
+}
+
+.assistant-contact-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.assistant-contact-facts li {
+  padding: 2px 8px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-full);
+  background: var(--canvas);
+  color: var(--ink-muted-80);
+}
+
+.assistant-contact-cart {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--canvas);
+}
+
+.assistant-contact-items {
+  display: grid;
+  gap: 8px;
+}
+
+.assistant-contact-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.assistant-contact-thumb {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--canvas-parchment);
+  object-fit: cover;
+}
+
+.assistant-contact-cart-foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--hairline);
+}
+
 @media (max-width: 640px) {
   .chart-card-donut {
     grid-template-columns: minmax(0, 1fr);

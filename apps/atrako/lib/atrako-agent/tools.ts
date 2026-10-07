@@ -17,8 +17,9 @@ import {
   type AtrakoWorkspaceContext,
 } from "./context";
 import { maskEmail, maskPhone, revealToken, type PiiVault } from "./safety";
-import type { Artifact } from "./artifacts";
+import type { Artifact, ContactCardArtifact } from "./artifacts";
 import { chartsFor } from "./charts";
+import { MAX_CARDS, contactCard, listCarts, listLeads } from "./crm-cards";
 
 /**
  * Catálogo de ferramentas do Atrako. Cada ferramenta:
@@ -135,6 +136,9 @@ function coverageFor(rt: ToolRuntime, keys: Array<keyof AtrakoCoverage>, hasRows
   if (!keys.some((k) => rt.ctx.coverage[k])) return "not_connected";
   return hasRows ? "available" : "empty";
 }
+
+const CARD_GUIDANCE =
+  "Os primeiros já aparecem como cartão do cliente na conversa (contato, etapa, itens, valor, data). Responda em 2-4 frases sem bullets repetindo esses campos: destaque o que importa (há quanto tempo, se já recebeu mensagem, histórico de compra) e termine com uma sugestão concreta numa frase natural.";
 
 const range = (p: AtrakoPeriod) => ({ gte: p.start, lte: p.end });
 const prevRange = (p: AtrakoPeriod) => ({ gte: p.previousStart, lte: p.previousEnd });
@@ -438,6 +442,46 @@ export const READ_TOOLS: AtrakoTool[] = [
     },
   },
   {
+    name: "leads_lista",
+    step: "Abrindo os leads",
+    description:
+      "Leads individuais do CRM do Atrako (os mais recentes, os de maior valor, os parados há mais tempo, de uma etapa ou origem): nome, etapa, origem, valor e última movimentação. Os primeiros aparecem na conversa como cartão do cliente.",
+    parameters: periodSchema({
+      etapa: nullableString("Nome (ou parte) da etapa do funil, ex.: 'Proposta'."),
+      origem: nullableString("Origem do lead, ex.: 'whatsapp', 'form', 'shopify'."),
+      ordem: { type: ["string", "null"], enum: ["recentes", "maior_valor", "parados", null], description: "Padrão: recentes." },
+      limite: { type: ["integer", "null"], description: "1 a 10 (padrão 5)." },
+    }),
+    risk: "READ",
+    module: "crm",
+    async run(args, rt) {
+      const explicit = args.periodo != null || args.inicio != null;
+      const p = periodOf(args, rt);
+      const { rows, data } = await listLeads(rt.ctx.clienteId, {
+        stage: typeof args.etapa === "string" && args.etapa.trim() ? args.etapa.trim().slice(0, 60) : null,
+        source: typeof args.origem === "string" && args.origem.trim() ? args.origem.trim().slice(0, 40) : null,
+        from: explicit ? p.start : null,
+        to: explicit ? p.end : null,
+        order: args.ordem === "maior_valor" || args.ordem === "parados" ? args.ordem : "recentes",
+        limit: Number(args.limite) > 0 ? Number(args.limite) : 5,
+      });
+      const cards = await Promise.all(
+        rows.slice(0, MAX_CARDS).map((l) => contactCard(rt.ctx.clienteId, { contactId: l.contactId, leadId: l.id })),
+      );
+      return {
+        data: {
+          leads: data,
+          total: data.length,
+          filtroPeriodo: explicit ? `${p.startLabel} a ${p.endLabel} (entrada)` : "todo o funil",
+          ...(rows.length ? { como_responder: CARD_GUIDANCE } : {}),
+        },
+        coverage: coverageFor(rt, ["crmNative"], rows.length > 0),
+        source: { tool: "leads_lista", label: "CRM do Atrako", period: explicit ? periodSource(p) : undefined },
+        artifacts: cards.filter((c): c is ContactCardArtifact => Boolean(c)),
+      };
+    },
+  },
+  {
     name: "vendas_visao_geral",
     step: "Somando as vendas",
     description:
@@ -506,7 +550,7 @@ export const READ_TOOLS: AtrakoTool[] = [
     name: "carrinhos_abandonados",
     step: "Checando carrinhos abandonados",
     description:
-      "Carrinhos abandonados: em aberto (quantidade e valor), recuperados no período, taxa de recuperação, quanto foi recuperado por mensagem vs sozinho, e por idade do carrinho.",
+      "Totais de carrinhos abandonados: em aberto (quantidade e valor), recuperados no período, taxa de recuperação, quanto foi recuperado por mensagem vs sozinho, e por idade do carrinho. Para carrinhos individuais (último, maior, de quem, o que tinha) use carrinhos_lista.",
     parameters: periodSchema(),
     risk: "READ",
     async run(args, rt) {
@@ -541,6 +585,34 @@ export const READ_TOOLS: AtrakoTool[] = [
         },
         coverage: coverageFor(rt, ["abandonedCarts"], Boolean(summary || recovery)),
         source: { tool: "carrinhos_abandonados", label: "Carrinhos abandonados", period: periodSource(p) },
+      };
+    },
+  },
+  {
+    name: "carrinhos_lista",
+    step: "Abrindo os carrinhos",
+    description:
+      "Carrinhos abandonados individuais (o último, os maiores, os recuperados): cliente, loja, itens, valor, quando abandonou e se recebeu mensagem de recuperação. Os primeiros aparecem na conversa como cartão do cliente (mesmo card do CRM).",
+    parameters: objectSchema({
+      status: { type: ["string", "null"], enum: ["abertos", "recuperados", "todos", null], description: "Padrão: abertos." },
+      ordem: { type: ["string", "null"], enum: ["recentes", "maior_valor", null], description: "Padrão: recentes." },
+      limite: { type: ["integer", "null"], description: "1 a 10 (padrão 5). 'O último' = 1." },
+    }),
+    risk: "READ",
+    async run(args, rt) {
+      const status = args.status === "recuperados" || args.status === "todos" ? args.status : "abertos";
+      const limit = Number(args.limite) > 0 ? Number(args.limite) : 5;
+      const { rows, data } = await listCarts(rt.ctx.clienteId, {
+        status,
+        limit,
+        order: args.ordem === "maior_valor" ? "maior_valor" : "recentes",
+      });
+      const cards = await Promise.all(rows.slice(0, MAX_CARDS).map((cart) => contactCard(rt.ctx.clienteId, { cart })));
+      return {
+        data: { carrinhos: data, total: data.length, ...(rows.length ? { como_responder: CARD_GUIDANCE } : {}) },
+        coverage: coverageFor(rt, ["abandonedCarts"], rows.length > 0),
+        source: { tool: "carrinhos_lista", label: "Carrinhos abandonados" },
+        artifacts: cards.filter((c): c is ContactCardArtifact => Boolean(c)),
       };
     },
   },
@@ -813,8 +885,12 @@ export const READ_TOOLS: AtrakoTool[] = [
     async run(args, rt) {
       const contactId = String(args.contactId ?? "").trim();
       try {
-        const j = await getPersonJourney(rt.ctx.clienteId, contactId);
+        const [j, card] = await Promise.all([
+          getPersonJourney(rt.ctx.clienteId, contactId),
+          contactCard(rt.ctx.clienteId, { contactId }).catch(() => null),
+        ]);
         return {
+          ...(card ? { artifacts: [card] } : {}),
           data: {
             contato: {
               nome: j.contact.name,

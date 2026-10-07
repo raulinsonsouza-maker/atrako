@@ -3,6 +3,7 @@ import test from "node:test";
 import type { FormField } from "@atrako/forms";
 import { artifactSummary, historyNote, type Artifact } from "../lib/atrako-agent/artifacts";
 import { chartsFor } from "../lib/atrako-agent/charts";
+import { ageLabel, cartItems } from "../lib/atrako-agent/crm-cards";
 import { orderForDesign, parseDesignOutput } from "../lib/atrako-agent/designer";
 import type { LlmCandidate } from "../lib/atrako-agent/llm";
 import { assertPublicUrl, readPage, tavilySearch } from "../lib/atrako-agent/web";
@@ -187,6 +188,63 @@ test("validateLpV3 pede hero em <section> quando o h1 está num <header>", () =>
     }).map((i) => i.code);
   assert.ok(codes(`<header class="hero"><h1>Promessa</h1></header>${body}`).includes("hero_header"));
   assert.ok(!codes(`<header><nav>Marca</nav></header><section class="hero"><h1>Promessa</h1></section>${body}`).includes("hero_header"));
+});
+
+// ── CRM: cartão do cliente ──
+
+test("cartItems normaliza itens do carrinho e só aceita imagem https", () => {
+  const items = cartItems([
+    { title: "Tênis Run", quantity: 2, unitPriceCents: 19990, imageUrl: "https://cdn.loja.com/t.jpg" },
+    { name: "Meia", quantity: "0", imageUrl: "javascript:alert(1)" },
+    null,
+    "lixo",
+  ]);
+  assert.deepEqual(items, [
+    { title: "Tênis Run", quantity: 2, unitPriceCents: 19990, imageUrl: "https://cdn.loja.com/t.jpg" },
+    { title: "Meia", quantity: 1, unitPriceCents: null, imageUrl: null },
+  ]);
+  assert.deepEqual(cartItems(undefined), []);
+});
+
+test("ageLabel conta dias corridos", () => {
+  const now = new Date("2026-10-07T18:00:00Z");
+  assert.equal(ageLabel(new Date("2026-10-07T10:00:00Z"), now), "hoje");
+  assert.equal(ageLabel(new Date("2026-10-06T12:00:00Z"), now), "ontem");
+  assert.equal(ageLabel(new Date("2026-10-01T12:00:00Z"), now), "há 6 dias");
+});
+
+test("cartão do cliente: resumo não carrega contato e o histórico guarda o contactId", () => {
+  const card: Artifact = {
+    kind: "contact_card",
+    id: "contact_1",
+    contactId: "ct_1",
+    leadId: "ld_1",
+    name: "Maria Souza",
+    email: "maria@exemplo.com.br",
+    phone: "11999998888",
+    location: "Curitiba/PR",
+    stage: "Carrinho abandonado",
+    source: "shopify",
+    dealValue: null,
+    createdAt: "2026-10-01T12:00:00Z",
+    activityAt: "2026-10-06T12:00:00Z",
+    customer: null,
+    cart: {
+      status: "OPEN",
+      store: "Shopify",
+      totalCents: 39980,
+      abandonedAt: "2026-10-06T12:00:00Z",
+      notifiedAt: null,
+      recoveredAt: null,
+      items: [],
+      recoveryUrl: null,
+    },
+  };
+  const summary = artifactSummary(card);
+  assert.match(summary, /Maria Souza/);
+  assert.match(summary, /itens do carrinho/);
+  assert.doesNotMatch(summary, /maria@|9999/);
+  assert.match(historyNote([card]), /contactId=ct_1/);
 });
 
 // ── token de prévia ──

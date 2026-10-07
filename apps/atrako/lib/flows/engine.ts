@@ -486,8 +486,9 @@ async function processEnrollment(id: string, now: Date, cache: WsCache): Promise
 
   // WHATSAPP
   const wa = (step.content ?? {}) as WhatsAppContent;
+  const reserve = wa.fallbackToEmail !== false && isEmailContent(wa.fallbackEmail) ? wa.fallbackEmail : null;
   const fallback = async (): Promise<Outcome> => {
-    if (wa.fallbackEmail && isEmailContent(wa.fallbackEmail)) return handle(await sendEmail(wa.fallbackEmail));
+    if (reserve) return handle(await sendEmail(reserve));
     return advance(e, steps, now, "skipped");
   };
   if (conditions.requiresPhone && !(contact.phoneE164 || contact.phone)) return fallback();
@@ -509,7 +510,7 @@ async function processEnrollment(id: string, now: Date, cache: WsCache): Promise
   });
   if (r.status === "SENT") return advance(e, steps, now, "sent");
   if (r.status === "DEFERRED") return reschedule(id, new Date(now.getTime() + 2 * HOUR));
-  if (r.status === "HELD" && /template_(pending|paused|in_appeal)/.test(r.reason) && !wa.fallbackEmail) {
+  if (r.status === "HELD" && /template_(pending|paused|in_appeal)/.test(r.reason) && !reserve) {
     const held = ctx.heldSince ? new Date(ctx.heldSince).getTime() : now.getTime();
     if (now.getTime() - held < MAX_HOLD_MS) {
       return reschedule(id, new Date(now.getTime() + 3 * HOUR), {
@@ -549,7 +550,7 @@ export async function handleAsyncWaFailure(deliveryId: string, effect: { fallbac
   }
   if (effect.fallbackEmail) {
     const wa = (step.content ?? {}) as WhatsAppContent;
-    if (!wa.fallbackEmail || !isEmailContent(wa.fallbackEmail) || !emailEligible(e.contact)) return;
+    if (wa.fallbackToEmail === false || !isEmailContent(wa.fallbackEmail) || !emailEligible(e.contact)) return;
     const coupon = step.couponCode && step.couponConfirmed ? step.couponCode : null;
     await sendEmailMessage({
       clienteId: e.clienteId,

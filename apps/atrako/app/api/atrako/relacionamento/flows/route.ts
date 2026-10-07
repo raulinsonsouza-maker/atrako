@@ -195,10 +195,13 @@ export async function POST(request: NextRequest) {
       if (body.status === "ACTIVE" || body.status === "PAUSED" || body.status === "DRAFT") {
         if (body.status === "ACTIVE") {
           // Ativar exige e-mails publicados sem pendência
-          const steps = await prisma.messageFlowStep.findMany({ where: { flowId, enabled: true, channel: "EMAIL" } });
-          const problems = steps.flatMap((s) =>
-            isEmailContent(s.content) ? emailContentProblems(sanitizeEmailContent(s.content)).map((p) => `Passo ${s.position + 1}: ${p}`) : [],
-          );
+          const steps = await prisma.messageFlowStep.findMany({ where: { flowId, enabled: true } });
+          const problems = steps.flatMap((s) => {
+            const wa = s.content as WhatsAppContent | null;
+            const email = s.channel === "EMAIL" ? s.content : wa?.fallbackToEmail !== false ? wa?.fallbackEmail : null;
+            const where = s.channel === "EMAIL" ? `Passo ${s.position + 1}` : `E-mail reserva do passo ${s.position + 1}`;
+            return isEmailContent(email) ? emailContentProblems(sanitizeEmailContent(email)).map((p) => `${where}: ${p}`) : [];
+          });
           if (problems.length) return bad(`Corrija antes de ativar: ${problems.join("; ")}`);
         }
         data.status = body.status;
@@ -220,8 +223,14 @@ export async function POST(request: NextRequest) {
       if (!step) return bad("Passo não encontrado", 404);
       const data: Prisma.MessageFlowStepUpdateInput = {};
       if (body.content !== undefined) {
-        const content =
-          step.channel === "EMAIL" ? sanitizeEmailContent(body.content) : (body.content as Record<string, unknown>);
+        let content: Record<string, unknown>;
+        if (step.channel === "EMAIL") content = sanitizeEmailContent(body.content);
+        else {
+          content = { ...(body.content as Record<string, unknown>) };
+          if (content.fallbackEmail != null) {
+            content.fallbackEmail = isEmailContent(content.fallbackEmail) ? sanitizeEmailContent(content.fallbackEmail) : undefined;
+          }
+        }
         data.draftContent = content as Prisma.InputJsonValue;
         data.draftUpdatedAt = new Date();
         data.customized = true;
@@ -266,12 +275,14 @@ export async function POST(request: NextRequest) {
       const content = step.draftContent ?? step.content;
       const contact = await sampleContact(ws, email || null);
       const origin = { flowId: step.flow.id, flowKey: step.flow.key, stepId: step.id, stepPosition: step.position };
-      if (step.channel === "EMAIL") {
+      const reserve = step.channel === "WHATSAPP" && body.reserve === true ? (content as WhatsAppContent).fallbackEmail : null;
+      if (step.channel === "WHATSAPP" && body.reserve === true && !isEmailContent(reserve)) return bad("Este passo não tem e-mail reserva");
+      if (step.channel === "EMAIL" || reserve) {
         if (!email) return bad("Informe o e-mail de teste");
         const r = await sendEmailMessage({
           clienteId: ws,
           contact,
-          content: sanitizeEmailContent(content),
+          content: sanitizeEmailContent(reserve ?? content),
           couponCode: step.couponCode,
           data: {},
           origin,
@@ -311,6 +322,12 @@ export async function POST(request: NextRequest) {
         if (problems.length) return bad(`Corrija: ${problems.join(", ")}`);
         if (!step.testedAt || (step.draftUpdatedAt && step.testedAt < step.draftUpdatedAt)) {
           return bad("Envie um teste da versão atual antes de publicar");
+        }
+      } else {
+        const wa = step.draftContent as WhatsAppContent;
+        if (wa.fallbackToEmail !== false && isEmailContent(wa.fallbackEmail)) {
+          const problems = emailContentProblems(sanitizeEmailContent(wa.fallbackEmail));
+          if (problems.length) return bad(`Corrija o e-mail reserva: ${problems.join(", ")}`);
         }
       }
       await prisma.messageFlowStep.update({

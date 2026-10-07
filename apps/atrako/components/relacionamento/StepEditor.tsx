@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { BackLink, Button, OptionChip, PillSelect, Switch } from "@/components/ui";
@@ -58,11 +58,23 @@ function splitDelay(minutes: number): { amount: number; unit: string } {
 const TEST_EMAIL_KEY = "rel-test-email";
 const TEST_PHONE_KEY = "rel-test-phone";
 
+const RESERVE_STARTER: EmailContent = {
+  subject: "{{primeiro_nome}}, temos uma mensagem da {{loja}} para você",
+  preheader: "",
+  blocks: [
+    { type: "heading", text: "Oi, {{primeiro_nome}}!" },
+    { type: "text", text: "Tentamos falar com você pelo WhatsApp. Separamos tudo por aqui também." },
+    { type: "button", label: "Ver na loja" },
+    { type: "signature" },
+  ],
+};
+
 export function StepEditor({
   workspaceId,
   flow,
   step,
   store,
+  focus,
   onClose,
   onSaved,
 }: {
@@ -70,6 +82,8 @@ export function StepEditor({
   flow: Flow;
   step: FlowStep;
   store: FlowStore;
+  /** Abre já na seção do e-mail reserva (passo de WhatsApp). */
+  focus?: "fallback";
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -90,10 +104,17 @@ export function StepEditor({
   const [savedDraftAt, setSavedDraftAt] = useState(step.draftUpdatedAt);
   const [testedAt, setTestedAt] = useState(step.testedAt);
   const [hasDraft, setHasDraft] = useState(Boolean(step.draftContent));
+  const [reserveTestTo, setReserveTestTo] = useState("");
+  const reserveRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setTestTo(localStorage.getItem(isEmail ? TEST_EMAIL_KEY : TEST_PHONE_KEY) ?? "");
+    setReserveTestTo(localStorage.getItem(TEST_EMAIL_KEY) ?? "");
   }, [isEmail]);
+
+  useEffect(() => {
+    if (focus === "fallback") reserveRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [focus]);
 
   const templates = useQuery({
     queryKey: ["rel-templates", workspaceId],
@@ -151,6 +172,19 @@ export function StepEditor({
       return `Teste enviado para ${testTo}.`;
     });
 
+  const testReserve = () =>
+    run("test-reserve", async () => {
+      if (dirty) {
+        await call("step_save", { content: wa });
+        setSavedDraftAt(new Date().toISOString());
+        setHasDraft(true);
+        setDirty(false);
+      }
+      localStorage.setItem(TEST_EMAIL_KEY, reserveTestTo);
+      await call("step_test", { email: reserveTestTo, reserve: true });
+      return `Teste do e-mail reserva enviado para ${reserveTestTo}.`;
+    });
+
   const publish = () =>
     run("publish", async () => {
       await call("step_publish");
@@ -198,7 +232,16 @@ export function StepEditor({
           : s,
       )
       .sort((a, b) => a.delayMinutes - b.delayMinutes),
+    "WHATSAPP",
   );
+  const reserveOn = !isEmail && wa.fallbackToEmail !== false;
+  const emailPreview = (content: unknown) =>
+    api("/api/atrako/relacionamento/flows", { body: { workspaceId, action: "preview", content, couponCode: coupon || null } }) as Promise<{
+      html: string;
+      bytes: number;
+      clipped: boolean;
+      problems: string[];
+    }>;
 
   const tplCards = [
     {
@@ -309,14 +352,7 @@ export function StepEditor({
             setEmail(v);
             setDirty(true);
           }}
-          preview={(content) =>
-            api("/api/atrako/relacionamento/flows", { body: { workspaceId, action: "preview", content, couponCode: coupon || null } }) as Promise<{
-              html: string;
-              bytes: number;
-              clipped: boolean;
-              problems: string[];
-            }>
-          }
+          preview={emailPreview}
         />
       ) : (
         <div className="rel-flow-open mt-0 border-t-0 pt-0">
@@ -372,6 +408,64 @@ export function StepEditor({
           </div>
         </div>
       )}
+
+      {reserveOn ? (
+        <section ref={reserveRef} className="flex scroll-mt-4 flex-col gap-3">
+          <div className="rel-card flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="type-body-strong text-[var(--ink)]">E-mail reserva</h3>
+              <p className="type-fine-print text-[var(--ink-muted-48)]">
+                Só para quem não recebe este WhatsApp: sem telefone, descadastrado do WhatsApp ou modelo ainda não aprovado. Aparece na aba E-mail do fluxo.
+              </p>
+            </div>
+            {!wa.fallbackEmail ? (
+              <Button
+                size="toolbar"
+                onClick={() => {
+                  setWa({ ...wa, fallbackEmail: RESERVE_STARTER });
+                  setDirty(true);
+                }}
+              >
+                Criar e-mail reserva
+              </Button>
+            ) : null}
+          </div>
+          {wa.fallbackEmail ? (
+            <>
+              <EmailBlockEditor
+                workspaceId={workspaceId}
+                value={wa.fallbackEmail}
+                hasCoupon={Boolean(coupon)}
+                onChange={(v) => {
+                  setWa({ ...wa, fallbackEmail: v });
+                  setDirty(true);
+                }}
+                preview={emailPreview}
+              />
+              <div className="rel-card flex flex-wrap items-end gap-3">
+                <label className="min-w-[240px] flex-1">
+                  <span className="rel-label type-fine-print">Enviar teste do e-mail reserva para</span>
+                  <input
+                    className="rel-input type-caption"
+                    value={reserveTestTo}
+                    inputMode="email"
+                    placeholder="voce@loja.com.br"
+                    onChange={(e) => setReserveTestTo(e.target.value)}
+                  />
+                </label>
+                <Button variant="outline" className="px-4 py-2" disabled={!!busy || !reserveTestTo.trim()} onClick={testReserve}>
+                  {busy === "test-reserve" ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  Enviar teste
+                </Button>
+              </div>
+            </>
+          ) : (
+            <p className="rel-inset type-caption text-[var(--ink-muted-80)]">
+              Sem e-mail reserva, quem não recebe o WhatsApp não recebe nada neste passo.
+            </p>
+          )}
+        </section>
+      ) : null}
 
       <section className="rel-card flex flex-wrap items-end gap-3">
         <label className="min-w-[240px] flex-1">

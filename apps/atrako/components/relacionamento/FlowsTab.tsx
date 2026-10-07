@@ -3,15 +3,25 @@
 import { Fragment, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight, Loader2, Mail, MessageCircle, Zap } from "lucide-react";
-import { Button, InfoHint, PillSelect, Switch } from "@/components/ui";
+import { Button, InfoHint, PillSelect, SegmentedControl, Switch } from "@/components/ui";
 import { api, num, pct } from "@/components/relacionamento/format";
 import { lastDaysPeriod } from "@/components/relacionamento/period";
 import { StepEditor, type FlowStep } from "@/components/relacionamento/StepEditor";
 import { NativeRecoveryChecklistCard } from "@/components/relacionamento/NativeRecoveryChecklistCard";
 import { RelEmpty, RelLoading } from "@/components/relacionamento/ui";
-import { EMAIL_EXAMPLE_VALUES, MessagePhone } from "@/components/relacionamento/phone/MessagePhone";
+import { EMAIL_EXAMPLE_VALUES, MessagePhone, type PhoneChannel } from "@/components/relacionamento/phone/MessagePhone";
 import { interpolate } from "@/lib/flows/variables";
-import { TRIGGER_LABEL, delayWords, flowPhoneItems } from "@/components/relacionamento/flowPhone";
+import {
+  RESERVE_SUFFIX,
+  RESERVE_TAG,
+  TRIGGER_LABEL,
+  channelSteps,
+  channelSummary,
+  delayWords,
+  flowPhoneItems,
+  reserveEmail,
+  shortGap,
+} from "@/components/relacionamento/flowPhone";
 
 export type Flow = {
   id: string;
@@ -38,10 +48,28 @@ function ChannelIcon({ channel, className = "h-3.5 w-3.5" }: { channel: FlowStep
   return channel === "EMAIL" ? <Mail className={className} /> : <MessageCircle className={className} />;
 }
 
-function shortGap(minutes: number) {
-  if (minutes < 60) return `${minutes} min`;
-  if (minutes < 2880 && (minutes < 1440 || minutes % 1440 !== 0)) return `${Math.round(minutes / 60)} h`;
-  return `${Math.round(minutes / 1440)} d`;
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+function MiniLane({ label, channel, steps }: { label: string; channel: PhoneChannel; steps: FlowStep[] }) {
+  let prev = 0;
+  return (
+    <span className="rel-mini-timeline">
+      <span className="rel-mini-lane-label">{label}</span>
+      {steps.map((s) => {
+        const gap = s.delayMinutes - prev;
+        prev = s.delayMinutes;
+        const reserve = channel === "EMAIL" && s.channel === "WHATSAPP";
+        return (
+          <Fragment key={s.id}>
+            {gap > 0 ? <span className="rel-mini-gap">{shortGap(gap)}</span> : null}
+            <span className="rel-mini-dot" data-channel={channel} data-off={!s.enabled} data-reserve={reserve || undefined}>
+              <ChannelIcon channel={channel} />
+            </span>
+          </Fragment>
+        );
+      })}
+    </span>
+  );
 }
 
 function stepTitle(s: FlowStep, storeName: string) {
@@ -59,7 +87,8 @@ export function FlowsTab({ workspaceId }: { workspaceId: string }) {
   const [open, setOpen] = useState<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
   const [advanced, setAdvanced] = useState<string | null>(null);
-  const [editing, setEditing] = useState<{ flowId: string; stepId: string } | null>(null);
+  const [editing, setEditing] = useState<{ flowId: string; stepId: string; focus?: "fallback" } | null>(null);
+  const [tabs, setTabs] = useState<Record<string, PhoneChannel>>({});
   const [error, setError] = useState<string | null>(null);
   const key = ["rel-flows", workspaceId];
   const { data, isLoading } = useQuery({
@@ -88,6 +117,7 @@ export function FlowsTab({ workspaceId }: { workspaceId: string }) {
         flow={editFlow}
         step={editStep}
         store={data.store}
+        focus={editing?.focus}
         onClose={() => setEditing(null)}
         onSaved={() => void qc.invalidateQueries({ queryKey: key })}
       />
@@ -136,14 +166,16 @@ export function FlowsTab({ workspaceId }: { workspaceId: string }) {
         const running = (f.enrollments.ACTIVE ?? 0) + (f.enrollments.PAUSED ?? 0);
         const pausedByError = f.status === "PAUSED" && Boolean(f.pausedReason) && f.pausedReason !== "Pausado manualmente";
         const showAdvanced = advanced === f.id;
+        const summary = channelSummary(f.steps);
+        const channel: PhoneChannel = tabs[f.id] ?? (summary.waTab ? "WHATSAPP" : "EMAIL");
+        const laneSteps = channelSteps(f.steps, channel);
         let prevDelay = 0;
-        let prevMini = 0;
         return (
           <section key={f.id} className="rel-card">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <button
                 type="button"
-                className="flex min-w-0 flex-1 items-start gap-2 text-left"
+                className="flex min-w-0 flex-1 basis-[280px] items-start gap-2 text-left"
                 onClick={() => {
                   setOpen(expanded ? null : f.id);
                   setActive(null);
@@ -159,19 +191,9 @@ export function FlowsTab({ workspaceId }: { workspaceId: string }) {
                   </span>
                   <span className="type-fine-print block text-[var(--ink-muted-48)]">{TRIGGER_LABEL[f.trigger] ?? f.trigger}</span>
                   {pausedByError ? <span className="type-fine-print block text-[var(--ink)]">{f.pausedReason}</span> : null}
-                  <span className="rel-mini-timeline mt-2 type-micro-legal">
-                    {f.steps.map((s, i) => {
-                      const gap = s.delayMinutes - prevMini;
-                      prevMini = s.delayMinutes;
-                      return (
-                        <Fragment key={s.id}>
-                          {i > 0 ? <span className="rel-mini-gap">{gap > 0 ? shortGap(gap) : ""}</span> : null}
-                          <span className="rel-mini-dot" data-channel={s.channel} data-off={!s.enabled}>
-                            <ChannelIcon channel={s.channel} />
-                          </span>
-                        </Fragment>
-                      );
-                    })}
+                  <span className="rel-mini-lanes mt-2 type-micro-legal">
+                    {summary.waTab ? <MiniLane label="WhatsApp" channel="WHATSAPP" steps={channelSteps(f.steps, "WHATSAPP")} /> : null}
+                    {summary.emailTab ? <MiniLane label="E-mail" channel="EMAIL" steps={channelSteps(f.steps, "EMAIL")} /> : null}
                   </span>
                 </span>
               </button>
@@ -199,7 +221,36 @@ export function FlowsTab({ workspaceId }: { workspaceId: string }) {
                     </div>
                   ) : null}
 
-                  <div className="rel-timeline">
+                  {summary.waTab && summary.emailTab ? (
+                    <SegmentedControl
+                      aria-label="Canal"
+                      value={channel}
+                      onChange={(v) => {
+                        setTabs((t) => ({ ...t, [f.id]: v }));
+                        setActive(null);
+                      }}
+                      options={[
+                        { value: "WHATSAPP", label: `WhatsApp (${summary.waTab})` },
+                        { value: "EMAIL", label: `E-mail (${summary.emailTab})` },
+                      ]}
+                    />
+                  ) : null}
+                  {summary.wa ? (
+                    <p className="rel-channel-summary type-fine-print">
+                      <span>
+                        <MessageCircle className="h-3.5 w-3.5 text-[var(--success)]" />
+                        Quem tem WhatsApp recebe {plural(summary.wa, "mensagem", "mensagens")}
+                        {summary.email ? ` e ${plural(summary.email, "e-mail", "e-mails")}` : ""}
+                      </span>
+                      <span>
+                        <Mail className="h-3.5 w-3.5 text-[var(--primary)]" />
+                        Quem não tem recebe{" "}
+                        {summary.email + summary.reserve ? plural(summary.email + summary.reserve, "e-mail", "e-mails") : "nada deste fluxo"}
+                      </span>
+                    </p>
+                  ) : null}
+
+                  <div className="rel-timeline mt-2">
                     <div className="rel-tl-trigger type-caption">
                       <span className="rel-tl-rail">
                         <span className="rel-mini-dot">
@@ -208,44 +259,57 @@ export function FlowsTab({ workspaceId }: { workspaceId: string }) {
                       </span>
                       <span className="text-[var(--ink)]">Quando: {TRIGGER_LABEL[f.trigger] ?? f.trigger}</span>
                     </div>
-                    {f.steps.map((s) => {
+                    {laneSteps.map((s) => {
                       const gap = s.delayMinutes - prevDelay;
                       prevDelay = s.delayMinutes;
+                      const reserve = channel === "EMAIL" && s.channel === "WHATSAPP" ? reserveEmail(s) : null;
+                      const rowId = reserve ? s.id + RESERVE_SUFFIX : s.id;
                       const tplPending =
-                        s.channel === "WHATSAPP" && s.preview?.kind === "whatsapp" && s.preview.templateStatus !== "APPROVED";
+                        !reserve && s.channel === "WHATSAPP" && s.preview?.kind === "whatsapp" && s.preview.templateStatus !== "APPROVED";
+                      const title = reserve
+                        ? interpolate(reserve.subject || "E-mail", { ...EMAIL_EXAMPLE_VALUES, loja: data.store.name })
+                        : stepTitle(s, data.store.name);
                       return (
-                        <Fragment key={s.id}>
+                        <Fragment key={rowId}>
                           <div className="rel-tl-delay type-fine-print">
                             <span className="rel-tl-rail" />
-                            <span>{delayWords(gap)}</span>
+                            <span>
+                              {delayWords(gap)}
+                              {gap !== s.delayMinutes && s.delayMinutes > 0 ? ` · ${shortGap(s.delayMinutes)} após o gatilho` : ""}
+                            </span>
                           </div>
                           <div
                             role="button"
                             tabIndex={0}
                             className="rel-tl-item cursor-pointer"
-                            data-active={active === s.id}
+                            data-active={active === rowId}
+                            data-reserve={reserve ? true : undefined}
                             style={s.enabled ? undefined : { opacity: 0.55 }}
-                            onClick={() => setActive(s.id)}
+                            onClick={() => setActive(rowId)}
                             onKeyDown={(e) => {
-                              if (e.key === "Enter") setActive(s.id);
+                              if (e.key === "Enter") setActive(rowId);
                             }}
                           >
-                            <span className="rel-mini-dot" data-channel={s.channel}>
-                              <ChannelIcon channel={s.channel} className="h-4 w-4" />
+                            <span className="rel-mini-dot" data-channel={channel}>
+                              <ChannelIcon channel={channel} className="h-4 w-4" />
                             </span>
                             <span className="min-w-0">
                               <span className="type-fine-print block text-[var(--ink-muted-48)]">
-                                {s.channel === "EMAIL" ? "E-mail" : "WhatsApp"}
+                                {reserve ? "E-mail reserva do WhatsApp" : s.channel === "EMAIL" ? "E-mail" : "WhatsApp"}
                                 {s.couponCode ? ` · cupom ${s.couponCode}` : ""}
                               </span>
-                              <span className="type-caption-strong block truncate text-[var(--ink)]">{stepTitle(s, data.store.name)}</span>
+                              <span className="type-caption-strong block truncate text-[var(--ink)]">{title}</span>
                               <span className="mt-1 flex flex-wrap gap-1.5">
+                                {reserve ? <span className="rel-badge type-micro-legal">{RESERVE_TAG}</span> : null}
                                 {s.draftContent ? <span className="rel-badge type-micro-legal" data-tone="warn">Não publicado</span> : null}
                                 {!s.enabled ? <span className="rel-badge type-micro-legal">Desligado</span> : null}
                                 {tplPending ? (
                                   <span className="rel-badge type-micro-legal" data-tone="warn">
                                     {s.preview?.kind === "whatsapp" && s.preview.templateStatus ? "Modelo em análise" : "Sem modelo aprovado"}
                                   </span>
+                                ) : null}
+                                {s.channel === "WHATSAPP" && !reserve && reserveEmail(s) ? (
+                                  <span className="rel-badge type-micro-legal">Sem WhatsApp: vai por e-mail</span>
                                 ) : null}
                                 {s.couponCode && !s.couponConfirmed ? <span className="rel-badge type-micro-legal" data-tone="warn">Confirmar cupom</span> : null}
                               </span>
@@ -255,7 +319,7 @@ export function FlowsTab({ workspaceId }: { workspaceId: string }) {
                               size="toolbar"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setEditing({ flowId: f.id, stepId: s.id });
+                                setEditing({ flowId: f.id, stepId: s.id, focus: reserve ? "fallback" : undefined });
                               }}
                             >
                               Editar
@@ -300,9 +364,11 @@ export function FlowsTab({ workspaceId }: { workspaceId: string }) {
 
                 <div className="flex justify-center lg:sticky lg:top-4">
                   <MessagePhone
+                    key={channel}
                     storeName={data.store.name}
                     avatarUrl={data.store.logoUrl}
-                    items={flowPhoneItems(workspaceId, f.trigger, f.steps)}
+                    items={flowPhoneItems(workspaceId, f.trigger, f.steps, channel)}
+                    channel={channel}
                     highlightId={active}
                     onSelect={setActive}
                   />

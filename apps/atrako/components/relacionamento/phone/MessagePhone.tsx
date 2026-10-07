@@ -17,18 +17,31 @@ export const EMAIL_EXAMPLE_VALUES: Record<string, string> = {
   link: "",
 };
 
+export type PhoneChannel = "WHATSAPP" | "EMAIL";
+
 export type PhoneItem =
   | { kind: "trigger"; label: string }
   | { kind: "delay"; label: string }
   | { kind: "whatsapp"; id: string; preview: WaPreview | null; image?: string }
-  | { kind: "email"; id: string; subject: string; preheader?: string; loadHtml?: () => Promise<string> };
+  | {
+      kind: "email";
+      id: string;
+      subject: string;
+      preheader?: string;
+      /** Tempo desde o gatilho, mostrado à direita na caixa de entrada. */
+      time?: string;
+      /** E-mail reserva de um passo de WhatsApp. */
+      reserve?: boolean;
+      tag?: string;
+      loadHtml?: () => Promise<string>;
+    };
 
 /** Um e-mail aberto no celular (prévia do editor). */
 export function EmailPhone({ subject, html, error, scale }: { subject: string; html: string | null; error?: string | null; scale?: number }) {
   return (
     <ChatPhone
-      theme="whatsapp"
-      header={{ name: "E-mail" }}
+      theme="mail"
+      header={{ name: "Caixa de entrada" }}
       items={[]}
       scale={scale}
       overlay={
@@ -50,11 +63,15 @@ export function EmailPhone({ subject, html, error, scale }: { subject: string; h
   );
 }
 
-/** Celular do Relacionamento: a sequência de mensagens como o cliente vê (WhatsApp + e-mail). */
+/**
+ * Celular do Relacionamento, um canal por vez:
+ * WHATSAPP = conversa com os balões; EMAIL = caixa de entrada (toque abre o e-mail).
+ */
 export function MessagePhone({
   storeName,
   avatarUrl,
   items,
+  channel = "WHATSAPP",
   highlightId,
   onSelect,
   scale,
@@ -62,57 +79,70 @@ export function MessagePhone({
   storeName: string;
   avatarUrl?: string | null;
   items: PhoneItem[];
+  channel?: PhoneChannel;
   highlightId?: string | null;
   onSelect?: (id: string) => void;
   scale?: number;
 }) {
   const [openEmail, setOpenEmail] = useState<{ id: string; subject: string; html: string | null; error?: string } | null>(null);
+  const mail = channel === "EMAIL";
+  const values = { ...EMAIL_EXAMPLE_VALUES, loja: storeName };
 
   const open = (it: Extract<PhoneItem, { kind: "email" }>) => {
     onSelect?.(it.id);
     if (!it.loadHtml) return;
-    setOpenEmail({ id: it.id, subject: interpolate(it.subject, { ...EMAIL_EXAMPLE_VALUES, loja: storeName }), html: null });
+    setOpenEmail({ id: it.id, subject: interpolate(it.subject, values), html: null });
     it.loadHtml().then(
       (html) => setOpenEmail((cur) => (cur?.id === it.id ? { ...cur, html } : cur)),
       (e: Error) => setOpenEmail((cur) => (cur?.id === it.id ? { ...cur, error: e.message || "Não foi possível abrir" } : cur)),
     );
   };
 
-  const chat: ChatItem[] = items.map((it, i): ChatItem => {
-    if (it.kind === "trigger") return { kind: "system", id: `trigger-${i}`, tone: "trigger", text: it.label };
-    if (it.kind === "delay") return { kind: "system", id: `delay-${i}`, text: it.label };
-    if (it.kind === "email") {
-      const values = { ...EMAIL_EXAMPLE_VALUES, loja: storeName };
-      return {
+  const chat: ChatItem[] = [];
+  items.forEach((it, i) => {
+    if (it.kind === "trigger") {
+      chat.push({ kind: "system", id: `trigger-${i}`, tone: "trigger", text: it.label });
+    } else if (it.kind === "delay") {
+      if (!mail) chat.push({ kind: "system", id: `delay-${i}`, text: it.label });
+    } else if (it.kind === "email") {
+      if (!mail) return;
+      chat.push({
         kind: "email",
         id: it.id,
         fromName: storeName,
         subject: interpolate(it.subject, values),
         preheader: it.preheader ? interpolate(it.preheader, values) : undefined,
+        time: it.time,
+        tag: it.tag,
+        reserve: it.reserve,
         highlight: highlightId === it.id,
         onClick: () => open(it),
-      };
+      });
+    } else {
+      if (mail) return;
+      const p = it.preview;
+      chat.push({
+        kind: "received",
+        id: it.id,
+        text: p?.body || "Modelo do WhatsApp ainda não escolhido ou não aprovado.",
+        image: p?.imageHeader ? it.image ?? true : undefined,
+        headerText: p?.headerText,
+        footer: p?.footer,
+        buttons: p?.buttons,
+        dim: !p?.body,
+        highlight: highlightId === it.id,
+        onClick: onSelect ? () => onSelect(it.id) : undefined,
+      });
     }
-    const p = it.preview;
-    return {
-      kind: "received",
-      id: it.id,
-      text: p?.body || "Modelo do WhatsApp ainda não escolhido ou não aprovado.",
-      image: p?.imageHeader ? it.image ?? true : undefined,
-      headerText: p?.headerText,
-      footer: p?.footer,
-      buttons: p?.buttons,
-      dim: !p?.body,
-      highlight: highlightId === it.id,
-      onClick: onSelect ? () => onSelect(it.id) : undefined,
-    };
   });
+  const hasMessages = chat.some((c) => c.kind !== "system");
 
   return (
     <ChatPhone
-      theme="whatsapp"
-      header={{ name: storeName, subtitle: "Conta comercial", avatarUrl }}
-      items={chat}
+      theme={mail ? "mail" : "whatsapp"}
+      header={mail ? { name: "Caixa de entrada", subtitle: storeName } : { name: storeName, subtitle: "Conta comercial", avatarUrl }}
+      items={hasMessages ? chat : []}
+      empty={mail ? "Nenhum e-mail neste fluxo." : "Nenhuma mensagem de WhatsApp neste fluxo."}
       focusId={highlightId}
       scale={scale}
       overlay={

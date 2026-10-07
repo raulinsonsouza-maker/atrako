@@ -29,11 +29,26 @@ export type ChatItem =
   /** Botão solto do Instagram (abaixo do balão). */
   | { kind: "action"; id?: string; label: string; variant?: "action" | "link"; dim?: boolean }
   /** E-mail na caixa de entrada; toque abre o conteúdo. */
-  | { kind: "email"; id?: string; fromName: string; subject: string; preheader?: string; time?: string; highlight?: boolean; onClick?: () => void }
+  | {
+      kind: "email";
+      id?: string;
+      fromName: string;
+      subject: string;
+      preheader?: string;
+      time?: string;
+      /** Selo na linha da caixa de entrada (tema mail). */
+      tag?: string;
+      reserve?: boolean;
+      highlight?: boolean;
+      onClick?: () => void;
+    }
   | { kind: "node"; id?: string; node: ReactNode };
 
 export type ChatPhoneProps = {
-  theme?: "instagram" | "whatsapp";
+  /** instagram (Social), whatsapp (conversa) ou mail (caixa de entrada). */
+  theme?: "instagram" | "whatsapp" | "mail";
+  /** Mostrado quando não há itens. */
+  empty?: ReactNode;
   header: { name: string; subtitle?: string; avatarUrl?: string | null };
   items: ChatItem[];
   /** Camada sobre a conversa (ex.: e-mail aberto). */
@@ -93,10 +108,11 @@ function initials(name: string) {
     .join("");
 }
 
-/** Aparelho com conversa: tema Instagram (Social) ou WhatsApp (Relacionamento). */
-export function ChatPhone({ theme = "instagram", header, items, overlay, focusId, below, scale, className }: ChatPhoneProps) {
+/** Aparelho com conversa: tema Instagram (Social), WhatsApp ou caixa de entrada de e-mail (Relacionamento). */
+export function ChatPhone({ theme = "instagram", header, items, overlay, focusId, below, scale, className, empty }: ChatPhoneProps) {
   const bodyRef = useRef<HTMLDivElement>(null);
   const wa = theme === "whatsapp";
+  const mail = theme === "mail";
 
   useEffect(() => {
     const body = bodyRef.current;
@@ -122,22 +138,66 @@ export function ChatPhone({ theme = "instagram", header, items, overlay, focusId
               </div>
             </div>
 
-            <div className="chat-header">
-              {wa ? <ChevronLeft className="chat-back" aria-hidden /> : null}
-              <div className="profile-pic" style={header.avatarUrl ? { backgroundImage: `url(${header.avatarUrl})` } : undefined}>
-                {!header.avatarUrl && wa ? initials(header.name) : null}
+            {mail ? (
+              <div className="mail-header">
+                <span className="mail-header-back">
+                  <ChevronLeft className="h-5 w-5" aria-hidden />
+                  Caixas
+                </span>
+                <div className="mail-header-title">{header.name}</div>
+                {header.subtitle ? <div className="mail-header-sub">{header.subtitle}</div> : null}
               </div>
-              <div className="profile-info">
-                <span className="username">{header.name}</span>
-                {header.subtitle ? <span className="subtitle">{header.subtitle}</span> : null}
+            ) : (
+              <div className="chat-header">
+                {wa ? <ChevronLeft className="chat-back" aria-hidden /> : null}
+                <div className="profile-pic" style={header.avatarUrl ? { backgroundImage: `url(${header.avatarUrl})` } : undefined}>
+                  {!header.avatarUrl && wa ? initials(header.name) : null}
+                </div>
+                <div className="profile-info">
+                  <span className="username">{header.name}</span>
+                  {header.subtitle ? <span className="subtitle">{header.subtitle}</span> : null}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="chat-body" ref={bodyRef}>
+              {!items.length && empty ? <div className="mail-empty">{empty}</div> : null}
               {items.map((it, idx) => {
                 const key = it.id ?? `${it.kind}-${idx}`;
                 const dataId = it.id ? { "data-chat-id": it.id } : {};
                 if (it.kind === "node") return <Fragment key={key}>{it.node}</Fragment>;
+                if (mail && it.kind === "system") {
+                  return (
+                    <div key={key} {...dataId} className={it.tone === "trigger" ? "mail-section mail-section-trigger" : "mail-section"}>
+                      {it.text}
+                    </div>
+                  );
+                }
+                if (mail && it.kind === "email") {
+                  const Tag = it.onClick ? "button" : "div";
+                  return (
+                    <Tag
+                      key={key}
+                      {...dataId}
+                      type={it.onClick ? "button" : undefined}
+                      className="mail-row"
+                      data-highlight={it.highlight || undefined}
+                      data-reserve={it.reserve || undefined}
+                      onClick={it.onClick}
+                    >
+                      <span className="mail-unread" aria-hidden />
+                      <span className="mail-row-main">
+                        <span className="mail-row-top">
+                          <span className="mail-row-from">{it.fromName}</span>
+                          {it.time ? <span className="mail-row-time">{it.time}</span> : null}
+                        </span>
+                        <span className="mail-row-subject">{it.subject || "Sem assunto"}</span>
+                        {it.preheader ? <span className="mail-row-pre">{it.preheader}</span> : null}
+                        {it.tag ? <span className="mail-row-tag">{it.tag}</span> : null}
+                      </span>
+                    </Tag>
+                  );
+                }
                 if (it.kind === "system") {
                   return (
                     <div key={key} {...dataId} className={it.tone === "label" ? "direct-label" : it.tone === "trigger" ? "system-event system-trigger" : "system-event"}>

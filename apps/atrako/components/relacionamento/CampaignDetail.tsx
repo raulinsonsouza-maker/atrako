@@ -940,7 +940,6 @@ function CreateStep({
           readOnly={readOnly}
           storeName={storeName}
           storeLogo={storeLogo}
-          emailSubject={wantsEmail ? email.subject : null}
           draft={waDraft}
           onDraft={setWaDraft}
           autosave={autosave}
@@ -1018,7 +1017,6 @@ function WaEditor({
   readOnly,
   storeName,
   storeLogo,
-  emailSubject,
   draft,
   onDraft,
   autosave,
@@ -1031,7 +1029,6 @@ function WaEditor({
   readOnly: boolean;
   storeName: string;
   storeLogo: string | null;
-  emailSubject: string | null;
   draft: string;
   onDraft: (v: string) => void;
   autosave: Autosave;
@@ -1053,7 +1050,6 @@ function WaEditor({
   const items: PhoneItem[] = [
     { kind: "trigger", label: c.eventDate ? `Campanha · ${dateBR(c.eventDate)}` : "Campanha" },
     { kind: "whatsapp", id: "wa", preview },
-    ...(emailSubject != null ? [{ kind: "email" as const, id: "email", subject: emailSubject || "E-mail" }] : []),
   ];
   const statusLabel = (s: string) => (s === "APPROVED" ? "Aprovado" : s === "PENDING" ? "Em análise" : s === "REJECTED" ? "Recusado" : s.toLowerCase());
 

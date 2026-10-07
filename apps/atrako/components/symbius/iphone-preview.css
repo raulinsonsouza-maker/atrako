@@ -1,4 +1,6 @@
-/* Mockup iPhone — baseado em Iphone/style.css */
+/* Mockup iPhone — baseado em Iphone/style.css.
+   Cores do simulador (Instagram / WhatsApp) ficam em variáveis próprias dentro do aparelho;
+   não são cores de marca do Atrako. */
 
 .symbius-iphone-wrap {
   display: flex;
@@ -7,29 +9,79 @@
 }
 
 .symbius-iphone-scale {
-  width: calc(402px * 0.72);
-  height: calc(874px * 0.72);
+  --phone-scale: 0.72;
+  /* Instagram (padrão) */
+  --ph-screen: #121212;
+  --ph-status: #ffffff;
+  --ph-header-bg: transparent;
+  --ph-header-border: #262626;
+  --ph-name: #ffffff;
+  --ph-sub: #a3a3a3;
+  --ph-system: #737373;
+  --ph-system-strong: #a3a3a3;
+  --ph-label: #525252;
+  --ph-in-bg: #262626;
+  --ph-in-fg: #ffffff;
+  --ph-out-bg: #0095f6;
+  --ph-out-fg: #ffffff;
+  --ph-btn-border: #3f3f46;
+  --ph-btn-fg: #ffffff;
+  --ph-link-border: #262626;
+  --ph-link-fg: #38bdf8;
+  --ph-meta: rgba(255, 255, 255, 0.55);
+  --ph-chip-bg: rgba(255, 255, 255, 0.06);
+  --ph-home: #ffffff;
+  --ph-avatar: linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7);
+  --ph-bubble-radius: 22px;
+  --ph-font-size: 14px;
+
+  width: calc(402px * var(--phone-scale));
+  height: calc(874px * var(--phone-scale));
   position: relative;
+}
+
+.symbius-iphone-scale[data-theme="whatsapp"] {
+  --ph-screen: #efeae2;
+  --ph-status: #000000;
+  --ph-header-bg: #f6f6f6;
+  --ph-header-border: #dcdcdc;
+  --ph-name: #111b21;
+  --ph-sub: #667781;
+  --ph-system: #54656f;
+  --ph-system-strong: #111b21;
+  --ph-label: #54656f;
+  --ph-in-bg: #ffffff;
+  --ph-in-fg: #111b21;
+  --ph-out-bg: #d9fdd3;
+  --ph-out-fg: #111b21;
+  --ph-btn-border: transparent;
+  --ph-btn-fg: #027eb5;
+  --ph-link-border: transparent;
+  --ph-link-fg: #027eb5;
+  --ph-meta: #667781;
+  --ph-chip-bg: rgba(255, 255, 255, 0.92);
+  --ph-home: #000000;
+  --ph-avatar: #25d366;
+  --ph-bubble-radius: 12px;
+  --ph-font-size: 15px;
 }
 
 .symbius-iphone-scale .iphone-container {
   width: 402px;
   height: 874px;
-  transform: scale(0.72);
+  transform: scale(var(--phone-scale));
   transform-origin: top left;
   background-color: #000000;
   border-radius: 54px;
   padding: 12px;
-  box-shadow: 0px 25px 50px -12px rgba(0, 0, 0, 0.25);
   box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-    Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 .symbius-iphone-scale .iphone-screen {
   width: 100%;
   height: 100%;
-  background-color: #121212;
+  background-color: var(--ph-screen);
   border-radius: 42px;
   overflow: hidden;
   position: relative;
@@ -43,7 +95,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 32px;
-  color: #ffffff;
+  color: var(--ph-status);
+  background: var(--ph-header-bg);
   font-size: 14px;
   font-weight: 600;
   z-index: 10;
@@ -78,19 +131,38 @@
   display: flex;
   align-items: center;
   padding: 10px 24px;
-  border-bottom: 1px solid #262626;
+  background: var(--ph-header-bg);
+  border-bottom: 1px solid var(--ph-header-border);
+  flex-shrink: 0;
+}
+
+.symbius-iphone-scale[data-theme="whatsapp"] .chat-header {
+  padding: 8px 16px 10px 8px;
+}
+
+.symbius-iphone-scale .chat-back {
+  width: 26px;
+  height: 26px;
+  color: #027eb5;
+  margin-right: 2px;
   flex-shrink: 0;
 }
 
 .symbius-iphone-scale .profile-pic {
   width: 40px;
   height: 40px;
-  background: linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7);
+  background: var(--ph-avatar);
   border-radius: 50%;
   margin-right: 12px;
   background-size: cover;
   background-position: center;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .symbius-iphone-scale .profile-info {
@@ -100,16 +172,16 @@
 }
 
 .symbius-iphone-scale .username {
-  color: #ffffff;
+  color: var(--ph-name);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .symbius-iphone-scale .subtitle {
-  color: #a3a3a3;
+  color: var(--ph-sub);
   font-size: 12px;
 }
 
@@ -120,11 +192,16 @@
   flex-direction: column;
   overflow-y: auto;
   min-height: 0;
+  position: relative;
+}
+
+.symbius-iphone-scale[data-theme="whatsapp"] .chat-body {
+  padding: 16px 14px;
 }
 
 .symbius-iphone-scale .direct-label {
   text-align: center;
-  color: #525252;
+  color: var(--ph-label);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 1px;
@@ -136,46 +213,280 @@
   max-width: 88%;
   margin: 4px 0 16px;
   text-align: center;
-  color: #737373;
+  color: var(--ph-system);
   font-size: 11px;
   line-height: 1.35;
 }
 
+.symbius-iphone-scale[data-theme="whatsapp"] .system-event {
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--ph-chip-bg);
+  font-size: 12px;
+  margin: 6px 0 12px;
+}
+
+.symbius-iphone-scale .system-event.system-trigger {
+  font-weight: 600;
+  color: var(--ph-system-strong);
+}
+
 .symbius-iphone-scale .system-event strong {
-  color: #a3a3a3;
+  color: var(--ph-system-strong);
   font-weight: 600;
 }
 
 .symbius-iphone-scale .msg {
   max-width: 80%;
   padding: 14px 16px;
-  border-radius: 22px;
-  font-size: 14px;
+  border-radius: var(--ph-bubble-radius);
+  font-size: var(--ph-font-size);
   line-height: 1.4;
   margin-bottom: 12px;
   word-wrap: break-word;
   white-space: pre-wrap;
+  text-align: left;
+  font-family: inherit;
+}
+
+.symbius-iphone-scale[data-theme="whatsapp"] .msg {
+  padding: 8px 10px 6px;
 }
 
 .symbius-iphone-scale .msg p {
   margin: 0 0 8px 0;
 }
 
-.symbius-iphone-scale .msg p:last-child {
+.symbius-iphone-scale .msg p:last-of-type {
   margin-bottom: 0;
 }
 
+.symbius-iphone-scale .msg-group {
+  align-self: flex-start;
+  max-width: 80%;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  border-radius: var(--ph-bubble-radius);
+}
+
+.symbius-iphone-scale .msg-group > .msg {
+  max-width: 100%;
+  margin-bottom: 0;
+}
+
+.symbius-iphone-scale[data-theme="whatsapp"] .msg-group {
+  max-width: 86%;
+}
+
+.symbius-iphone-scale [data-highlight="true"] {
+  outline: 3px solid var(--primary, #0066cc);
+  outline-offset: 3px;
+}
+
+.symbius-iphone-scale button.msg-group,
+.symbius-iphone-scale button.email-card {
+  cursor: pointer;
+}
+
 .symbius-iphone-scale .bubble-received {
-  background-color: #262626;
-  color: #ffffff;
+  background-color: var(--ph-in-bg);
+  color: var(--ph-in-fg);
   align-self: flex-start;
 }
 
+.symbius-iphone-scale[data-theme="whatsapp"] .bubble-received {
+  border-top-left-radius: 4px;
+}
+
 .symbius-iphone-scale .bubble-sent {
-  background-color: #0095f6;
-  color: #ffffff;
+  background-color: var(--ph-out-bg);
+  color: var(--ph-out-fg);
   align-self: flex-end;
-  border-radius: 22px 22px 4px 22px;
+  border-radius: var(--ph-bubble-radius) var(--ph-bubble-radius) 4px var(--ph-bubble-radius);
+}
+
+.symbius-iphone-scale .msg-time {
+  display: block;
+  margin-top: 2px;
+  text-align: right;
+  font-size: 11px;
+  color: var(--ph-meta);
+}
+
+.symbius-iphone-scale .msg-image {
+  margin: -4px -6px 8px;
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 1.6;
+  background: #dfe5e7;
+}
+
+.symbius-iphone-scale .msg-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.symbius-iphone-scale .msg-image-ph {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #8696a0;
+  font-size: 12px;
+}
+
+.symbius-iphone-scale .msg-header-text {
+  font-weight: 600;
+}
+
+.symbius-iphone-scale .msg-footer {
+  margin-top: 6px !important;
+  font-size: 12px;
+  color: var(--ph-meta);
+}
+
+.symbius-iphone-scale .msg-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.symbius-iphone-scale .msg-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: var(--ph-in-bg);
+  color: var(--ph-btn-fg);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.symbius-iphone-scale .email-card {
+  align-self: stretch;
+  max-width: 100%;
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--ph-header-border);
+  background: #ffffff;
+  color: #111b21;
+}
+
+.symbius-iphone-scale .email-card-icon {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e8f0fe;
+  color: #1a73e8;
+}
+
+.symbius-iphone-scale .email-card-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.symbius-iphone-scale .email-card-from {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.symbius-iphone-scale .email-card-from .msg-time {
+  margin: 0;
+}
+
+.symbius-iphone-scale .email-card-subject {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.symbius-iphone-scale .email-card-pre {
+  font-size: 13px;
+  color: #667781;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.symbius-iphone-scale .email-card-open {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #1a73e8;
+}
+
+.symbius-iphone-scale .phone-overlay {
+  position: absolute;
+  inset: 44px 0 34px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  color: #111b21;
+}
+
+.symbius-iphone-scale .phone-overlay-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border-bottom: 1px solid #e9edef;
+}
+
+.symbius-iphone-scale .phone-overlay-back {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: #1a73e8;
+  cursor: pointer;
+}
+
+.symbius-iphone-scale .phone-overlay-title {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.symbius-iphone-scale .phone-overlay-empty {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  text-align: center;
+  font-size: 14px;
+  color: #667781;
 }
 
 .symbius-iphone-scale .btn-action,
@@ -194,15 +505,15 @@
 
 .symbius-iphone-scale .btn-action {
   background-color: transparent;
-  border: 1px solid #3f3f46;
-  color: #ffffff;
+  border: 1px solid var(--ph-btn-border);
+  color: var(--ph-btn-fg);
   align-self: flex-start;
 }
 
 .symbius-iphone-scale .btn-link {
   background-color: transparent;
-  border: 1px solid #262626;
-  color: #38bdf8;
+  border: 1px solid var(--ph-link-border);
+  color: var(--ph-link-fg);
   align-self: flex-start;
 }
 
@@ -217,7 +528,7 @@
 .symbius-iphone-scale .home-indicator {
   width: 140px;
   height: 5px;
-  background-color: #ffffff;
+  background-color: var(--ph-home);
   border-radius: 10px;
   opacity: 0.8;
 }
@@ -284,7 +595,7 @@
   border-radius: 9999px;
   background: rgba(228, 228, 231, 0.85);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: #52525b;
 }
 
@@ -296,13 +607,12 @@
   cursor: pointer;
   color: inherit;
   font: inherit;
-  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
 
 .symbius-iphone-tabs button.active {
   background: #fff;
   color: #18181b;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .symbius-iphone-tabs button:not(.active):hover {
@@ -311,10 +621,6 @@
 
 @media (max-width: 420px) {
   .symbius-iphone-scale {
-    width: calc(402px * 0.62);
-    height: calc(874px * 0.62);
-  }
-  .symbius-iphone-scale .iphone-container {
-    transform: scale(0.62);
+    --phone-scale: 0.62;
   }
 }

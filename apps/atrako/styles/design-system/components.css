@@ -6160,6 +6160,412 @@ button.rel-list-row:active {
   border-left-color: var(--danger);
 }
 
+/* Início: primeiros passos + resultado em tile escuro */
+.rel-setup-step {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.rel-setup-step + .rel-setup-step {
+  border-top: 1px solid var(--divider-soft);
+}
+
+.rel-setup-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--hairline);
+  color: var(--ink-muted-80);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.rel-setup-num[data-done="true"] {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success);
+}
+
+.rel-setup-num[data-next="true"] {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.rel-result-tile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 20px 24px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-tile-1);
+  color: var(--on-dark);
+}
+
+.rel-result-tile a {
+  color: var(--primary-on-dark);
+}
+
+/* Fluxos: mini linha do tempo (card fechado) e linha do tempo vertical (aberto) */
+.rel-mini-timeline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.rel-mini-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-pill);
+  background: var(--canvas-parchment);
+  color: var(--ink-muted-80);
+}
+
+.rel-mini-dot[data-channel="WHATSAPP"] {
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success);
+}
+
+.rel-mini-dot[data-channel="EMAIL"] {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary);
+}
+
+.rel-mini-dot[data-off="true"] {
+  opacity: 0.4;
+}
+
+.rel-mini-gap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-muted-48);
+}
+
+.rel-mini-gap::before {
+  content: "";
+  width: 10px;
+  height: 1px;
+  background: var(--hairline);
+}
+
+.rel-flow-open {
+  display: grid;
+  gap: 24px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--divider-soft);
+}
+
+@media (min-width: 1068px) {
+  .rel-flow-open {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+}
+
+.rel-timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.rel-tl-trigger,
+.rel-tl-delay {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  color: var(--ink-muted-48);
+}
+
+.rel-tl-rail {
+  display: flex;
+  justify-content: center;
+  width: 36px;
+  flex: 0 0 36px;
+}
+
+.rel-tl-delay .rel-tl-rail::before {
+  content: "";
+  width: 2px;
+  height: 22px;
+  border-radius: 1px;
+  background: var(--hairline);
+}
+
+.rel-tl-item {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px 10px 0;
+  border-radius: var(--radius-lg);
+  border: 1px solid transparent;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.rel-tl-item[data-active="true"] {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 4%, var(--canvas));
+}
+
+.rel-tpl-grid {
+  display: grid;
+  gap: 8px;
+}
+
+@media (min-width: 640px) {
+  .rel-tpl-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.rel-tpl-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--hairline);
+  background: var(--canvas);
+  text-align: left;
+}
+
+.rel-tpl-card[data-selected="true"] {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 4%, var(--canvas));
+}
+
+.rel-tpl-bubble {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  padding: 8px 10px;
+  border-radius: 4px 10px 10px 10px;
+  background: var(--canvas-parchment);
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+
+.rel-delay-sentence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Campanha: 3 passos, cards da lista, menu "…", barra de ação */
+.rel-stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px;
+  scrollbar-width: none;
+}
+
+.rel-stepper::-webkit-scrollbar {
+  display: none;
+}
+
+.rel-stepper-item {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 4px;
+  border-radius: var(--radius-pill);
+  color: var(--ink-muted-48);
+}
+
+.rel-stepper-item[data-current="true"] {
+  color: var(--ink);
+  background: var(--canvas);
+  box-shadow: none;
+  outline: 1px solid var(--hairline);
+}
+
+.rel-stepper-item[data-done="true"] {
+  color: var(--ink-muted-80);
+}
+
+.rel-stepper-line {
+  flex: 1 1 24px;
+  min-width: 16px;
+  max-width: 72px;
+  height: 1px;
+  background: var(--hairline);
+}
+
+.rel-stepper-line[data-done="true"] {
+  background: var(--success);
+}
+
+.rel-menu {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 220px;
+  padding: 6px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--hairline);
+  background: var(--canvas);
+}
+
+.rel-menu-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm, 8px);
+  color: var(--ink);
+  text-align: left;
+}
+
+.rel-menu-item:hover {
+  background: var(--canvas-parchment);
+}
+
+.rel-menu-item[data-danger="true"] {
+  color: var(--danger);
+}
+
+.rel-action-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 12px 0;
+  border-top: 1px solid var(--hairline);
+  background: var(--canvas-parchment);
+}
+
+.rel-big-count {
+  font-size: 48px;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.rel-channel-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--hairline);
+  background: var(--canvas);
+  text-align: left;
+}
+
+.rel-channel-card[data-selected="true"] {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 4%, var(--canvas));
+}
+
+.rel-channel-card[data-selected="true"] .rel-mini-dot {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.rel-campaign-grid {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .rel-campaign-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1068px) {
+  .rel-campaign-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.rel-campaign-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--hairline);
+  background: var(--canvas);
+  text-align: left;
+}
+
+.rel-campaign-card:hover {
+  border-color: var(--ink-muted-48);
+}
+
+.rel-campaign-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.rel-campaign-steps > span {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--canvas-parchment);
+}
+
+.rel-campaign-steps > span[data-on="true"] {
+  background: var(--primary);
+}
+
+.rel-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.32);
+}
+
+.rel-modal-card {
+  width: min(440px, 100%);
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+.rel-tl-item .rel-mini-dot {
+  justify-self: center;
+  width: 36px;
+  height: 36px;
+}
+
 /* ── Mobile (< md / 768px) ──
    Tudo abaixo vale só no celular; no desktop estas classes não têm efeito.
    Utilities do Tailwind vêm depois deste arquivo, então overrides usam seletor encadeado. */

@@ -16,6 +16,7 @@ import { ImoveisPanel } from "@/components/clientes/ImoveisPanel";
 import { CrmTab } from "@/components/clientes/CrmTab";
 import { MarketplacePanel, type MarketplaceSub } from "@/components/clientes/MarketplacePanel";
 import { EcommercePanel } from "@/components/clientes/EcommercePanel";
+import { RelacionamentoPanel } from "@/components/clientes/RelacionamentoPanel";
 import { GeralConsolidado } from "@/components/clientes/GeralConsolidado";
 import { SocialMediaPanel } from "@/components/clientes/SocialMediaPanel";
 import { HotelFazendaSaoJoaoPanel } from "@/components/clientes/HotelFazendaSaoJoaoPanel";
@@ -62,6 +63,8 @@ function formatRelativeTime(value: string | Date): string {
   const days = Math.floor(hours / 24);
   return `há ${days}d`;
 }
+
+type DashCanal = "geral" | "meta" | "google" | "linkedin" | "imoveis" | "crm" | "relacionamento" | "marketplaces" | "ecommerce";
 
 export type DateFilter = {
   periodo: string;
@@ -238,7 +241,7 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
 let dailyGlobalSyncFired = false;
 
 export function ClienteDashboard({ id, portalMode = false }: { id: string; portalMode?: boolean }) {
-  const [canal, setCanal] = React.useState<"geral" | "meta" | "google" | "linkedin" | "imoveis" | "crm" | "marketplaces" | "ecommerce">("geral");
+  const [canal, setCanal] = React.useState<DashCanal>("geral");
   const [subView, setSubView] = React.useState<"dados" | "criativos" | "social-media">("dados");
   const [marketplaceSub, setMarketplaceSub] = React.useState<MarketplaceSub>("ml");
   const [analystOpen, setAnalystOpen] = React.useState(false);
@@ -419,7 +422,7 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
   const { data: resumo } = useQuery({
     queryKey: ["resumo", id, canal, dateFilter.periodo, dateFilter.dataInicio, dateFilter.dataFim],
     queryFn: () => fetchResumo(id, canal as "geral" | "meta" | "google", dateFilter),
-    enabled: !!id && !!cliente && canal !== "imoveis" && canal !== "crm" && canal !== "marketplaces" && canal !== "ecommerce" && !socialMediaOnly,
+    enabled: !!id && !!cliente && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce" && !socialMediaOnly,
   });
   const geralSemMidia =
     canal === "geral" && !!resumo && resumo.leads === 0 && Number(resumo.investimento) === 0;
@@ -456,7 +459,7 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
   const { data: midia } = useQuery({
     queryKey: ["midia", id, canal, presetPeriodo, dateFilter.dataInicio, dateFilter.dataFim, chartAgrupamento],
     queryFn: () => fetchMidia(id, canal as string, dateFilter, presetPeriodo, isLongPeriod ? undefined : chartAgrupamento),
-    enabled: !!id && !!cliente && canal !== "imoveis" && canal !== "crm" && canal !== "marketplaces" && canal !== "ecommerce" && !socialMediaOnly,
+    enabled: !!id && !!cliente && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce" && !socialMediaOnly,
   });
 
   const { data: financeiro } = useQuery({
@@ -484,11 +487,24 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
     enabled: !!id && !!cliente && !socialMediaOnly && canUseAnalyst,
   });
   const hasCrm = crmFunil?.configured === true;
+  /** Mesma chave do useModules: cache compartilhado quando é o workspace ativo. */
+  const { data: relConfig } = useQuery<{ modules?: Record<string, { enabled?: boolean }> }>({
+    queryKey: ["workspace-config", id],
+    queryFn: () => fetch(`/api/atrako/config?workspaceId=${id}`).then((r) => (r.ok ? r.json() : {})),
+    enabled: !!id && !portalMode,
+    staleTime: 30_000,
+  });
+  const hasRelacionamento = !portalMode && relConfig?.modules?.relacionamento?.enabled === true;
 
-  const isHotelPanel = isHotelFazendaSaoJoao(cliente) && canal !== "google" && canal !== "imoveis" && canal !== "crm" && canal !== "marketplaces" && canal !== "ecommerce";
-  const isTertuliaPanel = isTertulia(cliente) && canal !== "google" && canal !== "imoveis" && canal !== "crm" && canal !== "marketplaces" && canal !== "ecommerce";
-  const isVarellaPanel = isVarellaMotos(cliente) && canal !== "imoveis" && canal !== "crm" && canal !== "marketplaces" && canal !== "ecommerce";
-  const isMiguelImoveisPanel = isMiguelImoveis(cliente) && canal !== "google" && canal !== "imoveis" && canal !== "crm" && canal !== "marketplaces" && canal !== "ecommerce";
+  React.useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("canal");
+    if (requested === "relacionamento" && hasRelacionamento) setCanal("relacionamento");
+  }, [hasRelacionamento]);
+
+  const isHotelPanel = isHotelFazendaSaoJoao(cliente) && canal !== "google" && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce";
+  const isTertuliaPanel = isTertulia(cliente) && canal !== "google" && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce";
+  const isVarellaPanel = isVarellaMotos(cliente) && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce";
+  const isMiguelImoveisPanel = isMiguelImoveis(cliente) && canal !== "google" && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce";
   const isMiguelGooglePanel = isMiguelImoveis(cliente) && canal === "google";
   const isMiguelPanel = isDrFernandoGuena(cliente) && canal !== "google";
   const isClinicaESpaPanel = isClinicaESpa(cliente) && !isImobClient(cliente) && canal !== "google";
@@ -756,6 +772,7 @@ function formatPercentage(value: number) {
         ...(hasLinkedin ? ["linkedin"] : []),
         ...(isMiguelImoveis(cliente) ? ["imoveis"] : []),
         ...(hasCrm ? ["crm"] : []),
+        ...(hasRelacionamento ? ["relacionamento"] : []),
         "marketplaces",
         "ecommerce",
       ] as const).map((c) => (
@@ -776,7 +793,7 @@ function formatPercentage(value: number) {
               : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
           }`}
         >
-          {c === "geral" ? "Geral" : c === "meta" ? "META" : c === "google" ? "Google" : c === "linkedin" ? "LinkedIn" : c === "imoveis" ? "Imóveis" : c === "crm" ? "CRM" : c === "marketplaces" ? "Marketplaces" : c === "ecommerce" ? "E-commerce" : "Lead Scoring"}
+          {c === "geral" ? "Geral" : c === "meta" ? "META" : c === "google" ? "Google" : c === "linkedin" ? "LinkedIn" : c === "imoveis" ? "Imóveis" : c === "crm" ? "CRM" : c === "relacionamento" ? "Relacionamento" : c === "marketplaces" ? "Marketplaces" : c === "ecommerce" ? "E-commerce" : "Lead Scoring"}
         </button>
       ))}
       {hotelPilotEnabled && (
@@ -854,7 +871,7 @@ function formatPercentage(value: number) {
         {/* Linha 1: Saldo chip (esquerda) + Filtro de data (direita) */}
         <div className="flex items-center gap-2">
           {/* Saldo chip — temporariamente oculto */}
-          {false && !portalMode && canal !== "geral" && canal !== "imoveis" && canal !== "crm" && (() => {
+          {false && !portalMode && canal !== "geral" && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && (() => {
             const saldo = canal === "meta" ? saldoMeta : saldoGoogle;
             const plataforma = canal === "meta" ? "META" : "Google";
             const value = saldo?.saldo;
@@ -1058,6 +1075,15 @@ function formatPercentage(value: number) {
         />
       )}
 
+      {!analystOpen && canal === "relacionamento" && id && (
+        <RelacionamentoPanel
+          clienteId={id}
+          dataInicio={dateFilter.dataInicio ?? new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10)}
+          dataFim={dateFilter.dataFim ?? new Date().toISOString().slice(0, 10)}
+          label={dateFilter.label ?? ""}
+        />
+      )}
+
       {/* ── Marketplaces tab ── */}
       {!analystOpen && canal === "marketplaces" && id && (
         <MarketplacePanel
@@ -1088,7 +1114,7 @@ function formatPercentage(value: number) {
       )}
 
       {/* ── Default panel (KPIs, chart, weekly table, financial) ── */}
-      {!analystOpen && canal !== "imoveis" && canal !== "crm" && canal !== "marketplaces" && canal !== "ecommerce" && (canal === "geral" || subView === "dados") && !isSpecialPanel && resumo && !geralSemMidia && (
+      {!analystOpen && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce" && (canal === "geral" || subView === "dados") && !isSpecialPanel && resumo && !geralSemMidia && (
         <DefaultPanel
           resumo={
             isMiguelImoveisPanel
@@ -1192,7 +1218,7 @@ function formatPercentage(value: number) {
       )}
 
       {/* ── Financial tracking (Plano x Real) ── */}
-      {!analystOpen && canal !== "imoveis" && canal !== "crm" && canal !== "marketplaces" && canal !== "ecommerce" && canal !== "linkedin" && (canal === "geral" || subView === "dados") && financeiro && financeiro.meses && (
+      {!analystOpen && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce" && canal !== "linkedin" && (canal === "geral" || subView === "dados") && financeiro && financeiro.meses && (
         <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
           <CardHeader>
             <div className="flex flex-wrap items-start justify-between gap-4">
@@ -1356,7 +1382,7 @@ function formatPercentage(value: number) {
       )}
 
       {/* ── Comportamento GA4 (todos os painéis quando configurado) ── */}
-      {!analystOpen && canal !== "imoveis" && canal !== "crm" && canal !== "marketplaces" && canal !== "ecommerce" && (canal === "geral" || subView === "dados") && analytics?.hasAnalytics && (
+      {!analystOpen && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce" && (canal === "geral" || subView === "dados") && analytics?.hasAnalytics && (
         <AnalyticsGA4Section data={analytics} />
       )}
 

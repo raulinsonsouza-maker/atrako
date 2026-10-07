@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, X } from "lucide-react";
-import { Button, PillSelect, SegmentedControl } from "@/components/ui";
+import { ChevronDown, ChevronRight, Loader2, Plus } from "lucide-react";
+import { Button } from "@/components/ui";
 import { api, dateBR, daysUntil, num } from "@/components/relacionamento/format";
-import { CalendarSettings } from "@/components/relacionamento/CalendarSettings";
 import { ChannelIcon, RelEmpty, RelLoading, RelSection } from "@/components/relacionamento/ui";
+import { relHref } from "@/components/relacionamento/nav";
+import { STAGE_LABEL, campaignStage, statusTone } from "@/components/relacionamento/campaignStage";
 
 type CampaignRow = {
   id: string;
@@ -26,25 +28,17 @@ type CampaignRow = {
 };
 type Upcoming = { key: string; label: string; date: string; leadDays: number; hint: string | null; custom: boolean; campaignId: string | null };
 
-const CHANNEL_LABEL: Record<string, string> = { EMAIL: "E-mail", WHATSAPP: "WhatsApp", BOTH: "E-mail + WhatsApp" };
-const OPEN_STATUSES = ["IDEIA", "BRIEFING", "CRIACAO", "REVISAO", "APROVADA", "AGENDADA", "ENVIANDO"];
-
-export function statusTone(status: string): "ok" | "warn" | "bad" | undefined {
-  if (status === "ENVIADA" || status === "APROVADA" || status === "AGENDADA") return "ok";
-  if (status === "PERDIDA") return "bad";
-  if (status === "REVISAO" || status === "ENVIANDO") return "warn";
-  return undefined;
-}
+const NEXT_STEP: Record<string, string> = {
+  planejar: "Próximo passo: planejar",
+  criar: "Próximo passo: criar a mensagem",
+};
 
 export function CampaignsTab({ workspaceId }: { workspaceId: string }) {
   const router = useRouter();
   const qc = useQueryClient();
-  const [filter, setFilter] = useState<"open" | "done" | "all">("open");
   const [creating, setCreating] = useState(false);
-  const [datesOpen, setDatesOpen] = useState(false);
+  const [showCancelled, setShowCancelled] = useState(false);
   const [name, setName] = useState("");
-  const [channel, setChannel] = useState("EMAIL");
-  const [eventDate, setEventDate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const key = ["rel-campaigns", workspaceId];
   const { data, isLoading } = useQuery({
@@ -62,19 +56,22 @@ export function CampaignsTab({ workspaceId }: { workspaceId: string }) {
 
   if (isLoading || !data) return <RelLoading />;
 
-  const rows = data.campaigns.filter((c) =>
-    filter === "all" ? true : filter === "open" ? OPEN_STATUSES.includes(c.status) : !OPEN_STATUSES.includes(c.status),
-  );
+  const byStage = (stages: string[]) => data.campaigns.filter((c) => stages.includes(campaignStage(c.status)));
+  const todo = byStage(["planejar", "criar"]).sort((a, b) => (a.eventDate ?? "9").localeCompare(b.eventDate ?? "9"));
+  const scheduled = byStage(["agendar"]).sort((a, b) => (a.scheduledAt ?? "").localeCompare(b.scheduledAt ?? ""));
+  const sent = byStage(["enviada"]).sort((a, b) => (b.sentAt ?? "").localeCompare(a.sentAt ?? "")).slice(0, 12);
+  const cancelled = byStage(["cancelada"]);
+  const submit = () => name.trim() && create.mutate({ name: name.trim(), channel: "EMAIL" });
 
   return (
     <div className="flex flex-col gap-4">
       <RelSection
-        title="Datas"
-        info="Para cada data ligada, a campanha nasce sozinha com a antecedência escolhida e a equipe é avisada até a aprovação. Clique numa data para abrir ou criar a campanha."
+        title="Próximas datas"
+        info="Para cada data ligada, a campanha nasce sozinha com a antecedência escolhida. Toque numa data para abrir ou criar a campanha."
         action={
-          <button type="button" className="type-fine-print text-[var(--primary)]" onClick={() => setDatesOpen(true)}>
+          <Link href={relHref("ajustes", "datas")} className="type-fine-print text-[var(--primary)]">
             Configurar datas
-          </button>
+          </Link>
         }
       >
         {data.upcoming.length ? (
@@ -108,143 +105,132 @@ export function CampaignsTab({ workspaceId }: { workspaceId: string }) {
           <RelEmpty
             text="Nenhuma data ligada."
             action={
-              <Button variant="outline" className="px-4 py-2" onClick={() => setDatesOpen(true)}>
+              <Link href={relHref("ajustes", "datas")} className="type-caption-strong text-[var(--primary)]">
                 Escolher datas
-              </Button>
+              </Link>
             }
           />
         )}
       </RelSection>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <SegmentedControl
-          aria-label="Filtrar campanhas"
-          value={filter}
-          onChange={setFilter}
-          options={[
-            { value: "open", label: "Em andamento" },
-            { value: "done", label: "Encerradas" },
-            { value: "all", label: "Todas" },
-          ]}
-        />
-        <Button size="toolbar" onClick={() => setCreating((v) => !v)}>
-          Nova campanha
-        </Button>
-      </div>
-
-      {creating ? (
-        <section className="rel-card grid gap-3 sm:grid-cols-[1fr_auto_auto_auto] sm:items-end">
-          <label>
-            <span className="rel-label type-fine-print">Nome</span>
-            <input className="rel-input type-caption" value={name} placeholder="ex.: Lançamento coleção verão" onChange={(e) => setName(e.target.value)} />
-          </label>
-          <div>
-            <span className="rel-label type-fine-print">Canal</span>
-            <PillSelect
-              size="field"
-              value={channel}
-              onChange={setChannel}
-              options={Object.entries(CHANNEL_LABEL).map(([value, label]) => ({ value, label }))}
-              aria-label="Canal"
+        <h2 className="type-body-strong text-[var(--ink)]">Campanhas</h2>
+        {creating ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              autoFocus
+              className="rel-input type-caption w-64"
+              value={name}
+              placeholder="Nome, ex.: Coleção de verão"
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") submit();
+                if (e.key === "Escape") setCreating(false);
+              }}
             />
+            <Button size="toolbar" disabled={create.isPending || !name.trim()} onClick={submit}>
+              {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Criar
+            </Button>
+            <Button variant="ghost" size="toolbar" onClick={() => setCreating(false)}>
+              Cancelar
+            </Button>
           </div>
-          <label>
-            <span className="rel-label type-fine-print">Data (opcional)</span>
-            <input className="rel-input type-caption" type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
-          </label>
-          <Button
-            className="px-4 py-2"
-            disabled={create.isPending || !name.trim()}
-            onClick={() => create.mutate({ name, channel, eventDate: eventDate ? `${eventDate}T12:00:00` : undefined })}
-          >
-            {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Criar
+        ) : (
+          <Button size="toolbar" onClick={() => setCreating(true)}>
+            <Plus className="h-4 w-4" />
+            Nova campanha
           </Button>
-          {error ? <p className="type-caption text-[var(--ink)] sm:col-span-4">{error}</p> : null}
+        )}
+      </div>
+      {error ? <p className="rel-card type-caption text-[var(--ink)]">{error}</p> : null}
+
+      {!data.campaigns.length ? (
+        <section className="rel-card">
+          <RelEmpty text="Nenhuma campanha ainda. Crie uma ou toque numa data acima." />
         </section>
       ) : null}
 
-      <section className="rel-card">
-        {rows.length ? (
-          <div className="overflow-x-auto">
-            <table className="rel-table type-caption">
-              <thead>
-                <tr>
-                  <th>Campanha</th>
-                  <th>Etapa</th>
-                  <th>Data</th>
-                  <th>Responsável</th>
-                  <th>Destinatários</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((c) => (
-                  <tr key={c.id} data-clickable="true" onClick={() => router.push(`/relacionamento/campanhas/${c.id}`)}>
-                    <td className="text-[var(--ink)]">
-                      <span className="flex items-center gap-1.5">
-                        <ChannelIcon channel={c.channel} />
-                        {c.name}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="rel-badge type-micro-legal" data-tone={statusTone(c.status)}>
-                        {c.statusLabel}
-                      </span>
-                    </td>
-                    <td className="tabular-nums">
-                      {dateBR(c.scheduledAt ?? c.eventDate)}
-                      {c.eventDate && OPEN_STATUSES.includes(c.status) && daysUntil(c.eventDate) >= 0 ? (
-                        <span className="type-micro-legal block text-[var(--ink-muted-48)]">em {daysUntil(c.eventDate)} dias</span>
-                      ) : null}
-                    </td>
-                    <td>{c.ownerName ?? "—"}</td>
-                    <td className="tabular-nums">{c.recipientsCount != null ? num(c.recipientsCount) : "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <RelEmpty text={filter === "open" ? "Nenhuma campanha em andamento." : "Nenhuma campanha aqui."} />
-        )}
-      </section>
+      {data.campaigns.length ? (
+        <CampaignGroup title="Precisa de ação" rows={todo} empty="Tudo em dia." onOpen={(id) => router.push(`/relacionamento/campanhas/${id}`)} />
+      ) : null}
+      <CampaignGroup title="Agendadas" rows={scheduled} onOpen={(id) => router.push(`/relacionamento/campanhas/${id}`)} />
+      <CampaignGroup title="Enviadas" rows={sent} onOpen={(id) => router.push(`/relacionamento/campanhas/${id}`)} />
 
-      {datesOpen ? <DatesPanel workspaceId={workspaceId} onClose={() => setDatesOpen(false)} /> : null}
+      {cancelled.length ? (
+        <div>
+          <button type="button" className="inline-flex items-center gap-1 type-fine-print text-[var(--ink-muted-80)]" onClick={() => setShowCancelled((v) => !v)}>
+            {showCancelled ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+            Canceladas ({cancelled.length})
+          </button>
+          {showCancelled ? (
+            <div className="mt-3">
+              <CampaignGroup rows={cancelled} onOpen={(id) => router.push(`/relacionamento/campanhas/${id}`)} />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
 
-function DatesPanel({ workspaceId, onClose }: { workspaceId: string; onClose: () => void }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+function CampaignGroup({ title, rows, empty, onOpen }: { title?: string; rows: CampaignRow[]; empty?: string; onOpen: (id: string) => void }) {
+  if (!rows.length && !empty) return null;
   return (
-    <div className="panel-modal-backdrop" role="presentation" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <aside className="panel-modal" style={{ width: "min(560px, 100%)" }} role="dialog" aria-modal="true" aria-label="Datas do calendário">
-        <div className="panel-modal-header">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="type-tagline text-[var(--ink)]">Datas do calendário</h2>
-              <p className="type-fine-print mt-1 text-[var(--ink-muted-48)]">Ligue as datas e escolha a antecedência da campanha.</p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center text-[var(--ink-muted-48)] active:scale-95"
-              aria-label="Fechar"
-            >
-              <X className="h-4 w-4" strokeWidth={1.75} />
-            </button>
-          </div>
+    <section className="flex flex-col gap-2">
+      {title ? (
+        <h3 className="type-caption-strong text-[var(--ink-muted-80)]">
+          {title} {rows.length ? <span className="text-[var(--ink-muted-48)]">· {rows.length}</span> : null}
+        </h3>
+      ) : null}
+      {rows.length ? (
+        <div className="rel-campaign-grid">
+          {rows.map((c) => (
+            <CampaignCard key={c.id} c={c} onOpen={() => onOpen(c.id)} />
+          ))}
         </div>
-        <div className="panel-modal-body">
-          <div className="panel-modal-section">
-            <CalendarSettings workspaceId={workspaceId} />
-          </div>
-        </div>
-      </aside>
-    </div>
+      ) : (
+        <p className="type-fine-print text-[var(--ink-muted-48)]">{empty}</p>
+      )}
+    </section>
+  );
+}
+
+function CampaignCard({ c, onOpen }: { c: CampaignRow; onOpen: () => void }) {
+  const stage = campaignStage(c.status);
+  const on = stage === "planejar" ? 1 : stage === "criar" ? 2 : stage === "cancelada" ? 0 : 3;
+  const left = c.eventDate ? daysUntil(c.eventDate) : null;
+  const when =
+    stage === "enviada"
+      ? `Enviada ${dateBR(c.sentAt)}`
+      : stage === "agendar"
+        ? `Sai ${dateBR(c.scheduledAt, true)}`
+        : c.eventDate
+          ? `${dateBR(c.eventDate)}${left != null && left >= 0 ? ` · em ${left} dias` : ""}`
+          : "Sem data";
+  return (
+    <button type="button" className="rel-campaign-card active:scale-95" onClick={onOpen}>
+      <span className="flex items-start justify-between gap-2">
+        <span className="min-w-0">
+          <span className="type-body-strong block truncate text-[var(--ink)]">{c.name}</span>
+          <span className="flex items-center gap-1.5 type-fine-print text-[var(--ink-muted-48)]">
+            <ChannelIcon channel={c.channel} />
+            {when}
+          </span>
+        </span>
+        <span className="rel-badge type-micro-legal shrink-0" data-tone={statusTone(c.status)}>
+          {STAGE_LABEL[c.status] ?? c.statusLabel}
+        </span>
+      </span>
+      <span className="rel-campaign-steps" aria-hidden>
+        {[1, 2, 3].map((n) => (
+          <span key={n} data-on={n <= on} />
+        ))}
+      </span>
+      <span className="flex items-center justify-between gap-2 type-fine-print text-[var(--ink-muted-48)]">
+        <span>{NEXT_STEP[stage] ?? (c.recipientsCount != null ? `${num(c.recipientsCount)} contatos` : "")}</span>
+        {c.ownerName ? <span className="truncate">{c.ownerName}</span> : null}
+      </span>
+    </button>
   );
 }

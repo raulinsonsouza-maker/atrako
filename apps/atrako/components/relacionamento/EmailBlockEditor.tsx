@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, ImagePlus, Loader2, Trash2 } from "lucide-react";
 import { OptionChip, PillSelect } from "@/components/ui";
 import type { EmailBlock, EmailBlockType, EmailContent } from "@/lib/flows/types";
+import { EmailPhone } from "@/components/relacionamento/phone/MessagePhone";
 
 export type EmailPreview = { html: string; bytes?: number; clipped?: boolean; problems?: string[] };
 
@@ -72,7 +73,7 @@ export function EmailBlockEditor({
   const [pvLoading, setPvLoading] = useState(false);
   const [pvError, setPvError] = useState<string | null>(null);
   const [uploading, setUploading] = useState<number | null>(null);
-  const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
+  const [device, setDevice] = useState<"desktop" | "mobile">("mobile");
   const focused = useRef<FieldRef | null>(null);
   const previewRef = useRef(preview);
   previewRef.current = preview;
@@ -334,7 +335,7 @@ export function EmailBlockEditor({
                   ) : null}
                 </div>
               ) : b.type === "signature" ? (
-                <span className="type-fine-print text-[var(--ink-muted-48)]">Assinatura e rodapé vêm do tema (Conteúdo → E-mail).</span>
+                <span className="type-fine-print text-[var(--ink-muted-48)]">Assinatura e rodapé vêm do visual do e-mail (Ajustes › Visual do e-mail).</span>
               ) : null}
             </li>
           ))}
@@ -354,11 +355,11 @@ export function EmailBlockEditor({
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2">
           <div className="flex gap-1.5">
-            <OptionChip className="px-3 py-1.5" selected={device === "desktop"} onClick={() => setDevice("desktop")}>
-              Computador
-            </OptionChip>
             <OptionChip className="px-3 py-1.5" selected={device === "mobile"} onClick={() => setDevice("mobile")}>
               Celular
+            </OptionChip>
+            <OptionChip className="px-3 py-1.5" selected={device === "desktop"} onClick={() => setDevice("desktop")}>
+              Computador
             </OptionChip>
           </div>
           {pvLoading ? <Loader2 className="h-4 w-4 animate-spin text-[var(--ink-muted-48)]" /> : null}
@@ -370,14 +371,12 @@ export function EmailBlockEditor({
           <p className="type-fine-print text-[var(--ink)]">E-mail grande ({Math.round((pv.bytes ?? 0) / 1024)} KB): o Gmail corta acima de ~100 KB.</p>
         ) : null}
         {pvError ? <p className="type-fine-print text-[var(--ink)]">{pvError}</p> : null}
-        <div className="flex justify-center">
-          <iframe
-            title="Prévia do e-mail"
-            className="rel-preview-frame"
-            style={device === "mobile" ? { maxWidth: 390 } : undefined}
-            sandbox=""
-            srcDoc={pv?.html ?? ""}
-          />
+        <div className="flex justify-center lg:sticky lg:top-4">
+          {device === "mobile" ? (
+            <EmailPhone subject={value.subject} html={pv?.html ?? null} error={pvError} />
+          ) : (
+            <iframe title="Prévia do e-mail" className="rel-preview-frame" sandbox="" srcDoc={pv?.html ?? ""} />
+          )}
         </div>
         <p className="type-micro-legal text-[var(--ink-muted-48)]">Prévia com dados de exemplo (itens reais da loja quando houver).</p>
       </div>

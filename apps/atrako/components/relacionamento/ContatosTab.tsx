@@ -5,28 +5,26 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Download, Loader2, Upload } from "lucide-react";
 import { Button, Switch } from "@/components/ui";
 import { api, num, pct } from "@/components/relacionamento/format";
-import { useOverview } from "@/components/relacionamento/overview";
-import type { RelPeriod } from "@/components/relacionamento/period";
+import type { Overview } from "@/components/relacionamento/overview";
 import { SuppressionList } from "@/components/relacionamento/DeliveriesTab";
 import { RelEmpty, RelLoading, RelSection } from "@/components/relacionamento/ui";
 
 type Audience = { key: string; label: string; description: string; total: number; withEmail: number; withPhone: number };
 type ImportStats = { total: number; imported: number; invalidEmail: number; invalidPhone: number; skipped: number; birthdays: number; consented: number };
 
-export function ContatosTab({ workspaceId, period }: { workspaceId: string; period: RelPeriod }) {
+/** Ferramentas de contatos (Ajustes): importar, públicos para anúncios e descadastrados. */
+export function ContatosAjustes({ workspaceId }: { workspaceId: string }) {
   return (
     <div className="flex flex-col gap-4">
-      <Base workspaceId={workspaceId} period={period} />
-      <AdAudiences workspaceId={workspaceId} />
       <ImportContacts workspaceId={workspaceId} />
+      <AdAudiences workspaceId={workspaceId} />
       <SuppressionList workspaceId={workspaceId} />
     </div>
   );
 }
 
-function Base({ workspaceId, period }: { workspaceId: string; period: RelPeriod }) {
-  const { data } = useOverview(workspaceId, period);
-  if (!data) return <RelLoading compact />;
+/** Base por etapa + aniversários (análise, na Central de clientes). */
+export function BaseCards({ data }: { data: Overview }) {
   const life = [...data.lifecycles].sort((a, b) => b.count - a.count);
   const total = life.reduce((s, l) => s + l.count, 0);
   const max = Math.max(1, ...life.map((l) => l.count));
@@ -36,7 +34,7 @@ function Base({ workspaceId, period }: { workspaceId: string; period: RelPeriod 
     <div className="rel-grid-2">
       <RelSection
         title="Base por etapa"
-        info="Calculado toda noite a partir dos pedidos: novos, recorrentes, em risco, inativos…"
+        info="Atualiza a cada pedido pago e é recalculado toda noite. Contatos sem compra entram como Lead no cálculo da noite."
         action={<span className="type-fine-print tabular-nums text-[var(--ink-muted-48)]">{num(total)}</span>}
       >
         {life.length ? (
@@ -58,7 +56,7 @@ function Base({ workspaceId, period }: { workspaceId: string; period: RelPeriod 
         )}
       </RelSection>
 
-      <RelSection title="Aniversários" info="Colete no formulário (campo Aniversário) ou importe uma lista abaixo. Alimenta o fluxo de aniversário.">
+      <RelSection title="Aniversários" info="Colete no formulário (campo Aniversário) ou importe uma lista em Relacionamento › Ajustes › Contatos. Alimenta o fluxo de aniversário.">
         <div className="space-y-3">
           <div>
             <p className="type-tagline tabular-nums text-[var(--ink)]">{pct(b.withDate, b.total)}</p>

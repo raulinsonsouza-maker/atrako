@@ -26,24 +26,22 @@ type Rule = {
 };
 
 const RULES: Rule[] = [
-  { day: 15, unless: "CRIACAO", title: (_n, l) => `Faltam 15 dias para ${l}: briefing e copy precisam começar`, severity: "aviso", to: "owner" },
+  { day: 15, unless: "CRIACAO", title: (_n, l) => `Faltam 15 dias para ${l}: hora de planejar a campanha`, severity: "aviso", to: "owner" },
   {
     day: 10,
-    unless: "APROVADA",
+    unless: "AGENDADA",
     onlyWa: true,
-    title: () => "Envie hoje o template de WhatsApp para aprovação da Meta",
-    body: "A revisão leva até 24h e o template novo passa por pacing — ele precisa estar aprovado até D-7.",
+    title: () => "Crie hoje o modelo de WhatsApp da campanha",
+    body: "A Meta leva até 24h para aprovar o modelo e o modelo novo passa por pacing — ele precisa estar aprovado até D-7.",
     severity: "aviso",
     to: "owner",
   },
-  { day: 10, unless: "REVISAO", title: (n) => `"${n}": a copy deve estar em revisão`, severity: "aviso", to: "owner" },
-  { day: 7, unless: "REVISAO", title: (n) => `"${n}" precisa estar em revisão`, severity: "aviso", to: "owner_approver" },
-  { day: 5, unless: "APROVADA", title: (n) => `Aprovação pendente: "${n}"`, severity: "aviso", to: "approver" },
-  { day: 3, unless: "APROVADA", title: (n) => `Urgente: "${n}" ainda não foi aprovada`, severity: "urgente", to: "admins" },
+  { day: 7, unless: "AGENDADA", title: (n) => `"${n}": falta criar e agendar`, severity: "aviso", to: "owner" },
+  { day: 3, unless: "AGENDADA", title: (n) => `Urgente: "${n}" ainda não foi agendada`, severity: "urgente", to: "admins" },
   {
     day: 1,
-    unless: "APROVADA",
-    title: (n) => `Última chance: sem aprovação, "${n}" não sai amanhã`,
+    unless: "AGENDADA",
+    title: (n) => `Última chance: agende "${n}" hoje ou ela não sai`,
     severity: "urgente",
     to: "all",
   },
@@ -123,15 +121,15 @@ export async function runCampaignReminders(now = new Date()) {
     if (!target) continue;
     const daysTo = Math.ceil((target.getTime() - now.getTime()) / DAY);
 
-    // Data passou sem aprovação → Perdida
-    if (daysTo < 0 && !atLeast(c.status, "APROVADA")) {
+    // Data passou sem agendamento → Cancelada
+    if (daysTo < 0 && !atLeast(c.status, "AGENDADA")) {
       await prisma.messageCampaign.update({ where: { id: c.id }, data: { status: "PERDIDA" } });
       await prisma.messageCampaignComment.create({
-        data: { campaignId: c.id, kind: "SISTEMA", body: "A data passou sem aprovação — campanha não foi enviada." },
+        data: { campaignId: c.id, kind: "SISTEMA", body: "A data passou sem agendamento — campanha não foi enviada." },
       });
       await sendTo(c, "all", {
         type: "campaign.lost",
-        title: `"${c.name}" não foi enviada: a data passou sem aprovação`,
+        title: `"${c.name}" não foi enviada: a data passou sem agendamento`,
         severity: "urgente",
         key: `campaign:${c.id}:lost`,
       });
@@ -209,7 +207,7 @@ export async function runHealthChecks(now = new Date()) {
           type: "email.reputation",
           title: "Bounce ou spam acima do limite",
           body: `Últimas 24h: ${bounced} bounces e ${complained} reclamações em ${sent24} envios. Limpe a base e reduza campanhas para proteger o domínio.`,
-          href: "/relacionamento?tab=desempenho&sub=envios",
+          href: `/clientes/${clienteId}?canal=relacionamento`,
           severity: "urgente",
           dedupeKey: `email-reputation:${today}`,
         });

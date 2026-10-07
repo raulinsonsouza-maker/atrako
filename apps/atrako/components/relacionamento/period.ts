@@ -14,6 +14,16 @@ export type RelPeriod = {
   label: string;
 };
 
+export function relPeriod(dataInicio: string, dataFim: string, label: string): RelPeriod {
+  return { qs: new URLSearchParams({ dataInicio, dataFim }).toString(), dataInicio, dataFim, label };
+}
+
+/** Janela fixa (telas de operação não têm filtro de data). */
+export function lastDaysPeriod(days = 30): RelPeriod {
+  const r = resolveDateRange({ preset: `${days}d` as DateRangeValue["preset"], customInicio: "", customFim: "" });
+  return relPeriod(r.dataInicio ?? "", r.dataFim ?? "", r.label);
+}
+
 /** Período único do Relacionamento — mesmo filtro do CRM/dashboard, lembrado no navegador. */
 export function useRelPeriod() {
   const [value, setValue] = useState<DateRangeValue>(DEFAULT_RANGE);

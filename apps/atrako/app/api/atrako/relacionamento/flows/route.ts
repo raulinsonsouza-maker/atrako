@@ -8,6 +8,8 @@ import { previewEmail } from "@/lib/flows/preview";
 import { isEmailContent, type WhatsAppContent } from "@/lib/flows/types";
 import { sampleContact } from "@/lib/flows/campaigns";
 import { sendEmailMessage, sendWhatsAppMessage } from "@/lib/flows/send";
+import { WA_TEMPLATE_LIBRARY } from "@/lib/flows/wa-templates";
+import { WA_EXAMPLE_PARAMS, waPreviewFromComponents, waPreviewFromDraft, type WaPreview } from "@/lib/flows/wa-preview";
 
 export async function GET(request: NextRequest) {
   const g = await gate(request);
@@ -42,8 +44,47 @@ export async function GET(request: NextRequest) {
   ]);
 
   const statsByStep = new Map(stepStats.map((s) => [s.stepId, s]));
+
+  const [store, tplRows] = await Promise.all([
+    prisma.cliente.findUnique({ where: { id: ws }, select: { nome: true, logoUrl: true } }),
+    prisma.waTemplateRef.findMany({
+      where: { clienteId: ws, status: { notIn: ["DELETED", "PENDING_DELETION"] } },
+      select: { id: true, status: true, purpose: true, version: true, components: true },
+      orderBy: { version: "desc" },
+    }),
+  ]);
+  const params = { ...WA_EXAMPLE_PARAMS, store_name: store?.nome || WA_EXAMPLE_PARAMS.store_name };
+  const waPreviewFor = (wa: WhatsAppContent): WaPreview | null => {
+    const ref = wa.templateRefId
+      ? tplRows.find((t) => t.id === wa.templateRefId)
+      : wa.purpose
+        ? tplRows.find((t) => t.purpose === wa.purpose && t.status === "APPROVED")
+        : undefined;
+    if (ref?.components) return waPreviewFromComponents(ref.components, params);
+    const def = wa.purpose ? WA_TEMPLATE_LIBRARY.find((d) => d.purpose === wa.purpose) : undefined;
+    if (def) {
+      return waPreviewFromComponents(
+        [
+          ...(def.imageHeader || def.carouselCards ? [{ type: "HEADER", format: "IMAGE" }] : []),
+          { type: "BODY", text: def.body.proximo },
+          ...(def.footer ? [{ type: "FOOTER", text: def.footer }] : []),
+          { type: "BUTTONS", buttons: def.buttons },
+        ],
+        params,
+      );
+    }
+    return wa.previewBody ? waPreviewFromDraft({ body: wa.previewBody }, params) : null;
+  };
+  const waStatusFor = (wa: WhatsAppContent) => {
+    const ref = wa.templateRefId
+      ? tplRows.find((t) => t.id === wa.templateRefId)
+      : tplRows.find((t) => t.purpose === wa.purpose && t.status === "APPROVED") ?? tplRows.find((t) => t.purpose === wa.purpose);
+    return ref?.status ?? null;
+  };
+
   return NextResponse.json({
     days,
+    store: { name: store?.nome ?? "Sua loja", logoUrl: store?.logoUrl ?? null },
     flows: flows.map((f) => {
       const enr = active.filter((a) => a.flowId === f.id);
       const byStatus: Record<string, number> = {};
@@ -75,7 +116,12 @@ export async function GET(request: NextRequest) {
         steps: f.steps.map((s) => {
           const st = statsByStep.get(s.id);
           const content = s.content as Record<string, unknown>;
+          const live = (s.draftContent ?? s.content) as Record<string, unknown>;
           return {
+            preview:
+              s.channel === "EMAIL"
+                ? { kind: "email" as const, subject: String(live.subject ?? ""), preheader: String(live.preheader ?? "") }
+                : { kind: "whatsapp" as const, wa: waPreviewFor(live as WhatsAppContent), templateStatus: waStatusFor(live as WhatsAppContent) },
             id: s.id,
             position: s.position,
             delayMinutes: s.delayMinutes,

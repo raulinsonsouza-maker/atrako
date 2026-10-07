@@ -35,7 +35,7 @@ export async function GET(request: NextRequest, ctx: Ctx) {
   if (!g.ok) return g.response;
   const c = await load(g.workspaceId, id);
   if (!c) return bad("Campanha não encontrada", 404);
-  const [checklist, estimate, comments, members, templates, sample, results, actor] = await Promise.all([
+  const [checklist, estimate, comments, members, templates, sample, results, actor, store] = await Promise.all([
     campaignChecklist(c),
     estimateCampaign(g.workspaceId, c),
     prisma.messageCampaignComment.findMany({ where: { campaignId: c.id }, orderBy: { createdAt: "asc" }, take: 200 }),
@@ -52,8 +52,10 @@ export async function GET(request: NextRequest, ctx: Ctx) {
     audienceSample(g.workspaceId, c.audience as CampaignAudience, 10),
     ["ENVIANDO", "ENVIADA"].includes(c.status) ? campaignResults(c.id) : Promise.resolve(null),
     flowActor(g.workspaceId),
+    prisma.cliente.findUnique({ where: { id: g.workspaceId }, select: { nome: true, logoUrl: true } }),
   ]);
   return NextResponse.json({
+    store: { name: store?.nome ?? "Sua loja", logoUrl: store?.logoUrl ?? null },
     campaign: {
       ...c,
       statusLabel: CAMPAIGN_STATUS_LABELS[c.status as keyof typeof CAMPAIGN_STATUS_LABELS] ?? c.status,
@@ -261,7 +263,7 @@ export async function POST(request: NextRequest, ctx: Ctx) {
   }
 
   if (action === "delete") {
-    if (!["IDEIA", "PERDIDA", "BRIEFING"].includes(c.status)) return bad("Só campanhas em ideia, briefing ou perdidas podem ser excluídas");
+    if (["AGENDADA", "ENVIANDO", "ENVIADA"].includes(c.status)) return bad("Cancele o agendamento antes de excluir; campanhas enviadas ficam no histórico");
     await prisma.messageCampaign.delete({ where: { id: c.id } });
     return NextResponse.json({ ok: true });
   }

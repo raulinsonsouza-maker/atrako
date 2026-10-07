@@ -5,25 +5,41 @@ import { useState } from "react";
 import { Link2, X } from "lucide-react";
 import { BackLink } from "@/components/ui/back-link";
 
+/**
+ * Formulário à esquerda + aparelho à direita (Social e Relacionamento).
+ * `embedded`: dentro de uma página com rolagem própria (card com borda, sem altura fixa).
+ */
 export function WizardLayout({
   form,
   previewHeader,
   preview,
+  embedded = false,
+  wideForm = false,
 }: {
   form: ReactNode;
-  previewHeader: ReactNode;
+  previewHeader?: ReactNode;
   preview: ReactNode;
+  embedded?: boolean;
+  wideForm?: boolean;
 }) {
   return (
-    <div className="symbius-light symbius-wizard-layout flex h-full min-h-0 flex-col overflow-hidden bg-[#eceef2] text-zinc-900 lg:flex-row">
-      <div className="w-full shrink-0 overflow-y-auto border-b border-zinc-200/80 bg-white lg:h-full lg:max-h-full lg:w-[min(100%,400px)] lg:border-b-0 lg:border-r lg:shadow-[1px_0_0_rgba(0,0,0,0.04)]">
+    <div
+      className={`symbius-light symbius-wizard-layout flex min-h-0 flex-col bg-[var(--canvas-parchment)] text-[var(--ink)] lg:flex-row ${
+        embedded ? "overflow-hidden rounded-[var(--radius-lg)] border border-[var(--hairline)]" : "h-full overflow-hidden"
+      }`}
+    >
+      <div
+        className={`w-full shrink-0 border-b border-[var(--hairline)] bg-[var(--canvas)] lg:border-b-0 lg:border-r ${
+          embedded ? "" : "overflow-y-auto lg:h-full lg:max-h-full"
+        } ${wideForm ? "lg:w-[min(100%,560px)] xl:w-[min(100%,640px)]" : "lg:w-[min(100%,400px)]"}`}
+      >
         <div className="px-5 py-5 md:px-6 md:py-6">{form}</div>
       </div>
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#eceef2] lg:h-full">
-        <div className="flex shrink-0 items-center justify-between border-b border-zinc-200/70 bg-[#eceef2] px-5 py-3.5 md:px-8">
-          {previewHeader}
-        </div>
-        <div className="flex flex-1 items-start justify-center overflow-y-auto px-4 py-6 md:px-8 md:py-8">
+      <div className={`flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--canvas-parchment)] ${embedded ? "" : "overflow-hidden lg:h-full"}`}>
+        {previewHeader ? (
+          <div className="flex shrink-0 items-center justify-between border-b border-[var(--hairline)] px-5 py-3.5 md:px-8">{previewHeader}</div>
+        ) : null}
+        <div className={`flex flex-1 items-start justify-center px-4 py-6 md:px-8 md:py-8 ${embedded ? "lg:sticky lg:top-0" : "overflow-y-auto"}`}>
           {preview}
         </div>
       </div>
@@ -64,10 +80,10 @@ export function WizardFieldLabel({ children }: { children: ReactNode }) {
 }
 
 export const wizardInputCls =
-  "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] leading-snug text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#0084ff] focus:ring-2 focus:ring-[#0084ff]/15";
+  "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] leading-snug text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]";
 
 export const wizardTextareaCls =
-  "min-h-[88px] w-full resize-y rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] leading-relaxed text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#0084ff] focus:ring-2 focus:ring-[#0084ff]/15";
+  "min-h-[88px] w-full resize-y rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] leading-relaxed text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]";
 
 export function ProBadge() {
   return (
@@ -81,11 +97,11 @@ function RadioDot({ selected }: { selected: boolean }) {
   return (
     <span
       className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 transition ${
-        selected ? "border-[#0084ff]" : "border-zinc-300 bg-white"
+        selected ? "border-[var(--primary)]" : "border-zinc-300 bg-white"
       }`}
     >
       {selected ? (
-        <span className="h-2 w-2 rounded-full bg-[#0084ff]" />
+        <span className="h-2 w-2 rounded-full bg-[var(--primary)]" />
       ) : null}
     </span>
   );
@@ -112,7 +128,7 @@ export function RadioOption({
         disabled
           ? "border-zinc-200/80 bg-zinc-50/80 opacity-55"
           : selected
-            ? "border-[#0084ff]/35 bg-[#f0f7ff] shadow-[inset_0_0_0_1px_rgba(0,132,255,0.08)]"
+            ? "border-[var(--primary)] bg-[var(--canvas-parchment)]"
             : "border-zinc-200 bg-white hover:border-zinc-300"
       }`}
     >
@@ -128,7 +144,7 @@ export function RadioOption({
           <RadioDot selected={selected && !disabled} />
           <span className="min-w-0 flex-1">
             <span className="flex min-h-[18px] items-center justify-between gap-2">
-              <span className="text-[13px] font-medium leading-snug text-zinc-800">
+              <span className="text-[13px] font-normal leading-snug text-zinc-800">
                 {title}
               </span>
               {pro ? <ProBadge /> : null}
@@ -179,11 +195,11 @@ export function ToggleRow({
         disabled={disabled}
         onClick={() => !disabled && onChange(!checked)}
         className={`relative h-[22px] w-[38px] shrink-0 rounded-full transition ${
-          checked ? "bg-[#0084ff]" : "bg-zinc-300"
+          checked ? "bg-[var(--primary)]" : "bg-zinc-300"
         } ${disabled ? "cursor-not-allowed" : ""}`}
       >
         <span
-          className={`absolute top-[2px] h-[18px] w-[18px] rounded-full bg-white shadow-sm transition ${
+          className={`absolute top-[2px] h-[18px] w-[18px] rounded-full bg-white transition ${
             checked ? "left-[18px]" : "left-[2px]"
           }`}
         />
@@ -203,7 +219,7 @@ export function TagChip({
     <button
       type="button"
       onClick={onClick}
-      className="rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-medium text-zinc-600 transition hover:border-[#0084ff]/40 hover:bg-[#f0f7ff] hover:text-[#0084ff]"
+      className="rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-normal text-zinc-600 transition hover:border-[var(--primary)] hover:bg-[var(--canvas-parchment)] hover:text-[var(--primary)]"
     >
       {children}
     </button>
@@ -224,7 +240,7 @@ export function ActivateButton({
       type="button"
       disabled={loading}
       onClick={onClick}
-      className="rounded-lg bg-[#0084ff] px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:bg-[#0073e6] disabled:opacity-60"
+      className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[var(--primary-focus)] disabled:opacity-60"
     >
       {loading ? "Ativando…" : label}
     </button>
@@ -275,7 +291,7 @@ export function WizardLinkButtonEditor({
           onClick={openModal}
           className="flex w-full items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-zinc-50/80 px-3.5 py-2.5 text-left transition hover:border-zinc-300 hover:bg-zinc-50"
         >
-          <span className="truncate text-[13px] font-medium text-zinc-800">
+          <span className="truncate text-[13px] font-normal text-zinc-800">
             {buttonLabel.trim() || "Acessar"}
           </span>
           <Link2 className="h-4 w-4 shrink-0 text-zinc-400" strokeWidth={1.75} />
@@ -285,7 +301,7 @@ export function WizardLinkButtonEditor({
       <button
         type="button"
         onClick={openModal}
-        className="flex w-full items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-white px-3 py-2.5 text-[13px] font-medium text-zinc-600 transition hover:border-[#0084ff]/40 hover:bg-[#f0f7ff] hover:text-[#0084ff]"
+        className="flex w-full items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-white px-3 py-2.5 text-[13px] font-normal text-zinc-600 transition hover:border-[var(--primary)] hover:bg-[var(--canvas-parchment)] hover:text-[var(--primary)]"
       >
         + Adicionar um link
       </button>
@@ -296,7 +312,7 @@ export function WizardLinkButtonEditor({
           onClick={closeModal}
         >
           <div
-            className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl"
+            className="w-full max-w-md overflow-hidden rounded-2xl bg-white"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3 border-b border-zinc-100 px-5 py-4">
@@ -340,14 +356,14 @@ export function WizardLinkButtonEditor({
               <button
                 type="button"
                 onClick={closeModal}
-                className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-[13px] font-medium text-zinc-700 transition hover:bg-zinc-50"
+                className="rounded-[var(--radius-xs)] border border-zinc-200 bg-white px-4 py-2 text-[13px] font-normal text-zinc-700 transition hover:bg-zinc-50"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={save}
-                className="rounded-lg bg-[#0084ff] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[#0073e6]"
+                className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[var(--primary-focus)]"
               >
                 Salvar
               </button>

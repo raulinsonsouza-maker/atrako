@@ -34,15 +34,15 @@ export const CAMPAIGN_STATUSES = [
 export type CampaignStatus = (typeof CAMPAIGN_STATUSES)[number];
 
 export const CAMPAIGN_STATUS_LABELS: Record<CampaignStatus, string> = {
-  IDEIA: "Ideia",
-  BRIEFING: "Briefing",
-  CRIACAO: "Copy e criação",
-  REVISAO: "Revisão",
-  APROVADA: "Aprovada",
+  IDEIA: "Planejando",
+  BRIEFING: "Planejando",
+  CRIACAO: "Criando",
+  REVISAO: "Criando",
+  APROVADA: "Criando",
   AGENDADA: "Agendada",
   ENVIANDO: "Enviando",
   ENVIADA: "Enviada",
-  PERDIDA: "Perdida",
+  PERDIDA: "Cancelada",
 };
 
 export type CampaignAudience = {
@@ -246,6 +246,8 @@ export type CampaignActor = { memberId: string | null; role: string | null; name
 
 const canApprove = (a: CampaignActor) => a.platform || a.role === "OWNER" || a.role === "ADMIN";
 
+const SCHEDULABLE = ["IDEIA", "BRIEFING", "CRIACAO", "REVISAO", "APROVADA"];
+
 export async function transitionCampaign(
   workspaceId: string,
   campaignId: string,
@@ -268,7 +270,7 @@ export async function transitionCampaign(
       next = "BRIEFING";
       break;
     case "start_creation":
-      if (!["IDEIA", "BRIEFING"].includes(c.status)) return { ok: false, error: "Etapa inválida" };
+      if (!["IDEIA", "BRIEFING", "PERDIDA"].includes(c.status)) return { ok: false, error: "Etapa inválida" };
       next = "CRIACAO";
       break;
     case "send_review":
@@ -294,21 +296,35 @@ export async function transitionCampaign(
       break;
     }
     case "schedule": {
-      if (c.status !== "APROVADA") return { ok: false, error: "Aprove a campanha antes de agendar" };
+      // Sem etapa de aprovação: quem agenda (com o checklist completo) é quem aprova
+      if (!SCHEDULABLE.includes(c.status)) return { ok: false, error: "Esta campanha não pode ser agendada agora" };
       const at = opts?.scheduledAt ? new Date(opts.scheduledAt) : c.scheduledAt;
       if (!at || Number.isNaN(at.getTime())) return { ok: false, error: "Defina data e hora do envio" };
+      if (at.getTime() < Date.now() - 5 * 60_000) return { ok: false, error: "Escolha um horário no futuro" };
+      const list = await campaignChecklist(c);
+      const pending = list.filter((i) => !i.ok);
+      if (pending.length) return { ok: false, error: `Falta resolver: ${pending.map((p) => p.label).join("; ")}` };
       const count = await audienceCount(workspaceId, parseAudience(c.audience), c.channel);
       if (opts?.confirmCount !== count.reachable) {
-        return { ok: false, error: `Confirme digitando o total de destinatários (${count.reachable})` };
+        return { ok: false, error: `O público mudou para ${count.reachable} contatos. Confira e confirme de novo.` };
       }
       next = "AGENDADA";
       data.scheduledAt = at;
       data.recipientsCount = count.reachable;
+      data.approvedAt = new Date();
+      data.approvedByMemberId = actor.memberId;
+      await comment(
+        "APROVACAO",
+        `Agendada${actor.name ? ` por ${actor.name}` : ""} para ${at.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" })} · ${count.reachable} contatos`,
+      );
       break;
     }
     case "unschedule":
       if (c.status !== "AGENDADA") return { ok: false, error: "Campanha não está agendada" };
-      next = "APROVADA";
+      next = "CRIACAO";
+      data.approvedAt = null;
+      data.approvedByMemberId = null;
+      await comment("SISTEMA", opts?.comment || "Agendamento cancelado");
       break;
     case "cancel":
       if (["ENVIANDO", "ENVIADA"].includes(c.status)) return { ok: false, error: "Campanha já saiu" };
@@ -332,16 +348,22 @@ export async function transitionCampaign(
   return { ok: true, status: next };
 }
 
-/** Edição de conteúdo depois de aprovada volta para Revisão. */
+/** Editar o conteúdo de uma campanha agendada desagenda (volta para Criar). */
 export async function touchCampaignContent(campaignId: string) {
   const c = await prisma.messageCampaign.findUnique({ where: { id: campaignId }, select: { status: true } });
+  const unschedule = c && ["APROVADA", "AGENDADA"].includes(c.status);
   await prisma.messageCampaign.update({
     where: { id: campaignId },
     data: {
       contentUpdatedAt: new Date(),
-      ...(c && ["APROVADA", "AGENDADA"].includes(c.status) ? { status: "REVISAO", approvedAt: null } : {}),
+      ...(unschedule ? { status: "CRIACAO", approvedAt: null, approvedByMemberId: null } : {}),
     },
   });
+  if (unschedule && c.status === "AGENDADA") {
+    await prisma.messageCampaignComment.create({
+      data: { campaignId, kind: "SISTEMA", body: "Conteúdo editado: agendamento cancelado. Agende de novo para enviar." },
+    });
+  }
 }
 
 // --------------------------------------------------------------------------- estimativa

@@ -45,12 +45,13 @@ export type Overview = {
     jobs: Array<{ job: string; lastAt: string | null; ok: boolean | null; stale: boolean; recentFailures: number }>;
   };
   attention: AttentionItem[];
+  setup: { emailConnected: boolean; themePublished: boolean; flowsActive: boolean; datesEnabled: boolean; whatsappConnected: boolean };
   upcoming: Array<{ key: string; label: string; date: string; leadDays: number; hint: string | null; campaign: { id: string; status: string } | null }>;
   birthdays: { withDate: number; total: number; thisMonth: number };
   lifecycles: Array<{ lifecycle: string; label: string; count: number }>;
 };
 
-/** Uma consulta para Início, Desempenho e Contatos (mesma chave = mesmo cache). */
+/** Uma consulta para Início e o painel do dashboard (mesma chave = mesmo cache). */
 export function useOverview(workspaceId: string, period: RelPeriod) {
   return useQuery({
     queryKey: ["rel-overview", workspaceId, period.qs],
@@ -59,17 +60,7 @@ export function useOverview(workspaceId: string, period: RelPeriod) {
   });
 }
 
-export const CAMPAIGN_STATUS: Record<string, string> = {
-  IDEIA: "Ideia",
-  BRIEFING: "Briefing",
-  CRIACAO: "Criação",
-  REVISAO: "Revisão",
-  APROVADA: "Aprovada",
-  AGENDADA: "Agendada",
-  ENVIANDO: "Enviando",
-  ENVIADA: "Enviada",
-  PERDIDA: "Perdida",
-};
+export { STAGE_LABEL as CAMPAIGN_STATUS } from "@/components/relacionamento/campaignStage";
 
 /** Rótulos amigáveis para a qualidade do número na Meta. */
 export const WA_QUALITY: Record<string, string> = { GREEN: "alta", YELLOW: "média", RED: "baixa", UNKNOWN: "—" };

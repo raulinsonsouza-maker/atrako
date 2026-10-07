@@ -83,7 +83,7 @@ function useDebounced<T>(value: T, ms = 350) {
   return v;
 }
 
-/** Histórico de envios (Desempenho → Histórico), recortado pelo período global. */
+/** Histórico de envios (Central de clientes › Relacionamento), recortado pelo período do dashboard. */
 export function DeliveryList({ workspaceId, period }: { workspaceId: string; period: RelPeriod }) {
   const qc = useQueryClient();
   const [channel, setChannel] = useState("");

@@ -160,6 +160,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
     },
     enabled: Boolean(workspaceId),
     placeholderData: keepPreviousData,
+    refetchInterval: 180_000,
   });
 
   const isMobile = useIsMobile();

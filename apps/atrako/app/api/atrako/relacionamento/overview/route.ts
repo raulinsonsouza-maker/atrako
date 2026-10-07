@@ -193,8 +193,28 @@ export async function GET(request: NextRequest) {
       tab: "fluxos",
     });
   }
-  for (const c of campaigns.filter((c) => c.status === "REVISAO")) {
-    attention.push({ key: `review-${c.id}`, tone: "warn", title: `Aprovar ${c.name}`, detail: "Campanha em revisão", href: `/relacionamento/campanhas/${c.id}` });
+  if (!resend) {
+    attention.push({ key: "email-off", tone: "bad", title: "Conectar o e-mail", detail: "Sem isso nenhum fluxo ou campanha sai", href: "/config/conexoes" });
+  } else {
+    if (resend.domainStatus !== "verified") {
+      attention.push({ key: "email-domain", tone: "warn", title: "Verificar o domínio do e-mail", detail: resend.domain ?? "Configure o DNS do domínio", href: "/config/conexoes" });
+    }
+    if (!resend.webhookSecret) {
+      attention.push({ key: "email-webhook", tone: "warn", title: "Ligar os eventos do e-mail", detail: "Sem eles não aparecem aberturas e cliques", href: "/config/conexoes" });
+    }
+  }
+  const emailKpi = byChannel.find((c) => c.channel === "EMAIL");
+  const sentEmail = emailKpi?._count.sentAt ?? 0;
+  if (sentEmail >= 50 && ((emailKpi?._count.bouncedAt ?? 0) / sentEmail > 0.04 || (emailKpi?._count.complainedAt ?? 0) / sentEmail > 0.001)) {
+    attention.push({ key: "email-reputation", tone: "bad", title: "Bounce ou spam acima do limite", detail: "Limpe a base e reduza campanhas", href: `/clientes/${ws}?canal=relacionamento` });
+  }
+  const waQuality = (waMeta as Record<string, unknown>).phoneQuality;
+  if (waConn && waQuality === "RED") {
+    attention.push({ key: "wa-quality", tone: "bad", title: "Qualidade do WhatsApp baixa", detail: "Reduza envios de marketing e revise os modelos", tab: "ajustes", sub: "whatsapp" });
+  }
+  const jobsDown = jobs.filter((j) => j.stale || j.ok === false);
+  if (jobsDown.length) {
+    attention.push({ key: "jobs", tone: "bad", title: "Envios automáticos atrasados", detail: "As mensagens saem quando a rotina voltar; avise o suporte se persistir", tab: "fluxos" });
   }
   for (const d of upcoming) {
     const left = Math.ceil((new Date(d.date).getTime() - Date.now()) / DAY);
@@ -209,7 +229,7 @@ export async function GET(request: NextRequest) {
     }
   }
   if (!theme?.publishedAt) {
-    attention.push({ key: "theme", tone: "warn", title: "Publicar o tema do e-mail", detail: "Logo, cores e assinatura", tab: "conteudo", sub: "email" });
+    attention.push({ key: "theme", tone: "warn", title: "Publicar o tema do e-mail", detail: "Logo, cores e assinatura", tab: "ajustes", sub: "email" });
   }
   const cartActive = flows.some((f) => f.trigger === "cart_abandoned" && f.status === "ACTIVE");
   const checklist = ((settings?.messagingPrefs as { nativeChecklist?: Record<string, boolean> } | null)?.nativeChecklist ?? {}) as Record<string, boolean>;
@@ -295,6 +315,13 @@ export async function GET(request: NextRequest) {
       jobs,
     },
     attention: attention.slice(0, 8),
+    setup: {
+      emailConnected: Boolean(resend),
+      themePublished: Boolean(theme?.publishedAt),
+      flowsActive: flows.some((f) => f.status === "ACTIVE"),
+      datesEnabled: dates.length > 0,
+      whatsappConnected: Boolean(waConn),
+    },
     upcoming,
     campaigns,
     birthdays: { ...bdays, thisMonth: birthdaysThisMonth.length },

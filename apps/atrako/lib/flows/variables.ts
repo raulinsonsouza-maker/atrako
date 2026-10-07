@@ -45,10 +45,17 @@ export function variableValues(ctx: Omit<RenderContext, "trackUrl">): Record<str
   };
 }
 
-/** Substitui {{var}}. Variável desconhecida vira vazio; espaços duplos são limpos. */
+/**
+ * Substitui {{var}}. Variável desconhecida vira vazio; espaços duplos são limpos.
+ * Sem nome, "Olá, {{primeiro_nome}}!" vira "Olá!" e "{{primeiro_nome}}, seu…" vira "Seu…".
+ */
 export function interpolate(text: string, values: Record<string, string>) {
-  return text
+  const out = text
     .replace(/\{\{\s*([a-z_]+)\s*\}\}/gi, (_, k: string) => values[k.toLowerCase()] ?? "")
     .replace(/[ \t]{2,}/g, " ")
-    .replace(/\s+([,.!?])/g, "$1");
+    .replace(/\s+([,.!?])/g, "$1")
+    .replace(/,+([,.!?])/g, "$1")
+    .replace(/[ \t]*,[ \t]*$/gm, "");
+  const lead = out.match(/^[ \t]*,[ \t]*/);
+  return lead ? out.slice(lead[0].length).replace(/^\p{Ll}/u, (c) => c.toUpperCase()) : out;
 }

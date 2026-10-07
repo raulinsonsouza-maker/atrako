@@ -40,6 +40,7 @@ type MessageRow = {
   content: string;
   status: string;
   toolContext: Prisma.JsonValue | null;
+  durationMs: number | null;
   createdAt: Date;
 };
 
@@ -51,6 +52,7 @@ function messageView(m: MessageRow) {
     content: m.content,
     status: m.status,
     createdAt: m.createdAt.toISOString(),
+    durationMs: m.durationMs,
     steps: tc.steps ?? [],
     pendingAction: tc.pendingAction ?? null,
     actionStatus: tc.actionStatus ?? null,
@@ -63,7 +65,15 @@ function conversationView(c: { id: string; title: string; createdAt: Date; updat
   return { id: c.id, title: c.title, createdAt: c.createdAt.toISOString(), updatedAt: c.updatedAt.toISOString() };
 }
 
-const messageSelect = { id: true, role: true, content: true, status: true, toolContext: true, createdAt: true } as const;
+const messageSelect = {
+  id: true,
+  role: true,
+  content: true,
+  status: true,
+  toolContext: true,
+  durationMs: true,
+  createdAt: true,
+} as const;
 
 async function ownConversation(session: Session, id: unknown) {
   if (typeof id !== "string" || !id.trim()) return null;

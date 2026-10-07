@@ -184,7 +184,13 @@ function ActionCard({
   );
 }
 
-const WRITE_TOOL_PREFIXES = ["criar_", "editar_", "publicar", "testar_"];
+function thinkingLabel(ms: number) {
+  const s = Math.max(1, Math.round(ms / 1000));
+  if (s < 60) return `Pensou por ${s}s`;
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return r ? `Pensou por ${m}min ${r}s` : `Pensou por ${m}min`;
+}
 
 function BotMessage({
   message,
@@ -203,13 +209,6 @@ function BotMessage({
   onAsk?: (text: string) => void;
   onArtifactUpdated?: (artifact: Artifact) => void;
 }) {
-  const consulted = [
-    ...new Set(
-      message.steps
-        .filter((s) => s.coverage !== "error" && !WRITE_TOOL_PREFIXES.some((p) => s.tool.startsWith(p)))
-        .map((s) => s.source ?? s.label),
-    ),
-  ];
   return (
     <div className={`assistant-msg-bot${fresh ? " assistant-msg-fresh" : ""}`}>
       <span className="assistant-avatar" aria-hidden>
@@ -230,8 +229,8 @@ function BotMessage({
           onUpdated={onArtifactUpdated}
         />
         <ActionCard message={message} busy={deciding} onDecide={onDecide} />
-        {consulted.length ? (
-          <p className="assistant-msg-sources type-fine-print">Consultei: {consulted.join(" · ")}</p>
+        {message.status === "COMPLETE" && message.durationMs ? (
+          <p className="assistant-msg-meta type-fine-print">{thinkingLabel(message.durationMs)}</p>
         ) : null}
       </div>
     </div>

@@ -27,6 +27,7 @@ export type AssistantMessage = {
   content: string;
   status: string;
   createdAt: string;
+  durationMs?: number | null;
   steps: AssistantStep[];
   pendingAction: AssistantPendingAction | null;
   actionStatus: "pending" | "confirmed" | "cancelled" | "failed" | null;

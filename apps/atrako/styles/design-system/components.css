@@ -7544,7 +7544,7 @@ button.rel-list-row:active {
   animation: assistant-word-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.assistant-msg-sources {
+.assistant-msg-meta {
   margin-top: 10px;
   color: var(--ink-muted-48);
 }

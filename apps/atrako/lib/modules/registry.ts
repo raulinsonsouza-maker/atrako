@@ -8,6 +8,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
+  Bot,
   CalendarDays,
   FileText,
   HeartHandshake,
@@ -21,6 +22,7 @@ import type { CriarPlatformId } from "@/lib/criar/catalog";
 import type { CriarModuleId } from "@/lib/criar/modules";
 
 export const MODULE_KEYS = [
+  "assistente",
   "crm",
   "insights",
   "relacionamento",
@@ -70,7 +72,22 @@ export type ModuleDef = {
   disableWarning?: string;
 };
 
+/** Tela inicial quando o Assistente está desligado: dashboard do workspace (Insights é núcleo). */
+export function homeFallback(workspaceId?: string | null): string {
+  return workspaceId ? `/clientes/${workspaceId}` : "/insights";
+}
+
 export const MODULES: ModuleDef[] = [
+  {
+    key: "assistente",
+    label: "Assistente",
+    description: "Pergunte e execute",
+    icon: Bot,
+    defaultRelease: "AVAILABLE",
+    // Fica no bloco "Início" da sidebar, fora do `nav` de Operação.
+    routes: ["/assistente", "/agent"],
+    apiPrefixes: ["/api/atrako/agent", "/api/atrako/assistant"],
+  },
   {
     key: "crm",
     label: "Leads",

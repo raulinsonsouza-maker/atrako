@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
-import { getModuleDef, type ModuleKey, type ModulesMap } from "@/lib/modules/registry";
+import { getModuleDef, homeFallback, type ModuleKey, type ModulesMap } from "@/lib/modules/registry";
 
 /**
  * Módulos efetivos do workspace ativo. Reaproveita o cache de
@@ -31,5 +31,8 @@ export function useModules() {
     [modules],
   );
 
-  return { modules, isEnabled, isLoading, isReady: isFetched && Boolean(modules) };
+  /** Enquanto carrega aponta para /assistente; o layout de lá redireciona se estiver desligado. */
+  const homeHref = modules && !modules.assistente?.enabled ? homeFallback(workspaceId) : "/assistente";
+
+  return { modules, isEnabled, isLoading, isReady: isFetched && Boolean(modules), homeHref };
 }

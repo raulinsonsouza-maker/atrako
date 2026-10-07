@@ -57,6 +57,7 @@ model Cliente {
   instagramInsightsMensais   InstagramInsightMensal[]
   instagramInsightsDiarios   InstagramInsightDiario[]
   analystConversations       AnalystConversation[]
+  atrakoConversations        AtrakoConversation[]
   atrakoEvents               AtrakoEvent[]
   atrakoOutbox               AtrakoOutbox[]
   oauthStates                OAuthState[]
@@ -144,6 +145,58 @@ model AnalystMessage {
   conversation        AnalystConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId, createdAt])
+}
+
+/// Conversas do Atrako (assistente do workspace). Uma pessoa por conversa (`actorKey`).
+model AtrakoConversation {
+  id        String          @id @default(cuid())
+  clienteId String
+  actorKey  String          @db.VarChar(160)
+  title     String          @default("Nova conversa") @db.VarChar(120)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  cliente   Cliente         @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  messages  AtrakoMessage[]
+
+  @@index([clienteId, actorKey, updatedAt])
+}
+
+model AtrakoMessage {
+  id                  String             @id @default(cuid())
+  conversationId      String
+  /// Redundante com a conversa: rate limit e custo por workspace sem join.
+  clienteId           String
+  /// USER | ASSISTANT
+  role                String             @db.VarChar(16)
+  content             String             @db.Text
+  /// PENDING | COMPLETE | ERROR
+  status              String             @default("COMPLETE") @db.VarChar(16)
+  sources             Json?
+  /// Passos de ferramenta, ação pendente/confirmada.
+  toolContext         Json?
+  model               String?            @db.VarChar(120)
+  promptTokens        Int?
+  completionTokens    Int?
+  totalTokens         Int?
+  estimatedCostMicros Int?
+  durationMs          Int?
+  traceId             String?            @db.VarChar(64)
+  clientRequestId     String?            @unique @db.VarChar(160)
+  createdAt           DateTime           @default(now())
+  conversation        AtrakoConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@index([clienteId, createdAt])
+}
+
+/// Modelo de IA "em descanso" (limite esgotado / falha) — a cadeia pula até `until`.
+model AtrakoLlmCooldown {
+  /// platform:<provider>:<modelo> | ws:<clienteId>:<modelo>
+  key       String   @id @db.VarChar(200)
+  until     DateTime
+  status    Int?
+  reason    String?  @db.VarChar(160)
+  updatedAt DateTime @updatedAt
 }
 
 enum InternalRole {

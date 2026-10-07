@@ -10,8 +10,14 @@ import {
   LayoutGrid,
   Link2,
   Loader2,
+  Sparkles,
   Users,
 } from "lucide-react";
+import {
+  AI_CONNECTION_PROVIDER,
+  aiModelLabel,
+  type AiConnectionMetadata,
+} from "@/lib/atrako-agent/providers";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
 import { AppPage } from "@/components/layout/AppPage";
@@ -76,7 +82,9 @@ const GROUPS: Array<{ title: string; links: HubLink[] }> = [
         icon: Link2,
         status: ({ config }) => {
           if (!config) return null;
-          const n = config.connections.filter((c) => c.hasCredentials).length;
+          const n = config.connections.filter(
+            (c) => c.hasCredentials && c.provider !== AI_CONNECTION_PROVIDER,
+          ).length;
           if (n === 0) return "Nenhuma ativa";
           return n === 1 ? "1 ativa" : `${n} ativas`;
         },
@@ -93,6 +101,20 @@ const GROUPS: Array<{ title: string; links: HubLink[] }> = [
             Boolean,
           );
           return active.length ? `${active.join(" + ")} ativo` : "Não configurado";
+        },
+      },
+      {
+        href: "/config/ia",
+        label: "IA",
+        desc: "Modelo e chave de API que o Atrako usa",
+        icon: Sparkles,
+        status: ({ config }) => {
+          if (!config) return null;
+          const row = config.connections.find((c) => c.provider === AI_CONNECTION_PROVIDER);
+          if (!row?.hasCredentials || row.status !== "ACTIVE") return "Sem IA própria";
+          const meta = (row.metadata ?? {}) as AiConnectionMetadata;
+          const model = aiModelLabel(meta.provider, meta.model);
+          return model ? `Conectada · ${model}` : "Conectada";
         },
       },
     ],

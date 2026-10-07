@@ -103,7 +103,8 @@ components:
   filter-toolbar: { css: ".crm-toolbar", note: "Esquerda = como ver os dados (search-input, date-range-filter, pill-select, segmented-control, pill). Direita = ações (icon-button toolbar + Button toolbar primary, radius-xs)" }
   pill-select-multi: { file: components/ui/pill-select.tsx, export: PillMultiSelect, css: ".pill-select-check", note: "Múltipla escolha no mesmo filtro — menu fica aberto, primeira opção limpa; trigger 'Meta Ads +2'" }
   channel-color: { file: lib/commerce-attribution/channel-color.ts, tokens: "--channel-*", note: "Cor por canal de aquisição — só identificação (ponto + tinta 12% no chip do lead, swatch no filtro). Nunca em botão/CTA" }
-  global-nav-collapsed: { file: components/layout/AppSidebar.tsx, css: ".nav-collapsed-divider / .nav-tip", note: "Menu recolhido (72px): ícones 40px centrados, separador no lugar do título, rótulo + descrição flutuante à direita, iniciais da conta; preferência salva no navegador" }
+  global-nav-collapsed: { file: components/layout/AppSidebar.tsx, css: ".nav-collapsed-divider / .nav-tip", note: "Menu recolhido (72px): ícones 40px centrados, separador no lugar do título, rótulo + descrição flutuante à direita; preferência salva no navegador" }
+  app-top-bar: { file: components/layout/AppTopBar.tsx, css: ".app-top-bar / .rel-bell-*", note: "Topo da área de conteúdo: sino de notificações (IconButton toolbar + contador danger) no canto direito, painel alinhado à direita. Celular: + abrir menu e marca, sticky" }
   pill-select-count: { file: components/ui/pill-select.tsx, note: "option.count — número à direita só no menu; o trigger fica limpo" }
   filter-strip: { css: ".crm-filter-strip / .crm-filter-chip", note: "Linha sob a filter-toolbar: filtros ativos como chips removíveis (×) + resumo curto à direita. Sem frases longas" }
   date-range-filter: { file: components/ui/date-range-filter.tsx, note: "Único filtro de período — presets + 2 meses. variant toolbar (pill 36px) | panel (topo do dashboard); allowAll = 'Todo o período'" }
@@ -126,8 +127,13 @@ components:
   brand-logo: { file: components/ui/brand-logo.tsx, note: "Logo de parceiro (simple-icons CC0) em tile 10px — só integrações de terceiros, nunca accent" }
   text-field: { file: components/ui/text-field.tsx, note: "Campo de formulário canônico — label + input h-11 radius-xs + hint; type=password com olho" }
   app-page: { file: components/layout/AppPage.tsx, note: "Shell de página AppShell — padding/título densos" }
+  thinking-orb: { file: components/ui/thinking-orb.tsx, css: ".thinking-orb / .thinking-label-*", note: "Esfera de pontos (canvas) do assistente — idle | thinking | resolved. Pontos em --ink, resolve para --primary; ThinkingLabel troca rótulos (Pensando…) e mostra 'Pronto'. Estático em reduced-motion" }
+  orb-composer: { file: components/ui/orb-composer.tsx, css: ".orb-composer-*", note: "Campo de pergunta do assistente — pílula 60px (como search), anel conic --primary girando no foco/digitando/enviando (é o indicador de foco, não decoração). Enviar circular dentro da pílula; Enter envia, Shift+Enter quebra linha; tremida quando vazio" }
+  assistant-shell: { file: app/agent/AgentConsole.tsx, css: ".assistant-*", note: "Assistente — histórico (card canvas 280px, começa recolhido; grupos Hoje/Ontem/7 dias, item ativo com fio --primary) + palco (hero 'Olá, eu sou o Atrako' com orb → fio de mensagens + composer fixo embaixo). Abaixo de desktop-sm o histórico vira gaveta. Sem app-top-bar nesta rota: header único 56px (menu no celular + histórico | título | sino + nova conversa)" }
+  assistant-reply: { file: app/agent/AssistantMarkdown.tsx, css: ".assistant-md-* / .assistant-caret / .assistant-msg-sources", note: "Resposta do Atrako em markdown mínimo (negrito, listas, tabela hairline) — chega em streaming com cursor --primary; rótulos do orb = passos reais das ferramentas; 'Consultei: …' em fine-print" }
+  assistant-action-card: { css: ".assistant-action-card / .assistant-action-row", note: "Proposta de rascunho (LP/formulário) — card canvas hairline com resumo; 'Criar rascunho' (primary toolbar) + 'Agora não' (outline). Nada é publicado; depois mostra 'Abrir para revisar'" }
   footer: { file: components/ui/site-footer.tsx }
-  global-nav: { file: components/layout/AppSidebar.tsx, note: "SaaS rail — type-nav-link 14/600 + type-fine-print desc; pairs with type-tagline page titles" }
+  global-nav: { file: components/layout/AppSidebar.tsx, note: "SaaS rail — type-nav-link 14/600 + type-fine-print desc; pairs with type-tagline page titles. Início (Assistente + Dashboard) · Criar · Operação; rodapé só ícones (Configuração, Sair). Conta escolhida no título do Dashboard, nunca listada no menu" }
 
 rules:
   do:

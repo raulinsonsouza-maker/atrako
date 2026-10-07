@@ -22,7 +22,7 @@ export function AppPage({
     <div className="flex min-h-0 flex-1 flex-col bg-[var(--canvas-parchment)]">
       <div
         className={cn(
-          "flex min-h-0 w-full flex-1 flex-col gap-4 px-4 py-4 md:gap-4 md:px-6 md:py-5",
+          "flex min-h-0 w-full flex-1 flex-col gap-4 px-4 py-4 md:gap-4 md:px-6 md:pb-5 md:pt-0",
           narrow && "mx-auto max-w-3xl",
           className,
         )}

@@ -4,7 +4,7 @@ import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { AppPage } from "@/components/layout/AppPage";
-import { BackLink } from "@/components/ui/back-link";
+import { AccountSwitcher } from "@/components/clientes/AccountSwitcher";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PillSelect } from "@/components/ui/pill-select";
 import { DateRangeFilter, resolveDateRange, type DatePreset } from "@/components/ui/date-range-filter";
@@ -820,19 +820,16 @@ function formatPercentage(value: number) {
   return (
     <AppPage
       title={
-        <div className="min-w-0 space-y-2">
-          {!portalMode && (
-            <BackLink href="/clientes" className="hidden md:inline-flex">Central de clientes</BackLink>
-          )}
-          <div>
-            <h1 className="type-tagline text-[var(--ink)]">
-              {cliente?.nome ?? "…"}
-            </h1>
+        portalMode ? (
+          <div className="min-w-0">
+            <h1 className="type-tagline text-[var(--ink)]">{cliente?.nome ?? "…"}</h1>
             <p className="type-fine-print mt-0.5 text-[var(--muted-foreground)]">
               Monitoramento de performance do projeto
             </p>
           </div>
-        </div>
+        ) : (
+          <AccountSwitcher id={id} nome={cliente?.nome} />
+        )
       }
       actions={channelTabs}
     >

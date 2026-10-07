@@ -7,9 +7,19 @@ import { createFormFromBrief, previewForm } from "@atrako/forms";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { requireModuleApi } from "@/lib/modules/resolve";
+import { isActiveModuleEnabled } from "@/lib/modules/page";
 import { moduleForAgentTool } from "@/lib/modules/registry";
 
 const registry = createDefaultAgentToolRegistry();
+
+/** O console manda `workspaceId: "guest"`: o módulo é checado pelo workspace ativo (cookie). */
+async function assistenteOff(): Promise<NextResponse | null> {
+  if (await isActiveModuleEnabled("assistente")) return null;
+  return NextResponse.json(
+    { error: "module_disabled", module: "assistente", message: "Assistente está desativado neste workspace." },
+    { status: 403 },
+  );
+}
 
 async function guestOrUserContext(workspaceId: string): Promise<AgentContext> {
   return {
@@ -21,6 +31,8 @@ async function guestOrUserContext(workspaceId: string): Promise<AgentContext> {
 }
 
 export async function GET() {
+  const off = await assistenteOff();
+  if (off) return off;
   return NextResponse.json({
     agent: "Atrako",
     greeting: "Olá, eu sou o Atrako. Como posso te ajudar hoje?",
@@ -29,6 +41,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const off = await assistenteOff();
+  if (off) return off;
+
   let body: unknown;
   try {
     body = await request.json();

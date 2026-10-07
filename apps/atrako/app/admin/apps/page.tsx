@@ -14,7 +14,35 @@ import {
   type PlatformAppReadinessFlags,
 } from "@/lib/config/platformAppCatalog";
 import { type PlatformAppProvider } from "@/lib/config/platformAppProviders";
+import { PLATFORM_LLM_APPS } from "@/lib/atrako-agent/providers";
 import { cn } from "@/lib/utils";
+
+type AiModelStatus = { provider: string; model: string; until: string | null; reason: string | null };
+
+function AiChainStatus({ app, chain }: { app: string; chain: AiModelStatus[] }) {
+  const def = PLATFORM_LLM_APPS.find((d) => d.app === app);
+  const rows = def ? chain.filter((c) => c.provider === def.provider) : [];
+  if (!rows.length) return null;
+  return (
+    <ul className="mt-3 flex flex-col gap-1.5 border-t border-[var(--hairline)] pt-3">
+      {rows.map((r) => (
+        <li key={r.model} className="flex items-center justify-between gap-3 type-fine-print">
+          <span className="min-w-0 truncate text-[var(--ink)]">{r.model}</span>
+          <span className={cn("shrink-0", r.until ? "text-[var(--ink-muted-48)]" : "text-[var(--success)]")}>
+            {r.until
+              ? `Em descanso até ${new Date(r.until).toLocaleString("pt-BR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}${r.reason ? ` — ${r.reason}` : ""}`
+              : "Ativo"}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 type AppRow = {
   provider: string;
@@ -33,6 +61,7 @@ type AppRow = {
   hasServiceId?: boolean;
   clientIdPreview: string | null;
   partnerKeyExpiresAt?: string | null;
+  models?: string | null;
   updatedAt: string;
 };
 
@@ -88,7 +117,7 @@ export default function AdminAppsPage() {
     queryFn: async () => {
       const r = await fetch("/api/admin/apps");
       if (!r.ok) throw new Error("Não foi possível carregar os apps.");
-      return r.json() as Promise<{ apps: AppRow[] }>;
+      return r.json() as Promise<{ apps: AppRow[]; aiChain?: AiModelStatus[] }>;
     },
   });
 
@@ -155,6 +184,7 @@ export default function AdminAppsPage() {
       ...(row?.partnerKeyExpiresAt
         ? { partnerKeyExpiresAt: row.partnerKeyExpiresAt }
         : {}),
+      ...(row?.models ? { models: row.models } : {}),
     });
   }
 
@@ -288,6 +318,8 @@ export default function AdminAppsPage() {
                     {isOpen ? "Fechar" : "Configurar"}
                   </Button>
                 </div>
+
+                {!isOpen ? <AiChainStatus app={provider} chain={data?.aiChain ?? []} /> : null}
 
                 {isOpen ? (
                   <form

@@ -41,6 +41,8 @@ export type PlatformAppCredentials = {
   serviceId?: string;
   /** TikTok Shop authorize host, e.g. https://services.tiktokshop.com */
   authBaseUrl?: string;
+  /** AI_*: model ids, one per line, in failover order. */
+  models?: string;
   [key: string]: unknown;
 };
 
@@ -187,6 +189,30 @@ const ENV_SEED: Partial<
     label: "Resend",
     clientSecret: process.env.RESEND_API_KEY?.trim() || undefined,
     clientId: process.env.RESEND_FROM?.trim() || undefined,
+  }),
+  AI_OPENROUTER: () => ({
+    label: "IA — OpenRouter",
+    clientSecret: process.env.OPENROUTER_API_KEY?.trim() || undefined,
+  }),
+  AI_NVIDIA: () => ({
+    label: "IA — NVIDIA",
+    clientSecret: process.env.NVIDIA_API_KEY?.trim() || undefined,
+  }),
+  AI_KILO: () => ({
+    label: "IA — Kilo",
+    clientSecret: process.env.KILO_API_KEY?.trim() || undefined,
+  }),
+  AI_OLLAMA: () => ({
+    label: "IA — Ollama",
+    clientSecret: process.env.OLLAMA_API_KEY?.trim() || undefined,
+  }),
+  AI_GROQ: () => ({
+    label: "IA — Groq",
+    clientSecret: process.env.GROQ_API_KEY?.trim() || undefined,
+  }),
+  AI_COHERE: () => ({
+    label: "IA — Cohere",
+    clientSecret: process.env.COHERE_API_KEY?.trim() || undefined,
   }),
 };
 
@@ -348,7 +374,7 @@ export async function upsertPlatformApp(input: {
   const nextCreds = { ...prev, ...(input.credentials ?? {}) };
   // Don't overwrite secrets with empty strings from the UI
   for (const [k, v] of Object.entries(nextCreds)) {
-    if (typeof v === "string" && v.trim() === "" && prev[k]) {
+    if (typeof v === "string" && v.trim() === "" && prev[k] && k !== "models") {
       nextCreds[k] = prev[k];
     }
   }
@@ -396,6 +422,7 @@ export async function listPlatformAppsMasked() {
         typeof creds.partnerKeyExpiresAt === "string"
           ? creds.partnerKeyExpiresAt
           : null,
+      models: typeof creds.models === "string" ? creds.models : null,
       metadata: row.metadata,
       updatedAt: row.updatedAt.toISOString(),
     };

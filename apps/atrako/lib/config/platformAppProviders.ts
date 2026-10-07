@@ -17,6 +17,12 @@ export const PLATFORM_APP_PROVIDERS = [
   "TRAY",
   "NUVEMSHOP",
   "RESEND",
+  "AI_OPENROUTER",
+  "AI_NVIDIA",
+  "AI_KILO",
+  "AI_OLLAMA",
+  "AI_GROQ",
+  "AI_COHERE",
 ] as const;
 
 export type PlatformAppProvider = (typeof PLATFORM_APP_PROVIDERS)[number];

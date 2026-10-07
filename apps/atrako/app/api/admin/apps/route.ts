@@ -8,13 +8,14 @@ import {
   type PlatformAppCredentials,
 } from "@/lib/config/platformApps";
 import { PLATFORM_APP_CATALOG } from "@/lib/config/platformAppCatalog";
+import { platformChainStatus } from "@/lib/atrako-agent/llm";
 
 export async function GET() {
   const authz = await requireInternalAdmin();
   if (authz.response) return authz.response;
   await ensurePlatformAppsSeeded();
-  const apps = await listPlatformAppsMasked();
-  return NextResponse.json({ apps });
+  const [apps, aiChain] = await Promise.all([listPlatformAppsMasked(), platformChainStatus().catch(() => [])]);
+  return NextResponse.json({ apps, aiChain });
 }
 
 export async function PATCH(request: NextRequest) {
@@ -45,12 +46,15 @@ export async function PATCH(request: NextRequest) {
     "partnerKeyExpiresAt",
     "serviceId",
     "authBaseUrl",
+    "models",
   ] as const;
   for (const f of fields) {
     if (typeof body[f] === "string" && body[f].trim()) {
       credentials[f] = (body[f] as string).trim();
     }
   }
+  // Lista vazia = volta à padrão do Atrako.
+  if (typeof body.models === "string" && !body.models.trim()) credentials.models = "";
 
   const enabled =
     typeof body.enabled === "boolean"

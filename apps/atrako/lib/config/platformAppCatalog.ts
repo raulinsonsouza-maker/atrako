@@ -21,7 +21,8 @@ export type PlatformAppFieldKey =
   | "apiBaseUrl"
   | "partnerKeyExpiresAt"
   | "serviceId"
-  | "authBaseUrl";
+  | "authBaseUrl"
+  | "models";
 
 export type PlatformAppField = {
   key: PlatformAppFieldKey;
@@ -425,7 +426,65 @@ export const PLATFORM_APP_CATALOG: Record<PlatformAppProvider, PlatformAppCatalo
       },
     ],
   },
+  AI_OPENROUTER: {
+    provider: "AI_OPENROUTER",
+    title: "IA — OpenRouter",
+    description:
+      "Modelos gratuitos usados pelo assistente quando o workspace não tem IA própria (ou como reserva dela).",
+    fields: [
+      { key: "label", label: "Nome de exibição" },
+      { key: "clientSecret", label: "API key", hint: "sk-or-…", secret: true, requiredForReady: true },
+      {
+        key: "models",
+        label: "Modelos (um por linha, em ordem)",
+        hint: "Vazio = lista padrão validada pelo Atrako",
+        multiline: true,
+      },
+    ],
+  },
+  AI_NVIDIA: {
+    provider: "AI_NVIDIA",
+    title: "IA — NVIDIA",
+    description: "Modelos gratuitos do build.nvidia.com na cadeia de reserva do assistente.",
+    fields: [
+      { key: "label", label: "Nome de exibição" },
+      { key: "clientSecret", label: "API key", hint: "nvapi-…", secret: true, requiredForReady: true },
+      {
+        key: "models",
+        label: "Modelos (um por linha, em ordem)",
+        hint: "Vazio = lista padrão validada pelo Atrako",
+        multiline: true,
+      },
+    ],
+  },
+  AI_KILO: aiChainEntry("AI_KILO", "IA — Kilo", "Modelos gratuitos do Kilo Gateway na cadeia do assistente.", "eyJ…"),
+  AI_OLLAMA: aiChainEntry("AI_OLLAMA", "IA — Ollama", "Modelos do Ollama Cloud na cadeia do assistente.", "Chave de API"),
+  AI_GROQ: aiChainEntry("AI_GROQ", "IA — Groq", "Modelos da Groq na cadeia do assistente.", "gsk_…"),
+  AI_COHERE: aiChainEntry("AI_COHERE", "IA — Cohere", "Modelos Command da Cohere na cadeia do assistente.", "Chave de API"),
 };
+
+function aiChainEntry(
+  provider: PlatformAppProvider,
+  title: string,
+  description: string,
+  keyHint: string,
+): PlatformAppCatalogEntry {
+  return {
+    provider,
+    title,
+    description,
+    fields: [
+      { key: "label", label: "Nome de exibição" },
+      { key: "clientSecret", label: "API key", hint: keyHint, secret: true, requiredForReady: true },
+      {
+        key: "models",
+        label: "Modelos (um por linha, em ordem)",
+        hint: "Vazio = lista padrão validada pelo Atrako",
+        multiline: true,
+      },
+    ],
+  };
+}
 
 export function platformAppCatalogList(): PlatformAppCatalogEntry[] {
   return PLATFORM_APP_PROVIDERS.map((p) => PLATFORM_APP_CATALOG[p]).filter((e) => !e.hideInAdmin);
@@ -507,6 +566,7 @@ export function platformAppStatus(
       case "apiBaseUrl":
       case "partnerKeyExpiresAt":
       case "authBaseUrl":
+      case "models":
         return true;
       default:
         return true;
@@ -575,6 +635,7 @@ export function credentialChecklist(
         case "apiBaseUrl":
         case "partnerKeyExpiresAt":
         case "authBaseUrl":
+        case "models":
           ok = true;
           break;
         default:

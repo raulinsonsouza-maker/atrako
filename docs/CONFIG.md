@@ -81,6 +81,7 @@ Fonte única: `apps/atrako/lib/modules/registry.ts` (`MODULES`). Sidebar, Criar,
 - **APIs autenticadas**: `requireModuleApi(workspaceId, key)` → 403 `{ error: "module_disabled" }`.
 - **Rotas públicas** (booking, checkout, forms públicos): `isPublicModuleEnabled(clienteId, key)` → 404 / `PublicUnavailable`.
 - **Agente**: `agentTools` (prefixos) → tool bloqueada se o módulo estiver off.
+- **Assistente** é a tela inicial: desligado, `/assistente` redireciona para o dashboard do workspace (`homeFallback` → `/clientes/:id`) em vez da tela de bloqueio.
 - Webhooks e links de gestão já emitidos (ex. `agenda/manage/[token]`) **não** são bloqueados.
 
 ### Checklist — novo módulo

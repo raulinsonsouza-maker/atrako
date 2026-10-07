@@ -23,7 +23,12 @@ export type WorkspaceConfig = {
     };
     messagingPrefs: Record<string, unknown>;
   };
-  connections: Array<{ provider: string; status: string; hasCredentials: boolean }>;
+  connections: Array<{
+    provider: string;
+    status: string;
+    hasCredentials: boolean;
+    metadata?: Record<string, unknown> | null;
+  }>;
   modules: ModulesMap;
   /** OWNER/ADMIN do workspace ou staff ADMIN. */
   canManage: boolean;

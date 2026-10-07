@@ -17,6 +17,8 @@ export const CONNECTION_PROVIDERS = [
   "NUVEMSHOP",
   "GOOGLE_CALENDAR",
   "RESEND",
+  /** LLM do cliente (protocolo OpenAI: OpenAI ou compatível) — Config → IA. */
+  "OPENAI",
 ] as const;
 
 export type ConnectionProvider = (typeof CONNECTION_PROVIDERS)[number];

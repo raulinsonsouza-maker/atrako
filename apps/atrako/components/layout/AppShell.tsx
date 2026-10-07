@@ -1,13 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
-import { MobileTopBar } from "@/components/layout/MobileTopBar";
+import { AppTopBar } from "@/components/layout/AppTopBar";
+
+const OpenAppMenuContext = createContext<() => void>(() => {});
+
+/** Abre a gaveta do `AppSidebar` no celular — para telas com header próprio (sem `AppTopBar`). */
+export function useOpenAppMenu() {
+  return useContext(OpenAppMenuContext);
+}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const openMenu = useCallback(() => setMobileOpen(true), []);
   /** Páginas públicas / autenticação — sem sidebar do app. */
   const bare =
     pathname === "/" ||
@@ -27,9 +35,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/criar/oferta") ||
     pathname.startsWith("/criar/paginas");
   const moduleEmbed = pathname.startsWith("/modules/");
-  /** Editor visual (Puck) precisa de altura de viewport; lista de páginas precisa de scroll. */
+  /** O assistente tem header próprio (histórico, título, sino, nova conversa). */
+  const ownHeader = pathname.startsWith("/assistente");
+  /** Editor visual (Puck) e chat do assistente precisam de altura de viewport; lista de páginas precisa de scroll. */
   const fillViewport =
     moduleEmbed ||
+    pathname.startsWith("/assistente") ||
     pathname.startsWith("/criar/oferta") ||
     pathname.startsWith("/criar/paginas");
 
@@ -48,16 +59,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div
-      className={`flex bg-[var(--canvas-parchment)] ${fillViewport ? "h-screen overflow-hidden" : "min-h-screen"}`}
-    >
-      <AppSidebar mobileOpen={mobileOpen} onMobileOpenChange={setMobileOpen} />
+    <OpenAppMenuContext.Provider value={openMenu}>
       <div
-        className={`flex min-w-0 flex-1 flex-col ${fillViewport ? "min-h-0 overflow-hidden" : ""}`}
+        className={`flex bg-[var(--canvas-parchment)] ${fillViewport ? "h-screen overflow-hidden" : "min-h-screen"}`}
       >
-        <MobileTopBar onOpenMenu={() => setMobileOpen(true)} />
-        {children}
+        <AppSidebar mobileOpen={mobileOpen} onMobileOpenChange={setMobileOpen} />
+        <div
+          className={`flex min-w-0 flex-1 flex-col ${fillViewport ? "min-h-0 overflow-hidden" : ""}`}
+        >
+          {ownHeader ? null : <AppTopBar onOpenMenu={openMenu} />}
+          {children}
+        </div>
       </div>
-    </div>
+    </OpenAppMenuContext.Provider>
   );
 }

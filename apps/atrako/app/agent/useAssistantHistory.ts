@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
+import type { Artifact } from "@/lib/atrako-agent/artifacts";
 
 export type AssistantStep = { tool: string; label: string; source?: string; coverage: string };
 
@@ -30,6 +31,7 @@ export type AssistantMessage = {
   pendingAction: AssistantPendingAction | null;
   actionStatus: "pending" | "confirmed" | "cancelled" | "failed" | null;
   actionResult: AssistantActionResult | null;
+  artifacts?: Artifact[];
 };
 
 export type AssistantConversation = {

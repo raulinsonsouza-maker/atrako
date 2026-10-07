@@ -1,64 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma";
-import {
-  assertCanManageConfig,
-  assertCanOperateWorkspace,
-  getActiveWorkspaceId,
-  requireWorkspaceAccess,
-} from "@/lib/tenancy/workspace";
-import { isModuleEnabled, requireModuleApi, resolveModules } from "@/lib/modules/resolve";
-import { loadWorkspaceContext, type AtrakoActor } from "@/lib/atrako-agent/context";
+import { isModuleEnabled, resolveModules } from "@/lib/modules/resolve";
+import { loadWorkspaceContext } from "@/lib/atrako-agent/context";
+import { resolveAssistantSession, type AssistantSession } from "@/lib/atrako-agent/session";
+import { WEB_TOOLS } from "@/lib/atrako-agent/web";
+import { CREATOR_TOOLS } from "@/lib/atrako-agent/creator";
 import { createLlmClient, describeLlmError, resolveLlmChain } from "@/lib/atrako-agent/llm";
 import { setCooldown } from "@/lib/atrako-agent/failover";
 import { EngineError, estimateCostMicros, runAtrakoEngine, type EngineEvent, type EngineStep } from "@/lib/atrako-agent/engine";
 import { toolsForWorkspace, type PendingAction } from "@/lib/atrako-agent/tools";
-import { DRAFT_TOOLS, executePendingAction, type ActionResult } from "@/lib/atrako-agent/actions";
+import { executePendingAction, type ActionResult } from "@/lib/atrako-agent/actions";
 import { createPiiVault, protectUserText } from "@/lib/atrako-agent/safety";
 import { checkAssistantRateLimit } from "@/lib/atrako-agent/limits";
+import { historyNote, type Artifact } from "@/lib/atrako-agent/artifacts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 const DEFAULT_TITLE = "Nova conversa";
 const MAX_MESSAGE_CHARS = 4000;
 
-type Session = { workspaceId: string; actor: AtrakoActor };
-
-async function resolveSession(): Promise<{ ok: true; session: Session } | { ok: false; response: NextResponse }> {
-  const workspaceId = await getActiveWorkspaceId();
-  if (!workspaceId) {
-    return { ok: false, response: NextResponse.json({ error: "Nenhum workspace ativo" }, { status: 401 }) };
-  }
-  const access = await requireWorkspaceAccess(workspaceId, "operate");
-  if (!access.ok) return { ok: false, response: access.response };
-  const off = await requireModuleApi(workspaceId, "assistente");
-  if (off) return { ok: false, response: off };
-
-  const who = await assertCanOperateWorkspace(workspaceId);
-  const canManage = await assertCanManageConfig(workspaceId).then(
-    () => true,
-    () => false,
-  );
-  const actor: AtrakoActor =
-    who.kind === "member"
-      ? { kind: "member", key: `member:${who.member.id}`, name: who.member.name ?? null, role: who.member.role, canManage }
-      : {
-          kind: "platform",
-          key: `internal:${who.user.id}`,
-          name: who.user.name ?? who.user.username ?? null,
-          role: who.user.role === "ADMIN" ? "admin da plataforma" : "analista da plataforma",
-          canManage,
-        };
-  return { ok: true, session: { workspaceId, actor } };
-}
+type Session = AssistantSession;
+const resolveSession = resolveAssistantSession;
 
 type ToolContext = {
   steps?: Array<Pick<EngineStep, "tool" | "label" | "source" | "coverage">>;
   pendingAction?: PendingAction | null;
   actionStatus?: "pending" | "confirmed" | "cancelled" | "failed";
   actionResult?: ActionResult | null;
+  artifacts?: Artifact[];
   rounds?: number;
 };
 
@@ -83,6 +55,7 @@ function messageView(m: MessageRow) {
     pendingAction: tc.pendingAction ?? null,
     actionStatus: tc.actionStatus ?? null,
     actionResult: tc.actionResult ?? null,
+    artifacts: tc.artifacts ?? [],
   };
 }
 
@@ -283,7 +256,7 @@ export async function POST(request: NextRequest) {
     where: { conversationId: conversation.id, status: "COMPLETE" },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: 12,
-    select: { role: true, content: true },
+    select: { role: true, content: true, toolContext: true },
   });
   const userMessage = await prisma.atrakoMessage.create({
     data: {
@@ -301,7 +274,9 @@ export async function POST(request: NextRequest) {
   const vault = createPiiVault();
   const protectedHistory = history.reverse().map((m) => ({
     role: m.role === "USER" ? ("user" as const) : ("assistant" as const),
-    content: protectUserText(m.content, vault).text,
+    content:
+      protectUserText(m.content, vault).text +
+      (m.role === "USER" ? "" : historyNote(((m.toolContext ?? {}) as ToolContext).artifacts)),
   }));
   const question = protectUserText(text, vault).text;
 
@@ -320,6 +295,15 @@ export async function POST(request: NextRequest) {
         }
       };
       send("meta", { conversation: conversationView(conv), userMessage: messageView(userMessage), traceId });
+      // Geração de página pode passar de 1 min sem texto: comentário SSE mantém proxies abertos.
+      const keepAlive = setInterval(() => {
+        if (!open) return;
+        try {
+          controller.enqueue(new TextEncoder().encode(": ping\n\n"));
+        } catch {
+          open = false;
+        }
+      }, 15_000);
 
       try {
         const ctx = await loadWorkspaceContext({
@@ -343,7 +327,8 @@ export async function POST(request: NextRequest) {
             void setCooldown(candidate.key, failure);
           },
           ctx,
-          tools: toolsForWorkspace(ctx, DRAFT_TOOLS),
+          tools: toolsForWorkspace(ctx, [...WEB_TOOLS, ...CREATOR_TOOLS]),
+          longTimeoutMs: 290_000,
           history: protectedHistory,
           question,
           vault,
@@ -355,6 +340,7 @@ export async function POST(request: NextRequest) {
           steps: result.steps.map((st) => ({ tool: st.tool, label: st.label, source: st.source, coverage: st.coverage })),
           pendingAction: result.pendingAction,
           actionStatus: result.pendingAction ? "pending" : undefined,
+          ...(result.artifacts.length ? { artifacts: result.artifacts } : {}),
           rounds: result.rounds,
         };
         const saved = await prisma.atrakoMessage.create({
@@ -407,6 +393,7 @@ export async function POST(request: NextRequest) {
           .catch(() => null);
         send("error", { message: friendly, failed: failed ? messageView(failed) : null });
       } finally {
+        clearInterval(keepAlive);
         open = false;
         try {
           controller.close();

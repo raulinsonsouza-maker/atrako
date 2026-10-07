@@ -16,11 +16,38 @@ import { previewForm, type FormStep } from "@atrako/forms";
 import { publicPath } from "@/lib/criar/slug";
 import { pickAttributionFromBody } from "@/lib/criar/lp-attribution";
 import { createLeadEvent, publishAtrakoEvents } from "@/lib/atrako/events";
+import { prisma } from "@/lib/db";
+import { verifyPreviewToken, type PreviewPayload } from "@/lib/criar/preview-token";
+import { flattenFields, validateFormAnswers } from "@/lib/criar/form-test";
+import { isLpSalesPageV3 } from "@/lib/criar/lp-html";
+
+/** Formulário alvo de um token de prévia (o próprio form, ou o vinculado à LP). */
+async function formForPreview(token: PreviewPayload) {
+  if (token.k === "form") return getCaptureFormById(token.ws, token.id);
+  const product = await prisma.commerceProduct.findFirst({
+    where: { id: token.id, clienteId: token.ws },
+    select: { salesPage: true },
+  });
+  const page = product?.salesPage as Record<string, unknown> | null;
+  const formId = isLpSalesPageV3(page) ? page.formId : typeof page?.formId === "string" ? page.formId : undefined;
+  return formId ? getCaptureFormById(token.ws, formId) : null;
+}
 
 export async function GET(request: NextRequest) {
   const workspaceId = request.nextUrl.searchParams.get("workspaceId")?.trim();
   const slug = request.nextUrl.searchParams.get("slug")?.trim();
   const id = request.nextUrl.searchParams.get("id")?.trim();
+  const previewParam = request.nextUrl.searchParams.get("preview");
+
+  if (previewParam) {
+    const token = verifyPreviewToken(previewParam, "form");
+    const form = token ? await formForPreview(token) : null;
+    if (!form) return NextResponse.json({ error: "Prévia expirada ou inválida" }, { status: 404 });
+    return NextResponse.json({
+      preview: true,
+      form: { id: form.id, name: form.name, slug: form.slug, status: form.status, steps: form.steps, source: form.source },
+    });
+  }
 
   if (slug) {
     const form = await getCaptureFormBySlug(slug);
@@ -78,6 +105,31 @@ export async function POST(request: NextRequest) {
   const input = body as Record<string, unknown>;
   const action = typeof input.action === "string" ? input.action : "publish";
   const workspaceId = typeof input.workspaceId === "string" ? input.workspaceId : "";
+
+  // Modo teste (prévia): valida como no envio real e não grava lead nem dispara fluxos.
+  if ((action === "complete" || action === "lp_lead") && input.preview != null) {
+    const token = verifyPreviewToken(input.preview);
+    if (!token) return NextResponse.json({ error: "Prévia expirada — gere uma nova." }, { status: 403 });
+    if (action === "lp_lead") {
+      const nome = typeof input.nome === "string" ? input.nome.trim() : "";
+      const email = typeof input.email === "string" ? input.email.trim() : "";
+      if (!nome || !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) {
+        return NextResponse.json({ error: "nome e e-mail obrigatórios" }, { status: 400 });
+      }
+      return NextResponse.json({ ok: true, test: true });
+    }
+    const form = await formForPreview(token);
+    if (!form) return NextResponse.json({ error: "Formulário não encontrado" }, { status: 404 });
+    const check = validateFormAnswers(
+      flattenFields(form.steps),
+      (Array.isArray(input.answers) ? input.answers : []) as Array<{ fieldId: string; value: string }>,
+    );
+    if (!check.ok) {
+      const first = check.errors[0];
+      return NextResponse.json({ error: `${first.label}: ${first.message}`, errors: check.errors }, { status: 400 });
+    }
+    return NextResponse.json({ ok: true, test: true });
+  }
 
   if (action === "complete") {
     const slug = typeof input.slug === "string" ? input.slug : "";

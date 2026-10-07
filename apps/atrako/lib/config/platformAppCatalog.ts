@@ -461,6 +461,24 @@ export const PLATFORM_APP_CATALOG: Record<PlatformAppProvider, PlatformAppCatalo
   AI_OLLAMA: aiChainEntry("AI_OLLAMA", "IA — Ollama", "Modelos do Ollama Cloud na cadeia do assistente.", "Chave de API"),
   AI_GROQ: aiChainEntry("AI_GROQ", "IA — Groq", "Modelos da Groq na cadeia do assistente.", "gsk_…"),
   AI_COHERE: aiChainEntry("AI_COHERE", "IA — Cohere", "Modelos Command da Cohere na cadeia do assistente.", "Chave de API"),
+  WEB_TAVILY: {
+    provider: "WEB_TAVILY",
+    title: "Busca na web — Tavily",
+    description: "Pesquisa na web usada pelo assistente para trazer referências, concorrentes e ideias com fonte.",
+    fields: [
+      { key: "label", label: "Nome de exibição" },
+      { key: "clientSecret", label: "API key", hint: "tvly-…", secret: true, requiredForReady: true },
+    ],
+  },
+  WEB_JINA: {
+    provider: "WEB_JINA",
+    title: "Leitura de páginas — Jina Reader",
+    description: "Opcional: chave do Jina Reader para ler páginas da web com limite maior. Sem chave, usa o acesso gratuito.",
+    fields: [
+      { key: "label", label: "Nome de exibição" },
+      { key: "clientSecret", label: "API key", hint: "jina_…", secret: true, requiredForReady: true },
+    ],
+  },
 };
 
 function aiChainEntry(

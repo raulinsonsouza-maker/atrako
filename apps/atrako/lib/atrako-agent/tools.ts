@@ -17,6 +17,8 @@ import {
   type AtrakoWorkspaceContext,
 } from "./context";
 import { maskEmail, maskPhone, revealToken, type PiiVault } from "./safety";
+import type { Artifact } from "./artifacts";
+import { chartsFor } from "./charts";
 
 /**
  * Catálogo de ferramentas do Atrako. Cada ferramenta:
@@ -47,11 +49,18 @@ export type ToolResult = {
   source: ToolSource;
   /** Ações DRAFT: proposta aguardando confirmação do usuário. */
   pendingAction?: PendingAction;
+  /** Cards na conversa (gráfico, referências, prévia, teste) — o modelo só recebe o resumo. */
+  artifacts?: Artifact[];
 };
 
 export type ToolRuntime = {
   ctx: AtrakoWorkspaceContext;
   vault?: PiiVault;
+  /** Atualiza o rótulo do passo no orb durante ferramentas longas. */
+  onProgress?: (label: string) => void;
+  signal?: AbortSignal;
+  /** O que o usuário escreveu nesta conversa (não o que o modelo resumiu). */
+  userText?: string;
 };
 
 type JsonSchema = Record<string, unknown>;
@@ -62,20 +71,25 @@ export type AtrakoTool = {
   step: string;
   description: string;
   parameters: JsonSchema;
-  risk: "READ" | "DRAFT";
+  /** WRITE grava direto (criação/publicação pedida pelo usuário). */
+  risk: "READ" | "DRAFT" | "WRITE";
   /** Só aparece se o módulo estiver ligado no workspace. */
   module?: ModuleKey;
+  /** Ferramenta demorada (gera página com IA): estende o prazo total da resposta. */
+  longRunning?: boolean;
+  /** Cria recurso: depois de um sucesso, novas chamadas na mesma resposta não criam outro. */
+  oncePerTurn?: boolean;
   run: (args: Record<string, unknown>, rt: ToolRuntime) => Promise<ToolResult>;
 };
 
 // ── schema helpers (compatíveis com strict mode: tudo required, opcional = null) ──
 
-const nullableString = (description: string, values?: readonly string[]) =>
+export const nullableString = (description: string, values?: readonly string[]) =>
   values
     ? { type: ["string", "null"], enum: [...values, null], description }
     : { type: ["string", "null"], description };
 
-const nullableInt = (description: string) => ({ type: ["integer", "null"], description });
+export const nullableInt = (description: string) => ({ type: ["integer", "null"], description });
 
 const PERIOD_PROPS = {
   periodo: nullableString(
@@ -86,7 +100,7 @@ const PERIOD_PROPS = {
   fim: nullableString("Data final YYYY-MM-DD (inclusive)."),
 } as const;
 
-function objectSchema(props: Record<string, unknown>): JsonSchema {
+export function objectSchema(props: Record<string, unknown>): JsonSchema {
   return {
     type: "object",
     properties: props,
@@ -927,5 +941,10 @@ export async function runTool(
   // Nunca aceitar escopo de tenant vindo do modelo.
   delete args.clienteId;
   delete args.workspaceId;
-  return tool.run(args, rt);
+  const result = await tool.run(args, rt);
+  if (tool.risk === "READ" && result.coverage === "available") {
+    const charts = chartsFor(tool.name, result.data);
+    if (charts.length) result.artifacts = [...charts, ...(result.artifacts ?? [])];
+  }
+  return result;
 }

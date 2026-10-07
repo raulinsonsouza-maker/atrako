@@ -1,4 +1,5 @@
 import type { AssistantConversation, AssistantMessage, AssistantPendingAction } from "./useAssistantHistory";
+import type { Artifact } from "@/lib/atrako-agent/artifacts";
 
 export type StreamHandlers = {
   onMeta?: (data: { conversation: AssistantConversation; userMessage: AssistantMessage; traceId: string }) => void;
@@ -6,6 +7,8 @@ export type StreamHandlers = {
   onToken?: (text: string) => void;
   onDiscard?: () => void;
   onAction?: (action: AssistantPendingAction) => void;
+  onStepDone?: (data: { id: string; tool: string; coverage: string; ms: number }) => void;
+  onArtifact?: (artifact: Artifact) => void;
   onDone?: (data: { message: AssistantMessage; conversation: AssistantConversation }) => void;
   onError?: (data: { message: string; failed: AssistantMessage | null }) => void;
 };
@@ -73,6 +76,12 @@ export async function streamAssistant(
         break;
       case "action":
         handlers.onAction?.(payload.action as AssistantPendingAction);
+        break;
+      case "step_done":
+        handlers.onStepDone?.(payload as never);
+        break;
+      case "artifact":
+        handlers.onArtifact?.(payload.artifact as Artifact);
         break;
       case "done":
         handlers.onDone?.(payload as never);

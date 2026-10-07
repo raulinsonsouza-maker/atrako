@@ -20,13 +20,20 @@ export default function PublicFormPage() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [previewToken, setPreviewToken] = useState<string | null>(null);
 
   useEffect(() => {
     if (!slug) return;
     let cancelled = false;
+    const preview = new URLSearchParams(window.location.search).get("preview");
+    setPreviewToken(preview);
     (async () => {
       try {
-        const r = await fetch(`/api/atrako/forms?slug=${encodeURIComponent(slug)}`);
+        const r = await fetch(
+          preview
+            ? `/api/atrako/forms?preview=${encodeURIComponent(preview)}`
+            : `/api/atrako/forms?slug=${encodeURIComponent(slug)}`,
+        );
         const j = await r.json();
         if (!r.ok) throw new Error(j.error || "Formulário não encontrado");
         if (cancelled) return;
@@ -67,7 +74,12 @@ export default function PublicFormPage() {
       const r = await fetch("/api/atrako/forms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "complete", slug, answers: payload }),
+        body: JSON.stringify({
+          action: "complete",
+          slug,
+          answers: payload,
+          ...(previewToken ? { preview: previewToken } : {}),
+        }),
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || "Falha ao enviar");
@@ -110,8 +122,12 @@ export default function PublicFormPage() {
   if (done) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[var(--canvas)] px-6 text-center">
-        <h1 className="type-display-md text-[var(--ink)]">Obrigado</h1>
-        <p className="type-body text-[var(--ink-muted-80)]">Recebemos suas respostas.</p>
+        <h1 className="type-display-md text-[var(--ink)]">{previewToken ? "Teste concluído" : "Obrigado"}</h1>
+        <p className="type-body text-[var(--ink-muted-80)]">
+          {previewToken
+            ? "Modo teste: as respostas passaram na validação e nada foi salvo."
+            : "Recebemos suas respostas."}
+        </p>
       </div>
     );
   }
@@ -125,7 +141,10 @@ export default function PublicFormPage() {
         />
       </div>
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-16">
-        <p className="type-fine-print text-[var(--ink-muted-48)]">{name}</p>
+        <p className="type-fine-print text-[var(--ink-muted-48)]">
+          {name}
+          {previewToken ? " · Modo teste — nada será salvo" : ""}
+        </p>
         <form onSubmit={onNext} className="mt-4">
           <h1 className="type-lead text-[var(--ink)]">{current?.label}</h1>
           {current?.type === "consent" ? (

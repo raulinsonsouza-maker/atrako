@@ -127,6 +127,26 @@ export async function createCaptureForm(input: {
   return created;
 }
 
+export async function updateCaptureFormStatus(
+  clienteId: string,
+  id: string,
+  status: "DRAFT" | "PUBLISHED",
+): Promise<CaptureFormRow | null> {
+  await prisma.$executeRaw`
+    UPDATE "CaptureForm" SET status = ${status}, "updatedAt" = NOW()
+    WHERE id = ${id} AND "clienteId" = ${clienteId}
+  `;
+  return getCaptureFormById(clienteId, id);
+}
+
+/** `/f/[slug]` não filtra por workspace: o slug precisa ser único na plataforma. */
+export async function isCaptureFormSlugTaken(slug: string): Promise<boolean> {
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT id FROM "CaptureForm" WHERE slug = ${slug} LIMIT 1
+  `;
+  return rows.length > 0;
+}
+
 export async function createCaptureFormFromBrief(input: {
   clienteId: string;
   brief: string;

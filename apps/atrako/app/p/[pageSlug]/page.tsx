@@ -21,22 +21,51 @@ import type {
   LpPuckProduct,
 } from "@/lib/criar/puck/context";
 import { loadCheckoutCatalogForPage } from "@/lib/criar/puck/load-checkout-catalog";
+import { isLpSalesPageV3 } from "@/lib/criar/lp-v3";
+import { verifyPreviewToken } from "@/lib/criar/preview-token";
+import { flattenFields } from "@/lib/criar/form-test";
+import { SalesPageHtmlView } from "@/components/commerce/SalesPageHtmlView";
 
 type Props = {
   params: Promise<{ pageSlug: string }>;
-  searchParams: Promise<{ embed?: string }>;
+  searchParams: Promise<{ embed?: string; preview?: string }>;
 };
 
-async function loadProduct(pageSlug: string) {
-  return prisma.commerceProduct.findFirst({
+/** Publicada pelo slug; com token de prévia válido, abre o rascunho pelo id. */
+async function loadProduct(pageSlug: string, previewToken?: string) {
+  const preview = verifyPreviewToken(previewToken, "lp");
+  if (preview) {
+    const draft = await prisma.commerceProduct.findFirst({
+      where: { id: preview.id, clienteId: preview.ws, active: true },
+    });
+    if (draft) return { product: draft, preview: true };
+  }
+  const product = await prisma.commerceProduct.findFirst({
     where: { slug: pageSlug, active: true, status: "PUBLISHED" },
   });
+  return product ? { product, preview: false } : null;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+function firstHeading(html: string): string | null {
+  const m = html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i);
+  const text = m?.[1]?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return text ? text.slice(0, 120) : null;
+}
+
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { pageSlug } = await params;
-  const product = await loadProduct(pageSlug);
-  if (!product) return { title: "Oferta" };
+  const sp = await searchParams;
+  const loaded = await loadProduct(pageSlug, sp.preview);
+  if (!loaded) return { title: "Oferta" };
+  const { product } = loaded;
+  if (loaded.preview) return { title: `Prévia — ${product.name}`, robots: { index: false, follow: false } };
+
+  if (isLpSalesPageV3(product.salesPage)) {
+    return {
+      title: firstHeading(product.salesPage.html) ?? product.name,
+      description: product.description ?? undefined,
+    };
+  }
 
   if (isLpSalesPageV2(product.salesPage)) {
     const hero = product.salesPage.puck.content?.find(
@@ -68,8 +97,10 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
   const { pageSlug } = await params;
   const sp = await searchParams;
   const embed = sp.embed === "1";
-  const product = await loadProduct(pageSlug);
-  if (!product) notFound();
+  const loaded = await loadProduct(pageSlug, sp.preview);
+  if (!loaded) notFound();
+  const { product } = loaded;
+  const previewToken = loaded.preview ? sp.preview ?? null : null;
 
   const [config, mpPublicKey] = await Promise.all([
     getWorkspaceConfig(product.clienteId),
@@ -89,6 +120,61 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
   };
 
   const salesRaw = product.salesPage;
+  if (isLpSalesPageV3(salesRaw)) {
+    if (salesRaw.goal !== "leads" && !(await isPublicModuleEnabled(product.clienteId, "commerce"))) {
+      return <PublicUnavailable brandName={brandName} />;
+    }
+    const form = salesRaw.formId ? await getCaptureFormById(product.clienteId, salesRaw.formId) : null;
+    const formReady = Boolean(form?.active && (previewToken || form.status === "PUBLISHED"));
+    const checkoutRow = salesRaw.checkoutProductId
+      ? await prisma.commerceProduct.findFirst({
+          where: {
+            id: salesRaw.checkoutProductId,
+            clienteId: product.clienteId,
+            active: true,
+            priceCents: { gt: 0 },
+            ...(previewToken ? {} : { status: "PUBLISHED" as const }),
+          },
+        })
+      : null;
+    const checkoutV3: LpPuckProduct | null = checkoutRow
+      ? {
+          id: checkoutRow.id,
+          name: checkoutRow.name,
+          slug: checkoutRow.slug,
+          priceCents: checkoutRow.priceCents,
+          description: checkoutRow.description,
+          clienteId: checkoutRow.clienteId,
+          type: checkoutRow.type,
+        }
+      : null;
+    return (
+      <BrandThemeScope primaryColor={brand?.primaryColor} className="min-h-screen bg-[var(--canvas)] text-[var(--ink)]">
+        {typeof tracking.pixelId === "string" && tracking.pixelId && !embed && !previewToken ? (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${tracking.pixelId}');fbq('track','PageView');`,
+            }}
+          />
+        ) : null}
+        <SalesPageHtmlView
+          page={salesRaw}
+          product={productPayload}
+          brandName={brandName}
+          currency={brand?.currency || "BRL"}
+          mpPublicKey={mpPublicKey}
+          form={
+            formReady && form
+              ? { slug: form.status === "PUBLISHED" ? form.slug : null, name: form.name, fields: flattenFields(form.steps) }
+              : null
+          }
+          checkoutProduct={checkoutV3}
+          previewToken={previewToken}
+        />
+      </BrandThemeScope>
+    );
+  }
+
   const isV2 = isLpSalesPageV2(salesRaw);
   const pageV2 = isV2 ? salesRaw : null;
   const pageV1 = isV2 ? null : normalizeSalesPage(salesRaw);

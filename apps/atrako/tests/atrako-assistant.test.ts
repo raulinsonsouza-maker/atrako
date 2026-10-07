@@ -298,7 +298,10 @@ test("system prompt leva persona, mapa de dados e o contexto do workspace", () =
   }
   assert.doesNotMatch(prompt, /Config → Integrações|LP \+ Checkout|Insights \(\/insights\)/);
   assert.match(prompt, /nunca escreva 'coverage'/);
-  assert.match(prompt, /Criar rascunho/);
+  assert.match(prompt, /criar_landing_page/);
+  assert.match(prompt, /Publicar só quando o usuário pedir explicitamente/);
+  assert.match(prompt, /Nunca invente depoimentos/);
+  assert.doesNotMatch(prompt, /Criar rascunho/);
 });
 
 test("contexto separa checkout Atrako de lojas/marketplaces", () => {
@@ -523,6 +526,39 @@ test("mesma ferramenta com os mesmos argumentos roda uma vez só na pergunta", a
     (m) => m.role === "tool",
   );
   assert.deepEqual(toolMsgs.map((m) => m.tool_call_id), ["c1", "c2", "c3"], "todo tool_call recebe resposta");
+});
+
+test("ferramenta oncePerTurn não cria de novo na mesma resposta e recebe o texto do usuário", async () => {
+  let runs = 0;
+  let seen: string | undefined;
+  const { client, requests } = mockClient([
+    call("criar", { nome: "A" }, "c1"),
+    call("criar", { nome: "B" }, "c2"),
+    text("Criei."),
+  ]);
+  const res = await runAtrakoEngine({
+    ...single(client),
+    ctx,
+    tools: [
+      fakeTool(
+        "criar",
+        async (_args, rt) => {
+          runs++;
+          seen = rt.userText;
+          return okResult("criar", { id: "p1" });
+        },
+        { oncePerTurn: true },
+      ),
+    ],
+    history: [{ role: "user", content: "antes" }, { role: "assistant", content: "ok" }],
+    question: "cria a página",
+  });
+  assert.equal(res.answer, "Criei.");
+  assert.equal(runs, 1);
+  assert.equal(seen, "antes\ncria a página");
+  const last = (requests[2] as { messages: Array<{ role: string; content: string }> }).messages.filter((m) => m.role === "tool").at(-1);
+  assert.match(last?.content ?? "", /já foi executada/);
+  assert.match(last?.content ?? "", /p1/);
 });
 
 test("provedor openai usa strict + include_usage; modelos gpt-5/o* sem temperature", async () => {

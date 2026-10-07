@@ -214,6 +214,14 @@ const ENV_SEED: Partial<
     label: "IA — Cohere",
     clientSecret: process.env.COHERE_API_KEY?.trim() || undefined,
   }),
+  WEB_TAVILY: () => ({
+    label: "Busca na web — Tavily",
+    clientSecret: process.env.TAVILY_API_KEY?.trim() || undefined,
+  }),
+  WEB_JINA: () => ({
+    label: "Leitura de páginas — Jina",
+    clientSecret: process.env.JINA_API_KEY?.trim() || undefined,
+  }),
 };
 
 function hasAnyCredential(creds: PlatformAppCredentials): boolean {

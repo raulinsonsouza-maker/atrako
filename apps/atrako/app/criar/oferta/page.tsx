@@ -25,6 +25,7 @@ import {
 import { slugify } from "@/lib/criar/slug";
 import type { LpGoal, LpSalesPageV2 } from "@/lib/criar/lp-schema";
 import { isLpSalesPageV1, isLpSalesPageV2 } from "@/lib/criar/lp-schema";
+import { isLpSalesPageV3 } from "@/lib/criar/lp-v3";
 import type {
   LpFormCatalogItem,
   LpPuckProduct,
@@ -170,9 +171,17 @@ function OfertaInner() {
   });
   const pages = useMemo(() => {
     const all = commerce?.products ?? [];
-    return all.filter(
-      (p) => isLpSalesPageV2(p.salesPage) || isLpSalesPageV1(p.salesPage),
-    );
+    return all
+      .filter(
+        (p) =>
+          isLpSalesPageV3(p.salesPage) ||
+          isLpSalesPageV2(p.salesPage) ||
+          isLpSalesPageV1(p.salesPage),
+      )
+      .map((p) => ({
+        ...p,
+        format: isLpSalesPageV3(p.salesPage) ? ("html" as const) : undefined,
+      }));
   }, [commerce?.products]);
 
   const { data: captureForms = [] } = useQuery({
@@ -313,6 +322,10 @@ function OfertaInner() {
         if (!product || cancelled) return;
         const { isLpSalesPageV2 } = await import("@/lib/criar/lp-schema");
         const sales = product.salesPage;
+        if (isLpSalesPageV3(sales)) {
+          router.replace(`/criar/paginas/${encodeURIComponent(product.id)}?aviso=html`);
+          return;
+        }
         setDraftProductId(product.id);
         setPageStatus(
           product.status === "PUBLISHED" ? "PUBLISHED" : "DRAFT",

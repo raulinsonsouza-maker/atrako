@@ -12,6 +12,7 @@ import {
   type PendingAction,
   type ToolSource,
 } from "./tools";
+import { MAX_ARTIFACTS_PER_ANSWER, artifactSummary, type Artifact } from "./artifacts";
 
 /**
  * Motor do Atrako: o modelo escolhe as ferramentas num loop de tool_calls
@@ -25,7 +26,8 @@ export type EngineEvent =
   | { type: "token"; text: string }
   /** Texto parcial que precedeu tool_calls — a UI descarta e volta a "pensando". */
   | { type: "discard" }
-  | { type: "action"; action: PendingAction };
+  | { type: "action"; action: PendingAction }
+  | { type: "artifact"; artifact: Artifact };
 
 export type EngineUsage = { prompt: number; completion: number; total: number };
 
@@ -47,6 +49,7 @@ export type EngineResult = {
   steps: EngineStep[];
   sources: ToolSource[];
   pendingAction: PendingAction | null;
+  artifacts: Artifact[];
   rounds: number;
 };
 
@@ -76,6 +79,8 @@ export type EngineInput<C extends EngineCandidate = EngineCandidate> = {
   maxRounds?: number;
   maxToolCallsPerRound?: number;
   timeoutMs?: number;
+  /** Prazo total quando a pergunta usa uma ferramenta `longRunning` (geração de página). */
+  longTimeoutMs?: number;
   /** Sem nenhum chunk nesse prazo, o modelo é dado como travado e o próximo assume. */
   firstChunkTimeoutMs?: number;
   maxOutputTokens?: number;
@@ -94,6 +99,7 @@ export class EngineError extends Error {
 const DEFAULT_MAX_ROUNDS = 6;
 const DEFAULT_MAX_TOOL_CALLS = 6;
 const DEFAULT_TIMEOUT_MS = 90_000;
+const DEFAULT_LONG_TIMEOUT_MS = 240_000;
 const DEFAULT_FIRST_CHUNK_TIMEOUT_MS = 25_000;
 
 /** Modelos de raciocínio rejeitam `temperature`. */
@@ -140,7 +146,16 @@ export async function runAtrakoEngine<C extends EngineCandidate>(input: EngineIn
   let current = 0;
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(new Error("timeout")), input.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+  const startedAt = Date.now();
+  let timer = setTimeout(() => controller.abort(new Error("timeout")), input.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+  let extended = false;
+  const extendDeadline = () => {
+    if (extended) return;
+    extended = true;
+    clearTimeout(timer);
+    const remaining = Math.max(1_000, (input.longTimeoutMs ?? DEFAULT_LONG_TIMEOUT_MS) - (Date.now() - startedAt));
+    timer = setTimeout(() => controller.abort(new Error("timeout")), remaining);
+  };
   const onAbort = () => controller.abort(new Error("aborted"));
   input.signal?.addEventListener("abort", onAbort, { once: true });
 
@@ -149,6 +164,7 @@ export async function runAtrakoEngine<C extends EngineCandidate>(input: EngineIn
   const steps: EngineStep[] = [];
   const sources: ToolSource[] = [];
   let pendingAction: PendingAction | null = null;
+  const artifacts: Artifact[] = [];
   let answer = "";
   let rounds = 0;
 
@@ -219,12 +235,21 @@ export async function runAtrakoEngine<C extends EngineCandidate>(input: EngineIn
 
   /** Mesma ferramenta + mesmos argumentos na mesma pergunta reaproveitam o resultado. */
   const toolCache = new Map<string, Promise<ToolPayload>>();
+  const onceRuns = new Map<string, Promise<ToolPayload>>();
+  const userText = [...input.history.filter((m) => m.role === "user").map((m) => m.content), input.question].join("\n");
 
   async function executeTool(tool: AtrakoTool, callId: string, args: Record<string, unknown>): Promise<ToolPayload> {
     const started = Date.now();
+    if (tool.longRunning) extendDeadline();
     emit({ type: "step", id: callId, tool: tool.name, label: tool.step });
     try {
-      const result = await runTool(tool, args, { ctx: input.ctx, vault: input.vault });
+      const result = await runTool(tool, args, {
+        ctx: input.ctx,
+        vault: input.vault,
+        signal: controller.signal,
+        onProgress: (label) => emit({ type: "step", id: callId, tool: tool.name, label }),
+        userText,
+      });
       const ms = Date.now() - started;
       steps.push({ tool: tool.name, label: tool.step, source: result.source.label, args, coverage: result.coverage, ms });
       sources.push(result.source);
@@ -233,10 +258,18 @@ export async function runAtrakoEngine<C extends EngineCandidate>(input: EngineIn
         pendingAction = result.pendingAction;
         emit({ type: "action", action: result.pendingAction });
       }
+      const shown: string[] = [];
+      for (const artifact of result.artifacts ?? []) {
+        if (artifacts.length >= MAX_ARTIFACTS_PER_ANSWER) break;
+        artifacts.push(artifact);
+        shown.push(artifactSummary(artifact));
+        emit({ type: "artifact", artifact });
+      }
       return {
         coverage: result.coverage,
         fonte: result.source,
         dados: result.data,
+        ...(shown.length ? { exibido_na_conversa: shown } : {}),
         ...(result.pendingAction
           ? {
               acao: "Rascunho preparado. O cartão com o resumo e o botão 'Criar rascunho' aparece logo abaixo da sua resposta, aqui na conversa. Nada foi criado ainda — responda em 1–2 frases pedindo para revisar o cartão e clicar em 'Criar rascunho'; não repita os campos nem cite outra tela.",
@@ -313,12 +346,28 @@ export async function runAtrakoEngine<C extends EngineCandidate>(input: EngineIn
           } catch {
             args = {};
           }
+          if (tool.oncePerTurn) {
+            const previous = onceRuns.get(tool.name);
+            if (previous) {
+              const prev = await previous;
+              if (prev.coverage === "available") {
+                return {
+                  call,
+                  payload: {
+                    aviso: `${tool.name} já foi executada com sucesso nesta resposta; não repita. Responda ao usuário com base no resultado anterior (ajustes só se ele pedir).`,
+                    resultado_anterior: prev.dados,
+                  } as ToolPayload,
+                };
+              }
+            }
+          }
           const cacheKey = `${tool.name}:${stableJson(args)}`;
           let pending = toolCache.get(cacheKey);
           if (!pending) {
             pending = executeTool(tool, call.id, args);
             toolCache.set(cacheKey, pending);
           }
+          if (tool.oncePerTurn) onceRuns.set(tool.name, pending);
           return { call, payload: await pending };
         }),
       );
@@ -346,7 +395,9 @@ export async function runAtrakoEngine<C extends EngineCandidate>(input: EngineIn
   if (!answer) {
     answer = pendingAction
       ? "Preparei o rascunho. Confira o resumo abaixo e confirme para eu criar."
-      : "Não consegui montar uma resposta agora. Pode reformular a pergunta?";
+      : artifacts.length
+        ? "Pronto — está logo abaixo, aqui na conversa."
+        : "Não consegui montar uma resposta agora. Pode reformular a pergunta?";
     emit({ type: "token", text: answer });
   }
 
@@ -357,6 +408,7 @@ export async function runAtrakoEngine<C extends EngineCandidate>(input: EngineIn
     steps,
     sources,
     pendingAction,
+    artifacts,
     rounds,
   };
 }

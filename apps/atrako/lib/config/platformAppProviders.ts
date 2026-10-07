@@ -23,6 +23,8 @@ export const PLATFORM_APP_PROVIDERS = [
   "AI_OLLAMA",
   "AI_GROQ",
   "AI_COHERE",
+  "WEB_TAVILY",
+  "WEB_JINA",
 ] as const;
 
 export type PlatformAppProvider = (typeof PLATFORM_APP_PROVIDERS)[number];

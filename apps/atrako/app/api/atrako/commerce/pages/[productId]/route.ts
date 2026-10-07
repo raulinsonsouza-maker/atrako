@@ -4,8 +4,35 @@ import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { isLpSalesPageV2 } from "@/lib/criar/lp-schema";
 import { puckHasBlockType } from "@/lib/criar/puck/puck-checkout";
+import { isLpSalesPageV3 } from "@/lib/criar/lp-html";
+import { createPreviewToken, lpPreviewPath } from "@/lib/criar/preview-token";
+import { publishResource } from "@/lib/atrako-agent/creator";
 
 type Params = { params: Promise<{ productId: string }> };
+
+/** Publicar / voltar para rascunho a partir do detalhe da página. */
+export async function POST(request: NextRequest, { params }: Params) {
+  const { productId } = await params;
+  const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+  const workspaceId = typeof body?.workspaceId === "string" ? body.workspaceId.trim() : "";
+  if (!workspaceId) return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
+  try {
+    if (body?.action === "unpublish") {
+      const res = await prisma.commerceProduct.updateMany({
+        where: { id: productId, clienteId: workspaceId },
+        data: { status: "DRAFT" },
+      });
+      if (!res.count) return NextResponse.json({ error: "página não encontrada" }, { status: 404 });
+      return NextResponse.json({ status: "DRAFT", warnings: [] });
+    }
+    const result = await publishResource(workspaceId, "landing_page", productId);
+    return NextResponse.json({ status: result.status, publicPath: result.publicPath, warnings: result.warnings });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Falha ao publicar" }, { status: 400 });
+  }
+}
 
 /** Detalhe de uma página/oferta: métricas + leads da LP. */
 export async function GET(request: NextRequest, { params }: Params) {
@@ -80,7 +107,15 @@ export async function GET(request: NextRequest, { params }: Params) {
   let pageKind: "leads" | "sales" | "mixed" = "leads";
   let checkoutProductId: string | null = null;
   let formId: string | null = null;
-  if (isLpSalesPageV2(product.salesPage)) {
+  let format: "html" | "puck" | "sections" = "sections";
+  if (isLpSalesPageV3(product.salesPage)) {
+    const sp = product.salesPage;
+    format = "html";
+    formId = sp.formId ?? null;
+    checkoutProductId = sp.checkoutProductId ?? null;
+    pageKind = sp.goal === "sales" ? "sales" : "leads";
+  } else if (isLpSalesPageV2(product.salesPage)) {
+    format = "puck";
     const sp = product.salesPage;
     formId = sp.formId ?? null;
     checkoutProductId = sp.checkoutProductId ?? null;
@@ -104,6 +139,11 @@ export async function GET(request: NextRequest, { params }: Params) {
       pageKind,
       checkoutProductId,
       formId,
+      format,
+      previewPath: lpPreviewPath(
+        product.slug,
+        createPreviewToken({ kind: "lp", id: product.id, clienteId: workspaceId }),
+      ),
     },
     metrics: {
       visits: { d7: visits7, d90: visits90 },

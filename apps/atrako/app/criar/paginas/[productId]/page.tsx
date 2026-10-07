@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3,
@@ -14,6 +14,7 @@ import {
   Pencil,
   Rocket,
   Settings,
+  Sparkles,
   Users,
 } from "lucide-react";
 import { AppPage } from "@/components/layout/AppPage";
@@ -34,6 +35,8 @@ type PageDetail = {
     pageKind?: "leads" | "sales" | "mixed";
     checkoutProductId?: string | null;
     formId?: string | null;
+    format?: "html" | "puck" | "sections";
+    previewPath?: string;
   };
   metrics: {
     visits: { d7: number; d90: number };
@@ -101,12 +104,16 @@ export default function PaginaDetailPage() {
   const params = useParams();
   const router = useRouter();
   const productId = String(params.productId || "");
+  const fromEditor = useSearchParams().get("aviso") === "html";
   const [tab, setTab] = useState<Tab>("resumo");
   const [period, setPeriod] = useState("7");
 
   const { workspaceId } = useActiveWorkspace();
 
-  const { data, isLoading, error } = useQuery({
+  const [publishing, setPublishing] = useState(false);
+  const [publishMsg, setPublishMsg] = useState<string | null>(null);
+
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["lp-page-detail", workspaceId, productId],
     queryFn: async () => {
       const r = await fetch(
@@ -119,7 +126,37 @@ export default function PaginaDetailPage() {
   });
 
   const path = data ? `/p/${data.product.slug}` : "";
-  const editHref = `/criar/oferta?mode=manual&productId=${encodeURIComponent(productId)}&edit=1`;
+  const isHtml = data?.product.format === "html";
+  const isPublished = data?.product.status === "PUBLISHED";
+  const editHref = isHtml
+    ? `/assistente?q=${encodeURIComponent(
+        `Quero ajustar a landing page "${data?.product.name ?? ""}" (id ${productId}). `,
+      )}`
+    : `/criar/oferta?mode=manual&productId=${encodeURIComponent(productId)}&edit=1`;
+  const previewSrc = data?.product.previewPath
+    ? `${data.product.previewPath}&embed=1`
+    : `${path}?embed=1`;
+
+  async function togglePublish() {
+    if (!workspaceId || publishing) return;
+    setPublishing(true);
+    setPublishMsg(null);
+    try {
+      const r = await fetch(`/api/atrako/commerce/pages/${encodeURIComponent(productId)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId, action: isPublished ? "unpublish" : "publish" }),
+      });
+      const j = (await r.json().catch(() => ({}))) as { error?: string; warnings?: string[] };
+      if (!r.ok) throw new Error(j.error || "Não foi possível publicar.");
+      setPublishMsg(j.warnings?.length ? j.warnings.join(" ") : null);
+      await refetch();
+    } catch (e) {
+      setPublishMsg(e instanceof Error ? e.message : "Não foi possível publicar.");
+    } finally {
+      setPublishing(false);
+    }
+  }
   const pageKindLabel =
     data?.product.pageKind === "mixed"
       ? "Misto"
@@ -181,15 +218,36 @@ export default function PaginaDetailPage() {
       }
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href={path}
-            target="_blank"
-            rel="noreferrer"
-            className="lp-pages-btn-primary"
-          >
-            <Rocket className="h-4 w-4" strokeWidth={1.75} />
-            Publicar página
-          </Link>
+          {isPublished ? (
+            <>
+              <Link href={path} target="_blank" rel="noreferrer" className="lp-pages-btn-primary">
+                <Eye className="h-4 w-4" strokeWidth={1.75} />
+                Ver página no ar
+              </Link>
+              <button
+                type="button"
+                className="lp-pages-btn-secondary"
+                disabled={publishing}
+                onClick={togglePublish}
+              >
+                Voltar para rascunho
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="lp-pages-btn-primary"
+              disabled={publishing}
+              onClick={togglePublish}
+            >
+              {publishing ? (
+                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.75} />
+              ) : (
+                <Rocket className="h-4 w-4" strokeWidth={1.75} />
+              )}
+              Publicar página
+            </button>
+          )}
           <button
             type="button"
             className="lp-pages-icon-btn"
@@ -253,7 +311,7 @@ export default function PaginaDetailPage() {
             <UrlChip path={path} />
             <div className="lp-detail-actions-bar-btns">
               <Link
-                href={path}
+                href={data.product.previewPath ?? path}
                 target="_blank"
                 rel="noreferrer"
                 className="lp-pages-btn-secondary"
@@ -262,8 +320,12 @@ export default function PaginaDetailPage() {
                 Pré-visualizar
               </Link>
               <Link href={editHref} className="lp-pages-btn-primary">
-                <Pencil className="h-4 w-4" strokeWidth={1.75} />
-                Editar design
+                {isHtml ? (
+                  <Sparkles className="h-4 w-4" strokeWidth={1.75} />
+                ) : (
+                  <Pencil className="h-4 w-4" strokeWidth={1.75} />
+                )}
+                {isHtml ? "Editar com o assistente" : "Editar design"}
               </Link>
               {checkoutStandaloneHref ? (
                 <Link
@@ -278,13 +340,27 @@ export default function PaginaDetailPage() {
             </div>
           </div>
 
+          {isHtml && fromEditor ? (
+            <p className="lp-detail-info type-fine-print">
+              Esta página foi criada pelo assistente em HTML e não abre no editor visual.
+              Para mudar textos, cores ou seções, use “Editar com o assistente” — ele
+              ajusta a página e mostra a prévia na conversa.
+            </p>
+          ) : null}
+
+          {publishMsg ? (
+            <p className="type-fine-print text-[var(--ink-muted-80)]">{publishMsg}</p>
+          ) : null}
+
           <div className="lp-detail-preview">
             <p className="type-fine-print text-[var(--ink-muted-48)]">
-              Pré-visualização da landing — só o conteúdo público da página.
+              {isPublished
+                ? "Pré-visualização da landing — só o conteúdo público da página."
+                : "Rascunho em modo teste — envios do formulário e do checkout não geram lead nem pedido."}
             </p>
             <iframe
               title={data.product.name}
-              src={`${path}?embed=1`}
+              src={previewSrc}
               className="lp-detail-iframe"
             />
           </div>

@@ -32,6 +32,8 @@ type Props = {
   /** LP que embute este checkout (pode diferir do product.id). */
   pageProductId?: string;
   pageSlug?: string;
+  /** Modo teste (prévia): simula a aprovação sem criar pedido nem cobrar. */
+  previewToken?: string | null;
 };
 
 function brl(cents: number, currency: string) {
@@ -47,8 +49,10 @@ export function CheckoutForm({
   parentOrderId,
   pageProductId,
   pageSlug,
+  previewToken,
 }: Props) {
   const router = useRouter();
+  const [testApproved, setTestApproved] = useState(false);
   const search = useSearchParams();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -76,6 +80,14 @@ export function CheckoutForm({
   async function submit(e?: React.FormEvent) {
     e?.preventDefault();
     setError(null);
+    if (previewToken) {
+      if (!name.trim() || !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email.trim()) || cpf.replace(/\D/g, "").length !== 11 || !terms) {
+        setError("Preencha nome, e-mail válido, CPF com 11 dígitos e aceite os termos.");
+        return;
+      }
+      setTestApproved(true);
+      return;
+    }
     setLoading(true);
     try {
       const payment =
@@ -146,14 +158,29 @@ export function CheckoutForm({
     }
   }
 
+  if (testApproved) {
+    return (
+      <div className="utility-card space-y-2 text-center">
+        <p className="type-caption-strong text-[var(--ink)]">Compra de teste aprovada</p>
+        <p className="type-body-strong text-[var(--ink)]">{totalLabel}</p>
+        <p className="type-fine-print text-[var(--ink-muted-48)]">
+          Modo teste: nenhum pedido foi criado e nada foi cobrado. Pagamento via {payType === "pix" ? "Pix" : "cartão"}.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
       <form id="checkout-form" onSubmit={submit} className="utility-card mb-24 space-y-4">
+        {previewToken ? (
+          <p className="type-fine-print text-[var(--ink-muted-48)]">Modo teste — o pagamento é simulado.</p>
+        ) : null}
         <div>
           <p className="type-caption-strong text-[var(--ink-muted-48)]">{brandName}</p>
           <h1 className="type-display-lg text-[var(--ink)]">{product.name}</h1>
           <p className="mt-1 type-body-strong text-[var(--ink)]">{totalLabel}</p>
-          {!mpPublicKey ? (
+          {!mpPublicKey && !previewToken ? (
             <p className="mt-2 type-caption text-amber-800">
               Mercado Pago não conectado — o pagamento pode não ser processado.{" "}
               <Link href="/config/conexoes" className="text-[var(--primary)] underline">

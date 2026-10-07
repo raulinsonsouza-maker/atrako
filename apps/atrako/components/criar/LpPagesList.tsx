@@ -8,6 +8,7 @@ import {
   LayoutTemplate,
   MoreHorizontal,
   Plus,
+  Sparkles,
 } from "lucide-react";
 import { SearchInput } from "@/components/ui/search-input";
 import { UrlChip } from "@/components/criar/CopyLinkButton";
@@ -20,6 +21,8 @@ export type LpPageItem = {
   status: string;
   visits?: number;
   conversions?: number;
+  /** `html` = página criada pelo assistente (editada pela conversa, não no editor visual). */
+  format?: "html";
 };
 
 function brl(cents: number) {
@@ -135,7 +138,18 @@ export function LpPagesList({
                 >
                   {p.name}
                 </Link>
-                <UrlChip path={`/p/${p.slug}`} className="lp-page-url" />
+                <div className="flex min-w-0 items-center gap-2">
+                  <UrlChip path={`/p/${p.slug}`} className="lp-page-url" />
+                  {p.status !== "PUBLISHED" ? (
+                    <span className="lp-page-badge type-micro-legal">Rascunho</span>
+                  ) : null}
+                  {p.format === "html" ? (
+                    <span className="lp-page-badge type-micro-legal">
+                      <Sparkles className="h-3 w-3" strokeWidth={1.75} aria-hidden />
+                      Assistente
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
               <div className="lp-page-row-aside">
@@ -164,7 +178,7 @@ export function LpPagesList({
 
                 <div className="lp-page-row-actions">
                   <Link href={editHref(p)} className="lp-pages-btn-secondary">
-                    Editar design
+                    {p.format === "html" ? "Abrir" : "Editar design"}
                   </Link>
                   <a
                     href={`/p/${p.slug}`}

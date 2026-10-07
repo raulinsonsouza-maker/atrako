@@ -18,17 +18,20 @@ import { useOpenAppMenu } from "@/components/layout/AppShell";
 import { NotificationBell } from "@/components/relacionamento/NotificationBell";
 import { AssistantMarkdown, markdownToPlainText } from "./AssistantMarkdown";
 import { AssistantRequestError, streamAssistant } from "./assistantStream";
+import { ArtifactList } from "./ArtifactList";
 import {
   useAssistantHistory,
   type AssistantConversation,
   type AssistantMessage,
 } from "./useAssistantHistory";
+import type { Artifact } from "@/lib/atrako-agent/artifacts";
 
 type Live = {
   key: string;
   phase: "thinking" | "streaming" | "resolved";
   label: string;
   text: string;
+  artifacts: Artifact[];
 };
 
 const NEW_KEY = "__new__";
@@ -56,6 +59,7 @@ function localMessage(role: AssistantMessage["role"], content: string, status = 
     pendingAction: null,
     actionStatus: null,
     actionResult: null,
+    artifacts: [],
   };
 }
 
@@ -180,21 +184,29 @@ function ActionCard({
   );
 }
 
+const WRITE_TOOL_PREFIXES = ["criar_", "editar_", "publicar", "testar_"];
+
 function BotMessage({
   message,
   fresh,
   deciding,
   onDecide,
+  conversationId,
+  onAsk,
+  onArtifactUpdated,
 }: {
   message: AssistantMessage;
   fresh: boolean;
   deciding: boolean;
   onDecide: (decision: "confirm" | "cancel") => void;
+  conversationId: string | null;
+  onAsk?: (text: string) => void;
+  onArtifactUpdated?: (artifact: Artifact) => void;
 }) {
   const consulted = [
     ...new Set(
       message.steps
-        .filter((s) => s.coverage !== "error" && !s.tool.startsWith("criar_"))
+        .filter((s) => s.coverage !== "error" && !WRITE_TOOL_PREFIXES.some((p) => s.tool.startsWith(p)))
         .map((s) => s.source ?? s.label),
     ),
   ];
@@ -210,6 +222,13 @@ function BotMessage({
         >
           <AssistantMarkdown text={message.content} />
         </div>
+        <ArtifactList
+          artifacts={message.artifacts}
+          messageId={message.id.startsWith("local-") ? null : message.id}
+          conversationId={conversationId}
+          onAsk={onAsk}
+          onUpdated={onArtifactUpdated}
+        />
         <ActionCard message={message} busy={deciding} onDecide={onDecide} />
         {consulted.length ? (
           <p className="assistant-msg-sources type-fine-print">Consultei: {consulted.join(" · ")}</p>
@@ -370,6 +389,17 @@ export default function AgentConsole() {
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
+  /* `/assistente?q=…` (ex.: "Editar com o assistente" no Criar): abre com o pedido no campo. */
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const q = url.searchParams.get("q")?.trim();
+    if (!q) return;
+    setQuestion(q.slice(0, 2000));
+    url.searchParams.delete("q");
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+    window.setTimeout(() => composerRef.current?.focus(), 50);
+  }, []);
+
   /* Nova pergunta: desce o fio na hora e lança a bola do enviar até o orb. */
   useLayoutEffect(() => {
     if (liveHere?.phase !== "thinking") return;
@@ -420,7 +450,7 @@ export default function AgentConsole() {
     flyFromRef.current = composerRef.current?.sendRect() ?? null;
     setFlying(!!flyFromRef.current && !prefersReducedMotion());
     setQuestion("");
-    setLive({ key, phase: "thinking", label: "Pensando", text: "" });
+    setLive({ key, phase: "thinking", label: "Pensando", text: "", artifacts: [] });
     if (liveRegionRef.current) liveRegionRef.current.textContent = "Atrako está pensando…";
 
     const controller = new AbortController();
@@ -454,6 +484,9 @@ export default function AgentConsole() {
           onDiscard: () => {
             streamed = false;
             setLive((cur) => (cur ? { ...cur, phase: "thinking", text: "" } : cur));
+          },
+          onArtifact: (artifact) => {
+            setLive((cur) => (cur ? { ...cur, artifacts: [...cur.artifacts, artifact] } : cur));
           },
           onDone: ({ message, conversation }) => {
             final = message;
@@ -521,6 +554,17 @@ export default function AgentConsole() {
     } finally {
       setDeciding(null);
     }
+  }
+
+  function updateArtifact(artifact: Artifact) {
+    if (!activeId) return;
+    history.setMessages(activeId, (list) =>
+      list.map((m) =>
+        m.artifacts?.some((a) => a.id === artifact.id)
+          ? { ...m, artifacts: (m.artifacts ?? []).map((a) => (a.id === artifact.id ? artifact : a)) }
+          : m,
+      ),
+    );
   }
 
   function startNew() {
@@ -627,6 +671,9 @@ export default function AgentConsole() {
                       fresh={freshIds.has(message.id)}
                       deciding={deciding === message.id}
                       onDecide={(d) => void decide(message, d)}
+                      conversationId={activeId}
+                      onAsk={live ? undefined : (t) => void send(t)}
+                      onArtifactUpdated={updateArtifact}
                     />
                   ),
                 )}
@@ -642,9 +689,17 @@ export default function AgentConsole() {
                         <AssistantMarkdown text={liveHere.text} />
                         <span className="assistant-caret" aria-hidden />
                       </div>
+                      <ArtifactList artifacts={liveHere.artifacts} messageId={null} conversationId={activeId} />
                     </div>
                   </div>
                 ) : liveHere ? (
+                  <>
+                  {liveHere.artifacts.length ? (
+                    <div className="assistant-msg-bot">
+                      <span aria-hidden />
+                      <ArtifactList artifacts={liveHere.artifacts} messageId={null} conversationId={activeId} />
+                    </div>
+                  ) : null}
                   <div className="assistant-thinking">
                     <ThinkingOrb
                       ref={pendingOrbRef}
@@ -655,6 +710,7 @@ export default function AgentConsole() {
                     />
                     <ThinkingLabel labels={[liveHere.label]} step={0} done={liveHere.phase === "resolved"} />
                   </div>
+                  </>
                 ) : null}
               </div>
             </div>

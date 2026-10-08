@@ -18,6 +18,7 @@ import { MarketplacePanel, type MarketplaceSub } from "@/components/clientes/Mar
 import { EcommercePanel } from "@/components/clientes/EcommercePanel";
 import { RelacionamentoPanel } from "@/components/clientes/RelacionamentoPanel";
 import { GeralConsolidado } from "@/components/clientes/GeralConsolidado";
+import { ComportamentoSection } from "@/components/clientes/ComportamentoSection";
 import { SocialMediaPanel } from "@/components/clientes/SocialMediaPanel";
 import { HotelFazendaSaoJoaoPanel } from "@/components/clientes/HotelFazendaSaoJoaoPanel";
 import { HotelAnalystPanel } from "@/components/clientes/HotelAnalystPanel";
@@ -243,6 +244,7 @@ let dailyGlobalSyncFired = false;
 export function ClienteDashboard({ id, portalMode = false }: { id: string; portalMode?: boolean }) {
   const [canal, setCanal] = React.useState<DashCanal>("geral");
   const [subView, setSubView] = React.useState<"dados" | "criativos" | "social-media">("dados");
+  const [geralView, setGeralView] = React.useState<"analise" | "comportamento">("analise");
   const [marketplaceSub, setMarketplaceSub] = React.useState<MarketplaceSub>("ml");
   const [analystOpen, setAnalystOpen] = React.useState(false);
   const [saldoVisible, setSaldoVisible] = React.useState(false);
@@ -514,6 +516,8 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
   const isKombuchaPanel = isKombucha(cliente) && canal !== "google";
   const isBeBluePanel = isBeBlueSchool(cliente) && canal !== "google";
   const isEcommerceMode = isEcommerceCliente(cliente);
+  const showComportamento = canal === "geral" && isEcommerceMode && geralView === "comportamento";
+  const geralAnalise = !showComportamento;
   const convLabels = React.useMemo(() => isComprasPanel
     ? { singular: "compra", plural: "compras", metric: "Custo/Compra", metricFull: "Custo / Compra", kpi: "Meta Custo/Compra", dbKey: "COMPRAS", taxa: "TAXA COMPRA", cust: "CUSTO / COMPRA", semResult: "sem compras", crLabel: "CR (clique→compra)", chartKey: "Compras", sub: "Total do período" }
     : isVisitasPanel
@@ -548,7 +552,7 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
   const { data: analytics } = useQuery({
     queryKey: ["analytics", id, dateFilter.periodo, dateFilter.dataInicio, dateFilter.dataFim],
     queryFn: () => fetchAnalytics(id, dateFilter),
-    enabled: !!id && !!cliente && (canal === "geral" || subView === "dados") && !socialMediaOnly,
+    enabled: !!id && !!cliente && (geralAnalise && (canal === "geral" || subView === "dados")) && !socialMediaOnly,
   });
 
   const { data: saldoMeta } = useQuery<{ saldo: number | null; moeda?: string; spendCap?: number | null; motivo?: string }>({
@@ -972,7 +976,25 @@ function formatPercentage(value: number) {
           />
         </div>
 
-        {/* Linha 2: Toggle Análise / Criativos / Lead Scoring — só em Meta e Google */}
+        {/* Linha 2: Toggle Análise / Criativos — Meta e Google. No Geral de loja, Análise / Comportamento. */}
+        {canal === "geral" && isEcommerceMode && (
+          <div className="flex items-center gap-1 self-end rounded-xl border border-[var(--border)] bg-[var(--card)] p-1">
+            {(["analise", "comportamento"] as const).map((view) => (
+              <button
+                key={view}
+                type="button"
+                onClick={() => setGeralView(view)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-all sm:px-4 sm:py-2 ${
+                  geralView === view
+                    ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
+                    : "text-[var(--muted-foreground)] hover:bg-muted/60 hover:text-[var(--foreground)]"
+                }`}
+              >
+                {view === "analise" ? "Análise" : "Comportamento"}
+              </button>
+            ))}
+          </div>
+        )}
         {(canal === "meta" || canal === "google") && (
           <div className="flex items-center gap-1 self-end rounded-xl border border-[var(--border)] bg-[var(--card)] p-1">
             {(
@@ -1106,12 +1128,16 @@ function formatPercentage(value: number) {
       )}
 
       {/* ── Geral: soma de todos os canais (vendas, leads, mídia) ── */}
-      {!analystOpen && id && canal === "geral" && !socialMediaOnly && (
+      {!analystOpen && id && canal === "geral" && !socialMediaOnly && !showComportamento && (
         <GeralConsolidado clienteId={id} query={buildQueryParams(dateFilter)} />
       )}
 
+      {!analystOpen && id && showComportamento && (
+        <ComportamentoSection clienteId={id} query={buildQueryParams(dateFilter)} />
+      )}
+
       {/* ── Default panel (KPIs, chart, weekly table, financial) ── */}
-      {!analystOpen && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce" && (canal === "geral" || subView === "dados") && !isSpecialPanel && resumo && !geralSemMidia && (
+      {!analystOpen && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce" && (geralAnalise && (canal === "geral" || subView === "dados")) && !isSpecialPanel && resumo && !geralSemMidia && (
         <DefaultPanel
           resumo={
             isMiguelImoveisPanel
@@ -1165,7 +1191,7 @@ function formatPercentage(value: number) {
         />
       )}
 
-      {!analystOpen && (canal === "geral" || subView === "dados") && isHotelPanel && painelEspecial && (
+      {!analystOpen && (geralAnalise && (canal === "geral" || subView === "dados")) && isHotelPanel && painelEspecial && (
         <HotelFazendaSaoJoaoPanel
           data={painelEspecial}
           canalLabel={canal === "geral" ? "geral" : canal === "meta" ? "meta" : "google"}
@@ -1173,7 +1199,7 @@ function formatPercentage(value: number) {
         />
       )}
 
-      {!analystOpen && (canal === "geral" || subView === "dados") && isTertuliaPanel && painelTertulia && (
+      {!analystOpen && (geralAnalise && (canal === "geral" || subView === "dados")) && isTertuliaPanel && painelTertulia && (
         <TertuliaPanel
           data={painelTertulia}
           canalLabel={canal === "geral" ? "geral" : canal === "meta" ? "meta" : "google"}
@@ -1181,7 +1207,7 @@ function formatPercentage(value: number) {
         />
       )}
 
-      {!analystOpen && (canal === "geral" || subView === "dados") && isVarellaPanel && painelVarella && (
+      {!analystOpen && (geralAnalise && (canal === "geral" || subView === "dados")) && isVarellaPanel && painelVarella && (
         <VarellaMotosPanel
           data={painelVarella}
           canalLabel={canal === "geral" ? "geral" : canal === "meta" ? "meta" : "google"}
@@ -1215,7 +1241,7 @@ function formatPercentage(value: number) {
       )}
 
       {/* ── Financial tracking (Plano x Real) ── */}
-      {!analystOpen && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce" && canal !== "linkedin" && (canal === "geral" || subView === "dados") && financeiro && financeiro.meses && (
+      {!analystOpen && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce" && canal !== "linkedin" && (geralAnalise && (canal === "geral" || subView === "dados")) && financeiro && financeiro.meses && (
         <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
           <CardHeader>
             <div className="flex flex-wrap items-start justify-between gap-4">
@@ -1379,7 +1405,7 @@ function formatPercentage(value: number) {
       )}
 
       {/* ── Comportamento GA4 (todos os painéis quando configurado) ── */}
-      {!analystOpen && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce" && (canal === "geral" || subView === "dados") && analytics?.hasAnalytics && (
+      {!analystOpen && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce" && (geralAnalise && (canal === "geral" || subView === "dados")) && analytics?.hasAnalytics && (
         <AnalyticsGA4Section data={analytics} />
       )}
 

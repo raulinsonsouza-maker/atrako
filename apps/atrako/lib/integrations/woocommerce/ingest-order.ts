@@ -12,6 +12,7 @@ import { reconcileOrderSources } from "@/lib/commerce-attribution/reconcile";
 import { markLeadLost, trackOrderPayment } from "@/lib/crm/abandoned-cart";
 import { birthDateFromStorePayload, upsertContactBirthday } from "@/lib/flows/important-dates";
 import { saveContactLocationFromOrder } from "@/lib/commerce/contact-location";
+import { placeFromPayload, rememberContactGender } from "@/lib/commerce/order-behavior";
 import {
   extractWooBuyerContact,
   getWooOrder,
@@ -120,6 +121,8 @@ export async function ingestWooCommerceOrder(input: {
   });
   if (existing) {
     const buyer = extractWooBuyerContact(wooOrder);
+    const payload = { order: wooOrder, webhook: input.webhookPayload ?? null };
+    const place = placeFromPayload("WOOCOMMERCE", payload);
     await prisma.marketplaceOrder.update({
       where: { id: existing.id },
       data: {
@@ -129,13 +132,12 @@ export async function ingestWooCommerceOrder(input: {
         buyerName: buyer.name ?? existing.buyerName,
         buyerEmail: buyer.email ?? existing.buyerEmail,
         buyerPhone: buyer.phone ?? existing.buyerPhone,
+        ...(place.stateUf || place.cityName || place.cityRaw ? place : {}),
         occurredAt: wooOrderOccurredAt(wooOrder) ?? existing.occurredAt,
-        rawPayload: {
-          order: wooOrder,
-          webhook: input.webhookPayload ?? null,
-        } as object,
+        rawPayload: payload as object,
       },
     });
+    await rememberContactGender(existing.contactId, buyer.name ?? existing.buyerName).catch(() => null);
     await syncWooOrderItems(input.workspaceId, existing.id, wooOrder).catch((err) =>
       console.error("[woo-items]", err instanceof Error ? err.message : err),
     );
@@ -195,6 +197,8 @@ async function persistWooOrder(input: {
     },
   });
 
+  const payload = { order: input.wooOrder, webhook: input.webhookPayload ?? null };
+  const place = placeFromPayload("WOOCOMMERCE", payload);
   const order = await prisma.marketplaceOrder.create({
     data: {
       clienteId: input.workspaceId,
@@ -208,13 +212,12 @@ async function persistWooOrder(input: {
       buyerName: buyer.name,
       buyerEmail: buyer.email,
       buyerPhone: buyer.phone,
-      rawPayload: {
-        order: input.wooOrder,
-        webhook: input.webhookPayload ?? null,
-      } as object,
+      ...place,
+      rawPayload: payload as object,
       occurredAt,
     },
   });
+  await rememberContactGender(contact.id, buyer.name).catch(() => null);
   await syncWooOrderItems(input.workspaceId, order.id, input.wooOrder).catch((err) =>
     console.error("[woo-items]", err instanceof Error ? err.message : err),
   );

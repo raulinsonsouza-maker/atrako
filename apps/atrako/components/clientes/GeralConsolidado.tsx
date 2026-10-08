@@ -459,7 +459,14 @@ export function GeralConsolidado({
   }
 
   if (data.ecommerce && data.fonteVendas !== "anuncios" && data.origens) {
-    return <EcommerceGeral data={data} origem={origem} onOrigem={setOrigem} fetching={isPlaceholderData} />;
+    return (
+      <EcommerceGeral
+        data={data}
+        origem={origem}
+        onOrigem={setOrigem}
+        fetching={isPlaceholderData}
+      />
+    );
   }
 
   const { totais, canaisVenda, canaisMidia, relacionamento: rel } = data;

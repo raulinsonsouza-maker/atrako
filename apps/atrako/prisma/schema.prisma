@@ -1019,6 +1019,8 @@ model NativeContact {
   name        String       @db.VarChar(200)
   email       String?      @db.VarChar(255)
   phone       String?      @db.VarChar(40)
+  /// Estimativa pelo primeiro nome: F, M, ou vazio quando o nome é ambíguo ou ausente.
+  gender      String?      @db.VarChar(1)
   metadata    Json?
   /// Descadastro de e-mail (link /u ou List-Unsubscribe)
   emailOptOutAt           DateTime?
@@ -1642,6 +1644,12 @@ model MarketplaceOrder {
   buyerName         String?   @db.VarChar(200)
   buyerEmail        String?   @db.VarChar(255)
   buyerPhone        String?   @db.VarChar(40)
+  /// UF (2 letras) do endereço de cobrança/entrega, quando reconhecida.
+  stateUf           String?   @db.VarChar(2)
+  /// Município oficial do IBGE, quando o texto da loja casa.
+  cityName          String?   @db.VarChar(120)
+  /// Texto de cidade da loja, quando não casa com o município oficial.
+  cityRaw           String?   @db.VarChar(120)
   rawPayload        Json?
   occurredAt        DateTime?
   createdAt         DateTime  @default(now())
@@ -1655,6 +1663,7 @@ model MarketplaceOrder {
   @@index([clienteId, provider, occurredAt])
   @@index([clienteId, createdAt])
   @@index([clienteId, shippingId])
+  @@index([clienteId, stateUf])
 }
 
 /// De onde veio cada pedido: origem gravada pela loja + anúncio Meta que o gerou.

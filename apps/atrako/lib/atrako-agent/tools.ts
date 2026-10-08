@@ -272,7 +272,7 @@ export const READ_TOOLS: AtrakoTool[] = [
     name: "visao_geral_negocio",
     step: "Montando a visão geral",
     description:
-      "Panorama do negócio no período: vendas (lojas, marketplaces, checkout), leads novos, investimento em mídia, carrinhos em aberto, agendamentos e conversas. Comece por aqui em perguntas amplas ('como estou?', 'resumo da semana').",
+      "Panorama do negócio no período: vendas, leads, mídia, carrinhos, agendamentos e conversas. Só use quando a pessoa pedir como está o negócio, um resumo ou um período. Não use em saudação nem em pergunta sobre um registro (carrinho, lead, pessoa).",
     parameters: periodSchema(),
     risk: "READ",
     async run(args, rt) {

@@ -17,6 +17,7 @@ import {
 } from "../lib/atrako-agent/engine";
 import { classifyLlmFailure, type LlmFailure } from "../lib/atrako-agent/failover";
 import { evaluateRateLimit } from "../lib/atrako-agent/limits";
+import { smallTalkReply } from "../lib/atrako-agent/small-talk";
 import { describeLlmError, maskApiKey, orderChain, type LlmCandidate } from "../lib/atrako-agent/llm";
 import { PLATFORM_LLM_APPS, findAiProvider, interleave, parseModelList } from "../lib/atrako-agent/providers";
 import { compactJson, createPiiVault, maskEmail, maskPhone, protectUserText, revealToken } from "../lib/atrako-agent/safety";
@@ -302,7 +303,17 @@ test("system prompt leva persona, mapa de dados e o contexto do workspace", () =
   assert.match(prompt, /Posso montar assim/);
   assert.match(prompt, /Publicar só quando o usuário pedir explicitamente/);
   assert.match(prompt, /Nunca invente depoimentos/);
+  assert.match(prompt, /Responda à mensagem literal/);
+  assert.match(prompt, /visao_geral_negocio só quando pedirem/);
   assert.doesNotMatch(prompt, /Criar rascunho/);
+});
+
+test("saudação pura não vira análise", () => {
+  assert.equal(smallTalkReply("Olá!"), "Olá. Em que posso ajudar?");
+  assert.equal(smallTalkReply("boa noite"), "Boa noite. Em que posso ajudar?");
+  assert.equal(smallTalkReply("oi, tudo bem?"), "Olá. Em que posso ajudar?");
+  assert.equal(smallTalkReply("qual o último carrinho abandonado?"), null);
+  assert.equal(smallTalkReply("olá, como estou nos últimos 30 dias?"), null);
 });
 
 test("contexto separa checkout Atrako de lojas/marketplaces", () => {

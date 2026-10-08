@@ -16,6 +16,7 @@ import { attachmentDigest, sanitizeAttachments } from "@/lib/atrako-agent/attach
 import { describeImages } from "@/lib/atrako-agent/attachment-vision";
 import { checkAssistantRateLimit } from "@/lib/atrako-agent/limits";
 import { historyNote, type Artifact } from "@/lib/atrako-agent/artifacts";
+import { smallTalkReply } from "@/lib/atrako-agent/small-talk";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -351,6 +352,30 @@ export async function POST(request: NextRequest) {
       }, 15_000);
 
       try {
+        const greeting = !digest ? smallTalkReply(content) : null;
+        if (greeting) {
+          send("token", { text: greeting });
+          const saved = await prisma.atrakoMessage.create({
+            data: {
+              conversationId: conv.id,
+              clienteId: session.workspaceId,
+              role: "ASSISTANT",
+              content: greeting,
+              status: "COMPLETE",
+              durationMs: Date.now() - started,
+              traceId,
+            },
+            select: messageSelect,
+          });
+          const updatedConv = await prisma.atrakoConversation.update({
+            where: { id: conv.id },
+            data: { updatedAt: new Date() },
+            select: { id: true, title: true, createdAt: true, updatedAt: true },
+          });
+          send("done", { message: messageView(saved), conversation: conversationView(updatedConv) });
+          return;
+        }
+
         const ctx = await loadWorkspaceContext({
           clienteId: session.workspaceId,
           actor: session.actor,

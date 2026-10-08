@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
 import { orderOriginKey, originLabel } from "@/lib/commerce-attribution/store-source";
+import { orderDetails } from "@/lib/commerce/order-details";
 import { genderFromName } from "@/lib/geo/gender";
 import { stateName } from "@/lib/geo/place";
 
@@ -38,8 +39,15 @@ export type Comportamento = {
     ticketCents: number | null;
     recompraPct: number | null;
   }>;
-  topCompradores: Array<{ nome: string; pedidos: number; receitaCents: number }>;
+  topCompradores: Array<{
+    id: string;
+    nome: string;
+    pedidos: number;
+    receitaCents: number;
+    compras: CompraComprador[];
+  }>;
   produtos: Array<{
+    id: string;
     nome: string;
     quantidade: number;
     receitaCents: number;
@@ -49,10 +57,16 @@ export type Comportamento = {
     imageUrl: string | null;
     productUrl: string | null;
   }>;
-  pares: Array<{ de: string; para: string; compradores: number }>;
-  /** Receita nova e de recompra por dia de Brasília. Semana quando o recorte passa de 62 dias. */
+  pares: Array<{
+    de: string;
+    para: string;
+    compradores: number;
+    deImagem: string | null;
+    paraImagem: string | null;
+  }>;
+  /** Receita nova e de recompra por dia de Brasília. Semana acima de 62 dias; mês acima de 180. */
   serie: Array<{ data: string; totalCents: number; primeiraCents: number; recompraCents: number }>;
-  serieAgrupamento: "dia" | "semana";
+  serieAgrupamento: "dia" | "semana" | "mes";
   /** Linhas Seg→Dom, colunas 0–23h, valor = pedidos pagos. */
   heatmap: number[][];
   genero: {
@@ -69,11 +83,27 @@ export type Comportamento = {
   }>;
 };
 
+export type CompraComprador = {
+  id: string;
+  numero: string;
+  em: string;
+  cents: number;
+  status: string | null;
+  pagamento: string | null;
+  parcelas: number | null;
+  freteCents: number | null;
+  freteMetodo: string | null;
+  descontoCents: number;
+  cupom: string | null;
+  itens: Array<{ nome: string; quantidade: number; precoCents: number; imagem: string | null; url: string | null }>;
+};
+
 type ItemRow = {
   title: string | null;
   sku: string | null;
   quantity: number | null;
   lineTotalCents: number | null;
+  unitPriceCents?: number | null;
   imageUrl?: string | null;
   productUrl?: string | null;
 };
@@ -88,6 +118,9 @@ export type BehaviorOrder = {
   provider: string;
   status: string | null;
   totalCents: number | null;
+  externalId?: string;
+  shippingCostCents?: number | null;
+  rawPayload?: unknown;
   occurredAt: Date | null;
   contactId: string | null;
   buyerName: string | null;
@@ -238,17 +271,89 @@ function brtSlot(date: Date): { day: number; hour: number } | null {
   return { day, hour };
 }
 
-export function aggregateComportamento(input: {
-  current: BehaviorOrder[];
-  previous: BehaviorOrder[];
-  priorKeys: Set<string>;
-  lifetimeReceitaCents: number;
-  lifetimeCompradores: number;
-}): Comportamento {
+export type FiltroComportamento = {
+  genero?: "f" | "m" | "u";
+  produto?: string;
+  dia?: number;
+  hora?: number;
+  uf?: string;
+  cidade?: string;
+  pular?: Array<"genero" | "produto" | "horario" | "lugar">;
+};
+
+function orderGender(order: Pick<BehaviorOrder, "contactGender" | "contactName" | "buyerName">): "f" | "m" | "u" {
+  const gender =
+    order.contactGender === "F" || order.contactGender === "M"
+      ? order.contactGender
+      : genderFromName(order.contactName || order.buyerName);
+  return gender === "F" ? "f" : gender === "M" ? "m" : "u";
+}
+
+function matchesFiltro(order: Tagged, filtro: FiltroComportamento): boolean {
+  const skip = new Set(filtro.pular ?? []);
+  if (!skip.has("genero") && filtro.genero && orderGender(order) !== filtro.genero) return false;
+  if (!skip.has("produto") && filtro.produto && !order.items.some((item) => productKey(item) === filtro.produto)) return false;
+  if (!skip.has("horario") && (filtro.dia != null || filtro.hora != null)) {
+    const slot = order.occurredAt ? brtSlot(order.occurredAt) : null;
+    if (!slot) return false;
+    if (filtro.dia != null && slot.day !== filtro.dia) return false;
+    if (filtro.hora != null && slot.hour !== filtro.hora) return false;
+  }
+  if (!skip.has("lugar")) {
+    if (filtro.uf != null && (order.stateUf ?? "") !== filtro.uf) return false;
+    if (filtro.cidade && (order.cityName || order.cityRaw || "Sem cidade") !== filtro.cidade) return false;
+  }
+  return true;
+}
+
+export type ComportamentoResposta = Comportamento & {
+  facetas?: {
+    genero: Comportamento["genero"];
+    produtos: Comportamento["produtos"];
+    heatmap: number[][];
+    estados: Comportamento["estados"];
+  };
+};
+
+export function aggregateComportamento(
+  input: {
+    current: BehaviorOrder[];
+    previous: BehaviorOrder[];
+    priorKeys: Set<string>;
+    lifetimeReceitaCents: number;
+    lifetimeCompradores: number;
+    lifetimePorComprador?: Map<string, number>;
+  },
+  filtro?: FiltroComportamento,
+): Comportamento {
   const prev = tagOrders(input.previous, input.priorKeys);
   const cur = tagOrders(input.current, prev.seen);
-  const tickets = ticketsOf(cur.tagged);
-  const ticketsAnterior = ticketsOf(prev.tagged);
+  const current = filtro ? cur.tagged.filter((order) => matchesFiltro(order, filtro)) : cur.tagged;
+  const previous = filtro ? prev.tagged.filter((order) => matchesFiltro(order, filtro)) : prev.tagged;
+  let receita = input.lifetimeReceitaCents;
+  let compradores = input.lifetimeCompradores;
+  if (filtro && input.lifetimePorComprador) {
+    receita = 0;
+    compradores = 0;
+    const keys = new Set(current.map((order) => order.key).filter((key): key is string => Boolean(key)));
+    for (const key of keys) {
+      const cents = input.lifetimePorComprador.get(key);
+      if (cents == null) continue;
+      receita += cents;
+      compradores += 1;
+    }
+  }
+  return finishAggregate(current, previous, receita, compradores);
+}
+
+function finishAggregate(
+  current: Tagged[],
+  previous: Tagged[],
+  lifetimeReceitaCents: number,
+  lifetimeCompradores: number,
+): Comportamento {
+  const tickets = ticketsOf(current);
+  const ticketsAnterior = ticketsOf(previous);
 
   let receitaPrimeira = 0;
   let receitaRecompra = 0;
@@ -256,7 +361,7 @@ export function aggregateComportamento(input: {
   let pedidosRecompra = 0;
   let pedidosSemContato = 0;
   let receitaSemContato = 0;
-  for (const order of cur.tagged) {
+  for (const order of current) {
     if (!order.key) {
       pedidosSemContato += 1;
       receitaSemContato += order.cents;
@@ -276,7 +381,10 @@ export function aggregateComportamento(input: {
     string,
     { label: string; buyers: Set<string>; receita: number; recompra: number }
   >();
-  const buyers = new Map<string, { nome: string; pedidos: number; receita: number }>();
+  const buyers = new Map<
+    string,
+    { nome: string; pedidos: number; receita: number; compras: Comportamento["topCompradores"][number]["compras"] }
+  >();
   const heatmap = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => 0));
   const genero = {
     f: { pedidos: 0, receitaCents: 0 },
@@ -299,7 +407,7 @@ export function aggregateComportamento(input: {
   const byBuyerOrders = new Map<string, Array<{ id: string; keys: Map<string, string> }>>();
   const serieMap = new Map<string, { totalCents: number; primeiraCents: number; recompraCents: number }>();
 
-  for (const order of cur.tagged) {
+  for (const order of current) {
     const originId = orderOriginKey(order.provider, order.channel);
     const origin = origins.get(originId) ?? {
       label: originLabel(originId),
@@ -314,9 +422,36 @@ export function aggregateComportamento(input: {
 
     if (order.key) {
       const nome = (order.contactName || order.buyerName || order.buyerEmail || "Sem nome").trim();
-      const row = buyers.get(order.key) ?? { nome, pedidos: 0, receita: 0 };
+      const row = buyers.get(order.key) ?? { nome, pedidos: 0, receita: 0, compras: [] };
       row.pedidos += 1;
       row.receita += order.cents;
+      const detalhes = order.rawPayload ? orderDetails(order.provider, order.rawPayload) : null;
+      const itens = order.items.map((item) => {
+        const quantidade = Math.max(0, item.quantity ?? 0);
+        const linha = Math.max(0, item.lineTotalCents ?? 0);
+        const preco = item.unitPriceCents ?? (quantidade > 0 ? Math.round(linha / quantidade) : linha);
+        return {
+          nome: cleanTitle(item.title) || item.sku?.trim() || "Produto",
+          quantidade,
+          precoCents: Math.max(0, preco),
+          imagem: httpUrl(item.imageUrl),
+          url: httpUrl(item.productUrl),
+        };
+      });
+      row.compras.push({
+        id: order.id,
+        numero: order.externalId?.trim() || order.id.slice(-6),
+        em: order.occurredAt?.toISOString() ?? "",
+        cents: order.cents,
+        status: order.status,
+        pagamento: detalhes?.paymentMethod ?? null,
+        parcelas: detalhes?.installments ?? null,
+        freteCents: detalhes?.shipping?.cents ?? order.shippingCostCents ?? null,
+        freteMetodo: detalhes?.shipping?.method ?? null,
+        descontoCents: detalhes?.discountCents ?? 0,
+        cupom: detalhes?.coupons[0]?.code ?? null,
+        itens,
+      });
       if (row.nome === "Sem nome" && nome !== "Sem nome") row.nome = nome;
       buyers.set(order.key, row);
     }
@@ -387,7 +522,10 @@ export function aggregateComportamento(input: {
     }
   }
 
-  const pairBuyers = new Map<string, { de: string; para: string; buyers: Set<string> }>();
+  const pairBuyers = new Map<
+    string,
+    { de: string; para: string; deImagem: string | null; paraImagem: string | null; buyers: Set<string> }
+  >();
   for (const [buyer, list] of byBuyerOrders) {
     for (let i = 0; i < list.length; i++) {
       for (let j = i + 1; j < list.length; j++) {
@@ -395,7 +533,13 @@ export function aggregateComportamento(input: {
           for (const [toKey, toName] of list[j].keys) {
             if (fromKey === toKey) continue;
             const id = `${fromKey}\t${toKey}`;
-            const pair = pairBuyers.get(id) ?? { de: fromName, para: toName, buyers: new Set<string>() };
+            const pair = pairBuyers.get(id) ?? {
+              de: fromName,
+              para: toName,
+              deImagem: products.get(fromKey)?.imageUrl ?? null,
+              paraImagem: products.get(toKey)?.imageUrl ?? null,
+              buyers: new Set<string>(),
+            };
             pair.buyers.add(buyer);
             pairBuyers.set(id, pair);
           }
@@ -419,9 +563,9 @@ export function aggregateComportamento(input: {
       receitaSemContatoCents: receitaSemContato,
     },
     ltv: {
-      medioCents: div(input.lifetimeReceitaCents, input.lifetimeCompradores),
-      compradores: input.lifetimeCompradores,
-      receitaCents: input.lifetimeReceitaCents,
+      medioCents: div(lifetimeReceitaCents, lifetimeCompradores),
+      compradores: lifetimeCompradores,
+      receitaCents: lifetimeReceitaCents,
     },
     origens: [...origins.entries()]
       .map(([id, row]) => ({
@@ -433,12 +577,19 @@ export function aggregateComportamento(input: {
         recompraPct: row.receita > 0 ? Math.round((row.recompra / row.receita) * 1000) / 10 : null,
       }))
       .sort((a, b) => b.receitaCents - a.receitaCents),
-    topCompradores: [...buyers.values()]
-      .sort((a, b) => b.receita - a.receita || b.pedidos - a.pedidos)
+    topCompradores: [...buyers.entries()]
+      .sort((a, b) => b[1].receita - a[1].receita || b[1].pedidos - a[1].pedidos)
       .slice(0, 10)
-      .map((row) => ({ nome: row.nome, pedidos: row.pedidos, receitaCents: row.receita })),
-    produtos: [...products.values()]
-      .map((row) => ({
+      .map(([id, row]) => ({
+        id,
+        nome: row.nome,
+        pedidos: row.pedidos,
+        receitaCents: row.receita,
+        compras: [...row.compras].sort((a, b) => b.em.localeCompare(a.em)),
+      })),
+    produtos: [...products.entries()]
+      .map(([id, row]) => ({
+        id,
         nome: row.nome,
         quantidade: row.quantidade,
         receitaCents: row.receita,
@@ -451,9 +602,16 @@ export function aggregateComportamento(input: {
       .sort((a, b) => b.receitaCents - a.receitaCents || b.quantidade - a.quantidade)
       .slice(0, 10),
     pares: [...pairBuyers.values()]
-      .map((row) => ({ de: row.de, para: row.para, compradores: row.buyers.size }))
+      .map((row) => ({
+        de: row.de,
+        para: row.para,
+        compradores: row.buyers.size,
+        deImagem: row.deImagem,
+        paraImagem: row.paraImagem,
+      }))
+      .filter((row) => row.compradores >= 2)
       .sort((a, b) => b.compradores - a.compradores)
-      .slice(0, 8),
+      .slice(0, 6),
     serie: [...serieMap.entries()]
       .map(([data, row]) => ({ data, ...row }))
       .sort((a, b) => a.data.localeCompare(b.data)),
@@ -545,8 +703,12 @@ function weekKey(ymd: string) {
   return date.toISOString().slice(0, 10);
 }
 
-/** Preenche os dias do recorte. Acima de 62 dias, soma na segunda da semana. */
-function densifySerie(
+function monthKey(ymd: string) {
+  return `${ymd.slice(0, 7)}-01`;
+}
+
+/** Preenche o recorte. Até 62 dias fica no dia; até 180, na semana; o ano, no mês. */
+export function densifySerie(
   sparse: Comportamento["serie"],
   start: Date,
   end: Date,
@@ -562,11 +724,12 @@ function densifySerie(
     if (key >= lastKey) break;
     cursor = shiftDays(cursor, 1);
   }
-  const weekly = days.length > 62;
+  const agrupamento: Comportamento["serieAgrupamento"] = days.length > 180 ? "mes" : days.length > 62 ? "semana" : "dia";
+  const bucketKey = agrupamento === "mes" ? monthKey : agrupamento === "semana" ? weekKey : (day: string) => day;
   const known = new Map(sparse.map((row) => [row.data, row]));
   const buckets = new Map<string, { data: string; totalCents: number; primeiraCents: number; recompraCents: number }>();
   for (const day of days) {
-    const key = weekly ? weekKey(day) : day;
+    const key = bucketKey(day);
     const row = buckets.get(key) ?? { data: key, totalCents: 0, primeiraCents: 0, recompraCents: 0 };
     const src = known.get(day);
     if (src) {
@@ -576,7 +739,7 @@ function densifySerie(
     }
     buckets.set(key, row);
   }
-  return { serie: [...buckets.values()], serieAgrupamento: weekly ? "semana" : "dia" };
+  return { serie: [...buckets.values()], serieAgrupamento: agrupamento };
 }
 
 function daySpan(start: { y: number; m: number; d: number }, end: { y: number; m: number; d: number }) {
@@ -608,8 +771,11 @@ export function comportamentoRange(params: { dataInicio: string | null; dataFim:
 const orderSelect = {
   id: true,
   provider: true,
+  externalId: true,
   status: true,
   totalCents: true,
+  shippingCostCents: true,
+  rawPayload: true,
   occurredAt: true,
   contactId: true,
   buyerName: true,
@@ -619,14 +785,17 @@ const orderSelect = {
   cityRaw: true,
   contact: { select: { name: true, gender: true } },
   source: { select: { channel: true } },
-  items: { select: { title: true, sku: true, quantity: true, lineTotalCents: true, imageUrl: true, productUrl: true } },
+  items: { select: { title: true, sku: true, quantity: true, unitPriceCents: true, lineTotalCents: true, imageUrl: true, productUrl: true } },
 } as const;
 
 type Loaded = {
   id: string;
   provider: string;
+  externalId: string;
   status: string | null;
   totalCents: number | null;
+  shippingCostCents: number | null;
+  rawPayload: unknown;
   occurredAt: Date | null;
   contactId: string | null;
   buyerName: string | null;
@@ -644,8 +813,11 @@ function toBehavior(row: Loaded): BehaviorOrder | null {
   return {
     id: row.id,
     provider: row.provider,
+    externalId: row.externalId,
     status: row.status,
     totalCents: row.totalCents,
+    shippingCostCents: row.shippingCostCents,
+    rawPayload: row.rawPayload,
     occurredAt: row.occurredAt,
     contactId: row.contactId,
     buyerName: row.buyerName,
@@ -660,10 +832,16 @@ function toBehavior(row: Loaded): BehaviorOrder | null {
   };
 }
 
+function filtroAtivo(filtro?: FiltroComportamento) {
+  if (!filtro) return false;
+  return Boolean(filtro.genero || filtro.produto || filtro.dia != null || filtro.hora != null || filtro.uf != null || filtro.cidade);
+}
+
 export async function getComportamento(
   clienteId: string,
   range: { start: Date; end: Date; previousStart: Date; previousEnd: Date },
-): Promise<Comportamento> {
+  filtro?: FiltroComportamento,
+): Promise<ComportamentoResposta> {
   const [windowRows, priorRows, lifetimeRows] = await Promise.all([
     prisma.marketplaceOrder.findMany({
       where: { clienteId, occurredAt: { gte: range.previousStart, lte: range.end } },
@@ -692,22 +870,34 @@ export async function getComportamento(
     if (key) priorKeys.add(key);
   }
 
-  const lifetimeBuyers = new Set<string>();
-  let lifetimeReceita = 0;
+  const lifetimePorComprador = new Map<string, number>();
   for (const row of lifetimeRows) {
     if (!isRevenueOrder(row.status)) continue;
     const key = buyerKey(row);
     if (!key) continue;
-    lifetimeBuyers.add(key);
-    lifetimeReceita += Math.max(0, row.totalCents ?? 0);
+    lifetimePorComprador.set(key, (lifetimePorComprador.get(key) ?? 0) + Math.max(0, row.totalCents ?? 0));
   }
+  let lifetimeReceita = 0;
+  for (const cents of lifetimePorComprador.values()) lifetimeReceita += cents;
 
-  const result = aggregateComportamento({
+  const base = {
     current,
     previous,
     priorKeys,
     lifetimeReceitaCents: lifetimeReceita,
-    lifetimeCompradores: lifetimeBuyers.size,
-  });
-  return { ...result, ...densifySerie(result.serie, range.start, range.end) };
+    lifetimeCompradores: lifetimePorComprador.size,
+    lifetimePorComprador,
+  };
+  const result = aggregateComportamento(base, filtroAtivo(filtro) ? filtro : undefined);
+  const resposta: ComportamentoResposta = { ...result, ...densifySerie(result.serie, range.start, range.end) };
+  if (!filtroAtivo(filtro) || !filtro) return resposta;
+  const faceta = (pular: NonNullable<FiltroComportamento["pular"]>[number]) =>
+    aggregateComportamento(base, { ...filtro, pular: [pular] });
+  resposta.facetas = {
+    genero: faceta("genero").genero,
+    produtos: faceta("produto").produtos,
+    heatmap: faceta("horario").heatmap,
+    estados: faceta("lugar").estados,
+  };
+  return resposta;
 }

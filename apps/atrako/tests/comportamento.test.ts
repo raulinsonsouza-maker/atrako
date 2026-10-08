@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { aggregateComportamento, buyerKey, comportamentoRange, type BehaviorOrder } from "../lib/commerce/comportamento";
+import { aggregateComportamento, buyerKey, comportamentoRange, densifySerie, type BehaviorOrder } from "../lib/commerce/comportamento";
 import { genderFromName } from "../lib/geo/gender";
 import { normalizePlace } from "../lib/geo/place";
 
@@ -90,13 +90,26 @@ describe("comportamento", () => {
     assert.equal(result.tickets.recompraCents, 15000);
     assert.equal(result.ltv.medioCents, 35000);
     assert.equal(result.origens.find((o) => o.id === "meta_ads")?.recompraPct, 100);
-    assert.equal(result.pares[0]?.de, "Óleo");
-    assert.equal(result.pares[0]?.para, "Cápsula");
-    assert.equal(result.pares[0]?.compradores, 1);
+    assert.equal(result.pares.length, 0);
     assert.equal(result.genero.f.pedidos, 2);
     assert.equal(result.genero.u.pedidos, 1);
     assert.equal(result.estados[0]?.nome, "Rio de Janeiro");
     assert.equal(result.topCompradores[0]?.nome, "Maria Silva");
+    assert.equal(result.topCompradores[0]?.compras.length, 2);
+
+    const soMulheres = aggregateComportamento(
+      {
+        current: [again, first, anon],
+        previous: [],
+        priorKeys: new Set([buyerKey(first)!]),
+        lifetimeReceitaCents: 35000,
+        lifetimeCompradores: 1,
+      },
+      { genero: "f" },
+    );
+    assert.equal(soMulheres.genero.f.pedidos, 2);
+    assert.equal(soMulheres.genero.u.pedidos, 0);
+    assert.equal(soMulheres.tickets.pedidoCents, 15000);
     const slot = result.heatmap[2][12];
     assert.ok(slot >= 1);
     assert.deepEqual(
@@ -107,6 +120,38 @@ describe("comportamento", () => {
     assert.equal(result.serie[0]?.totalCents, 15000);
     assert.equal(result.serie[1]?.recompraCents, 20000);
     assert.equal(result.serie[1]?.totalCents, 20000);
+  });
+
+  it("mostra a sequência quando dois compradores seguem o mesmo caminho", () => {
+    const depois = new Date("2026-10-08T15:00:00.000Z");
+    const caminho = (contato: string, id: string, email: string, nome: string, quando: Date, titulo: string, imagem: string | null) =>
+      order({
+        id,
+        contactId: contato,
+        buyerEmail: email,
+        buyerName: nome,
+        contactName: nome,
+        occurredAt: quando,
+        items: [{ title: titulo, sku: titulo, quantity: 1, lineTotalCents: 1000, imageUrl: imagem }],
+      });
+    const result = aggregateComportamento({
+      current: [
+        caminho("c1", "a1", "a@ex.com", "Ana", new Date("2026-10-07T15:00:00.000Z"), "Óleo", "https://loja.example/oleo.jpg"),
+        caminho("c1", "a2", "a@ex.com", "Ana", depois, "Cápsula", "https://loja.example/cap.jpg"),
+        caminho("c2", "b1", "b@ex.com", "Bruno", new Date("2026-10-07T15:00:00.000Z"), "Óleo", null),
+        caminho("c2", "b2", "b@ex.com", "Bruno", depois, "Cápsula", null),
+      ],
+      previous: [],
+      priorKeys: new Set(),
+      lifetimeReceitaCents: 0,
+      lifetimeCompradores: 0,
+    });
+    assert.equal(result.pares.length, 1);
+    assert.equal(result.pares[0]?.de, "Óleo");
+    assert.equal(result.pares[0]?.para, "Cápsula");
+    assert.equal(result.pares[0]?.compradores, 2);
+    assert.equal(result.pares[0]?.deImagem, "https://loja.example/oleo.jpg");
+    assert.equal(result.pares[0]?.paraImagem, "https://loja.example/cap.jpg");
   });
 
   it("agrupa o mesmo produto e não faz par consigo mesmo", () => {
@@ -131,6 +176,28 @@ describe("comportamento", () => {
     assert.equal(result.produtos[0]?.imageUrl, "https://loja.example/filtro.jpg");
     assert.equal(result.produtos[0]?.recompras, 1);
     assert.equal(result.pares.length, 0);
+  });
+
+  it("recorte anual soma a receita no mês", () => {
+    const serie = densifySerie(
+      [
+        { data: "2026-01-10", totalCents: 100, primeiraCents: 40, recompraCents: 60 },
+        { data: "2026-01-20", totalCents: 50, primeiraCents: 50, recompraCents: 0 },
+        { data: "2026-03-02", totalCents: 80, primeiraCents: 0, recompraCents: 80 },
+      ],
+      new Date("2026-01-01T03:00:00.000Z"),
+      new Date("2026-10-08T02:59:59.999Z"),
+    );
+    assert.equal(serie.serieAgrupamento, "mes");
+    assert.equal(serie.serie.find((row) => row.data === "2026-01-01")?.totalCents, 150);
+    assert.equal(serie.serie.find((row) => row.data === "2026-01-01")?.primeiraCents, 90);
+    assert.equal(serie.serie.find((row) => row.data === "2026-02-01")?.totalCents, 0);
+    assert.equal(serie.serie.at(-1)?.data, "2026-10-01");
+  });
+
+  it("recorte de 90 dias continua na semana", () => {
+    const serie = densifySerie([], new Date("2026-07-10T03:00:00.000Z"), new Date("2026-10-08T02:59:59.999Z"));
+    assert.equal(serie.serieAgrupamento, "semana");
   });
 
   it("recorte de ontem em Brasília começa às 03:00 UTC", () => {

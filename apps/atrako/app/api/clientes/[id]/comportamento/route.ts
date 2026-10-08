@@ -26,6 +26,8 @@ export async function GET(
   if (produto) filtro.produto = produto;
   const origem = sp.get("origem")?.trim() ?? "";
   if (/^[A-Za-z0-9_]{1,40}$/.test(origem)) filtro.origem = origem;
+  const compra = sp.get("compra");
+  if (compra === "nova" || compra === "recompra") filtro.compra = compra;
   if (dia != null && dia !== "") {
     const n = Number(dia);
     if (Number.isInteger(n) && n >= 0 && n <= 6) filtro.dia = n;

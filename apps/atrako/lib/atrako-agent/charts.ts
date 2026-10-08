@@ -274,6 +274,35 @@ function agenda(data: Row): ChartArtifact | null {
   });
 }
 
+function comportamento(data: Row): ChartArtifact | null {
+  const genero = obj(data.genero);
+  const fatias = [
+    { tipo: "Mulheres", receita: num(obj(genero?.mulheres)?.receita) },
+    { tipo: "Homens", receita: num(obj(genero?.homens)?.receita) },
+    { tipo: "Não identificado", receita: num(obj(genero?.naoIdentificado)?.receita) },
+  ].filter((row) => row.receita > 0);
+  if (fatias.some((row) => row.tipo !== "Não identificado")) {
+    return chart({
+      chart: "donut",
+      title: "Receita por gênero",
+      unit: "currency",
+      xKey: "tipo",
+      series: [{ key: "receita", label: "Receita" }],
+      data: fatias,
+    });
+  }
+  const produtos = arr(data.produtos).filter((row) => num(row.receita) > 0).slice(0, 6);
+  if (!produtos.length) return null;
+  return chart({
+    chart: "bar",
+    title: "Produtos por receita",
+    unit: "currency",
+    xKey: "nome",
+    series: [{ key: "receita", label: "Receita", tone: "revenue" }],
+    data: produtos.map((row) => ({ nome: str(row.nome), receita: num(row.receita) })),
+  });
+}
+
 const BUILDERS: Record<string, (data: Row) => ChartArtifact | null> = {
   midia_visao_geral: midia,
   vendas_visao_geral: vendas,
@@ -281,6 +310,7 @@ const BUILDERS: Record<string, (data: Row) => ChartArtifact | null> = {
   crm_pipeline: crm,
   carrinhos_abandonados: carrinhos,
   clientes_recompra: recompra,
+  comportamento_compra: comportamento,
   relacionamento_desempenho: relacionamento,
   agenda_resumo: agenda,
 };

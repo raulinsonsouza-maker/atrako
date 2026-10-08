@@ -43,13 +43,13 @@ const FEMALE = new Set(
   susana suzana tania tatiana tatiane telma terezinha thais thalia
   valentina valeria vanessa vera veronica vitoria vivian viviane wanda
   yasmin yara yolanda zelia zenaide zilda zuleica
-  acacia anali andrea danielle danielly edilaine eliana ester franciele gilvaneide
+  acacia anali andrea anik cristiana danielle danielly deisi edilaine eliana ester franciele gilvaneide
   gilvania gilvanez gisele gleice graziella graziela henriqueta itaraiacy
   ivona izabela janine jaqueline jeanine joelma joicilene josemary juliane
-  jussara karen karin karine katia katiane leticia lidiane lilia liza
+  jussara karen karili karin karine katia katiane leticia lidiane lilia liza
   lorayne lorrane luciane lucilene magda marcelle mariangela marianna
   marilyn marinna mayara mercia michelle mirela mirella mirelle mirian
-  monique myrian nayara pamela paola quezia rafaela raissa rayane rayssa
+  monique myrian nailu narah nayara nicole pamela paola quezia rafaela raissa rayane rayssa
   rosiane samantha samya stephanie suemy susy tahiana taina tamires
   tarciana tarsia tathiane teresa tereza thaina thalita valquiria vania
   `

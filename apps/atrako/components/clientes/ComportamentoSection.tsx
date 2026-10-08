@@ -61,6 +61,8 @@ type Comportamento = {
     origens: Comportamento["origens"];
     heatmap: number[][];
     estados: Comportamento["estados"];
+    recompra: Comportamento["recompra"];
+    serie: Comportamento["serie"];
   };
   pares: Array<{ de: string; para: string; compradores: number; deImagem: string | null; paraImagem: string | null }>;
   serie: Array<{ data: string; totalCents: number; primeiraCents: number; recompraCents: number }>;
@@ -403,14 +405,37 @@ function ticketTone(now: number | null, before: number | null): "positive" | "ne
   return undefined;
 }
 
-function Kpi({ label, value, hint, tone }: { label: string; value: string; hint?: string; tone?: "positive" | "negative" }) {
+function Kpi({
+  label,
+  value,
+  hint,
+  tone,
+  pressed,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  tone?: "positive" | "negative";
+  pressed?: boolean;
+  onClick?: () => void;
+}) {
   const valueColor = tone === "positive" ? "text-positive" : tone === "negative" ? "text-negative" : "text-[var(--foreground)]";
-  return (
-    <div className="kpi-card-content rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
+  const className = `kpi-card-content w-full rounded-2xl border bg-[var(--card)] p-4 text-left ${
+    pressed ? "border-[var(--primary)]" : "border-[var(--border)]"
+  } ${onClick ? "active:scale-[0.99]" : ""}`;
+  const body = (
+    <>
       <p className="type-fine-print uppercase tracking-[0.18em] text-[var(--muted-foreground)]">{label}</p>
       <p className={`kpi-card-value mt-2 type-tagline tabular-nums ${valueColor}`}>{value}</p>
       {hint ? <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">{hint}</p> : null}
-    </div>
+    </>
+  );
+  if (!onClick) return <div className={className}>{body}</div>;
+  return (
+    <button type="button" aria-pressed={pressed} onClick={onClick} className={className}>
+      {body}
+    </button>
   );
 }
 
@@ -427,12 +452,48 @@ const chartTooltip = {
   itemStyle: { color: "var(--foreground)", fontSize: 13 },
 };
 
+function Legenda({
+  label,
+  color,
+  opacity = 1,
+  pressed,
+  dim,
+  onClick,
+}: {
+  label: string;
+  color: string;
+  opacity?: number;
+  pressed: boolean;
+  dim?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <li>
+      <button
+        type="button"
+        aria-pressed={pressed}
+        onClick={onClick}
+        className={`inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] px-2 py-1 type-fine-print active:scale-95 ${
+          pressed ? "bg-[var(--divider-soft)] text-[var(--foreground)]" : "text-[var(--muted-foreground)]"
+        } ${dim ? "opacity-45" : ""}`}
+      >
+        <span className="h-2 w-2 rounded-full" style={{ background: color, opacity }} />
+        {label}
+      </button>
+    </li>
+  );
+}
+
 function ReceitaChart({
   serie,
   agrupamento,
+  compra,
+  onCompra,
 }: {
   serie: Comportamento["serie"];
   agrupamento: Comportamento["serieAgrupamento"];
+  compra: "nova" | "recompra" | null;
+  onCompra: (compra: "nova" | "recompra" | null) => void;
 }) {
   const isMobile = useIsMobile();
   const years = new Set(serie.map((row) => row.data.slice(0, 4)));
@@ -462,19 +523,10 @@ function ReceitaChart({
     <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="type-caption-strong text-[var(--foreground)]">{titulo}</p>
-        <ul className="flex flex-wrap gap-3">
-          <li className="inline-flex items-center gap-1.5 type-fine-print text-[var(--muted-foreground)]">
-            <span className="h-2 w-2 rounded-full bg-[var(--primary)] opacity-30" />
-            Total
-          </li>
-          <li className="inline-flex items-center gap-1.5 type-fine-print text-[var(--muted-foreground)]">
-            <span className="h-2 w-2 rounded-full bg-[var(--primary)]" />
-            Recompra
-          </li>
-          <li className="inline-flex items-center gap-1.5 type-fine-print text-[var(--muted-foreground)]">
-            <span className="h-2 w-2 rounded-full bg-[var(--chart-revenue)]" />
-            Nova
-          </li>
+        <ul className="flex flex-wrap gap-1">
+          <Legenda label="Total" color="var(--primary)" opacity={0.3} pressed={compra == null} onClick={() => onCompra(null)} />
+          <Legenda label="Recompra" color="var(--primary)" pressed={compra === "recompra"} dim={compra === "nova"} onClick={() => onCompra("recompra")} />
+          <Legenda label="Nova" color="var(--chart-revenue)" pressed={compra === "nova"} dim={compra === "recompra"} onClick={() => onCompra("nova")} />
         </ul>
       </div>
       <div className="mt-4 h-56">
@@ -498,9 +550,9 @@ function ReceitaChart({
               formatter={(value: number, name: string) => [money(Math.round(Number(value) * 100)), name]}
               {...chartTooltip}
             />
-            <Bar dataKey="total" name="Total" fill="var(--primary)" fillOpacity={0.18} radius={[4, 4, 0, 0]} />
-            <Line type="monotone" dataKey="recompra" name="Recompra" stroke="var(--primary)" strokeWidth={2} dot={{ r: 3, strokeWidth: 0 }} />
-            <Line type="monotone" dataKey="nova" name="Nova" stroke="var(--chart-revenue)" strokeWidth={2} dot={{ r: 3, strokeWidth: 0 }} />
+            <Bar dataKey="total" name="Total" fill="var(--primary)" fillOpacity={compra ? 0.08 : 0.18} radius={[4, 4, 0, 0]} />
+            <Line type="monotone" dataKey="recompra" name="Recompra" stroke="var(--primary)" strokeWidth={2} strokeOpacity={compra === "nova" ? 0.25 : 1} dot={{ r: 3, strokeWidth: 0 }} />
+            <Line type="monotone" dataKey="nova" name="Nova" stroke="var(--chart-revenue)" strokeWidth={2} strokeOpacity={compra === "recompra" ? 0.25 : 1} dot={{ r: 3, strokeWidth: 0 }} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -656,13 +708,23 @@ function Pares({ pares }: { pares: Comportamento["pares"] }) {
   );
 }
 
-type Filtro = { genero?: "f" | "m" | "u"; produto?: string; origem?: string; dia?: number; hora?: number; uf?: string; cidade?: string };
+type Filtro = {
+  genero?: "f" | "m" | "u";
+  produto?: string;
+  origem?: string;
+  compra?: "nova" | "recompra";
+  dia?: number;
+  hora?: number;
+  uf?: string;
+  cidade?: string;
+};
 
 function filtroQuery(base: string, filtro: Filtro) {
   const params = new URLSearchParams(base);
   if (filtro.genero) params.set("genero", filtro.genero);
   if (filtro.produto) params.set("produto", filtro.produto);
   if (filtro.origem) params.set("origem", filtro.origem);
+  if (filtro.compra) params.set("compra", filtro.compra);
   if (filtro.dia != null) params.set("dia", String(filtro.dia));
   if (filtro.hora != null) params.set("hora", String(filtro.hora));
   if (filtro.uf != null) params.set("uf", filtro.uf);
@@ -680,54 +742,54 @@ function PedidoNoCard({ compra }: { compra: Comportamento["topCompradores"][numb
     ? `Pago com ${compra.pagamento}${compra.parcelas ? ` em ${compra.parcelas}x` : ""}`
     : null;
   return (
-    <div className="space-y-3 border-t border-[var(--divider-soft)] pt-3">
-      <div>
-        <p className="type-caption-strong text-[var(--foreground)]">Pedido #{compra.numero}</p>
-        <p className="type-fine-print text-[var(--muted-foreground)]">
-          {quando}
-          {status ? ` · ${status}` : ""}
-        </p>
-      </div>
-      <ul className="space-y-3">
+    <article className="flex flex-col gap-4">
+      <header className="flex flex-col items-start gap-2">
+        <div>
+          <p className="type-caption-strong text-[var(--foreground)]">Pedido #{compra.numero}</p>
+          <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">{quando}</p>
+        </div>
+        {status ? <span className="rel-badge type-micro-legal">{status}</span> : null}
+      </header>
+      <ul className="flex flex-col gap-4">
         {compra.itens.map((item, index) => (
-          <li key={`${item.nome}-${index}`} className="flex items-center gap-3">
+          <li key={`${item.nome}-${index}`} className="flex items-start gap-4">
             <ProductPhoto src={item.imagem} size="sm" />
-            <div className="min-w-0 flex-1">
-              <p className="line-clamp-2 type-caption text-[var(--foreground)]">{item.nome}</p>
-              <p className="type-fine-print tabular-nums text-[var(--muted-foreground)]">
+            <div className="min-w-0 flex-1 pt-0.5">
+              <p className="type-caption text-[var(--foreground)]">{item.nome}</p>
+              <p className="mt-1 type-fine-print tabular-nums text-[var(--muted-foreground)]">
                 {Math.max(1, item.quantidade)}× {item.precoCents > 0 ? money(item.precoCents) : ""}
               </p>
             </div>
             {item.precoCents > 0 ? (
-              <p className="shrink-0 type-caption tabular-nums text-[var(--foreground)]">
+              <p className="shrink-0 pt-0.5 type-caption tabular-nums text-[var(--foreground)]">
                 {money(item.precoCents * Math.max(1, item.quantidade))}
               </p>
             ) : null}
           </li>
         ))}
       </ul>
-      <div className="space-y-1 border-t border-[var(--divider-soft)] pt-3">
+      <div className="flex flex-col gap-2.5 border-t border-[var(--divider-soft)] pt-4">
         {compra.freteCents != null ? (
-          <div className="flex items-baseline justify-between gap-3">
-            <p className="min-w-0 truncate type-caption text-[var(--muted-foreground)]">
+          <div className="flex items-start justify-between gap-4">
+            <p className="min-w-0 type-caption text-[var(--muted-foreground)]">
               {compra.freteMetodo ? `Frete · ${compra.freteMetodo}` : "Frete"}
             </p>
             <p className="shrink-0 type-caption tabular-nums text-[var(--foreground)]">{freteGratis ? "Grátis" : money(compra.freteCents)}</p>
           </div>
         ) : null}
         {compra.descontoCents > 0 ? (
-          <div className="flex items-baseline justify-between gap-3">
-            <p className="type-caption text-[var(--muted-foreground)]">{compra.cupom ? `Cupom ${compra.cupom}` : "Desconto"}</p>
-            <p className="type-caption tabular-nums text-[var(--foreground)]">−{money(compra.descontoCents)}</p>
+          <div className="flex items-start justify-between gap-4">
+            <p className="min-w-0 type-caption text-[var(--muted-foreground)]">{compra.cupom ? `Cupom ${compra.cupom}` : "Desconto"}</p>
+            <p className="shrink-0 type-caption tabular-nums text-[var(--foreground)]">−{money(compra.descontoCents)}</p>
           </div>
         ) : null}
-        <div className="flex items-baseline justify-between gap-3">
+        <div className="mt-1 flex items-baseline justify-between gap-4">
           <p className="type-caption text-[var(--muted-foreground)]">Total</p>
           <p className="type-body-strong tabular-nums text-[var(--foreground)]">{money(compra.cents)}</p>
         </div>
       </div>
       {pagamento ? <p className="type-fine-print text-[var(--muted-foreground)]">{pagamento}</p> : null}
-    </div>
+    </article>
   );
 }
 
@@ -771,6 +833,10 @@ export function ComportamentoSection({ clienteId, query }: { clienteId: string; 
   const produtoNome = rotulos.produto ?? produtosVisao.find((row) => row.id === filtro.produto)?.nome;
   const origemNome = rotulos.origem ?? origensVisao.find((row) => row.id === filtro.origem)?.label;
   const estadoNome = rotulos.lugar ?? estadosVisao.find((row) => row.uf === filtro.uf)?.nome;
+  const recompraVisao = data.facetas?.recompra ?? data.recompra;
+  const serieVisao = data.facetas?.serie ?? data.serie;
+  const escolherCompra = (compra: "nova" | "recompra" | null) =>
+    setFiltro((atual) => ({ ...atual, compra: compra == null || atual.compra === compra ? undefined : compra }));
   const limparFiltro = () => {
     setFiltro({});
     setRotulos({});
@@ -795,6 +861,13 @@ export function ComportamentoSection({ clienteId, query }: { clienteId: string; 
       id: "origem",
       label: `Origem · ${origemNome ?? "Origem"}`,
       off: () => setFiltro((atual) => ({ ...atual, origem: undefined })),
+    });
+  }
+  if (filtro.compra) {
+    chips.push({
+      id: "compra",
+      label: filtro.compra === "nova" ? "Receita nova" : "Receita de recompra",
+      off: () => setFiltro((atual) => ({ ...atual, compra: undefined })),
     });
   }
   if (filtro.dia != null && filtro.hora != null) {
@@ -835,13 +908,25 @@ export function ComportamentoSection({ clienteId, query }: { clienteId: string; 
         </div>
       ) : null}
       <div className="kpi-grid grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Kpi label="Receita nova" value={money(data.recompra.receitaPrimeiraCents)} hint={`${num(data.recompra.pedidosPrimeira)} pedidos`} />
-        <Kpi label="Receita de recompra" value={money(data.recompra.receitaRecompraCents)} hint={`${num(data.recompra.pedidosRecompra)} pedidos`} />
-        <Kpi label="Receita recorrente" value={pct(data.recompra.participacaoRecorrentesPct)} />
+        <Kpi
+          label="Receita nova"
+          value={money(recompraVisao.receitaPrimeiraCents)}
+          hint={`${num(recompraVisao.pedidosPrimeira)} pedidos`}
+          pressed={filtro.compra === "nova"}
+          onClick={() => escolherCompra("nova")}
+        />
+        <Kpi
+          label="Receita de recompra"
+          value={money(recompraVisao.receitaRecompraCents)}
+          hint={`${num(recompraVisao.pedidosRecompra)} pedidos`}
+          pressed={filtro.compra === "recompra"}
+          onClick={() => escolherCompra("recompra")}
+        />
+        <Kpi label="Receita recorrente" value={pct(recompraVisao.participacaoRecorrentesPct)} />
         <Kpi label="LTV" value={money(data.ltv.medioCents)} hint={`${num(data.ltv.compradores)} compradores`} />
       </div>
 
-      <ReceitaChart serie={data.serie} agrupamento={data.serieAgrupamento} />
+      <ReceitaChart serie={serieVisao} agrupamento={data.serieAgrupamento} compra={filtro.compra ?? null} onCompra={escolherCompra} />
 
       <div className="kpi-grid grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Kpi label="Ticket do pedido" value={money(data.tickets.pedidoCents)} tone={ticketTone(data.tickets.pedidoCents, before.pedidoCents)} />
@@ -866,15 +951,17 @@ export function ComportamentoSection({ clienteId, query }: { clienteId: string; 
         )}
       </Card>
 
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid items-start gap-3 lg:grid-cols-2">
         <Card title={comprador ? undefined : "Top 10 compradores"}>
           {comprador ? (
-            <div>
+            <div className="flex flex-col gap-4">
               <BackLink onClick={() => setComprador(null)} />
-              <p className="mt-3 type-caption-strong text-[var(--foreground)]">{comprador.nome}</p>
-              <div className="mt-1 max-h-80 space-y-4 overflow-y-auto pr-1">
+              <p className="type-caption-strong text-[var(--foreground)]">{comprador.nome}</p>
+              <div className="flex max-h-[28rem] flex-col divide-y divide-[var(--divider-soft)] overflow-y-auto pr-3 [scrollbar-gutter:stable]">
                 {comprador.compras.map((compra) => (
-                  <PedidoNoCard key={compra.id} compra={compra} />
+                  <div key={compra.id} className="py-5 first:pt-1 last:pb-1">
+                    <PedidoNoCard compra={compra} />
+                  </div>
                 ))}
               </div>
             </div>

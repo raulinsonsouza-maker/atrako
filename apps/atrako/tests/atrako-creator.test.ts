@@ -339,6 +339,26 @@ test("chartsFor: receita por origem vira rosca; mídia diária vira linha; sem d
   assert.deepEqual(chartsFor("crm_pipeline", null), []);
 });
 
+test("chartsFor: comportamento mostra gênero e, sem nome, os produtos", () => {
+  const [donut] = chartsFor("comportamento_compra", {
+    genero: {
+      mulheres: { receita: 640 },
+      homens: { receita: 200 },
+      naoIdentificado: { receita: 90 },
+    },
+  });
+  assert.equal(donut.chart, "donut");
+  assert.equal(donut.title, "Receita por gênero");
+  assert.equal(donut.data.length, 3);
+
+  const [bar] = chartsFor("comportamento_compra", {
+    genero: { mulheres: { receita: 0 }, homens: { receita: 0 }, naoIdentificado: { receita: 40 } },
+    produtos: [{ nome: "Kefir", receita: 40 }],
+  });
+  assert.equal(bar.chart, "bar");
+  assert.deepEqual(bar.data, [{ nome: "Kefir", receita: 40 }]);
+});
+
 // ── web ──
 
 test("assertPublicUrl bloqueia endereços internos, portas e esquemas", async () => {

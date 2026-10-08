@@ -43,6 +43,9 @@ describe("lugar e gênero", () => {
     assert.equal(genderFromName("Maria Eduarda"), "F");
     assert.equal(genderFromName("João Pedro"), "M");
     assert.equal(genderFromName("Letícia Souza"), "F");
+    assert.equal(genderFromName("Nicole Schraiber"), "F");
+    assert.equal(genderFromName("Nailú Nardi"), "F");
+    assert.equal(genderFromName("Deisi Guacira Tibes"), "F");
     assert.equal(genderFromName("Alessandro Carvalho"), "M");
     assert.equal(genderFromName("Alex"), null);
     assert.equal(genderFromName("Cliente teste"), null);
@@ -221,6 +224,26 @@ describe("comportamento", () => {
     const lista = aggregateComportamento(base, { origem: "meta_ads", pular: ["origem"] });
     assert.equal(lista.origens.length, 2);
     assert.equal(lista.tickets.pedidos, 2);
+  });
+
+  it("filtra a receita nova e a visão sem esse filtro continua com a recompra", () => {
+    const base = {
+      current: [
+        order({ id: "primeira", occurredAt: new Date("2026-10-07T15:00:00.000Z"), totalCents: 10000 }),
+        order({ id: "seguinte", occurredAt: new Date("2026-10-08T15:00:00.000Z"), totalCents: 20000 }),
+      ],
+      previous: [],
+      priorKeys: new Set<string>(),
+      lifetimeReceitaCents: 0,
+      lifetimeCompradores: 0,
+    };
+    const soNova = aggregateComportamento(base, { compra: "nova" });
+    assert.equal(soNova.recompra.pedidosPrimeira, 1);
+    assert.equal(soNova.recompra.pedidosRecompra, 0);
+    assert.equal(soNova.tickets.pedidos, 1);
+    const lista = aggregateComportamento(base, { compra: "nova", pular: ["compra"] });
+    assert.equal(lista.recompra.pedidosPrimeira, 1);
+    assert.equal(lista.recompra.pedidosRecompra, 1);
   });
 
   it("recorte de ontem em Brasília começa às 03:00 UTC", () => {

@@ -5,6 +5,7 @@ import { summarizeLedger } from "@/lib/atrako/finance-ledger";
 import { getPersonJourney } from "@/lib/atrako/person";
 import { getAbandonedCartSummary } from "@/lib/crm/abandoned-cart";
 import { getCartRecoveryMetrics, getRepurchaseMetrics } from "@/lib/commerce/customer-metrics";
+import { getComportamento, type Comportamento } from "@/lib/commerce/comportamento";
 import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
 import { CHANNEL_LABELS, orderOriginKey, type OrderChannel } from "@/lib/commerce-attribution/store-source";
 import type { ModuleKey } from "@/lib/modules/registry";
@@ -144,6 +145,108 @@ const CARD_GUIDANCE =
 
 const range = (p: AtrakoPeriod) => ({ gte: p.start, lte: p.end });
 const prevRange = (p: AtrakoPeriod) => ({ gte: p.previousStart, lte: p.previousEnd });
+const reais = (cents: number | null | undefined) => (cents == null ? null : money(cents));
+
+const DIAS_COMPRA = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo"] as const;
+const MESES_COMPRA = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+
+function rotuloSerieCompra(data: string, agrupamento: Comportamento["serieAgrupamento"]) {
+  const [ano, mes, dia] = data.split("-");
+  const curto = MESES_COMPRA[Number(mes) - 1] ?? mes;
+  if (agrupamento === "mes") return `${curto}/${ano.slice(2)}`;
+  if (agrupamento === "semana") return `sem ${dia}/${mes}`;
+  return `${dia}/${mes}`;
+}
+
+/** O mesmo recorte da aba Comportamento, em reais e sem carrinho nem e-mail. */
+function comportamentoParaAgente(view: Comportamento) {
+  const receita = view.tickets.receitaCents;
+  const fatia = (pedidos: number, cents: number) => ({
+    pedidos,
+    receita: money(cents),
+    participacaoPct: pct(cents, receita),
+  });
+  const picos = view.heatmap
+    .flatMap((row, dia) => row.map((pedidos, hora) => ({ dia: DIAS_COMPRA[dia] ?? String(dia), hora, pedidos })))
+    .filter((cell) => cell.pedidos > 0)
+    .sort((a, b) => b.pedidos - a.pedidos)
+    .slice(0, 5);
+  const serie = view.serie.filter((row) => row.totalCents > 0);
+  return {
+    leitura: view.leitura,
+    tickets: {
+      pedido: reais(view.tickets.pedidoCents),
+      porCliente: reais(view.tickets.porClienteCents),
+      primeiraCompra: reais(view.tickets.primeiraCents),
+      recompra: reais(view.tickets.recompraCents),
+      anterior: {
+        pedido: reais(view.ticketsAnterior.pedidoCents),
+        porCliente: reais(view.ticketsAnterior.porClienteCents),
+      },
+    },
+    recompra: {
+      receitaNova: money(view.recompra.receitaPrimeiraCents),
+      pedidosNovos: view.recompra.pedidosPrimeira,
+      receitaRecompra: money(view.recompra.receitaRecompraCents),
+      pedidosRecompra: view.recompra.pedidosRecompra,
+      participacaoRecorrentePct: view.recompra.participacaoRecorrentesPct,
+      pedidosSemComprador: view.recompra.pedidosSemContato,
+      receitaSemComprador: money(view.recompra.receitaSemContatoCents),
+    },
+    ltv: {
+      medio: reais(view.ltv.medioCents),
+      compradores: view.ltv.compradores,
+      receita: money(view.ltv.receitaCents),
+    },
+    genero: {
+      mulheres: fatia(view.genero.f.pedidos, view.genero.f.receitaCents),
+      homens: fatia(view.genero.m.pedidos, view.genero.m.receitaCents),
+      naoIdentificado: fatia(view.genero.u.pedidos, view.genero.u.receitaCents),
+      nota: "Estimativa pelo primeiro nome. A loja não envia sexo. Nomes genéricos ficam sem identificação.",
+    },
+    origens: view.origens.slice(0, 8).map((row) => ({
+      origem: row.label,
+      clientes: row.clientes,
+      receita: money(row.receitaCents),
+      ticket: reais(row.ticketCents),
+      voltaramPct: row.recompraPct,
+    })),
+    produtos: view.produtos.slice(0, 8).map((row) => ({
+      nome: row.nome,
+      quantidade: row.quantidade,
+      receita: money(row.receitaCents),
+      compradores: row.compradores,
+      ticket: reais(row.ticketCents),
+      voltaram: row.recompras,
+    })),
+    depoisComprou: view.pares.slice(0, 6).map((row) => ({
+      de: row.de,
+      para: row.para,
+      compradores: row.compradores,
+    })),
+    maioresCompradores: view.topCompradores.slice(0, 8).map((row) => ({
+      nome: row.nome,
+      pedidos: row.pedidos,
+      receita: money(row.receitaCents),
+    })),
+    lugares: view.estados.slice(0, 8).map((row) => ({
+      lugar: row.nome,
+      pedidos: row.pedidos,
+      receita: money(row.receitaCents),
+      cidade: row.cidades[0]?.nome ?? null,
+    })),
+    quandoCompram: picos,
+    serie: {
+      agrupamento: view.serieAgrupamento,
+      pontos: (serie.length > 18 ? serie.slice(-18) : serie).map((row) => ({
+        periodo: rotuloSerieCompra(row.data, view.serieAgrupamento),
+        total: money(row.totalCents),
+        nova: money(row.primeiraCents),
+        recompra: money(row.recompraCents),
+      })),
+    },
+  };
+}
 
 /** Delegação ao InPilot (mídia, campanhas, criativos, funil externo, GA, metas). */
 async function analyst(
@@ -516,7 +619,7 @@ export const READ_TOOLS: AtrakoTool[] = [
     name: "clientes_recompra",
     step: "Analisando recompra",
     description:
-      "Base de clientes: novos vs recorrentes no período, participação da recompra na receita, intervalo médio entre compras e ciclo de vida da base (ativos, em risco, perdidos…).",
+      "Base de clientes: novos vs recorrentes no período, participação da recompra na receita, intervalo médio entre compras e ciclo de vida da base (ativos, em risco, perdidos…). Para gênero, horário, cidade, produtos e quem mais compra, use comportamento_compra.",
     parameters: periodSchema(),
     risk: "READ",
     async run(args, rt) {
@@ -545,6 +648,34 @@ export const READ_TOOLS: AtrakoTool[] = [
         },
         coverage: coverageFor(rt, ["marketplace", "commerce"], Boolean(metrics?.paid.count) || lifecycle.length > 0),
         source: { tool: "clientes_recompra", label: "Clientes e recompra", period: periodSource(p) },
+      };
+    },
+  },
+  {
+    name: "comportamento_compra",
+    step: "Lendo o comportamento de compra",
+    description:
+      "Quem compra neste período: receita nova e de recompra, ticket do pedido e ticket por cliente, LTV, gênero estimado pelo nome, origem, produtos, o que compram depois, maiores compradores, estado e cidade, e os horários com mais pedidos. Use em pergunta sobre clientes, recompra, gênero, horário, lugar ou produto. Não use em saudação.",
+    parameters: periodSchema(),
+    risk: "READ",
+    async run(args, rt) {
+      const p = periodOf(args, rt);
+      const view = await getComportamento(rt.ctx.clienteId, {
+        start: p.start,
+        end: p.end,
+        previousStart: p.previousStart,
+        previousEnd: p.previousEnd,
+      });
+      const data = comportamentoParaAgente(view);
+      return {
+        data,
+        coverage: coverageFor(rt, ["marketplace", "commerce"], data.recompra.pedidosNovos + data.recompra.pedidosRecompra + data.recompra.pedidosSemComprador > 0),
+        source: {
+          tool: "comportamento_compra",
+          label: "Comportamento de compra",
+          period: periodSource(p),
+          note: "Gênero é estimativa pelo primeiro nome. Pedido sem comprador identificado não entra em receita nova nem em recompra. Ticket do pedido divide pela quantidade de pedidos; ticket por cliente, pelos compradores identificados.",
+        },
       };
     },
   },

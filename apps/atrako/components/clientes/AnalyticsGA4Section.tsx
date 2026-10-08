@@ -14,6 +14,7 @@ import {
   ComposedChart,
 } from "recharts";
 import { Activity, Users, TrendingUp, Clock } from "lucide-react";
+import { bucketYmd, diasEntre, rotuloEixo, rotuloTooltip } from "@/lib/chart-bucket";
 
 const tooltipStyle = {
   contentStyle: {
@@ -92,8 +93,53 @@ export type AnalyticsGA4Data = {
   }>;
 };
 
+function seriesDoGrafico(series: NonNullable<AnalyticsGA4Data["series"]>) {
+  const ordered = [...series].sort((a, b) => String(a.data).localeCompare(String(b.data)));
+  const first = String(ordered[0]?.data ?? "").slice(0, 10);
+  const last = String(ordered[ordered.length - 1]?.data ?? "").slice(0, 10);
+  const mensal = ordered.length > 1 && diasEntre(first, last) > 180;
+  if (!mensal) {
+    return {
+      mensal: false,
+      rows: ordered.map((row) => {
+        const day = String(row.data).slice(0, 10);
+        return { ...row, periodo: rotuloEixo(day, "dia", false), rotulo: rotuloTooltip(day, "dia") };
+      }),
+    };
+  }
+  const buckets = new Map<string, { sessions: number; activeUsers: number; engagement: number; duration: number; weight: number }>();
+  for (const row of ordered) {
+    const key = bucketYmd(String(row.data), "mes");
+    const current = buckets.get(key) ?? { sessions: 0, activeUsers: 0, engagement: 0, duration: 0, weight: 0 };
+    const weight = row.sessions || 0;
+    current.sessions += row.sessions;
+    current.activeUsers += row.activeUsers;
+    current.engagement += row.engagementRate * weight;
+    current.duration += row.averageSessionDuration * weight;
+    current.weight += weight;
+    buckets.set(key, current);
+  }
+  const years = new Set([...buckets.keys()].map((key) => key.slice(0, 4)));
+  const multiYear = years.size > 1;
+  return {
+    mensal: true,
+    rows: [...buckets.entries()].map(([key, row]) => ({
+      data: key,
+      sessions: row.sessions,
+      activeUsers: row.activeUsers,
+      engagementRate: row.weight > 0 ? row.engagement / row.weight : 0,
+      averageSessionDuration: row.weight > 0 ? row.duration / row.weight : 0,
+      periodo: rotuloEixo(key, "mes", multiYear),
+      rotulo: rotuloTooltip(key, "mes"),
+    })),
+  };
+}
+
 export function AnalyticsGA4Section({ data }: { data: AnalyticsGA4Data }) {
   if (!data?.hasAnalytics || !data.resumo) return null;
+  const grafico = data.series?.length ? seriesDoGrafico(data.series) : { mensal: false, rows: [] };
+  const series = grafico.rows;
+  const mensal = grafico.mensal;
 
   return (
     <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
@@ -140,21 +186,10 @@ export function AnalyticsGA4Section({ data }: { data: AnalyticsGA4Data }) {
             icon={Clock}
           />
         </section>
-        {data.series && data.series.length > 0 && (
+        {series.length > 0 && (
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart
-                data={data.series.map((s) => {
-                  const d = new Date(s.data);
-                  return {
-                    ...s,
-                    periodo: d.toLocaleDateString("pt-BR", {
-                      day: "2-digit",
-                      month: "short",
-                    }),
-                  };
-                })}
-              >
+              <ComposedChart data={series}>
                 <defs>
                   <linearGradient id="ga4BarGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="var(--muted-foreground)" stopOpacity={0.25} />
@@ -168,10 +203,10 @@ export function AnalyticsGA4Section({ data }: { data: AnalyticsGA4Data }) {
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
-                  interval={data.series.length > 14 ? Math.ceil(data.series.length / 14) - 1 : 0}
-                  angle={data.series.length > 14 ? -45 : 0}
-                  textAnchor={data.series.length > 14 ? "end" : "middle"}
-                  height={data.series.length > 14 ? 50 : 30}
+                  interval={series.length > 14 ? Math.ceil(series.length / 14) - 1 : 0}
+                  angle={!mensal && series.length > 14 ? -45 : 0}
+                  textAnchor={!mensal && series.length > 14 ? "end" : "middle"}
+                  height={!mensal && series.length > 14 ? 50 : 30}
                 />
                 <YAxis
                   yAxisId="left"
@@ -195,7 +230,7 @@ export function AnalyticsGA4Section({ data }: { data: AnalyticsGA4Data }) {
                       return [formatDuration(Number(value)), "Duração"];
                     return [Number(value).toLocaleString("pt-BR"), name];
                   }}
-                  labelFormatter={(_, payload) => payload?.[0]?.payload?.periodo ?? ""}
+                  labelFormatter={(_, payload) => payload?.[0]?.payload?.rotulo ?? ""}
                   {...tooltipStyle}
                 />
                 <Legend

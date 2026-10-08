@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { ArrowRight, Loader2, ShoppingBag } from "lucide-react";
+import { ArrowRight, Loader2, ShoppingBag, X } from "lucide-react";
 import { BackLink } from "@/components/ui/back-link";
 import { orderStatusLabel } from "@/lib/commerce-attribution/order-status";
 import { Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -58,6 +58,7 @@ type Comportamento = {
   facetas?: {
     genero: Comportamento["genero"];
     produtos: Comportamento["produtos"];
+    origens: Comportamento["origens"];
     heatmap: number[][];
     estados: Comportamento["estados"];
   };
@@ -70,6 +71,7 @@ type Comportamento = {
 };
 
 const DAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+const WEEKDAYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 const MESES_LONG = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 const money = (cents: number | null | undefined) =>
@@ -581,27 +583,46 @@ function Heatmap({
   );
 }
 
-function Origens({ origens }: { origens: Comportamento["origens"] }) {
+function Origens({
+  origens,
+  selecionado,
+  onSelect,
+}: {
+  origens: Comportamento["origens"];
+  selecionado: string | null;
+  onSelect: (id: string) => void;
+}) {
   const max = Math.max(1, ...origens.map((row) => row.receitaCents));
   return (
-    <ul className="space-y-3">
+    <ul className="space-y-1">
       {origens.map((row) => {
         const share = Math.max(2, Math.round((row.receitaCents / max) * 100));
+        const pressed = selecionado == null ? undefined : selecionado === row.id;
         return (
           <li key={row.id}>
-            <span className="flex items-baseline justify-between gap-3">
-              <span className="type-caption text-[var(--foreground)]">{row.label}</span>
-              <span className="type-caption tabular-nums text-[var(--foreground)]">
-                {money(row.receitaCents)}
-                <span className="ml-2 text-[var(--muted-foreground)]">{pct(row.recompraPct)} voltou</span>
+            <button
+              type="button"
+              aria-pressed={pressed === true}
+              onClick={() => onSelect(row.id)}
+              className={`w-full rounded-[var(--radius-xs)] px-2 py-2 text-left active:scale-[0.99] ${pressed ? "bg-[var(--divider-soft)]" : ""}`}
+            >
+              <span className="flex items-baseline justify-between gap-3">
+                <span className="type-caption text-[var(--foreground)]">{row.label}</span>
+                <span className="type-caption tabular-nums text-[var(--foreground)]">
+                  {money(row.receitaCents)}
+                  <span className="ml-2 text-[var(--muted-foreground)]">{pct(row.recompraPct)} voltou</span>
+                </span>
               </span>
-            </span>
-            <span className="mt-1.5 flex h-2 overflow-hidden rounded-full bg-[var(--divider-soft)]">
-              <span className="h-full rounded-full bg-[var(--primary)]" style={{ width: `${share}%` }} />
-            </span>
-            <span className="mt-1 block type-fine-print text-[var(--muted-foreground)]">
-              {num(row.clientes)} {row.clientes === 1 ? "cliente" : "clientes"} · ticket {money(row.ticketCents)}
-            </span>
+              <span className="mt-1.5 flex h-2 overflow-hidden rounded-full bg-[var(--divider-soft)]">
+                <span
+                  className="h-full rounded-full bg-[var(--primary)]"
+                  style={{ width: `${share}%`, opacity: pressed === false ? 0.45 : 1 }}
+                />
+              </span>
+              <span className="mt-1 block type-fine-print text-[var(--muted-foreground)]">
+                {num(row.clientes)} {row.clientes === 1 ? "cliente" : "clientes"} · ticket {money(row.ticketCents)}
+              </span>
+            </button>
           </li>
         );
       })}
@@ -635,12 +656,13 @@ function Pares({ pares }: { pares: Comportamento["pares"] }) {
   );
 }
 
-type Filtro = { genero?: "f" | "m" | "u"; produto?: string; dia?: number; hora?: number; uf?: string; cidade?: string };
+type Filtro = { genero?: "f" | "m" | "u"; produto?: string; origem?: string; dia?: number; hora?: number; uf?: string; cidade?: string };
 
 function filtroQuery(base: string, filtro: Filtro) {
   const params = new URLSearchParams(base);
   if (filtro.genero) params.set("genero", filtro.genero);
   if (filtro.produto) params.set("produto", filtro.produto);
+  if (filtro.origem) params.set("origem", filtro.origem);
   if (filtro.dia != null) params.set("dia", String(filtro.dia));
   if (filtro.hora != null) params.set("hora", String(filtro.hora));
   if (filtro.uf != null) params.set("uf", filtro.uf);
@@ -711,7 +733,7 @@ function PedidoNoCard({ compra }: { compra: Comportamento["topCompradores"][numb
 
 export function ComportamentoSection({ clienteId, query }: { clienteId: string; query: string }) {
   const [filtro, setFiltro] = useState<Filtro>({});
-  const [rotulos, setRotulos] = useState<{ produto?: string; lugar?: string }>({});
+  const [rotulos, setRotulos] = useState<{ produto?: string; origem?: string; lugar?: string }>({});
   const [comprador, setComprador] = useState<Comportamento["topCompradores"][number] | null>(null);
   const pedido = filtroQuery(query, filtro);
   const { data, isLoading, isPlaceholderData, isError } = useQuery({
@@ -743,36 +765,49 @@ export function ComportamentoSection({ clienteId, query }: { clienteId: string; 
   const before = data.ticketsAnterior;
   const generoVisao = data.facetas?.genero ?? data.genero;
   const produtosVisao = data.facetas?.produtos ?? data.produtos;
+  const origensVisao = data.facetas?.origens ?? data.origens;
   const heatmapVisao = data.facetas?.heatmap ?? data.heatmap;
   const estadosVisao = data.facetas?.estados ?? data.estados;
   const produtoNome = rotulos.produto ?? produtosVisao.find((row) => row.id === filtro.produto)?.nome;
+  const origemNome = rotulos.origem ?? origensVisao.find((row) => row.id === filtro.origem)?.label;
   const estadoNome = rotulos.lugar ?? estadosVisao.find((row) => row.uf === filtro.uf)?.nome;
+  const limparFiltro = () => {
+    setFiltro({});
+    setRotulos({});
+  };
   const chips: Array<{ id: string; label: string; off: () => void }> = [];
   if (filtro.genero) {
     chips.push({
       id: "genero",
-      label: GENERO.find((row) => row.id === filtro.genero)?.label ?? filtro.genero,
+      label: `Gênero · ${GENERO.find((row) => row.id === filtro.genero)?.label ?? filtro.genero}`,
       off: () => setFiltro((atual) => ({ ...atual, genero: undefined })),
     });
   }
   if (filtro.produto) {
     chips.push({
       id: "produto",
-      label: produtoNome ?? "Produto",
+      label: `Produto · ${produtoNome ?? "Produto"}`,
       off: () => setFiltro((atual) => ({ ...atual, produto: undefined })),
+    });
+  }
+  if (filtro.origem) {
+    chips.push({
+      id: "origem",
+      label: `Origem · ${origemNome ?? "Origem"}`,
+      off: () => setFiltro((atual) => ({ ...atual, origem: undefined })),
     });
   }
   if (filtro.dia != null && filtro.hora != null) {
     chips.push({
       id: "horario",
-      label: `${DAYS[filtro.dia] ?? ""} ${filtro.hora}h`,
+      label: `Horário · ${WEEKDAYS[filtro.dia] ?? ""}, ${filtro.hora}h`,
       off: () => setFiltro((atual) => ({ ...atual, dia: undefined, hora: undefined })),
     });
   }
   if (filtro.uf != null) {
     chips.push({
       id: "lugar",
-      label: estadoNome ?? "Sem local",
+      label: `Lugar · ${estadoNome ?? "Sem local"}`,
       off: () => setFiltro((atual) => ({ ...atual, uf: undefined, cidade: undefined })),
     });
   }
@@ -780,17 +815,23 @@ export function ComportamentoSection({ clienteId, query }: { clienteId: string; 
   return (
     <section className={`space-y-4 transition-opacity ${isPlaceholderData ? "opacity-60" : ""}`}>
       {chips.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
+        <div className="crm-filter-strip">
           {chips.map((chip) => (
             <button
               key={chip.id}
               type="button"
               onClick={chip.off}
-              className="rounded-[var(--radius-xs)] bg-[var(--card)] px-2.5 py-1 type-fine-print text-[var(--foreground)] active:scale-95"
+              className="crm-filter-chip max-w-xs"
+              data-active="true"
+              aria-label={`Remover filtro ${chip.label}`}
             >
-              {chip.label} ×
+              <span className="truncate">{chip.label}</span>
+              <X className="h-3 w-3 shrink-0" strokeWidth={2} />
             </button>
           ))}
+          <button type="button" onClick={limparFiltro} className="type-caption text-[var(--primary)] active:scale-95">
+            Limpar filtro
+          </button>
         </div>
       ) : null}
       <div className="kpi-grid grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -810,10 +851,18 @@ export function ComportamentoSection({ clienteId, query }: { clienteId: string; 
       </div>
 
       <Card title="Origem">
-        {data.origens.length === 0 ? (
+        {origensVisao.length === 0 ? (
           <p className="type-fine-print text-[var(--muted-foreground)]">Nenhuma venda paga no período.</p>
         ) : (
-          <Origens origens={data.origens} />
+          <Origens
+            origens={origensVisao}
+            selecionado={filtro.origem ?? null}
+            onSelect={(id) => {
+              const nome = origensVisao.find((row) => row.id === id)?.label;
+              setRotulos((atual) => ({ ...atual, origem: nome }));
+              setFiltro((atual) => ({ ...atual, origem: atual.origem === id ? undefined : id }));
+            }}
+          />
         )}
       </Card>
 

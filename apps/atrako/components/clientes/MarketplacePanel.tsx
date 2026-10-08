@@ -14,6 +14,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { bucketYmd, diasEntre, rotuloEixo, rotuloTooltip } from "@/lib/chart-bucket";
 
 type MarketplaceSub = "ml" | "shopee" | "tiktok" | "magalu";
 
@@ -117,6 +118,71 @@ function formatBrl(cents: number) {
     style: "currency",
     currency: "BRL",
   });
+}
+
+function marketplaceSerie(series: Array<{ date: string; orders: number; gmvCents: number; netCents: number }>) {
+  const ordered = [...series].sort((a, b) => a.date.localeCompare(b.date));
+  const first = ordered[0]?.date ?? "";
+  const last = ordered[ordered.length - 1]?.date ?? "";
+  const mensal = ordered.length > 1 && diasEntre(first, last) > 180;
+  if (!mensal) {
+    return {
+      mensal: false,
+      rows: ordered.map((row) => ({
+        ...row,
+        periodo: rotuloEixo(row.date, "dia", false),
+        rotulo: rotuloTooltip(row.date, "dia"),
+      })),
+    };
+  }
+  const buckets = new Map<string, { orders: number; gmvCents: number; netCents: number }>();
+  for (const row of ordered) {
+    const key = bucketYmd(row.date, "mes");
+    const current = buckets.get(key) ?? { orders: 0, gmvCents: 0, netCents: 0 };
+    current.orders += row.orders;
+    current.gmvCents += row.gmvCents;
+    current.netCents += row.netCents;
+    buckets.set(key, current);
+  }
+  const years = new Set([...buckets.keys()].map((key) => key.slice(0, 4)));
+  const multiYear = years.size > 1;
+  return {
+    mensal: true,
+    rows: [...buckets.entries()].map(([key, row]) => ({
+      date: key,
+      ...row,
+      periodo: rotuloEixo(key, "mes", multiYear),
+      rotulo: rotuloTooltip(key, "mes"),
+    })),
+  };
+}
+
+function MarketplaceSerie({ series }: { series: Array<{ date: string; orders: number; gmvCents: number; netCents: number }> }) {
+  const grafico = marketplaceSerie(series);
+  return (
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
+      <p className="mb-4 type-fine-print uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+        {grafico.mensal ? "Evolução mensal de vendas" : "Evolução diária de vendas"}
+      </p>
+      <div className="h-72 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={grafico.rows}>
+            <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
+            <XAxis dataKey="periodo" fontSize={11} tickLine={false} axisLine={false} stroke="var(--muted-foreground)" />
+            <YAxis yAxisId="money" tickFormatter={(v) => `R$${Math.round(Number(v) / 100)}`} fontSize={11} />
+            <YAxis yAxisId="orders" orientation="right" allowDecimals={false} fontSize={11} />
+            <Tooltip
+              labelFormatter={(_label, payload) => payload?.[0]?.payload?.rotulo ?? _label}
+              formatter={(value, name) => (name === "Pedidos" ? [value, name] : [formatBrl(Number(value)), name])}
+            />
+            <Area yAxisId="money" type="monotone" dataKey="gmvCents" name="GMV" fill="var(--primary)" stroke="var(--primary)" fillOpacity={0.16} />
+            <Area yAxisId="money" type="monotone" dataKey="netCents" name="Líquido" fill="var(--chart-revenue)" stroke="var(--chart-revenue)" fillOpacity={0.08} />
+            <Bar yAxisId="orders" dataKey="orders" name="Pedidos" fill="var(--chart-spend)" />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
 }
 
 function statusLabel(status: string) {
@@ -330,25 +396,7 @@ export function MarketplacePanel({
           </div>
 
           {sub === "ml" && data.series.length > 0 ? (
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
-              <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                Evolução diária de vendas
-              </p>
-              <div className="h-72 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={data.series}>
-                    <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
-                    <XAxis dataKey="date" tickFormatter={(v) => String(v).slice(5)} fontSize={11} />
-                    <YAxis yAxisId="money" tickFormatter={(v) => `R$${Math.round(Number(v) / 100)}`} fontSize={11} />
-                    <YAxis yAxisId="orders" orientation="right" allowDecimals={false} fontSize={11} />
-                    <Tooltip formatter={(value, name) => name === "Pedidos" ? [value, name] : [formatBrl(Number(value)), name]} />
-                    <Area yAxisId="money" type="monotone" dataKey="gmvCents" name="GMV" fill="var(--primary)" stroke="var(--primary)" fillOpacity={0.16} />
-                    <Area yAxisId="money" type="monotone" dataKey="netCents" name="Líquido" fill="#10b981" stroke="#10b981" fillOpacity={0.08} />
-                    <Bar yAxisId="orders" dataKey="orders" name="Pedidos" fill="#94a3b8" opacity={0.55} />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+            <MarketplaceSerie series={data.series} />
           ) : null}
 
           <div className="grid gap-4 lg:grid-cols-2">

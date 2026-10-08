@@ -5,6 +5,7 @@ import { isEcommerceCliente } from "@/lib/clientProfiles";
 import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
 import { CHANNEL_LABELS, orderOriginKey, type OrderChannel } from "@/lib/commerce-attribution/store-source";
 import { getCartRecoveryMetrics, getRepurchaseMetrics } from "@/lib/commerce/customer-metrics";
+import { agrupamentoPorDias, bucketYmd } from "@/lib/chart-bucket";
 
 const SITE_PROVIDERS = new Set(["WOOCOMMERCE", "SHOPIFY", "NUVEMSHOP", "TRAY"]);
 
@@ -237,15 +238,11 @@ export async function GET(
   const metaReceita = (porOrigem.get("meta_ads")?.receitaCents ?? 0) / 100;
   const origens = fonteVendas === "lojas" ? [...porOrigem.values()].sort((a, b) => b.receitaCents - a.receitaCents) : [];
 
-  // Série de vendas: por dia até ~2 meses, por semana (segunda) acima disso.
+  // Série de vendas: por dia até ~2 meses, por semana até ~6 meses, por mês no ano.
   const start = new Date(Date.UTC(dataInicio.getFullYear(), dataInicio.getMonth(), dataInicio.getDate()));
   const end = new Date(Date.UTC(dataFim.getFullYear(), dataFim.getMonth(), dataFim.getDate()));
-  const semanal = (end.getTime() - start.getTime()) / DAY_MS > 62;
-  const bucketOf = (dayKey: string) => {
-    if (!semanal) return dayKey;
-    const d = new Date(`${dayKey}T00:00:00Z`);
-    return new Date(d.getTime() - ((d.getUTCDay() + 6) % 7) * DAY_MS).toISOString().slice(0, 10);
-  };
+  const agrupamento = agrupamentoPorDias((end.getTime() - start.getTime()) / DAY_MS);
+  const bucketOf = (dayKey: string) => bucketYmd(dayKey, agrupamento);
   const serieMap = new Map<string, { data: string; receitaCents: number; pedidos: number }>();
   for (let t = start.getTime(); t <= end.getTime(); t += DAY_MS) {
     const key = bucketOf(new Date(t).toISOString().slice(0, 10));
@@ -268,7 +265,7 @@ export async function GET(
     origem: filtro,
     midiaDaOrigem,
     serie: fonteVendas === "lojas" ? [...serieMap.values()] : [],
-    serieAgrupamento: semanal ? "semana" : "dia",
+    serieAgrupamento: agrupamento,
     clientes,
     recuperacao,
     totais: {

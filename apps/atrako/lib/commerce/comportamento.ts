@@ -274,11 +274,12 @@ function brtSlot(date: Date): { day: number; hour: number } | null {
 export type FiltroComportamento = {
   genero?: "f" | "m" | "u";
   produto?: string;
+  origem?: string;
   dia?: number;
   hora?: number;
   uf?: string;
   cidade?: string;
-  pular?: Array<"genero" | "produto" | "horario" | "lugar">;
+  pular?: Array<"genero" | "produto" | "origem" | "horario" | "lugar">;
 };
 
 function orderGender(order: Pick<BehaviorOrder, "contactGender" | "contactName" | "buyerName">): "f" | "m" | "u" {
@@ -293,6 +294,7 @@ function matchesFiltro(order: Tagged, filtro: FiltroComportamento): boolean {
   const skip = new Set(filtro.pular ?? []);
   if (!skip.has("genero") && filtro.genero && orderGender(order) !== filtro.genero) return false;
   if (!skip.has("produto") && filtro.produto && !order.items.some((item) => productKey(item) === filtro.produto)) return false;
+  if (!skip.has("origem") && filtro.origem && orderOriginKey(order.provider, order.channel) !== filtro.origem) return false;
   if (!skip.has("horario") && (filtro.dia != null || filtro.hora != null)) {
     const slot = order.occurredAt ? brtSlot(order.occurredAt) : null;
     if (!slot) return false;
@@ -310,6 +312,7 @@ export type ComportamentoResposta = Comportamento & {
   facetas?: {
     genero: Comportamento["genero"];
     produtos: Comportamento["produtos"];
+    origens: Comportamento["origens"];
     heatmap: number[][];
     estados: Comportamento["estados"];
   };
@@ -834,7 +837,9 @@ function toBehavior(row: Loaded): BehaviorOrder | null {
 
 function filtroAtivo(filtro?: FiltroComportamento) {
   if (!filtro) return false;
-  return Boolean(filtro.genero || filtro.produto || filtro.dia != null || filtro.hora != null || filtro.uf != null || filtro.cidade);
+  return Boolean(
+    filtro.genero || filtro.produto || filtro.origem || filtro.dia != null || filtro.hora != null || filtro.uf != null || filtro.cidade,
+  );
 }
 
 export async function getComportamento(
@@ -896,6 +901,7 @@ export async function getComportamento(
   resposta.facetas = {
     genero: faceta("genero").genero,
     produtos: faceta("produto").produtos,
+    origens: faceta("origem").origens,
     heatmap: faceta("horario").heatmap,
     estados: faceta("lugar").estados,
   };

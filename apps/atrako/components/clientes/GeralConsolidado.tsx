@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CartRecoveryMetrics, RepurchaseMetrics } from "@/lib/commerce/customer-metrics";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { rotuloEixo, rotuloTooltip, type ChartAgrupamento } from "@/lib/chart-bucket";
 import { mobileTickInterval } from "@/lib/chart-mobile";
 
 type Consolidado = {
@@ -19,7 +20,7 @@ type Consolidado = {
   /** Canal de mídia cujo investimento conta para a origem filtrada (META, GOOGLE). */
   midiaDaOrigem?: string | null;
   serie?: Array<{ data: string; receitaCents: number; pedidos: number }>;
-  serieAgrupamento?: "dia" | "semana";
+  serieAgrupamento?: ChartAgrupamento;
   totais: {
     receita: number;
     pedidos: number;
@@ -349,19 +350,22 @@ function VendasSerie({ data, origemLabel }: { data: Consolidado; origemLabel: st
   const isMobile = useIsMobile();
   const serie = data.serie ?? [];
   if (serie.length < 2) return null;
-  const semanal = data.serieAgrupamento === "semana";
-  const rows = serie.map((s) => {
-    const [, m, d] = s.data.split("-");
-    return { periodo: `${d}/${m}`, receita: s.receitaCents / 100, pedidos: s.pedidos };
-  });
+  const agrupamento = data.serieAgrupamento ?? "dia";
+  const years = new Set(serie.map((row) => row.data.slice(0, 4)));
+  const multiYear = years.size > 1;
+  const rows = serie.map((row) => ({
+    periodo: rotuloEixo(row.data, agrupamento, multiYear),
+    rotulo: rotuloTooltip(row.data, agrupamento),
+    receita: row.receitaCents / 100,
+    pedidos: row.pedidos,
+  }));
   const tickEvery = isMobile ? mobileTickInterval(rows.length) : rows.length > 16 ? Math.ceil(rows.length / 16) - 1 : 0;
+  const titulo = agrupamento === "mes" ? "Vendas por mês" : agrupamento === "semana" ? "Vendas por semana" : "Vendas por dia";
 
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="type-caption-strong text-[var(--foreground)]">
-          {semanal ? "Vendas por semana" : "Vendas por dia"}
-        </p>
+        <p className="type-caption-strong text-[var(--foreground)]">{titulo}</p>
         <p className="type-fine-print text-[var(--muted-foreground)]">{origemLabel ?? "Todas as origens"}</p>
       </div>
       <div className="mt-4 h-48">
@@ -386,7 +390,9 @@ function VendasSerie({ data, origemLabel }: { data: Consolidado; origemLabel: st
             />
             <Tooltip
               cursor={{ fill: "var(--divider-soft)" }}
-              labelFormatter={(label: string) => (semanal ? `Semana de ${label}` : label)}
+              labelFormatter={(_label: string, payload: ReadonlyArray<{ payload?: { rotulo?: string } }>) =>
+                payload[0]?.payload?.rotulo ?? _label
+              }
               formatter={(value: number, _name: string, item: { payload?: { pedidos?: number } }) => [
                 `${brl(Number(value))} · ${item.payload?.pedidos ?? 0} pedidos`,
                 "Receita",

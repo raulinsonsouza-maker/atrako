@@ -24,6 +24,8 @@ export async function GET(
   if (genero === "f" || genero === "m" || genero === "u") filtro.genero = genero;
   const produto = sp.get("produto");
   if (produto) filtro.produto = produto;
+  const origem = sp.get("origem")?.trim() ?? "";
+  if (/^[A-Za-z0-9_]{1,40}$/.test(origem)) filtro.origem = origem;
   if (dia != null && dia !== "") {
     const n = Number(dia);
     if (Number.isInteger(n) && n >= 0 && n <= 6) filtro.dia = n;

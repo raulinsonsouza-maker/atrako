@@ -7,6 +7,7 @@ import { Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, 
 import { SegmentedControl } from "@/components/ui";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
+import { bucketYmd, rotuloEixo, rotuloTooltip } from "@/lib/chart-bucket";
 import { formatCompactNumber, mobileTickInterval } from "@/lib/chart-mobile";
 import { api, brl, brlMicros, dateBR, num, pct } from "@/components/relacionamento/format";
 import { rate, useOverview, type Overview } from "@/components/relacionamento/overview";
@@ -312,15 +313,16 @@ function DailyChart({ data }: { data: Overview }) {
       cur.cents += d.cents;
       byDay.set(d.day, cur);
     }
-    const weekly = data.days > 120;
-    const step = (weekly ? 7 : 1) * 86_400_000;
-    const out: Array<{ periodo: string; envios: number; receita: number; compras: number }> = [];
+    const agrupamento = data.days > 180 ? "mes" : data.days > 120 ? "semana" : "dia";
+    const step = (agrupamento === "semana" ? 7 : 1) * 86_400_000;
+    const buckets = new Map<string, { envios: number; receita: number; compras: number }>();
     const end = new Date(data.until).getTime();
     for (let t = new Date(data.since).getTime(); t <= end; t += step) {
       let sent = 0;
       let converted = 0;
       let cents = 0;
-      for (let i = 0; i < (weekly ? 7 : 1); i++) {
+      const span = agrupamento === "semana" ? 7 : 1;
+      for (let i = 0; i < span; i++) {
         const v = byDay.get(new Date(t + i * 86_400_000).toISOString().slice(0, 10));
         if (v) {
           sent += v.sent;
@@ -328,10 +330,21 @@ function DailyChart({ data }: { data: Overview }) {
           cents += v.cents;
         }
       }
-      const [, m, d] = new Date(t).toISOString().slice(0, 10).split("-");
-      out.push({ periodo: `${d}/${m}`, envios: sent, receita: cents / 100, compras: converted });
+      const day = new Date(t).toISOString().slice(0, 10);
+      const key = bucketYmd(day, agrupamento);
+      const row = buckets.get(key) ?? { envios: 0, receita: 0, compras: 0 };
+      row.envios += sent;
+      row.receita += cents / 100;
+      row.compras += converted;
+      buckets.set(key, row);
     }
-    return out;
+    const years = new Set([...buckets.keys()].map((key) => key.slice(0, 4)));
+    const multiYear = years.size > 1;
+    return [...buckets.entries()].map(([key, row]) => ({
+      periodo: rotuloEixo(key, agrupamento, multiYear),
+      rotulo: rotuloTooltip(key, agrupamento),
+      ...row,
+    }));
   }, [data]);
 
   const total = rows.reduce((s, r) => s + r.envios, 0);
@@ -339,7 +352,7 @@ function DailyChart({ data }: { data: Overview }) {
 
   return (
     <RelSection
-      title={data.days > 120 ? "Envios e receita por semana" : "Envios e receita por dia"}
+      title={data.days > 180 ? "Envios e receita por mês" : data.days > 120 ? "Envios e receita por semana" : "Envios e receita por dia"}
       info="Barras: mensagens enviadas. Linha: receita atribuída às mensagens."
       action={<span className="type-fine-print tabular-nums text-[var(--ink-muted-48)]">{num(total)} envios</span>}
     >
@@ -361,6 +374,9 @@ function DailyChart({ data }: { data: Overview }) {
               <YAxis yAxisId="receita" orientation="right" hide />
               <Tooltip
                 cursor={{ fill: "var(--divider-soft)" }}
+                labelFormatter={(_label: string, payload: ReadonlyArray<{ payload?: { rotulo?: string } }>) =>
+                  payload[0]?.payload?.rotulo ?? _label
+                }
                 formatter={(value: number, name: string, item: { payload?: { compras?: number } }) =>
                   name === "Receita" ? [`${brl(Math.round(Number(value) * 100))} · ${item.payload?.compras ?? 0} compras`, name] : [num(Number(value)), name]
                 }

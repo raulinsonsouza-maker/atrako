@@ -42,7 +42,11 @@ describe("lugar e gênero", () => {
   it("estima gênero pelo primeiro nome e deixa ambíguo vazio", () => {
     assert.equal(genderFromName("Maria Eduarda"), "F");
     assert.equal(genderFromName("João Pedro"), "M");
+    assert.equal(genderFromName("Letícia Souza"), "F");
+    assert.equal(genderFromName("Alessandro Carvalho"), "M");
     assert.equal(genderFromName("Alex"), null);
+    assert.equal(genderFromName("Cliente teste"), null);
+    assert.equal(genderFromName("Edu Teste"), null);
     assert.equal(genderFromName(""), null);
   });
 });
@@ -198,6 +202,25 @@ describe("comportamento", () => {
   it("recorte de 90 dias continua na semana", () => {
     const serie = densifySerie([], new Date("2026-07-10T03:00:00.000Z"), new Date("2026-10-08T02:59:59.999Z"));
     assert.equal(serie.serieAgrupamento, "semana");
+  });
+
+  it("filtra pela origem e a lista de origens ignora o próprio filtro", () => {
+    const base = {
+      current: [
+        order({ id: "loja", channel: "direct", totalCents: 10000 }),
+        order({ id: "anuncio", channel: "meta_ads", contactId: "c2", buyerEmail: "ads@ex.com", totalCents: 20000 }),
+      ],
+      previous: [],
+      priorKeys: new Set<string>(),
+      lifetimeReceitaCents: 0,
+      lifetimeCompradores: 0,
+    };
+    const soAds = aggregateComportamento(base, { origem: "meta_ads" });
+    assert.equal(soAds.tickets.pedidos, 1);
+    assert.equal(soAds.origens[0]?.id, "meta_ads");
+    const lista = aggregateComportamento(base, { origem: "meta_ads", pular: ["origem"] });
+    assert.equal(lista.origens.length, 2);
+    assert.equal(lista.tickets.pedidos, 2);
   });
 
   it("recorte de ontem em Brasília começa às 03:00 UTC", () => {

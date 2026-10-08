@@ -1,0 +1,330 @@
+/* Efeitos da LP v3. Tudo vive dentro de .atrako-lp-v3 e usa a cor da página (--primary). */
+
+.atrako-lp-v3 {
+  --fx-aurora-1: color-mix(in srgb, var(--primary, #0066cc) 55%, transparent);
+  --fx-aurora-2: color-mix(in srgb, var(--primary, #0066cc) 25%, #7c5cff00);
+  --fx-line: color-mix(in srgb, var(--primary, #0066cc) 35%, transparent);
+}
+
+.atrako-lp-v3 .fx-aurora {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.atrako-lp-v3 .fx-aurora::before {
+  content: "";
+  position: absolute;
+  inset: -20% -10% auto;
+  height: 70%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(40% 60% at 20% 40%, var(--fx-aurora-1), transparent 70%),
+    radial-gradient(35% 55% at 80% 30%, color-mix(in srgb, var(--primary, #0066cc) 40%, white), transparent 70%),
+    radial-gradient(30% 50% at 50% 80%, var(--fx-aurora-2), transparent 70%);
+  filter: blur(8px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .atrako-lp-v3 .fx-aurora::before {
+    animation: atrako-fx-aurora 14s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes atrako-fx-aurora {
+  from { transform: translate3d(-4%, 0, 0) scale(1); }
+  to { transform: translate3d(4%, 2%, 0) scale(1.08); }
+}
+
+.atrako-lp-v3 .fx-grid-bg,
+.atrako-lp-v3 .fx-dot-bg {
+  position: relative;
+  isolation: isolate;
+}
+
+.atrako-lp-v3 .fx-grid-bg::before,
+.atrako-lp-v3 .fx-dot-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse at center, black 40%, transparent 78%);
+}
+
+.atrako-lp-v3 .fx-grid-bg::before {
+  background-image:
+    linear-gradient(to right, var(--fx-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--fx-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.atrako-lp-v3 .fx-dot-bg::before {
+  background-image: radial-gradient(circle, var(--fx-line) 1.2px, transparent 1.4px);
+  background-size: 22px 22px;
+}
+
+.atrako-lp-v3 .fx-spotlight {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(420px 220px at 70% 20%, color-mix(in srgb, var(--primary, #0066cc) 45%, transparent), transparent 70%);
+}
+
+.atrako-lp-v3 .fx-beams {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.atrako-lp-v3 .fx-beams path {
+  fill: none;
+  stroke: color-mix(in srgb, var(--primary, #0066cc) 70%, white);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .atrako-lp-v3 .fx-beams path {
+    stroke-dasharray: 8 14;
+    animation: atrako-fx-dash 8s linear infinite;
+  }
+}
+
+@keyframes atrako-fx-dash {
+  to { stroke-dashoffset: -180; }
+}
+
+.atrako-lp-v3 .fx-bento {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .atrako-lp-v3 .fx-bento {
+    grid-template-columns: 1.4fr 1fr;
+  }
+  .atrako-lp-v3 .fx-bento-wide {
+    grid-row: span 2;
+  }
+}
+
+.atrako-lp-v3 .fx-bento-item {
+  border: 1px solid color-mix(in srgb, var(--primary, #0066cc) 25%, transparent);
+  border-radius: 16px;
+  padding: 24px;
+  background: color-mix(in srgb, var(--primary, #0066cc) 6%, transparent);
+}
+
+@property --atrako-fx-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.atrako-lp-v3 .fx-moving-border {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 28px;
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+  background: transparent;
+}
+
+.atrako-lp-v3 .fx-moving-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  border-radius: inherit;
+  background: conic-gradient(from var(--atrako-fx-angle), transparent 40%, var(--primary, #0066cc), transparent 70%);
+}
+
+.atrako-lp-v3 .fx-moving-border::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  z-index: -1;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--primary, #0066cc) 88%, black);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .atrako-lp-v3 .fx-moving-border::before {
+    animation: atrako-fx-spin 4s linear infinite;
+  }
+}
+
+@keyframes atrako-fx-spin {
+  to { --atrako-fx-angle: 360deg; }
+}
+
+.atrako-lp-v3 .fx-glow-card {
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--primary, #0066cc) 30%, transparent);
+  background: color-mix(in srgb, var(--primary, #0066cc) 8%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary, #0066cc) 12%, transparent);
+}
+
+.atrako-lp-v3 .fx-lamp {
+  position: relative;
+  isolation: isolate;
+  text-align: center;
+  padding-top: 48px;
+}
+
+.atrako-lp-v3 .fx-lamp::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  z-index: -1;
+  width: min(480px, 80%);
+  height: 80px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--primary, #0066cc) 70%, white), transparent 70%);
+  filter: blur(8px);
+}
+
+.atrako-lp-v3 .fx-gradient-text,
+.atrako-lp-v3 .fx-shimmer-text {
+  background-image: linear-gradient(100deg, var(--primary, #0066cc), color-mix(in srgb, var(--primary, #0066cc) 40%, white), var(--primary, #0066cc));
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .atrako-lp-v3 .fx-shimmer-text {
+    animation: atrako-fx-shimmer 3.5s linear infinite;
+  }
+}
+
+@keyframes atrako-fx-shimmer {
+  to { background-position: -200% 0; }
+}
+
+.atrako-lp-v3 .fx-reveal {
+  animation: atrako-fx-rise both;
+  animation-timeline: view();
+  animation-range: entry 0% entry 40%;
+}
+
+@keyframes atrako-fx-rise {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atrako-lp-v3 .fx-reveal {
+    animation: none;
+  }
+}
+
+.atrako-lp-v3 .fx-marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+}
+
+.atrako-lp-v3 .fx-marquee-track {
+  display: flex;
+  gap: 32px;
+  width: max-content;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .atrako-lp-v3 .fx-marquee-track {
+    animation: atrako-fx-marquee 28s linear infinite;
+  }
+}
+
+@keyframes atrako-fx-marquee {
+  to { transform: translateX(-50%); }
+}
+
+.atrako-lp-v3 [data-fx="spotlight-follow"] {
+  position: relative;
+  background-image: radial-gradient(180px circle at var(--fx-x, 50%) var(--fx-y, 0%), color-mix(in srgb, var(--primary, #0066cc) 35%, transparent), transparent 60%);
+}
+
+.atrako-lp-v3 [data-fx="tilt"] {
+  transform-style: preserve-3d;
+}
+
+.atrako-lp-v3 .fx-sparkles {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.atrako-lp-v3 .fx-beam-line {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: color-mix(in srgb, var(--primary, #0066cc) 25%, transparent);
+}
+
+.atrako-lp-v3 .fx-beam-line > span {
+  display: block;
+  width: 100%;
+  height: var(--fx-progress, 0%);
+  background: var(--primary, #0066cc);
+}
+
+.atrako-lp-v3 [data-fx="timeline"] {
+  position: relative;
+  padding-left: 28px;
+}
+
+.atrako-lp-v3 [data-fx="timeline"]::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(var(--primary, #0066cc), transparent);
+  transform-origin: top;
+  transform: scaleY(var(--fx-progress, 0));
+}
+
+.atrako-lp-v3 [data-fx="reveal"]:not(.is-in) {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.atrako-lp-v3 [data-fx="reveal"].is-in {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.atrako-lp-v3.fx-credits {
+  margin: 0;
+  padding: 24px 16px 40px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: 0.72;
+}
+
+.atrako-lp-v3.fx-credits a {
+  color: inherit;
+}

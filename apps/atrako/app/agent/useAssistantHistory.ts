@@ -33,6 +33,13 @@ export type AssistantMessage = {
   actionStatus: "pending" | "confirmed" | "cancelled" | "failed" | null;
   actionResult: AssistantActionResult | null;
   artifacts?: Artifact[];
+  attachments?: Array<{
+    id: string;
+    name: string;
+    kind: "image" | "document" | "video";
+    mime: string;
+    url: string;
+  }>;
 };
 
 export type AssistantConversation = {

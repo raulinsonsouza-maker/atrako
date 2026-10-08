@@ -62,6 +62,8 @@ export type ToolRuntime = {
   signal?: AbortSignal;
   /** O que o usuário escreveu nesta conversa (não o que o modelo resumiu). */
   userText?: string;
+  /** Só a mensagem desta vez. A confirmação da página olha para ela, não para o histórico. */
+  lastUserMessage?: string;
 };
 
 type JsonSchema = Record<string, unknown>;

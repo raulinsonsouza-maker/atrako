@@ -1,6 +1,8 @@
 import type { AssistantConversation, AssistantMessage, AssistantPendingAction } from "./useAssistantHistory";
 import type { Artifact } from "@/lib/atrako-agent/artifacts";
 
+import type { ChatAttachment } from "@/lib/atrako-agent/attachments";
+
 export type StreamHandlers = {
   onMeta?: (data: { conversation: AssistantConversation; userMessage: AssistantMessage; traceId: string }) => void;
   onStep?: (data: { id: string; tool: string; label: string }) => void;
@@ -25,7 +27,7 @@ export class AssistantRequestError extends Error {
 
 /** POST /api/atrako/assistant e despacha os eventos SSE. */
 export async function streamAssistant(
-  body: { message: string; conversationId: string | null; clientRequestId: string },
+  body: { message: string; conversationId: string | null; clientRequestId: string; attachments?: ChatAttachment[] },
   handlers: StreamHandlers,
   signal?: AbortSignal,
 ): Promise<void> {

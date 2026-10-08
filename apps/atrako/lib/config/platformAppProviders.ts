@@ -25,6 +25,7 @@ export const PLATFORM_APP_PROVIDERS = [
   "AI_COHERE",
   "WEB_TAVILY",
   "WEB_JINA",
+  "IMAGES_UNSPLASH",
 ] as const;
 
 export type PlatformAppProvider = (typeof PLATFORM_APP_PROVIDERS)[number];

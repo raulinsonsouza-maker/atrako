@@ -18,6 +18,10 @@ import { flattenFields, sampleAnswers, validateFormAnswers } from "@/lib/criar/f
 import { normalizeFormArgs } from "./actions";
 import { artifactId, type Artifact, type FormPreviewArtifact, type LpPreviewArtifact, type TestStep } from "./artifacts";
 import { DesignError, runDesigner, type DesignBrief, type DesignOutput } from "./designer";
+import { gatherStockImages, trackCredits } from "./images";
+import { pickStockImages, stockBriefLines, usedStockImages, type StockImage } from "./images-core";
+import { assessLpBrief } from "@/lib/criar/lp-brief";
+import { imagesForBrief, imagesFromDigest, namesFromDigest, videosFromDigest, attachmentOwnedBy } from "./attachments";
 import { nullableString, objectSchema, type AtrakoTool, type ToolResult, type ToolRuntime } from "./tools";
 
 /**
@@ -31,6 +35,18 @@ const LP_EDIT_PATH = (id: string) => `/criar/paginas/${encodeURIComponent(id)}`;
 const FORM_EDIT_PATH = "/forms";
 
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+
+function mediaFromConversation(userText: string | undefined, stock: StockImage[], workspaceId: string) {
+  const text = userText ?? "";
+  const own = (url: string) => attachmentOwnedBy(url, workspaceId);
+  const videos = videosFromDigest(text).filter((video) => own(video.url));
+  return {
+    imagens: imagesForBrief(imagesFromDigest(text).filter((img) => own(img.url)), stockBriefLines(stock)),
+    videos: videos.map((video) => ({ url: video.url, nome: video.name })),
+    videoUrls: videos.map((video) => video.url),
+    anexos: namesFromDigest(text),
+  };
+}
 
 const fieldItems = {
   type: "object",
@@ -135,6 +151,31 @@ export async function publishResource(clienteId: string, kind: "landing_page" | 
   if (page?.goal === "sales" && !(await getMpPublicKey(clienteId))) {
     warnings.push("Mercado Pago não conectado: o checkout não consegue cobrar até conectar em Config → Conexões.");
   }
+  if (isLpSalesPageV3(product.salesPage)) {
+    const lp = product.salesPage;
+    const issues = validateLpV3(lp, { needsForm: lp.goal === "leads", needsCheckout: lp.goal === "sales" });
+    if (!issues.length) {
+      try {
+        const [brand, cliente] = await Promise.all([
+          workspaceBrand(clienteId),
+          prisma.cliente.findUnique({ where: { id: clienteId }, select: { segmento: true } }),
+        ]);
+        await ingestPublishedPage({
+          clienteId,
+          productId: product.id,
+          html: lp.html,
+          cssSource: lp.cssSource ?? "",
+          goal: lp.goal,
+          segmento: cliente?.segmento ?? null,
+          brandName: brand?.name ?? null,
+          accent: lp.theme?.accent ?? brand?.primaryColor ?? null,
+          issueCount: 0,
+        });
+      } catch (error) {
+        console.warn("[lp-library]", error instanceof Error ? error.message.slice(0, 160) : error);
+      }
+    }
+  }
   const updated = await prisma.commerceProduct.update({
     where: { id: product.id },
     data: { status: "PUBLISHED" },
@@ -156,6 +197,38 @@ function errorResult(tool: string, label: string, message: string): ToolResult {
 
 function commerceOn(rt: ToolRuntime) {
   return rt.ctx.modules.length === 0 || rt.ctx.modules.includes("commerce");
+}
+
+function imageQueries(args: Record<string, unknown>, fallback: string): string[] {
+  const raw = Array.isArray(args.imagens_busca)
+    ? args.imagens_busca
+        .filter((q): q is string => typeof q === "string" && q.trim().length > 1)
+        .map((q) => q.trim().slice(0, 120))
+    : [];
+  if (raw.length) return raw.slice(0, 4);
+  const text = fallback.trim().slice(0, 120);
+  return text ? [text] : [];
+}
+
+function asStock(images: LpSalesPageV3["images"]): StockImage[] {
+  return (images ?? []).map((img) => ({
+    id: img.id,
+    url: img.url,
+    alt: img.alt,
+    width: 1600,
+    height: 900,
+    color: "",
+    author: img.author,
+    authorUrl: img.authorUrl,
+    photoUrl: img.photoUrl,
+    downloadLocation: img.downloadLocation,
+  }));
+}
+
+async function withStock(page: LpSalesPageV3, pool: StockImage[]): Promise<LpSalesPageV3> {
+  const used = usedStockImages(`${page.html}\n${page.cssSource ?? ""}\n${page.css}`, pool);
+  if (!used.length) return page;
+  return { ...page, images: await trackCredits(used) };
 }
 
 const MIN_FIX_WINDOW_MS = 110_000;
@@ -295,7 +368,7 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
     longRunning: true,
     oncePerTurn: true,
     description:
-      "Cria uma landing page de alta qualidade em HTML (design e copy feitos por IA) já integrada ao formulário (captura) ou ao checkout (venda) do Atrako. Fica em RASCUNHO e abre a prévia na conversa. Antes, se o usuário citar referências/sites/estilo, use ler_pagina ou pesquisar_web e resuma em 'referencias'. Não publica.",
+      "Cria a landing page em HTML, com formulário ou checkout do Atrako. Só chame DEPOIS que a pessoa concordou com o plano ('sim', 'pode montar'). Se faltar oferta, público, visual, botão ou o ok dela, a ferramenta não cria nada e devolve o que ainda falar. Fica em rascunho. Não publica.",
     parameters: objectSchema({
       nome: { type: "string", description: "Nome interno da página." },
       objetivo: {
@@ -306,9 +379,10 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
       briefing: {
         type: "string",
         description:
-          "Tudo sobre a oferta: o que é, público, dor, promessa, diferenciais, tom, seções desejadas. Seja detalhado, mas só com fatos que o usuário deu: sem inventar depoimentos, bônus, garantia, instrutor ou números.",
+          "Só o que a pessoa disse sobre a oferta: o que é, para quem, dor e promessa. Sem depoimento, bônus, garantia ou número que ela não falou.",
       },
-      estilo: nullableString("Direção visual: cores, clima (ex.: minimalista escuro, editorial, vibrante), referências visuais descritas."),
+      publico: nullableString("Para quem é a página, com as palavras da pessoa. Null se ela ainda não disse."),
+      estilo: nullableString("Como ela quer o visual: claro, escuro, colorido, uma cor ou um site de referência. 'Claro e simples' se ela disse que tanto faz. Null se ainda não falou."),
       referencias: nullableString("Resumo do que foi aprendido nas referências da web (estrutura, estilo, argumentos)."),
       referencias_urls: { type: ["array", "null"], items: { type: "string" }, description: "Links das referências usadas." },
       cta: nullableString("Texto principal do botão."),
@@ -320,6 +394,11 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
       },
       produto_checkout_id: nullableString("Id de produto existente para vender (venda). Null = a própria página é o produto, com preco_reais."),
       preco_reais: { type: ["number", "null"], description: "Preço em reais quando a própria página é o produto." },
+      imagens_busca: {
+        type: ["array", "null"],
+        items: { type: "string" },
+        description: "2 a 4 buscas de foto em inglês, específicas do negócio (ex.: modern dental clinic interior). Null = o sistema busca pelo segmento.",
+      },
     }),
     risk: "WRITE",
     async run(args, rt) {
@@ -329,7 +408,23 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
         args.objetivo === "sales" || Number(args.preco_reais) > 0 || str(args.produto_checkout_id, 80) ? "sales" : "leads";
       const nome = str(args.nome, 120) || "Landing page";
       const briefing = str(args.briefing, 4000);
-      if (briefing.length < 20) return errorResult(tool, label, "Briefing curto demais — pergunte ao usuário sobre a oferta e o público.");
+      const publico = str(args.publico, 300);
+      const estilo = str(args.estilo, 1200);
+      const cta = str(args.cta, 60);
+      const priceReais = Number(args.preco_reais);
+      const priceCents = Number.isFinite(priceReais) && priceReais > 0 ? Math.round(priceReais * 100) : 0;
+      const gate = assessLpBrief({
+        briefing,
+        publico,
+        estilo,
+        cta,
+        goal,
+        precoReais: priceCents ? priceCents / 100 : null,
+        temProduto: Boolean(str(args.produto_checkout_id, 80)),
+        lastUserMessage: rt.lastUserMessage ?? "",
+        anexos: namesFromDigest(rt.userText ?? ""),
+      });
+      if (!gate.ok) return errorResult(tool, label, gate.falar);
       if (goal === "sales" && !commerceOn(rt)) return errorResult(tool, label, "O módulo de vendas (commerce) está desligado neste workspace.");
 
       rt.onProgress?.("Preparando formulário e checkout");
@@ -342,8 +437,6 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
         formCreated = ensured.created;
       }
       let checkout: { id: string; name: string; priceCents: number } | null = null;
-      const priceReais = Number(args.preco_reais);
-      const priceCents = Number.isFinite(priceReais) && priceReais > 0 ? Math.round(priceReais * 100) : 0;
       if (goal === "sales") {
         const pid = str(args.produto_checkout_id, 80);
         if (pid) {
@@ -358,17 +451,30 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
       }
 
       const brand = await workspaceBrand(rt.ctx.clienteId);
+      const stock = await gatherStockImages(
+        imageQueries(args, [rt.ctx.segmento, brand?.name || rt.ctx.nome].filter(Boolean).join(" ")),
+      ).catch(() => [] as StockImage[]);
+      const media = mediaFromConversation(rt.userText, stock, rt.ctx.clienteId);
+      const library = await libraryReferences({
+        clienteId: rt.ctx.clienteId,
+        goal,
+        segmento: rt.ctx.segmento,
+        estilo: str(args.estilo, 1200) || null,
+      }).catch(() => "");
       const brief: DesignBrief = {
         negocio: brand?.name || rt.ctx.nome,
         segmento: rt.ctx.segmento,
         objetivo: goal,
         nome,
-        briefing,
-        estilo: str(args.estilo, 1200) || null,
+        briefing: publico && !briefing.toLowerCase().includes(publico.toLowerCase()) ? `${briefing}\nPara quem: ${publico}` : briefing,
+        estilo: estilo || null,
         referencias: str(args.referencias, 3000) || null,
-        cta: str(args.cta, 60) || null,
+        cta: cta || null,
         corMarca: brand?.primaryColor ?? null,
         logoUrl: brand?.logoUrl ?? null,
+        imagens: media.imagens,
+        videos: media.videos,
+        referenciasBiblioteca: library || null,
         produto: goal === "sales" ? { nome: checkout?.name ?? nome, precoReais: (checkout?.priceCents ?? priceCents) / 100 || null } : null,
         formulario: form ? { nome: form.name, campos: flattenFields(form.steps).map((f) => f.label) } : null,
         pedidoOriginal: rt.userText?.slice(-4000) || null,
@@ -394,6 +500,7 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
               brief: briefing,
               references,
               generatedBy: out.model,
+              videoUrls: media.videoUrls,
             }),
           { needsForm: goal === "leads", needsCheckout: goal === "sales" },
         );
@@ -401,6 +508,7 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
         if (rt.signal?.aborted) throw error;
         return errorResult(tool, label, error instanceof DesignError ? error.message : "Não consegui gerar a página agora.");
       }
+      designed = { ...designed, page: await withStock(designed.page, stock) };
 
       rt.onProgress?.("Salvando o rascunho");
       const slug = await uniqueGlobalProductSlug(nome);
@@ -418,6 +526,7 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
         },
         select: { id: true, clienteId: true, name: true, slug: true, status: true, salesPage: true },
       });
+      await recordLibraryUses(rt.ctx.clienteId, product.id, designed.page.html).catch(() => undefined);
 
       const artifacts: Artifact[] = [lpPreviewArtifact(product)];
       if (form && formCreated) {
@@ -460,6 +569,11 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
       pagina_id: { type: "string", description: "Id da página (veja o histórico da conversa ou paginas_e_formularios)." },
       instrucoes: { type: "string", description: "O que mudar, de forma específica." },
       referencias: nullableString("Resumo de referências novas, se houver."),
+      imagens_busca: {
+        type: ["array", "null"],
+        items: { type: "string" },
+        description: "Buscas novas de foto em inglês, se a edição pedir imagens. Null = mantém as fotos atuais.",
+      },
     }),
     risk: "WRITE",
     async run(args, rt) {
@@ -479,6 +593,18 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
       }
       const form = current.formId ? await getCaptureFormById(rt.ctx.clienteId, current.formId) : null;
       const brand = await workspaceBrand(rt.ctx.clienteId);
+      const asked = Array.isArray(args.imagens_busca)
+        ? args.imagens_busca.filter((q): q is string => typeof q === "string" && q.trim().length > 1).slice(0, 4)
+        : [];
+      const fresh = asked.length ? await gatherStockImages(asked).catch(() => [] as StockImage[]) : [];
+      const pool = pickStockImages([...fresh, ...asStock(current.images)], 6);
+      const media = mediaFromConversation(rt.userText, pool, rt.ctx.clienteId);
+      const library = await libraryReferences({
+        clienteId: rt.ctx.clienteId,
+        goal: current.goal,
+        segmento: rt.ctx.segmento,
+        estilo: null,
+      }).catch(() => "");
       const brief: DesignBrief = {
         negocio: brand?.name || rt.ctx.nome,
         segmento: rt.ctx.segmento,
@@ -490,6 +616,9 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
         cta: null,
         corMarca: brand?.primaryColor ?? null,
         logoUrl: brand?.logoUrl ?? null,
+        imagens: media.imagens,
+        videos: media.videos,
+        referenciasBiblioteca: library || null,
         produto: current.goal === "sales" ? { nome: product.name, precoReais: product.priceCents / 100 || null } : null,
         formulario: form ? { nome: form.name, campos: flattenFields(form.steps).map((f) => f.label) } : null,
       };
@@ -510,6 +639,7 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
               brief: current.brief,
               references: current.references,
               generatedBy: out.model,
+              videoUrls: media.videoUrls,
             }),
             previous: { html: current.html, css: current.css, cssSource: current.cssSource, updatedAt: current.updatedAt },
           }),
@@ -520,11 +650,13 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
         if (rt.signal?.aborted) throw error;
         return errorResult(tool, label, error instanceof DesignError ? error.message : "Não consegui ajustar a página agora.");
       }
+      designed = { ...designed, page: await withStock(designed.page, pool) };
       const updated = await prisma.commerceProduct.update({
         where: { id: product.id },
         data: { salesPage: designed.page as unknown as Prisma.InputJsonValue },
         select: { id: true, clienteId: true, name: true, slug: true, status: true, salesPage: true },
       });
+      await recordLibraryUses(rt.ctx.clienteId, updated.id, designed.page.html).catch(() => undefined);
       return {
         data: {
           pagina: { id: updated.id, nome: updated.name, status: updated.status === "PUBLISHED" ? "publicada (mudança já está no ar)" : "rascunho" },

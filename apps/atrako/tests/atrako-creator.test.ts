@@ -120,7 +120,7 @@ test("renderSlots usa só o primeiro marcador e cria âncora quando falta", () =
   assert.doesNotMatch(withAnchor, /data-atrako-slot="form" id="form"/);
 });
 
-const GOOD_HTML = `<header><a href="#form">Quero</a></header><main><section><h1>Agenda cheia em 30 dias</h1><p>${"Texto real da página com argumentos concretos. ".repeat(12)}</p></section><section id="form"><h2>Fale com a gente</h2><atrako-form></atrako-form></section></main>`;
+const GOOD_HTML = `<header><a href="#form">Quero</a></header><main><section class="sec-hero hero" data-section="hero"><h1>Agenda cheia em 30 dias</h1><p>${"Texto real da página com argumentos concretos. ".repeat(12)}</p></section><section id="form" class="sec-form" data-section="form"><h2>Fale com a gente</h2><atrako-form></atrako-form></section></main>`;
 const GOOD_CSS = `:root{--accent:#0b3d91}${".s{padding:96px 24px;font-size:clamp(18px,2vw,22px);line-height:1.5}".repeat(10)}@media (max-width:640px){.s{padding:48px 16px}}`;
 
 test("buildSalesPageV3 sanitiza, escopa e guarda o CSS original para edição", () => {
@@ -155,7 +155,7 @@ test("validateLpV3 pega depoimento placeholder, contato inventado e container no
     goal: "leads",
     html: GOOD_HTML.replace(
       "</main>",
-      '<section class="container"><blockquote>"Placeholder de depoimento"</blockquote><cite>Cliente Satisfeito</cite><p>(41) 99999-9999</p></section></main>',
+      '<section class="container sec-dor" data-section="dor"><blockquote>"Placeholder de depoimento"</blockquote><cite>Cliente Satisfeito</cite><p>(41) 99999-9999</p></section></main>',
     ),
     css: GOOD_CSS,
     brief: "b",

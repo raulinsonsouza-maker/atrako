@@ -6,6 +6,9 @@ import type { FormField } from "@atrako/forms";
 import { CheckoutForm } from "@/components/commerce/CheckoutForm";
 import { LpLeadForm } from "@/components/commerce/LpLeadForm";
 import { LP_V3_SCOPE, googleFontsHref, renderSlots, type LpSalesPageV3 } from "@/lib/criar/lp-v3";
+import { withUtm } from "@/lib/atrako-agent/images-core";
+import { LpFxRuntime } from "@/components/commerce/lp-fx/LpFxRuntime";
+import "@/styles/lp-fx/fx.css";
 import type { LpCheckoutBump, LpPuckProduct } from "@/lib/criar/puck/context";
 
 type Props = {
@@ -80,6 +83,24 @@ export function SalesPageHtmlView({
         style={vars}
         dangerouslySetInnerHTML={inner}
       />
+      <LpFxRuntime root={root} html={html} />
+      {page.images?.length ? (
+        <p className={`${LP_V3_SCOPE} fx-credits`}>
+          Fotos de{" "}
+          {page.images.map((img, index) => (
+            <span key={img.id}>
+              {index > 0 ? ", " : ""}
+              <a href={withUtm(img.authorUrl)} target="_blank" rel="noopener noreferrer">
+                {img.author}
+              </a>
+            </span>
+          ))}{" "}
+          no{" "}
+          <a href={withUtm(page.images[0]?.photoUrl || "https://unsplash.com")} target="_blank" rel="noopener noreferrer">
+            Unsplash
+          </a>
+        </p>
+      ) : null}
       {slots.form
         ? createPortal(
             <LpLeadForm

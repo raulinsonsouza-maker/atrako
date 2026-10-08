@@ -12,6 +12,8 @@ import { EngineError, estimateCostMicros, runAtrakoEngine, type EngineEvent, typ
 import { toolsForWorkspace, type PendingAction } from "@/lib/atrako-agent/tools";
 import { executePendingAction, type ActionResult } from "@/lib/atrako-agent/actions";
 import { createPiiVault, protectUserText } from "@/lib/atrako-agent/safety";
+import { attachmentDigest, sanitizeAttachments } from "@/lib/atrako-agent/attachments";
+import { describeImages } from "@/lib/atrako-agent/attachment-vision";
 import { checkAssistantRateLimit } from "@/lib/atrako-agent/limits";
 import { historyNote, type Artifact } from "@/lib/atrako-agent/artifacts";
 
@@ -38,18 +40,38 @@ type MessageRow = {
   id: string;
   role: string;
   content: string;
+  attachments?: Prisma.JsonValue | null;
   status: string;
   toolContext: Prisma.JsonValue | null;
   durationMs: number | null;
   createdAt: Date;
 };
 
+function attachmentChips(raw: Prisma.JsonValue | null | undefined) {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const row = item as Record<string, unknown>;
+    if (row.kind !== "image" && row.kind !== "document" && row.kind !== "video") return [];
+    if (typeof row.url !== "string" || typeof row.name !== "string") return [];
+    return [{
+      id: String(row.id ?? row.url).slice(0, 80),
+      name: row.name.slice(0, 120),
+      kind: row.kind,
+      mime: typeof row.mime === "string" ? row.mime.slice(0, 160) : "",
+      url: row.url,
+    }];
+  });
+}
+
 function messageView(m: MessageRow) {
   const tc = (m.toolContext ?? {}) as ToolContext;
+  const attachments = attachmentChips(m.attachments);
   return {
     id: m.id,
     role: m.role === "USER" ? ("user" as const) : ("assistant" as const),
     content: m.content,
+    ...(attachments.length ? { attachments } : {}),
     status: m.status,
     createdAt: m.createdAt.toISOString(),
     durationMs: m.durationMs,
@@ -69,6 +91,7 @@ const messageSelect = {
   id: true,
   role: true,
   content: true,
+  attachments: true,
   status: true,
   toolContext: true,
   durationMs: true,
@@ -224,7 +247,9 @@ export async function POST(request: NextRequest) {
   if (body.decision === "confirm" || body.decision === "cancel") return handleDecision(session, body);
 
   const text = typeof body.message === "string" ? body.message.trim().slice(0, MAX_MESSAGE_CHARS) : "";
-  if (!text) return NextResponse.json({ error: "Mensagem vazia" }, { status: 400 });
+  const attachments = sanitizeAttachments(body.attachments, session.workspaceId);
+  if (!text && !attachments.length) return NextResponse.json({ error: "Mensagem vazia" }, { status: 400 });
+  const content = text || "Segue o arquivo.";
 
   const chain = await resolveLlmChain(session.workspaceId);
   if (!chain.configured) {
@@ -257,7 +282,7 @@ export async function POST(request: NextRequest) {
   }
   if (!conversation) {
     conversation = await prisma.atrakoConversation.create({
-      data: { clienteId: session.workspaceId, actorKey: session.actor.key, title: titleFrom(text) },
+      data: { clienteId: session.workspaceId, actorKey: session.actor.key, title: titleFrom(content) },
     });
   }
 
@@ -266,14 +291,21 @@ export async function POST(request: NextRequest) {
     where: { conversationId: conversation.id, status: "COMPLETE" },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: 12,
-    select: { role: true, content: true, toolContext: true },
+    select: { role: true, content: true, attachments: true, toolContext: true },
   });
+  const described = await describeImages(
+    session.workspaceId,
+    attachments.filter((item) => item.kind === "image" && !item.text).map((item) => item.url),
+  );
+  const stored = attachments.map((item) => (described.has(item.url) ? { ...item, text: described.get(item.url) } : item));
+  const digest = attachmentDigest(stored);
   const userMessage = await prisma.atrakoMessage.create({
     data: {
       conversationId: conversation.id,
       clienteId: session.workspaceId,
       role: "USER",
-      content: text,
+      content,
+      ...(stored.length ? { attachments: stored as Prisma.InputJsonValue } : {}),
       status: "COMPLETE",
       traceId,
       clientRequestId,
@@ -282,13 +314,16 @@ export async function POST(request: NextRequest) {
   });
 
   const vault = createPiiVault();
-  const protectedHistory = history.reverse().map((m) => ({
-    role: m.role === "USER" ? ("user" as const) : ("assistant" as const),
-    content:
-      protectUserText(m.content, vault).text +
-      (m.role === "USER" ? "" : historyNote(((m.toolContext ?? {}) as ToolContext).artifacts)),
-  }));
-  const question = protectUserText(text, vault).text;
+  const protectedHistory = history.reverse().map((m) => {
+    const past = m.role === "USER" ? attachmentDigest(sanitizeAttachments(m.attachments, session.workspaceId)) : "";
+    const body = protectUserText(past ? `${past}\n\n${m.content}` : m.content, vault).text;
+    return {
+      role: m.role === "USER" ? ("user" as const) : ("assistant" as const),
+      content: body + (m.role === "USER" ? "" : historyNote(((m.toolContext ?? {}) as ToolContext).artifacts)),
+    };
+  });
+  const question = protectUserText(content, vault).text;
+  const contextNote = digest ? protectUserText(digest, vault).text : undefined;
 
   const conv = conversation;
   const started = Date.now();
@@ -341,6 +376,7 @@ export async function POST(request: NextRequest) {
           longTimeoutMs: 290_000,
           history: protectedHistory,
           question,
+          contextNote,
           vault,
           signal: request.signal,
           onEvent: (e: EngineEvent) => send(e.type, e),

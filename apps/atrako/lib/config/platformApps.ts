@@ -222,6 +222,11 @@ const ENV_SEED: Partial<
     label: "Leitura de páginas — Jina",
     clientSecret: process.env.JINA_API_KEY?.trim() || undefined,
   }),
+  IMAGES_UNSPLASH: () => ({
+    label: "Imagens — Unsplash",
+    clientId: process.env.UNSPLASH_ACCESS_KEY?.trim() || undefined,
+    clientSecret: process.env.UNSPLASH_SECRET_KEY?.trim() || undefined,
+  }),
 };
 
 function hasAnyCredential(creds: PlatformAppCredentials): boolean {

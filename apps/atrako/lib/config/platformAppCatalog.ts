@@ -479,6 +479,16 @@ export const PLATFORM_APP_CATALOG: Record<PlatformAppProvider, PlatformAppCatalo
       { key: "clientSecret", label: "API key", hint: "jina_…", secret: true, requiredForReady: true },
     ],
   },
+  IMAGES_UNSPLASH: {
+    provider: "IMAGES_UNSPLASH",
+    title: "Imagens — Unsplash",
+    description: "Fotos para as landing pages geradas pelo assistente. A chave fica só na plataforma; o lojista não conecta conta.",
+    fields: [
+      { key: "label", label: "Nome de exibição" },
+      { key: "clientId", label: "Access Key", hint: "Chave pública do app Unsplash", requiredForReady: true },
+      { key: "clientSecret", label: "Secret Key", hint: "Opcional no acesso público", secret: true },
+    ],
+  },
 };
 
 function aiChainEntry(

@@ -299,6 +299,7 @@ test("system prompt leva persona, mapa de dados e o contexto do workspace", () =
   assert.doesNotMatch(prompt, /Config → Integrações|LP \+ Checkout|Insights \(\/insights\)/);
   assert.match(prompt, /nunca escreva 'coverage'/);
   assert.match(prompt, /criar_landing_page/);
+  assert.match(prompt, /Posso montar assim/);
   assert.match(prompt, /Publicar só quando o usuário pedir explicitamente/);
   assert.match(prompt, /Nunca invente depoimentos/);
   assert.doesNotMatch(prompt, /Criar rascunho/);

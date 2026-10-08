@@ -1,6 +1,8 @@
 import sanitizeHtml from "sanitize-html";
+import { LP_FX, LP_FX_IDS, LP_FX_LIMITS } from "./lp-fx/catalog";
+import { isLpSectionKind } from "./lp-library/kinds";
 import type { LpGoal } from "./lp-schema";
-import { LP_SLOT_CLASS, LP_V3_SCOPE, hasCheckoutSlot, hasFormSlot, type LpSalesPageV3, type LpV3Theme } from "./lp-v3";
+import { LP_SLOT_CLASS, LP_V3_SCOPE, hasCheckoutSlot, hasFormSlot, type LpSalesPageV3, type LpStockCredit, type LpV3Theme } from "./lp-v3";
 
 export * from "./lp-v3";
 
@@ -31,7 +33,7 @@ const ALLOWED_TAGS = [
   "header", "footer", "main", "section", "article", "aside", "nav", "div", "span",
   "h1", "h2", "h3", "h4", "h5", "h6", "p", "a", "ul", "ol", "li", "dl", "dt", "dd",
   "strong", "em", "b", "i", "u", "s", "small", "mark", "sup", "sub", "br", "hr",
-  "img", "picture", "source", "figure", "figcaption", "blockquote", "cite", "q", "time",
+  "img", "picture", "source", "video", "figure", "figcaption", "blockquote", "cite", "q", "time",
   "details", "summary", "table", "thead", "tbody", "tfoot", "tr", "th", "td", "caption",
   "button", "address", "abbr",
   "atrako-form", "atrako-checkout",
@@ -74,7 +76,8 @@ export function sanitizeLpHtml(raw: string): string {
       "*": ["class", "id", "style", "role", "title", "lang", "dir", "aria-*", "data-*", "tabindex"],
       a: ["href", "target", "rel"],
       img: ["src", "srcset", "sizes", "alt", "width", "height", "loading", "decoding"],
-      source: ["srcset", "media", "type", "sizes"],
+      video: ["src", "poster", "controls", "playsinline", "preload", "width", "height"],
+      source: ["src", "srcset", "media", "type", "sizes"],
       details: ["open"],
       time: ["datetime"],
       button: ["type"],
@@ -83,7 +86,7 @@ export function sanitizeLpHtml(raw: string): string {
       ...Object.fromEntries(SVG_TAGS.map((t) => [t, SVG_ATTRS])),
     },
     allowedSchemes: ["https", "http", "mailto", "tel"],
-    allowedSchemesByTag: { img: ["https", "data"], source: ["https"] },
+    allowedSchemesByTag: { img: ["https", "data"], source: ["https"], video: ["https"] },
     allowedSchemesAppliedToAttributes: ["href", "src", "srcset"],
     allowProtocolRelative: false,
     parseStyleAttributes: false,
@@ -103,11 +106,64 @@ export function sanitizeLpHtml(raw: string): string {
       "atrako-checkout": () => ({ tagName: "atrako-checkout", attribs: {} }),
     },
   });
-  return out.replace(/\sstyle="([^"]*)"/gi, (_m, value: string) => {
+  return stripUnknownFx(out).replace(/\sstyle="([^"]*)"/gi, (_m, value: string) => {
     const decoded = value.replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'").replace(/&amp;/g, "&");
     const clean = cleanInlineStyle(decoded);
     return clean ? ` style="${clean.replace(/&/g, "&amp;").replace(/"/g, "&quot;")}"` : "";
   });
+}
+
+/** Tira data-fx que o catálogo não conhece. Classes fx-* desconhecidas não executam nada. */
+export function stripUnknownFx(html: string): string {
+  return html.replace(/\sdata-fx=(["'])([^"']*)\1/gi, (full, _q, value: string) =>
+    LP_FX_IDS.has(value.trim()) ? full : "",
+  );
+}
+
+const BACKGROUND_FX = new Set(LP_FX.filter((fx) => fx.background).map((fx) => fx.id));
+const TEXT_FX = new Set(LP_FX.filter((fx) => fx.text && fx.kind === "react").map((fx) => fx.id));
+
+/** Avisos de uso além do limite. Entram na rodada de correção do designer. */
+export function fxOveruse(html: string): LpIssue[] {
+  const issues: LpIssue[] = [];
+  const dataFx = [...html.matchAll(/\sdata-fx=(["'])([^"']+)\1/gi)].map((m) => m[2]);
+  const classes = [...html.matchAll(/\sclass=(["'])([^"']+)\1/gi)].flatMap((m) => m[2].split(/\s+/));
+  const backgrounds = [...dataFx, ...classes].filter((id) => BACKGROUND_FX.has(id));
+  if (backgrounds.length > LP_FX_LIMITS.maxBackground) {
+    issues.push({
+      code: "fx_background",
+      message: `Há ${backgrounds.length} fundos animados. Deixe só um (fx-aurora, fx-grid-bg, fx-dot-bg, fx-spotlight, fx-beams ou fx-lamp).`,
+    });
+  }
+  if (dataFx.length > LP_FX_LIMITS.maxPerPage) {
+    issues.push({
+      code: "fx_count",
+      message: `Há ${dataFx.length} efeitos data-fx. Use no máximo ${LP_FX_LIMITS.maxPerPage} na página.`,
+    });
+  }
+  const headings = html.match(/<h[12]\b[^>]*>/gi) ?? [];
+  const crowded = headings.some((tag) => {
+    const ids = [...tag.matchAll(/\sdata-fx=(["'])([^"']+)\1/gi)].map((m) => m[2]).filter((id) => TEXT_FX.has(id));
+    return ids.length > LP_FX_LIMITS.maxTextPerHeading;
+  });
+  if (crowded) {
+    issues.push({ code: "fx_heading", message: "Cada título pode ter só um efeito de texto." });
+  }
+  return issues;
+}
+
+export function sectionContractIssues(html: string): LpIssue[] {
+  const tags = html.match(/<section\b[^>]*>/gi) ?? [];
+  const missing = tags.some((tag) => {
+    const kind = tag.match(/\sdata-section=(["'])([^"']+)\1/i)?.[2] ?? "";
+    return !isLpSectionKind(kind);
+  });
+  if (!missing) return [];
+  return [{
+    code: "section_kind",
+    message:
+      'Cada <section> precisa de data-section com um destes valores: hero, dor, beneficios, como-funciona, oferta, form, checkout, faq, cta-final, rodape, diferenciais. A classe deve incluir sec-<tipo> (ex.: class="sec-hero hero").',
+  }];
 }
 
 // ── CSS ──
@@ -241,6 +297,15 @@ export function sanitizeTheme(raw: unknown): LpV3Theme | undefined {
 
 // ── montagem e validação ──
 
+/** Tira <video> cuja URL não está na lista. Sem lista, não fica vídeo nenhum. */
+export function filterVideos(html: string, allowed: string[]): string {
+  const ok = new Set(allowed.map((url) => url.trim()).filter(Boolean));
+  return html.replace(/<video\b[^>]*>[\s\S]*?<\/video>/gi, (block) => {
+    const srcs = [...block.matchAll(/\bsrc=["']([^"']+)["']/gi)].map((match) => match[1]);
+    return srcs.some((src) => ok.has(src)) ? block : "";
+  });
+}
+
 export type LpV3Input = {
   goal: LpGoal;
   html: string;
@@ -252,11 +317,14 @@ export type LpV3Input = {
   brief: string;
   references?: string[];
   generatedBy?: string;
+  images?: LpStockCredit[];
+  /** URLs de vídeo que a pessoa enviou. Qualquer outra é removida. */
+  videoUrls?: string[];
 };
 
 export function buildSalesPageV3(input: LpV3Input): LpSalesPageV3 {
   const extracted = extractBodyAndStyles(input.html);
-  const html = sanitizeLpHtml(extracted.html).slice(0, MAX_LP_HTML);
+  const html = filterVideos(sanitizeLpHtml(extracted.html), input.videoUrls ?? []).slice(0, MAX_LP_HTML);
   const rawCss = `${extracted.css}\n${input.css ?? ""}`.replace(/\/\*[\s\S]*?\*\//g, "").trim();
   const css = scopeCss(rawCss).slice(0, MAX_LP_CSS);
   const cssSource = rawCss.replace(/<\/?\s*style[^>]*>/gi, "").replace(/@import[^;]*;/gi, "").slice(0, MAX_LP_CSS);
@@ -275,6 +343,7 @@ export function buildSalesPageV3(input: LpV3Input): LpSalesPageV3 {
     brief: input.brief.slice(0, 4000),
     ...(input.references?.length ? { references: input.references.slice(0, 10) } : {}),
     ...(input.generatedBy ? { generatedBy: input.generatedBy } : {}),
+    ...(input.images?.length ? { images: input.images.slice(0, 8) } : {}),
     updatedAt: new Date().toISOString(),
   };
 }
@@ -345,6 +414,7 @@ export function validateLpV3(
     issues.push({ code: "hero_header", message: 'O hero está num <header>, sem o padding das seções: use <section class="hero"><div class="container">…</div></section>.' });
   }
   if (opts.source !== undefined) issues.push(...unsupportedClaims(page.html, opts.source));
+  issues.push(...fxOveruse(page.html), ...sectionContractIssues(page.html));
   if (page.css.length < 600) issues.push({ code: "css_thin", message: "O CSS está curto demais — a página precisa de estilo completo (tipografia, espaçamento, cores, responsivo)." });
   if (!/@media/i.test(page.css)) issues.push({ code: "responsive", message: "Faltam regras @media para celular (max-width: 640px)." });
   return issues;

@@ -10,6 +10,18 @@ export const LP_SLOT_CLASS = "atrako-slot";
 
 export type LpV3Theme = { accent?: string; accentInk?: string; surface?: "light" | "dark" };
 
+/** Foto de banco usada na página. A view renderiza o crédito; a IA não escreve a atribuição. */
+export type LpStockCredit = {
+  id: string;
+  url: string;
+  alt: string;
+  author: string;
+  authorUrl: string;
+  photoUrl: string;
+  downloadLocation: string;
+  tracked: boolean;
+};
+
 export type LpSalesPageV3 = {
   version: 3;
   goal: LpGoal;
@@ -25,6 +37,7 @@ export type LpSalesPageV3 = {
   brief: string;
   references?: string[];
   generatedBy?: string;
+  images?: LpStockCredit[];
   updatedAt?: string;
   /** Versão anterior à última edição pela IA (para desfazer). */
   previous?: { html: string; css: string; cssSource?: string; updatedAt?: string };

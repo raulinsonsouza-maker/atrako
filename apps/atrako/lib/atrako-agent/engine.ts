@@ -73,6 +73,8 @@ export type EngineInput<C extends EngineCandidate = EngineCandidate> = {
   history: HistoryMessage[];
   /** Pergunta já protegida (sem PII em claro). */
   question: string;
+  /** Bloco [Anexos] da mensagem atual. Não entra na checagem de "pode montar". */
+  contextNote?: string;
   vault?: PiiVault;
   onEvent?: (event: EngineEvent) => void;
   signal?: AbortSignal;
@@ -123,14 +125,19 @@ function stableJson(value: unknown): string {
 }
 type Msg = OpenAI.Chat.Completions.ChatCompletionMessageParam;
 
-export function buildMessages(input: Pick<EngineInput, "ctx" | "tools" | "history" | "question">): Msg[] {
+function questionWithNote(input: Pick<EngineInput, "question" | "contextNote">) {
+  const note = input.contextNote?.trim();
+  return note ? `${input.question}\n\n${note}` : input.question;
+}
+
+export function buildMessages(input: Pick<EngineInput, "ctx" | "tools" | "history" | "question" | "contextNote">): Msg[] {
   const system = buildAtrakoSystemPrompt({
     workspace: describeWorkspaceContext(input.ctx),
   });
   return [
     { role: "system", content: system },
     ...input.history.slice(-12).map((m) => ({ role: m.role, content: m.content.slice(0, 4000) }) as Msg),
-    { role: "user", content: input.question },
+    { role: "user", content: questionWithNote(input) },
   ];
 }
 
@@ -236,7 +243,7 @@ export async function runAtrakoEngine<C extends EngineCandidate>(input: EngineIn
   /** Mesma ferramenta + mesmos argumentos na mesma pergunta reaproveitam o resultado. */
   const toolCache = new Map<string, Promise<ToolPayload>>();
   const onceRuns = new Map<string, Promise<ToolPayload>>();
-  const userText = [...input.history.filter((m) => m.role === "user").map((m) => m.content), input.question].join("\n");
+  const userText = [...input.history.filter((m) => m.role === "user").map((m) => m.content), questionWithNote(input)].join("\n");
 
   async function executeTool(tool: AtrakoTool, callId: string, args: Record<string, unknown>): Promise<ToolPayload> {
     const started = Date.now();
@@ -249,6 +256,7 @@ export async function runAtrakoEngine<C extends EngineCandidate>(input: EngineIn
         signal: controller.signal,
         onProgress: (label) => emit({ type: "step", id: callId, tool: tool.name, label }),
         userText,
+        lastUserMessage: input.question,
       });
       const ms = Date.now() - started;
       steps.push({ tool: tool.name, label: tool.step, source: result.source.label, args, coverage: result.coverage, ms });

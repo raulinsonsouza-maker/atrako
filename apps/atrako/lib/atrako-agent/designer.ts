@@ -1,5 +1,7 @@
 import "server-only";
 import type OpenAI from "openai";
+import { lpFxPromptSection } from "@/lib/criar/lp-fx/catalog";
+import { LP_SECTION_KINDS } from "@/lib/criar/lp-library/kinds";
 import { classifyLlmFailure, setCooldown } from "./failover";
 import { createLlmClient, resolveLlmChain, type LlmCandidate } from "./llm";
 
@@ -19,6 +21,12 @@ export type DesignBrief = {
   cta: string | null;
   corMarca: string | null;
   logoUrl: string | null;
+  /** Fotos liberadas (banco ou usuário). A IA só pode usar estas URLs. */
+  imagens?: Array<{ rotulo: string; url: string; alt: string; papel: string }> | null;
+  /** Vídeos enviados pela pessoa. A IA só pode usar estas URLs. */
+  videos?: Array<{ url: string; nome: string }> | null;
+  /** Seções da biblioteca, já anonimizadas, para adaptar. */
+  referenciasBiblioteca?: string | null;
   produto: { nome: string; precoReais: number | null } | null;
   formulario: { nome: string; campos: string[] } | null;
   /** Mensagens do usuário na conversa: fonte de verdade para fatos (o briefing é resumo do assistente). */
@@ -89,17 +97,21 @@ REGRAS DE HTML
 - Proibido: <script>, <form>, <input>, <select>, <textarea>, <iframe>, atributos on*, JavaScript.
 - Formulário e checkout são do Atrako. Marque o lugar exato com <atrako-form></atrako-form> (captura) ou <atrako-checkout></atrako-checkout> (venda), dentro de uma <section id="form"> ou <section id="checkout"> com título e argumentos ao redor. A plataforma renderiza ali um card branco de até 520px.
 - Botões de CTA são links: <a class="..." href="#form"> ou href="#checkout". Use vários CTAs ao longo da página.
-- Imagens: só as URLs fornecidas (logo/imagens do usuário). Sem banco de imagens. Construa o visual com CSS (formas, camadas, gradientes sutis, mockups em CSS) e ícones SVG inline simples. Toda <img> com alt.
+- Imagens: use SOMENTE as URLs da lista IMAGENS (e o logo, se houver). A primeira da lista, se for da pessoa, é a foto principal do hero. Coloque a foto de papel "hero" no hero e mais 1 a 3 fotos em seções. object-fit: cover, proporção definida, loading="lazy" fora do hero. Texto sobre foto só com overlay que garanta contraste. Toda <img> com alt descritivo. Se a lista vier vazia, construa o visual com CSS e SVG, sem inventar URL de imagem.
+- Vídeo: use <video controls> somente com as URLs da lista VÍDEOS, em <source src>. Sem autoplay. Se a lista vier vazia, não use <video>.
 - Nunca invente depoimentos, números, clientes, prêmios ou garantias que não foram informados. Sem prova social real, NÃO crie seção de depoimentos (nem com "placeholder"): use "como funciona", diferenciais concretos e respostas a objeções.
 - Contato (telefone, e-mail, endereço) só se veio no briefing. Nada de 9999-9999 ou e-mail inventado.
-- Estrutura de cada seção: <section class="nome-da-secao"><div class="container">…</div></section>. Nunca class="container" no próprio <section>. O hero também é <section class="hero"> (nunca <header>), com o mesmo padding vertical.
+- Estrutura de cada seção: <section class="sec-<tipo> nome" data-section="<tipo>"><div class="container">…</div></section>. Nunca class="container" no próprio <section>. O hero é <section class="sec-hero hero" data-section="hero"> (nunca <header> com o h1).
+- Tipos de data-section, um por seção: ${LP_SECTION_KINDS.join(", ")}.
+- O CSS de cada seção começa com .sec-<tipo> (ex.: .sec-hero h1). :root, body, .container e botões ficam no CSS base, sem prefixo de seção.
+- Se usar uma referência da biblioteca, marque a seção com data-lib="ID" (o id vem na referência). Preencha os {{placeholders}} com a copy deste negócio. Não copie texto de exemplo.
 - Oferta: o que o comprador recebe (gravação, material, grupo/comunidade, suporte, certificado, prazos de acesso) só se estiver no pedido. Senão, descreva apenas o que foi informado.
 
 REGRAS DE CSS
 - Escreva CSS completo: tipografia (escala com clamp()), cores, espaçamentos, botões com estados :hover e :focus-visible, cards, FAQ, rodapé.
 - Comece com variáveis em :root (cores, fontes, raios). Elas são aplicadas só dentro da página automaticamente.
 - Container de até 1120px centralizado; seções com padding vertical generoso (clamp(64px, 10vw, 128px)).
-- Ritmo visual: alterne o fundo das seções (claro, tom suave do acento, uma seção escura de destaque). Hero em duas colunas no desktop (texto + elemento visual em CSS/SVG: mockup, cartão flutuante, formas), uma coluna no celular.
+- Ritmo visual: alterne o fundo das seções (claro, tom suave do acento, uma seção escura de destaque). Hero em duas colunas no desktop (texto + foto ou elemento visual), uma coluna no celular. Prefira as classes fx-* do catálogo a recriar esses efeitos.
 - Detalhe de agência: eyebrow (rótulo pequeno em caixa alta acima dos títulos), números grandes nos passos, ícones SVG consistentes, cards com borda fina, CTA com contraste forte.
 - Mobile first de verdade: inclua @media (max-width: 640px) e @media (min-width: 900px). Nada de rolagem horizontal.
 - Use as fontes de ===FONTES=== em font-family. Sem @import, sem !important.
@@ -110,7 +122,9 @@ Captura: hero com promessa + CTA, problema/dor, benefícios, como funciona (3 pa
 Venda: hero com promessa + preço/CTA, para quem é, o que você recebe, como funciona, oferta (preço em destaque) + checkout, FAQ, CTA final, rodapé.
 
 COPY
-Português do Brasil, direto, específico do negócio e do público. Headline com benefício concreto; subheadline que explica como. Nada genérico do tipo "solução completa".`;
+Português do Brasil, direto, específico do negócio e do público. Headline com benefício concreto; subheadline que explica como. Nada genérico do tipo "solução completa".
+
+${lpFxPromptSection()}`;
 
 function briefText(b: DesignBrief): string {
   const lines = [
@@ -122,6 +136,13 @@ function briefText(b: DesignBrief): string {
     b.cta ? `Texto do CTA: ${b.cta}` : null,
     b.corMarca ? `Cor da marca: ${b.corMarca}` : null,
     b.logoUrl ? `Logo (pode usar em <img>): ${b.logoUrl}` : null,
+    b.imagens?.length
+      ? `IMAGENS (só estas URLs):\n${b.imagens.map((img) => `${img.rotulo} (papel ${img.papel}): ${img.url} — alt: ${img.alt}`).join("\n")}`
+      : "IMAGENS: nenhuma. Não use <img> além do logo.",
+    b.videos?.length
+      ? `VÍDEOS (só estas URLs, em <video controls><source src>):\n${b.videos.map((v) => `${v.nome}: ${v.url}`).join("\n")}`
+      : "VÍDEOS: nenhum. Não use <video>.",
+    b.referenciasBiblioteca ? `REFERÊNCIAS DA BIBLIOTECA (adapte a estrutura; não copie conteúdo):\n${b.referenciasBiblioteca}` : null,
     b.estilo ? `Direção visual pedida: ${b.estilo}` : null,
     b.referencias ? `Referências pesquisadas:\n${b.referencias}` : null,
     b.pedidoOriginal

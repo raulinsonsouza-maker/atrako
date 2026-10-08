@@ -33,4 +33,4 @@ export type { TextFieldProps } from "./text-field";
 export { ThinkingOrb, ThinkingLabel, useThinkingStep } from "./thinking-orb";
 export type { ThinkingOrbProps, ThinkingOrbState, ThinkingLabelProps } from "./thinking-orb";
 export { OrbComposer, OrbComposerChip } from "./orb-composer";
-export type { OrbComposerProps, OrbComposerHandle, OrbComposerChipProps } from "./orb-composer";
+export type { OrbComposerProps, OrbComposerHandle, OrbComposerChipProps, ComposerFile } from "./orb-composer";

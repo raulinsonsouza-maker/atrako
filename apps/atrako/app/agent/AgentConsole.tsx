@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Menu, MessageSquare, PanelLeft, PanelLeftClose, SquarePen, Trash2 } from "lucide-react";
+import { Menu, MessageSquare, PanelLeft, PanelLeftClose, SquarePen, Trash2, FileText, Film } from "lucide-react";
 import {
   Button,
   IconButton,
@@ -11,6 +11,7 @@ import {
   ThinkingLabel,
   ThinkingOrb,
   useThinkingStep,
+  type ComposerFile,
   type OrbComposerHandle,
 } from "@/components/ui";
 import { buttonClass } from "@/components/ui/button";
@@ -25,6 +26,7 @@ import {
   type AssistantMessage,
 } from "./useAssistantHistory";
 import type { Artifact } from "@/lib/atrako-agent/artifacts";
+import { attachmentTooBig, kindFromFile, type ChatAttachment } from "@/lib/atrako-agent/attachments";
 
 type Live = {
   key: string;
@@ -48,7 +50,12 @@ const uid = () =>
     ? crypto.randomUUID()
     : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 
-function localMessage(role: AssistantMessage["role"], content: string, status = "COMPLETE"): AssistantMessage {
+function localMessage(
+  role: AssistantMessage["role"],
+  content: string,
+  status = "COMPLETE",
+  attachments?: AssistantMessage["attachments"],
+): AssistantMessage {
   return {
     id: `local-${uid()}`,
     role,
@@ -60,6 +67,7 @@ function localMessage(role: AssistantMessage["role"], content: string, status = 
     actionStatus: null,
     actionResult: null,
     artifacts: [],
+    ...(attachments?.length ? { attachments } : {}),
   };
 }
 
@@ -371,6 +379,10 @@ export default function AgentConsole() {
   const [collapsed, setCollapsed] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [flying, setFlying] = useState(false);
+  const [files, setFiles] = useState<Array<ComposerFile & { attachment?: ChatAttachment }>>([]);
+  const [attachError, setAttachError] = useState("");
+  const filesRef = useRef(files);
+  filesRef.current = files;
 
   const composerRef = useRef<OrbComposerHandle>(null);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -439,16 +451,67 @@ export default function AgentConsole() {
     if (thread) thread.scrollTop = thread.scrollHeight;
   }, [activeId, history.loadingMessages]);
 
+  async function addFiles(list: File[]) {
+    setAttachError("");
+    const room = 4 - filesRef.current.length;
+    if (room <= 0 || list.length > room) setAttachError("Até 4 arquivos por mensagem.");
+    for (const file of list.slice(0, Math.max(0, room))) {
+      const kind = kindFromFile(file.type, file.name);
+      if (!kind) {
+        setAttachError("Use imagem, PDF, texto, planilha, Word, MP4 ou WebM.");
+        continue;
+      }
+      if (attachmentTooBig(kind, file.size)) {
+        setAttachError(kind === "image" ? "Imagem até 5 MB." : kind === "document" ? "Documento até 8 MB." : "Vídeo até 25 MB.");
+        continue;
+      }
+      const id = uid();
+      const previewUrl = kind === "image" ? URL.createObjectURL(file) : undefined;
+      setFiles((cur) => [...cur, { id, name: file.name || "arquivo", kind, status: "uploading", previewUrl }]);
+      const body = new FormData();
+      body.set("file", file);
+      try {
+        const response = await fetch("/api/atrako/assistant/attachments", { method: "POST", body });
+        const data = (await response.json().catch(() => ({}))) as ChatAttachment & { error?: string };
+        if (!response.ok || !data.url) throw new Error(data.error || "Falha no upload.");
+        setFiles((cur) => cur.map((item) => (item.id === id ? { ...item, status: "ready", attachment: data } : item)));
+      } catch (error) {
+        setFiles((cur) => cur.map((item) => (item.id === id ? { ...item, status: "error" } : item)));
+        setAttachError(error instanceof Error ? error.message : "Falha no upload.");
+      }
+    }
+  }
+
+  function dropFile(id: string) {
+    setFiles((cur) => {
+      const found = cur.find((file) => file.id === id);
+      if (found?.previewUrl) URL.revokeObjectURL(found.previewUrl);
+      return cur.filter((file) => file.id !== id);
+    });
+  }
+
+  function clearFiles() {
+    for (const file of filesRef.current) {
+      if (file.previewUrl) URL.revokeObjectURL(file.previewUrl);
+    }
+    setFiles([]);
+  }
+
   async function send(raw: string) {
     const text = raw.trim();
-    if (!text || live || aiMissing) return;
+    const ready = filesRef.current.filter((file) => file.status === "ready" && file.attachment).map((file) => file.attachment!);
+    if ((!text && !ready.length) || filesRef.current.some((file) => file.status === "uploading") || live || aiMissing) return;
+    const message = text || "Segue o arquivo.";
+    const chips = ready.map(({ id, name, kind, mime, url }) => ({ id, name, kind, mime, url }));
 
     let key = viewKey;
-    const optimistic = localMessage("user", text);
+    const optimistic = localMessage("user", message, "COMPLETE", chips);
     history.setMessages(key, (list) => [...list, optimistic]);
     flyFromRef.current = composerRef.current?.sendRect() ?? null;
     setFlying(!!flyFromRef.current && !prefersReducedMotion());
     setQuestion("");
+    clearFiles();
+    setAttachError("");
     setLive({ key, phase: "thinking", label: "Pensando", text: "", artifacts: [] });
     if (liveRegionRef.current) liveRegionRef.current.textContent = "Atrako está pensando…";
 
@@ -460,7 +523,7 @@ export default function AgentConsole() {
 
     try {
       await streamAssistant(
-        { message: text, conversationId: activeId, clientRequestId: uid() },
+        { message, conversationId: activeId, clientRequestId: uid(), ...(ready.length ? { attachments: ready } : {}) },
         {
           onMeta: ({ conversation, userMessage }) => {
             history.upsertConversation(conversation);
@@ -569,6 +632,8 @@ export default function AgentConsole() {
   function startNew() {
     history.startNew();
     setQuestion("");
+    clearFiles();
+    setAttachError("");
     setMobileOpen(false);
     window.requestAnimationFrame(() => composerRef.current?.focus());
   }
@@ -579,15 +644,21 @@ export default function AgentConsole() {
   }
 
   const composer = (
-    <OrbComposer
-      ref={composerRef}
-      value={question}
-      onValueChange={setQuestion}
-      onSubmit={send}
-      busy={!!live}
-      placeholder="Pergunte ao Atrako"
-      autoFocus
-    />
+    <div className="assistant-composer-wrap">
+      <OrbComposer
+        ref={composerRef}
+        value={question}
+        onValueChange={setQuestion}
+        onSubmit={send}
+        busy={!!live}
+        placeholder="Pergunte ao Atrako"
+        autoFocus
+        files={files}
+        onFiles={(list) => void addFiles(list)}
+        onRemoveFile={dropFile}
+      />
+      {attachError ? <p className="assistant-composer-note type-caption">{attachError}</p> : null}
+    </div>
   );
 
   const setupCta = (
@@ -661,6 +732,23 @@ export default function AgentConsole() {
                 {messages.map((message) =>
                   message.role === "user" ? (
                     <div key={message.id} className="assistant-msg-user type-body">
+                      {message.attachments?.length ? (
+                        <div className="assistant-msg-files">
+                          {message.attachments.map((file) => (
+                            <span key={file.id} className="assistant-msg-file type-caption">
+                              {file.kind === "image" ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={file.url} alt="" />
+                              ) : file.kind === "video" ? (
+                                <Film className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+                              ) : (
+                                <FileText className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+                              )}
+                              <span>{file.name}</span>
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
                       {message.content}
                     </div>
                   ) : (

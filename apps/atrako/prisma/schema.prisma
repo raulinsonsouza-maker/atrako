@@ -83,6 +83,7 @@ model Cliente {
   commerceCoupons            CommerceCoupon[]
   commerceEntitlements       CommerceEntitlement[]
   captureForms               CaptureForm[]
+  lpLibrarySections          LpLibrarySection[]
   marketplaceOrders          MarketplaceOrder[]
   metaAdPurchases            MetaAdPurchaseDaily[]
   marketplaceSellerSnapshots MarketplaceSellerSnapshot[]
@@ -169,6 +170,8 @@ model AtrakoMessage {
   /// USER | ASSISTANT
   role                String             @db.VarChar(16)
   content             String             @db.Text
+  /// Arquivos da mensagem: id, nome, tipo, mime, url e texto extraído.
+  attachments         Json?
   /// PENDING | COMPLETE | ERROR
   status              String             @default("COMPLETE") @db.VarChar(16)
   sources             Json?
@@ -2434,4 +2437,40 @@ model MetaApiLog {
 
   @@index([clienteId, createdAt])
   @@index([draftId, createdAt])
+}
+
+/** Seção de LP reutilizável. candidate = só o workspace de origem; approved = global. */
+model LpLibrarySection {
+  id              String   @id @default(cuid())
+  kind            String   @db.VarChar(40)
+  goal            String?  @db.VarChar(20)
+  html            String   @db.Text
+  css             String   @db.Text
+  baseCss         String?  @db.Text
+  fx              String[]
+  tags            String[]
+  status          String   @default("candidate") @db.VarChar(20)
+  score           Float    @default(0)
+  uses            Int      @default(0)
+  skeleton        String   @unique @db.VarChar(40)
+  sourceClienteId String
+  sourceProductId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  sourceCliente   Cliente  @relation(fields: [sourceClienteId], references: [id], onDelete: Cascade)
+  usesLog         LpLibraryUse[]
+
+  @@index([status, kind, goal])
+}
+
+model LpLibraryUse {
+  id        String           @id @default(cuid())
+  sectionId String
+  clienteId String
+  productId String
+  createdAt DateTime         @default(now())
+  section   LpLibrarySection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId])
+  @@index([productId])
 }

@@ -3,6 +3,8 @@
 export type FoodFulfillment = "DELIVERY" | "PICKUP";
 export type FoodPaymentMethod = "PIX" | "CARD_ON_DELIVERY" | "CASH";
 
+export type QuoteAddition = { name: string; priceCents: number; quantity: number };
+
 export type QuoteLine = {
   itemId: string;
   name: string;
@@ -10,6 +12,7 @@ export type QuoteLine = {
   quantity: number;
   available: boolean;
   removals: string[];
+  additions: QuoteAddition[];
   notes: string | null;
 };
 

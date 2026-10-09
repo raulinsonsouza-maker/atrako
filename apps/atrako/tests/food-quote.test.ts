@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { modulesForEdition } from "../lib/modules/editions";
+import { isItemOrderable, isOpenAt } from "../lib/food/availability";
 import { canTransitionFulfillment, quoteFoodOrder, statusTemplatePurpose } from "../lib/food/quote";
 
 const line = {
@@ -10,6 +11,7 @@ const line = {
   quantity: 1,
   available: true,
   removals: [],
+  additions: [],
   notes: null,
 };
 
@@ -72,4 +74,21 @@ test("versão food liga o módulo e desliga agenda e loja sem apagar o restante"
   assert.equal(next.commerce, false);
   assert.equal(next.forms, true);
   assert.deepEqual(modulesForEdition("custom", { forms: true }), { forms: true });
+});
+
+test("item segue o horário da loja e o horário próprio", () => {
+  const noon = new Date("2026-10-12T15:00:00.000Z");
+  const later = new Date("2026-10-12T18:00:00.000Z");
+  const storeHours = { "1": [{ start: "10:00", end: "14:00" }] };
+  assert.equal(isOpenAt(storeHours, noon), true);
+  assert.equal(isOpenAt(storeHours, later), false);
+  assert.equal(isItemOrderable({ available: true, categoryActive: true, storeHours, schedule: { mode: "ALWAYS" }, now: noon }), true);
+  assert.equal(isItemOrderable({ available: true, categoryActive: true, storeHours, schedule: { mode: "ALWAYS" }, now: later }), false);
+  assert.equal(isItemOrderable({
+    available: true,
+    categoryActive: false,
+    storeHours: null,
+    schedule: null,
+    now: noon,
+  }), false);
 });

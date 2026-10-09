@@ -22,6 +22,17 @@ function readOrder(slug: string, body: Record<string, unknown>): CreateFoodOrder
         quantity: Number(item.quantity) || 0,
         removals: Array.isArray(item.removals) ? item.removals.filter((r): r is string => typeof r === "string") : [],
         notes: typeof item.notes === "string" ? item.notes : null,
+        additions: Array.isArray(item.additions)
+          ? item.additions
+              .map((row) => {
+                const addition = row as Record<string, unknown>;
+                return {
+                  optionId: typeof addition.optionId === "string" ? addition.optionId : "",
+                  quantity: Number(addition.quantity) || 1,
+                };
+              })
+              .filter((addition) => addition.optionId)
+          : [],
       };
     })
     .filter((item) => item.itemId);
@@ -31,6 +42,7 @@ function readOrder(slug: string, body: Record<string, unknown>): CreateFoodOrder
   return {
     slug,
     clientRequestId: requestId,
+    channel: "STORE",
     fulfillment: fulfillment as FoodFulfillment,
     paymentMethod,
     customerName: typeof body.customerName === "string" ? body.customerName : "",

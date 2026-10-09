@@ -33,7 +33,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/u/") ||
     /** Studio LP full-bleed (estilo GreatPages) */
     pathname.startsWith("/criar/oferta") ||
-    pathname.startsWith("/criar/paginas");
+    pathname.startsWith("/criar/paginas") ||
+    pathname.startsWith("/food");
   const moduleEmbed = pathname.startsWith("/modules/");
   /** O assistente tem header próprio (histórico, título, sino, nova conversa). */
   const ownHeader = pathname.startsWith("/assistente");

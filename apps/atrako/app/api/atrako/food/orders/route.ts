@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     },
     include: { items: true },
     orderBy: { createdAt: "desc" },
-    take: 80,
+    take: 200,
   });
   return NextResponse.json({ orders });
 }

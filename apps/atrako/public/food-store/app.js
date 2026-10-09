@@ -50,7 +50,7 @@ function cartSubtotal() {
   let total = 0;
   lines.forEach((line) => {
     const item = itemById(line.itemId);
-    if (item) total += item.priceCents * line.quantity;
+    if (item) total += lineUnitPrice(item, line.additions || []) * line.quantity;
   });
   return total;
 }
@@ -79,23 +79,31 @@ function updateCart() {
   $("#cartItems").innerHTML = count ? [...lines.values()].map((line) => {
     const item = itemById(line.itemId);
     if (!item) return "";
-    const extra = line.removals?.length ? `<small>Sem ${line.removals.join(", ")}</small>` : "";
-    return `<div class="cart-item"><span class="cart-item__emoji">${item.imageUrl ? `<img src="${item.imageUrl}" alt="" />` : item.emoji || ""}</span><div class="cart-item__copy"><strong>${item.name}</strong><span>${money(item.priceCents)}</span>${extra}</div><div class="quantity"><button data-action="minus" data-key="${line.key}" aria-label="Remover uma unidade">−</button><span>${line.quantity}</span><button data-action="plus" data-key="${line.key}" aria-label="Adicionar uma unidade">+</button></div></div>`;
+    const extraParts = [];
+    if (line.additions?.length) extraParts.push(line.additions.map((addition) => addition.name).join(", "));
+    if (line.removals?.length) extraParts.push(`Sem ${line.removals.join(", ")}`);
+    const extra = extraParts.length ? `<small>${extraParts.join(" · ")}</small>` : "";
+    return `<div class="cart-item"><span class="cart-item__emoji">${item.imageUrl ? `<img src="${item.imageUrl}" alt="" />` : item.emoji || ""}</span><div class="cart-item__copy"><strong>${item.name}</strong><span>${money(lineUnitPrice(item, line.additions || []))}</span>${extra}</div><div class="quantity"><button data-action="minus" data-key="${line.key}" aria-label="Remover uma unidade">−</button><span>${line.quantity}</span><button data-action="plus" data-key="${line.key}" aria-label="Adicionar uma unidade">+</button></div></div>`;
   }).join("") : "<p>Seu carrinho está vazio.</p>";
 }
 
-function addLine(item, quantity, removals = [], notes = "") {
+function lineUnitPrice(item, additions = []) {
+  return item.priceCents + additions.reduce((sum, addition) => sum + addition.priceCents, 0);
+}
+
+function addLine(item, quantity, removals = [], notes = "", additions = []) {
   if (!item?.available) {
     showToast("Este item está indisponível.");
     return;
   }
-  const key = `${item.id}|${[...removals].sort().join(",")}|${notes}`;
+  const key = `${item.id}|${additions.map((addition) => addition.optionId).sort().join(",")}|${[...removals].sort().join(",")}|${notes}`;
   const current = lines.get(key);
   lines.set(key, {
     key,
     itemId: item.id,
     quantity: (current?.quantity || 0) + quantity,
     removals,
+    additions,
     notes,
   });
   updateCart();
@@ -196,10 +204,19 @@ $("#checkout")?.addEventListener("click", () => {
   location.hash = "checkout";
 });
 
+function selectedAdditions() {
+  return [...$("#detailGroups").querySelectorAll("input:checked")].map((input) => ({
+    optionId: input.value,
+    name: input.dataset.name,
+    priceCents: Number(input.dataset.price) || 0,
+  }));
+}
+
 function updateDetailTotal() {
   if (!activeProduct) return;
   $("#detailQuantity").textContent = detailQuantity;
-  $("#detailTotal").textContent = money(activeProduct.priceCents * detailQuantity);
+  const selected = selectedAdditions();
+  $("#detailTotal").textContent = money(lineUnitPrice(activeProduct, selected) * detailQuantity);
   $("#detailMinus").disabled = detailQuantity === 1;
 }
 
@@ -219,6 +236,10 @@ function openProduct(item) {
   const ingredients = item.ingredients || [];
   $("#detailIngredients").innerHTML = ingredients.map((ingredient, index) => `<span><i>${index + 1}</i>${ingredient}</span>`).join("");
   $("#detailRemovals").innerHTML = ingredients.map((ingredient) => `<label><input type="checkbox" value="${ingredient}" /><span><i></i>${ingredient}</span></label>`).join("");
+  const groups = item.groups || [];
+  $("#detailGroupsSection").hidden = groups.length === 0;
+  $("#detailGroups").innerHTML = groups.map((group) => `<div><strong>${group.name}</strong>${group.options.map((option) => `<label><input type="${group.maxSelect === 1 ? "radio" : "checkbox"}" name="group-${group.id}" value="${option.id}" data-price="${option.priceCents}" data-name="${option.name}" /><span><i></i>${option.name}${option.priceCents ? ` · ${money(option.priceCents)}` : ""}</span></label>`).join("")}</div>`).join("");
+  $("#detailGroups").querySelectorAll("input").forEach((input) => input.addEventListener("change", updateDetailTotal));
   $("#detailAllergens").innerHTML = item.allergens ? `<span aria-hidden="true">ⓘ</span><p><strong>Alergênicos</strong>${item.allergens}</p>` : "";
   $("#detailNotes").value = "";
   $("#notesCount").textContent = "0";
@@ -254,8 +275,9 @@ function renderCheckout() {
   $("#checkoutItems").innerHTML = [...lines.values()].map((line) => {
     const item = itemById(line.itemId);
     if (!item) return "";
-    const note = line.removals?.length ? `sem ${line.removals.join(", ")}` : "";
-    return `<div class="checkout-item"><span>${item.imageUrl ? `<img src="${item.imageUrl}" alt="" />` : item.emoji || ""}</span><div><strong>${line.quantity}x ${item.name}</strong><small>${money(item.priceCents)} cada ${note}</small></div><b>${money(item.priceCents * line.quantity)}</b></div>`;
+    const note = [line.additions?.map((addition) => addition.name).join(", "), line.removals?.length ? `sem ${line.removals.join(", ")}` : ""].filter(Boolean).join(" · ");
+    const unit = lineUnitPrice(item, line.additions || []);
+    return `<div class="checkout-item"><span>${item.imageUrl ? `<img src="${item.imageUrl}" alt="" />` : item.emoji || ""}</span><div><strong>${line.quantity}x ${item.name}</strong><small>${money(unit)} cada ${note}</small></div><b>${money(unit * line.quantity)}</b></div>`;
   }).join("");
   $("#checkoutSubtotal").textContent = money(subtotal);
   $("#checkoutDelivery").textContent = fee ? money(fee) : "Grátis";
@@ -302,6 +324,7 @@ function checkoutPayload(preview) {
       quantity: line.quantity,
       removals: line.removals,
       notes: line.notes,
+      additions: (line.additions || []).map((addition) => ({ optionId: addition.optionId, quantity: 1 })),
     })),
   };
 }
@@ -424,11 +447,19 @@ $("#detailPlus")?.addEventListener("click", () => { detailQuantity += 1; updateD
 $("#detailNotes")?.addEventListener("input", (event) => { $("#notesCount").textContent = event.target.value.length; });
 $("#detailAdd")?.addEventListener("click", () => {
   if (!activeProduct) return;
+  const groups = activeProduct.groups || [];
+  for (const group of groups) {
+    const count = [...$("#detailGroups").querySelectorAll(`input[name="group-${group.id}"]:checked`)].length;
+    if (count < group.minSelect || count > group.maxSelect) {
+      showToast(`Escolha ${group.name}.`);
+      return;
+    }
+  }
   const removals = [...$("#detailRemovals").querySelectorAll("input:checked")].map((input) => input.value);
   const notes = $("#detailNotes").value.trim();
   const name = activeProduct.name;
   const qty = detailQuantity;
-  addLine(activeProduct, qty, removals, notes);
+  addLine(activeProduct, qty, removals, notes, selectedAdditions());
   history.back();
   showToast(`${qty}x ${name} adicionado ao pedido!`);
 });

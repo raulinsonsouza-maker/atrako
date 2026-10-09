@@ -123,6 +123,15 @@ export async function processWhatsAppWebhookPayload(payload: unknown) {
           console.warn("[whatsapp/webhook] flow inbound failed", e instanceof Error ? e.message : e),
         );
 
+        const { handleFoodWhatsAppMessage } = await import("@/lib/food/whatsapp-order");
+        await handleFoodWhatsAppMessage({
+          workspaceId,
+          conversationId: conversation.id,
+          phone,
+          contactName: contact.name,
+          body: bodyText,
+        }).catch((e) => console.warn("[whatsapp/webhook] food order failed", e instanceof Error ? e.message : e));
+
         const event = createEvent({
           name: "conversation.started",
           source: "whatsapp",

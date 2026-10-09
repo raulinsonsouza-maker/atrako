@@ -16,8 +16,10 @@ import {
   quoteFoodOrder,
   type FoodFulfillment,
   type FoodPaymentMethod,
+  type QuoteAddition,
   type QuoteLine,
 } from "@/lib/food/quote";
+import { asItemSchedule, asWeekHours, isItemOrderable } from "@/lib/food/availability";
 import { sendFoodStatusMessage } from "@/lib/food/status-message";
 
 export const FOOD_REF_PREFIX = "food:";
@@ -30,9 +32,12 @@ type AddressInput = {
   neighborhood?: string;
 };
 
+export type FoodChannel = "STORE" | "WHATSAPP" | "COUNTER";
+
 export type CreateFoodOrderInput = {
   slug: string;
   clientRequestId: string;
+  channel?: FoodChannel;
   fulfillment: FoodFulfillment;
   paymentMethod: FoodPaymentMethod;
   customerName: string;
@@ -40,7 +45,13 @@ export type CreateFoodOrderInput = {
   couponCode?: string | null;
   changeForCents?: number | null;
   address?: AddressInput | null;
-  items: Array<{ itemId: string; quantity: number; removals?: string[]; notes?: string | null }>;
+  items: Array<{
+    itemId: string;
+    quantity: number;
+    removals?: string[];
+    notes?: string | null;
+    additions?: Array<{ optionId: string; quantity?: number }>;
+  }>;
 };
 
 function payerEmail(phoneE164: string) {
@@ -53,24 +64,54 @@ function money(cents: number) {
 }
 
 async function loadLines(
-  storeId: string,
+  store: { id: string; hours: unknown },
   items: CreateFoodOrderInput["items"],
 ): Promise<{ ok: true; lines: QuoteLine[] } | { ok: false; error: string }> {
   const ids = [...new Set(items.map((i) => i.itemId))];
-  const rows = await prisma.foodItem.findMany({ where: { storeId, id: { in: ids } } });
+  const rows = await prisma.foodItem.findMany({
+    where: { storeId: store.id, id: { in: ids } },
+    include: { category: true, groups: { include: { options: true } } },
+  });
   const byId = new Map(rows.map((r) => [r.id, r]));
+  const storeHours = asWeekHours(store.hours);
   const lines: QuoteLine[] = [];
   for (const item of items) {
     const row = byId.get(item.itemId);
     if (!row) return { ok: false, error: "Item não encontrado no cardápio." };
+    const orderable = isItemOrderable({
+      available: row.available,
+      categoryActive: row.category.active,
+      storeHours,
+      schedule: asItemSchedule(row.schedule),
+    });
+    if (!orderable) return { ok: false, error: `${row.name} está indisponível.` };
     const removals = (item.removals ?? []).map((r) => r.trim()).filter(Boolean).slice(0, 12);
+    const additions: QuoteAddition[] = [];
+    let extra = 0;
+    const chosen = new Map<string, number>();
+    for (const addition of item.additions ?? []) {
+      const quantity = addition.quantity && addition.quantity > 0 ? Math.min(addition.quantity, 10) : 1;
+      chosen.set(addition.optionId, (chosen.get(addition.optionId) ?? 0) + quantity);
+    }
+    for (const group of row.groups) {
+      const picked = group.options.filter((option) => chosen.has(option.id) && option.available);
+      const count = picked.reduce((sum, option) => sum + (chosen.get(option.id) ?? 0), 0);
+      if (count < group.minSelect) return { ok: false, error: `Escolha ${group.name}.` };
+      if (count > group.maxSelect) return { ok: false, error: `${group.name} passou do limite.` };
+      for (const option of picked) {
+        const quantity = chosen.get(option.id) ?? 1;
+        additions.push({ name: option.name, priceCents: option.priceCents, quantity });
+        extra += option.priceCents * quantity;
+      }
+    }
     lines.push({
       itemId: row.id,
       name: row.name,
-      priceCents: row.priceCents,
+      priceCents: row.priceCents + extra,
       quantity: item.quantity,
-      available: row.available,
+      available: true,
       removals,
+      additions,
       notes: item.notes?.trim().slice(0, 140) || null,
     });
   }
@@ -129,7 +170,7 @@ export async function previewFoodOrder(input: CreateFoodOrderInput) {
 async function priceCheckout(input: CreateFoodOrderInput) {
   const store = await prisma.foodStore.findUnique({ where: { slug: input.slug } });
   if (!store || store.status === "DISABLED") return { ok: false as const, error: "Loja indisponível.", status: 404 };
-  const loaded = await loadLines(store.id, input.items);
+  const loaded = await loadLines(store, input.items);
   if (!loaded.ok) return { ok: false as const, error: loaded.error, status: 400 };
   const couponCode = input.couponCode?.trim().toUpperCase() || "";
   const coupon = couponCode
@@ -214,6 +255,7 @@ export async function createFoodOrder(input: CreateFoodOrderInput) {
         customerName: name,
         phone: input.phone.trim().slice(0, 40),
         phoneE164,
+        channel: input.channel ?? "STORE",
         fulfillment: input.fulfillment,
         address:
           input.fulfillment === "DELIVERY"
@@ -241,6 +283,7 @@ export async function createFoodOrder(input: CreateFoodOrderInput) {
             priceCents: line.priceCents,
             quantity: line.quantity,
             removals: line.removals,
+            additions: line.additions.length ? line.additions : Prisma.JsonNull,
             notes: line.notes,
           })),
         },
@@ -255,7 +298,7 @@ export async function createFoodOrder(input: CreateFoodOrderInput) {
     type: "food.order",
     title: `Novo pedido #${created.number}`,
     body: `${name} · ${money(created.totalCents)} · ${payOnDelivery ? "pagamento na entrega" : "Pix"}`,
-    href: "/food",
+    href: "/food/pedidos",
     severity: "aviso",
     dedupeKey: `food-order:${created.id}`,
   }).catch(() => null);

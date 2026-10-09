@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { requireModuleApi } from "@/lib/modules/resolve";
 import { ensureFoodWorkspace } from "@/lib/food/catalog";
+import { foodCanManage, foodPanelRole } from "@/lib/food/panel";
+import { storeForWorkspace } from "@/lib/food/editor";
 
 export async function GET(request: NextRequest) {
   const workspaceId = request.nextUrl.searchParams.get("workspaceId")?.trim();
@@ -12,32 +14,23 @@ export async function GET(request: NextRequest) {
   const moduleOff = await requireModuleApi(workspaceId, "food");
   if (moduleOff) return moduleOff;
 
-  let store = await prisma.foodStore.findUnique({
-    where: { clienteId: workspaceId },
-    include: {
-      categories: { orderBy: { sortOrder: "asc" } },
-      items: { orderBy: { sortOrder: "asc" } },
-    },
-  });
+  let store = await storeForWorkspace(workspaceId);
   if (!store) {
     await ensureFoodWorkspace(workspaceId);
-    store = await prisma.foodStore.findUnique({
-      where: { clienteId: workspaceId },
-      include: {
-        categories: { orderBy: { sortOrder: "asc" } },
-        items: { orderBy: { sortOrder: "asc" } },
-      },
-    });
+    store = await storeForWorkspace(workspaceId);
   }
-  return NextResponse.json({ store });
+  return NextResponse.json({ store, role: await foodPanelRole(workspaceId) });
 }
 
 export async function PATCH(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const workspaceId = typeof body.workspaceId === "string" ? body.workspaceId : "";
   if (!workspaceId) return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
-  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  const access = await requireWorkspaceAccess(workspaceId, "manage");
   if (!access.ok) return access.response;
+  if (!foodCanManage(await foodPanelRole(workspaceId))) {
+    return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+  }
   const moduleOff = await requireModuleApi(workspaceId, "food");
   if (moduleOff) return moduleOff;
 

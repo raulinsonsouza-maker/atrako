@@ -1858,6 +1858,8 @@ model WaConversation {
   windowExpiresAt DateTime?
   lastMessageAt   DateTime?
   handedOffAt     DateTime?
+  /// Rascunho de pedido Food na conversa oficial. Não é um segundo cardápio.
+  foodCart        Json?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   cliente         Cliente        @relation(fields: [clienteId], references: [id], onDelete: Cascade)
@@ -2504,6 +2506,8 @@ model FoodStore {
   pickupName         String?  @db.VarChar(160)
   pickupAddress      String?  @db.VarChar(255)
   pickupInstructions String?  @db.VarChar(255)
+  /// Horário da semana. Vazio = aberto o dia todo enquanto aceita pedidos. Chave 0–6 (domingo–sábado).
+  hours              Json     @default("{}")
   nextNumber         Int      @default(1000)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -2545,10 +2549,13 @@ model FoodItem {
   calories    Int?
   allergens   String?      @db.VarChar(255)
   ingredients Json?
+  /// null ou ALWAYS = enquanto a loja estiver aberta. HOURS = dias e intervalos próprios.
+  schedule    Json?
   available   Boolean      @default(true)
   sortOrder   Int          @default(0)
   store       FoodStore    @relation(fields: [storeId], references: [id], onDelete: Cascade)
   category    FoodCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  groups      FoodModifierGroup[]
   orderItems  FoodOrderItem[]
 
   @@unique([storeId, key])
@@ -2568,6 +2575,31 @@ model FoodCoupon {
   @@unique([storeId, code])
 }
 
+model FoodModifierGroup {
+  id        String               @id @default(cuid())
+  itemId    String
+  name      String               @db.VarChar(80)
+  minSelect Int                  @default(0)
+  maxSelect Int                  @default(1)
+  sortOrder Int                  @default(0)
+  item      FoodItem             @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  options   FoodModifierOption[]
+
+  @@index([itemId, sortOrder])
+}
+
+model FoodModifierOption {
+  id         String            @id @default(cuid())
+  groupId    String
+  name       String            @db.VarChar(80)
+  priceCents Int               @default(0)
+  available  Boolean           @default(true)
+  sortOrder  Int               @default(0)
+  group      FoodModifierGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, sortOrder])
+}
+
 model FoodOrder {
   id                 String    @id @default(cuid())
   clienteId          String
@@ -2580,6 +2612,8 @@ model FoodOrder {
   customerName       String    @db.VarChar(200)
   phone              String    @db.VarChar(40)
   phoneE164          String?   @db.VarChar(20)
+  /// STORE | WHATSAPP | COUNTER
+  channel            String    @default("STORE") @db.VarChar(16)
   fulfillment        String    @db.VarChar(16)
   address            Json?
   paymentMethod      String    @db.VarChar(24)
@@ -2611,6 +2645,7 @@ model FoodOrder {
   @@unique([storeId, number])
   @@index([clienteId, createdAt])
   @@index([clienteId, fulfillmentStatus])
+  @@index([clienteId, channel])
   @@index([mpOrderId])
   @@index([contactId])
 }
@@ -2623,6 +2658,7 @@ model FoodOrderItem {
   priceCents Int
   quantity   Int
   removals   Json?
+  additions  Json?
   notes      String?   @db.VarChar(200)
   order      FoodOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
   item       FoodItem? @relation(fields: [itemId], references: [id], onDelete: SetNull)

@@ -6,7 +6,7 @@
 import { createEvent, createEventId, type AtrakoEvent } from "@atrako/events";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@/lib/generated/prisma";
-import { upsertPersonAndLead } from "@/lib/atrako/person";
+import { normalizePersonEmail, normalizePersonPhone, upsertPersonAndLead } from "@/lib/atrako/person";
 import { publishAtrakoEvents } from "@/lib/atrako/events";
 import {
   ensureDefaultPipeline,
@@ -20,7 +20,9 @@ import {
   type MlOrder,
   type NormalizedMlLineItem,
 } from "./orders";
-import { extractShippingEconomics, getMlShipment } from "./shipments";
+import { extractShippingEconomics, getMlShipment, type MlShipment } from "./shipments";
+import { refreshMlBuyerIfThin, fetchMlBuyerFacts } from "./enrich-buyer";
+import { normalizePlace } from "@/lib/geo/place";
 
 const PAID_STATUSES = new Set(["paid", "confirmed"]);
 
@@ -126,12 +128,13 @@ export async function ingestMercadoLivreOrder(input: {
   let shippingStatus: string | null = null;
   let shippingMode: string | null = null;
   let logisticType: string | null = null;
+  let shipment: MlShipment | null = null;
   const shippingId =
     mlOrder.shipping?.id != null ? String(mlOrder.shipping.id) : null;
 
   if (shippingId) {
     try {
-      const shipment = await getMlShipment(input.workspaceId, shippingId);
+      shipment = await getMlShipment(input.workspaceId, shippingId);
       const ship = extractShippingEconomics(shipment);
       shippingCostCents = ship.shippingCostCents;
       shippingStatus = ship.shippingStatus;
@@ -157,6 +160,15 @@ export async function ingestMercadoLivreOrder(input: {
   });
 
   if (existing) {
+    const prevRaw =
+      existing.rawPayload && typeof existing.rawPayload === "object" && !Array.isArray(existing.rawPayload)
+        ? (existing.rawPayload as Record<string, unknown>)
+        : {};
+    const nextRaw = {
+      ...prevRaw,
+      order: mlOrder,
+      notification: input.notification ?? prevRaw.notification ?? null,
+    };
     await prisma.$transaction(async (tx) => {
       await tx.marketplaceOrder.update({
         where: { id: existing.id },
@@ -171,10 +183,7 @@ export async function ingestMercadoLivreOrder(input: {
           shippingMode: shippingMode ?? existing.shippingMode,
           logisticType: logisticType ?? existing.logisticType,
           currency: mlOrder.currency_id ?? existing.currency,
-          rawPayload: {
-            order: mlOrder,
-            notification: input.notification ?? null,
-          } as object,
+          rawPayload: nextRaw as object,
         },
       });
       if (existing.items.length === 0 && items.length > 0) {
@@ -192,6 +201,11 @@ export async function ingestMercadoLivreOrder(input: {
       }
     });
 
+    const buyer = await refreshMlBuyerIfThin(
+      { ...existing, rawPayload: nextRaw, shippingMode, logisticType, shippingStatus },
+      { order: mlOrder, shipment },
+    ).catch(() => null);
+
     if (existing.contactId && existing.leadId) {
       await markMarketplaceBuyerInCrm({
         workspaceId: input.workspaceId,
@@ -202,8 +216,8 @@ export async function ingestMercadoLivreOrder(input: {
         totalCents,
         status: mlOrder.status ?? existing.status,
         items,
-        buyerPhone: existing.buyerPhone,
-        buyerEmail: existing.buyerEmail,
+        buyerPhone: buyer?.phone ?? existing.buyerPhone,
+        buyerEmail: buyer?.email ?? existing.buyerEmail,
       });
     }
 
@@ -224,6 +238,7 @@ export async function ingestMercadoLivreOrder(input: {
       logisticType,
     },
     notification: input.notification,
+    shipment,
   });
 }
 
@@ -242,9 +257,25 @@ async function persistMlOrder(input: {
     logisticType: string | null;
   };
   notification?: Record<string, unknown> | null;
+  shipment?: MlShipment | null;
 }) {
   const externalId = String(input.mlOrder.id);
-  const buyer = extractMlBuyerContact(input.mlOrder);
+  const loaded = await fetchMlBuyerFacts({
+    workspaceId: input.workspaceId,
+    externalId,
+    shippingId: input.economics.shippingId,
+    order: input.mlOrder,
+    shipment: input.shipment,
+  }).catch(() => null);
+  const fromOrder = extractMlBuyerContact(input.mlOrder);
+  const facts = loaded?.facts;
+  const place = normalizePlace(facts?.city, facts?.state);
+  const buyer = {
+    name: facts?.name || fromOrder.name,
+    email: normalizePersonEmail(facts?.email) ?? normalizePersonEmail(fromOrder.email),
+    phone: normalizePersonPhone(facts?.phone) ?? normalizePersonPhone(fromOrder.phone),
+    buyerId: fromOrder.buyerId,
+  };
   const items = input.items;
   const occurredAt = input.mlOrder.date_closed
     ? new Date(input.mlOrder.date_closed)
@@ -267,10 +298,14 @@ async function persistMlOrder(input: {
       marketingEligible,
       meliOrderId: externalId,
       meliBuyerId: buyer.buyerId,
+      meliNickname: facts?.nickname ?? null,
       meliStatus: input.mlOrder.status ?? null,
       itemCount: items.length,
       units: items.reduce((sum, it) => sum + it.quantity, 0),
       productNames: items.map((i) => i.title),
+      ...(place.cityName || place.cityRaw
+        ? { location: { city: place.cityName ?? place.cityRaw, state: place.stateUf } }
+        : {}),
     },
   });
 
@@ -294,8 +329,14 @@ async function persistMlOrder(input: {
       buyerName: buyer.name,
       buyerEmail: buyer.email,
       buyerPhone: buyer.phone,
+      stateUf: place.stateUf,
+      cityName: place.cityName,
+      cityRaw: place.cityRaw,
       rawPayload: {
         order: input.mlOrder,
+        billing: loaded?.billing ?? null,
+        shipment: loaded?.shipment ?? input.shipment ?? null,
+        buyerEnrichedAt: new Date().toISOString(),
         notification: input.notification ?? null,
       } as object,
       occurredAt,

@@ -45,7 +45,7 @@ export const ATRAKO_STRUCTURE_MAP = {
     "Central de dados: ads (Meta, Google, TikTok, LinkedIn), GA4, tracking, eventos de jornada e atribuição até receita.",
   /** Nomes exatos do menu lateral — o agente só pode citar estas telas. */
   modules: [
-    { id: "dashboard", label: "Dashboard", path: null, knows: "mídia paga (Meta/Google), vendas e resultados do período — item 'Dashboard' do menu" },
+    { id: "dashboard", label: "Dashboard", path: null, knows: "mídia paga (Meta/Google), vendas e resultados do período. Abas: Geral, Marketplaces (Mercado Livre, Shopee, TikTok Shop) e E-commerce (loja própria)" },
     { id: "crm", label: "Leads", path: "/crm", knows: "funil, pipeline, origens dos leads" },
     { id: "relacionamento", label: "Relacionamento", path: "/relacionamento", knows: "e-mail e WhatsApp por etapa, fluxos automáticos, campanhas" },
     { id: "whatsapp", label: "Atendimento", path: "/whatsapp", knows: "conversas do WhatsApp, janelas de 24h, handoff humano" },
@@ -61,6 +61,7 @@ export const ATRAKO_STRUCTURE_MAP = {
   journeys: [
     "Anúncio → LP → Formulário → CRM → WhatsApp → Agenda → Pagamento",
     "Anúncio → E-commerce → Carrinho → Checkout → Compra",
+    "Marketplace (Mercado Livre, Shopee, TikTok Shop) → pedido pago → lead no CRM",
     "Instagram → Comentário → DM → LP → Cadastro → CRM",
   ],
   eventSpine:
@@ -74,7 +75,8 @@ export const ATRAKO_DATA_MAP = [
   { area: "E-mail, WhatsApp e fluxos", screen: "Relacionamento", source: "entregas, aberturas, cliques e receita atribuída" },
   { area: "Conversas de WhatsApp", screen: "Atendimento", source: "inbox e janelas de 24h" },
   { area: "Agenda", screen: "Agenda", source: "agendamentos, serviços e profissionais" },
-  { area: "Vendas", screen: "Loja", source: "pedidos das lojas (Shopify, Nuvemshop, Tray, Woo), marketplaces e checkout Atrako" },
+  { area: "Vendas da loja própria", screen: "Dashboard", source: "aba E-commerce: pedidos de Shopify, Nuvemshop, Tray e Woo, com foto, frete, cupom e total ao abrir o pedido" },
+  { area: "Marketplaces", screen: "Dashboard", source: "aba Marketplaces: Mercado Livre, Shopee e TikTok Shop — receita, líquido (taxas e frete do vendedor), Full/Flex/Mercado Envios, estados, cidades e produtos" },
   { area: "Comportamento de compra", screen: "Dashboard", source: "pedidos pagos: receita nova e de recompra, gênero estimado pelo nome, horário, estado e cidade, produtos e maiores compradores" },
   { area: "Caixa", screen: "Caixa", source: "lançamentos confirmados (entradas, saídas, reembolsos)" },
   { area: "Formulários", screen: "Formulários", source: "formulários de captura e respostas" },
@@ -102,6 +104,9 @@ export const ATRAKO_LANGUAGE = {
 export const ATRAKO_METRIC_RULES = [
   "Compras/receita atribuída da Meta ≠ conversões/valor de conversão do Google: nunca some as duas nem chame conversão do Google de venda.",
   "Receita real = pedidos pagos das lojas, marketplaces e checkout (vendas_visao_geral). Valor atribuído pelos anúncios é referência.",
+  "Marketplace não é a loja própria. Mercado Livre, Shopee e TikTok Shop ficam na aba Marketplaces (marketplaces_visao). Woo, Shopify, Tray e Nuvemshop ficam na aba E-commerce.",
+  "No marketplace, líquido = receita − taxas − frete do vendedor. Esse frete é custo de envio, não o valor que o comprador pagou. Full, Flex e Mercado Envios são modos de envio, não canais de anúncio.",
+  "Cidade e estado do marketplace só existem quando a cobrança ou o envio trouxeram o endereço. Sem isso, diga que o marketplace não liberou o lugar — não invente cidade.",
   "ROAS geral = receita real ÷ investimento em mídia. ROAS da plataforma é o que ela reporta, não a receita do caixa.",
   "Receita do relacionamento (e-mail/WhatsApp) já está dentro da receita das lojas: mostre a participação, não some.",
   "O campo coverage das ferramentas é interno — nunca escreva 'coverage', 'not_connected', 'empty' ou 'available'. Traduza: not_connected = 'X ainda não está conectado ao Atrako' (diga onde conectar); empty = 'conectado, mas sem movimento no período' (zero é dado real); available = só use os números.",
@@ -115,10 +120,11 @@ export const ATRAKO_RESPONSE_RULES = [
   "Responda à mensagem literal. Saudação (olá, oi, bom dia, boa noite) não é análise: cumprimente em uma frase e pergunte como ajudar, sem chamar ferramenta. Não substitua a pergunta por um panorama do negócio.",
   "Use as ferramentas antes de afirmar qualquer número. Nunca invente, nunca estime sem dizer que é estimativa.",
   "visao_geral_negocio só quando pedirem como está o negócio, um resumo ou um período ('como estou?', 'resumo da semana'). Pergunta específica (último carrinho, um lead, uma pessoa) usa a ferramenta daquele registro.",
-  "Pergunta sobre quem compra, quando, onde, o que volta a comprar, gênero, horário, cidade ou maiores compradores → comportamento_compra. Ciclo de vida da base (ativo, em risco, perdido) continua em clientes_recompra.",
+  "Pergunta sobre quem compra, quando, onde, o que volta a comprar, gênero, horário, cidade ou maiores compradores na base toda → comportamento_compra. Ciclo de vida da base (ativo, em risco, perdido) continua em clientes_recompra.",
+  "Pergunta sobre Mercado Livre, Shopee, TikTok Shop, frete Full/Flex/Mercado Envios, taxa, líquido do marketplace ou de onde vieram as vendas do marketplace → marketplaces_visao. Não responda isso com a loja própria nem misture os dois.",
   "Chame várias ferramentas em paralelo quando forem independentes. Nunca chame a mesma ferramenta duas vezes com os mesmos argumentos na mesma pergunta.",
   "Se faltar dado, diga exatamente o que falta e onde conectar (ex.: 'conecte a Meta em [Configuração → Integrações](/config/conexoes)').",
-  "Cite só as telas da lista 'Telas do Atrako', com o nome exato, como link markdown quando tiver caminho (ex.: [Leads](/crm)). Nunca invente telas, abas ou seções, e nunca use nome de ferramenta como nome de tela.",
+  "Cite só as telas da lista 'Telas do Atrako', com o nome exato, como link markdown quando tiver caminho (ex.: [Leads](/crm)). No Dashboard, pode citar as abas que estão no mapa de dados (Marketplaces e E-commerce). Nunca invente outras telas ou abas, e nunca use nome de ferramenta como nome de tela.",
   "Formato: parágrafo curto com a resposta + bullets ou tabela markdown curta quando houver 3+ números. Sem títulos ou rótulos como 'Próximo passo:', 'Próximos passos' ou 'Próxima verificação'; quando houver sugestão, ela é uma frase natural no fim (no máximo uma).",
   "Não repita conselhos que você já deu nesta conversa (ex.: conectar a mesma fonte de novo); traga só o que for novo.",
   "Máximo ~180 palavras, salvo se o usuário pedir detalhe.",

@@ -16,6 +16,7 @@ import {
   MessageSquare,
   ShoppingBag,
   Users,
+  UtensilsCrossed,
   Wallet,
 } from "lucide-react";
 import type { CriarPlatformId } from "@/lib/criar/catalog";
@@ -30,6 +31,7 @@ export const MODULE_KEYS = [
   "social",
   "agenda",
   "commerce",
+  "food",
   "finance",
   "forms",
 ] as const;
@@ -171,6 +173,17 @@ export const MODULES: ModuleDef[] = [
     apiPrefixes: ["/api/atrako/commerce/checkout"],
     criarModules: ["upsell", "cupom"],
     disableWarning: "Páginas de venda e checkouts publicados ficam indisponíveis. Landing pages de captura continuam no ar.",
+  },
+  {
+    key: "food",
+    label: "Food",
+    description: "Cardápio e pedidos",
+    icon: UtensilsCrossed,
+    defaultRelease: "BETA",
+    nav: true,
+    routes: ["/food"],
+    apiPrefixes: ["/api/atrako/food"],
+    disableWarning: "O cardápio público deixa de receber pedidos. Os pedidos já feitos continuam na fila.",
   },
   {
     key: "finance",

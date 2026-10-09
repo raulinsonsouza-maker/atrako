@@ -303,9 +303,45 @@ function comportamento(data: Row): ChartArtifact | null {
   });
 }
 
+function marketplaces(data: Row): ChartArtifact | null {
+  const estados = arr(data.porEstado).filter((row) => num(row.receita) > 0);
+  if (estados.length >= 2) {
+    return chart({
+      chart: "bar",
+      title: "Receita por estado",
+      unit: "currency",
+      xKey: "estado",
+      series: [{ key: "receita", label: "Receita", tone: "revenue" }],
+      data: estados.slice(0, 8).map((row) => ({ estado: str(row.estado, "Sem local"), receita: num(row.receita) })),
+    });
+  }
+  const fretes = arr(data.porFrete).filter((row) => num(row.receita) > 0);
+  if (fretes.length >= 2) {
+    return chart({
+      chart: "bar",
+      title: "Receita por frete",
+      unit: "currency",
+      xKey: "tipo",
+      series: [{ key: "receita", label: "Receita", tone: "revenue" }],
+      data: fretes.map((row) => ({ tipo: str(row.tipo, "Envio"), receita: num(row.receita) })),
+    });
+  }
+  const produtos = arr(data.produtos).filter((row) => num(row.receita) > 0).slice(0, 6);
+  if (!produtos.length) return null;
+  return chart({
+    chart: "bar",
+    title: "Produtos do marketplace",
+    unit: "currency",
+    xKey: "nome",
+    series: [{ key: "receita", label: "Receita", tone: "revenue" }],
+    data: produtos.map((row) => ({ nome: str(row.nome), receita: num(row.receita) })),
+  });
+}
+
 const BUILDERS: Record<string, (data: Row) => ChartArtifact | null> = {
   midia_visao_geral: midia,
   vendas_visao_geral: vendas,
+  marketplaces_visao: marketplaces,
   visao_geral_negocio: visaoGeral,
   crm_pipeline: crm,
   carrinhos_abandonados: carrinhos,

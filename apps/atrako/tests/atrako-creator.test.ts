@@ -362,6 +362,28 @@ test("chartsFor: receita por origem vira rosca; mídia diária vira linha; sem d
   assert.deepEqual(chartsFor("crm_pipeline", null), []);
 });
 
+test("chartsFor: marketplace prefere estado, depois frete", () => {
+  const [estados] = chartsFor("marketplaces_visao", {
+    porEstado: [
+      { estado: "São Paulo", receita: 800 },
+      { estado: "Paraná", receita: 200 },
+    ],
+    porFrete: [{ tipo: "Full", receita: 900 }],
+  });
+  assert.equal(estados.chart, "bar");
+  assert.equal(estados.title, "Receita por estado");
+  assert.equal(estados.data.length, 2);
+
+  const [frete] = chartsFor("marketplaces_visao", {
+    porEstado: [{ estado: "São Paulo", receita: 100 }],
+    porFrete: [
+      { tipo: "Full", receita: 70 },
+      { tipo: "Flex", receita: 30 },
+    ],
+  });
+  assert.equal(frete.title, "Receita por frete");
+});
+
 test("chartsFor: comportamento mostra gênero e, sem nome, os produtos", () => {
   const [donut] = chartsFor("comportamento_compra", {
     genero: {

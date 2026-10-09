@@ -6,7 +6,9 @@ import { getPersonJourney } from "@/lib/atrako/person";
 import { getAbandonedCartSummary } from "@/lib/crm/abandoned-cart";
 import { getCartRecoveryMetrics, getRepurchaseMetrics } from "@/lib/commerce/customer-metrics";
 import { getComportamento, type Comportamento } from "@/lib/commerce/comportamento";
-import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
+import { isRevenueOrder, orderStatusLabel } from "@/lib/commerce-attribution/order-status";
+import { shippingFacetKey, shippingLabel } from "@/lib/integrations/mercadolivre/shipments";
+import { stateName } from "@/lib/geo/place";
 import { CHANNEL_LABELS, orderOriginKey, type OrderChannel } from "@/lib/commerce-attribution/store-source";
 import type { ModuleKey } from "@/lib/modules/registry";
 import {
@@ -291,6 +293,7 @@ const PROVIDER_LABELS: Record<string, string> = {
   SHOPEE: "Shopee",
   TIKTOK_SHOP: "TikTok Shop",
   CHECKOUT: "Checkout Atrako",
+  FOOD: "Food",
   META: "Meta Ads",
   GOOGLE: "Google Ads",
   LINKEDIN: "LinkedIn Ads",
@@ -299,13 +302,18 @@ const PROVIDER_LABELS: Record<string, string> = {
 const SITE_PROVIDERS = new Set(["WOOCOMMERCE", "SHOPIFY", "NUVEMSHOP", "TRAY"]);
 
 async function salesSnapshot(clienteId: string, r: { gte: Date; lte: Date }) {
-  const [orders, checkout, media] = await Promise.all([
+  const [orders, checkout, food, media] = await Promise.all([
     prisma.marketplaceOrder.findMany({
       where: { clienteId, occurredAt: r },
       select: { provider: true, status: true, totalCents: true, source: { select: { channel: true } } },
     }),
     prisma.commerceOrder.aggregate({
       where: { clienteId, status: "APPROVED", createdAt: r },
+      _count: { _all: true },
+      _sum: { totalCents: true },
+    }),
+    prisma.foodOrder.aggregate({
+      where: { clienteId, paymentStatus: "APPROVED", paidAt: r },
       _count: { _all: true },
       _sum: { totalCents: true },
     }),
@@ -346,6 +354,11 @@ async function salesSnapshot(clienteId: string, r: { gte: Date; lte: Date }) {
     byStore.set("CHECKOUT", row);
     byOrigin.set("CHECKOUT", { ...row });
   }
+  if (food._count._all > 0) {
+    const row = { label: PROVIDER_LABELS.FOOD, pedidos: food._count._all, receita: money(food._sum.totalCents) };
+    byStore.set("FOOD", row);
+    byOrigin.set("FOOD", { ...row });
+  }
   const stores = [...byStore.values()].map((b) => ({ ...b, receita: round2(b.receita) })).sort((a, b) => b.receita - a.receita);
   const receita = round2(stores.reduce((s, b) => s + b.receita, 0));
   const pedidos = stores.reduce((s, b) => s + b.pedidos, 0);
@@ -369,6 +382,160 @@ async function salesSnapshot(clienteId: string, r: { gte: Date; lte: Date }) {
         roas: investimentoCanal > 0 ? round2(valorReportado / investimentoCanal) : null,
       };
     }),
+  };
+}
+
+const MARKETPLACE_PROVIDERS = ["MERCADO_LIVRE", "SHOPEE", "TIKTOK_SHOP"] as const;
+
+function marketplaceProviders(raw: unknown): string[] {
+  const value = typeof raw === "string" ? raw.trim().toLowerCase().replace(/[\s-]+/g, "") : "";
+  if (value === "mercadolivre" || value === "ml") return ["MERCADO_LIVRE"];
+  if (value === "shopee") return ["SHOPEE"];
+  if (value === "tiktok" || value === "tiktokshop") return ["TIKTOK_SHOP"];
+  return [...MARKETPLACE_PROVIDERS];
+}
+
+function plainTitle(value: string) {
+  return value.replace(/<br\s*\/?>/gi, " ").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+}
+
+/** Recorte da aba Marketplaces: frete, lugar, líquido e produtos. Não inclui a loja própria. */
+async function marketplaceSnapshot(clienteId: string, r: { gte: Date; lte: Date }, providers: string[]) {
+  const where = { clienteId, provider: { in: providers }, occurredAt: r };
+  const [orders, items] = await Promise.all([
+    prisma.marketplaceOrder.findMany({
+      where,
+      select: {
+        id: true,
+        provider: true,
+        externalId: true,
+        status: true,
+        totalCents: true,
+        saleFeeCents: true,
+        shippingCostCents: true,
+        netCents: true,
+        shippingMode: true,
+        logisticType: true,
+        stateUf: true,
+        cityName: true,
+        cityRaw: true,
+        buyerName: true,
+        occurredAt: true,
+      },
+    }),
+    prisma.marketplaceOrderItem.findMany({
+      where: { order: where },
+      select: {
+        title: true,
+        quantity: true,
+        lineTotalCents: true,
+        orderId: true,
+        order: { select: { status: true } },
+      },
+    }),
+  ]);
+
+  const paidIds = new Set<string>();
+  let receitaCents = 0;
+  let taxasCents = 0;
+  let freteCents = 0;
+  let liquidoCents = 0;
+  let semCidade = 0;
+  const frete = new Map<string, { tipo: string; pedidos: number; receita: number; custoFrete: number }>();
+  const estados = new Map<string, { estado: string; pedidos: number; receita: number; cidades: Map<string, { cidade: string; pedidos: number; receita: number }> }>();
+
+  for (const order of orders) {
+    if (!isRevenueOrder(order.status)) continue;
+    paidIds.add(order.id);
+    const cents = order.totalCents ?? 0;
+    const taxa = order.saleFeeCents ?? 0;
+    const fretePedido = order.shippingCostCents ?? 0;
+    receitaCents += cents;
+    taxasCents += taxa;
+    freteCents += fretePedido;
+    liquidoCents += order.netCents ?? cents - taxa - fretePedido;
+
+    const tipo = shippingLabel(order.shippingMode, order.logisticType);
+    const freteKey = shippingFacetKey(order.shippingMode, order.logisticType);
+    const freteLabel = tipo === "—" ? "Envio" : tipo;
+    const freteRow = frete.get(freteKey) ?? { tipo: freteLabel, pedidos: 0, receita: 0, custoFrete: 0 };
+    freteRow.pedidos += 1;
+    freteRow.receita += money(cents);
+    freteRow.custoFrete += money(fretePedido);
+    frete.set(freteKey, freteRow);
+
+    const cidade = order.cityName || order.cityRaw;
+    if (!cidade) semCidade += 1;
+    const uf = order.stateUf || "_";
+    const estado = estados.get(uf) ?? { estado: stateName(order.stateUf), pedidos: 0, receita: 0, cidades: new Map() };
+    estado.pedidos += 1;
+    estado.receita += money(cents);
+    if (cidade) {
+      const city = estado.cidades.get(cidade) ?? { cidade, pedidos: 0, receita: 0 };
+      city.pedidos += 1;
+      city.receita += money(cents);
+      estado.cidades.set(cidade, city);
+    }
+    estados.set(uf, estado);
+  }
+
+  const produtos = new Map<string, { nome: string; unidades: number; pedidos: Set<string>; receita: number }>();
+  for (const item of items) {
+    if (!paidIds.has(item.orderId) || !isRevenueOrder(item.order.status)) continue;
+    const nome = plainTitle(item.title) || "Produto";
+    const row = produtos.get(nome) ?? { nome, unidades: 0, pedidos: new Set<string>(), receita: 0 };
+    row.unidades += item.quantity;
+    row.pedidos.add(item.orderId);
+    row.receita += money(item.lineTotalCents);
+    produtos.set(nome, row);
+  }
+
+  const pedidos = paidIds.size;
+  const recentes = [...orders]
+    .sort((a, b) => (b.occurredAt?.getTime() ?? 0) - (a.occurredAt?.getTime() ?? 0))
+    .slice(0, 5)
+    .map((order) => ({
+      numero: order.externalId,
+      canal: PROVIDER_LABELS[order.provider] ?? order.provider,
+      comprador: order.buyerName,
+      cidade: order.cityName || order.cityRaw || null,
+      estado: order.stateUf ? stateName(order.stateUf) : null,
+      status: orderStatusLabel(order.status),
+      total: reais(order.totalCents),
+      frete: (() => {
+        const label = shippingLabel(order.shippingMode, order.logisticType);
+        return label === "—" ? null : label;
+      })(),
+    }));
+
+  return {
+    receita: round2(money(receitaCents)),
+    pedidos,
+    ticketMedio: pedidos ? round2(money(receitaCents) / pedidos) : null,
+    taxas: round2(money(taxasCents)),
+    freteVendedor: round2(money(freteCents)),
+    liquido: round2(money(liquidoCents)),
+    pedidosSemCidade: semCidade,
+    porFrete: [...frete.values()]
+      .map((row) => ({ ...row, receita: round2(row.receita), custoFrete: round2(row.custoFrete) }))
+      .sort((a, b) => b.receita - a.receita),
+    porEstado: [...estados.values()]
+      .map((row) => ({
+        estado: row.estado,
+        pedidos: row.pedidos,
+        receita: round2(row.receita),
+        cidades: [...row.cidades.values()]
+          .map((city) => ({ ...city, receita: round2(city.receita) }))
+          .sort((a, b) => b.receita - a.receita)
+          .slice(0, 5),
+      }))
+      .sort((a, b) => b.receita - a.receita)
+      .slice(0, 8),
+    produtos: [...produtos.values()]
+      .map((row) => ({ nome: row.nome, unidades: row.unidades, pedidos: row.pedidos.size, receita: round2(row.receita) }))
+      .sort((a, b) => b.receita - a.receita)
+      .slice(0, 8),
+    pedidosRecentes: recentes,
   };
 }
 
@@ -603,7 +770,7 @@ export const READ_TOOLS: AtrakoTool[] = [
     name: "vendas_visao_geral",
     step: "Somando as vendas",
     description:
-      "Vendas consolidadas de lojas (Shopify, Nuvemshop, Tray, Woo), marketplaces (Mercado Livre, Shopee, TikTok Shop) e checkout Atrako: receita, pedidos, ticket médio, por loja e por origem de tráfego, investimento em mídia e ROAS geral.",
+      "Vendas consolidadas de lojas (Shopify, Nuvemshop, Tray, Woo), marketplaces (Mercado Livre, Shopee, TikTok Shop) e checkout Atrako: receita, pedidos, ticket médio, por loja e por origem de tráfego, investimento em mídia e ROAS geral. Não traz frete, estado nem líquido do marketplace — para isso use marketplaces_visao.",
     parameters: periodSchema(),
     risk: "READ",
     async run(args, rt) {
@@ -624,6 +791,32 @@ export const READ_TOOLS: AtrakoTool[] = [
           label: "Vendas consolidadas",
           period: periodSource(p),
           note: "Receita = pedidos pagos (cancelados fora). Compras reportadas pela Meta são referência, não somam à receita das lojas.",
+        },
+      };
+    },
+  },
+  {
+    name: "marketplaces_visao",
+    step: "Lendo os marketplaces",
+    description:
+      "Aba Marketplaces do Dashboard: Mercado Livre, Shopee ou TikTok Shop. Receita, taxas, frete do vendedor, líquido, modos de envio (Full, Flex, Mercado Envios), estados e cidades, produtos mais vendidos e os pedidos recentes. Não inclui a loja própria (Woo, Shopify, Tray, Nuvemshop). Cidade ausente significa que o marketplace não liberou o endereço.",
+    parameters: periodSchema({
+      canal: nullableString("Marketplace: mercadolivre, shopee, tiktok ou null para todos.", ["mercadolivre", "shopee", "tiktok"]),
+    }),
+    risk: "READ",
+    async run(args, rt) {
+      const p = periodOf(args, rt);
+      const providers = marketplaceProviders(args.canal);
+      const data = await marketplaceSnapshot(rt.ctx.clienteId, range(p), providers);
+      const canal = providers.length === 1 ? (PROVIDER_LABELS[providers[0]] ?? providers[0]) : "Marketplaces";
+      return {
+        data: { canal, ...data },
+        coverage: coverageFor(rt, ["marketplace"], data.pedidos > 0),
+        source: {
+          tool: "marketplaces_visao",
+          label: canal,
+          period: periodSource(p),
+          note: "Líquido = receita − taxas − frete do vendedor. Full, Flex e Mercado Envios são o envio, não anúncio. pedidosSemCidade não têm endereço liberado.",
         },
       };
     },

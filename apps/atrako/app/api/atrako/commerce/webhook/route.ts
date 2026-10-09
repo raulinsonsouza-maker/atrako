@@ -40,6 +40,22 @@ export async function POST(request: NextRequest) {
         "",
     ).trim();
 
+    const hintedStatus = String(
+      (body as { data?: { status?: string }; status?: string })?.data?.status ||
+        (body as { status?: string })?.status ||
+        "",
+    );
+
+    if (externalRef.startsWith("food:")) {
+      const { applyFoodPaymentWebhook } = await import("@/lib/food/orders");
+      await applyFoodPaymentWebhook({
+        orderId: externalRef.slice("food:".length),
+        mpOrderId: dataId || null,
+        hintedStatus,
+      });
+      return NextResponse.json({ ok: true, food: true });
+    }
+
     let order =
       (externalRef
         ? await prisma.commerceOrder.findUnique({ where: { id: externalRef } })
@@ -80,6 +96,15 @@ export async function POST(request: NextRequest) {
           }
         }
         return NextResponse.json({ ok: true, agenda: true });
+      }
+    }
+
+    if (!order && dataId) {
+      const food = await prisma.foodOrder.findFirst({ where: { mpOrderId: dataId }, select: { id: true } });
+      if (food) {
+        const { applyFoodPaymentWebhook } = await import("@/lib/food/orders");
+        await applyFoodPaymentWebhook({ orderId: food.id, mpOrderId: dataId, hintedStatus });
+        return NextResponse.json({ ok: true, food: true });
       }
     }
 

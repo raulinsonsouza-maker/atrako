@@ -4,6 +4,13 @@
  */
 
 import { parseStoreLocalTime, parseWooTime } from "@/lib/integrations/store-time";
+import {
+  describeMlBuyer,
+  mlPaymentFromOrder,
+  mlShippingLabel,
+  mlShippingStatusLabel,
+  parseMlBuyerFacts,
+} from "@/lib/integrations/mercadolivre/buyer-facts";
 
 export type OrderLocation = { city: string; state: string | null };
 
@@ -145,11 +152,76 @@ function trayDetails(o: RawTrayOrder): OrderDetails {
   };
 }
 
+function mlDetails(raw: Record<string, unknown>): OrderDetails {
+  const order = record(raw.order);
+  if (!order) return emptyDetails();
+  const facts = parseMlBuyerFacts({
+    order,
+    billing: raw.billing,
+    shipment: raw.shipment,
+  });
+  const card = describeMlBuyer({
+    facts,
+    cityName: text(raw.cityName),
+    cityRaw: text(raw.cityRaw),
+    stateUf: text(raw.stateUf),
+    shippingMode: text(raw.shippingMode) ?? text(record(raw.shipment)?.mode) ?? text(record(order.shipping)?.mode),
+    logisticType:
+      text(raw.logisticType) ??
+      text(record(raw.shipment)?.logistic_type) ??
+      text(record(order.shipping)?.logistic_type),
+    shippingStatus: text(raw.shippingStatus),
+    shipment: raw.shipment,
+  });
+  const pay = mlPaymentFromOrder(order);
+  const method = mlShippingLabel(
+    text(raw.shippingMode) ?? text(record(raw.shipment)?.mode),
+    text(raw.logisticType) ?? text(record(raw.shipment)?.logistic_type),
+  );
+  const status = mlShippingStatusLabel(
+    text(raw.shippingStatus) ?? text(record(raw.shipment)?.status),
+  );
+  const shippingMethod = [method, status].filter(Boolean).join(" · ") || null;
+  const city = card.location?.split("/")[0] ?? null;
+  const state = card.location?.includes("/") ? card.location.split("/").slice(1).join("/") : null;
+  return {
+    createdAt: text(order.date_created),
+    paymentMethod: pay.method,
+    installments: pay.installments,
+    coupons: [],
+    discountCents: 0,
+    shipping: shippingMethod ? { method: shippingMethod, cents: null, days: null, estimatedDate: null, trackingUrl: null } : null,
+    location: city ? { city, state } : null,
+    gift: false,
+    giftTo: null,
+  };
+}
+
+function record(raw: unknown): Record<string, unknown> | null {
+  return raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
+}
+
+function emptyDetails(): OrderDetails {
+  return {
+    createdAt: null,
+    paymentMethod: null,
+    installments: null,
+    coupons: [],
+    discountCents: 0,
+    shipping: null,
+    location: null,
+    gift: false,
+    giftTo: null,
+  };
+}
+
 export function orderDetails(provider: string, rawPayload: unknown): OrderDetails | null {
-  const order = (rawPayload as { order?: unknown } | null)?.order;
+  const root = record(rawPayload);
+  const order = root?.order;
   if (!order || typeof order !== "object") return null;
   if (provider === "WOOCOMMERCE") return wooDetails(order as RawWooOrder);
   if (provider === "TRAY") return trayDetails(order as RawTrayOrder);
+  if (provider === "MERCADO_LIVRE") return mlDetails(root!);
   return null;
 }
 

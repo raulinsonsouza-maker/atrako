@@ -26,7 +26,7 @@ export const LIFECYCLE_LABELS: Record<Lifecycle, string> = {
 type PaidOrder = { at: Date; cents: number; titles: string[] };
 
 async function paidOrdersFor(workspaceId: string, contactId: string): Promise<PaidOrder[]> {
-  const [mkt, com] = await Promise.all([
+  const [mkt, com, food] = await Promise.all([
     prisma.marketplaceOrder.findMany({
       where: { clienteId: workspaceId, contactId },
       select: {
@@ -43,6 +43,10 @@ async function paidOrdersFor(workspaceId: string, contactId: string): Promise<Pa
       where: { clienteId: workspaceId, contactId, approvedAt: { not: null } },
       select: { approvedAt: true, totalCents: true, items: { select: { name: true } } },
     }),
+    prisma.foodOrder.findMany({
+      where: { clienteId: workspaceId, contactId, paymentStatus: "APPROVED", paidAt: { not: null } },
+      select: { paidAt: true, totalCents: true, items: { select: { name: true } } },
+    }),
   ]);
   const out: PaidOrder[] = [];
   for (const o of mkt) {
@@ -51,6 +55,9 @@ async function paidOrdersFor(workspaceId: string, contactId: string): Promise<Pa
   }
   for (const o of com) {
     out.push({ at: o.approvedAt!, cents: o.totalCents, titles: o.items.map((i) => i.name) });
+  }
+  for (const o of food) {
+    out.push({ at: o.paidAt!, cents: o.totalCents, titles: o.items.map((i) => i.name) });
   }
   return out.sort((a, b) => a.at.getTime() - b.at.getTime());
 }
@@ -179,7 +186,7 @@ export async function runLifecycleTriggers(
 /** Cron noturno: todos os contatos com pedido (ou perfil) em todos os workspaces. */
 export async function recomputeAllProfiles(opts?: { workspaceId?: string; dryRun?: boolean; triggers?: boolean }) {
   const where = opts?.workspaceId ? { clienteId: opts.workspaceId } : {};
-  const [mkt, com, existing] = await Promise.all([
+  const [mkt, com, foodContacts, existing] = await Promise.all([
     prisma.marketplaceOrder.findMany({
       where: { ...where, contactId: { not: null } },
       distinct: ["clienteId", "contactId"],
@@ -190,10 +197,15 @@ export async function recomputeAllProfiles(opts?: { workspaceId?: string; dryRun
       distinct: ["clienteId", "contactId"],
       select: { clienteId: true, contactId: true },
     }),
+    prisma.foodOrder.findMany({
+      where: { ...where, contactId: { not: null }, paymentStatus: "APPROVED" },
+      distinct: ["clienteId", "contactId"],
+      select: { clienteId: true, contactId: true },
+    }),
     prisma.customerProfile.findMany({ where, select: { clienteId: true, contactId: true } }),
   ]);
   const pairs = new Map<string, { clienteId: string; contactId: string }>();
-  for (const r of [...mkt, ...com, ...existing]) {
+  for (const r of [...mkt, ...com, ...foodContacts, ...existing]) {
     if (r.contactId) pairs.set(r.contactId, { clienteId: r.clienteId, contactId: r.contactId });
   }
   let profiles = 0;

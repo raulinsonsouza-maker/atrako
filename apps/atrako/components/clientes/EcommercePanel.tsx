@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Area, Bar, CartesianGrid, ComposedChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { MetricGrid, MetricTile, SectionCard, SegmentedControl } from "@/components/ui";
 import { ChannelDisconnected } from "@/components/clientes/ChannelDisconnected";
+import { PedidoSheet } from "@/components/clientes/PedidoSheet";
 import { orderStatusLabel } from "@/lib/commerce-attribution/order-status";
 import { bucketYmd, diasEntre, rotuloEixo, rotuloTooltip } from "@/lib/chart-bucket";
 
@@ -151,6 +152,7 @@ export function EcommercePanel({
   canConfigure?: boolean;
 }) {
   const [provider, setProvider] = useState("ALL");
+  const [orderId, setOrderId] = useState<string | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["ecommerce", clienteId, provider, dateRange.from, dateRange.to],
@@ -337,7 +339,7 @@ export function EcommercePanel({
       <div className="rel-card overflow-hidden !p-0">
         <div className="border-b border-[var(--border)] px-4 py-3">
           <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Últimos pedidos</p>
-          <p className="type-fine-print text-[var(--muted-foreground)]">Amostra dos 10 mais recentes no período.</p>
+          <p className="type-fine-print text-[var(--muted-foreground)]">Os 10 mais recentes. Clique para abrir o pedido.</p>
         </div>
         {data.orders.length === 0 ? (
           <p className="px-4 py-8 text-center type-fine-print text-[var(--muted-foreground)]">
@@ -358,11 +360,19 @@ export function EcommercePanel({
               </thead>
               <tbody>
                 {data.orders.map((order) => (
-                  <tr key={order.id} className="border-b border-border/60">
+                  <tr
+                    key={order.id}
+                    className="cursor-pointer border-b border-border/60 active:bg-[var(--divider-soft)]"
+                    onClick={() => setOrderId(order.id)}
+                  >
                     <td className="px-4 py-3 tabular-nums text-[var(--foreground)]">
                       #{order.externalId}
                       {order.leadId ? (
-                        <Link href="/crm" className="ml-2 text-[var(--primary)] hover:underline">
+                        <Link
+                          href="/crm"
+                          onClick={(event) => event.stopPropagation()}
+                          className="ml-2 text-[var(--primary)]"
+                        >
                           Lead
                         </Link>
                       ) : null}
@@ -388,6 +398,7 @@ export function EcommercePanel({
           </div>
         )}
       </div>
+      {orderId ? <PedidoSheet clienteId={clienteId} orderId={orderId} onClose={() => setOrderId(null)} /> : null}
     </div>
   );
 }

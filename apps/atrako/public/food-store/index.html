@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#c10037" />
+    <meta name="description" content="Cardápio digital Lépido — uma fome de experiência." />
+    <title>Lépido • Cardápio</title>
+    <link rel="preload" href="/food-store/assets/mascote.png" as="image" />
+    <link rel="stylesheet" href="/food-store/styles.css" />
+  </head>
+  <body class="intro-open">
+    <div class="intro" id="intro" aria-label="Boas-vindas ao cardápio Lépido">
+      <div class="intro__glow"></div>
+      <img class="intro__logo" src="/food-store/assets/logo-vermelho.png" alt="Lépido" />
+      <div class="intro__copy">
+        <span class="eyebrow">UMA FOME DE EXPERIÊNCIA</span>
+        <h1>Bateu a<br />fome?</h1>
+        <p>O Lépido sabe exatamente o que fazer.</p>
+      </div>
+      <div class="intro__character" id="introCharacter">
+        <video
+          id="introLoopVideo"
+          class="intro__video intro__video--loop"
+          muted
+          autoplay
+          loop
+          playsinline
+          preload="auto"
+          poster="/food-store/assets/mascote-intro-poster.jpg"
+          aria-label="Mascote Lépido se movimentando com a boca fechada"
+        >
+          <source src="/food-store/assets/mascote-loop-fechado.mp4" type="video/mp4" />
+        </video>
+        <video
+          id="introOpenVideo"
+          class="intro__video intro__video--opening"
+          muted
+          playsinline
+          preload="auto"
+          aria-hidden="true"
+        >
+          <source src="/food-store/assets/mascote-abre-boca.mp4" type="video/mp4" />
+        </video>
+      </div>
+      <button class="intro__cta" id="enterMenu" type="button">
+        <span>Vem comigo</span>
+        <span class="intro__cta-icon" aria-hidden="true">↓</span>
+      </button>
+      <button class="intro__skip" id="skipIntro" type="button">Pular animação</button>
+    </div>
+
+    <div class="mouth-transition" id="mouthTransition" aria-hidden="true">
+      <span>HMMM...</span>
+    </div>
+
+    <main id="menu" tabindex="-1">
+      <header class="topbar">
+        <img src="/food-store/assets/logo-vermelho.png" alt="Lépido" />
+        <button class="location" type="button" aria-label="Alterar local de entrega">
+          <span>Entregar em</span>
+          <strong>Minha localização ⌄</strong>
+        </button>
+        <button class="profile-button" type="button" aria-label="Minha conta">☺</button>
+      </header>
+
+      <section class="welcome">
+        <div>
+          <p>Oi, faminto! <span aria-hidden="true">👋</span></p>
+          <h2>O que vai te fazer<br /><em>feliz hoje?</em></h2>
+        </div>
+        <span class="open-status"><i></i> Aberto agora</span>
+      </section>
+
+      <section class="hero-offer" aria-label="Oferta em destaque">
+        <img class="hero-offer__image" src="/food-store/assets/banner-duplo.webp" alt="Duplo Lépido com bacon, cheddar, salada e molho especial" />
+        <div class="hero-offer__content">
+          <span class="tag">COMBO DO DIA</span>
+          <h3>Duplo<br />Lépido</h3>
+          <p>2 carnes, cheddar, bacon crocante e molho da casa.</p>
+          <strong>R$ 34,90</strong>
+          <button type="button" class="quick-add" data-id="duplo">Quero esse <span>+</span></button>
+        </div>
+      </section>
+
+      <nav class="categories" aria-label="Categorias do cardápio">
+        <button class="category active" data-category="todos"><span>✦</span> Todos</button>
+        <button class="category" data-category="burgers"><span>🍔</span> Burgers</button>
+        <button class="category" data-category="combos"><span>🍟</span> Combos</button>
+        <button class="category" data-category="bebidas"><span>🥤</span> Bebidas</button>
+        <button class="category" data-category="doces"><span>🍦</span> Doces</button>
+      </nav>
+
+      <section class="menu-section" aria-labelledby="favoritesTitle">
+        <div class="section-heading">
+          <div>
+            <span>OS QUERIDINHOS</span>
+            <h2 id="favoritesTitle">Mais pedidos</h2>
+          </div>
+          <button type="button" id="showAll">Ver todos</button>
+        </div>
+        <div class="products" id="products"></div>
+      </section>
+
+      <section class="brand-strip">
+        <span>LEVE</span><i>✦</i><span>RÁPIDO</span><i>✦</i><span>GOSTOSO</span>
+      </section>
+
+      <section class="menu-section menu-section--last" aria-labelledby="drinksTitle">
+        <div class="section-heading">
+          <div>
+            <span>PRA ACOMPANHAR</span>
+            <h2 id="drinksTitle">Bebidas geladas</h2>
+          </div>
+        </div>
+        <div class="drinks" id="drinks"></div>
+      </section>
+    </main>
+
+    <button class="mascot-helper" id="mascotHelper" type="button" aria-label="Pedir uma sugestão ao Lépido">
+      <img src="/food-store/assets/mascote.png" alt="" />
+      <span>?</span>
+    </button>
+    <div class="helper-bubble" id="helperBubble" role="status">
+      <button type="button" aria-label="Fechar sugestão">×</button>
+      <strong>Tá com muita fome?</strong>
+      <p>Vai de Duplo Lépido. Eu garanto. 😋</p>
+    </div>
+
+    <button class="cart-bar" id="cartBar" type="button" aria-controls="cartSheet" aria-expanded="false">
+      <span class="cart-count" id="cartCount">0</span>
+      <span>Ver meu pedido</span>
+      <strong id="cartTotal">R$ 0,00</strong>
+    </button>
+
+    <div class="cart-overlay" id="cartOverlay"></div>
+    <aside class="cart-sheet" id="cartSheet" aria-hidden="true" aria-labelledby="cartTitle">
+      <div class="cart-sheet__handle"></div>
+      <div class="cart-sheet__heading">
+        <div>
+          <span>QUASE LÁ!</span>
+          <h2 id="cartTitle">Seu pedido</h2>
+        </div>
+        <button id="closeCart" type="button" aria-label="Fechar carrinho">×</button>
+      </div>
+      <div class="cart-items" id="cartItems"></div>
+      <div class="cart-summary">
+        <div><span>Subtotal</span><strong id="subtotal">R$ 0,00</strong></div>
+        <div><span>Entrega</span><strong>R$ 5,00</strong></div>
+        <div class="cart-summary__total"><span>Total</span><strong id="grandTotal">R$ 5,00</strong></div>
+      </div>
+      <button class="checkout" id="checkout" type="button">Finalizar pedido <span>→</span></button>
+    </aside>
+
+    <section class="product-page" id="productPage" aria-hidden="true" aria-labelledby="detailName">
+      <div class="product-page__hero">
+        <img id="detailImage" src="" alt="" />
+        <button class="product-page__back" id="closeProduct" type="button" aria-label="Voltar ao cardápio">←</button>
+        <span class="product-page__badge" id="detailBadge"></span>
+      </div>
+      <div class="product-page__content">
+        <div class="product-page__title">
+          <div><span id="detailCategory">BURGER</span><h1 id="detailName"></h1></div>
+          <strong id="detailPrice"></strong>
+        </div>
+        <p class="product-page__description" id="detailDescription"></p>
+        <div class="product-facts">
+          <span><strong>15–20</strong> min</span><span><strong id="detailCalories">650</strong> kcal</span><span><strong>1</strong> pessoa</span>
+        </div>
+        <section class="detail-section">
+          <div class="detail-section__heading"><div><span>VEM COM</span><h2>Ingredientes</h2></div><span>Inclusos</span></div>
+          <div class="ingredient-list" id="detailIngredients"></div>
+        </section>
+        <section class="detail-section">
+          <div class="detail-section__heading"><div><span>DO SEU JEITO</span><h2>Quer tirar algo?</h2></div><span>Opcional</span></div>
+          <div class="remove-list" id="detailRemovals"></div>
+        </section>
+        <section class="detail-section">
+          <label class="notes-label" for="detailNotes"><span>ALGUM RECADO?</span><strong>Observações</strong></label>
+          <textarea id="detailNotes" maxlength="140" placeholder="Ex.: cortar ao meio, molho separado..."></textarea>
+          <small><span id="notesCount">0</span>/140</small>
+        </section>
+        <div class="allergen-note" id="detailAllergens"></div>
+      </div>
+      <div class="product-page__footer">
+        <div class="detail-quantity" aria-label="Quantidade"><button id="detailMinus" type="button" aria-label="Diminuir quantidade">−</button><strong id="detailQuantity">1</strong><button id="detailPlus" type="button" aria-label="Aumentar quantidade">+</button></div>
+        <button class="detail-add" id="detailAdd" type="button"><span>Adicionar</span><strong id="detailTotal"></strong></button>
+      </div>
+    </section>
+
+    <section class="checkout-page" id="checkoutPage" aria-hidden="true" aria-labelledby="checkoutTitle">
+      <header class="checkout-header">
+        <button id="closeCheckout" type="button" aria-label="Voltar ao carrinho">←</button>
+        <div><span>FINALIZAR</span><h1 id="checkoutTitle">Seu pedido</h1></div>
+        <span class="checkout-step">1 de 1</span>
+      </header>
+      <form id="checkoutForm" novalidate>
+        <section class="checkout-card">
+          <div class="checkout-card__heading"><span>1</span><div><small>COMO VOCÊ QUER?</small><h2>Entrega ou retirada</h2></div></div>
+          <div class="fulfillment-toggle">
+            <label><input type="radio" name="fulfillment" value="delivery" checked /><span>🛵 Entrega</span></label>
+            <label><input type="radio" name="fulfillment" value="pickup" /><span>🛜 Retirada</span></label>
+          </div>
+          <div class="address-fields" id="addressFields">
+            <div class="field"><label for="checkoutCep">CEP</label><input id="checkoutCep" name="cep" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" required /></div>
+            <div class="field"><label for="checkoutStreet">Rua</label><input id="checkoutStreet" name="street" autocomplete="street-address" placeholder="Nome da rua" required /></div>
+            <div class="field-row"><div class="field"><label for="checkoutNumber">Número</label><input id="checkoutNumber" name="number" inputmode="numeric" placeholder="123" required /></div><div class="field"><label for="checkoutComplement">Complemento</label><input id="checkoutComplement" name="complement" placeholder="Apto, bloco..." /></div></div>
+            <div class="field"><label for="checkoutNeighborhood">Bairro</label><input id="checkoutNeighborhood" name="neighborhood" placeholder="Seu bairro" required /></div>
+          </div>
+          <div class="pickup-info" id="pickupInfo"><strong>Retire no Lépido Centro</strong><span>Rua das Delícias, 123 • Centro</span><small>Pronto em aproximadamente 20 minutos</small></div>
+        </section>
+
+        <section class="checkout-card">
+          <div class="checkout-card__heading"><span>2</span><div><small>QUEM VAI RECEBER?</small><h2>Seus dados</h2></div></div>
+          <div class="field"><label for="checkoutName">Nome</label><input id="checkoutName" name="customerName" autocomplete="name" placeholder="Como podemos te chamar?" required /></div>
+          <div class="field"><label for="checkoutPhone">Celular</label><input id="checkoutPhone" name="phone" type="tel" autocomplete="tel" placeholder="(00) 00000-0000" required /></div>
+        </section>
+
+        <section class="checkout-card">
+          <div class="checkout-card__heading"><span>3</span><div><small>FORMA DE PAGAMENTO</small><h2>Como vai pagar?</h2></div></div>
+          <div class="payment-list">
+            <label><input type="radio" name="payment" value="pix" checked /><span><i>PIX</i><b>Pix</b><small>Chave exibida após confirmar</small></span></label>
+            <label><input type="radio" name="payment" value="card" /><span><i>💳</i><b>Cartão na entrega</b><small>Crédito ou débito</small></span></label>
+            <label><input type="radio" name="payment" value="cash" /><span><i>💵</i><b>Dinheiro</b><small>Pagamento na entrega</small></span></label>
+          </div>
+          <div class="field change-field" id="changeField"><label for="checkoutChange">Troco para quanto?</label><input id="checkoutChange" name="change" inputmode="decimal" placeholder="R$ 0,00" /></div>
+        </section>
+
+        <section class="checkout-card">
+          <div class="checkout-card__heading"><span>4</span><div><small>CONFIRA TUDO</small><h2>Resumo</h2></div></div>
+          <div class="checkout-items" id="checkoutItems"></div>
+          <label class="coupon"><input id="couponInput" placeholder="Cupom de desconto" /><button id="applyCoupon" type="button">Aplicar</button></label>
+          <div class="checkout-totals">
+            <div><span>Subtotal</span><strong id="checkoutSubtotal"></strong></div>
+            <div><span>Entrega</span><strong id="checkoutDelivery"></strong></div>
+            <div class="discount-row" id="discountRow"><span>Desconto</span><strong id="checkoutDiscount"></strong></div>
+            <div class="checkout-totals__grand"><span>Total</span><strong id="checkoutGrandTotal"></strong></div>
+          </div>
+        </section>
+
+        <label class="terms-check"><input id="termsCheck" type="checkbox" required /><span>Confirmo que os dados e itens do pedido estão corretos.</span></label>
+        <button class="place-order" id="placeOrder" type="submit"><span>Confirmar pedido</span><strong id="placeOrderTotal"></strong></button>
+      </form>
+    </section>
+
+    <section class="order-success" id="orderSuccess" aria-hidden="true">
+      <div class="success-animation" aria-label="Lépido saindo para entregar o pedido">
+        <video id="deliveryLoopVideo" autoplay muted loop playsinline preload="auto" poster="/food-store/assets/tela-entrega-poster.jpg">
+          <source src="/food-store/assets/tela-entrega-loop.mp4" type="video/mp4" />
+        </video>
+      </div>
+      <div class="success-confetti" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="success-content">
+        <span class="success-kicker">PEDIDO CONFIRMADO</span>
+        <h1>Boa escolha!</h1>
+        <p>Seu pedido <strong id="orderNumber">#0000</strong> foi recebido e já entrou na fila.</p>
+        <div class="order-status"><i></i><div><span>Previsão</span><strong id="orderEstimate">35–45 minutos</strong></div></div>
+        <p id="orderPaymentNote"></p>
+        <img id="pixQr" alt="QR Code do Pix" hidden />
+        <p id="pixCopy" hidden></p>
+        <div class="order-progress"><span class="active">Recebido</span><span>Preparando</span><span>A caminho</span></div>
+        <button id="finishOrder" type="button">Voltar ao cardápio</button>
+      </div>
+    </section>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script>window.FOOD_SLUG = "__SLUG__";</script>
+    <script src="/food-store/app.js"></script>
+  </body>
+</html>

@@ -9,7 +9,8 @@ import { isRevenueOrder, orderStatusLabel } from "@/lib/commerce-attribution/ord
 import { describeOrderOrigin } from "@/lib/commerce-attribution/describe";
 import { CHANNEL_LABELS, type OrderChannel } from "@/lib/commerce-attribution/store-source";
 import { LOST_REASON_LABELS, readStageHistory, type LostReason } from "@/lib/crm/stage-history";
-import { orderDetails } from "@/lib/commerce/order-details";
+import { formatLocation, orderDetails } from "@/lib/commerce/order-details";
+import { mlShippingLabel } from "@/lib/integrations/mercadolivre/buyer-facts";
 
 export function normalizePersonPhone(raw?: string | null): string | null {
   if (!raw) return null;
@@ -370,10 +371,32 @@ const STORE_PROVIDER_LABELS: Record<string, string> = {
   SHOPEE: "Shopee",
   TIKTOK_SHOP: "TikTok Shop",
   COMMERCE: "Checkout próprio",
+  FOOD: "Food",
 };
 
 export function storeProviderLabel(provider: string) {
   return STORE_PROVIDER_LABELS[provider] ?? provider;
+}
+
+const LEAD_SOURCE_LABELS: Record<string, string> = {
+  mercadolivre: "Mercado Livre",
+  shopee: "Shopee",
+  tiktokshop: "TikTok Shop",
+  woocommerce: "WooCommerce",
+  shopify: "Shopify",
+  nuvemshop: "Nuvemshop",
+  tray: "Tray",
+  magalu: "Magalu",
+  instagram: "Instagram",
+  whatsapp: "WhatsApp",
+  meta: "Meta",
+};
+
+/** `mercadolivre` e `MERCADO_LIVRE` viram o mesmo nome. */
+export function leadSourceLabel(source: string) {
+  const raw = source.trim();
+  const upper = raw.toUpperCase().replace(/[\s-]+/g, "_");
+  return STORE_PROVIDER_LABELS[upper] ?? LEAD_SOURCE_LABELS[raw.toLowerCase()] ?? raw;
 }
 
 export { orderStatusLabel };
@@ -728,9 +751,7 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
   for (const lead of leads) {
     const meta = asMeta(lead.metadata);
     const attrDetail = formatAttributionDetail(meta);
-    const sourcePart = lead.source
-      ? `Origem: ${STORE_PROVIDER_LABELS[lead.source.toUpperCase()] ?? lead.source}`
-      : undefined;
+    const sourcePart = lead.source ? `Origem: ${leadSourceLabel(lead.source)}` : undefined;
 
     items.push({
       at: lead.createdAt.toISOString(),
@@ -950,11 +971,25 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
     const cents = mo.totalCents ?? 0;
     const key = orderKey(mo.provider, mo.externalId);
     const at = mo.occurredAt ?? mo.createdAt;
-    const details = orderDetails(mo.provider, mo.rawPayload);
+    const details = orderDetails(mo.provider, {
+      ...(mo.rawPayload && typeof mo.rawPayload === "object" ? (mo.rawPayload as Record<string, unknown>) : {}),
+      shippingMode: mo.shippingMode,
+      logisticType: mo.logisticType,
+      shippingStatus: mo.shippingStatus,
+      cityName: mo.cityName,
+      cityRaw: mo.cityRaw,
+      stateUf: mo.stateUf,
+    });
     const createdAt = details?.createdAt ? new Date(details.createdAt) : null;
     const paid = isRevenueOrder(mo.status);
     const paidLater = paid && createdAt && at.getTime() - createdAt.getTime() >= 60_000 ? createdAt : null;
     const method = details?.paymentMethod ?? null;
+    const place =
+      formatLocation(details?.location) ??
+      (mo.cityName || mo.cityRaw ? [mo.cityName ?? mo.cityRaw, mo.stateUf].filter(Boolean).join("/") : null);
+    const ship =
+      details?.shipping?.method ??
+      mlShippingLabel(mo.shippingMode, mo.logisticType);
     if (paidLater) {
       items.push({
         at: paidLater.toISOString(),
@@ -988,9 +1023,11 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
       title: orderTitle(mo.externalId, mo.status, cents),
       detail:
         [
+          itemsSummary(mo.items),
+          place ? `entrega em ${place}` : null,
+          ship,
           storeProviderLabel(mo.provider),
           paid && method ? `pago com ${method}${paidLater ? ` ${fmtLag(at.getTime() - paidLater.getTime())} depois do pedido` : ""}` : null,
-          itemsSummary(mo.items),
           origin ? `Origem: ${origin.title}` : null,
           origin?.detail,
           isRevenueOrder(mo.status) ? conversionByOrder.get(key) ?? null : null,

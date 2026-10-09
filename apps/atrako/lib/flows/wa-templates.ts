@@ -193,6 +193,26 @@ export const WA_TEMPLATE_LIBRARY: WaTemplateDef[] = [
     },
     buttons: [{ type: "COPY_CODE" }, { type: "URL", text: "Conhecer a loja" }, OPTOUT],
   },
+  ...[
+    ["food_confirmed", "foi confirmado"],
+    ["food_preparing", "está sendo preparado"],
+    ["food_ready", "está pronto para retirada"],
+    ["food_ready_dispatch", "está pronto para sair"],
+    ["food_out_for_delivery", "saiu para entrega"],
+    ["food_completed", "foi concluído"],
+    ["food_cancelled", "foi cancelado"],
+  ].map(
+    ([purpose, verb]): WaTemplateDef => ({
+      purpose,
+      category: "UTILITY",
+      body: {
+        proximo: `Oi {{first_name}}, seu pedido {{order_ref}} na {{store_name}} ${verb}. Acompanhe por aqui.`,
+        neutro: `Olá {{first_name}}, o pedido {{order_ref}} na {{store_name}} ${verb}. Acompanhe pelo botão abaixo.`,
+        formal: `Olá {{first_name}}. O pedido {{order_ref}} na {{store_name}} ${verb}. Acompanhe pelo botão abaixo.`,
+      },
+      buttons: [{ type: "URL", text: "Acompanhar" }],
+    }),
+  ),
   ...[2, 3, 4].map(
     (n): WaTemplateDef => ({
       purpose: `carousel_${n}`,

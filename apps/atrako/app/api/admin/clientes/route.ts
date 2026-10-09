@@ -14,6 +14,8 @@ import { requireInternalAdmin } from "@/lib/internalAccess";
 import { writeAuditLog } from "@/lib/internalUsers";
 import { validateCommercialContext } from "@/lib/admin/clientContext";
 import { ensureWorkspaceSettings } from "@/lib/config/getWorkspaceConfig";
+import { prisma } from "@/lib/db";
+import { applyWorkspaceEdition, parseEdition } from "@/lib/modules/apply-edition";
 import { createWorkspaceInvite } from "@/lib/tenancy/invites";
 
 export async function GET(request: NextRequest) {
@@ -21,7 +23,12 @@ export async function GET(request: NextRequest) {
   if (authz.response) return authz.response;
   try {
     const clientes = await findAllClientes(false);
-    return NextResponse.json(clientes);
+    const settings = await prisma.workspaceSettings.findMany({
+      where: { clienteId: { in: clientes.map((c) => c.id) } },
+      select: { clienteId: true, edition: true },
+    });
+    const editionById = new Map(settings.map((s) => [s.clienteId, s.edition]));
+    return NextResponse.json(clientes.map((c) => ({ ...c, edition: editionById.get(c.id) ?? "custom" })));
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: message }, { status: 500 });
@@ -37,6 +44,7 @@ export async function POST(request: NextRequest) {
     logoUrl?: string;
     segmento?: string;
     ativo?: boolean;
+    edition?: string;
     syncAfterCreate?: boolean;
     orcamentoMidiaGoogleMensal?: number;
     orcamentoMidiaMetaMensal?: number;
@@ -139,6 +147,8 @@ export async function POST(request: NextRequest) {
     });
 
     await ensureWorkspaceSettings(cliente.id);
+    const edition = parseEdition(body.edition) ?? "custom";
+    await applyWorkspaceEdition(cliente.id, edition);
 
     let ownerInvite: { acceptPath: string; email: string } | null = null;
     const ownerEmail = body.ownerEmail?.trim().toLowerCase();

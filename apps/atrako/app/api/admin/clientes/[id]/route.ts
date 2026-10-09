@@ -14,6 +14,7 @@ import { syncClienteCanais } from "@/lib/sync/syncClienteCanais";
 import { requireInternalAdmin } from "@/lib/internalAccess";
 import { writeAuditLog } from "@/lib/internalUsers";
 import { validateCommercialContext } from "@/lib/admin/clientContext";
+import { applyWorkspaceEdition, parseEdition } from "@/lib/modules/apply-edition";
 
 export async function PATCH(
   request: NextRequest,
@@ -46,6 +47,7 @@ export async function PATCH(
     inPilotEnabled?: boolean;
     objetivoMidia?: string;
     perfilPanel?: string | null;
+    edition?: string;
     squad?: number | null;
     produtoServico?: string | null;
     modeloNegocio?: string | null;
@@ -147,6 +149,9 @@ export async function PATCH(
         ...commercialContext,
       },
     });
+
+    const edition = parseEdition(body.edition);
+    if (edition) await applyWorkspaceEdition(id, edition);
 
     const currentGoogleConta = cliente.contas.find((conta) => conta.plataforma === PLATAFORMA_GOOGLE_ADS);
     const currentMetaConta = cliente.contas.find((conta) => conta.plataforma === PLATAFORMA_META);

@@ -3,6 +3,7 @@
  * Doc: https://developers.mercadolivre.com.br/pt_br/gerenciamento-de-envios
  */
 
+import { mlShippingLabel } from "./buyer-facts";
 import { mlFetch } from "./client";
 
 export type MlShipment = {
@@ -55,14 +56,18 @@ export function extractShippingEconomics(shipment: MlShipment): {
   };
 }
 
-/** Label amigável Full / Flex / Correios etc. */
+/** Label amigável Full / Flex / Mercado Envios. */
 export function shippingLabel(mode: string | null, logisticType: string | null) {
-  const logistic = (logisticType || "").toLowerCase();
-  const m = (mode || "").toLowerCase();
-  if (logistic.includes("fulfillment") || logistic === "fbm") return "Full";
-  if (logistic.includes("flex") || m.includes("flex")) return "Flex";
-  if (logistic.includes("self_service") || logistic.includes("turbo")) return "Turbo / Próprio";
-  if (m === "me2" || m === "me1") return "Mercado Envios";
-  if (m === "custom") return "Personalizado";
-  return logisticType || mode || "—";
+  return mlShippingLabel(mode, logisticType) ?? "—";
+}
+
+/** Chave estável para filtrar Full / Flex / Mercado Envios. */
+export function shippingFacetKey(mode: string | null, logisticType: string | null) {
+  const label = mlShippingLabel(mode, logisticType);
+  if (label === "Full") return "full";
+  if (label === "Flex") return "flex";
+  if (label === "Turbo / Próprio") return "turbo";
+  if (label === "Mercado Envios") return "me";
+  if (label === "Personalizado") return "custom";
+  return "outro";
 }

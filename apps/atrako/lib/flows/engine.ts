@@ -44,7 +44,11 @@ export const SALES_TRIGGERS: FlowTrigger[] = [
   "lead_welcome",
 ];
 
-/** Transacionais: não contam no limite de e-mail de marketing. */
+/**
+ * Transacionais: não contam no limite de e-mail de marketing.
+ * Status do pedido Food (food_confirmed, food_out_for_delivery, …) sai por template
+ * UTILITY em lib/food/status-message, com pricingCategory utility, fora desta cota.
+ */
 const TRANSACTIONAL_TRIGGERS = new Set<string>(["order_unpaid"]);
 
 const LEASE_MS = 10 * 60_000;

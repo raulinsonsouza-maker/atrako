@@ -9,6 +9,9 @@ import { leadCommunications } from "@/lib/flows/lead-card";
 import { CHANNEL_LABELS, wooVisitExtras, type OrderChannel } from "@/lib/commerce-attribution/store-source";
 import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
 import { contactLocation, formatLocation, orderDetails } from "@/lib/commerce/order-details";
+import { describeMlBuyer, parseMlBuyerFacts } from "@/lib/integrations/mercadolivre/buyer-facts";
+import { refreshMlBuyerIfThin } from "@/lib/integrations/mercadolivre/enrich-buyer";
+import { leadSourceLabel } from "@/lib/atrako/person";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -31,9 +34,6 @@ export async function GET(request: NextRequest, ctx: Ctx) {
   if (!lead) return NextResponse.json({ error: "not found" }, { status: 404 });
 
   const pipeline = await ensureDefaultPipeline(workspaceId);
-  const journey = lead.contactId
-    ? await getPersonJourney(workspaceId, lead.contactId).catch(() => null)
-    : null;
 
   const sources = (lead.contact?.metadata as { sources?: string[] } | null)?.sources;
   const leadMeta = (lead.metadata ?? {}) as { lostReason?: string; lostAt?: string };
@@ -57,6 +57,40 @@ export async function GET(request: NextRequest, ctx: Ctx) {
     take: 50,
     include: { items: true, source: true },
   });
+
+  for (const row of orderRows.filter((row) => row.provider === "MERCADO_LIVRE").slice(0, 3)) {
+    const saved = await refreshMlBuyerIfThin(row).catch(() => null);
+    if (!saved) continue;
+    if (saved.phone) row.buyerPhone = saved.phone;
+    if (saved.email) row.buyerEmail = saved.email;
+    if (saved.name) row.buyerName = saved.name;
+    if (saved.cityName) row.cityName = saved.cityName;
+    if (saved.cityRaw) row.cityRaw = saved.cityRaw;
+    if (saved.stateUf) row.stateUf = saved.stateUf;
+    row.rawPayload = saved.rawPayload;
+    if (lead.contact) {
+      if (!lead.contact.phone && saved.phone) lead.contact.phone = saved.phone;
+      if (!lead.contact.email && saved.email) lead.contact.email = saved.email;
+      if (saved.name && (lead.contact.name === "Contato" || !lead.contact.name.trim())) {
+        lead.contact.name = saved.name;
+      }
+      const meta =
+        lead.contact.metadata && typeof lead.contact.metadata === "object" && !Array.isArray(lead.contact.metadata)
+          ? (lead.contact.metadata as Record<string, unknown>)
+          : {};
+      const city = saved.cityName ?? saved.cityRaw;
+      if (city || saved.rawPayload) {
+        lead.contact.metadata = {
+          ...meta,
+          ...(city ? { location: { city, state: saved.stateUf } } : {}),
+        };
+      }
+    }
+  }
+
+  const journey = lead.contactId
+    ? await getPersonJourney(workspaceId, lead.contactId).catch(() => null)
+    : null;
 
   // Pedido não pago vira carrinho (`order:<id>`): o card mostra um só, com o status real do pedido.
   const cartOrderKey = (provider: string, externalId: string) => `${provider}:${externalId}`;
@@ -113,7 +147,15 @@ export async function GET(request: NextRequest, ctx: Ctx) {
     totalCents: o.totalCents ?? 0,
     currency: o.currency ?? "BRL",
     occurredAt: (o.occurredAt ?? o.createdAt).toISOString(),
-    details: orderDetails(o.provider, o.rawPayload),
+    details: orderDetails(o.provider, {
+      ...(o.rawPayload && typeof o.rawPayload === "object" ? (o.rawPayload as Record<string, unknown>) : {}),
+      shippingMode: o.shippingMode,
+      logisticType: o.logisticType,
+      shippingStatus: o.shippingStatus,
+      cityName: o.cityName,
+      cityRaw: o.cityRaw,
+      stateUf: o.stateUf,
+    }),
     items: o.items.map((i) => ({
       title: i.title,
       quantity: i.quantity,
@@ -154,6 +196,28 @@ export async function GET(request: NextRequest, ctx: Ctx) {
   }));
 
   const location = contactLocation(lead.contact?.metadata) ?? orders.find((o) => o.details?.location)?.details?.location ?? null;
+  const mlCard = orderRows
+    .filter((o) => o.provider === "MERCADO_LIVRE")
+    .map((o) => {
+      const raw = o.rawPayload && typeof o.rawPayload === "object" ? (o.rawPayload as Record<string, unknown>) : {};
+      return describeMlBuyer({
+        facts: parseMlBuyerFacts({ order: raw.order, billing: raw.billing, shipment: raw.shipment }),
+        cityName: o.cityName,
+        cityRaw: o.cityRaw,
+        stateUf: o.stateUf,
+        shippingMode: o.shippingMode,
+        logisticType: o.logisticType,
+        shippingStatus: o.shippingStatus,
+        shipment: raw.shipment,
+      });
+    })
+    .find((card) => card.nickname || card.location || card.address || card.document || card.shipping) ?? null;
+  const contactMeta =
+    lead.contact?.metadata && typeof lead.contact.metadata === "object" && !Array.isArray(lead.contact.metadata)
+      ? (lead.contact.metadata as { nickname?: unknown; meliNickname?: unknown })
+      : null;
+  const storedNickname = [contactMeta?.nickname, contactMeta?.meliNickname].find((value) => typeof value === "string");
+  const nickname = mlCard?.nickname ?? (typeof storedNickname === "string" ? storedNickname : null);
 
   return NextResponse.json({
     communications,
@@ -171,7 +235,12 @@ export async function GET(request: NextRequest, ctx: Ctx) {
       stageName: lead.stage?.name ?? null,
       stageColor: lead.stage?.color ?? null,
       sources: Array.isArray(sources) ? sources : [],
-      location: formatLocation(location),
+      sourceLabel: lead.source ? leadSourceLabel(lead.source) : null,
+      location: formatLocation(location) ?? mlCard?.location ?? null,
+      nickname,
+      address: mlCard?.address ?? null,
+      document: mlCard?.document ?? null,
+      shipping: mlCard?.shipping ?? null,
       lostReason: leadMeta.lostReason ?? null,
       lostAt: leadMeta.lostAt ?? null,
       createdAt: lead.createdAt.toISOString(),

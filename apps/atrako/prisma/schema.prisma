@@ -85,6 +85,8 @@ model Cliente {
   captureForms               CaptureForm[]
   lpLibrarySections          LpLibrarySection[]
   marketplaceOrders          MarketplaceOrder[]
+  foodStores                 FoodStore[]
+  foodOrders                 FoodOrder[]
   metaAdPurchases            MetaAdPurchaseDaily[]
   marketplaceSellerSnapshots MarketplaceSellerSnapshot[]
   marketplaceCatalogItems    MarketplaceCatalogItem[]
@@ -910,6 +912,8 @@ model WorkspaceSettings {
   customDomain    String?  @db.VarChar(255)
   /// SOLO = um profissional implícito; SALON = múltiplos profissionais
   businessMode    String   @default("SOLO") @db.VarChar(16)
+  /// food | stay | inside_sales | ecommerce | custom. Uma versão por cliente.
+  edition         String   @default("custom") @db.VarChar(32)
   /// Só escolhas explícitas do workspace; ausência = padrão do release (lib/modules/registry.ts).
   modulesEnabled  Json     @default("{}")
   tracking        Json     @default("{}")
@@ -1045,6 +1049,7 @@ model NativeContact {
   leads       NativeLead[]
   waConversations WaConversation[]
   commerceOrders  CommerceOrder[]
+  foodOrders      FoodOrder[]
   marketplaceOrders MarketplaceOrder[]
   profile         CustomerProfile?
   importantDates  ContactImportantDate[]
@@ -2482,4 +2487,157 @@ model LpLibraryUse {
 
   @@index([sectionId])
   @@index([productId])
+}
+
+/// Loja de comida do workspace. Uma por cliente nesta versão.
+model FoodStore {
+  id                 String   @id @default(cuid())
+  clienteId          String   @unique
+  slug               String   @unique @db.VarChar(80)
+  name               String   @db.VarChar(160)
+  status             String   @default("PUBLISHED") @db.VarChar(20)
+  acceptingOrders    Boolean  @default(true)
+  deliveryEnabled    Boolean  @default(true)
+  pickupEnabled      Boolean  @default(true)
+  deliveryFeeCents   Int      @default(500)
+  minOrderCents      Int      @default(0)
+  pickupName         String?  @db.VarChar(160)
+  pickupAddress      String?  @db.VarChar(255)
+  pickupInstructions String?  @db.VarChar(255)
+  nextNumber         Int      @default(1000)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  cliente            Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  categories         FoodCategory[]
+  items              FoodItem[]
+  coupons            FoodCoupon[]
+  orders             FoodOrder[]
+
+  @@index([status])
+}
+
+model FoodCategory {
+  id        String     @id @default(cuid())
+  storeId   String
+  name      String     @db.VarChar(80)
+  slug      String     @db.VarChar(40)
+  sortOrder Int        @default(0)
+  active    Boolean    @default(true)
+  store     FoodStore  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  items     FoodItem[]
+
+  @@unique([storeId, slug])
+  @@index([storeId, sortOrder])
+}
+
+model FoodItem {
+  id          String       @id @default(cuid())
+  storeId     String
+  categoryId  String
+  /// Chave estável do cardápio semeado (classico, duplo…).
+  key         String       @db.VarChar(40)
+  name        String       @db.VarChar(160)
+  description String?      @db.Text
+  priceCents  Int
+  imageUrl    String?      @db.VarChar(255)
+  emoji       String?      @db.VarChar(8)
+  badge       String?      @db.VarChar(40)
+  calories    Int?
+  allergens   String?      @db.VarChar(255)
+  ingredients Json?
+  available   Boolean      @default(true)
+  sortOrder   Int          @default(0)
+  store       FoodStore    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  category    FoodCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  orderItems  FoodOrderItem[]
+
+  @@unique([storeId, key])
+  @@index([storeId, available])
+}
+
+model FoodCoupon {
+  id       String    @id @default(cuid())
+  storeId  String
+  code     String    @db.VarChar(40)
+  /// PERCENT (basis = value/100) ou FIXED em centavos
+  type     String    @db.VarChar(16)
+  value    Int
+  active   Boolean   @default(true)
+  store    FoodStore @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, code])
+}
+
+model FoodOrder {
+  id                 String    @id @default(cuid())
+  clienteId          String
+  storeId            String
+  number             Int
+  publicToken        String    @unique @db.VarChar(64)
+  clientRequestId    String    @db.VarChar(80)
+  contactId          String?
+  leadId             String?
+  customerName       String    @db.VarChar(200)
+  phone              String    @db.VarChar(40)
+  phoneE164          String?   @db.VarChar(20)
+  fulfillment        String    @db.VarChar(16)
+  address            Json?
+  paymentMethod      String    @db.VarChar(24)
+  /// PENDING | APPROVED | REJECTED | REFUNDED | PAY_ON_DELIVERY
+  paymentStatus      String    @default("PENDING") @db.VarChar(24)
+  /// NEW | CONFIRMED | PREPARING | READY | OUT_FOR_DELIVERY | COMPLETED | CANCELLED
+  fulfillmentStatus  String    @default("NEW") @db.VarChar(24)
+  subtotalCents      Int
+  discountCents      Int       @default(0)
+  deliveryFeeCents   Int       @default(0)
+  totalCents         Int
+  couponCode         String?   @db.VarChar(40)
+  changeForCents     Int?
+  notes              String?   @db.Text
+  mpOrderId          String?   @db.VarChar(120)
+  pixQrCode          String?   @db.Text
+  pixQrCodeBase64    String?   @db.Text
+  pixCopyPaste       String?   @db.Text
+  paidAt             DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  cliente            Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  store              FoodStore @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  contact            NativeContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  items              FoodOrderItem[]
+  events             FoodOrderEvent[]
+
+  @@unique([storeId, clientRequestId])
+  @@unique([storeId, number])
+  @@index([clienteId, createdAt])
+  @@index([clienteId, fulfillmentStatus])
+  @@index([mpOrderId])
+  @@index([contactId])
+}
+
+model FoodOrderItem {
+  id         String    @id @default(cuid())
+  orderId    String
+  itemId     String?
+  name       String    @db.VarChar(160)
+  priceCents Int
+  quantity   Int
+  removals   Json?
+  notes      String?   @db.VarChar(200)
+  order      FoodOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  item       FoodItem? @relation(fields: [itemId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+}
+
+model FoodOrderEvent {
+  id        String    @id @default(cuid())
+  orderId   String
+  kind      String    @db.VarChar(40)
+  fromValue String?   @db.VarChar(24)
+  toValue   String?   @db.VarChar(24)
+  createdAt DateTime  @default(now())
+  order     FoodOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, createdAt])
 }

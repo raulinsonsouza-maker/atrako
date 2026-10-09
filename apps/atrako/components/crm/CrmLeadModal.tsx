@@ -103,7 +103,12 @@ type LeadDetail = {
     stageName: string | null;
     stageColor: string | null;
     sources: string[];
+    sourceLabel: string | null;
     location: string | null;
+    nickname: string | null;
+    address: string | null;
+    document: string | null;
+    shipping: string | null;
     lostReason: string | null;
     lostAt: string | null;
     createdAt: string;
@@ -383,7 +388,12 @@ function OrderBlock({ order, leadLocation }: { order: LeadOrder; leadLocation: s
   const itemsCents = order.items.reduce((sum, i) => sum + i.unitPriceCents * (i.quantity || 1), 0);
   const shipping = d?.shipping ?? null;
   const shippingCents =
-    shipping?.cents ?? (itemsCents > 0 && order.totalCents > itemsCents ? order.totalCents - itemsCents : null);
+    shipping?.cents ??
+    (order.provider === "MERCADO_LIVRE"
+      ? null
+      : itemsCents > 0 && order.totalCents > itemsCents
+        ? order.totalCents - itemsCents
+        : null);
   const showMethodInRow =
     shippingCents != null && !!shipping?.method && !(shippingCents === 0 && /gr[aá]tis/i.test(shipping.method));
   const notes = orderNotes(order, d, shippingCents == null, leadLocation);
@@ -577,6 +587,14 @@ export function CrmLeadModal({
     ? profile.totalSpentCents
     : paidOrders.reduce((s, o) => s + o.totalCents, 0);
   const openCents = openCarts.reduce((s, c) => s + c.totalCents, 0);
+  const purchaseItems = (data?.orders ?? []).find((o) => o.items.length)?.items ?? [];
+  const purchaseShown = purchaseItems.slice(0, 2).map((item) => (item.quantity > 1 ? `${item.quantity}× ${item.title}` : item.title));
+  const purchaseExtra = purchaseItems.length - purchaseShown.length;
+  const purchaseLine = purchaseShown.length
+    ? purchaseExtra > 0
+      ? `${purchaseShown.join(", ")} e mais ${purchaseExtra}`
+      : purchaseShown.join(", ")
+    : null;
 
   return (
     <div
@@ -654,8 +672,30 @@ export function CrmLeadModal({
                       {lead.location}
                     </span>
                   ) : null}
-                  {!lead.phone && !lead.email && !lead.location ? (
-                    <span className="type-caption text-[var(--ink-muted-48)]">Sem e-mail ou telefone</span>
+                  {lead.address ? (
+                    <span className="type-caption text-[var(--ink-muted-80)]">{lead.address}</span>
+                  ) : null}
+                  {lead.nickname ? (
+                    <span className="type-caption text-[var(--ink-muted-80)]">Apelido no Mercado Livre: {lead.nickname}</span>
+                  ) : null}
+                  {lead.document ? (
+                    <span className="type-caption tabular-nums text-[var(--ink-muted-80)]">{lead.document}</span>
+                  ) : null}
+                  {lead.shipping ? (
+                    <span className="type-caption text-[var(--ink-muted-80)]">Envio {lead.shipping}</span>
+                  ) : null}
+                  {purchaseLine ? (
+                    <span className="inline-flex items-start gap-2 type-caption text-[var(--ink-muted-80)]">
+                      <ShoppingBag className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--ink-muted-48)]" strokeWidth={1.75} />
+                      <span>{purchaseLine}</span>
+                    </span>
+                  ) : null}
+                  {!lead.phone && !lead.email ? (
+                    <span className="type-caption text-[var(--ink-muted-48)]">
+                      {lead.source === "mercadolivre" || lead.source === "MERCADO_LIVRE"
+                        ? "O Mercado Livre não enviou e-mail nem telefone"
+                        : "Sem e-mail ou telefone"}
+                    </span>
                   ) : null}
                 </div>
               ) : null}

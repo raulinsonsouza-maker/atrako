@@ -28,6 +28,7 @@ type Entry = {
 
 const SOURCE_LABELS: Record<string, string> = {
   commerce: "Vendas",
+  food: "Food",
   manual: "Manual",
   agenda: "Agenda",
   crm: "CRM",

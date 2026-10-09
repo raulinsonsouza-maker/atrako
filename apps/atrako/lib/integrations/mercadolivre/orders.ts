@@ -72,6 +72,20 @@ export async function getMlOrder(workspaceId: string, orderId: string | number) 
   return mlFetch<MlOrder>(workspaceId, `/orders/${orderId}`);
 }
 
+/** Cobrança do pedido: nome, documento e endereço. A v2 cobre o formato atual; a v1 ainda responde em contas antigas. */
+export async function getMlBillingInfo(workspaceId: string, orderId: string | number) {
+  try {
+    return await mlFetch<unknown>(workspaceId, `/orders/${orderId}/billing_info`, {
+      headers: { "x-version": "2" },
+      signal: AbortSignal.timeout(8000),
+    });
+  } catch {
+    return mlFetch<unknown>(workspaceId, `/orders/${orderId}/billing_info`, {
+      signal: AbortSignal.timeout(8000),
+    });
+  }
+}
+
 export function extractMlOrderItems(order: MlOrder): NormalizedMlLineItem[] {
   const rows = order.order_items ?? [];
   return rows.map((row) => {

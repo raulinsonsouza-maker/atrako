@@ -57,6 +57,7 @@ interface ClienteAdmin {
   diferenciais?: string | null;
   observacoesAnaliticas?: string | null;
   perfilPanel?: string | null;
+  edition?: string | null;
   squad?: number | null;
   ultimoSyncAt?: string | null;
   contas: ContaAdmin[];
@@ -88,6 +89,7 @@ interface ClientePayload {
   inPilotEnabled?: boolean;
   objetivoMidia?: string;
   perfilPanel?: string | null;
+  edition?: string | null;
   squad?: number | null;
   produtoServico?: string | null;
   modeloNegocio?: string | null;
@@ -413,6 +415,7 @@ function ClienteForm({
   );
   const [objetivoMidia, setObjetivoMidia] = useState(initialValues.objetivoMidia ?? "leads");
   const [perfilPanel, setPerfilPanel] = useState(initialValues.perfilPanel ?? "");
+  const [edition, setEdition] = useState(initialValues.edition ?? "custom");
   const [squad, setSquad] = useState<string>(
     initialValues.squad != null ? String(initialValues.squad) : ""
   );
@@ -699,6 +702,21 @@ function ClienteForm({
               </FormField>
             </div>
 
+            <FormField label="Versão do Atrako" hint="A equipe escolhe uma versão por cliente. Food liga cardápio e pedidos. Personalizado mantém os módulos como estão. O endereço público do Food usa o slug da empresa, por exemplo /cardapio/lepido.">
+              <PillSelect
+                className="w-full"
+                size="field"
+                value={edition}
+                onChange={setEdition}
+                options={[
+                  { value: "custom", label: "Personalizado" },
+                  { value: "food", label: "Food" },
+                  { value: "stay", label: "Aluguel por temporada" },
+                  { value: "inside_sales", label: "Inside sales" },
+                  { value: "ecommerce", label: "E-commerce" },
+                ]}
+              />
+            </FormField>
             <FormField label="Perfil de painel especial" hint="Layout customizado por segmento (hotel, imobiliária…). As métricas de vendas vêm de “Tipo de resultado do painel”.">
               <PillSelect
                 className="w-full"
@@ -883,6 +901,7 @@ function ClienteForm({
                     telegramAtivo,
                     objetivoMidia,
                     perfilPanel: perfilPanel || null,
+                    edition,
                     squad: squad ? Number(squad) : null,
                     inPilotEnabled,
                     produtoServico: produtoServico.trim() || null,
@@ -2438,6 +2457,7 @@ export default function AdminClientesPage() {
             inPilotEnabled: editing.inPilotEnabled,
             objetivoMidia: editing.objetivoMidia,
             perfilPanel: editing.perfilPanel ?? null,
+            edition: editing.edition ?? "custom",
             squad: editing.squad ?? null,
             produtoServico: editing.produtoServico ?? null,
             modeloNegocio: editing.modeloNegocio ?? null,

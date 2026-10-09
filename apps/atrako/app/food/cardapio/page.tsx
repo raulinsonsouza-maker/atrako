@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 
@@ -14,6 +14,7 @@ type Item = {
   description: string | null;
   priceCents: number;
   imageUrl: string | null;
+  emoji: string | null;
   ingredients: string[] | null;
   available: boolean;
   schedule: Schedule | null;
@@ -83,59 +84,22 @@ export default function FoodMenuPage() {
 
   return (
     <section>
-      <h1 className="food-brand">Cardápio</h1>
-      <input className="food-search" placeholder="Buscar item" value={search} onChange={(event) => setSearch(event.target.value)} />
+      <h1 className="food-title">Cardápio</h1>
+      <p className="food-lead">A foto, o preço e o que está à venda. O cliente vê a mesma imagem.</p>
+      <div className="food-toolbar">
+        <input className="food-search" placeholder="Buscar item" value={search} onChange={(event) => setSearch(event.target.value)} />
+        <button className="food-button" type="button" onClick={() => setEditing("new")}>Novo item</button>
+      </div>
       <form
-        className="food-row"
+        className="food-toolbar"
         onSubmit={(event) => {
           event.preventDefault();
           save.mutate({ action: "category", name: categoryName });
         }}
       >
         <input placeholder="Nova categoria" value={categoryName} onChange={(event) => setCategoryName(event.target.value)} />
-        <button className="food-button" type="submit">Adicionar categoria</button>
-        <button className="food-button ghost" type="button" onClick={() => setEditing("new")}>Novo item</button>
+        <button className="food-button ghost" type="submit">Adicionar categoria</button>
       </form>
-      {(store?.categories ?? []).map((category) => {
-        const categoryItems = (store?.items ?? []).filter((item) => item.categoryId === category.id);
-        const items = categoryItems.filter((item) => !search.trim() || item.name.toLowerCase().includes(search.trim().toLowerCase()));
-        return (
-          <section key={category.id} className="food-panel" style={{ marginTop: 12 }}>
-            <div className="food-row">
-              <strong>{category.name}</strong>
-              <button
-                type="button"
-                className="food-button ghost"
-                onClick={() => save.mutate({ action: "category", categoryId: category.id, name: category.name, active: !category.active })}
-              >
-                {category.active ? "Pausar categoria" : "Ativar categoria"}
-              </button>
-            </div>
-            {items.map((item) => {
-              const index = categoryItems.findIndex((row) => row.id === item.id);
-              return (
-              <article key={item.id} className="food-row">
-                <span>
-                  {item.name}<br />
-                  <span className="food-muted">{brl(item.priceCents)} · {item.available ? "À venda" : "Pausado"}</span>
-                </span>
-                <span>
-                  <button type="button" className="food-button ghost" disabled={index === 0} onClick={() => {
-                    const ordered = categoryItems.map((row, rowIndex) => ({ id: row.id, sortOrder: rowIndex === index ? index - 1 : rowIndex === index - 1 ? index : rowIndex }));
-                    save.mutate({ action: "reorder", items: ordered });
-                  }}>Subir</button>
-                  <button type="button" className="food-button ghost" onClick={() => save.mutate({ action: "item", itemId: item.id, categoryId: item.categoryId, name: item.name, description: item.description, priceCents: item.priceCents, imageUrl: item.imageUrl, ingredients: item.ingredients ?? [], available: !item.available, schedule: item.schedule, groups: item.groups })}>
-                    {item.available ? "Pausar" : "À venda"}
-                  </button>
-                  <button type="button" className="food-button" onClick={() => setEditing(item)}>Editar</button>
-                </span>
-              </article>
-              );
-            })}
-          </section>
-        );
-      })}
-      {store ? <HoursEditor hours={store.hours ?? {}} onSave={(hours) => save.mutate({ action: "hours", hours })} /> : null}
       {editing ? (
         <ItemEditor
           item={editing === "new" ? null : editing}
@@ -146,33 +110,257 @@ export default function FoodMenuPage() {
           error={save.error instanceof Error ? save.error.message : null}
         />
       ) : null}
+      {(store?.categories ?? []).map((category) => {
+        const categoryItems = (store?.items ?? []).filter((item) => item.categoryId === category.id);
+        const items = categoryItems.filter((item) => !search.trim() || item.name.toLowerCase().includes(search.trim().toLowerCase()));
+        return (
+          <section key={category.id} className="food-category">
+            <div className="food-category__head">
+              <h2>{category.name}{category.active ? "" : " · pausada"}</h2>
+              <button
+                type="button"
+                className="food-button ghost"
+                onClick={() => save.mutate({ action: "category", categoryId: category.id, name: category.name, active: !category.active })}
+              >
+                {category.active ? "Pausar categoria" : "Ativar categoria"}
+              </button>
+            </div>
+            <div className="food-dishes">
+            {items.map((item) => {
+              const index = categoryItems.findIndex((row) => row.id === item.id);
+              return (
+              <article key={item.id} className={item.available ? "food-dish" : "food-dish is-paused"}>
+                <button type="button" className="food-dish__photo" onClick={() => setEditing(item)}>
+                  {item.imageUrl ? <img src={item.imageUrl} alt="" /> : <span>{item.emoji || item.name.slice(0, 1)}</span>}
+                  {item.available ? null : <em>Pausado</em>}
+                </button>
+                <div className="food-dish__copy">
+                  <strong>{item.name}</strong>
+                  <span>{brl(item.priceCents)}</span>
+                  {item.description ? <p>{item.description}</p> : null}
+                </div>
+                <div className="food-dish__actions">
+                  <button type="button" className="food-button ghost" disabled={index === 0} onClick={() => {
+                    const ordered = categoryItems.map((row, rowIndex) => ({ id: row.id, sortOrder: rowIndex === index ? index - 1 : rowIndex === index - 1 ? index : rowIndex }));
+                    save.mutate({ action: "reorder", items: ordered });
+                  }}>Subir</button>
+                  <button type="button" className="food-button ghost" onClick={() => save.mutate({ action: "item", itemId: item.id, categoryId: item.categoryId, name: item.name, description: item.description, priceCents: item.priceCents, imageUrl: item.imageUrl, ingredients: item.ingredients ?? [], available: !item.available, schedule: item.schedule, groups: item.groups })}>
+                    {item.available ? "Pausar" : "À venda"}
+                  </button>
+                  <button type="button" className="food-button" onClick={() => setEditing(item)}>Editar</button>
+                </div>
+              </article>
+              );
+            })}
+            </div>
+          </section>
+        );
+      })}
+      {store ? <HoursEditor hours={store.hours ?? {}} onSave={(hours) => save.mutate({ action: "hours", hours })} /> : null}
     </section>
   );
 }
 
-function HoursEditor({ hours, onSave }: { hours: Store["hours"]; onSave: (hours: Store["hours"]) => void }) {
-  const [draft, setDraft] = useState(hours);
+const DAY_NAMES: Record<string, string> = {
+  "1": "Segunda",
+  "2": "Terça",
+  "3": "Quarta",
+  "4": "Quinta",
+  "5": "Sexta",
+  "6": "Sábado",
+  "0": "Domingo",
+};
+const DAY_SHORT: Record<string, string> = {
+  "1": "Seg",
+  "2": "Ter",
+  "3": "Qua",
+  "4": "Qui",
+  "5": "Sex",
+  "6": "Sáb",
+  "0": "Dom",
+};
+const DAY_ORDER = ["1", "2", "3", "4", "5", "6", "0"];
+
+type Slot = { start: string; end: string };
+
+function validSlot(slot: Slot) {
+  return /^\d{2}:\d{2}$/.test(slot.start) && /^\d{2}:\d{2}$/.test(slot.end) && slot.end > slot.start;
+}
+
+const CLOCK_HOURS = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, "0"));
+const CLOCK_MINUTES = ["00", "15", "30", "45"];
+
+function ClockField({ value, label, onChange }: { value: string; label: string; onChange: (value: string) => void }) {
+  const match = /^(\d{2}):(\d{2})$/.exec(value);
+  const hour = match?.[1] ?? "11";
+  const minute = match?.[2] ?? "00";
+  const minutes = CLOCK_MINUTES.includes(minute) ? CLOCK_MINUTES : [...CLOCK_MINUTES, minute].sort();
   return (
-    <section className="food-panel" style={{ marginTop: 12 }}>
+    <span className="food-clock" role="group" aria-label={label}>
+      <select aria-label={`${label}, hora`} value={CLOCK_HOURS.includes(hour) ? hour : "11"} onChange={(event) => onChange(`${event.target.value}:${minute}`)}>
+        {CLOCK_HOURS.map((item) => <option key={item} value={item}>{item}</option>)}
+      </select>
+      <span aria-hidden="true">:</span>
+      <select aria-label={`${label}, minuto`} value={minute} onChange={(event) => onChange(`${hour}:${event.target.value}`)}>
+        {minutes.map((item) => <option key={item} value={item}>{item}</option>)}
+      </select>
+    </span>
+  );
+}
+
+function blankWeek(): Record<string, Slot[]> {
+  return Object.fromEntries(DAY_ORDER.map((key) => [key, key === "0" ? [] : [{ start: "11:00", end: "23:00" }]]));
+}
+
+function weekFrom(hours: Store["hours"]) {
+  return Object.fromEntries(DAY_ORDER.map((key) => [key, (hours[key] ?? []).map((slot) => ({ ...slot }))]));
+}
+
+function hoursSummary(draft: Record<string, Slot[]>) {
+  const groups: Array<{ start: string; end: string; text: string }> = [];
+  for (const key of DAY_ORDER) {
+    const slots = (draft[key] ?? []).filter(validSlot);
+    const text = slots.length ? slots.map((slot) => `${slot.start}–${slot.end}`).join(" e ") : "fechado";
+    const last = groups.at(-1);
+    const follows = last ? DAY_ORDER.indexOf(key) === DAY_ORDER.indexOf(last.end) + 1 : false;
+    if (last && follows && last.text === text) last.end = key;
+    else groups.push({ start: key, end: key, text });
+  }
+  return groups
+    .map((group) => {
+      const days = group.start === group.end ? DAY_SHORT[group.start] : `${DAY_SHORT[group.start]}–${DAY_SHORT[group.end]}`;
+      return `${days} ${group.text}`;
+    })
+    .join(" · ");
+}
+
+function HoursEditor({ hours, onSave }: { hours: Store["hours"]; onSave: (hours: Store["hours"]) => void }) {
+  const signature = JSON.stringify(hours ?? {});
+  const [custom, setCustom] = useState(() => Object.values(hours ?? {}).some((slots) => slots?.length));
+  const [draft, setDraft] = useState<Record<string, Slot[]>>(() => (custom ? weekFrom(hours) : blankWeek()));
+  const [hint, setHint] = useState("");
+
+  useEffect(() => {
+    const parsed = JSON.parse(signature) as Store["hours"];
+    const hasHours = Object.values(parsed).some((slots) => slots?.length);
+    setCustom(hasHours);
+    setDraft(hasHours ? weekFrom(parsed) : blankWeek());
+    setHint("");
+  }, [signature]);
+
+  function updateDay(key: string, slots: Slot[]) {
+    setDraft((current) => ({ ...current, [key]: slots }));
+    setHint("");
+  }
+
+  function save() {
+    if (!custom) {
+      onSave({});
+      return;
+    }
+    const next: Store["hours"] = {};
+    for (const key of DAY_ORDER) {
+      const slots = (draft[key] ?? []).filter(validSlot);
+      if (slots.length) next[key] = slots;
+    }
+    if (!Object.keys(next).length) {
+      setHint("Abra pelo menos um dia, ou escolha o dia todo.");
+      return;
+    }
+    onSave(next);
+  }
+
+  return (
+    <section className="food-panel food-hours">
       <h2>Horário da loja</h2>
-      <p className="food-muted">Vazio significa aberto o dia todo enquanto a loja aceita pedidos.</p>
-      {DAYS.map(([key, label]) => (
-        <div key={key} className="food-row">
-          <span>{label}</span>
-          <input
-            placeholder="10:00-14:00, 18:00-22:00"
-            value={(draft[key] ?? []).map((slot) => `${slot.start}-${slot.end}`).join(", ")}
-            onChange={(event) => {
-              const slots = event.target.value.split(",").map((part) => part.trim()).filter(Boolean).map((part) => {
-                const [start, end] = part.split("-");
-                return { start: (start ?? "").trim(), end: (end ?? "").trim() };
-              });
-              setDraft({ ...draft, [key]: slots });
-            }}
-          />
+      <p className="food-muted">O cardápio só recebe pedido dentro deste horário.</p>
+      <div className="food-hours__modes">
+        <button type="button" className={custom ? "" : "is-on"} onClick={() => { setCustom(false); setHint(""); }}>
+          <strong>O dia todo</strong>
+          <span>Enquanto a loja estiver aceitando pedidos</span>
+        </button>
+        <button type="button" className={custom ? "is-on" : ""} onClick={() => { setCustom(true); setHint(""); }}>
+          <strong>Horário da casa</strong>
+          <span>Cada dia aberto, fechado ou com dois turnos</span>
+        </button>
+      </div>
+      {custom ? (
+        <div className="food-hours__days">
+          {DAY_ORDER.map((key) => {
+            const slots = draft[key] ?? [];
+            const open = slots.length > 0;
+            return (
+              <div key={key} className={open ? "food-hours__day is-open" : "food-hours__day"}>
+                <button
+                  type="button"
+                  className="food-hours__toggle"
+                  aria-pressed={open}
+                  onClick={() => updateDay(key, open ? [] : [{ start: "11:00", end: "23:00" }])}
+                >
+                  <span>{DAY_NAMES[key]}</span>
+                  <strong>{open ? "Aberto" : "Fechado"}</strong>
+                </button>
+                {open ? (
+                  <div className="food-hours__slots">
+                    {slots.map((slot, index) => (
+                      <div key={index} className="food-hours__slot">
+                        <ClockField
+                          label={`${DAY_NAMES[key]} começa`}
+                          value={slot.start}
+                          onChange={(start) => updateDay(key, slots.map((row, rowIndex) => rowIndex === index ? { ...row, start } : row))}
+                        />
+                        <span>até</span>
+                        <ClockField
+                          label={`${DAY_NAMES[key]} termina`}
+                          value={slot.end}
+                          onChange={(end) => updateDay(key, slots.map((row, rowIndex) => rowIndex === index ? { ...row, end } : row))}
+                        />
+                        {index > 0 ? (
+                          <button type="button" className="food-hours__remove" onClick={() => updateDay(key, slots.filter((_, rowIndex) => rowIndex !== index))}>
+                            Tirar turno
+                          </button>
+                        ) : null}
+                        {!validSlot(slot) ? <em>O fim precisa ser depois do início</em> : null}
+                      </div>
+                    ))}
+                    <div className="food-hours__tools">
+                      {slots.length < 2 ? (
+                        <button type="button" className="food-hours__add" onClick={() => {
+                          const first = slots[0];
+                          if (first && first.end > "17:00") {
+                            updateDay(key, [
+                              { start: first.start, end: "15:00" },
+                              { start: "18:00", end: first.end > "18:00" ? first.end : "23:00" },
+                            ]);
+                            return;
+                          }
+                          updateDay(key, [...slots, { start: "18:00", end: "23:00" }]);
+                        }}>
+                          + outro turno
+                        </button>
+                      ) : null}
+                      {key === "1" ? (
+                        <button type="button" className="food-hours__add" onClick={() => {
+                          const monday = draft["1"] ?? [];
+                          setDraft(Object.fromEntries(DAY_ORDER.map((day) => [day, monday.map((slot) => ({ ...slot }))])));
+                          setHint("");
+                        }}>
+                          Copiar segunda para todos os dias
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : <p className="food-hours__closed">Não recebe pedido neste dia</p>}
+              </div>
+            );
+          })}
+          <p className="food-hours__summary">{hoursSummary(draft)}</p>
         </div>
-      ))}
-      <button type="button" className="food-button" onClick={() => onSave(draft)}>Salvar horário</button>
+      ) : (
+        <p className="food-hours__summary">Aberto todos os dias, o tempo todo, enquanto a loja aceitar pedidos.</p>
+      )}
+      {hint ? <p className="food-muted">{hint}</p> : null}
+      <button type="button" className="food-button" onClick={save}>Salvar horário</button>
     </section>
   );
 }
@@ -206,9 +394,13 @@ function ItemEditor({
   });
   const [groups, setGroups] = useState<Group[]>(item?.groups ?? []);
 
+  useEffect(() => {
+    document.querySelector(".food-editor")?.scrollIntoView({ block: "start" });
+  }, []);
+
   return (
     <form
-      className="food-form"
+      className="food-form food-editor"
       onSubmit={(event) => {
         event.preventDefault();
         const schedule = mode === "ALWAYS"
@@ -239,6 +431,26 @@ function ItemEditor({
       }}
     >
       <h2>{item ? "Editar item" : "Novo item"}</h2>
+      <div className="food-photo-field">
+        {imageUrl ? <img src={imageUrl} alt="" /> : <span>Sem foto</span>}
+        <label className="food-button ghost">
+          {imageUrl ? "Trocar foto" : "Enviar foto"}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={async (event) => {
+              const file = event.target.files?.[0];
+              if (!file) return;
+              const form = new FormData();
+              form.set("workspaceId", workspaceId);
+              form.set("file", file);
+              const res = await fetch("/api/atrako/food/photo", { method: "POST", body: form });
+              const payload = await res.json().catch(() => ({}));
+              if (res.ok && payload.url) setImageUrl(payload.url);
+            }}
+          />
+        </label>
+      </div>
       <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome" required />
       <textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Descrição" />
       <input value={price} onChange={(event) => setPrice(event.target.value)} placeholder="Preço em reais" required />
@@ -249,21 +461,6 @@ function ItemEditor({
           </button>
         ))}
       </div>
-      <input value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} placeholder="Foto" />
-      <input
-        type="file"
-        accept="image/*"
-        onChange={async (event) => {
-          const file = event.target.files?.[0];
-          if (!file) return;
-          const form = new FormData();
-          form.set("workspaceId", workspaceId);
-          form.set("file", file);
-          const res = await fetch("/api/atrako/food/photo", { method: "POST", body: form });
-          const payload = await res.json().catch(() => ({}));
-          if (res.ok && payload.url) setImageUrl(payload.url);
-        }}
-      />
       <input value={ingredients} onChange={(event) => setIngredients(event.target.value)} placeholder="Ingredientes que dá para tirar, separados por vírgula" />
       <button type="button" className={available ? "food-button" : "food-button ghost"} onClick={() => setAvailable((value) => !value)}>
         {available ? "À venda" : "Pausado"}
@@ -278,8 +475,10 @@ function ItemEditor({
       {groups.map((group, index) => (
         <div key={index} className="food-panel">
           <input value={group.name} placeholder="Grupo de complemento" onChange={(event) => setGroups(groups.map((row, rowIndex) => rowIndex === index ? { ...row, name: event.target.value } : row))} />
-          <input value={group.minSelect} onChange={(event) => setGroups(groups.map((row, rowIndex) => rowIndex === index ? { ...row, minSelect: Number(event.target.value) || 0 } : row))} />
-          <input value={group.maxSelect} onChange={(event) => setGroups(groups.map((row, rowIndex) => rowIndex === index ? { ...row, maxSelect: Number(event.target.value) || 1 } : row))} />
+          <div className="food-row">
+            <input aria-label="Mínimo" value={group.minSelect} onChange={(event) => setGroups(groups.map((row, rowIndex) => rowIndex === index ? { ...row, minSelect: Number(event.target.value) || 0 } : row))} />
+            <input aria-label="Máximo" value={group.maxSelect} onChange={(event) => setGroups(groups.map((row, rowIndex) => rowIndex === index ? { ...row, maxSelect: Number(event.target.value) || 1 } : row))} />
+          </div>
           {group.options.map((option, optionIndex) => (
             <div key={optionIndex} className="food-row">
               <input value={option.name} placeholder="Opção" onChange={(event) => {

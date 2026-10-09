@@ -25,6 +25,8 @@ type FoodOrder = {
   paymentStatus: string;
   paymentMethod: string;
   totalCents: number;
+  changeForCents: number | null;
+  address: { street?: string; number?: string; complement?: string; neighborhood?: string } | null;
   createdAt: string;
   items: FoodItemLine[];
 };
@@ -38,6 +40,7 @@ const COLUMNS = [
 ];
 
 const CHANNEL: Record<string, string> = { STORE: "Loja", WHATSAPP: "WhatsApp", COUNTER: "Balcão" };
+const METHOD: Record<string, string> = { PIX: "Pix", CASH: "Dinheiro", CARD_ON_DELIVERY: "Cartão" };
 const PAYMENT: Record<string, string> = {
   PENDING: "Pix pendente",
   APPROVED: "Pago",
@@ -88,7 +91,7 @@ export default function FoodOrdersPage() {
     queryFn: async () => {
       const res = await fetch(`/api/atrako/food?workspaceId=${workspaceId}`);
       if (!res.ok) throw new Error("Falha ao carregar o cardápio");
-      return res.json() as Promise<{ store: { items: Array<{ id: string; name: string; available: boolean }> } | null }>;
+      return res.json() as Promise<{ store: { items: Array<{ id: string; name: string; available: boolean; imageUrl: string | null }> } | null }>;
     },
   });
 
@@ -172,9 +175,10 @@ export default function FoodOrdersPage() {
         >
           <input placeholder="Nome" value={draft.customerName} onChange={(event) => setDraft({ ...draft, customerName: event.target.value })} required />
           <input placeholder="Celular" value={draft.phone} onChange={(event) => setDraft({ ...draft, phone: event.target.value })} required />
-          <div className="food-row">
+          <div className="food-picks">
             {(menu.data?.store?.items ?? []).filter((item) => item.available).map((item) => (
-              <button key={item.id} type="button" className={draft.itemId === item.id ? "food-button" : "food-button ghost"} onClick={() => setDraft({ ...draft, itemId: item.id })}>
+              <button key={item.id} type="button" className={draft.itemId === item.id ? "food-pick is-on" : "food-pick"} onClick={() => setDraft({ ...draft, itemId: item.id })}>
+                {item.imageUrl ? <img src={item.imageUrl} alt="" /> : <i />}
                 {item.name}
               </button>
             ))}
@@ -200,17 +204,24 @@ export default function FoodOrdersPage() {
                 <strong>#{order.number} {order.customerName}</strong>
                 <p>
                   <span className="food-chip">{CHANNEL[order.channel] ?? order.channel}</span>
+                  <span className="food-chip">{METHOD[order.paymentMethod] ?? order.paymentMethod}</span>
                   <span className="food-chip">{PAYMENT[order.paymentStatus] ?? order.paymentStatus}</span>
                   {order.fulfillmentStatus === "OUT_FOR_DELIVERY" ? <span className="food-chip">Saiu para entrega</span> : null}
                 </p>
                 <p>{brl(order.totalCents)} · {order.fulfillment === "PICKUP" ? "Retirada" : "Entrega"}</p>
+                {order.fulfillment === "DELIVERY" && order.address ? (
+                  <p>{[order.address.street, order.address.number, order.address.complement].filter(Boolean).join(", ")}{order.address.neighborhood ? ` · ${order.address.neighborhood}` : ""}</p>
+                ) : null}
+                {order.paymentMethod === "CASH" && order.changeForCents ? <p>Troco para {brl(order.changeForCents)}</p> : null}
                 {order.items.map((item) => (
                   <p key={item.id}>
                     {item.quantity}× {item.name}
                     {item.additions?.length ? ` + ${item.additions.map((addition) => addition.name).join(", ")}` : ""}
-                    {item.removals?.length ? ` sem ${item.removals.join(", ")}` : ""}
+                    {item.removals?.length ? ` · sem ${item.removals.join(", ")}` : ""}
+                    {item.notes ? ` · ${item.notes}` : ""}
                   </p>
                 ))}
+                <div className="food-card__actions">
                 {order.paymentStatus === "PAY_ON_DELIVERY" ? (
                   <button type="button" className="food-button ghost" onClick={() => action.mutate({ id: order.id, receivePayment: true })}>Recebido</button>
                 ) : null}
@@ -220,6 +231,7 @@ export default function FoodOrdersPage() {
                 {order.fulfillmentStatus !== "COMPLETED" && order.fulfillmentStatus !== "CANCELLED" ? (
                   <button type="button" className="food-button ghost" onClick={() => action.mutate({ id: order.id, fulfillmentStatus: "CANCELLED" })}>Cancelar</button>
                 ) : null}
+                </div>
               </article>
             ))}
           </section>

@@ -57,9 +57,9 @@
     <main id="menu" tabindex="-1">
       <header class="topbar">
         <img src="/food-store/assets/logo-vermelho.png" alt="Lépido" />
-        <button class="location" type="button" aria-label="Alterar local de entrega">
+        <button class="location" id="openLocation" type="button" aria-label="Alterar local de entrega" aria-controls="locationSheet" aria-expanded="false">
           <span>Entregar em</span>
-          <strong>Minha localização ⌄</strong>
+          <strong id="locationLabel">Minha localização ⌄</strong>
         </button>
         <button class="profile-button" type="button" aria-label="Minha conta">☺</button>
       </header>
@@ -152,6 +152,27 @@
       <button class="checkout" id="checkout" type="button">Finalizar pedido <span>→</span></button>
     </aside>
 
+    <div class="location-overlay" id="locationOverlay"></div>
+    <aside class="location-sheet" id="locationSheet" aria-hidden="true" aria-labelledby="locationTitle">
+      <div class="cart-sheet__handle"></div>
+      <div class="cart-sheet__heading">
+        <div>
+          <span>ENTREGAR EM</span>
+          <h2 id="locationTitle">Onde você está?</h2>
+        </div>
+        <button id="closeLocation" type="button" aria-label="Fechar endereço">×</button>
+      </div>
+      <button class="location-geo" id="useLocation" type="button">Usar minha localização</button>
+      <p class="location-or">ou informe o CEP</p>
+      <label class="field"><span>CEP</span><input id="locationCep" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" /></label>
+      <p class="location-found" id="locationFound" hidden></p>
+      <div class="field-row">
+        <label class="field"><span>Número</span><input id="locationNumber" inputmode="numeric" placeholder="123" /></label>
+        <label class="field"><span>Complemento</span><input id="locationComplement" placeholder="Apto, bloco..." /></label>
+      </div>
+      <button class="checkout" id="saveLocation" type="button">Entregar aqui <span>✓</span></button>
+    </aside>
+
     <section class="product-page" id="productPage" aria-hidden="true" aria-labelledby="detailName">
       <div class="product-page__hero">
         <img id="detailImage" src="" alt="" />
@@ -173,7 +194,7 @@
         </section>
         <section class="detail-section" id="detailGroupsSection">
           <div class="detail-section__heading"><div><span>ACRESCENTAR</span><h2>Complementos</h2></div><span id="detailGroupsHint">Opcional</span></div>
-          <div class="remove-list" id="detailGroups"></div>
+          <div class="addon-list" id="detailGroups"></div>
         </section>
         <section class="detail-section">
           <div class="detail-section__heading"><div><span>DO SEU JEITO</span><h2>Quer tirar algo?</h2></div><span>Opcional</span></div>

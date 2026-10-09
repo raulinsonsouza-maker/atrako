@@ -35,7 +35,8 @@ export default function FoodHomePage() {
 
   return (
     <section>
-      <h1 className="food-brand">Início</h1>
+      <h1 className="food-title">Início</h1>
+      <p className="food-lead">O movimento de hoje, em reais já recebidos.</p>
       {isLoading ? <p className="food-muted">Carregando…</p> : null}
       {today ? (
         <>

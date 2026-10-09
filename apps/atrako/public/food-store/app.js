@@ -82,6 +82,7 @@ function updateCart() {
     const extraParts = [];
     if (line.additions?.length) extraParts.push(line.additions.map((addition) => addition.name).join(", "));
     if (line.removals?.length) extraParts.push(`Sem ${line.removals.join(", ")}`);
+    if (line.notes) extraParts.push(line.notes);
     const extra = extraParts.length ? `<small>${extraParts.join(" · ")}</small>` : "";
     return `<div class="cart-item"><span class="cart-item__emoji">${item.imageUrl ? `<img src="${item.imageUrl}" alt="" />` : item.emoji || ""}</span><div class="cart-item__copy"><strong>${item.name}</strong><span>${money(lineUnitPrice(item, line.additions || []))}</span>${extra}</div><div class="quantity"><button data-action="minus" data-key="${line.key}" aria-label="Remover uma unidade">−</button><span>${line.quantity}</span><button data-action="plus" data-key="${line.key}" aria-label="Adicionar uma unidade">+</button></div></div>`;
   }).join("") : "<p>Seu carrinho está vazio.</p>";
@@ -238,7 +239,15 @@ function openProduct(item) {
   $("#detailRemovals").innerHTML = ingredients.map((ingredient) => `<label><input type="checkbox" value="${ingredient}" /><span><i></i>${ingredient}</span></label>`).join("");
   const groups = item.groups || [];
   $("#detailGroupsSection").hidden = groups.length === 0;
-  $("#detailGroups").innerHTML = groups.map((group) => `<div><strong>${group.name}</strong>${group.options.map((option) => `<label><input type="${group.maxSelect === 1 ? "radio" : "checkbox"}" name="group-${group.id}" value="${option.id}" data-price="${option.priceCents}" data-name="${option.name}" /><span><i></i>${option.name}${option.priceCents ? ` · ${money(option.priceCents)}` : ""}</span></label>`).join("")}</div>`).join("");
+  const groupsHint = $("#detailGroupsHint");
+  if (groupsHint) groupsHint.textContent = groups.some((group) => group.minSelect > 0) ? "Obrigatório" : "Opcional";
+  $("#detailGroups").innerHTML = groups.map((group) => {
+    const rule = group.minSelect > 0
+      ? `Escolha ${group.minSelect}${group.maxSelect > group.minSelect ? ` a ${group.maxSelect}` : ""}`
+      : `Até ${group.maxSelect}`;
+    const options = group.options.map((option) => `<label><input type="${group.maxSelect === 1 ? "radio" : "checkbox"}" name="group-${group.id}" value="${option.id}" data-price="${option.priceCents}" data-name="${String(option.name).replace(/"/g, "&quot;")}" /><span><i></i>${option.name}${option.priceCents ? ` · ${money(option.priceCents)}` : ""}</span></label>`).join("");
+    return `<div><strong>${group.name}</strong><small>${rule}</small>${options}</div>`;
+  }).join("");
   $("#detailGroups").querySelectorAll("input").forEach((input) => input.addEventListener("change", updateDetailTotal));
   $("#detailAllergens").innerHTML = item.allergens ? `<span aria-hidden="true">ⓘ</span><p><strong>Alergênicos</strong>${item.allergens}</p>` : "";
   $("#detailNotes").value = "";
@@ -275,7 +284,7 @@ function renderCheckout() {
   $("#checkoutItems").innerHTML = [...lines.values()].map((line) => {
     const item = itemById(line.itemId);
     if (!item) return "";
-    const note = [line.additions?.map((addition) => addition.name).join(", "), line.removals?.length ? `sem ${line.removals.join(", ")}` : ""].filter(Boolean).join(" · ");
+    const note = [line.additions?.map((addition) => addition.name).join(", "), line.removals?.length ? `sem ${line.removals.join(", ")}` : "", line.notes].filter(Boolean).join(" · ");
     const unit = lineUnitPrice(item, line.additions || []);
     return `<div class="checkout-item"><span>${item.imageUrl ? `<img src="${item.imageUrl}" alt="" />` : item.emoji || ""}</span><div><strong>${line.quantity}x ${item.name}</strong><small>${money(unit)} cada ${note}</small></div><b>${money(unit * line.quantity)}</b></div>`;
   }).join("");
@@ -347,9 +356,165 @@ async function refreshQuote() {
   renderCheckout();
 }
 
+const ADDRESS_KEY = "lepido-address-v1";
+let savedAddress = null;
+let locationDraft = null;
+
+function readSavedAddress() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(ADDRESS_KEY) || "null");
+    if (!raw || typeof raw !== "object") return null;
+    return raw;
+  } catch {
+    return null;
+  }
+}
+
+function addressLabel(address) {
+  if (!address) return "Minha localização ⌄";
+  const place = [address.street, address.number].filter(Boolean).join(", ") || address.neighborhood || "Endereço salvo";
+  return `${place} ⌄`;
+}
+
+function paintLocation() {
+  const label = $("#locationLabel");
+  if (label) label.textContent = addressLabel(savedAddress);
+}
+
+function applyAddressToForm() {
+  if (!savedAddress) return;
+  const fields = [
+    ["#checkoutCep", savedAddress.cep],
+    ["#checkoutStreet", savedAddress.street],
+    ["#checkoutNumber", savedAddress.number],
+    ["#checkoutComplement", savedAddress.complement],
+    ["#checkoutNeighborhood", savedAddress.neighborhood],
+  ];
+  fields.forEach(([selector, value]) => {
+    const field = $(selector);
+    if (field) field.value = value || "";
+  });
+}
+
+function formatCep(value) {
+  const digits = String(value || "").replace(/\D/g, "").slice(0, 8);
+  return digits.replace(/(\d{5})(\d{1,3})/, "$1-$2");
+}
+
+async function lookupCep(raw) {
+  const digits = String(raw || "").replace(/\D/g, "");
+  if (digits.length !== 8) return null;
+  const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.erro) return null;
+  return {
+    cep: formatCep(digits),
+    street: data.logradouro || "",
+    neighborhood: data.bairro || "",
+    city: data.localidade || "",
+  };
+}
+
+function paintLocationFound() {
+  const note = $("#locationFound");
+  if (!note) return;
+  if (!locationDraft) {
+    note.hidden = true;
+    note.textContent = "";
+    return;
+  }
+  note.hidden = false;
+  note.textContent = [locationDraft.street, locationDraft.neighborhood, locationDraft.city].filter(Boolean).join(" · ");
+}
+
+function openLocation() {
+  savedAddress = savedAddress || readSavedAddress();
+  locationDraft = savedAddress ? { ...savedAddress } : null;
+  $("#locationCep").value = savedAddress?.cep || "";
+  $("#locationNumber").value = savedAddress?.number || "";
+  $("#locationComplement").value = savedAddress?.complement || "";
+  paintLocationFound();
+  $("#locationSheet").classList.add("is-open");
+  $("#locationOverlay").classList.add("is-open");
+  $("#locationSheet").setAttribute("aria-hidden", "false");
+  $("#openLocation")?.setAttribute("aria-expanded", "true");
+  $("#locationCep").focus();
+}
+
+function closeLocation() {
+  $("#locationSheet").classList.remove("is-open");
+  $("#locationOverlay").classList.remove("is-open");
+  $("#locationSheet").setAttribute("aria-hidden", "true");
+  $("#openLocation")?.setAttribute("aria-expanded", "false");
+}
+
+$("#openLocation")?.addEventListener("click", openLocation);
+$("#closeLocation")?.addEventListener("click", closeLocation);
+$("#locationOverlay")?.addEventListener("click", closeLocation);
+$("#locationCep")?.addEventListener("input", async (event) => {
+  event.target.value = formatCep(event.target.value);
+  locationDraft = event.target.value.replace(/\D/g, "").length === 8 ? await lookupCep(event.target.value) : null;
+  paintLocationFound();
+  if (event.target.value.replace(/\D/g, "").length === 8 && !locationDraft) showToast("CEP não encontrado.");
+});
+$("#useLocation")?.addEventListener("click", () => {
+  if (!navigator.geolocation) {
+    showToast("Este aparelho não informa a localização.");
+    return;
+  }
+  const button = $("#useLocation");
+  button.disabled = true;
+  navigator.geolocation.getCurrentPosition(async (position) => {
+    try {
+      const { latitude, longitude } = position.coords;
+      const geo = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=pt`).then((res) => res.json());
+      const cep = String(geo.postcode || "").replace(/\D/g, "");
+      if (cep.length !== 8) {
+        showToast("Achei a região, mas não o CEP. Digite o CEP.");
+        return;
+      }
+      $("#locationCep").value = formatCep(cep);
+      locationDraft = await lookupCep(cep);
+      paintLocationFound();
+      if (!locationDraft) showToast("CEP não encontrado.");
+      else $("#locationNumber").focus();
+    } catch {
+      showToast("Não foi possível ler esse ponto.");
+    } finally {
+      button.disabled = false;
+    }
+  }, () => {
+    button.disabled = false;
+    showToast("Permita a localização ou informe o CEP.");
+  }, { enableHighAccuracy: true, timeout: 8000 });
+});
+$("#saveLocation")?.addEventListener("click", () => {
+  if (!locationDraft?.street && !locationDraft?.neighborhood) {
+    showToast("Informe um CEP válido.");
+    return;
+  }
+  const number = $("#locationNumber").value.trim();
+  if (!number) {
+    showToast("Informe o número.");
+    $("#locationNumber").focus();
+    return;
+  }
+  savedAddress = {
+    ...locationDraft,
+    number,
+    complement: $("#locationComplement").value.trim(),
+  };
+  localStorage.setItem(ADDRESS_KEY, JSON.stringify(savedAddress));
+  paintLocation();
+  applyAddressToForm();
+  closeLocation();
+  showToast("Entrega neste endereço.");
+});
+
 function openCheckout() {
   if (!lines.size) { location.hash = ""; return; }
   if (!$("#intro").classList.contains("is-hidden")) enterMenu(true);
+  applyAddressToForm();
   const delivery = document.querySelector('[name="fulfillment"]:checked')?.value !== "pickup";
   $("#addressFields").classList.toggle("is-hidden", !delivery);
   $("#pickupInfo").classList.toggle("is-visible", !delivery);
@@ -489,7 +654,8 @@ $("#checkoutPhone")?.addEventListener("input", (event) => {
 $("#applyCoupon")?.addEventListener("click", () => { refreshQuote().catch(() => showToast("Não foi possível validar o cupom.")); });
 $("#checkoutForm")?.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (!event.currentTarget.reportValidity()) return;
+  const form = event.currentTarget;
+  if (!(form instanceof HTMLFormElement) || !form.reportValidity()) return;
   if (menu && !menu.acceptingOrders) { showToast("A loja não está recebendo pedidos."); return; }
   const button = $("#placeOrder");
   button.disabled = true;
@@ -508,14 +674,20 @@ $("#checkoutForm")?.addEventListener("submit", async (event) => {
       showToast(data.pixError);
       return;
     }
-    lines.clear();
-    updateCart();
-    event.currentTarget.reset();
+    if (!data.order?.publicToken) {
+      showToast("Não foi possível registrar o pedido.");
+      return;
+    }
+    form.reset();
     checkoutDiscount = null;
     sessionStorage.removeItem("food-request-id");
+    lines.clear();
+    updateCart();
     history.replaceState(null, "", `#pedido/${data.order.publicToken}`);
     routeCheckout();
     showOrder(data.order);
+  } catch {
+    showToast("Não foi possível registrar o pedido.");
   } finally {
     button.disabled = false;
   }
@@ -533,6 +705,8 @@ async function boot() {
     return;
   }
   menu = await res.json();
+  savedAddress = readSavedAddress();
+  paintLocation();
   items = menu.items || [];
   const plates = items.filter((item) => item.category !== "bebidas");
   const drinks = items.filter((item) => item.category === "bebidas");

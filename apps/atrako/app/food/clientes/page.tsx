@@ -23,7 +23,8 @@ export default function FoodCustomersPage() {
 
   return (
     <section>
-      <h1 className="food-brand">Clientes</h1>
+      <h1 className="food-title">Clientes</h1>
+      <p className="food-lead">Quem já comprou, com que frequência e quem está parado há mais de 30 dias.</p>
       <div className="food-list">
         {(data?.customers ?? []).map((customer) => (
           <article key={customer.phone} className="food-row">

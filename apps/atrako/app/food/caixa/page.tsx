@@ -35,7 +35,8 @@ export default function FoodCashPage() {
 
   return (
     <section>
-      <h1 className="food-brand">Caixa</h1>
+      <h1 className="food-title">Caixa</h1>
+      <p className="food-lead">O que entrou, o que ainda chega na entrega e o que foi estornado.</p>
       {caixa ? (
         <>
           <div className="food-stats">

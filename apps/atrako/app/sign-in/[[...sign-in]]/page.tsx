@@ -78,7 +78,7 @@ function SignInForm() {
           Atrako
         </Link>
         <div className="mt-10 max-w-sm md:mt-0">
-          <p className="type-fine-print uppercase tracking-[0.18em] text-[var(--ink-muted-48)]">
+          <p className="type-fine-print uppercase text-[var(--ink-muted-48)]">
             Inteligência comercial
           </p>
           <p className="type-display-md mt-3 text-[var(--on-dark)]">Da mídia à receita.</p>

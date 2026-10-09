@@ -77,14 +77,14 @@ export function ContactsTable({
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm text-zinc-500">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 type-caption text-zinc-500">
         <p>{countLabel}</p>
       </div>
 
       {/* Mobile cards */}
       <div className="space-y-2 md:hidden">
         {contacts.length === 0 ? (
-          <p className="rounded-2xl border border-zinc-200 bg-white px-4 py-10 text-center text-sm text-zinc-500">
+          <p className="rounded-2xl border border-zinc-200 bg-white px-4 py-10 text-center type-caption text-zinc-500">
             Nenhum contato ainda. Quando alguém interagir com suas automações,
             aparecerá aqui automaticamente.
           </p>
@@ -104,13 +104,13 @@ export function ContactsTable({
                 profilePictureUrl={c.profilePictureUrl}
               />
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-zinc-900">
+                <p className="truncate font-semibold text-zinc-900">
                   {displayName(c)}
                 </p>
-                <p className="truncate text-xs text-zinc-500">
+                <p className="truncate type-fine-print text-zinc-500">
                   {c.stId ?? (c.username ? `@${c.username}` : c.igsid)}
                 </p>
-                <p className="mt-1 line-clamp-1 text-xs text-zinc-500">
+                <p className="mt-1 line-clamp-1 type-fine-print text-zinc-500">
                   {c.lastMessage ?? "Sem mensagens"}
                 </p>
               </div>
@@ -120,7 +120,7 @@ export function ContactsTable({
       </div>
 
       <div className="hidden overflow-hidden rounded-2xl border border-zinc-200 bg-white md:block">
-        <table className="w-full text-sm text-zinc-900">
+        <table className="w-full type-caption text-zinc-900">
           <thead className="border-b border-zinc-100 bg-zinc-50/80 text-zinc-600">
             <tr>
               {selectable && (
@@ -178,16 +178,16 @@ export function ContactsTable({
                       />
                     </td>
                     <td className="px-4 py-3">
-                      <p className="font-medium text-zinc-900">
+                      <p className="font-semibold text-zinc-900">
                         {displayName(c)}
                       </p>
-                      <p className="text-xs text-zinc-500">
+                      <p className="type-fine-print text-zinc-500">
                         {c.username ? `@${c.username}` : c.igsid}
                       </p>
                       {(origin || userTags.length > 0) && (
                         <div className="mt-1.5 flex flex-wrap gap-1">
                           {origin ? (
-                            <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700">
+                            <span className="rounded-full bg-violet-50 px-2 py-0.5 type-micro-legal text-violet-700">
                               {origin}
                             </span>
                           ) : null}
@@ -196,7 +196,7 @@ export function ContactsTable({
                             return (
                               <span
                                 key={t}
-                                className={`rounded-full px-2 py-0.5 text-[10px] ${
+                                className={`rounded-full px-2 py-0.5 type-micro-legal ${
                                   isEmail
                                     ? "bg-violet-50 text-violet-700"
                                     : "bg-sky-50 text-sky-700"
@@ -209,26 +209,26 @@ export function ContactsTable({
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-zinc-500">
+                    <td className="px-4 py-3 font-mono type-fine-print text-zinc-500">
                       {c.stId ?? "—"}
                     </td>
                     <td className="max-w-[220px] px-4 py-3 text-zinc-600">
                       {c.lastMessage ? (
-                        <span className="line-clamp-2 text-xs leading-snug">
+                        <span className="line-clamp-2 type-fine-print leading-snug">
                           {c.lastMessageDirection === "OUTBOUND" ? "Você: " : ""}
                           {c.lastMessage}
                         </span>
                       ) : (
-                        <span className="text-xs text-zinc-400">—</span>
+                        <span className="type-fine-print text-zinc-400">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
                       {c.botPaused ? (
-                        <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                        <span className="rounded-full bg-amber-50 px-2.5 py-0.5 type-caption-strong text-amber-700">
                           Bot pausado
                         </span>
                       ) : (
-                        <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                        <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 type-caption-strong text-emerald-700">
                           Inscrito
                         </span>
                       )}

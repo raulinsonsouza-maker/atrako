@@ -60,13 +60,13 @@ export function LogoUploadField({ value, onChange }: LogoUploadFieldProps) {
               unoptimized
             />
           </div>
-          <p className="min-w-0 flex-1 truncate text-xs text-[var(--muted-foreground)]">{value}</p>
+          <p className="min-w-0 flex-1 truncate type-fine-print text-[var(--muted-foreground)]">{value}</p>
           <div className="flex shrink-0 items-center gap-1">
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
               disabled={uploading}
-              className="rounded-lg border border-[var(--border)] px-2.5 py-1.5 text-[11px] font-semibold text-[var(--muted-foreground)] transition hover:bg-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-50"
+              className="rounded-lg border border-[var(--border)] px-2.5 py-1.5 type-caption-strong text-[var(--muted-foreground)] transition hover:bg-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-50"
             >
               {uploading ? "Enviando..." : "Trocar"}
             </button>
@@ -84,7 +84,7 @@ export function LogoUploadField({ value, onChange }: LogoUploadFieldProps) {
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-dashed border-[var(--border)] bg-[var(--background)] py-4 text-sm text-[var(--muted-foreground)] transition hover:border-[var(--primary)]/40 hover:bg-[var(--primary)]/3 hover:text-[var(--primary)] disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-dashed border-[var(--border)] bg-[var(--background)] py-4 type-caption text-[var(--muted-foreground)] transition hover:border-[var(--primary)]/40 hover:bg-[var(--primary)]/3 hover:text-[var(--primary)] disabled:opacity-50"
         >
           {uploading ? (
             <>
@@ -101,7 +101,7 @@ export function LogoUploadField({ value, onChange }: LogoUploadFieldProps) {
         </button>
       )}
       {uploadError && (
-        <p className="text-[11px] text-red-500">{uploadError}</p>
+        <p className="type-fine-print text-red-500">{uploadError}</p>
       )}
       <input
         ref={inputRef}

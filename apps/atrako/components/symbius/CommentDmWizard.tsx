@@ -346,7 +346,7 @@ export function CommentDmWizard({
               }}
             >
               {mediaFilter === "next" ? (
-                <p className="text-[11px] leading-snug text-zinc-500">
+                <p className="type-fine-print leading-snug text-zinc-500">
                   A automação passa a valer para a próxima publicação ou Reel
                   que você fizer depois de ativar.
                 </p>
@@ -380,7 +380,7 @@ export function CommentDmWizard({
                       className={wizardInputCls}
                       placeholder="Eu quero"
                     />
-                    <p className="text-[11px] text-zinc-500">
+                    <p className="type-fine-print text-zinc-500">
                       Use vírgulas para separar as palavras
                     </p>
                     <div className="flex flex-wrap gap-1.5">
@@ -515,7 +515,7 @@ export function CommentDmWizard({
             <WizardSectionTitle>E então, eles vão receber</WizardSectionTitle>
             <div className="mt-2.5 space-y-2">
               <div className="rounded-xl border border-zinc-200 bg-white p-3.5">
-                <p className="mb-2.5 text-[13px] font-medium text-zinc-800">
+                <p className="mb-2.5 type-caption-strong text-zinc-800">
                   Uma DM contendo um link
                 </p>
                 <div className="space-y-2">
@@ -562,7 +562,7 @@ export function CommentDmWizard({
                       className={wizardTextareaCls}
                     />
                     <div className="flex items-center gap-2">
-                      <span className="shrink-0 text-[11px] text-zinc-500">
+                      <span className="shrink-0 type-fine-print text-zinc-500">
                         Enviar após
                       </span>
                       <input
@@ -575,7 +575,7 @@ export function CommentDmWizard({
                         }
                         className={`${wizardInputCls} w-20`}
                       />
-                      <span className="text-[11px] text-zinc-500">minutos</span>
+                      <span className="type-fine-print text-zinc-500">minutos</span>
                     </div>
                   </div>
                 )}
@@ -586,7 +586,7 @@ export function CommentDmWizard({
       }
       previewHeader={
         <>
-          <p className="text-[13px] font-semibold text-zinc-600">
+          <p className="type-caption-strong text-zinc-600">
             Visualização
           </p>
           <ActivateButton loading={loading} onClick={activate} />

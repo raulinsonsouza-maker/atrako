@@ -20,7 +20,7 @@ async function SocialShell({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session) {
     return (
-      <div className="p-6 text-sm text-red-600">
+      <div className="p-6 type-caption text-red-600">
         Não foi possível iniciar a sessão do Social. Verifique SOCIAL_DATABASE_URL.
       </div>
     );

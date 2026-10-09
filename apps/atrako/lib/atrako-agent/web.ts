@@ -2,6 +2,7 @@ import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import { resolvePlatformApp } from "@/lib/config/platformApps";
 import { artifactId, type ReferenceItem } from "./artifacts";
+import { brandLine, stripStickyPromo } from "./site-facts";
 import { nullableInt, nullableString, objectSchema, type AtrakoTool, type ToolResult } from "./tools";
 
 /**
@@ -141,7 +142,7 @@ export async function tavilySearch(
 
 // ── leitura de página ──
 
-function htmlToText(html: string): { title: string; text: string } {
+export function htmlToText(html: string): { title: string; text: string } {
   const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/\s+/g, " ").trim() ?? "";
   const text = html
     .replace(/<(script|style|noscript|svg|template)[\s\S]*?<\/\1>/gi, " ")
@@ -177,7 +178,7 @@ export async function readPage(raw: string, signal?: AbortSignal): Promise<PageR
     if (res.ok) {
       const body = await res.text();
       const title = body.match(/^Title:\s*(.+)$/m)?.[1]?.trim() ?? url.hostname;
-      const content = body.replace(/^[\s\S]*?Markdown Content:\s*/m, "").trim() || body.trim();
+      const content = stripStickyPromo(body.replace(/^[\s\S]*?Markdown Content:\s*/m, "").trim() || body.trim());
       return {
         url: url.toString(),
         title: title.slice(0, 200),
@@ -204,14 +205,42 @@ export async function readPage(raw: string, signal?: AbortSignal): Promise<PageR
   const type = res.headers.get("content-type") ?? "";
   if (!/text\/(html|plain)|application\/xhtml/.test(type)) throw new Error("Esse endereço não é uma página de texto.");
   const html = (await res.text()).slice(0, 1_500_000);
-  const { title, text } = type.includes("text/plain") ? { title: url.hostname, text: html } : htmlToText(html);
+  const parsed = type.includes("text/plain") ? { title: url.hostname, text: html } : htmlToText(html);
+  const text = stripStickyPromo(parsed.text);
   return {
     url: url.toString(),
-    title: (title || url.hostname).slice(0, 200),
+    title: (parsed.title || url.hostname).slice(0, 200),
     text: text.slice(0, PAGE_TEXT_CAP),
     truncated: text.length > PAGE_TEXT_CAP,
     via: "direct",
   };
+}
+
+/** HTML ou CSS público, sem seguir redirect para rede interna. */
+export async function fetchPublicText(
+  raw: string,
+  signal?: AbortSignal,
+  hops = 0,
+): Promise<{ url: string; body: string; type: string }> {
+  if (hops > 3) throw new Error("A página redirecionou demais.");
+  const url = await assertPublicUrl(raw);
+  const res = await fetch(url, {
+    redirect: "manual",
+    headers: { "user-agent": "AtrakoBot/1.0 (+https://atrako.com.br)", accept: "text/html,text/css,text/plain" },
+    signal: withTimeout(signal),
+  });
+  if (res.status >= 300 && res.status < 400) {
+    const next = res.headers.get("location");
+    if (!next) throw new Error("A página redirecionou sem destino.");
+    return fetchPublicText(new URL(next, url).toString(), signal, hops + 1);
+  }
+  if (!res.ok) throw new Error(`A página respondeu ${res.status}.`);
+  const type = res.headers.get("content-type") ?? "";
+  if (!/text\/(html|plain|css)|application\/xhtml/i.test(type) && !url.pathname.endsWith(".css")) {
+    throw new Error("Esse endereço não é uma página de texto.");
+  }
+  const body = (await res.text()).slice(0, 1_500_000);
+  return { url: url.toString(), body, type };
 }
 
 // ── ferramentas ──
@@ -268,7 +297,7 @@ export const WEB_TOOLS: AtrakoTool[] = [
     name: "ler_pagina",
     step: "Lendo a página",
     description:
-      "Lê o conteúdo de uma página da web (texto/markdown, até ~12 mil caracteres): site de referência que o usuário mandou, concorrente, artigo. Use quando o usuário colar um link ou quando um resultado da pesquisa precisar ser aprofundado.",
+      "Lê o conteúdo de uma página da web uma vez (texto e, quando o CSS publica, cor e fonte). Se a conversa já tem [Páginas já lidas] para esse endereço, NÃO chame de novo: use o texto que já está lá.",
     parameters: objectSchema({
       url: { type: "string", description: "Endereço completo (https://…)." },
     }),
@@ -277,8 +306,16 @@ export const WEB_TOOLS: AtrakoTool[] = [
       const raw = typeof args.url === "string" ? args.url : "";
       try {
         const page = await readPage(raw, rt.signal);
+        const { inspectStorePage } = await import("./site-brand");
+        const look = await inspectStorePage(raw, rt.signal).catch(() => null);
+        const visual = look?.brand ? brandLine(look.brand) : "";
+        const preco = look?.priceCents ? `Preço de vitrine: R$ ${(look.priceCents / 100).toFixed(2).replace(".", ",")}.` : "";
+        const extra = [preco, visual ? `Identidade visual lida no CSS: ${visual}. Use estas cores e esta fonte. Não peça o código de novo.` : ""]
+          .filter(Boolean)
+          .join("\n");
+        const conteudo = [page.text, extra].filter(Boolean).join("\n\n");
         return {
-          data: { titulo: page.title, url: page.url, conteudo: page.text, cortado: page.truncated },
+          data: { titulo: page.title, url: page.url, conteudo, cortado: page.truncated },
           coverage: page.text ? "available" : "empty",
           source: { tool: "ler_pagina", label: page.title || "Página da web", note: EXTERNAL_NOTE },
           artifacts: [
@@ -286,7 +323,12 @@ export const WEB_TOOLS: AtrakoTool[] = [
               kind: "references",
               id: artifactId("refs"),
               title: "Página lida",
-              items: [{ title: page.title, url: page.url, snippet: page.text.replace(/\s+/g, " ").slice(0, 220) }],
+              items: [{
+                title: page.title,
+                url: page.url,
+                snippet: page.text.replace(/\s+/g, " ").slice(0, 220),
+                memo: conteudo.slice(0, 1600),
+              }],
             },
           ],
         };

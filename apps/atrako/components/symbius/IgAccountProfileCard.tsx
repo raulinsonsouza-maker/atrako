@@ -50,7 +50,7 @@ export function IgAccountProfileCard({
 
   return (
     <div className={compact ? "" : "symbius-card"}>
-      <p className="text-sm text-[var(--symbius-muted)]">
+      <p className="type-caption text-[var(--symbius-muted)]">
         Conta Instagram conectada
       </p>
       <div className="mt-3 flex items-center gap-4">
@@ -73,13 +73,13 @@ export function IgAccountProfileCard({
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="truncate text-lg font-semibold">
+          <p className="truncate type-tagline ">
             @{account.igUsername ?? "instagram"}
           </p>
-          <p className="mt-0.5 truncate text-xs text-[var(--symbius-muted)]">
+          <p className="mt-0.5 truncate type-fine-print text-[var(--symbius-muted)]">
             ID: {account.igUserId}
           </p>
-          <p className="mt-1 text-xs">
+          <p className="mt-1 type-fine-print">
             <span className="text-[var(--symbius-accent)]">{account.status}</span>
             {account.messagesEnabled === false && (
               <span className="ml-2 text-amber-400">mensagens limitadas</span>
@@ -93,7 +93,7 @@ export function IgAccountProfileCard({
           type="button"
           onClick={refreshProfile}
           disabled={loading}
-          className="symbius-btn-outline mt-4 inline-flex items-center gap-2 text-sm disabled:opacity-60"
+          className="symbius-btn-outline mt-4 inline-flex items-center gap-2 type-caption disabled:opacity-60"
         >
           {loading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -103,7 +103,7 @@ export function IgAccountProfileCard({
           Atualizar perfil
         </button>
       )}
-      {error && <p className="mt-2 text-xs text-red-300">{error}</p>}
+      {error && <p className="mt-2 type-fine-print text-red-300">{error}</p>}
     </div>
   );
 }

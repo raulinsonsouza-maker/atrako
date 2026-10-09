@@ -20,7 +20,7 @@ export default async function ObrigadoPage({
       {order ? (
         <>
           <p className="type-body text-[var(--ink-muted-80)]">
-            Pedido <code className="text-xs">{order.id}</code> · {order.status}
+            Pedido <code className="type-fine-print">{order.id}</code> · {order.status}
           </p>
           <ul className="type-body text-[var(--muted-foreground)]">
             {order.items.map((i) => (
@@ -38,7 +38,7 @@ export default async function ObrigadoPage({
               Ir para área de membros
             </Link>
           ) : (
-            <p className="text-sm text-amber-800">Aguardando confirmação do pagamento.</p>
+            <p className="type-caption text-amber-800">Aguardando confirmação do pagamento.</p>
           )}
         </>
       ) : (

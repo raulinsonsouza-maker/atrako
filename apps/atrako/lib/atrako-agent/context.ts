@@ -78,7 +78,7 @@ export const DEFAULT_PERIOD: PeriodPreset = "ultimos_30_dias";
 export type AtrakoPeriod = {
   preset: PeriodPreset;
   start: Date;
-  /** Fim inclusivo (23:59:59.999 do último dia). */
+  /** Fim inclusivo do último dia no fuso do workspace. */
   end: Date;
   endDay: Date;
   previousStart: Date;
@@ -112,11 +112,43 @@ export function calendarDateIn(timezone: string, now = new Date()): Date {
 
 const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 
-const endOfDay = (d: Date) => {
-  const e = new Date(d);
-  e.setHours(23, 59, 59, 999);
-  return e;
-};
+/** Deslocamento (local − UTC) do fuso naquele instante, em ms. */
+function tzOffsetMs(timeZone: string, instant: number): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(new Date(instant));
+  const v = Object.fromEntries(parts.map((p) => [p.type, p.value]));
+  const asUtc = Date.UTC(
+    Number(v.year),
+    Number(v.month) - 1,
+    Number(v.day),
+    Number(v.hour) % 24,
+    Number(v.minute),
+    Number(v.second),
+  );
+  return asUtc - instant;
+}
+
+/** Meia-noite ou fim do dia civil de `date` no fuso do workspace, como instante UTC. */
+function zonedBoundary(date: Date, timeZone: string, end: boolean): Date {
+  const y = date.getFullYear();
+  const m = date.getMonth();
+  const d = date.getDate();
+  const h = end ? 23 : 0;
+  const min = end ? 59 : 0;
+  const sec = end ? 59 : 0;
+  const probe = Date.UTC(y, m, d, h, min, sec);
+  let utc = probe;
+  for (let i = 0; i < 2; i++) utc = probe - tzOffsetMs(timeZone, utc);
+  return new Date(utc + (end ? 999 : 0));
+}
 
 /** Normaliza texto livre pt-BR ("últimos 7 dias", "mês passado") para um preset. */
 export function periodPresetFromText(value: unknown): PeriodPreset | null {
@@ -148,6 +180,7 @@ export function periodPresetFromText(value: unknown): PeriodPreset | null {
 export function resolvePeriod(
   input: { periodo?: unknown; inicio?: unknown; fim?: unknown } | null | undefined,
   today: Date,
+  timeZone = "America/Sao_Paulo",
 ): AtrakoPeriod {
   const explicitStart = parseLocalDate(input?.inicio);
   const explicitEnd = parseLocalDate(input?.fim);
@@ -200,11 +233,11 @@ export function resolvePeriod(
   const comparison = previousPeriod(start, endDay, comparisonPreset);
   return {
     preset,
-    start,
-    end: endOfDay(endDay),
+    start: zonedBoundary(start, timeZone, false),
+    end: zonedBoundary(endDay, timeZone, true),
     endDay,
-    previousStart: comparison.start,
-    previousEnd: endOfDay(comparison.end),
+    previousStart: zonedBoundary(comparison.start, timeZone, false),
+    previousEnd: zonedBoundary(comparison.end, timeZone, true),
     startLabel: formatLocalDate(start),
     endLabel: formatLocalDate(endDay),
     previousStartLabel: formatLocalDate(comparison.start),

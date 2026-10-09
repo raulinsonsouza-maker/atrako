@@ -63,6 +63,7 @@ services:
       TIKTOK_SHOP_APP_SECRET: ${TIKTOK_SHOP_APP_SECRET:-}
       TIKTOK_SHOP_SERVICE_ID: ${TIKTOK_SHOP_SERVICE_ID:-}
       CRON_SECRET: ${CRON_SECRET:-}
+      SYNC_CRON_TOKEN: ${SYNC_CRON_TOKEN:-}
       # Links já enviados foram assinados com esta chave (fallback antes de CRON_SECRET existir).
       SYMBIUS_LINK_TRACKING_SECRET: ${SYMBIUS_LINK_TRACKING_SECRET:-symbius-link-dev}
       # Uploads em runtime (logos de e-mail, imagens de LP): volume sobrevive a deploys.

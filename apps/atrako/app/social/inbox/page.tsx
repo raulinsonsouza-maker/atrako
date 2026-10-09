@@ -339,7 +339,7 @@ export default function InboxPage() {
               key={f.id}
               type="button"
               onClick={() => setFolder(f.id)}
-              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm ${
+              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left type-caption ${
                 folder === f.id
                   ? "bg-[var(--primary-glow)] type-body-strong text-[var(--primary)]"
                   : "text-[var(--ink-muted-48)] hover:bg-[var(--canvas-parchment)]"
@@ -348,12 +348,12 @@ export default function InboxPage() {
               {f.icon}
               <span className="flex-1 truncate">{f.label}</span>
               {typeof f.count === "number" && (
-                <span className="text-xs text-[var(--ink-muted-48)]">{f.count}</span>
+                <span className="type-fine-print text-[var(--ink-muted-48)]">{f.count}</span>
               )}
             </button>
           ))}
           <div className="my-3 border-t border-[var(--divider-soft)] pt-3">
-            <p className="px-3 type-micro-legal uppercase tracking-wide text-[var(--ink-muted-48)]">
+            <p className="px-3 type-micro-legal uppercase text-[var(--ink-muted-48)]">
               Atalhos
             </p>
             <div className="mt-1 space-y-0.5">
@@ -416,7 +416,7 @@ export default function InboxPage() {
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar conversas…"
           />
-          <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
+          <div className="mt-2 flex flex-wrap gap-1.5 type-fine-print">
             <span className="rounded-full bg-[var(--canvas-parchment)] px-2.5 py-1 text-[var(--ink-muted-48)]">
               {folder === "all"
                 ? "Todas"
@@ -545,7 +545,7 @@ export default function InboxPage() {
                 <p className="truncate type-body-strong">
                   {displayName(selected.contato)}
                 </p>
-                <p className="text-xs text-[var(--ink-muted-48)]">
+                <p className="type-fine-print text-[var(--ink-muted-48)]">
                   Instagram
                   {!canSend ? " · fora da janela 24h (HUMAN_AGENT)" : ""}
                 </p>
@@ -602,7 +602,7 @@ export default function InboxPage() {
                       }`}
                     >
                       <div
-                        className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                        className={`max-w-[75%] rounded-2xl px-4 py-2.5 type-caption leading-relaxed ${
                           outbound
                             ? "rounded-br-md bg-[var(--primary)] text-white"
                             : "rounded-bl-md bg-white text-[var(--ink)] shadow-sm"
@@ -639,7 +639,7 @@ export default function InboxPage() {
                       key={s.id}
                       type="button"
                       onClick={() => setReply(s.body)}
-                      className="rounded-full bg-[var(--canvas-parchment)] px-2 py-0.5 text-xs text-[var(--ink-muted-48)] hover:bg-zinc-200"
+                      className="rounded-full bg-[var(--canvas-parchment)] px-2 py-0.5 type-fine-print text-[var(--ink-muted-48)] hover:bg-zinc-200"
                     >
                       {s.shortcut ? `/${s.shortcut}` : s.title}
                     </button>
@@ -671,7 +671,7 @@ export default function InboxPage() {
                 type="datetime-local"
                 value={scheduleAt}
                 onChange={(e) => setScheduleAt(e.target.value)}
-                className="mb-2 w-full rounded-lg border border-[var(--hairline)] px-2 py-1 text-xs"
+                className="mb-2 w-full rounded-lg border border-[var(--hairline)] px-2 py-1 type-fine-print"
               />
               {pendingMedia && (
                 <div className="mb-2 flex items-center gap-2 rounded-xl border border-[var(--hairline)] bg-[var(--canvas-parchment)] p-2">
@@ -688,7 +688,7 @@ export default function InboxPage() {
                       className="h-14 w-14 rounded-lg object-cover"
                     />
                   ) : (
-                    <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-zinc-200 text-xs">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-zinc-200 type-fine-print">
                       Áudio
                     </div>
                   )}
@@ -740,7 +740,7 @@ export default function InboxPage() {
                     setReply(v);
                   }}
                   placeholder="Digite sua mensagem..."
-                  className="flex-1 rounded-xl border border-[var(--hairline)] bg-[var(--canvas-parchment)] px-4 py-3 text-sm outline-none focus:border-sky-400 focus:bg-white"
+                  className="flex-1 rounded-xl border border-[var(--hairline)] bg-[var(--canvas-parchment)] px-4 py-3 type-caption outline-none focus:border-sky-400 focus:bg-white"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();

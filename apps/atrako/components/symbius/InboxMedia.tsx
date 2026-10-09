@@ -50,7 +50,7 @@ function MediaBlock({
         />
         {(type === "reel" || type === "ig_reel") && (
           <p
-            className={`px-2 py-1 text-[10px] font-medium ${
+            className={`px-2 py-1 type-micro-legal ${
               outbound ? "text-white/80" : "text-zinc-500"
             }`}
           >
@@ -98,7 +98,7 @@ function MediaBlock({
           }}
         />
         <span
-          className={`block px-3 py-2 text-xs underline ${
+          className={`block px-3 py-2 type-fine-print underline ${
             outbound ? "text-white/90" : "text-sky-700"
           }`}
         >
@@ -114,7 +114,7 @@ function MediaBlock({
         href={url}
         target="_blank"
         rel="noreferrer"
-        className={`mb-1 block text-xs underline ${
+        className={`mb-1 block type-fine-print underline ${
           outbound ? "text-white/90" : "text-sky-700"
         }`}
       >
@@ -125,7 +125,7 @@ function MediaBlock({
 
   return (
     <p
-      className={`mb-1 text-xs ${
+      className={`mb-1 type-fine-print ${
         outbound ? "text-white/70" : "text-zinc-500"
       }`}
     >
@@ -171,7 +171,7 @@ export function ContactAvatar({
     .replace("@", "")
     .charAt(0)
     .toUpperCase();
-  const dim = size === "sm" ? "h-9 w-9 text-xs" : "h-10 w-10 text-sm";
+  const dim = size === "sm" ? "h-9 w-9 type-fine-print" : "h-10 w-10 type-caption";
 
   if (profilePictureUrl) {
     return (
@@ -187,7 +187,7 @@ export function ContactAvatar({
 
   return (
     <div
-      className={`flex ${dim} shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-amber-300 font-bold text-white`}
+      className={`flex ${dim} shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-amber-300 font-semibold text-white`}
     >
       {initial}
     </div>

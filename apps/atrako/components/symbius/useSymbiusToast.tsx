@@ -26,7 +26,7 @@ export function useSymbiusToast() {
   const Toast = toast ? (
     <div
       role="status"
-      className={`fixed bottom-4 right-4 z-[100] max-w-sm rounded-xl px-4 py-3 text-sm font-medium shadow-lg ${
+      className={`fixed bottom-4 right-4 z-[100] max-w-sm rounded-xl px-4 py-3 type-caption-strong shadow-lg ${
         toast.kind === "success"
           ? "bg-emerald-600 text-white"
           : toast.kind === "error"

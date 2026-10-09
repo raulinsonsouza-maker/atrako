@@ -3,6 +3,7 @@ import test from "node:test";
 import { creditsToTrack, mapUnsplashPhoto, pickStockImages, usedStockImages, withUtm, type StockImage } from "../lib/atrako-agent/images-core";
 import { lpFxPromptSection, LP_FX_IDS } from "../lib/criar/lp-fx/catalog";
 import { assessLpBrief } from "../lib/criar/lp-brief";
+import { brandFromCss, completeBriefFromSite, priceReaisFromHtml, productImageFromHtml, productUrlFromHtml } from "../lib/atrako-agent/site-facts";
 import { anonymizeSection, cssForSection, splitSections } from "../lib/criar/lp-library/extract";
 import { rankSections, type LibraryCandidate } from "../lib/criar/lp-library/rank";
 import { sectionScore } from "../lib/criar/lp-library/score";
@@ -170,4 +171,74 @@ test("a página não sai enquanto falta o que a pessoa quer", () => {
   const venda = assessLpBrief({ ...briefCheio, goal: "sales", lastUserMessage: "sim" });
   assert.equal(venda.ok, false);
   if (!venda.ok) assert.match(venda.falar, /preço/);
+  const longo = assessLpBrief({
+    ...briefCheio,
+    lastUserMessage: "crie uma lp de algum produto focada em venda dele pode ser do kefir",
+  });
+  assert.equal(longo.ok, false);
+  if (!longo.ok) assert.match(longo.falar, /Posso montar assim/);
+  const site = assessLpBrief({
+    ...briefCheio,
+    goal: "sales",
+    precoReais: 145,
+    lastUserMessage: "pegue tudo no site de uma vez",
+  });
+  assert.equal(site.ok, true);
+  const botao = assessLpBrief({
+    ...briefCheio,
+    goal: "sales",
+    precoReais: 145,
+    lastUserMessage: "pegue as informações no site comprar agora",
+  });
+  assert.equal(botao.ok, true);
+  const semPreco = assessLpBrief({
+    ...briefCheio,
+    goal: "sales",
+    lastUserMessage: "pegue tudo no site de uma vez",
+  });
+  assert.equal(semPreco.ok, false);
+  if (!semPreco.ok) assert.match(semPreco.falar, /preço/);
+});
+
+test("a loja preenche cor, preço e botão sem perguntar de novo", () => {
+  const css = `:root{--e-global-color-primary:#6EC1E4;--e-global-color-accent:#61CE70;--e-global-color-079bfa9:#8F664D;--e-global-color-1b4b8e3:#F8F7F7;--e-global-color-0b861d2:#EDDED3;--e-global-color-a0c481e:#532C15;--e-global-color-727b017:#030002;--e-global-typography-primary-font-family:"Roboto";}`;
+  const brand = brandFromCss(css);
+  assert.equal(brand.accent, "#8F664D");
+  assert.equal(brand.paper, "#EDDED3");
+  assert.equal(brand.font, "Roboto");
+  const html = `<span class="woocommerce-Price-amount amount"><bdi>R$&nbsp;0,00</bdi></span><p class="price"><span class="woocommerce-Price-amount amount"><bdi>R$&nbsp;145,00</bdi></span></p><a href="https://sensebiologicus.com.br/loja/grankefir-kefir-liofilizado-50g/">kefir</a>`;
+  assert.equal(priceReaisFromHtml(html), 145);
+  assert.equal(productUrlFromHtml(html, "kefir"), "https://sensebiologicus.com.br/loja/grankefir-kefir-liofilizado-50g/");
+  assert.equal(
+    productImageFromHtml('<meta property="og:image" content="https://loja.example/logo.png"><meta property="og:image" content="https://loja.example/pote.png">'),
+    "https://loja.example/pote.png",
+  );
+  const filled = completeBriefFromSite({
+    briefing: "",
+    publico: "",
+    estilo: "",
+    cta: "",
+    goal: "sales",
+    said: "https://sensebiologicus.com.br/ pegue as informações no site comprar agora",
+    productTitle: "Grankefir Kefir Liofilizado 50G",
+    productText: "Kefir liofilizado para a rotina. 50 gramas, com fermentos vivos.",
+    priceCents: 14500,
+    brand,
+  });
+  assert.ok(filled.briefing.length >= 20);
+  assert.equal(filled.cta, "Comprar agora");
+  assert.match(filled.estilo, /#8F664D/);
+  assert.match(filled.estilo, /Roboto/);
+  assert.equal(filled.priceCents, 14500);
+  const gate = assessLpBrief({
+    briefing: filled.briefing,
+    publico: filled.publico,
+    estilo: filled.estilo,
+    cta: filled.cta,
+    goal: "sales",
+    precoReais: filled.priceCents / 100,
+    temProduto: false,
+    lastUserMessage: "pegue as informações no site comprar agora",
+  });
+  assert.equal(gate.ok, true);
 });

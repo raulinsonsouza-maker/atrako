@@ -35,7 +35,7 @@ export default function InviteAcceptPage() {
         <p className="mt-2 type-caption text-[var(--ink-muted-48)]">
           Aceite para entrar no workspace Symbius.
         </p>
-        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-4 type-caption text-red-600">{error}</p>}
         <button
           type="button"
           disabled={busy}

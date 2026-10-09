@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDownLeft, ArrowUpRight, Loader2, RefreshCcw } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { AppPage } from "@/components/layout/AppPage";
 import { Button } from "@/components/ui/button";
 import { PillSelect } from "@/components/ui/pill-select";
+import { MetricTile } from "@/components/ui";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 
 type Entry = {
@@ -41,7 +42,7 @@ const SOURCE_LABELS: Record<string, string> = {
 };
 
 const fieldClass =
-  "mt-1.5 h-11 w-full rounded-[var(--radius-xs)] border border-[rgba(0,0,0,0.08)] bg-[var(--canvas)] px-4 type-caption text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary-focus)]";
+  "mt-1.5 h-11 w-full rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-4 type-caption text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary-focus)]";
 
 function brl(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -190,35 +191,9 @@ export default function FinancePage() {
               </p>
             </div>
 
-            <div className="caixa-kpi-card">
-              <span className="caixa-kpi-icon" data-tone="in">
-                <ArrowDownLeft className="h-4 w-4" strokeWidth={1.75} />
-              </span>
-              <p className="type-fine-print text-[var(--ink-muted-48)]">Receitas</p>
-              <p className="mt-auto type-tagline tabular-nums text-[var(--success)]">
-                {brl(summary?.income ?? 0)}
-              </p>
-            </div>
-
-            <div className="caixa-kpi-card">
-              <span className="caixa-kpi-icon" data-tone="out">
-                <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
-              </span>
-              <p className="type-fine-print text-[var(--ink-muted-48)]">Despesas</p>
-              <p className="mt-auto type-tagline tabular-nums text-[var(--danger)]">
-                {brl(summary?.expense ?? 0)}
-              </p>
-            </div>
-
-            <div className="caixa-kpi-card">
-              <span className="caixa-kpi-icon" data-tone="refund">
-                <RefreshCcw className="h-4 w-4" strokeWidth={1.75} />
-              </span>
-              <p className="type-fine-print text-[var(--ink-muted-48)]">Reembolsos</p>
-              <p className="mt-auto type-tagline tabular-nums text-[var(--ink-muted-80)]">
-                {brl(summary?.refund ?? 0)}
-              </p>
-            </div>
+            <MetricTile label="Receitas" value={brl(summary?.income ?? 0)} tone="positive" />
+            <MetricTile label="Despesas" value={brl(summary?.expense ?? 0)} tone="negative" />
+            <MetricTile label="Reembolsos" value={brl(summary?.refund ?? 0)} />
           </div>
 
           <form onSubmit={addManual} className="caixa-manual">

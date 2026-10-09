@@ -54,7 +54,7 @@ export function FlowEditClient({ fluxoId }: { fluxoId: string }) {
         <div className="absolute right-4 top-4 z-20 hidden md:block">
           <Link
             href={`/social/flows/${fluxoId}?builder=1`}
-            className="rounded-lg bg-black/40 px-2 py-1 text-xs text-white/70 underline hover:text-white"
+            className="rounded-lg bg-black/40 px-2 py-1 type-fine-print text-white/70 underline hover:text-white"
           >
             Builder avançado
           </Link>

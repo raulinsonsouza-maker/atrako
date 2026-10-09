@@ -56,10 +56,10 @@ function SectionBlock({
     case "hero":
       return (
         <section className="lp-section lp-section-hero">
-          <p className="type-fine-print uppercase tracking-wide text-[var(--ink-muted-48)]">
+          <p className="type-fine-print uppercase text-[var(--ink-muted-48)]">
             {brandName}
           </p>
-          <h1 className="mt-3 type-tagline text-[var(--ink)] sm:text-[28px] sm:leading-tight">
+          <h1 className="mt-3 type-tagline text-[var(--ink)] type-lead sm:leading-tight">
             {section.headline}
           </h1>
           {section.subheadline ? (

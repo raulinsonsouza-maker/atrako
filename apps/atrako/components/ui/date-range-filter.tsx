@@ -333,7 +333,7 @@ export function DateRangeFilter({ value, onChange, allowAll = false, variant = "
         >
           <div className="grid md:grid-cols-[220px_1fr]">
             <div className="border-b border-[var(--border)] p-3 md:border-b-0 md:border-r">
-              <p className="mb-2 px-3 type-fine-print uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+              <p className="mb-2 px-3 type-fine-print uppercase text-[var(--muted-foreground)]">
                 Períodos
               </p>
               <div className="date-range-presets space-y-0.5">

@@ -2,7 +2,8 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { AlertTriangle, Search, TrendingUp, MousePointerClick, Eye, Wallet, Percent, BarChart3 } from "lucide-react";
+import { MetricGrid, MetricTile } from "@/components/ui";
+import { AlertTriangle, Search, BarChart3 } from "lucide-react";
 
 export interface KeywordAnalysis {
   text: string;
@@ -89,8 +90,8 @@ export function GoogleKeywordsPanel({ data, formatCurrency, isLoading }: Props) 
     return (
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--card)] px-6 py-16 text-center">
         <AlertTriangle className="h-8 w-8 text-[var(--muted-foreground)]" />
-        <p className="text-sm font-medium text-[var(--foreground)]">Palavras-chave indisponíveis</p>
-        <p className="max-w-sm text-xs text-[var(--muted-foreground)]">{data.error}</p>
+        <p className="type-caption-strong text-[var(--foreground)]">Palavras-chave indisponíveis</p>
+        <p className="max-w-sm type-fine-print text-[var(--muted-foreground)]">{data.error}</p>
       </div>
     );
   }
@@ -99,8 +100,8 @@ export function GoogleKeywordsPanel({ data, formatCurrency, isLoading }: Props) 
     return (
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--card)] px-6 py-16 text-center">
         <Search className="h-8 w-8 text-[var(--muted-foreground)]" />
-        <p className="text-sm font-medium text-[var(--foreground)]">Nenhuma palavra-chave encontrada</p>
-        <p className="text-xs text-[var(--muted-foreground)]">Não há dados de keywords para o período selecionado.</p>
+        <p className="type-caption-strong text-[var(--foreground)]">Nenhuma palavra-chave encontrada</p>
+        <p className="type-fine-print text-[var(--muted-foreground)]">Não há dados de keywords para o período selecionado.</p>
       </div>
     );
   }
@@ -121,9 +122,9 @@ export function GoogleKeywordsPanel({ data, formatCurrency, isLoading }: Props) 
       <div className="flex items-start gap-3">
         <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">Google Ads</p>
-          <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">Análise de Palavras-chave</h2>
-          <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+          <p className="type-micro-legal uppercase text-[var(--primary)]">Google Ads</p>
+          <h2 className="type-tagline text-[var(--foreground)]">Análise de Palavras-chave</h2>
+          <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
             {keywords.length} termo{keywords.length !== 1 ? "s" : ""} com impressões
             {data.dateFrom ? ` · ${data.dateFrom} → ${data.dateTo}` : ""}
           </p>
@@ -131,34 +132,21 @@ export function GoogleKeywordsPanel({ data, formatCurrency, isLoading }: Props) 
       </div>
 
       {/* ── KPI cards ── */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <MetricGrid>
         {([
-          { label: "Impressões",   value: fmt(totals.impressions),                           icon: Eye,               accent: false },
-          { label: "Cliques",      value: fmt(totals.clicks),                                icon: MousePointerClick, accent: false },
-          { label: "CTR Médio",    value: `${fmt(totals.ctr, 2)}%`,                          icon: Percent,           accent: false },
-          { label: "Investimento", value: formatCurrency(totals.cost),                       icon: Wallet,            accent: false },
-          { label: "Conversões",   value: fmt(totals.conversions, 1),                        icon: TrendingUp,        accent: true  },
-          { label: "CPL Médio",    value: totals.cpl > 0 ? formatCurrency(totals.cpl) : "—", icon: TrendingUp,        accent: true  },
-        ] as const).map(({ label, value, icon: Icon, accent }) => (
-          <Card key={label} className="group relative overflow-hidden rounded-2xl border-[var(--border)] transition-all hover:border-[color-mix(in_srgb,var(--primary)_20%,var(--border))]">
-            <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--primary)] opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-[0.05]" />
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-[var(--primary)]">
-                  <Icon className="h-3.5 w-3.5" />
-                </div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)] leading-tight">{label}</p>
-              </div>
-              <p className={`text-lg font-semibold tabular-nums leading-none truncate ${accent ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
-                {value}
-              </p>
-            </CardContent>
-          </Card>
+          { label: "Impressões", value: fmt(totals.impressions) },
+          { label: "Cliques", value: fmt(totals.clicks) },
+          { label: "CTR Médio", value: `${fmt(totals.ctr, 2)}%` },
+          { label: "Investimento", value: formatCurrency(totals.cost) },
+          { label: "Conversões", value: fmt(totals.conversions, 1) },
+          { label: "CPL Médio", value: totals.cpl > 0 ? formatCurrency(totals.cpl) : "—" },
+        ]).map((kpi) => (
+          <MetricTile key={kpi.label} label={kpi.label} value={kpi.value} />
         ))}
-      </div>
+      </MetricGrid>
 
       {/* ── Tabela — card flutuante ── */}
-      <Card className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)]">
+      <Card className="overflow-hidden">
         <CardHeader className="border-b border-border/60 px-6 pb-4 pt-5 sm:px-8">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -166,15 +154,15 @@ export function GoogleKeywordsPanel({ data, formatCurrency, isLoading }: Props) 
                 <BarChart3 className="h-4 w-4" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--foreground)]">
+                <h3 className="type-caption-strong uppercase text-[var(--foreground)]">
                   Detalhamento de palavras-chave
                 </h3>
-                <p className="mt-0.5 text-[11px] text-[var(--muted-foreground)]">
+                <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
                   {sorted.length} termo{sorted.length !== 1 ? "s" : ""}
                 </p>
               </div>
             </div>
-            <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--foreground)]">
+            <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 type-caption-strong uppercase text-[var(--foreground)]">
               Ordenar: {cols.find((c) => c.key === sortBy)?.label} {sortDir === "desc" ? "↓" : "↑"}
             </span>
           </div>
@@ -185,10 +173,10 @@ export function GoogleKeywordsPanel({ data, formatCurrency, isLoading }: Props) 
             <table className="w-full min-w-[860px] border-separate [border-spacing:0_6px]">
               <thead>
                 <tr>
-                  <th className="w-[190px] px-4 pb-1 text-left text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">
+                  <th className="w-[190px] px-4 pb-1 text-left type-micro-legal uppercase text-[var(--muted-foreground)]">
                     Palavra-chave / Tipo
                   </th>
-                  <th className="px-3 pb-1 text-left text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">
+                  <th className="px-3 pb-1 text-left type-micro-legal uppercase text-[var(--muted-foreground)]">
                     Campanha
                   </th>
                   {cols.map(({ key, label }) => {
@@ -197,14 +185,14 @@ export function GoogleKeywordsPanel({ data, formatCurrency, isLoading }: Props) 
                       <th
                         key={key}
                         onClick={() => toggleSort(key)}
-                        className={`cursor-pointer select-none px-4 pb-1 text-right text-[10px] font-semibold uppercase tracking-[0.2em] transition-colors
+                        className={`cursor-pointer select-none px-4 pb-1 text-right type-micro-legal uppercase transition-colors
                           ${active ? "text-[var(--primary)]" : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"}`}
                       >
                         {label}{active ? (sortDir === "desc" ? " ↓" : " ↑") : ""}
                       </th>
                     );
                   })}
-                  <th className="px-4 pb-1 text-right text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">
+                  <th className="px-4 pb-1 text-right type-micro-legal uppercase text-[var(--muted-foreground)]">
                     Decisão
                   </th>
                 </tr>
@@ -215,36 +203,36 @@ export function GoogleKeywordsPanel({ data, formatCurrency, isLoading }: Props) 
                   return (
                     <tr key={`${kw.text}-${kw.matchType}-${i}`} className="group">
                       <td className="rounded-l-2xl bg-pearl px-4 py-3.5 transition-colors group-hover:bg-parchment">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--foreground)]">{kw.text}</p>
-                        <p className="mt-0.5 text-[10px] text-[var(--muted-foreground)]">Corresp. {kw.matchType}</p>
+                        <p className="type-caption-strong uppercase text-[var(--foreground)]">{kw.text}</p>
+                        <p className="mt-0.5 type-micro-legal text-[var(--muted-foreground)]">Corresp. {kw.matchType}</p>
                       </td>
                       <td className="max-w-[150px] bg-pearl px-3 py-3.5 transition-colors group-hover:bg-parchment">
-                        <p className="truncate text-xs text-[var(--muted-foreground)]">{kw.campaignName}</p>
+                        <p className="truncate type-fine-print text-[var(--muted-foreground)]">{kw.campaignName}</p>
                       </td>
                       <td className="bg-pearl px-4 py-3.5 text-right tabular-nums transition-colors group-hover:bg-parchment">
-                        <span className="text-sm font-semibold text-[var(--foreground)]">{fmt(kw.impressions)}</span>
+                        <span className="type-caption-strong text-[var(--foreground)]">{fmt(kw.impressions)}</span>
                       </td>
                       <td className="bg-pearl px-4 py-3.5 text-right tabular-nums transition-colors group-hover:bg-parchment">
-                        <span className="text-sm font-semibold text-[var(--foreground)]">{fmt(kw.clicks)}</span>
+                        <span className="type-caption-strong text-[var(--foreground)]">{fmt(kw.clicks)}</span>
                       </td>
                       <td className="bg-pearl px-4 py-3.5 text-right tabular-nums transition-colors group-hover:bg-parchment">
-                        <span className="text-sm font-semibold text-[var(--foreground)]">{fmt(kw.ctr, 2)}%</span>
+                        <span className="type-caption-strong text-[var(--foreground)]">{fmt(kw.ctr, 2)}%</span>
                       </td>
                       <td className="bg-pearl px-4 py-3.5 text-right tabular-nums transition-colors group-hover:bg-parchment">
-                        <span className="text-sm font-semibold text-[var(--foreground)]">{formatCurrency(kw.cost)}</span>
+                        <span className="type-caption-strong text-[var(--foreground)]">{formatCurrency(kw.cost)}</span>
                       </td>
                       <td className="bg-pearl px-4 py-3.5 text-right tabular-nums transition-colors group-hover:bg-parchment">
-                        <span className={`text-sm font-semibold ${kw.conversions > 0 ? "text-[var(--primary)]" : "text-[var(--muted-foreground)]"}`}>
+                        <span className={`type-caption-strong ${kw.conversions > 0 ?"text-[var(--primary)]" :"text-[var(--muted-foreground)]"}`}>
                           {fmt(kw.conversions, 1)}
                         </span>
                       </td>
                       <td className="bg-pearl px-4 py-3.5 text-right tabular-nums transition-colors group-hover:bg-parchment">
-                        <span className={`text-sm font-semibold ${kw.cpl > 0 ? "text-positive" : "text-[var(--muted-foreground)]"}`}>
+                        <span className={`type-caption-strong ${kw.cpl > 0 ?"text-positive" :"text-[var(--muted-foreground)]"}`}>
                           {kw.cpl > 0 ? formatCurrency(kw.cpl) : "—"}
                         </span>
                       </td>
                       <td className="rounded-r-2xl bg-pearl px-4 py-3.5 text-right transition-colors group-hover:bg-parchment">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${cfg.badge}`}>
+                        <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 type-micro-legal uppercase ${cfg.badge}`}>
                           <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
                           {cfg.label}
                         </span>
@@ -256,26 +244,26 @@ export function GoogleKeywordsPanel({ data, formatCurrency, isLoading }: Props) 
                 {/* Totals */}
                 <tr>
                   <td className="rounded-l-2xl bg-parchment px-4 py-3.5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--foreground)]">Total</p>
+                    <p className="type-caption-strong uppercase text-[var(--foreground)]">Total</p>
                   </td>
                   <td className="bg-parchment px-3 py-3.5" />
                   <td className="bg-parchment px-4 py-3.5 text-right tabular-nums">
-                    <span className="text-sm font-semibold text-[var(--foreground)]">{fmt(totals.impressions)}</span>
+                    <span className="type-caption-strong text-[var(--foreground)]">{fmt(totals.impressions)}</span>
                   </td>
                   <td className="bg-parchment px-4 py-3.5 text-right tabular-nums">
-                    <span className="text-sm font-semibold text-[var(--foreground)]">{fmt(totals.clicks)}</span>
+                    <span className="type-caption-strong text-[var(--foreground)]">{fmt(totals.clicks)}</span>
                   </td>
                   <td className="bg-parchment px-4 py-3.5 text-right tabular-nums">
-                    <span className="text-sm font-semibold text-[var(--foreground)]">{fmt(totals.ctr, 2)}%</span>
+                    <span className="type-caption-strong text-[var(--foreground)]">{fmt(totals.ctr, 2)}%</span>
                   </td>
                   <td className="bg-parchment px-4 py-3.5 text-right tabular-nums">
-                    <span className="text-sm font-semibold text-[var(--foreground)]">{formatCurrency(totals.cost)}</span>
+                    <span className="type-caption-strong text-[var(--foreground)]">{formatCurrency(totals.cost)}</span>
                   </td>
                   <td className="bg-parchment px-4 py-3.5 text-right tabular-nums">
-                    <span className="text-sm font-semibold text-[var(--primary)]">{fmt(totals.conversions, 1)}</span>
+                    <span className="type-caption-strong text-[var(--primary)]">{fmt(totals.conversions, 1)}</span>
                   </td>
                   <td className="bg-parchment px-4 py-3.5 text-right tabular-nums">
-                    <span className="text-sm font-semibold text-positive">{totals.cpl > 0 ? formatCurrency(totals.cpl) : "—"}</span>
+                    <span className="type-caption-strong text-positive">{totals.cpl > 0 ? formatCurrency(totals.cpl) : "—"}</span>
                   </td>
                   <td className="rounded-r-2xl bg-parchment px-4 py-3.5" />
                 </tr>

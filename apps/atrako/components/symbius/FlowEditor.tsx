@@ -155,18 +155,18 @@ function SymbiusNode({ data, selected }: NodeProps) {
           selected ? "border-[#2d6cdf]" : "border-[#93c5fd]"
         }`}
       >
-        <div className="flex items-center gap-1.5 rounded-t-xl bg-[#2d6cdf] px-3 py-1.5 text-xs font-bold text-white">
+        <div className="flex items-center gap-1.5 rounded-t-xl bg-[#2d6cdf] px-3 py-1.5 type-caption-strong text-white">
           <Zap className="h-3.5 w-3.5" />
           Gatilho
         </div>
         <div className="p-4">
-          <p className="text-sm font-semibold text-zinc-800">
+          <p className="type-caption-strong text-zinc-800">
             {triggerConfigured
               ? triggerLabel
               : "Gatilho para acionar a automação"}
           </p>
           {triggerConfigured ? (
-            <p className="mt-2 text-xs leading-relaxed text-zinc-500">
+            <p className="mt-2 type-fine-print leading-relaxed text-zinc-500">
               {String(data.triggerSummary ?? "Configurado")}
             </p>
           ) : (
@@ -176,13 +176,13 @@ function SymbiusNode({ data, selected }: NodeProps) {
                 e.stopPropagation();
                 onAddTrigger?.();
               }}
-              className="mt-3 w-full rounded-xl bg-zinc-100 py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-200"
+              className="mt-3 w-full rounded-xl bg-zinc-100 py-2.5 type-caption-strong text-zinc-700 hover:bg-zinc-200"
             >
               Adicionar gatilho +
             </button>
           )}
         </div>
-        <div className="flex items-center justify-end gap-2 border-t border-zinc-100 px-3 py-2 text-[11px] font-medium text-zinc-600">
+        <div className="flex items-center justify-end gap-2 border-t border-zinc-100 px-3 py-2 type-caption-strong text-zinc-600">
           Próximo passo
           <Handle
             type="source"
@@ -205,21 +205,21 @@ function SymbiusNode({ data, selected }: NodeProps) {
         position={Position.Top}
         className="!h-3 !w-3 !border-2 !border-[#2d6cdf] !bg-white"
       />
-      <p className="text-[10px] font-bold uppercase tracking-wide text-[#1d4ed8]">
+      <p className="type-micro-legal uppercase text-[#1d4ed8]">
         {NODE_LABELS[tipo] ?? tipo}
       </p>
       {tipo === "send_message" && (
-        <p className="mt-2 line-clamp-3 text-sm text-zinc-800">
+        <p className="mt-2 line-clamp-3 type-caption text-zinc-800">
           {String(config.text ?? "")}
         </p>
       )}
       {tipo === "wait" && (
-        <p className="mt-2 text-sm text-zinc-800">
+        <p className="mt-2 type-caption text-zinc-800">
           {String(config.minutes ?? 0)} min
         </p>
       )}
       {tipo === "add_tag" && (
-        <p className="mt-2 text-sm text-zinc-800">#{String(config.tag ?? "")}</p>
+        <p className="mt-2 type-caption text-zinc-800">#{String(config.tag ?? "")}</p>
       )}
       <Handle
         type="source"
@@ -633,12 +633,12 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               onBlur={() => void save(false)}
-              className="max-w-[200px] truncate border-0 bg-transparent text-sm font-semibold text-zinc-900 outline-none md:max-w-xs"
+              className="max-w-[200px] truncate border-0 bg-transparent type-caption-strong text-zinc-900 outline-none md:max-w-xs"
             />
             <Pencil className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
           </div>
           {status === "PUBLISHED" && (
-            <span className="rounded bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+            <span className="rounded bg-rose-500 px-1.5 py-0.5 type-micro-legal text-white">
               LIVE
             </span>
           )}
@@ -648,7 +648,7 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
             type="button"
             disabled={saving}
             onClick={() => save(false)}
-            className="hidden rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 sm:inline-flex"
+            className="hidden rounded-lg border border-zinc-200 px-3 py-2 type-caption-strong text-zinc-700 hover:bg-zinc-50 sm:inline-flex"
           >
             Salvar
           </button>
@@ -656,7 +656,7 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
             type="button"
             disabled={saving || !triggerConfigured}
             onClick={() => save(true)}
-            className="inline-flex items-center rounded-lg bg-[#2d6cdf] px-3 py-2 text-sm font-semibold text-white hover:bg-[#255bbd] disabled:opacity-50"
+            className="inline-flex items-center rounded-lg bg-[#2d6cdf] px-3 py-2 type-caption-strong text-white hover:bg-[#255bbd] disabled:opacity-50"
           >
             Visualizar e publicar
           </button>
@@ -676,7 +676,7 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
             {panel === "pick" && (
               <>
                 <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
-                  <h2 className="font-bold">Gatilhos</h2>
+                  <h2 className="font-semibold">Gatilhos</h2>
                   <button
                     type="button"
                     onClick={() => setPanel("closed")}
@@ -686,18 +686,18 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
                   </button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-zinc-600">
+                  <p className="type-caption-strong uppercase text-zinc-600">
                     Escolha o canal
                   </p>
-                  <div className="mt-2 flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm font-medium">
+                  <div className="mt-2 flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 type-caption-strong ">
                     <Instagram className="h-4 w-4 text-pink-500" />
                     Instagram
                   </div>
 
-                  <p className="mt-6 text-xs font-semibold uppercase tracking-wide text-zinc-600">
+                  <p className="mt-6 type-caption-strong uppercase text-zinc-600">
                     Escolha o gatilho
                   </p>
-                  <p className="mt-1 text-sm text-zinc-500">
+                  <p className="mt-1 type-caption text-zinc-500">
                     Evento específico do Instagram que inicia sua automação.
                   </p>
                   <div className="mt-3 space-y-2">
@@ -730,12 +730,12 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
                               {opt.title}
                             </span>
                             {opt.soon && (
-                              <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-amber-700">
+                              <span className="rounded bg-amber-100 px-1.5 py-0.5 type-micro-legal uppercase text-amber-700">
                                 Em breve
                               </span>
                             )}
                           </span>
-                          <span className="mt-0.5 block text-sm text-zinc-500">
+                          <span className="mt-0.5 block type-caption text-zinc-500">
                             {opt.description}
                           </span>
                         </span>
@@ -747,7 +747,7 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
                   <button
                     type="button"
                     onClick={() => setPanel("closed")}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#2d6cdf] py-2.5 text-sm font-semibold text-white hover:bg-[#255bbd]"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#2d6cdf] py-2.5 type-caption-strong text-white hover:bg-[#255bbd]"
                   >
                     <Check className="h-4 w-4" />
                     Continuar
@@ -770,7 +770,7 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
                     >
                       <ChevronLeft className="h-5 w-5" />
                     </button>
-                    <h2 className="font-bold">
+                    <h2 className="font-semibold">
                       {triggerTitle(activeTriggerType)}
                     </h2>
                   </div>
@@ -784,7 +784,7 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
                 </div>
 
                 <div className="border-b border-zinc-100 px-4 py-3">
-                  <p className="text-xs font-medium text-zinc-500">
+                  <p className="type-caption-strong text-zinc-500">
                     Etapa {step} de {maxSteps}
                   </p>
                   <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-100">
@@ -799,14 +799,14 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
                   {/* Step 1 comment: which posts */}
                   {isComment && step === 1 && (
                     <div>
-                      <h3 className="text-base font-bold leading-snug">
+                      <h3 className="type-body-strong leading-snug">
                         Em quais Comentário no Feed a automação deve funcionar?
                       </h3>
                       <div className="relative mt-4">
                         <button
                           type="button"
                           onClick={() => setShowMediaMenu((v) => !v)}
-                          className="flex w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-left text-sm font-medium"
+                          className="flex w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-left type-caption-strong "
                         >
                           {mediaFilter === "specific"
                             ? "Post específico"
@@ -832,7 +832,7 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
                                   setShowMediaMenu(false);
                                   if (id !== "specific") setMediaId(null);
                                 }}
-                                className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-zinc-50"
+                                className="flex w-full items-center gap-2 px-3 py-2.5 text-left type-caption hover:bg-zinc-50"
                               >
                                 <span
                                   className={`flex h-4 w-4 items-center justify-center rounded-full border ${
@@ -854,11 +854,11 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
 
                       {mediaFilter === "specific" && (
                         <div className="mt-5">
-                          <p className="text-sm font-semibold">
+                          <p className="type-caption-strong ">
                             Selecione os posts
                           </p>
                           {mediaWarning && (
-                            <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-snug text-amber-900">
+                            <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 type-fine-print leading-snug text-amber-900">
                               {mediaWarning}
                             </p>
                           )}
@@ -905,14 +905,14 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
                                 setMediaId(e.target.value.trim() || null)
                               }
                               placeholder="Ou cole o ID da publicação"
-                              className="mt-3 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-[#2d6cdf]"
+                              className="mt-3 w-full rounded-xl border border-zinc-200 px-3 py-2 type-caption outline-none focus:border-[#2d6cdf]"
                             />
                           )}
                         </div>
                       )}
 
                       {mediaFilter === "next" && (
-                        <p className="mt-4 rounded-xl bg-sky-50 px-3 py-2 text-sm text-sky-900">
+                        <p className="mt-4 rounded-xl bg-sky-50 px-3 py-2 type-caption text-sky-900">
                           A automação valerá para a próxima publicação ou Reel
                           publicada após ativar o fluxo.
                         </p>
@@ -926,22 +926,22 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
                       step === 2 &&
                       activeTriggerType !== "welcome")) && (
                     <div>
-                      <h3 className="text-base font-bold leading-snug">
+                      <h3 className="type-body-strong leading-snug">
                         Quais palavras ou frases ativam a automação?
                       </h3>
-                      <p className="mt-1 text-sm text-zinc-500">
+                      <p className="mt-1 type-caption text-zinc-500">
                         As palavras-chave valem para todos os gatilhos desta
                         automação.
                       </p>
 
                       <div className="relative mt-4">
-                        <p className="mb-1 text-[10px] font-semibold uppercase text-zinc-600">
+                        <p className="mb-1 type-micro-legal uppercase text-zinc-600">
                           Selecionado
                         </p>
                         <button
                           type="button"
                           onClick={() => setShowMatchMenu((v) => !v)}
-                          className="flex w-full items-center justify-between rounded-xl border border-zinc-200 px-3 py-2.5 text-left text-sm font-medium"
+                          className="flex w-full items-center justify-between rounded-xl border border-zinc-200 px-3 py-2.5 text-left type-caption-strong "
                         >
                           {MATCH_OPTIONS.find((m) => m.id === matchMode)?.label}
                           <span className="text-zinc-600">▾</span>
@@ -957,7 +957,7 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
                                   setShowMatchMenu(false);
                                   if (opt.id === "any") setKeywordList([]);
                                 }}
-                                className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-zinc-50"
+                                className="flex w-full items-center gap-2 px-3 py-2.5 text-left type-caption hover:bg-zinc-50"
                               >
                                 <span
                                   className={`flex h-4 w-4 items-center justify-center rounded-full border ${
@@ -979,14 +979,14 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
 
                       {matchMode !== "any" && (
                         <div className="mt-5">
-                          <p className="text-sm font-semibold">
+                          <p className="type-caption-strong ">
                             Adicionar palavra-chave
                           </p>
                           <div className="mt-2 flex flex-wrap gap-2">
                             {keywordList.map((k) => (
                               <span
                                 key={k}
-                                className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-3 py-1 text-sm font-medium text-sky-800"
+                                className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-3 py-1 type-caption-strong text-sky-800"
                               >
                                 {k}
                                 <button
@@ -1011,7 +1011,7 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
                                 e.key === "Enter" && addKeyword()
                               }
                               placeholder="Adicionar texto"
-                              className="flex-1 rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-[#2d6cdf]"
+                              className="flex-1 rounded-xl border border-zinc-200 px-3 py-2 type-caption outline-none focus:border-[#2d6cdf]"
                             />
                             <button
                               type="button"
@@ -1029,13 +1029,13 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
                   {/* Step 3 comment: next action hint */}
                   {isComment && step === 3 && (
                     <div>
-                      <h3 className="text-base font-bold">Pronto para o fluxo</h3>
-                      <p className="mt-2 text-sm text-zinc-500">
+                      <h3 className="type-body-strong ">Pronto para o fluxo</h3>
+                      <p className="mt-2 type-caption text-zinc-500">
                         Gatilho configurado. Use o botão{" "}
                         <strong>+</strong> à direita para adicionar mensagens,
                         tags e waits no canvas.
                       </p>
-                      <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-600">
+                      <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-3 type-caption text-zinc-600">
                         {triggerSummary}
                       </div>
                     </div>
@@ -1056,7 +1056,7 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
                           matchMode !== "any" &&
                           keywordList.length === 0)
                       }
-                      className="flex-1 rounded-xl bg-[#2d6cdf] py-2.5 text-sm font-semibold text-white hover:bg-[#255bbd] disabled:opacity-50"
+                      className="flex-1 rounded-xl bg-[#2d6cdf] py-2.5 type-caption-strong text-white hover:bg-[#255bbd] disabled:opacity-50"
                     >
                       Continuar
                     </button>
@@ -1064,7 +1064,7 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
                     <button
                       type="button"
                       onClick={finishTriggerConfig}
-                      className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#2d6cdf] py-2.5 text-sm font-semibold text-white hover:bg-[#255bbd]"
+                      className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#2d6cdf] py-2.5 type-caption-strong text-white hover:bg-[#255bbd]"
                     >
                       <Check className="h-4 w-4" />
                       Salvar gatilho
@@ -1119,7 +1119,7 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
 
           {addMenuOpen && (
             <div className="absolute right-20 top-[calc(50%-180px)] z-30 w-52 rounded-xl border border-zinc-200 bg-white p-2 text-zinc-900 shadow-xl">
-              <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-zinc-600">
+              <p className="px-2 py-1 type-micro-legal uppercase text-zinc-600">
                 Adicionar passo
               </p>
               {[
@@ -1136,7 +1136,7 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
                   key={t}
                   type="button"
                   onClick={() => addNode(t)}
-                  className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-medium text-zinc-800 hover:bg-zinc-50"
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left type-caption-strong text-zinc-800 hover:bg-zinc-50"
                 >
                   <MessageSquare className="h-4 w-4 shrink-0 text-[#0084ff]" />
                   {NODE_LABELS[t]}
@@ -1153,7 +1153,7 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
               </p>
               {selected.tipo === "send_message" && (
                 <textarea
-                  className="mt-3 min-h-[100px] w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-[#2d6cdf]"
+                  className="mt-3 min-h-[100px] w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 type-caption text-zinc-900 outline-none focus:border-[#2d6cdf]"
                   value={String(selected.config.text ?? "")}
                   onChange={(e) =>
                     updateSelectedNode({
@@ -1165,7 +1165,7 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
               {selected.tipo === "wait" && (
                 <input
                   type="number"
-                  className="mt-3 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
+                  className="mt-3 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 type-caption text-zinc-900"
                   value={Number(selected.config.minutes ?? 0)}
                   onChange={(e) =>
                     updateSelectedNode({
@@ -1179,7 +1179,7 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
               )}
               {selected.tipo === "add_tag" && (
                 <input
-                  className="mt-3 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
+                  className="mt-3 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 type-caption text-zinc-900"
                   value={String(selected.config.tag ?? "")}
                   onChange={(e) =>
                     updateSelectedNode({
@@ -1191,7 +1191,7 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
             </div>
           )}
 
-          <div className="absolute bottom-3 right-4 z-20 flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm">
+          <div className="absolute bottom-3 right-4 z-20 flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 type-caption-strong text-zinc-700 shadow-sm">
             <Check className="h-3.5 w-3.5 text-emerald-600" />
             {savedAt
               ? `Salvo em ${savedAt.toLocaleDateString("pt-BR")} às ${savedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`

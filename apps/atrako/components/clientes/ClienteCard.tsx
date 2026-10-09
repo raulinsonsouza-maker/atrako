@@ -38,12 +38,12 @@ export function ClienteCard({ cliente }: { cliente: ClienteCardData }) {
         <CardContent className="flex h-full flex-col gap-5 p-6">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--muted)] to-[var(--border)] text-sm font-semibold text-[var(--muted-foreground)]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--muted)] to-[var(--border)] type-caption-strong text-[var(--muted-foreground)]">
                 {initials}
               </div>
               {cliente.segmento?.trim() && (
                 <span
-                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white"
+                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 type-micro-legal uppercase text-white"
                   style={{ backgroundColor: cliente.segmentoCor ?? "var(--badge-digital)" }}
                 >
                   <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.6)" }} />
@@ -51,7 +51,7 @@ export function ClienteCard({ cliente }: { cliente: ClienteCardData }) {
                 </span>
               )}
               {cliente.squad && (
-                <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--muted)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--muted)] px-2 py-0.5 type-micro-legal uppercase text-[var(--muted-foreground)]">
                   S{cliente.squad}
                 </span>
               )}
@@ -63,20 +63,20 @@ export function ClienteCard({ cliente }: { cliente: ClienteCardData }) {
 
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold leading-tight text-[var(--foreground)]">
+              <h3 className="type-tagline leading-tight text-[var(--foreground)]">
                 {cliente.nome}
               </h3>
               <AccountHealthDot status={cliente.healthStatus} />
             </div>
-            <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">Unidade de negócio</p>
+            <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">Unidade de negócio</p>
           </div>
 
           <div className="flex items-center justify-between border-t border-[var(--border)] pt-4">
             <div className="flex items-center gap-1.5">
               <BarChart3 className="h-3 w-3 text-[var(--muted-foreground)]" />
-              <span className="text-[10px] font-medium text-[var(--muted-foreground)]">Ativo</span>
+              <span className="type-micro-legal text-[var(--muted-foreground)]">Ativo</span>
             </div>
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)] transition-colors group-hover:text-[var(--primary)]">
+            <span className="type-caption-strong uppercase text-[var(--muted-foreground)] transition-colors group-hover:text-[var(--primary)]">
               Ver diagnóstico →
             </span>
           </div>

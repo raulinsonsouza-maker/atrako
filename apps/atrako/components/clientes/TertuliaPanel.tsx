@@ -1,5 +1,6 @@
 "use client";
 
+import { MetricTile, SegmentedControl } from "@/components/ui";
 import {
   Bar,
   CartesianGrid,
@@ -93,8 +94,8 @@ function TertuliaTooltip({ active, payload, label }: TooltipProps<number, string
     <div
       className="rounded-[10px] border border-[var(--border)] bg-[var(--card)] px-4 py-3"
     >
-      <p className="mb-2 text-sm font-semibold text-[var(--foreground)]">{label}</p>
-      <div className="space-y-2 text-[13px]">
+      <p className="mb-2 type-caption-strong text-[var(--foreground)]">{label}</p>
+      <div className="space-y-2 type-caption">
         <div className="flex items-center justify-between gap-5">
           <span className="font-semibold text-[var(--primary)]">Intenções de pedido</span>
           <span className="font-semibold text-[var(--primary)]">
@@ -102,19 +103,19 @@ function TertuliaTooltip({ active, payload, label }: TooltipProps<number, string
           </span>
         </div>
         <div className="flex items-center justify-between gap-5">
-          <span className="font-medium text-foreground/80">Cliques delivery</span>
+          <span className="font-semibold text-foreground/80">Cliques delivery</span>
           <span className="font-semibold text-[var(--foreground)]">
             {formatInteger(Number(point?.CliquesDelivery ?? 0))}
           </span>
         </div>
         <div className="flex items-center justify-between gap-5">
-          <span className="font-medium text-foreground/80">Conversas WhatsApp</span>
+          <span className="font-semibold text-foreground/80">Conversas WhatsApp</span>
           <span className="font-semibold text-[var(--foreground)]">
             {formatInteger(Number(point?.ConversasWhatsapp ?? 0))}
           </span>
         </div>
         <div className="flex items-center justify-between gap-5">
-          <span className="font-medium text-foreground/80">Investimento</span>
+          <span className="font-semibold text-foreground/80">Investimento</span>
           <span className="font-semibold text-[var(--foreground)]">
             {formatCurrency(Number(point?.Investimento ?? 0))}
           </span>
@@ -128,37 +129,14 @@ function TertuliaKpi({
   title,
   value,
   sub,
-  icon: Icon,
-  accent = false,
 }: {
   title: string;
   value: string;
   sub: string;
-  icon: React.ElementType;
+  icon?: React.ElementType;
   accent?: boolean;
 }) {
-  return (
-    <Card className="overflow-hidden rounded-2xl border-[var(--border)] bg-[var(--card)]">
-      <CardContent className="flex items-start gap-4 p-5">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[var(--primary)]">
-          <Icon className="h-5 w-5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
-            {title}
-          </p>
-          <p
-            className={`mt-1 text-2xl font-semibold leading-none tabular-nums ${
-              accent ? "text-[var(--primary)]" : "text-[var(--foreground)]"
-            }`}
-          >
-            {value}
-          </p>
-          <p className="mt-1.5 text-[11px] text-[var(--muted-foreground)]">{sub}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  return <MetricTile label={title} value={value} detail={sub} />;
 }
 
 export function TertuliaPanel({
@@ -223,14 +201,14 @@ export function TertuliaPanel({
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
-        <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
+        <Card className="overflow-hidden">
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
+                <h3 className="type-tagline text-[var(--foreground)]">
                   Intenção de pedido
                 </h3>
-                <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
                   {isMensal
                     ? "Leitura mensal de cliques para delivery e conversas que viram pedidos via WhatsApp."
                     : isDiario
@@ -239,34 +217,29 @@ export function TertuliaPanel({
                 </p>
               </div>
               {!isMensal && onAgrupamentoChange && (
-                <div className="flex overflow-hidden rounded-lg border border-[var(--border)] text-xs">
-                  <button
-                    onClick={() => onAgrupamentoChange("diario")}
-                    className={`px-2.5 py-1.5 font-semibold transition-colors ${isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"}`}
-                  >
-                    Diário
-                  </button>
-                  <button
-                    onClick={() => onAgrupamentoChange("semanal")}
-                    className={`px-2.5 py-1.5 font-semibold transition-colors ${!isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"}`}
-                  >
-                    Semanal
-                  </button>
-                </div>
+                <SegmentedControl
+                  aria-label="Agrupamento"
+                  value={isDiario ? "diario" : "semanal"}
+                  onChange={onAgrupamentoChange}
+                  options={[
+                    { value: "diario", label: "Diário" },
+                    { value: "semanal", label: "Semanal" },
+                  ]}
+                />
               )}
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-muted/20 px-3 py-1 text-[11px] font-medium text-[var(--muted-foreground)]">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-muted/20 px-3 py-1 type-caption-strong text-[var(--muted-foreground)]">
                 <span className="h-2 w-2 rounded-full bg-[var(--chart-spend)]" />
                 Investimento
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-muted/20 px-3 py-1 text-[11px] font-medium text-[var(--muted-foreground)]">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-muted/20 px-3 py-1 type-caption-strong text-[var(--muted-foreground)]">
                 <span className="h-2 w-2 rounded-full bg-[var(--primary)]" />
                 Intenções de pedido
               </span>
-              <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/8 px-3 py-1 text-[11px] font-medium text-[var(--foreground)]">
+              <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/8 px-3 py-1 type-caption-strong text-[var(--foreground)]">
                 {formatInteger(data.resumo.cliquesDelivery)} cliques e{" "}
                 {formatInteger(data.resumo.conversasWhatsapp)} conversas
               </span>
@@ -328,35 +301,35 @@ export function TertuliaPanel({
             </div>
             <div className="grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                   Pico de cliques delivery
                 </p>
-                <p className="mt-2 text-lg font-semibold text-[var(--foreground)]">
+                <p className="mt-2 type-tagline text-[var(--foreground)]">
                   {topClicksWeek ? formatInteger(topClicksWeek.cliquesDelivery) : "—"}
                 </p>
-                <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+                <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                   {topClicksWeek?.periodo ?? "Sem dados"}
                 </p>
               </div>
               <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                   Pico de WhatsApp
                 </p>
-                <p className="mt-2 text-lg font-semibold text-[var(--foreground)]">
+                <p className="mt-2 type-tagline text-[var(--foreground)]">
                   {topWhatsappWeek ? formatInteger(topWhatsappWeek.conversasWhatsapp) : "—"}
                 </p>
-                <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+                <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                   {topWhatsappWeek?.periodo ?? "Sem dados"}
                 </p>
               </div>
               <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                   Maior volume total
                 </p>
-                <p className="mt-2 text-lg font-semibold text-[var(--foreground)]">
+                <p className="mt-2 type-tagline text-[var(--foreground)]">
                   {topIntentWeek ? formatInteger(topIntentWeek.intencoesPedido) : "—"}
                 </p>
-                <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+                <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                   {topIntentWeek?.periodo ?? "Sem dados"}
                 </p>
               </div>
@@ -364,14 +337,14 @@ export function TertuliaPanel({
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
+        <Card className="overflow-hidden">
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
+                <h3 className="type-tagline text-[var(--foreground)]">
                   Eficiência operacional
                 </h3>
-                <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
                   O que o tráfego está gerando em intenção de compra.
                 </p>
               </div>
@@ -379,34 +352,34 @@ export function TertuliaPanel({
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
             <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+              <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                 CTR do período
               </p>
-              <p className="mt-2 text-xl font-semibold text-[var(--foreground)]">
+              <p className="mt-2 type-tagline text-[var(--foreground)]">
                 {formatPercentage(data.resumo.ctr)}
               </p>
             </div>
             <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+              <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                 CPC delivery
               </p>
-              <p className="mt-2 text-xl font-semibold text-[var(--foreground)]">
+              <p className="mt-2 type-tagline text-[var(--foreground)]">
                 {formatCurrency(data.resumo.cpcDelivery)}
               </p>
             </div>
             <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+              <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                 Custo por conversa
               </p>
-              <p className="mt-2 text-xl font-semibold text-[var(--foreground)]">
+              <p className="mt-2 type-tagline text-[var(--foreground)]">
                 {formatCurrency(data.resumo.custoPorConversa)}
               </p>
             </div>
             <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+              <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                 Share WhatsApp
               </p>
-              <p className="mt-2 text-xl font-semibold text-[var(--foreground)]">
+              <p className="mt-2 type-tagline text-[var(--foreground)]">
                 {formatPercentage(data.resumo.shareWhatsapp)}
               </p>
             </div>
@@ -437,16 +410,16 @@ export function TertuliaPanel({
             icon: Percent,
           },
         ].map((item) => (
-          <Card key={item.label} className="overflow-hidden rounded-2xl border-[var(--border)]">
+          <Card key={item.label} className="overflow-hidden">
             <CardContent className="flex items-center gap-3 p-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-[var(--primary)]">
                 <item.icon className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                   {item.label}
                 </p>
-                <p className="mt-1 text-lg font-semibold text-[var(--foreground)]">{item.value}</p>
+                <p className="mt-1 type-tagline text-[var(--foreground)]">{item.value}</p>
               </div>
             </CardContent>
           </Card>
@@ -458,17 +431,17 @@ export function TertuliaPanel({
           <CardHeader className="border-b border-border/60 px-6 pb-5 pt-6 sm:px-8">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h3 className="text-xl font-semibold uppercase tracking-tight text-[var(--foreground)] sm:text-2xl">
+                <h3 className="type-tagline uppercase text-[var(--foreground)] ">
                   Operação de pedidos
                   <span className="ml-2 text-primary">
                     {isMensal ? "Mês a mês" : isDiario ? "Dia a dia" : "Semana a semana"}
                   </span>
                 </h3>
-                <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+                <p className="mt-1 type-caption text-[var(--muted-foreground)]">
                   Leitura das duas frentes que importam para a Tertúlia: delivery e WhatsApp.
                 </p>
               </div>
-              <span className="rounded-full border border-primary/25 bg-primary/12 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--foreground)]">
+              <span className="rounded-full border border-primary/25 bg-primary/12 px-3 py-1 type-caption-strong uppercase text-[var(--foreground)]">
                 {latestFiveSeries.length} {isMensal ? "meses" : isDiario ? "dias" : "semanas"}
               </span>
             </div>
@@ -478,7 +451,7 @@ export function TertuliaPanel({
               <table className="w-full min-w-[860px] border-separate [border-spacing:0_10px]">
                 <thead>
                   <tr>
-                    <th className="w-[220px] px-3 text-left text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">
+                    <th className="w-[220px] px-3 text-left type-micro-legal uppercase text-[var(--muted-foreground)]">
                       Métrica
                     </th>
                     {latestFiveSeries.map((item, index) => {
@@ -492,13 +465,13 @@ export function TertuliaPanel({
                         >
                           <div className="flex flex-col items-center gap-1">
                             <span
-                              className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
+                              className={`type-micro-legal uppercase ${
                                 isLatest ? "text-[var(--primary)]" : "text-[var(--muted-foreground)]"
                               }`}
                             >
                               {isLatest ? "Atual" : isDiario ? "Dia" : isMensal ? "Mês" : "Semana"}
                             </span>
-                            <span className="text-sm font-semibold whitespace-nowrap">{item.periodo}</span>
+                            <span className="type-caption-strong whitespace-nowrap">{item.periodo}</span>
                           </div>
                         </th>
                       );
@@ -536,7 +509,7 @@ export function TertuliaPanel({
                   ].map((metric, metricIdx) => (
                     <tr key={metric.label}>
                       <td className="rounded-l-2xl bg-[var(--muted)] px-4 py-4">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--foreground)]">
+                        <p className="type-caption-strong uppercase text-[var(--foreground)]">
                           {metric.label}
                         </p>
                       </td>
@@ -553,7 +526,7 @@ export function TertuliaPanel({
                                   : "bg-muted/50"
                             }`}
                           >
-                            <span className="text-sm font-semibold tabular-nums text-[var(--foreground)]">
+                            <span className="type-caption-strong tabular-nums text-[var(--foreground)]">
                               {metric.render(item)}
                             </span>
                           </td>

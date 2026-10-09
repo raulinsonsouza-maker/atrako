@@ -7,7 +7,9 @@ import { AppPage } from "@/components/layout/AppPage";
 import { AccountSwitcher } from "@/components/clientes/AccountSwitcher";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PillSelect } from "@/components/ui/pill-select";
+import { IconButton } from "@/components/ui/icon-button";
 import { DateRangeFilter, resolveDateRange, type DatePreset } from "@/components/ui/date-range-filter";
+import { MetricGrid, MetricTile, SectionCard, SegmentedControl } from "@/components/ui";
 import { DefaultPanel } from "@/components/clientes/DefaultPanel";
 import { GoogleKeywordsPanel } from "@/components/clientes/GoogleKeywordsPanel";
 import { AnalyticsGA4Section } from "@/components/clientes/AnalyticsGA4Section";
@@ -16,6 +18,7 @@ import { ImoveisPanel } from "@/components/clientes/ImoveisPanel";
 import { CrmTab } from "@/components/clientes/CrmTab";
 import { MarketplacePanel, type MarketplaceSub } from "@/components/clientes/MarketplacePanel";
 import { EcommercePanel } from "@/components/clientes/EcommercePanel";
+import { ChannelDisconnected } from "@/components/clientes/ChannelDisconnected";
 import { RelacionamentoPanel } from "@/components/clientes/RelacionamentoPanel";
 import { GeralConsolidado } from "@/components/clientes/GeralConsolidado";
 import { ComportamentoSection } from "@/components/clientes/ComportamentoSection";
@@ -219,7 +222,7 @@ const tooltipStyle = {
     boxShadow: "0 8px 24px rgba(0,0,0,.35)",
     padding: "10px 14px",
   },
-  labelStyle: { color: "var(--foreground)", fontWeight: 600, marginBottom: 4 },
+  labelStyle: { color: "var(--foreground)", fontWeight: 500, marginBottom: 4 },
   itemStyle: { color: "var(--foreground)", fontSize: 13 },
 };
 
@@ -228,8 +231,8 @@ const tooltipStyle = {
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div>
-      <h2 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">{title}</h2>
-      {subtitle ? <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">{subtitle}</p> : null}
+      <h2 className="type-tagline text-[var(--foreground)]">{title}</h2>
+      {subtitle ? <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">{subtitle}</p> : null}
     </div>
   );
 }
@@ -240,6 +243,39 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
 // vez por carregamento da aba (a trava real é no servidor; isto só evita repetir
 // a chamada a cada troca de cliente na mesma sessão).
 let dailyGlobalSyncFired = false;
+
+const COMMERCE_SYNC: Record<string, string> = {
+  SHOPIFY: "/api/atrako/shopify/sync",
+  TRAY: "/api/atrako/tray/sync",
+  NUVEMSHOP: "/api/atrako/nuvemshop/sync",
+  WOOCOMMERCE: "/api/atrako/woocommerce/sync",
+  MERCADO_LIVRE: "/api/atrako/mercadolivre/sync",
+  SHOPEE: "/api/atrako/shopee/sync",
+  TIKTOK_SHOP: "/api/atrako/tiktok-shop/sync",
+};
+
+/** Lojas e marketplaces conectados. Falha de um canal não interrompe os outros. */
+async function syncConnectedCommerce(clienteId: string) {
+  const res = await fetch(`/api/atrako/config?workspaceId=${clienteId}`);
+  if (!res.ok) return false;
+  const config = (await res.json()) as {
+    connections?: Array<{ provider: string; status: string; hasCredentials: boolean }>;
+  };
+  const paths = (config.connections ?? [])
+    .filter((row) => row.status === "ACTIVE" && row.hasCredentials && COMMERCE_SYNC[row.provider])
+    .map((row) => COMMERCE_SYNC[row.provider]);
+  if (paths.length === 0) return false;
+  await Promise.all(
+    paths.map((path) =>
+      fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId: clienteId }),
+      }).catch(() => null),
+    ),
+  );
+  return true;
+}
 
 export function ClienteDashboard({ id, portalMode = false }: { id: string; portalMode?: boolean }) {
   const [canal, setCanal] = React.useState<DashCanal>("geral");
@@ -252,7 +288,7 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
   const [chartAgrupamento, setChartAgrupamento] = React.useState<"diario" | "semanal" | "mensal">("semanal");
   const [customInicio, setCustomInicio] = React.useState("");
   const [customFim, setCustomFim] = React.useState("");
-  const channelTabsRef = React.useRef<HTMLDivElement>(null);
+  const channelTabsRef = React.useRef<HTMLElement>(null);
   const isMobile = useIsMobile();
 
   /** Celular: abas viram faixa rolável; a ativa precisa ficar à vista. */
@@ -310,10 +346,13 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
         return;
       }
       const url = `/api/clientes/${id}/sync${background ? "?background=1" : ""}`;
-      const res = await fetch(url, { method: "POST" });
+      const [res, commerceRan] = await Promise.all([
+        fetch(url, { method: "POST" }),
+        background ? Promise.resolve(false) : syncConnectedCommerce(id),
+      ]);
       if (res.ok) {
         const data = await res.json().catch(() => ({} as { skipped?: boolean }));
-        if (data?.skipped) {
+        if (data?.skipped && !commerceRan) {
           // Dados já estavam frescos — nada a atualizar, volta ao estado neutro.
           setSyncStatus("idle");
           return;
@@ -323,7 +362,13 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
         await queryClient.invalidateQueries({ queryKey: ["resumo", id] });
         await queryClient.invalidateQueries({ queryKey: ["midia", id] });
         await queryClient.invalidateQueries({ queryKey: ["campanhas", id] });
+        await queryClient.invalidateQueries({ queryKey: ["ecommerce", id] });
+        await queryClient.invalidateQueries({ queryKey: ["marketplaces", id] });
       } else {
+        if (commerceRan) {
+          await queryClient.invalidateQueries({ queryKey: ["ecommerce", id] });
+          await queryClient.invalidateQueries({ queryKey: ["marketplaces", id] });
+        }
         // Em segundo plano não alarmamos o usuário (ex.: portal do cliente).
         setSyncStatus(background ? "idle" : "error");
       }
@@ -486,17 +531,24 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
     queryFn: () => fetch(`/api/clientes/${id}/crm/funil`).then((r) => r.json()),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-    enabled: !!id && !!cliente && !socialMediaOnly && canUseAnalyst,
+    enabled: !!id && !!cliente && !socialMediaOnly && !portalMode,
   });
   const hasCrm = crmFunil?.configured === true;
+  const crmKnown = portalMode || crmFunil !== undefined;
   /** Mesma chave do useModules: cache compartilhado quando é o workspace ativo. */
-  const { data: relConfig } = useQuery<{ modules?: Record<string, { enabled?: boolean }> }>({
+  const { data: relConfig } = useQuery<{
+    canManage?: boolean;
+    modules?: Record<string, { enabled?: boolean }>;
+    connections?: Array<{ provider: string; status: string; hasCredentials: boolean }>;
+  }>({
     queryKey: ["workspace-config", id],
     queryFn: () => fetch(`/api/atrako/config?workspaceId=${id}`).then((r) => (r.ok ? r.json() : {})),
     enabled: !!id && !portalMode,
     staleTime: 30_000,
   });
   const hasRelacionamento = !portalMode && relConfig?.modules?.relacionamento?.enabled === true;
+  const configKnown = portalMode || relConfig !== undefined;
+  const canConfigure = relConfig?.canManage === true;
 
   React.useEffect(() => {
     const requested = new URLSearchParams(window.location.search).get("canal");
@@ -554,6 +606,19 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
     queryFn: () => fetchAnalytics(id, dateFilter),
     enabled: !!id && !!cliente && (geralAnalise && (canal === "geral" || subView === "dados")) && !socialMediaOnly,
   });
+
+  const { data: metaStatus } = useQuery<{ connected: boolean; health: string } | null>({
+    queryKey: ["meta-connection-status", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/atrako/meta/connection?workspaceId=${id}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!id && !portalMode,
+    staleTime: 60_000,
+  });
+  const metaPronta = metaStatus?.connected === true && metaStatus.health === "ready";
+  const metaKnown = portalMode ? Boolean(cliente) : metaStatus !== undefined;
 
   const { data: saldoMeta } = useQuery<{ saldo: number | null; moeda?: string; spendCap?: number | null; motivo?: string }>({
     queryKey: ["saldo-meta", id],
@@ -758,48 +823,166 @@ function formatPercentage(value: number) {
   return `${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}%`;
 }
 
+  const providerOn = (provider: string) => {
+    const row = relConfig?.connections?.find((item) => item.provider === provider);
+    if (!row?.hasCredentials) return false;
+    return row.status !== "DISCONNECTED" && row.status !== "REVOKED";
+  };
+  const contaOn = (plataforma: string) =>
+    Boolean(
+      (cliente as { contas?: { plataforma?: string; accountIdPlataforma?: string | null }[] } | undefined)?.contas?.some(
+        (ct) => ct.plataforma?.toUpperCase() === plataforma && ct.accountIdPlataforma,
+      ),
+    );
+  const metaConnected = portalMode ? contaOn("META") : metaPronta || contaOn("META");
+  const googleConnected = portalMode
+    ? contaOn("GOOGLE_ADS") || contaOn("GOOGLE")
+    : providerOn("GOOGLE_ADS") || contaOn("GOOGLE_ADS") || contaOn("GOOGLE");
+  const marketplaceSubs = (["ml", "shopee", "tiktok"] as const).filter((key) =>
+    providerOn(key === "ml" ? "MERCADO_LIVRE" : key === "shopee" ? "SHOPEE" : "TIKTOK_SHOP"),
+  );
+  const ecommerceConnected = ["SHOPIFY", "TRAY", "NUVEMSHOP", "WOOCOMMERCE"].some(providerOn);
+  const workspaceKnown = !portalMode && relConfig !== undefined;
+  const clienteKnown = Boolean(cliente);
+  const showDefaultChannel = (connected: boolean, known: boolean) => {
+    if (!known) return true;
+    if (connected) return true;
+    return canConfigure;
+  };
+  const showOptInChannel = (connected: boolean, known: boolean) => {
+    if (!known) return false;
+    if (connected) return true;
+    return canConfigure;
+  };
+  const showMeta = showDefaultChannel(metaConnected, portalMode ? clienteKnown : metaKnown);
+  const showGoogle = showDefaultChannel(googleConnected, portalMode ? clienteKnown : workspaceKnown);
+  const showMarketplaces = showDefaultChannel(marketplaceSubs.length > 0, workspaceKnown);
+  const showEcommerce = showDefaultChannel(ecommerceConnected, workspaceKnown);
+  const showCrm = showOptInChannel(hasCrm, crmKnown);
+  const showRelacionamento = showOptInChannel(hasRelacionamento, workspaceKnown);
+
+  const conexoesHref = `/config/conexoes?workspaceId=${id}`;
+  const modulosHref = `/config/modulos?workspaceId=${id}`;
+  const offlineCopy =
+    canal === "meta" && (portalMode ? clienteKnown : metaKnown) && !metaConnected
+      ? {
+          title: "Meta não conectado",
+          description: "Conecte a conta de anúncios para ver investimento, campanhas e resultados.",
+          actionLabel: "Conectar Meta",
+          actionHref: canConfigure ? conexoesHref : null,
+        }
+      : canal === "google" && (portalMode ? clienteKnown : workspaceKnown) && !googleConnected
+        ? {
+            title: "Google não conectado",
+            description: "Conecte a conta de anúncios para ver investimento, campanhas e resultados.",
+            actionLabel: "Conectar Google",
+            actionHref: canConfigure ? conexoesHref : null,
+          }
+        : canal === "crm" && crmKnown && !hasCrm
+          ? {
+              title: "CRM não conectado",
+              description: "Ative o funil para acompanhar leads e conversões.",
+              actionLabel: "Configurar CRM",
+              actionHref: canConfigure ? modulosHref : null,
+            }
+          : canal === "relacionamento" && workspaceKnown && !hasRelacionamento
+            ? {
+                title: "Relacionamento não conectado",
+                description: "Ative o módulo para acompanhar a base e as mensagens.",
+                actionLabel: "Ativar Relacionamento",
+                actionHref: canConfigure ? modulosHref : null,
+              }
+            : null;
+
+  React.useEffect(() => {
+    if (socialMediaOnly || canal === "geral" || canal === "imoveis" || canal === "linkedin") return;
+    const visible =
+      (canal === "meta" && showMeta) ||
+      (canal === "google" && showGoogle) ||
+      (canal === "crm" && showCrm) ||
+      (canal === "relacionamento" && showRelacionamento) ||
+      (canal === "marketplaces" && showMarketplaces) ||
+      (canal === "ecommerce" && showEcommerce);
+    if (!visible) setCanal("geral");
+  }, [canal, socialMediaOnly, showMeta, showGoogle, showCrm, showRelacionamento, showMarketplaces, showEcommerce]);
+
+  React.useEffect(() => {
+    if (!workspaceKnown || canConfigure || canal !== "marketplaces") return;
+    if (marketplaceSub === "magalu" || !marketplaceSubs.includes(marketplaceSub as "ml" | "shopee" | "tiktok")) {
+      const next = marketplaceSubs[0];
+      if (next) setMarketplaceSub(next);
+    }
+  }, [workspaceKnown, canConfigure, canal, marketplaceSub, marketplaceSubs]);
+
+  const channelLabel = (c: string) =>
+    c === "geral"
+      ? "Geral"
+      : c === "meta"
+        ? "Meta"
+        : c === "google"
+          ? "Google"
+          : c === "linkedin"
+            ? "LinkedIn"
+            : c === "imoveis"
+              ? "Imóveis"
+              : c === "crm"
+                ? "CRM"
+                : c === "relacionamento"
+                  ? "Relacionamento"
+                  : c === "marketplaces"
+                    ? "Marketplaces"
+                    : c === "ecommerce"
+                      ? "E-commerce"
+                      : "Lead Scoring";
+
+  const channelTabClass = (active: boolean) =>
+    `inline-flex shrink-0 items-center gap-1.5 -mb-px border-b-2 px-1 pb-3 pt-2 type-nav-link ${
+      active ? "border-[var(--primary)] text-[var(--ink)]" : "border-transparent text-[var(--muted-foreground)]"
+    }`;
+
   const channelTabs = socialMediaOnly ? (
-    <div className="flex items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--card)] p-1">
-      <span className="rounded-lg bg-[var(--primary)] px-3 py-2 text-xs font-semibold uppercase tracking-wider text-[var(--primary-foreground)] sm:px-4">
-        Social Media
-      </span>
-    </div>
+    <nav aria-label="Canais do dashboard" className="flex border-b border-[var(--hairline)]">
+      <span className={channelTabClass(true)}>Social Media</span>
+    </nav>
   ) : (
-    <div
+    <nav
       ref={channelTabsRef}
-      className="mobile-scroll-strip relative flex flex-wrap items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--card)] p-1"
+      aria-label="Canais do dashboard"
+      className="channel-tabs mobile-scroll-strip flex items-end gap-6 overflow-x-auto border-b border-[var(--hairline)]"
     >
       {([
         "geral",
-        "meta",
-        "google",
+        ...(showMeta ? ["meta"] : []),
+        ...(showGoogle ? ["google"] : []),
         ...(hasLinkedin ? ["linkedin"] : []),
         ...(isMiguelImoveis(cliente) ? ["imoveis"] : []),
-        ...(hasCrm ? ["crm"] : []),
-        ...(hasRelacionamento ? ["relacionamento"] : []),
-        "marketplaces",
-        "ecommerce",
-      ] as const).map((c) => (
-        <button
-          key={c}
-          type="button"
-          data-active={canal === c && !analystOpen ? "true" : undefined}
-          onClick={() => {
-            setCanal(c as typeof canal);
-            setSubView("dados");
-            setAnalystOpen(false);
-            setSaldoVisible(false);
-            if (c === "marketplaces") setMarketplaceSub("ml");
-          }}
-          className={`rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-all sm:px-4 ${
-            canal === c
-              ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
-              : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-          }`}
-        >
-          {c === "geral" ? "Geral" : c === "meta" ? "META" : c === "google" ? "Google" : c === "linkedin" ? "LinkedIn" : c === "imoveis" ? "Imóveis" : c === "crm" ? "CRM" : c === "relacionamento" ? "Relacionamento" : c === "marketplaces" ? "Marketplaces" : c === "ecommerce" ? "E-commerce" : "Lead Scoring"}
-        </button>
-      ))}
+        ...(showCrm ? ["crm"] : []),
+        ...(showRelacionamento ? ["relacionamento"] : []),
+        ...(showMarketplaces ? ["marketplaces"] : []),
+        ...(showEcommerce ? ["ecommerce"] : []),
+      ] as const).map((c) => {
+        const active = canal === c && !analystOpen;
+        return (
+          <button
+            key={c}
+            type="button"
+            data-active={active ? "true" : undefined}
+            onClick={() => {
+              setCanal(c as typeof canal);
+              setSubView("dados");
+              setAnalystOpen(false);
+              setSaldoVisible(false);
+              if (c === "marketplaces") setMarketplaceSub("ml");
+            }}
+            className={channelTabClass(active)}
+          >
+            {channelLabel(c)}
+            {c === "meta" && metaPronta ? (
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" aria-label="Meta conectada" />
+            ) : null}
+          </button>
+        );
+      })}
       {hotelPilotEnabled && (
         <button
           type="button"
@@ -809,16 +992,32 @@ function formatPercentage(value: number) {
             setSubView("dados");
             setAnalystOpen(true);
           }}
-          className={`rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-all sm:px-4 ${
-            analystOpen
-              ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
-              : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-          }`}
+          className={channelTabClass(analystOpen)}
         >
           InPilot
         </button>
       )}
-    </div>
+    </nav>
+  );
+
+  const hoje = new Date()
+    .toLocaleDateString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    })
+    .toLocaleUpperCase("pt-BR");
+
+  const dateControl = (
+    <DateRangeFilter
+      value={{ preset: presetPeriodo, customInicio, customFim }}
+      onChange={(v) => {
+        setPresetPeriodo(v.preset as PresetPeriodo);
+        setCustomInicio(v.customInicio);
+        setCustomFim(v.customFim);
+      }}
+    />
   );
 
   return (
@@ -831,11 +1030,8 @@ function formatPercentage(value: number) {
               Monitoramento de performance do projeto
             </p>
           </div>
-        ) : (
-          <AccountSwitcher id={id} nome={cliente?.nome} />
-        )
+        ) : undefined
       }
-      actions={channelTabs}
     >
       {/* ── Fullscreen loading overlay ── */}
       {loaderVisible && (
@@ -860,16 +1056,62 @@ function formatPercentage(value: number) {
               />
             ))}
           </div>
-          <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">
+          <p className="mt-6 type-caption-strong uppercase text-[var(--muted-foreground)]">
             Carregando
           </p>
         </div>
       )}
 
-      <div className="flex min-h-0 flex-col gap-6">
+      <div className="flex min-h-0 flex-col gap-5">
+      {!portalMode ? (
+        <div className="flex flex-col gap-4 pb-2 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <p className="type-fine-print uppercase text-[var(--muted-foreground)]">{hoje}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <h1 className="type-tagline text-[var(--ink)]">Visão geral</h1>
+              <AccountSwitcher id={id} nome={cliente?.nome} hideTitle />
+            </div>
+            <p className="mt-2 type-caption text-[var(--muted-foreground)]">
+              O que está acontecendo e onde agir agora.
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {canUseAnalyst ? (
+              <IconButton
+                size="toolbar"
+                onClick={() => triggerSync()}
+                disabled={syncStatus === "syncing"}
+                title={
+                  syncStatus === "syncing"
+                    ? "Sincronizando…"
+                    : syncStatus === "error"
+                      ? "Erro ao sincronizar"
+                      : lastSyncedLabel
+                        ? `Atualizado ${lastSyncedLabel}`
+                        : "Sincronizar dados agora"
+                }
+                aria-label={
+                  syncStatus === "syncing"
+                    ? "Sincronizando"
+                    : syncStatus === "error"
+                      ? "Erro ao sincronizar"
+                      : lastSyncedLabel
+                        ? `Atualizado ${lastSyncedLabel}`
+                        : "Sincronizar"
+                }
+              >
+                <RefreshCw className={`h-4 w-4 ${syncStatus === "syncing" ? "animate-spin" : ""}`} />
+              </IconButton>
+            ) : null}
+            {dateControl}
+          </div>
+        </div>
+      ) : null}
+      {channelTabs}
       {/* ── Date filter + sub-aba Criativos / Análise de dados (Meta/Google) ── */}
       <div className="flex flex-col gap-2">
-        {/* Linha 1: Saldo chip (esquerda) + Filtro de data (direita) */}
+        {/* Portal: o período fica aqui. No app, ele sobe para o cabeçalho. */}
+        {portalMode ? (
         <div className="flex items-center gap-2">
           {/* Saldo chip — temporariamente oculto */}
           {false && !portalMode && canal !== "geral" && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && (() => {
@@ -901,17 +1143,17 @@ function formatPercentage(value: number) {
               <div className={`flex items-center gap-2 rounded-xl border px-3 py-2 transition-all sm:gap-3 sm:px-4 sm:py-2.5 ${containerClass}`}>
                 <Wallet className={`h-4 w-4 shrink-0 ${isCritical ? "text-negative" : isWarning ? "text-amber-600" : "text-[var(--primary)]"}`} />
                 <div className="flex flex-col leading-tight">
-                  <span className={`text-[9px] font-semibold uppercase tracking-widest sm:text-[10px] ${labelClass}`}>
+                  <span className={`type-micro-legal uppercase ${labelClass}`}>
                     {isGastoMes ? `Investido ${plataforma}` : `Saldo ${plataforma}`}
                   </span>
                   {isLoading ? (
-                    <span className="text-xs animate-pulse text-[var(--muted-foreground)]">carregando…</span>
+                    <span className="type-fine-print animate-pulse text-[var(--muted-foreground)]">carregando…</span>
                   ) : displayValue != null ? (
-                    <span className="text-sm font-semibold tabular-nums">
+                    <span className="type-caption-strong tabular-nums">
                       {saldoVisible ? formatCurrency(displayValue as number) : "R$ ••••••"}
                     </span>
                   ) : (
-                    <span className="text-xs text-[var(--muted-foreground)]">—</span>
+                    <span className="type-fine-print text-[var(--muted-foreground)]">—</span>
                   )}
                 </div>
                 {(isCritical || isWarning) && saldoVisible && (
@@ -928,98 +1170,52 @@ function formatPercentage(value: number) {
             );
           })()}
 
-          {/* Sync chip — icon-only, same height as Saldo chip; label aparece em hover (title) */}
-          {!portalMode && canUseAnalyst && (
-            <button
-              onClick={() => triggerSync()}
-              disabled={syncStatus === "syncing"}
-              title={
-                syncStatus === "syncing"
-                  ? "Sincronizando…"
-                  : syncStatus === "error"
-                    ? "Erro ao sincronizar"
-                    : lastSyncedLabel
-                      ? `Atualizado ${lastSyncedLabel}`
-                      : "Sincronizar dados agora"
-              }
-              aria-label={
-                syncStatus === "syncing"
-                  ? "Sincronizando"
-                  : syncStatus === "error"
-                    ? "Erro ao sincronizar"
-                    : lastSyncedLabel
-                      ? `Atualizado ${lastSyncedLabel}`
-                      : "Sincronizar"
-              }
-              className={`inline-flex self-stretch w-11 items-center justify-center rounded-xl border transition-all ${
-                syncStatus === "syncing"
-                  ? "border-primary/40 bg-primary/8 text-[var(--primary)] cursor-wait"
-                  : syncStatus === "error"
-                    ? "border-red-500/40 bg-red-500/8 text-negative hover:bg-red-500/12"
-                    : "border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] hover:bg-muted/60 hover:text-[var(--foreground)]"
-              }`}
-            >
-              <RefreshCw className={`h-4 w-4 shrink-0 ${syncStatus === "syncing" ? "animate-spin" : ""}`} />
-            </button>
-          )}
-
-          {/* Filtro de data — direita */}
-          <DateRangeFilter
-            variant="panel"
-            className="date-range-fill ml-auto flex-1 md:flex-initial"
-            value={{ preset: presetPeriodo, customInicio, customFim }}
-            onChange={(v) => {
-              setPresetPeriodo(v.preset as PresetPeriodo);
-              setCustomInicio(v.customInicio);
-              setCustomFim(v.customFim);
-            }}
-          />
+          <div className="ml-auto">{dateControl}</div>
         </div>
+        ) : null}
 
         {/* Linha 2: Toggle Análise / Criativos — Meta e Google. No Geral de loja, Análise / Comportamento. */}
         {canal === "geral" && isEcommerceMode && (
-          <div className="flex items-center gap-1 self-end rounded-xl border border-[var(--border)] bg-[var(--card)] p-1">
-            {(["analise", "comportamento"] as const).map((view) => (
-              <button
-                key={view}
-                type="button"
-                onClick={() => setGeralView(view)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-all sm:px-4 sm:py-2 ${
-                  geralView === view
-                    ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
-                    : "text-[var(--muted-foreground)] hover:bg-muted/60 hover:text-[var(--foreground)]"
-                }`}
-              >
-                {view === "analise" ? "Análise" : "Comportamento"}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            className="self-end"
+            aria-label="Visão geral"
+            value={geralView}
+            onChange={setGeralView}
+            options={[
+              { value: "analise", label: "Análise" },
+              { value: "comportamento", label: "Comportamento" },
+            ]}
+          />
         )}
-        {(canal === "meta" || canal === "google") && (
-          <div className="flex items-center gap-1 self-end rounded-xl border border-[var(--border)] bg-[var(--card)] p-1">
-            {(
+        {(canal === "meta" || canal === "google") && !offlineCopy && (
+          <SegmentedControl
+            className="self-end"
+            aria-label="Visão do canal"
+            value={subView}
+            onChange={setSubView}
+            options={(
               canal === "meta"
-                  ? (cliente?.socialMediaAtivo
-                      ? (["dados", "criativos", "social-media"] as const)
-                      : (["dados", "criativos"] as const))
-                  : (["dados", "criativos"] as const)
-            ).map((view) => (
-              <button
-                key={view}
-                onClick={() => setSubView(view)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-all sm:px-4 sm:py-2 ${
-                  subView === view
-                    ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
-                    : "text-[var(--muted-foreground)] hover:bg-muted/60 hover:text-[var(--foreground)]"
-                }`}
-              >
-                {view === "dados" ? "Análise" : view === "criativos" ? "Criativos" : view === "social-media" ? "Social Media" : "Lead Scoring"}
-              </button>
-            ))}
-          </div>
+                ? (cliente?.socialMediaAtivo
+                    ? (["dados", "criativos", "social-media"] as const)
+                    : (["dados", "criativos"] as const))
+                : (["dados", "criativos"] as const)
+            ).map((view) => ({
+              value: view,
+              label: view === "dados" ? "Análise" : view === "criativos" ? "Criativos" : "Social Media",
+            }))}
+          />
         )}
       </div>
 
+      {offlineCopy ? (
+        <ChannelDisconnected
+          title={offlineCopy.title}
+          description={offlineCopy.description}
+          actionHref={offlineCopy.actionHref}
+          actionLabel={offlineCopy.actionLabel}
+        />
+      ) : (
+      <>
       {!portalMode && hotelPilotEnabled && analystOpen && (
         <HotelAnalystPanel clienteId={id} filter={dateFilter} channel={canal} comparisonPreset={presetPeriodo} />
       )}
@@ -1029,11 +1225,11 @@ function formatPercentage(value: number) {
         <div className="space-y-6">
           {metaAdsLoading ? (
             <div className="flex items-center justify-center py-16">
-              <p className="text-sm text-[var(--muted-foreground)]">Carregando anúncios META…</p>
+              <p className="type-caption text-[var(--muted-foreground)]">Carregando anúncios META…</p>
             </div>
           ) : metaAdsError ? (
             <div className="rounded-2xl border border-red-500/20 bg-red-500/6 px-6 py-8 text-center">
-              <p className="text-sm text-negative">
+              <p className="type-caption text-negative">
                 {metaAdsError instanceof Error ? metaAdsError.message : "Erro ao carregar anúncios META."}
               </p>
             </div>
@@ -1048,7 +1244,7 @@ function formatPercentage(value: number) {
             />
           ) : (
             <div className="flex items-center justify-center py-16">
-              <p className="text-sm text-[var(--muted-foreground)]">Nenhum anúncio META ativo encontrado.</p>
+              <p className="type-caption text-[var(--muted-foreground)]">Nenhum anúncio META ativo encontrado.</p>
             </div>
           )}
         </div>
@@ -1113,6 +1309,8 @@ function formatPercentage(value: number) {
           }}
           sub={marketplaceSub}
           onSubChange={setMarketplaceSub}
+          canConfigure={canConfigure}
+          availableSubs={workspaceKnown && !canConfigure ? [...marketplaceSubs] : null}
         />
       )}
 
@@ -1124,6 +1322,7 @@ function formatPercentage(value: number) {
             from: dateFilter.dataInicio ?? new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10),
             to: dateFilter.dataFim ?? new Date().toISOString().slice(0, 10),
           }}
+          canConfigure={canConfigure}
         />
       )}
 
@@ -1255,7 +1454,7 @@ function formatPercentage(value: number) {
               />
               <div className="flex flex-wrap items-center gap-2">
                 {!semOrcamento && (
-                <div className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-muted/30 px-3 py-1.5 text-xs">
+                <div className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-muted/30 px-3 py-1.5 type-fine-print">
                   <span className="h-2.5 w-2.5 rounded-full bg-[var(--chart-plan)]" />
                   <span className="text-[var(--muted-foreground)]">Orçado</span>
                   <strong className="text-[var(--foreground)]">
@@ -1267,7 +1466,7 @@ function formatPercentage(value: number) {
                   </strong>
                 </div>
                 )}
-                <div className="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs">
+                <div className="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 type-fine-print">
                   <span className="h-2.5 w-2.5 rounded-full bg-[var(--primary)]" />
                   <span className="text-[var(--muted-foreground)]">Realizado</span>
                   <strong className="text-[var(--primary)]">
@@ -1354,35 +1553,25 @@ function formatPercentage(value: number) {
                 .toLocaleString("pt-BR", { month: "long" });
               const monthLabel = monthName.charAt(0).toUpperCase() + monthName.slice(1);
               return (
-                <div className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-pearl)] p-4">
-                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">
-                      Ritmo do mês · {monthLabel} — dia {dayOfMonth} de {daysInMonth}
-                    </p>
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${isAhead ? "bg-positive/10 text-[var(--positive)]" : "bg-negative/10 text-[var(--negative)]"}`}>
+                <SectionCard
+                  className="mt-5"
+                  title={`Ritmo do mês · ${monthLabel} — dia ${dayOfMonth} de ${daysInMonth}`}
+                  action={
+                    <span className={`inline-flex items-center gap-1 type-caption-strong ${isAhead ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
                       {isAhead ? "▲" : "▼"} {Math.abs(deltaPercent).toFixed(1)}% {isAhead ? "acima do ritmo" : "abaixo do ritmo"}
                     </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <div className="rounded-xl border border-[var(--border)] bg-[var(--canvas)] p-3">
-                      <p className="mb-1 text-[10px] uppercase tracking-wider text-[var(--muted-foreground)]">Orçado no mês</p>
-                      <p className="text-[15px] font-semibold text-[var(--foreground)]">{formatCurrency(cmd.planejadoTotal)}</p>
-                    </div>
-                    <div className="rounded-xl border border-primary/15 bg-[var(--chart-current)] p-3">
-                      <p className="mb-1 text-[10px] uppercase tracking-wider text-[var(--muted-foreground)]">Realizado até hoje</p>
-                      <p className="text-[15px] font-semibold text-[var(--primary)]">{formatCurrency(cmd.realizadoTotal)}</p>
-                    </div>
-                    <div className="rounded-xl border border-[var(--border)] bg-[var(--canvas)] p-3">
-                      <p className="mb-1 text-[10px] uppercase tracking-wider text-[var(--muted-foreground)]">Ritmo esperado (dia {dayOfMonth})</p>
-                      <p className="text-[15px] font-semibold text-[var(--foreground)]">{formatCurrency(paceIdeal)}</p>
-                    </div>
-                    <div className={`rounded-xl border p-3 ${isAhead ? "border-positive/20 bg-positive/[0.06]" : "border-negative/20 bg-negative/[0.06]"}`}>
-                      <p className="mb-1 text-[10px] uppercase tracking-wider text-[var(--muted-foreground)]">Diferença do ritmo</p>
-                      <p className={`text-[15px] font-semibold ${isAhead ? "text-[var(--positive)]" : "text-[var(--negative)]"}`}>
-                        {isAhead ? "+" : ""}{formatCurrency(delta)}
-                      </p>
-                    </div>
-                  </div>
+                  }
+                >
+                  <MetricGrid>
+                    <MetricTile label="Orçado no mês" value={formatCurrency(cmd.planejadoTotal)} />
+                    <MetricTile label="Realizado até hoje" value={formatCurrency(cmd.realizadoTotal)} />
+                    <MetricTile label={`Ritmo esperado (dia ${dayOfMonth})`} value={formatCurrency(paceIdeal)} />
+                    <MetricTile
+                      label="Diferença do ritmo"
+                      value={`${isAhead ? "+" : ""}${formatCurrency(delta)}`}
+                      tone={isAhead ? "positive" : "negative"}
+                    />
+                  </MetricGrid>
                   <div className="mt-3 relative h-2 overflow-hidden rounded-full bg-[var(--border)]">
                     <div className="absolute top-0 bottom-0 w-0.5 bg-[var(--ink-muted-48)] z-10" style={{ left: `${pctEsperado}%` }} />
                     <div
@@ -1390,14 +1579,14 @@ function formatPercentage(value: number) {
                       style={{ width: `${pctRealizado}%` }}
                     />
                   </div>
-                  <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-4 text-[10px] text-[var(--muted-foreground)]">
+                  <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-4 type-micro-legal text-[var(--muted-foreground)]">
                     <span>{pctRealizado.toFixed(0)}% realizado do mês</span>
                     <span className="text-[var(--border)]">|</span>
                     <span>Ritmo esperado: {pctEsperado.toFixed(0)}%</span>
                     <span className="text-[var(--border)]">|</span>
                     <span>{(100 - pctRealizado).toFixed(0)}% restante para fechar o mês</span>
                   </div>
-                </div>
+                </SectionCard>
               );
             })()}
           </CardContent>
@@ -1416,10 +1605,10 @@ function formatPercentage(value: number) {
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--muted)]">
               <BarChart3 className="h-6 w-6 text-[var(--muted-foreground)]" />
             </div>
-            <p className="mb-1 text-sm font-medium text-[var(--foreground)]">
+            <p className="mb-1 type-caption-strong text-[var(--foreground)]">
               Nenhum dado de mídia ainda
             </p>
-            <p className="mx-auto max-w-md text-sm text-[var(--muted-foreground)]">
+            <p className="mx-auto max-w-md type-caption text-[var(--muted-foreground)]">
               A sincronização é feita na <strong className="text-[var(--foreground)]">Administração</strong>:
               configure as credenciais do Google Sheets e clique em{" "}
               <strong className="text-[var(--foreground)]">Sincronizar</strong>.
@@ -1427,7 +1616,7 @@ function formatPercentage(value: number) {
             {!portalMode && canUseAnalyst && (
               <Link
                 href="/admin/clientes"
-                className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-4 py-2 text-sm font-medium text-[var(--primary)] transition hover:bg-primary/20"
+                className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-4 py-2 type-caption-strong text-[var(--primary)] transition hover:bg-primary/20"
               >
                 Ir para Administração
                 <ChevronRight className="h-3.5 w-3.5" />
@@ -1435,6 +1624,8 @@ function formatPercentage(value: number) {
             )}
           </CardContent>
         </Card>
+      )}
+      </>
       )}
       </div>
     </AppPage>
@@ -1555,7 +1746,7 @@ function CriativoPreview({
   const Placeholder = ({ message = "Preview indisponível" }: { message?: string }) => (
     <div className={`${containerClass} flex-col gap-2 text-center text-[var(--muted-foreground)]`}>
       <BarChart3 className="h-8 w-8 opacity-50" />
-      <span className="text-xs">{message}</span>
+      <span className="type-fine-print">{message}</span>
     </div>
   );
 
@@ -1584,7 +1775,7 @@ function CriativoPreview({
     return (
       <div className={`${containerClass} flex-col gap-2`}>
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent" />
-        <span className="text-xs text-[var(--muted-foreground)]">Carregando prévia do Meta…</span>
+        <span className="type-fine-print text-[var(--muted-foreground)]">Carregando prévia do Meta…</span>
       </div>
     );
   }
@@ -1632,7 +1823,7 @@ function CriativoPreview({
           />
           {isVideo && (
             <div className="pointer-events-none absolute bottom-2 left-2 right-2 flex justify-center">
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-black/70 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-white/90">
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-black/70 px-2 py-1 type-micro-legal uppercase text-white/90">
                 <Play className="h-3 w-3 fill-current" />
                 {creative?.video_source_url || creative?.video_embed_html ? "Vídeo com player" : "Thumbnail"}
               </span>
@@ -1652,7 +1843,7 @@ function CriativoPreview({
           />
           {isVideo && (
             <div className="pointer-events-none absolute bottom-2 left-2 right-2 flex justify-center">
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-black/70 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-white/90">
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-black/70 px-2 py-1 type-micro-legal uppercase text-white/90">
                 <Play className="h-3 w-3 fill-current" />
                 {creative?.video_source_url || creative?.video_embed_html ? "Vídeo com player" : "Thumbnail"}
               </span>
@@ -1668,7 +1859,7 @@ function CriativoPreview({
       <div className={`relative overflow-hidden ${containerClass}`}>
         <video src={creative.video_source_url} preload="metadata" muted playsInline className="h-full w-full object-contain" />
         <div className="pointer-events-none absolute bottom-2 left-2 right-2 flex justify-center">
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-black/70 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-white/90">
+          <span className="inline-flex items-center gap-1.5 rounded-md bg-black/70 px-2 py-1 type-micro-legal uppercase text-white/90">
             <Play className="h-3 w-3 fill-current" />
             Vídeo
           </span>
@@ -1857,7 +2048,7 @@ function MetaCriativosGrid({
   const previewFormat = "MOBILE_FEED_STANDARD" as const;
 
   if (!sorted.length) {
-    return <p className="py-8 text-center text-sm text-[var(--muted-foreground)]">Nenhum criativo encontrado.</p>;
+    return <p className="py-8 text-center type-caption text-[var(--muted-foreground)]">Nenhum criativo encontrado.</p>;
   }
 
   // ── Motor de decisão baseado em CPL ──────────────────────────────────────────
@@ -2088,7 +2279,7 @@ function MetaCriativosGrid({
             <div className="flex flex-col items-end">
               <span className="font-semibold text-[var(--foreground)]">{formatCurrency(metrics.cpl)}</span>
               {level === "adset" && delta !== null && (
-                <span className={`text-[9px] font-semibold ${delta <= 0 ? "text-positive" : "text-amber-600"}`}>
+                <span className={`type-micro-legal ${delta <= 0 ?"text-positive" :"text-amber-600"}`}>
                   {delta <= 0 ? "" : "+"}{delta.toFixed(0)}% vs. campanha
                 </span>
               )}
@@ -2148,7 +2339,7 @@ function MetaCriativosGrid({
           onClick={() => changeTableSort(key)}
           aria-label={`Ordenar por ${label}`}
           aria-pressed={active}
-          className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors ${align === "left" ? "-ml-2" : ""} ${active ? "bg-primary/12 text-[var(--primary)]" : highlighted ? "text-[var(--accent)] hover:bg-parchment" : "text-[var(--muted-foreground)] hover:bg-parchment hover:text-[var(--foreground)]"}`}
+          className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 type-micro-legal uppercase transition-colors ${align ==="left" ?"-ml-2" :""} ${active ?"bg-primary/12 text-[var(--primary)]" : highlighted ?"text-[var(--accent)] hover:bg-parchment" :"text-[var(--muted-foreground)] hover:bg-parchment hover:text-[var(--foreground)]"}`}
         >
           {label}
           <SortIcon className={`h-3 w-3 ${active ? "opacity-100" : "opacity-45"}`} />
@@ -2210,8 +2401,8 @@ function MetaCriativosGrid({
           <BarChart3 className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Análise de Criativos</p>
-          <h2 className="text-xl font-semibold uppercase tracking-tight text-[var(--foreground)]">
+          <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Análise de Criativos</p>
+          <h2 className="type-tagline uppercase text-[var(--foreground)]">
             Criativos{" "}
             <span className="text-primary">META</span>
           </h2>
@@ -2266,11 +2457,11 @@ function MetaCriativosGrid({
                 <kpi.icon className="h-5 w-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">{kpi.label}</p>
-                <p className={`mt-1 text-2xl font-semibold tabular-nums leading-none ${kpi.accent ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
+                <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">{kpi.label}</p>
+                <p className={`mt-1 type-lead-airy tabular-nums leading-none ${kpi.accent ?"text-[var(--primary)]" :"text-[var(--foreground)]"}`}>
                   {kpi.value}
                 </p>
-                <p className="mt-1.5 text-[11px] text-[var(--muted-foreground)]">{kpi.sub}</p>
+                <p className="mt-1.5 type-fine-print text-[var(--muted-foreground)]">{kpi.sub}</p>
               </div>
             </CardContent>
           </Card>
@@ -2285,18 +2476,18 @@ function MetaCriativosGrid({
               <BarChart3 className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[var(--foreground)]">Performance por Criativo</p>
-              <p className="text-[11px] text-[var(--muted-foreground)]">Compare os anúncios e clique nas colunas para ordenar.</p>
+              <p className="type-caption-strong uppercase text-[var(--foreground)]">Performance por Criativo</p>
+              <p className="type-fine-print text-[var(--muted-foreground)]">Compare os anúncios e clique nas colunas para ordenar.</p>
             </div>
           </div>
-          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--border)] bg-pearl px-3 py-1.5 text-[10px] text-[var(--muted-foreground)]">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--border)] bg-pearl px-3 py-1.5 type-micro-legal text-[var(--muted-foreground)]">
             <ArrowUpDown className="h-3 w-3 text-[var(--primary)]" />
             Ordenado por <strong className="font-semibold text-[var(--foreground)]">{sortLabel[tableSort.key]}</strong>
             <span>{tableSort.direction === "desc" ? "maior primeiro" : "menor primeiro"}</span>
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className={`table-sticky-first w-full text-left text-xs ${hasSalesCampaigns ? "min-w-[1120px]" : hasAttributedSalesValue ? "min-w-[900px]" : "min-w-[760px]"}`}>
+          <table className={`table-sticky-first w-full text-left type-fine-print ${hasSalesCampaigns ?"min-w-[1120px]" : hasAttributedSalesValue ?"min-w-[900px]" :"min-w-[760px]"}`}>
             <thead>
               <tr className="border-b-2 border-[var(--border)]">
                 {sortableHeader("name", "Criativo", "left")}
@@ -2331,8 +2522,8 @@ function MetaCriativosGrid({
                             {campaignOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                           </span>
                           <span className="min-w-0">
-                            <span className="block truncate text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--foreground)]">{campaign.name}</span>
-                            <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                            <span className="block truncate type-caption-strong uppercase text-[var(--foreground)]">{campaign.name}</span>
+                            <span className="mt-0.5 block type-micro-legal uppercase text-[var(--muted-foreground)]">
                               Campanha · {campaign.adsets.length} conjuntos · {campaign.items.length} anúncios · {spendShare.toFixed(0)}% verba · {resultShare.toFixed(0)}% resultados
                             </span>
                           </span>
@@ -2358,8 +2549,8 @@ function MetaCriativosGrid({
                                   {adsetOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                                 </span>
                                 <span className="min-w-0">
-                                  <span className="block truncate text-[11px] font-semibold text-[var(--foreground)]">{adset.name}</span>
-                                  <span className="mt-0.5 block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]">
+                                  <span className="block truncate type-caption-strong text-[var(--foreground)]">{adset.name}</span>
+                                  <span className="mt-0.5 block type-micro-legal uppercase text-[var(--muted-foreground)]">
                                     Conjunto · {adset.items.length} anúncios · {adsetSpendShare.toFixed(0)}% verba · {adsetResultShare.toFixed(0)}% resultados
                                   </span>
                                 </span>
@@ -2392,7 +2583,7 @@ function MetaCriativosGrid({
                                     </div>
                                     <div className="min-w-0">
                                       <p className="max-w-[170px] truncate font-semibold uppercase tracking-wide text-[var(--foreground)]">{item.displayName}</p>
-                                      <p className="mt-0.5 text-[9px] text-[var(--muted-foreground)]">{item.mediaType === "video" ? "Vídeo" : "Imagem"} · Abrir detalhes</p>
+                                      <p className="mt-0.5 type-micro-legal text-[var(--muted-foreground)]">{item.mediaType === "video" ? "Vídeo" : "Imagem"} · Abrir detalhes</p>
                                     </div>
                                   </div>
                                 </td>
@@ -2443,12 +2634,12 @@ function MetaCriativosGrid({
             <SlidersHorizontal className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Leitura de eficiência</p>
-            <h2 className="text-xl font-semibold uppercase tracking-tight text-[var(--foreground)]">
+            <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Leitura de eficiência</p>
+            <h2 className="type-tagline uppercase text-[var(--foreground)]">
               Verba{" "}
               <span className="text-primary">versus Resultado</span>
             </h2>
-            <p className="mt-0.5 text-[12px] text-[var(--muted-foreground)]">Compare quanto cada campanha recebe com quanto ela devolve em resultados.</p>
+            <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">Compare quanto cada campanha recebe com quanto ela devolve em resultados.</p>
           </div>
         </div>
         <div className="space-y-3 p-5 sm:p-6">
@@ -2474,8 +2665,8 @@ function MetaCriativosGrid({
                   <div key={campaign.id} className="rounded-2xl border border-[var(--border)] bg-pearl p-4 transition-colors hover:bg-pearl">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0">
-                        <p className="truncate text-[12px] font-semibold uppercase tracking-wide text-[var(--foreground)]">{campaign.name}</p>
-                        <p className="mt-1 text-[10px] text-[var(--muted-foreground)]">
+                        <p className="truncate type-caption-strong uppercase text-[var(--foreground)]">{campaign.name}</p>
+                        <p className="mt-1 type-micro-legal text-[var(--muted-foreground)]">
                           {campaign.adsets.length} conjuntos · {campaign.items.length} anúncios · {formatCurrency(campaign.metrics.spend)}
                           {costPerResult !== null ? ` · ${usePurchases ? "CPA" : convLabels.metric} ${formatCurrency(costPerResult)}` : ""}
                         </p>
@@ -2483,25 +2674,25 @@ function MetaCriativosGrid({
                       <div className={`flex shrink-0 items-start gap-2 rounded-xl border px-3 py-2 ${signal.bg} ${signal.border}`}>
                         <signal.Icon className={`mt-0.5 h-3.5 w-3.5 ${signal.color}`} />
                         <div>
-                          <p className={`text-[10px] font-semibold uppercase tracking-wider ${signal.color}`}>{signal.label}</p>
-                          <p className="mt-0.5 max-w-[310px] text-[9px] text-[var(--muted-foreground)]">{signal.detail}</p>
+                          <p className={`type-micro-legal uppercase ${signal.color}`}>{signal.label}</p>
+                          <p className="mt-0.5 max-w-[310px] type-micro-legal text-[var(--muted-foreground)]">{signal.detail}</p>
                         </div>
                       </div>
                     </div>
                     <div className="mt-4 grid gap-3">
                       <div className="grid grid-cols-[76px_1fr_46px] items-center gap-3">
-                        <span className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Verba</span>
+                        <span className="type-micro-legal uppercase text-[var(--muted-foreground)]">Verba</span>
                         <div className="h-2 overflow-hidden rounded-full bg-parchment">
                           <div className="h-full rounded-full bg-[var(--primary)]" style={{ width: `${Math.min(100, spendShare)}%` }} />
                         </div>
-                        <span className="text-right text-[11px] font-semibold tabular-nums text-[var(--foreground)]">{spendShare.toFixed(0)}%</span>
+                        <span className="text-right type-caption-strong tabular-nums text-[var(--foreground)]">{spendShare.toFixed(0)}%</span>
                       </div>
                       <div className="grid grid-cols-[76px_1fr_46px] items-center gap-3">
-                        <span className="truncate text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]" title={resultLabel}>{resultLabel}</span>
+                        <span className="truncate type-micro-legal uppercase text-[var(--muted-foreground)]" title={resultLabel}>{resultLabel}</span>
                         <div className="h-2 overflow-hidden rounded-full bg-parchment">
                           <div className={`h-full rounded-full ${efficiency >= 1.2 ? "bg-green-500" : efficiency < 0.8 ? "bg-red-500" : "bg-blue-500"}`} style={{ width: `${Math.min(100, resultShare)}%` }} />
                         </div>
-                        <span className={`text-right text-[11px] font-semibold tabular-nums ${signal.color}`}>{resultShare.toFixed(0)}%</span>
+                        <span className={`text-right type-caption-strong tabular-nums ${signal.color}`}>{resultShare.toFixed(0)}%</span>
                       </div>
                     </div>
                   </div>
@@ -2526,12 +2717,12 @@ function MetaCriativosGrid({
                 <TrendingUp className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Criativos META</p>
-                <h2 className="text-xl font-semibold uppercase tracking-tight text-[var(--foreground)]">
+                <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Criativos META</p>
+                <h2 className="type-tagline uppercase text-[var(--foreground)]">
                   Plano{" "}
                   <span className="text-primary">de Ação</span>
                 </h2>
-                <p className="mt-0.5 text-[12px] text-[var(--muted-foreground)]">Recomendações automáticas baseadas na performance do período.</p>
+                <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">Recomendações automáticas baseadas na performance do período.</p>
               </div>
             </div>
               <div className="p-6 space-y-5">
@@ -2539,7 +2730,7 @@ function MetaCriativosGrid({
                 {/* Escalar */}
                 {acaoEscalar.length > 0 && (
                   <div>
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-green-500">↑ Aumentar verba</p>
+                    <p className="mb-2 type-micro-legal uppercase text-green-500">↑ Aumentar verba</p>
                     <div className="grid gap-2 sm:grid-cols-2">
                       {acaoEscalar.map((item) => (
                         <button
@@ -2548,14 +2739,14 @@ function MetaCriativosGrid({
                           onClick={() => setModalAdId(item.ad.id)}
                           className="flex items-center gap-3 rounded-xl border border-green-500/25 bg-green-500/6 px-4 py-3 text-left transition hover:border-green-500/50 hover:bg-green-500/10"
                         >
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-500/15 text-green-500 text-[11px] font-semibold">↑</span>
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-500/15 text-green-500 type-caption-strong ">↑</span>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-xs font-semibold text-[var(--foreground)]">{item.displayName}</p>
-                            <p className="mt-0.5 text-[10px] text-[var(--muted-foreground)]">
+                            <p className="truncate type-caption-strong text-[var(--foreground)]">{item.displayName}</p>
+                            <p className="mt-0.5 type-micro-legal text-[var(--muted-foreground)]">
                               {convLabels.metric} {formatCurrency(item.cpl)} · {item.leads} {convLabels.singular}{item.leads > 1 && !convLabels.singular.endsWith(".") ? "s" : ""} · CTR {item.ctr.toFixed(2)}%
                             </p>
                           </div>
-                          <span className="shrink-0 text-[10px] font-medium text-green-500">Top performer</span>
+                          <span className="shrink-0 type-micro-legal text-green-500">Top performer</span>
                         </button>
                       ))}
                     </div>
@@ -2565,7 +2756,7 @@ function MetaCriativosGrid({
                 {/* Otimizar */}
                 {acaoOtimizar.length > 0 && (
                   <div>
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-amber-500">⟳ Otimizar</p>
+                    <p className="mb-2 type-micro-legal uppercase text-amber-500">⟳ Otimizar</p>
                     <div className="grid gap-2 sm:grid-cols-2">
                       {acaoOtimizar.map((item) => (
                         <button
@@ -2574,15 +2765,15 @@ function MetaCriativosGrid({
                           onClick={() => setModalAdId(item.ad.id)}
                           className="flex items-center gap-3 rounded-xl border border-amber-500/25 bg-amber-500/6 px-4 py-3 text-left transition hover:border-amber-500/50 hover:bg-amber-500/10"
                         >
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-500 text-[11px] font-semibold">⟳</span>
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-500 type-caption-strong ">⟳</span>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-xs font-semibold text-[var(--foreground)]">{item.displayName}</p>
-                            <p className="mt-0.5 text-[10px] text-[var(--muted-foreground)]">
+                            <p className="truncate type-caption-strong text-[var(--foreground)]">{item.displayName}</p>
+                            <p className="mt-0.5 type-micro-legal text-[var(--muted-foreground)]">
                               {convLabels.metric} {formatCurrency(item.cpl)} · acima da meta de {formatCurrency(cplAlvo)}
                             </p>
                           </div>
                           {item.alerts[0] && (
-                            <span className="shrink-0 max-w-[100px] text-right text-[9px] font-medium text-amber-600 leading-tight">{item.alerts[0]}</span>
+                            <span className="shrink-0 max-w-[100px] text-right type-micro-legal text-amber-600 leading-tight">{item.alerts[0]}</span>
                           )}
                         </button>
                       ))}
@@ -2593,7 +2784,7 @@ function MetaCriativosGrid({
                 {/* Pausar */}
                 {acaoPausar.length > 0 && (
                   <div>
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-red-500">✕ Pausar</p>
+                    <p className="mb-2 type-micro-legal uppercase text-red-500">✕ Pausar</p>
                     <div className="grid gap-2 sm:grid-cols-2">
                       {acaoPausar.map((item) => (
                         <button
@@ -2602,17 +2793,17 @@ function MetaCriativosGrid({
                           onClick={() => setModalAdId(item.ad.id)}
                           className="flex items-center gap-3 rounded-xl border border-red-500/25 bg-red-500/6 px-4 py-3 text-left transition hover:border-red-500/50 hover:bg-red-500/10"
                         >
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-red-500 text-[11px] font-semibold">✕</span>
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-red-500 type-caption-strong ">✕</span>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-xs font-semibold text-[var(--foreground)]">{item.displayName}</p>
-                            <p className="mt-0.5 text-[10px] text-[var(--muted-foreground)]">
+                            <p className="truncate type-caption-strong text-[var(--foreground)]">{item.displayName}</p>
+                            <p className="mt-0.5 type-micro-legal text-[var(--muted-foreground)]">
                               {formatCurrency(item.spend)} investido{item.leads === 0 ? ` ${convLabels.semResult}` : ` · ${convLabels.metric} ${formatCurrency(item.cpl)}`}
                             </p>
                           </div>
                           {item.alerts[0] ? (
-                            <span className="shrink-0 max-w-[100px] text-right text-[9px] font-medium text-negative leading-tight">{item.alerts[0]}</span>
+                            <span className="shrink-0 max-w-[100px] text-right type-micro-legal text-negative leading-tight">{item.alerts[0]}</span>
                           ) : (
-                            <span className="shrink-0 text-[9px] font-medium text-negative">Sem resultado</span>
+                            <span className="shrink-0 type-micro-legal text-negative">Sem resultado</span>
                           )}
                         </button>
                       ))}
@@ -2623,8 +2814,8 @@ function MetaCriativosGrid({
                 {/* Redistribuição */}
                 {verbaPausar > 0 && acaoEscalar.length > 0 && (
                   <div className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-muted/8 px-4 py-3">
-                    <span className="text-base">→</span>
-                    <p className="text-xs text-[var(--muted-foreground)]">
+                    <span className="type-body">→</span>
+                    <p className="type-fine-print text-[var(--muted-foreground)]">
                       Redistribuir{" "}
                       <span className="font-semibold text-[var(--foreground)]">{formatCurrency(verbaPausar)}</span>
                       {" "}dos criativos pausados para{" "}
@@ -2651,12 +2842,12 @@ function MetaCriativosGrid({
             <div className="flex shrink-0 items-center justify-between border-b border-[var(--border)] px-5 py-4">
               <div>
                 <p className="font-semibold text-[var(--foreground)]">{modalItem.displayName}</p>
-                <p className="mt-0.5 text-[10px] text-[var(--muted-foreground)]">
+                <p className="mt-0.5 type-micro-legal text-[var(--muted-foreground)]">
                   {modalItem.mediaType === "video" ? "Vídeo" : "Imagem"}{modalItem.leads > 0 ? ` · ${modalItem.leads} lead${modalItem.leads > 1 ? "s" : ""} · CPL ${formatCurrency(modalItem.cpl)}` : " · sem leads"}
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <span className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${statusConfig[modalItem.status].color} ${statusConfig[modalItem.status].bg} ${statusConfig[modalItem.status].border}`}>
+                <span className={`rounded-full border px-3 py-1 type-caption-strong uppercase ${statusConfig[modalItem.status].color} ${statusConfig[modalItem.status].bg} ${statusConfig[modalItem.status].border}`}>
                   {statusConfig[modalItem.status].label}
                 </span>
                 <button
@@ -2673,9 +2864,9 @@ function MetaCriativosGrid({
             <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-5 md:flex-row md:gap-6">
               <div className="shrink-0 flex justify-center md:block">
                 {modalFallback && (
-                  <p className="mb-2 text-center text-[10px] text-[var(--muted-foreground)]">
+                  <p className="mb-2 text-center type-micro-legal text-[var(--muted-foreground)]">
                     Mídia alternativa.{" "}
-                    <button type="button" onClick={() => setModalFallback(false)} className="font-medium text-[var(--primary)] underline underline-offset-2">
+                    <button type="button" onClick={() => setModalFallback(false)} className="font-semibold text-[var(--primary)] underline underline-offset-2">
                       Prévia Meta
                     </button>
                   </p>
@@ -2695,8 +2886,8 @@ function MetaCriativosGrid({
               <div className="flex min-w-0 flex-1 flex-col gap-3">
                 {/* Investimento — destaque */}
                 <div className="rounded-xl border border-primary/30 bg-primary/8 px-4 py-3 flex items-center justify-between">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-primary/80">Investimento</p>
-                  <p className="text-xl font-semibold tabular-nums text-[var(--primary)]">{formatCurrency(modalItem.spend)}</p>
+                  <p className="type-micro-legal uppercase text-primary/80">Investimento</p>
+                  <p className="type-tagline tabular-nums text-[var(--primary)]">{formatCurrency(modalItem.spend)}</p>
                 </div>
 
                 {/* Funil: Alcance → Engajamento → Resultado */}
@@ -2727,12 +2918,12 @@ function MetaCriativosGrid({
                   },
                 ].map((section) => (
                   <div key={section.label}>
-                    <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60">{section.label}</p>
+                    <p className="mb-1.5 type-micro-legal uppercase text-muted-foreground/60">{section.label}</p>
                     <div className="grid grid-cols-3 gap-2">
                       {section.cols.map((m) => (
                         <div key={m.label} className="rounded-xl border border-[var(--border)] bg-background/60 p-3 text-center">
-                          <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">{m.label}</p>
-                          <p className="mt-1 text-sm font-semibold tabular-nums text-[var(--foreground)]">{m.value}</p>
+                          <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">{m.label}</p>
+                          <p className="mt-1 type-caption-strong tabular-nums text-[var(--foreground)]">{m.value}</p>
                         </div>
                       ))}
                     </div>
@@ -2741,7 +2932,7 @@ function MetaCriativosGrid({
                 {/* Métricas de vídeo */}
                 {modalItem.mediaType === "video" && (modalItem.hookRate > 0 || modalItem.holdRate > 0) && (
                   <div>
-                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Performance de Vídeo</p>
+                    <p className="mb-1.5 type-micro-legal uppercase text-[var(--muted-foreground)]">Performance de Vídeo</p>
                     <div className="grid grid-cols-2 gap-2">
                       {[
                         {
@@ -2758,9 +2949,9 @@ function MetaCriativosGrid({
                         },
                       ].map((m) => (
                         <div key={m.label} className="rounded-xl border border-[var(--border)] bg-background/60 p-3 text-center">
-                          <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">{m.label}</p>
-                          <p className="text-[8px] text-muted-foreground/60">{m.desc}</p>
-                          <p className={`mt-1 text-sm font-semibold tabular-nums ${m.color}`}>{m.value}</p>
+                          <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">{m.label}</p>
+                          <p className="type-micro-legal text-muted-foreground/60">{m.desc}</p>
+                          <p className={`mt-1 type-caption-strong tabular-nums ${m.color}`}>{m.value}</p>
                         </div>
                       ))}
                     </div>
@@ -2768,16 +2959,16 @@ function MetaCriativosGrid({
                 )}
                 {modalItem.primaryText && (
                   <div className="rounded-xl border border-[var(--border)] bg-background/60 p-4">
-                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Texto do anúncio</p>
-                    <p className="text-sm leading-relaxed text-[var(--foreground)]">{modalItem.primaryText}</p>
+                    <p className="mb-1.5 type-micro-legal uppercase text-[var(--muted-foreground)]">Texto do anúncio</p>
+                    <p className="type-caption leading-relaxed text-[var(--foreground)]">{modalItem.primaryText}</p>
                   </div>
                 )}
                 {modalItem.alerts.length > 0 && (
                   <div>
-                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Diagnóstico</p>
+                    <p className="mb-1.5 type-micro-legal uppercase text-[var(--muted-foreground)]">Diagnóstico</p>
                     <div className="flex flex-wrap gap-1.5">
                       {modalItem.alerts.map((a) => (
-                        <span key={a} className="inline-flex items-center rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-1.5 text-xs font-medium text-amber-600">
+                        <span key={a} className="inline-flex items-center rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-1.5 type-caption-strong text-amber-600">
                           {a}
                         </span>
                       ))}

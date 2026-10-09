@@ -19,7 +19,14 @@ export type ChartArtifact = {
   note?: string;
 };
 
-export type ReferenceItem = { title: string; url: string; snippet?: string; image?: string | null };
+export type ReferenceItem = {
+  title: string;
+  url: string;
+  snippet?: string;
+  image?: string | null;
+  /** Texto guardado para a conversa. O cartão mostra só o snippet. */
+  memo?: string;
+};
 
 export type ReferencesArtifact = {
   kind: "references";
@@ -141,6 +148,42 @@ export function artifactSummary(a: Artifact): string {
     case "contact_card":
       return `Cartão do cliente "${a.name}" exibido na conversa (contato, etapa${a.cart ? ", itens do carrinho" : ""}${a.customer ? ", compras" : ""} e botão para abrir no CRM) — não repita esses dados.`;
   }
+}
+
+export type RememberedPage = { url: string; title: string; memo: string };
+
+/** Mesma página com ou sem barra no final, sem query de cupom. */
+export function pageKey(url: string): string {
+  try {
+    const parsed = new URL(url.trim());
+    const path = parsed.pathname.replace(/\/+$/, "") || "/";
+    return `${parsed.host}${path}`.toLowerCase();
+  } catch {
+    return url.trim().toLowerCase();
+  }
+}
+
+/** Páginas que esta conversa já leu de verdade (não só o banner do cartão). */
+export function rememberedPages(artifacts: Artifact[] | undefined): RememberedPage[] {
+  const out: RememberedPage[] = [];
+  const seen = new Set<string>();
+  for (const artifact of artifacts ?? []) {
+    if (artifact.kind !== "references" || artifact.title !== "Página lida") continue;
+    for (const item of artifact.items) {
+      const memo = item.memo?.trim() ?? "";
+      const key = pageKey(item.url);
+      if (memo.length < 80 || seen.has(key)) continue;
+      seen.add(key);
+      out.push({ url: item.url, title: item.title, memo: memo.slice(0, 1600) });
+    }
+  }
+  return out;
+}
+
+export function pagesNote(pages: RememberedPage[]): string {
+  if (!pages.length) return "";
+  const body = pages.map((page) => `URL: ${page.url}\nTítulo: ${page.title}\n${page.memo}`).join("\n\n");
+  return `[Páginas já lidas nesta conversa. Não chame ler_pagina de novo para estes endereços. Use este texto.]\n${body}`;
 }
 
 /** Nota curta anexada ao histórico para o modelo lembrar o que criou em turnos anteriores. */

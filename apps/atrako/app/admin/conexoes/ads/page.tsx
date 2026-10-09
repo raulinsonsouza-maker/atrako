@@ -35,8 +35,8 @@ export default function AdsConexoesPage() {
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>
-          <h1 className="text-xl font-semibold">Conexões de mídia (Ads)</h1>
-          <p className="text-sm text-[#737373]">
+          <h1 className="type-tagline ">Conexões de mídia (Ads)</h1>
+          <p className="type-caption text-[#737373]">
             BMs Meta / Google / LinkedIn compartilháveis. Instagram e Mercado Pago ficam no hub por
             workspace.
           </p>
@@ -44,14 +44,14 @@ export default function AdsConexoesPage() {
       </div>
 
       {error ? (
-        <div className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 type-caption text-amber-900">
           <AlertCircle className="h-4 w-4 shrink-0" />
           Não foi possível listar conexões admin. Use o cadastro via API ou seed existente.
         </div>
       ) : null}
 
       {isLoading ? (
-        <p className="text-sm text-[#737373]">Carregando…</p>
+        <p className="type-caption text-[#737373]">Carregando…</p>
       ) : (
         <ul className="space-y-2">
           {conexoes.map((c) => (
@@ -60,22 +60,22 @@ export default function AdsConexoesPage() {
               className="flex items-center justify-between rounded-xl border border-[#efefef] bg-white px-4 py-3"
             >
               <div>
-                <p className="text-sm font-medium">{c.nome}</p>
-                <p className="text-xs text-[#737373]">
+                <p className="type-caption-strong ">{c.nome}</p>
+                <p className="type-fine-print text-[#737373]">
                   {c.plataforma} · {c.contasCount} contas
                 </p>
               </div>
               {c.ativo ? (
-                <span className="inline-flex items-center gap-1 text-xs text-emerald-700">
+                <span className="inline-flex items-center gap-1 type-fine-print text-emerald-700">
                   <CheckCircle2 className="h-3.5 w-3.5" /> Ativo
                 </span>
               ) : (
-                <span className="text-xs text-[#a3a3a3]">Inativo</span>
+                <span className="type-fine-print text-[#a3a3a3]">Inativo</span>
               )}
             </li>
           ))}
           {conexoes.length === 0 ? (
-            <li className="rounded-xl border border-dashed border-[#efefef] p-6 text-center text-sm text-[#737373]">
+            <li className="rounded-xl border border-dashed border-[#efefef] p-6 text-center type-caption text-[#737373]">
               Nenhuma conexão de ads ainda. Cadastre em Admin → API conexões ou reutilize as existentes
               vinculadas às contas do workspace.
             </li>

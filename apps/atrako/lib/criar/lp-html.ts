@@ -357,6 +357,11 @@ const CLAIMS: Array<{ code: string; page: RegExp; source: RegExp; what: string }
   { code: "claim_person", page: /\binstrutor|\binstrutora|quem (vai )?(te )?(ensina|conduz)|sobre (o|a) (mentor|mentora|especialista|professor|professora)/i, source: /instrutor|instrutora|professor|professora|mentor|mentora|especialista|ministrad|conduzid|dr\.|dra\./i, what: "apresentação de pessoa (instrutor/especialista)" },
   { code: "claim_access", page: /grava[cç][ãa]o|comunidade|grupo (exclusivo|vip|de alunos|de suporte|no whatsapp)|certificado|acesso vital[íi]cio/i, source: /grava|comunidade|grupo|certificad|vital[íi]ci/i, what: "item de entrega (gravação, grupo, certificado)" },
   { code: "claim_material", page: /material de apoio|apostila|e-?book/i, source: /material|apostila|e-?book|pdf/i, what: "material de apoio" },
+  { code: "claim_ingredient", page: /ceramid|hialur[oô]nic|retinol|niacinamid|col[aá]geno|vitamina c|pept[ií]deo/i, source: /ceramid|hialur|retinol|niacinamid|col[aá]geno|vitamina c|pept/i, what: "ingrediente ou ativo" },
+  { code: "claim_timing", page: /\d+\s*h\b|desincha[cç]o imediato|\bimediato\b|primeira aplica[cç][aã]o|\d+\s*(?:a|–|-)\s*\d+\s*dias/i, source: /\d+\s*h\b|imediato|primeira aplica|\d+\s*(?:a|–|-)\s*\d+\s*dias/i, what: "prazo ou resultado imediato" },
+  { code: "claim_cruelty", page: /cruelty|testes em animais|testado em animais/i, source: /cruelty|animais/i, what: "selo de testes em animais" },
+  { code: "claim_report", page: /\brelatam\b|usu[aá]ri[oa]s?\b/i, source: /relat|usu[aá]ri|depoimento/i, what: "relato de quem usou" },
+  { code: "claim_deal", page: /oferta especial|por apenas|\bdesconto\b/i, source: /oferta especial|desconto|promo|cupom/i, what: "desconto ou oferta especial" },
 ];
 const PROOF_NUMBER =
   /(\+?\s?\d[\d.,]*\s*(?:mil|k)?\s*\+?)\s*(alunos|alunas|clientes|empreendedores|pacientes|seguidores|avalia[cç][õo]es|atendimentos|vendas|empresas|pessoas|anos de experi[eê]ncia|anos de mercado)/gi;
@@ -375,6 +380,10 @@ export function unsupportedClaims(html: string, source: string): LpIssue[] {
     const around = text.slice(Math.max(0, (hit.index ?? 0) - 40), (hit.index ?? 0) + 60).trim();
     issues.push({ code: c.code, message: `A página traz ${c.what} que o usuário não informou ("…${around}…"). Remova essa seção/frase.` });
   }
+  const year = text.match(/©\s*(20\d{2})/);
+  if (year && !source.includes(year[1])) {
+    issues.push({ code: "claim_year", message: `O rodapé usa o ano ${year[1]}, que não veio no pedido. Tire o ano ou use o ano de hoje.` });
+  }
   const numbers = ` ${source.replace(/(?<=\d)[.,](?=\d)/g, "").replace(/\D+/g, " ")} `;
   for (const m of text.matchAll(PROOF_NUMBER)) {
     const n = m[1].replace(/\D/g, "").replace(/^0+/, "");
@@ -386,10 +395,20 @@ export function unsupportedClaims(html: string, source: string): LpIssue[] {
   return issues;
 }
 
+/** Coluna de foto sem imagem, svg ou vídeo. Vira um buraco branco na página. */
+export function emptyVisualIssues(html: string): LpIssue[] {
+  const blocks = html.match(/<(div|figure)\b[^>]*class="[^"]*\b(?:image|visual|photo|media)\b[^"]*"[^>]*>[\s\S]*?<\/\1>/gi) ?? [];
+  if (!blocks.some((block) => !/<(img|svg|video|picture)\b/i.test(block))) return [];
+  return [{
+    code: "empty_visual",
+    message: "Há uma coluna de imagem vazia. Se a lista IMAGENS tiver URL, use <img>. Se não tiver, apague a coluna — não deixe um bloco em branco.",
+  }];
+}
+
 /** Problemas objetivos que o designer precisa corrigir (usado na rodada de correção). */
 export function validateLpV3(
   page: LpSalesPageV3,
-  opts: { needsForm: boolean; needsCheckout: boolean; source?: string },
+  opts: { needsForm: boolean; needsCheckout: boolean; source?: string; imageUrls?: string[] },
 ): LpIssue[] {
   const issues: LpIssue[] = [];
   const text = htmlText(page.html);
@@ -414,7 +433,19 @@ export function validateLpV3(
     issues.push({ code: "hero_header", message: 'O hero está num <header>, sem o padding das seções: use <section class="hero"><div class="container">…</div></section>.' });
   }
   if (opts.source !== undefined) issues.push(...unsupportedClaims(page.html, opts.source));
-  issues.push(...fxOveruse(page.html), ...sectionContractIssues(page.html));
+  issues.push(...emptyVisualIssues(page.html), ...fxOveruse(page.html), ...sectionContractIssues(page.html));
+  if (opts.imageUrls?.length) {
+    const hero = page.html.match(/<section\b[^>]*data-section=["']hero["'][^>]*>[\s\S]*?<\/section>/i)?.[0] ?? "";
+    if (!/<img\b/i.test(hero)) {
+      issues.push({ code: "hero_photo", message: "A lista IMAGENS tem foto e o hero não tem <img>. Coloque a foto de papel hero ao lado do texto, dentro do container." });
+    }
+  }
+  if (opts.source && /foco no produto|visual claro|mais clara|\bclean\b/i.test(opts.source) && /fx-aurora|fx-beams|fx-lamp/.test(page.html)) {
+    issues.push({
+      code: "fx_wash",
+      message: "O pedido é visual claro e focado no produto. Tire o véu colorido (fx-aurora, fx-beams, fx-lamp). O hero é a foto do produto em fundo claro.",
+    });
+  }
   if (page.css.length < 600) issues.push({ code: "css_thin", message: "O CSS está curto demais — a página precisa de estilo completo (tipografia, espaçamento, cores, responsivo)." });
   if (!/@media/i.test(page.css)) issues.push({ code: "responsive", message: "Faltam regras @media para celular (max-width: 640px)." });
   return issues;

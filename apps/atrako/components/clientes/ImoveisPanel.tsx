@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { MetricTile } from "@/components/ui";
 import { useQuery } from "@tanstack/react-query";
 import { Building2, MessageCircle, FileText, TrendingUp, AlertCircle, RefreshCw, Hash, Home } from "lucide-react";
 
@@ -57,27 +58,13 @@ function Skeleton({ className }: { className?: string }) {
   );
 }
 
-function StatBadge({ icon: Icon, label, value, accent }: {
-  icon: React.ElementType;
+function StatBadge({ label, value }: {
+  icon?: React.ElementType;
   label: string;
   value: number | string;
   accent?: boolean;
 }) {
-  return (
-    <div className={`flex flex-col items-center gap-1 rounded-xl border px-4 py-3 text-center ${
-      accent
-        ? "border-primary/30 bg-primary/10"
-        : "border-[var(--border)] bg-[var(--card)]"
-    }`}>
-      <Icon className={`h-4 w-4 ${accent ? "text-[var(--primary)]" : "text-[var(--muted-foreground)]"}`} />
-      <span className={`text-xl font-semibold tabular-nums ${accent ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
-        {value}
-      </span>
-      <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">
-        {label}
-      </span>
-    </div>
-  );
+  return <MetricTile label={label} value={String(value)} />;
 }
 
 interface ImoveisTableRowProps {
@@ -101,7 +88,7 @@ function ImoveisTableRow({ rank, item, maxTotal }: ImoveisTableRowProps) {
         />
       )}
       <div className="relative flex items-center gap-3 px-4 py-3 sm:gap-4">
-        <span className={`w-6 shrink-0 text-center text-sm font-semibold tabular-nums ${
+        <span className={`w-6 shrink-0 text-center type-caption-strong tabular-nums ${
           rank <= 3 ? "text-[var(--primary)]" : "text-[var(--muted-foreground)]"
         }`}>
           {rank}
@@ -109,17 +96,17 @@ function ImoveisTableRow({ rank, item, maxTotal }: ImoveisTableRowProps) {
 
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex items-center gap-2">
-            <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--primary)]">
+            <span className="rounded bg-primary/15 px-1.5 py-0.5 type-micro-legal tabular-nums text-[var(--primary)]">
               #{item.id}
             </span>
             {item.anuncios > 0 && (
-              <span className="text-[10px] text-[var(--muted-foreground)]">
+              <span className="type-micro-legal text-[var(--muted-foreground)]">
                 {item.anuncios} anúncio{item.anuncios !== 1 ? "s" : ""}
               </span>
             )}
           </div>
           {item.nome && (
-            <span className="mt-0.5 truncate text-sm font-semibold text-[var(--foreground)]">
+            <span className="mt-0.5 truncate type-caption-strong text-[var(--foreground)]">
               {item.nome}
             </span>
           )}
@@ -127,22 +114,22 @@ function ImoveisTableRow({ rank, item, maxTotal }: ImoveisTableRowProps) {
 
         <div className="flex shrink-0 items-center gap-4 sm:gap-6">
           <div className="hidden flex-col items-end sm:flex">
-            <span className="text-xs text-[var(--muted-foreground)]">Conversas</span>
-            <span className="text-sm font-semibold tabular-nums text-[var(--foreground)]">
+            <span className="type-fine-print text-[var(--muted-foreground)]">Conversas</span>
+            <span className="type-caption-strong tabular-nums text-[var(--foreground)]">
               {item.conversas}
             </span>
           </div>
           <div className="hidden flex-col items-end sm:flex">
-            <span className="text-xs text-[var(--muted-foreground)]">Leads</span>
-            <span className="text-sm font-semibold tabular-nums text-[var(--foreground)]">
+            <span className="type-fine-print text-[var(--muted-foreground)]">Leads</span>
+            <span className="type-caption-strong tabular-nums text-[var(--foreground)]">
               {item.leads}
             </span>
           </div>
           <div className="flex flex-col items-end">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+            <span className="type-micro-legal uppercase text-[var(--muted-foreground)]">
               Total
             </span>
-            <span className={`text-base font-semibold tabular-nums ${
+            <span className={`type-body-strong tabular-nums ${
               noResults ? "text-[var(--muted-foreground)]" : "text-[var(--primary)]"
             }`}>
               {item.total}
@@ -163,29 +150,29 @@ function SemIdRow({ item }: { item: ImoveisData["semId"] }) {
   return (
     <div className="rounded-xl border border-dashed border-border/50 bg-card/50">
       <div className="flex items-center gap-3 px-4 py-3 sm:gap-4">
-        <span className="w-6 shrink-0 text-center text-sm font-semibold text-[var(--muted-foreground)]">—</span>
+        <span className="w-6 shrink-0 text-center type-caption-strong text-[var(--muted-foreground)]">—</span>
         <div className="flex min-w-0 flex-1 flex-col">
-          <span className="text-sm font-semibold text-[var(--muted-foreground)]">
+          <span className="type-caption-strong text-[var(--muted-foreground)]">
             Anúncios sem ID de imóvel
           </span>
           {item.anuncios > 0 && (
-            <span className="text-[10px] text-[var(--muted-foreground)]">
+            <span className="type-micro-legal text-[var(--muted-foreground)]">
               {item.anuncios} anúncio{item.anuncios !== 1 ? "s" : ""}
             </span>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-4 sm:gap-6">
           <div className="hidden flex-col items-end sm:flex">
-            <span className="text-xs text-[var(--muted-foreground)]">Conversas</span>
-            <span className="text-sm font-semibold tabular-nums text-[var(--muted-foreground)]">{item.conversas}</span>
+            <span className="type-fine-print text-[var(--muted-foreground)]">Conversas</span>
+            <span className="type-caption-strong tabular-nums text-[var(--muted-foreground)]">{item.conversas}</span>
           </div>
           <div className="hidden flex-col items-end sm:flex">
-            <span className="text-xs text-[var(--muted-foreground)]">Leads</span>
-            <span className="text-sm font-semibold tabular-nums text-[var(--muted-foreground)]">{item.leads}</span>
+            <span className="type-fine-print text-[var(--muted-foreground)]">Leads</span>
+            <span className="type-caption-strong tabular-nums text-[var(--muted-foreground)]">{item.leads}</span>
           </div>
           <div className="flex flex-col items-end">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Total</span>
-            <span className="text-base font-semibold tabular-nums text-[var(--muted-foreground)]">{item.total}</span>
+            <span className="type-micro-legal uppercase text-[var(--muted-foreground)]">Total</span>
+            <span className="type-body-strong tabular-nums text-[var(--muted-foreground)]">{item.total}</span>
           </div>
         </div>
       </div>
@@ -219,11 +206,11 @@ export function ImoveisPanel({
         <AlertCircle className="h-8 w-8 text-negative" />
         <div>
           <p className="font-semibold text-[var(--foreground)]">Não foi possível carregar os dados</p>
-          <p className="mt-1 text-sm text-[var(--muted-foreground)]">{message}</p>
+          <p className="mt-1 type-caption text-[var(--muted-foreground)]">{message}</p>
         </div>
         <button
           onClick={() => refetch()}
-          className="flex items-center gap-2 rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+          className="flex items-center gap-2 rounded-lg bg-[var(--primary)] px-4 py-2 type-caption-strong text-white hover:opacity-90"
         >
           <RefreshCw className="h-4 w-4" />
           Tentar novamente
@@ -241,10 +228,10 @@ export function ImoveisPanel({
             <Building2 className="h-5 w-5 text-[var(--primary)]" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-[var(--foreground)]">
+            <h2 className="type-body-strong text-[var(--foreground)]">
               Resultados por Imóvel
             </h2>
-            <p className="text-xs text-[var(--muted-foreground)]">
+            <p className="type-fine-print text-[var(--muted-foreground)]">
               Conversas e leads atribuídos por ID de imóvel nos anúncios Meta
             </p>
           </div>
@@ -261,13 +248,13 @@ export function ImoveisPanel({
 
       {/* Summary KPI row */}
       {isLoading ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rel-kpi-grid">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-20" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rel-kpi-grid">
           <StatBadge icon={TrendingUp} label="Total Resultados" value={totalResultados} accent />
           <StatBadge icon={MessageCircle} label="Conversas" value={totalConversas} />
           <StatBadge icon={FileText} label="Leads Form" value={totalLeads} />
@@ -277,11 +264,11 @@ export function ImoveisPanel({
 
       {/* Table header */}
       <div className="hidden grid-cols-[24px_1fr_80px_80px_72px] items-center gap-4 rounded-lg px-4 py-2 sm:grid">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">#</span>
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Imóvel</span>
-        <span className="text-right text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Conversas</span>
-        <span className="text-right text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Leads</span>
-        <span className="text-right text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Total</span>
+        <span className="type-micro-legal uppercase text-[var(--muted-foreground)]">#</span>
+        <span className="type-micro-legal uppercase text-[var(--muted-foreground)]">Imóvel</span>
+        <span className="text-right type-micro-legal uppercase text-[var(--muted-foreground)]">Conversas</span>
+        <span className="text-right type-micro-legal uppercase text-[var(--muted-foreground)]">Leads</span>
+        <span className="text-right type-micro-legal uppercase text-[var(--muted-foreground)]">Total</span>
       </div>
 
       {/* Rows */}
@@ -296,7 +283,7 @@ export function ImoveisPanel({
           <Hash className="h-8 w-8 text-[var(--muted-foreground)]" />
           <div>
             <p className="font-semibold text-[var(--foreground)]">Nenhum imóvel encontrado</p>
-            <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+            <p className="mt-1 type-caption text-[var(--muted-foreground)]">
               Não há anúncios com IDs de imóveis no período selecionado.
             </p>
           </div>
@@ -316,7 +303,7 @@ export function ImoveisPanel({
             <>
               <div className="my-2 flex items-center gap-3">
                 <div className="h-px flex-1 bg-border/40" />
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">
+                <span className="type-micro-legal uppercase text-[var(--muted-foreground)]">
                   Sem ID atribuído
                 </span>
                 <div className="h-px flex-1 bg-border/40" />
@@ -328,7 +315,7 @@ export function ImoveisPanel({
       )}
 
       {data && (
-        <p className="text-center text-[10px] text-[var(--muted-foreground)]">
+        <p className="text-center type-micro-legal text-[var(--muted-foreground)]">
           {data.totalAnuncios} anúncio{data.totalAnuncios !== 1 ? "s" : ""} analisados no período •
           Anúncios com múltiplos IDs têm resultados somados em cada imóvel
         </p>

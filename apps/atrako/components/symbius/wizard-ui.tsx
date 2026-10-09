@@ -59,7 +59,7 @@ export function WizardBackButton({
 
 export function WizardTitle({ children }: { children: ReactNode }) {
   return (
-    <h1 className="mt-2.5 text-[22px] font-semibold leading-snug tracking-tight text-zinc-900">
+    <h1 className="mt-2.5 type-tagline leading-snug text-zinc-900">
       {children}
     </h1>
   );
@@ -67,27 +67,27 @@ export function WizardTitle({ children }: { children: ReactNode }) {
 
 export function WizardSectionTitle({ children }: { children: ReactNode }) {
   return (
-    <h2 className="text-[15px] font-semibold text-zinc-900">{children}</h2>
+    <h2 className="type-body-strong text-zinc-900">{children}</h2>
   );
 }
 
 export function WizardFieldLabel({ children }: { children: ReactNode }) {
   return (
-    <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+    <label className="mb-1.5 block type-caption-strong uppercase text-zinc-400">
       {children}
     </label>
   );
 }
 
 export const wizardInputCls =
-  "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] leading-snug text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]";
+  "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 type-caption leading-snug text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]";
 
 export const wizardTextareaCls =
-  "min-h-[88px] w-full resize-y rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] leading-relaxed text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]";
+  "min-h-[88px] w-full resize-y rounded-lg border border-zinc-200 bg-white px-3 py-2 type-caption leading-relaxed text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]";
 
 export function ProBadge() {
   return (
-    <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700">
+    <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 type-micro-legal uppercase text-amber-700">
       PRO
     </span>
   );
@@ -144,7 +144,7 @@ export function RadioOption({
           <RadioDot selected={selected && !disabled} />
           <span className="min-w-0 flex-1">
             <span className="flex min-h-[18px] items-center justify-between gap-2">
-              <span className="text-[13px] font-normal leading-snug text-zinc-800">
+              <span className="type-caption font-normal leading-snug text-zinc-800">
                 {title}
               </span>
               {pro ? <ProBadge /> : null}
@@ -187,7 +187,7 @@ export function ToggleRow({
             }`
       } ${!bare && disabled ? "opacity-55" : !bare ? "cursor-pointer" : ""}`}
     >
-      <span className="text-[13px] leading-snug text-zinc-800">{label}</span>
+      <span className="type-caption leading-snug text-zinc-800">{label}</span>
       <button
         type="button"
         role="switch"
@@ -219,7 +219,7 @@ export function TagChip({
     <button
       type="button"
       onClick={onClick}
-      className="rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-normal text-zinc-600 transition hover:border-[var(--primary)] hover:bg-[var(--canvas-parchment)] hover:text-[var(--primary)]"
+      className="rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-1 type-fine-print font-normal text-zinc-600 transition hover:border-[var(--primary)] hover:bg-[var(--canvas-parchment)] hover:text-[var(--primary)]"
     >
       {children}
     </button>
@@ -240,7 +240,7 @@ export function ActivateButton({
       type="button"
       disabled={loading}
       onClick={onClick}
-      className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[var(--primary-focus)] disabled:opacity-60"
+      className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-4 py-2 type-caption-strong text-white transition hover:bg-[var(--primary-focus)] disabled:opacity-60"
     >
       {loading ? "Ativando…" : label}
     </button>
@@ -291,7 +291,7 @@ export function WizardLinkButtonEditor({
           onClick={openModal}
           className="flex w-full items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-zinc-50/80 px-3.5 py-2.5 text-left transition hover:border-zinc-300 hover:bg-zinc-50"
         >
-          <span className="truncate text-[13px] font-normal text-zinc-800">
+          <span className="truncate type-caption font-normal text-zinc-800">
             {buttonLabel.trim() || "Acessar"}
           </span>
           <Link2 className="h-4 w-4 shrink-0 text-zinc-400" strokeWidth={1.75} />
@@ -301,7 +301,7 @@ export function WizardLinkButtonEditor({
       <button
         type="button"
         onClick={openModal}
-        className="flex w-full items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-white px-3 py-2.5 text-[13px] font-normal text-zinc-600 transition hover:border-[var(--primary)] hover:bg-[var(--canvas-parchment)] hover:text-[var(--primary)]"
+        className="flex w-full items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-white px-3 py-2.5 type-caption font-normal text-zinc-600 transition hover:border-[var(--primary)] hover:bg-[var(--canvas-parchment)] hover:text-[var(--primary)]"
       >
         + Adicionar um link
       </button>
@@ -316,7 +316,7 @@ export function WizardLinkButtonEditor({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3 border-b border-zinc-100 px-5 py-4">
-              <h3 className="text-[15px] font-semibold text-zinc-900">
+              <h3 className="type-body-strong text-zinc-900">
                 Adicionar um link
               </h3>
               <button
@@ -356,14 +356,14 @@ export function WizardLinkButtonEditor({
               <button
                 type="button"
                 onClick={closeModal}
-                className="rounded-[var(--radius-xs)] border border-zinc-200 bg-white px-4 py-2 text-[13px] font-normal text-zinc-700 transition hover:bg-zinc-50"
+                className="rounded-[var(--radius-xs)] border border-zinc-200 bg-white px-4 py-2 type-caption font-normal text-zinc-700 transition hover:bg-zinc-50"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={save}
-                className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[var(--primary-focus)]"
+                className="rounded-[var(--radius-xs)] bg-[var(--primary)] px-4 py-2 type-caption-strong text-white transition hover:bg-[var(--primary-focus)]"
               >
                 Salvar
               </button>

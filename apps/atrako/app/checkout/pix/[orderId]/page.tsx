@@ -29,11 +29,11 @@ export default async function PixCheckoutPage({
       {order.pixCopyPaste ? (
         <textarea
           readOnly
-          className="h-24 w-full rounded-lg border border-[var(--hairline)] p-2 text-xs"
+          className="h-24 w-full rounded-lg border border-[var(--hairline)] p-2 type-fine-print"
           value={order.pixCopyPaste}
         />
       ) : (
-        <p className="text-sm text-amber-800">Aguardando QR Code do Mercado Pago…</p>
+        <p className="type-caption text-amber-800">Aguardando QR Code do Mercado Pago…</p>
       )}
       <Link href={`/obrigado?orderId=${order.id}`} className="type-body text-[var(--primary)] underline">
         Já paguei — continuar

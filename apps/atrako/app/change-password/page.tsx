@@ -44,8 +44,8 @@ export default function ChangePasswordPage() {
     <main className="flex min-h-[calc(100vh-5rem)] items-center justify-center px-4 py-10">
       <form onSubmit={submit} className="w-full max-w-md space-y-5 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-7 shadow-2xl">
         <div>
-          <h1 className="text-2xl font-semibold">Alterar senha</h1>
-          <p className="mt-1 text-sm text-[var(--muted-foreground)]">Altere sua senha quando quiser.</p>
+          <h1 className="type-lead-airy ">Alterar senha</h1>
+          <p className="mt-1 type-caption text-[var(--muted-foreground)]">Altere sua senha quando quiser.</p>
         </div>
         <PasswordField
           label="Senha atual"
@@ -70,7 +70,7 @@ export default function ChangePasswordPage() {
           value={confirmation}
           onChange={(event) => setConfirmation(event.target.value)}
         />
-        {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
+        {error && <p role="alert" className="type-caption text-red-400">{error}</p>}
         <button disabled={saving} type="submit" className="w-full rounded-lg bg-[var(--primary)] px-4 py-2.5 font-semibold text-black disabled:opacity-60">
           {saving ? "Salvando..." : "Salvar nova senha"}
         </button>

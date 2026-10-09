@@ -105,7 +105,7 @@ function InputField({
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+      <label className="mb-1.5 block type-caption-strong uppercase text-[var(--muted-foreground)]">
         {label}
       </label>
       <input
@@ -113,9 +113,9 @@ function InputField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm transition-colors focus:border-[var(--primary)]/40 focus:outline-none"
+        className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 type-caption transition-colors focus:border-[var(--primary)]/40 focus:outline-none"
       />
-      {hint && <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">{hint}</p>}
+      {hint && <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">{hint}</p>}
     </div>
   );
 }
@@ -136,7 +136,7 @@ function Modal({
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className={`relative z-10 w-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl ${wide ? "max-w-4xl" : "max-w-lg"}`}>
         <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
-          <h3 className="text-base font-bold text-[var(--foreground)]">{title}</h3>
+          <h3 className="type-body-strong text-[var(--foreground)]">{title}</h3>
           <button
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-xl text-[var(--muted-foreground)] hover:bg-white/5 hover:text-[var(--foreground)] transition-colors"
@@ -490,7 +490,7 @@ export default function AdminIntegrationsConfigPage() {
   if (unauthorized) {
     return (
       <main className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-sm text-[var(--muted-foreground)]">Sua sessão não possui acesso administrativo.</p>
+        <p className="type-caption text-[var(--muted-foreground)]">Sua sessão não possui acesso administrativo.</p>
       </main>
     );
   }
@@ -501,27 +501,27 @@ export default function AdminIntegrationsConfigPage() {
         <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[var(--primary)]/10 blur-3xl" />
         <div className="relative flex items-start justify-between gap-6 flex-wrap">
           <div className="max-w-2xl space-y-3">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--primary)]">
+            <div className="flex items-center gap-2 type-caption-strong uppercase text-[var(--primary)]">
               <LockKeyhole className="h-4 w-4" />
               Central de controle
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-[var(--foreground)] sm:text-4xl">
+            <h1 className="type-lead font-extrabold text-[var(--foreground)] ">
               Configurações
             </h1>
-            <p className="max-w-xl text-sm leading-6 text-[var(--muted-foreground)]">
+            <p className="max-w-xl type-caption leading-6 text-[var(--muted-foreground)]">
               Veja rapidamente o que está conectado, resolva pendências e mantenha o InPilot pronto para operar.
               Os detalhes técnicos aparecem apenas quando você precisar deles.
             </p>
           </div>
         <button
           onClick={() => { setLogsModalOpen(true); fetchLogs("ALL"); setLogsFilter("ALL"); }}
-          className="flex shrink-0 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)]/90 px-4 py-2.5 text-sm font-semibold text-[var(--foreground)] shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--primary)]/40"
+          className="flex shrink-0 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)]/90 px-4 py-2.5 type-caption-strong text-[var(--foreground)] shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--primary)]/40"
         >
           <ScrollText className="h-4 w-4 text-[var(--muted-foreground)]" />
           Logs do sistema
         </button>
         </div>
-        <p className="relative mt-7 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+        <p className="relative mt-7 type-caption-strong uppercase text-[var(--muted-foreground)]">
           Plataformas e canais
         </p>
       </section>
@@ -535,8 +535,8 @@ export default function AdminIntegrationsConfigPage() {
             <UsersRound className="h-5 w-5" />
           </span>
           <span className="min-w-0">
-            <span className="block text-sm font-bold text-[var(--foreground)]">Usuários internos</span>
-            <span className="mt-1 block text-xs leading-5 text-[var(--muted-foreground)]">Crie acessos, escolha permissões e desative contas sem apagar o histórico.</span>
+            <span className="block type-caption-strong text-[var(--foreground)]">Usuários internos</span>
+            <span className="mt-1 block type-fine-print leading-5 text-[var(--muted-foreground)]">Crie acessos, escolha permissões e desative contas sem apagar o histórico.</span>
           </span>
           <ChevronRight className="ml-auto mt-1 h-5 w-5 text-[var(--muted-foreground)] transition-transform group-hover:translate-x-0.5" />
         </Link>
@@ -548,21 +548,21 @@ export default function AdminIntegrationsConfigPage() {
             <BarChart3 className="h-5 w-5" />
           </span>
           <span className="min-w-0">
-            <span className="block text-sm font-bold text-[var(--foreground)]">Uso e acesso do InPilot</span>
-            <span className="mt-1 block text-xs leading-5 text-[var(--muted-foreground)]">Escolha usuários e clientes autorizados e acompanhe o consumo da ferramenta.</span>
+            <span className="block type-caption-strong text-[var(--foreground)]">Uso e acesso do InPilot</span>
+            <span className="mt-1 block type-fine-print leading-5 text-[var(--muted-foreground)]">Escolha usuários e clientes autorizados e acompanhe o consumo da ferramenta.</span>
           </span>
           <ChevronRight className="ml-auto mt-1 h-5 w-5 text-[var(--muted-foreground)] transition-transform group-hover:translate-x-0.5" />
         </Link>
       </section>
 
       {formError && (
-        <div className="flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/5 px-5 py-3 text-sm">
+        <div className="flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/5 px-5 py-3 type-caption">
           <AlertTriangle className="h-4 w-4 shrink-0 text-red-400" />
           <span className="text-red-400">{formError}</span>
         </div>
       )}
       {formSuccess && (
-        <div className="flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-5 py-3 text-sm">
+        <div className="flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-5 py-3 type-caption">
           <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
           <span className="text-emerald-400">{formSuccess}</span>
         </div>
@@ -584,13 +584,13 @@ export default function AdminIntegrationsConfigPage() {
                 </span>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-base font-bold text-[var(--foreground)]">{item.label}</h2>
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${item.ok ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"}`}>
+                    <h2 className="type-body-strong text-[var(--foreground)]">{item.label}</h2>
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 type-micro-legal ${item.ok ?"bg-emerald-500/10 text-emerald-400" :"bg-amber-500/10 text-amber-400"}`}>
                       {item.ok ? <CircleCheck className="h-3 w-3" /> : <CircleAlert className="h-3 w-3" />}
                       {isLoading ? "Verificando" : item.ok ? "Pronto" : "Precisa configurar"}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm leading-5 text-[var(--muted-foreground)]">{item.description}</p>
+                  <p className="mt-2 type-caption leading-5 text-[var(--muted-foreground)]">{item.description}</p>
                 </div>
               </div>
               <button
@@ -603,7 +603,7 @@ export default function AdminIntegrationsConfigPage() {
                   }
                   setPlatformModal(item.key);
                 }}
-                className="flex w-full items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--background)]/50 px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--primary)]/50 hover:bg-[var(--primary)]/5"
+                className="flex w-full items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--background)]/50 px-4 py-3 type-caption-strong text-[var(--foreground)] transition hover:border-[var(--primary)]/50 hover:bg-[var(--primary)]/5"
               >
                 {item.action}<ChevronRight className="h-4 w-4 text-[var(--muted-foreground)]" />
               </button>
@@ -618,11 +618,11 @@ export default function AdminIntegrationsConfigPage() {
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-400">Meta</span>
+              <CardTitle className="flex items-center gap-2 type-body">
+                <span className="rounded-full bg-blue-500/10 px-2 py-0.5 type-micro-legal uppercase text-blue-400">Meta</span>
                 Meta Ads
               </CardTitle>
-              <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+              <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                 Credenciais globais padrão. Clientes sem BM vinculada usam este token.
               </p>
             </div>
@@ -649,12 +649,12 @@ export default function AdminIntegrationsConfigPage() {
           {/* BMs conectadas */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+              <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                 Business Managers (BMs) conectadas
               </p>
               <button
                 onClick={() => { setBmNome(""); setBmToken(""); setBmAccountId(""); setBmError(""); setMetaBMModalOpen(true); }}
-                className="flex items-center gap-1 rounded-lg bg-[var(--primary)]/10 px-2.5 py-1.5 text-[11px] font-semibold text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors"
+                className="flex items-center gap-1 rounded-lg bg-[var(--primary)]/10 px-2.5 py-1.5 type-caption-strong text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors"
               >
                 <Plus className="h-3 w-3" />
                 Adicionar BM
@@ -663,7 +663,7 @@ export default function AdminIntegrationsConfigPage() {
             {metaBMs.length === 0 ? (
               <div className="flex items-center gap-2 rounded-xl border border-dashed border-[var(--border)] px-4 py-3">
                 <Wifi className="h-3.5 w-3.5 shrink-0 text-[var(--muted-foreground)]/40" />
-                <p className="text-xs text-[var(--muted-foreground)]">
+                <p className="type-fine-print text-[var(--muted-foreground)]">
                   Nenhuma BM cadastrada — usando credenciais globais acima.
                 </p>
               </div>
@@ -675,8 +675,8 @@ export default function AdminIntegrationsConfigPage() {
                     <div key={bm.id} className="flex items-center gap-3 bg-[var(--card)] px-4 py-3">
                       <StatusDot ok={ok} />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-[var(--foreground)]">{bm.nome}</p>
-                        <p className="text-[11px] text-[var(--muted-foreground)]">
+                        <p className="truncate type-caption-strong text-[var(--foreground)]">{bm.nome}</p>
+                        <p className="type-fine-print text-[var(--muted-foreground)]">
                           {ok ? "Conectada" : "Token ausente"}
                           {bm.contasCount > 0 && (
                             <> · {bm.contasCount} conta{bm.contasCount !== 1 ? "s" : ""}</>
@@ -686,7 +686,7 @@ export default function AdminIntegrationsConfigPage() {
                       </div>
                       <a
                         href="/admin/conexoes"
-                        className="shrink-0 rounded-lg border border-[var(--border)] px-2.5 py-1 text-[11px] font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-white/5 transition-colors"
+                        className="shrink-0 rounded-lg border border-[var(--border)] px-2.5 py-1 type-caption-strong text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-white/5 transition-colors"
                       >
                         Editar
                       </a>
@@ -700,7 +700,7 @@ export default function AdminIntegrationsConfigPage() {
             <button
               disabled={mutation.isPending || isLoading}
               onClick={handleSaveCredentials}
-              className="rounded-xl bg-[var(--primary)] px-6 py-2.5 text-sm font-semibold text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-50"
+              className="rounded-xl bg-[var(--primary)] px-6 py-2.5 type-caption-strong text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-50"
             >
               {mutation.isPending ? "Salvando..." : "Salvar credenciais"}
             </button>
@@ -715,11 +715,11 @@ export default function AdminIntegrationsConfigPage() {
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-500">Google</span>
+              <CardTitle className="flex items-center gap-2 type-body">
+                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 type-micro-legal uppercase text-emerald-500">Google</span>
                 Google Ads
               </CardTitle>
-              <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+              <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                 Credenciais OAuth globais. Clientes sem MCC vinculado usam estas credenciais.
               </p>
             </div>
@@ -773,12 +773,12 @@ export default function AdminIntegrationsConfigPage() {
           {/* MCCs conectados */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+              <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                 MCCs (gerenciadoras) conectados
               </p>
               <button
                 onClick={() => { setMccNome(""); setMccClientId(""); setMccClientSecret(""); setMccDeveloperToken(""); setMccRefreshToken(""); setMccLoginCustomerId(""); setMccError(""); setGoogleMCCModalOpen(true); }}
-                className="flex items-center gap-1 rounded-lg bg-emerald-500/10 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-500 hover:bg-emerald-500/20 transition-colors"
+                className="flex items-center gap-1 rounded-lg bg-emerald-500/10 px-2.5 py-1.5 type-caption-strong text-emerald-500 hover:bg-emerald-500/20 transition-colors"
               >
                 <Plus className="h-3 w-3" />
                 Adicionar MCC
@@ -787,7 +787,7 @@ export default function AdminIntegrationsConfigPage() {
             {googleMCCs.length === 0 ? (
               <div className="flex items-center gap-2 rounded-xl border border-dashed border-[var(--border)] px-4 py-3">
                 <Wifi className="h-3.5 w-3.5 shrink-0 text-[var(--muted-foreground)]/40" />
-                <p className="text-xs text-[var(--muted-foreground)]">
+                <p className="type-fine-print text-[var(--muted-foreground)]">
                   Nenhum MCC cadastrado — usando credenciais globais acima.
                 </p>
               </div>
@@ -799,8 +799,8 @@ export default function AdminIntegrationsConfigPage() {
                     <div key={mcc.id} className="flex items-center gap-3 bg-[var(--card)] px-4 py-3">
                       <StatusDot ok={ok} />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-[var(--foreground)]">{mcc.nome}</p>
-                        <p className="text-[11px] text-[var(--muted-foreground)]">
+                        <p className="truncate type-caption-strong text-[var(--foreground)]">{mcc.nome}</p>
+                        <p className="type-fine-print text-[var(--muted-foreground)]">
                           {ok ? "Conectado" : "Credenciais incompletas"}
                           {mcc.googleLoginCustomerId && <> · MCC {mcc.googleLoginCustomerId}</>}
                           {mcc.contasCount > 0 && (
@@ -811,7 +811,7 @@ export default function AdminIntegrationsConfigPage() {
                       </div>
                       <a
                         href="/admin/conexoes"
-                        className="shrink-0 rounded-lg border border-[var(--border)] px-2.5 py-1 text-[11px] font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-white/5 transition-colors"
+                        className="shrink-0 rounded-lg border border-[var(--border)] px-2.5 py-1 type-caption-strong text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-white/5 transition-colors"
                       >
                         Editar
                       </a>
@@ -825,7 +825,7 @@ export default function AdminIntegrationsConfigPage() {
             <button
               disabled={mutation.isPending || isLoading}
               onClick={handleSaveCredentials}
-              className="rounded-xl bg-[var(--primary)] px-6 py-2.5 text-sm font-semibold text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-50"
+              className="rounded-xl bg-[var(--primary)] px-6 py-2.5 type-caption-strong text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-50"
             >
               {mutation.isPending ? "Salvando..." : "Salvar credenciais"}
             </button>
@@ -840,11 +840,11 @@ export default function AdminIntegrationsConfigPage() {
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-500">LinkedIn</span>
+              <CardTitle className="flex items-center gap-2 type-body">
+                <span className="rounded-full bg-sky-500/10 px-2 py-0.5 type-micro-legal uppercase text-sky-500">LinkedIn</span>
                 LinkedIn Ads
               </CardTitle>
-              <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+              <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                 Conexões autorizadas via OAuth do LinkedIn. Cada cliente com LinkedIn Ads é vinculado a uma conexão.
               </p>
             </div>
@@ -853,12 +853,12 @@ export default function AdminIntegrationsConfigPage() {
         <CardContent className="space-y-5">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+              <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                 Conexões LinkedIn
               </p>
               <button
                 onClick={addLinkedinConexao}
-                className="flex items-center gap-1 rounded-lg bg-sky-500/10 px-2.5 py-1.5 text-[11px] font-semibold text-sky-500 hover:bg-sky-500/20 transition-colors"
+                className="flex items-center gap-1 rounded-lg bg-sky-500/10 px-2.5 py-1.5 type-caption-strong text-sky-500 hover:bg-sky-500/20 transition-colors"
               >
                 <Plus className="h-3 w-3" />
                 Adicionar conexão
@@ -867,7 +867,7 @@ export default function AdminIntegrationsConfigPage() {
             {linkedinConns.length === 0 ? (
               <div className="flex items-center gap-2 rounded-xl border border-dashed border-[var(--border)] px-4 py-3">
                 <Wifi className="h-3.5 w-3.5 shrink-0 text-[var(--muted-foreground)]/40" />
-                <p className="text-xs text-[var(--muted-foreground)]">
+                <p className="type-fine-print text-[var(--muted-foreground)]">
                   Nenhuma conexão LinkedIn cadastrada — clique em &quot;Adicionar conexão&quot; e autorize via OAuth.
                 </p>
               </div>
@@ -879,8 +879,8 @@ export default function AdminIntegrationsConfigPage() {
                     <div key={c.id} className="flex items-center gap-3 bg-[var(--card)] px-4 py-3">
                       <StatusDot ok={ok} />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-[var(--foreground)]">{c.nome}</p>
-                        <p className="text-[11px] text-[var(--muted-foreground)]">
+                        <p className="truncate type-caption-strong text-[var(--foreground)]">{c.nome}</p>
+                        <p className="type-fine-print text-[var(--muted-foreground)]">
                           {ok ? "Conectada" : "Aguardando autorização OAuth"}
                           {c.contasCount > 0 && (
                             <> · {c.contasCount} conta{c.contasCount !== 1 ? "s" : ""}</>
@@ -890,13 +890,13 @@ export default function AdminIntegrationsConfigPage() {
                       </div>
                       <button
                         onClick={() => startLinkedinOauth(c.id)}
-                        className="shrink-0 rounded-lg border border-sky-500/40 bg-sky-500/10 px-2.5 py-1 text-[11px] font-medium text-sky-600 hover:bg-sky-500/20 transition-colors"
+                        className="shrink-0 rounded-lg border border-sky-500/40 bg-sky-500/10 px-2.5 py-1 type-caption-strong text-sky-600 hover:bg-sky-500/20 transition-colors"
                       >
                         {ok ? "Reconectar" : "Conectar LinkedIn"}
                       </button>
                       <a
                         href="/admin/conexoes"
-                        className="shrink-0 rounded-lg border border-[var(--border)] px-2.5 py-1 text-[11px] font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-white/5 transition-colors"
+                        className="shrink-0 rounded-lg border border-[var(--border)] px-2.5 py-1 type-caption-strong text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-white/5 transition-colors"
                       >
                         Editar
                       </a>
@@ -914,11 +914,11 @@ export default function AdminIntegrationsConfigPage() {
       {platformModal === "telegram" && <Modal title="Configurar Telegram" onClose={() => setPlatformModal(null)} wide>
       <Card id="telegram" className="border-0 bg-transparent shadow-none">
         <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-400">Telegram</span>
+          <CardTitle className="flex items-center gap-2 type-body">
+            <span className="rounded-full bg-sky-500/10 px-2 py-0.5 type-micro-legal uppercase text-sky-400">Telegram</span>
             Resumo diário no Telegram
           </CardTitle>
-          <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+          <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
             Após o sync diário das 05:00 BRT, envia automaticamente um resumo de cada cliente com Telegram ativo para o canal configurado.
           </p>
         </CardHeader>
@@ -942,10 +942,10 @@ export default function AdminIntegrationsConfigPage() {
           </div>
 
           <details className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-4">
-            <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+            <summary className="cursor-pointer type-caption-strong uppercase text-[var(--muted-foreground)]">
               Como configurar o bot (passo a passo)
             </summary>
-            <div className="mt-3 space-y-4 text-xs text-[var(--muted-foreground)]">
+            <div className="mt-3 space-y-4 type-fine-print text-[var(--muted-foreground)]">
               <div>
                 <p className="mb-1.5 font-semibold text-[var(--foreground)]">1. Criar o bot</p>
                 <ol className="space-y-1 list-decimal pl-4">
@@ -979,27 +979,27 @@ export default function AdminIntegrationsConfigPage() {
           </details>
 
           {telegramFormError && (
-            <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-xs text-red-400">
+            <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 type-fine-print text-red-400">
               <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
               {telegramFormError}
             </div>
           )}
           {telegramFormSuccess && (
-            <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-xs text-emerald-400">
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 type-fine-print text-emerald-400">
               <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
               {telegramFormSuccess}
             </div>
           )}
 
           {telegramTestResult && (
-            <div className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-xs ${telegramTestResult.ok ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400" : "border-red-500/30 bg-red-500/5 text-red-400"}`}>
+            <div className={`flex items-center gap-2 rounded-xl border px-4 py-3 type-fine-print ${telegramTestResult.ok ?"border-emerald-500/30 bg-emerald-500/5 text-emerald-400" :"border-red-500/30 bg-red-500/5 text-red-400"}`}>
               {telegramTestResult.ok ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> : <AlertTriangle className="h-3.5 w-3.5 shrink-0" />}
               {telegramTestResult.msg}
             </div>
           )}
 
           {telegramSendAllResult && (
-            <div className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-xs ${telegramSendAllResult.ok ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400" : "border-red-500/30 bg-red-500/5 text-red-400"}`}>
+            <div className={`flex items-center gap-2 rounded-xl border px-4 py-3 type-fine-print ${telegramSendAllResult.ok ?"border-emerald-500/30 bg-emerald-500/5 text-emerald-400" :"border-red-500/30 bg-red-500/5 text-red-400"}`}>
               {telegramSendAllResult.ok ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> : <AlertTriangle className="h-3.5 w-3.5 shrink-0" />}
               {telegramSendAllResult.msg}
             </div>
@@ -1025,7 +1025,7 @@ export default function AdminIntegrationsConfigPage() {
                   setTelegramTestLoading(false);
                 }
               }}
-              className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-5 py-2.5 text-sm font-semibold text-[var(--foreground)] transition hover:opacity-80 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-5 py-2.5 type-caption-strong text-[var(--foreground)] transition hover:opacity-80 disabled:opacity-50"
             >
               <Send className="h-4 w-4" />
               {telegramTestLoading ? "Enviando..." : "Enviar mensagem de teste"}
@@ -1054,7 +1054,7 @@ export default function AdminIntegrationsConfigPage() {
                   setTelegramSendAllLoading(false);
                 }
               }}
-              className="flex items-center gap-2 rounded-xl border border-sky-500/50 bg-sky-500/10 px-5 py-2.5 text-sm font-semibold text-sky-400 transition hover:opacity-80 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl border border-sky-500/50 bg-sky-500/10 px-5 py-2.5 type-caption-strong text-sky-400 transition hover:opacity-80 disabled:opacity-50"
             >
               <Send className="h-4 w-4" />
               {telegramSendAllLoading ? "Enviando relatórios..." : "Enviar todos os relatórios agora"}
@@ -1072,7 +1072,7 @@ export default function AdminIntegrationsConfigPage() {
                 setTelegramFormError("");
                 telegramMutation.mutate(body);
               }}
-              className="flex items-center gap-2 rounded-xl bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl bg-sky-500 px-5 py-2.5 type-caption-strong text-white transition hover:opacity-90 disabled:opacity-50"
             >
               <Send className="h-4 w-4" />
               {telegramMutation.isPending ? "Salvando..." : "Salvar Telegram"}
@@ -1084,7 +1084,7 @@ export default function AdminIntegrationsConfigPage() {
 
       {/* ── Status do sync global (sempre visível) ── */}
       <section className="space-y-2">
-        <h2 className="text-base font-bold tracking-tight text-[var(--foreground)]">Status do sync global</h2>
+        <h2 className="type-body-strong text-[var(--foreground)]">Status do sync global</h2>
         <div className="divide-y divide-[var(--border)] overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)]">
           {(() => {
             const successAt = data?.globalSyncSuccessAt ? new Date(data.globalSyncSuccessAt) : null;
@@ -1093,8 +1093,8 @@ export default function AdminIntegrationsConfigPage() {
               <div className="flex items-center gap-3 px-4 py-3">
                 <StatusDot ok={fresh} />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-[var(--foreground)]">Último sync bem-sucedido</p>
-                  <p className="text-[11px] text-[var(--muted-foreground)]">
+                  <p className="type-caption-strong text-[var(--foreground)]">Último sync bem-sucedido</p>
+                  <p className="type-fine-print text-[var(--muted-foreground)]">
                     {successAt
                       ? `${successAt.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}${fresh ? " (recente)" : " (mais de 25h atrás)"}`
                       : "Nunca executado — abra o painel admin ou configure o Scheduled Deployment"}
@@ -1107,8 +1107,8 @@ export default function AdminIntegrationsConfigPage() {
             <div className="flex items-center gap-3 px-4 py-3">
               <div className="h-2 w-2 shrink-0 rounded-full bg-amber-400" />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-[var(--foreground)]">Última tentativa</p>
-                <p className="text-[11px] text-[var(--muted-foreground)]">
+                <p className="type-caption-strong text-[var(--foreground)]">Última tentativa</p>
+                <p className="type-fine-print text-[var(--muted-foreground)]">
                   {new Date(data.globalSyncAttemptAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
                 </p>
               </div>
@@ -1143,7 +1143,7 @@ export default function AdminIntegrationsConfigPage() {
               hint="Se esta BM tiver uma conta padrão diferente da global."
             />
             {bmError && (
-              <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-xs text-red-400">
+              <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 type-fine-print text-red-400">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                 {bmError}
               </div>
@@ -1151,14 +1151,14 @@ export default function AdminIntegrationsConfigPage() {
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setMetaBMModalOpen(false)}
-                className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-white/5 transition-colors"
+                className="rounded-xl border border-[var(--border)] px-4 py-2.5 type-caption-strong text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-white/5 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 disabled={bmSaving}
                 onClick={handleAddBM}
-                className="flex items-center gap-2 rounded-xl bg-[var(--primary)] px-5 py-2.5 text-sm font-semibold text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-xl bg-[var(--primary)] px-5 py-2.5 type-caption-strong text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-50"
               >
                 {bmSaving && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                 {bmSaving ? "Salvando..." : "Adicionar BM"}
@@ -1217,7 +1217,7 @@ export default function AdminIntegrationsConfigPage() {
               hint="ID numérico da conta gerenciadora (sem traços)."
             />
             {mccError && (
-              <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-xs text-red-400">
+              <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 type-fine-print text-red-400">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                 {mccError}
               </div>
@@ -1225,14 +1225,14 @@ export default function AdminIntegrationsConfigPage() {
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setGoogleMCCModalOpen(false)}
-                className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-white/5 transition-colors"
+                className="rounded-xl border border-[var(--border)] px-4 py-2.5 type-caption-strong text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-white/5 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 disabled={mccSaving}
                 onClick={handleAddMCC}
-                className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 type-caption-strong text-white transition hover:opacity-90 disabled:opacity-50"
               >
                 {mccSaving && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                 {mccSaving ? "Salvando..." : "Adicionar MCC"}
@@ -1247,7 +1247,7 @@ export default function AdminIntegrationsConfigPage() {
         <Modal title="Configurar alertas automáticos" onClose={() => setAlertModalOpen(false)}>
           <div className="space-y-5">
             <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Destino das notificações</p>
+              <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">Destino das notificações</p>
               <InputField
                 label="E-mail de notificação"
                 type="email"
@@ -1267,7 +1267,7 @@ export default function AdminIntegrationsConfigPage() {
             </div>
 
             <div className="space-y-4 border-t border-[var(--border)] pt-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Configuração SMTP (e-mail)</p>
+              <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">Configuração SMTP (e-mail)</p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <InputField
                   label="Host SMTP"
@@ -1305,7 +1305,7 @@ export default function AdminIntegrationsConfigPage() {
             </div>
 
             <div className="space-y-4 border-t border-[var(--border)] pt-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Limiares de alerta</p>
+              <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">Limiares de alerta</p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <InputField
                   label="Saldo mínimo (dias restantes)"
@@ -1327,19 +1327,19 @@ export default function AdminIntegrationsConfigPage() {
             </div>
 
             {alertFormError && (
-              <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-xs text-red-400">
+              <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 type-fine-print text-red-400">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                 {alertFormError}
               </div>
             )}
             {alertFormSuccess && (
-              <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-xs text-emerald-400">
+              <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 type-fine-print text-emerald-400">
                 <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                 {alertFormSuccess}
               </div>
             )}
             {testAlertResult && (
-              <div className={`flex items-start gap-2 rounded-xl border px-4 py-3 text-xs ${testAlertResult.ok ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400" : "border-red-500/30 bg-red-500/5 text-red-400"}`}>
+              <div className={`flex items-start gap-2 rounded-xl border px-4 py-3 type-fine-print ${testAlertResult.ok ?"border-emerald-500/30 bg-emerald-500/5 text-emerald-400" :"border-red-500/30 bg-red-500/5 text-red-400"}`}>
                 {testAlertResult.ok
                   ? <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   : <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />}
@@ -1351,21 +1351,21 @@ export default function AdminIntegrationsConfigPage() {
               <button
                 disabled={testAlertLoading}
                 onClick={handleTestAlert}
-                className="flex items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-medium text-[var(--foreground)] transition hover:bg-white/5 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2.5 type-caption-strong text-[var(--foreground)] transition hover:bg-white/5 disabled:opacity-50"
               >
                 {testAlertLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}
                 {testAlertLoading ? "Enviando teste..." : "Testar alertas"}
               </button>
               <button
                 onClick={() => setAlertModalOpen(false)}
-                className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-white/5 transition-colors"
+                className="rounded-xl border border-[var(--border)] px-4 py-2.5 type-caption-strong text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-white/5 transition-colors"
               >
                 Fechar
               </button>
               <button
                 disabled={alertMutation.isPending}
                 onClick={handleSaveAlerts}
-                className="flex items-center gap-2 rounded-xl bg-[var(--primary)] px-5 py-2.5 text-sm font-semibold text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-xl bg-[var(--primary)] px-5 py-2.5 type-caption-strong text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-50"
               >
                 {alertMutation.isPending && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                 {alertMutation.isPending ? "Salvando..." : "Salvar alertas"}
@@ -1384,8 +1384,8 @@ export default function AdminIntegrationsConfigPage() {
             <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4 shrink-0">
               <div className="flex items-center gap-3">
                 <ScrollText className="h-5 w-5 text-[var(--muted-foreground)]" />
-                <h3 className="text-base font-bold text-[var(--foreground)]">Logs do sistema</h3>
-                <span className="rounded-full border border-[var(--border)] px-2 py-0.5 text-[10px] text-[var(--muted-foreground)]">
+                <h3 className="type-body-strong text-[var(--foreground)]">Logs do sistema</h3>
+                <span className="rounded-full border border-[var(--border)] px-2 py-0.5 type-micro-legal text-[var(--muted-foreground)]">
                   últimas 300 entradas · 7 dias
                 </span>
               </div>
@@ -1404,7 +1404,7 @@ export default function AdminIntegrationsConfigPage() {
                   <button
                     key={f}
                     onClick={() => { setLogsFilter(f); fetchLogs(f); }}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    className={`rounded-lg px-3 py-1.5 type-caption-strong transition-colors ${
                       logsFilter === f
                         ? f === "ERROR"
                           ? "bg-red-500/15 text-red-400 border border-red-500/30"
@@ -1422,14 +1422,14 @@ export default function AdminIntegrationsConfigPage() {
                 <button
                   onClick={() => fetchLogs(logsFilter)}
                   disabled={logsLoading}
-                  className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-white/5 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] px-3 py-1.5 type-caption-strong text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-white/5 transition-colors disabled:opacity-50"
                 >
                   <RefreshCw className={`h-3.5 w-3.5 ${logsLoading ? "animate-spin" : ""}`} />
                   Atualizar
                 </button>
                 <button
                   onClick={clearLogs}
-                  className="flex items-center gap-1.5 rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/5 transition-colors"
+                  className="flex items-center gap-1.5 rounded-lg border border-red-500/30 px-3 py-1.5 type-caption-strong text-red-400 hover:bg-red-500/5 transition-colors"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                   Limpar
@@ -1438,7 +1438,7 @@ export default function AdminIntegrationsConfigPage() {
             </div>
 
             {/* Log list */}
-            <div className="flex-1 overflow-y-auto font-mono text-xs">
+            <div className="flex-1 overflow-y-auto font-mono type-fine-print">
               {logsLoading && (
                 <div className="flex items-center justify-center gap-2 py-12 text-[var(--muted-foreground)]">
                   <RefreshCw className="h-4 w-4 animate-spin" />
@@ -1455,7 +1455,7 @@ export default function AdminIntegrationsConfigPage() {
                 <div className="flex flex-col items-center justify-center gap-2 py-16 text-[var(--muted-foreground)]">
                   <ScrollText className="h-8 w-8 opacity-30" />
                   <p>Nenhum log encontrado.</p>
-                  <p className="text-[10px]">Os logs aparecem aqui após o próximo sync.</p>
+                  <p className="type-micro-legal">Os logs aparecem aqui após o próximo sync.</p>
                 </div>
               )}
               {!logsLoading && logsData.map((log) => {
@@ -1481,7 +1481,7 @@ export default function AdminIntegrationsConfigPage() {
                 return (
                   <div key={log.id} className={`flex gap-3 px-5 py-2 hover:bg-white/[0.02] transition-colors ${rowBg}`}>
                     <span className="shrink-0 text-[var(--muted-foreground)] opacity-60 tabular-nums">{brt}</span>
-                    <span className={`shrink-0 w-12 font-bold ${levelColor}`}>{log.level}</span>
+                    <span className={`shrink-0 w-12 font-semibold ${levelColor}`}>{log.level}</span>
                     <span className="flex-1 break-all text-[var(--foreground)] opacity-90">{log.message}</span>
                     {ctx && <span className="shrink-0 text-[var(--muted-foreground)] opacity-50 hidden sm:block">{ctx}</span>}
                   </div>
@@ -1491,7 +1491,7 @@ export default function AdminIntegrationsConfigPage() {
 
             {/* Footer */}
             <div className="border-t border-[var(--border)] px-6 py-3 shrink-0">
-              <p className="text-[11px] text-[var(--muted-foreground)]">
+              <p className="type-fine-print text-[var(--muted-foreground)]">
                 {logsData.length > 0
                   ? `${logsData.length} entrada(s) exibida(s) · ordenadas da mais recente para a mais antiga`
                   : "Nenhuma entrada"}

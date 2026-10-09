@@ -105,10 +105,53 @@
   --shadow-soft: none;
 
   /* Fonts (valores preenchidos pelo next/font no layout) */
-  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-display: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: "Geist", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Geist", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   /* Frosted chrome — saturate(180%) blur(20px) */
   --frosted: rgba(245, 245, 247, 0.8);
   --frosted-blur: saturate(180%) blur(20px);
+}
+
+/* Tema escuro: mesmas chaves, superfícies da referência. Accent e séries de gráfico ficam. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  --ink: #f4f5f7;
+  --foreground: #f4f5f7;
+  --body: #f4f5f7;
+  --body-on-dark: #f4f5f7;
+  --body-muted: #9aa0a6;
+  --ink-muted-80: #c8c8cc;
+  --ink-muted-48: #9aa0a6;
+  --on-dark: #ffffff;
+  --muted-foreground: #9aa0a6;
+
+  --canvas: #16181d;
+  --canvas-parchment: #0c0d10;
+  --surface-pearl: #1a1c21;
+  --surface-tile-1: #1c1e24;
+  --surface-tile-2: rgba(255, 255, 255, 0.08);
+  --surface-tile-3: #14161b;
+  --surface-black: #0b0c0e;
+  --surface-chip-translucent: rgba(255, 255, 255, 0.08);
+
+  --background: #0c0d10;
+  --background-elevated: #16181d;
+  --card: #16181d;
+  --card-hover: #1c1e24;
+  --card-foreground: #f4f5f7;
+  --muted: #14161b;
+  --border: rgba(255, 255, 255, 0.1);
+  --divider-soft: rgba(255, 255, 255, 0.06);
+  --hairline: rgba(255, 255, 255, 0.1);
+
+  --success: #30d158;
+  --danger: #ff453a;
+  --badge-critical: #ff453a;
+  --positive: #30d158;
+  --negative: #ff453a;
+  --channel-tiktok: #f4f5f7;
+
+  --frosted: rgba(12, 13, 16, 0.8);
 }

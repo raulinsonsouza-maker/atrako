@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { FormField } from "@atrako/forms";
-import { artifactSummary, historyNote, type Artifact } from "../lib/atrako-agent/artifacts";
+import { artifactSummary, historyNote, pageKey, pagesNote, rememberedPages, type Artifact } from "../lib/atrako-agent/artifacts";
 import { chartsFor } from "../lib/atrako-agent/charts";
 import { ageLabel, cartItems } from "../lib/atrako-agent/crm-cards";
 import { orderForDesign, parseDesignOutput } from "../lib/atrako-agent/designer";
@@ -176,6 +176,29 @@ test("unsupportedClaims barra garantia, bônus, instrutor e números que o usuá
   const offer = "<ul><li>Acesso ao live + gravação (30 dias)</li><li>Material de apoio em PDF</li></ul>";
   assert.deepEqual(unsupportedClaims(offer, "Workshop ao vivo, R$ 97").map((i) => i.code), ["claim_access", "claim_material"]);
   assert.deepEqual(unsupportedClaims(offer, "Ao vivo, com gravação por 30 dias e apostila em PDF"), []);
+  const product =
+    '<section class="sec-hero" data-section="hero"><div class="image" aria-hidden="true"></div><h1>Olhar descansado</h1><p>Fórmula com ácido hialurônico por até 12h. Desinchaço imediato. Muitas usuárias relatam melhora. Oferta especial por apenas R$ 159.</p></section><p>© 2025 Sense. Cruelty-free, sem testes em animais.</p>';
+  const productCodes = unsupportedClaims(product, "Hidratante para a área dos olhos, R$ 159,15, mulheres de 25 a 45, visual claro").map((i) => i.code);
+  assert.ok(productCodes.includes("claim_ingredient"));
+  assert.ok(productCodes.includes("claim_timing"));
+  assert.ok(productCodes.includes("claim_report"));
+  assert.ok(productCodes.includes("claim_deal"));
+  assert.ok(productCodes.includes("claim_cruelty"));
+  assert.ok(productCodes.includes("claim_year"));
+  const page = buildSalesPageV3({
+    goal: "sales",
+    html: product + "<atrako-checkout></atrako-checkout><p>" + "texto ".repeat(80) + "</p>",
+    css: ".x{color:red}".repeat(80) + "@media (max-width:640px){.x{color:#111}}",
+    brief: "b",
+  });
+  const layout = validateLpV3(page, {
+    needsForm: false,
+    needsCheckout: true,
+    source: "foco no produto, visual claro",
+    imageUrls: ["https://images.example/produto.jpg"],
+  }).map((i) => i.code);
+  assert.ok(layout.includes("empty_visual"));
+  assert.ok(layout.includes("hero_photo"));
 });
 
 test("validateLpV3 pede hero em <section> quando o h1 está num <header>", () => {
@@ -465,17 +488,27 @@ test("parseDesignOutput aceita cercas markdown e recusa texto sem HTML", () => {
   assert.equal(parseDesignOutput("Desculpe, não posso ajudar."), null);
 });
 
-test("orderForDesign: chave do workspace primeiro, depois modelos maiores, resto na ordem", () => {
+test("orderForDesign: modelo grande de página antes do chat rápido do workspace", () => {
   const c = (model: string, source: "platform" | "workspace" = "platform") =>
     ({ key: model, provider: "openrouter", model, apiKey: "FAKE", baseUrl: "https://x", source }) as unknown as LlmCandidate;
   const ordered = orderForDesign([
+    c("nvidia/nemotron-3-super-120b-a12b", "workspace"),
     c("meta-llama/llama-3.3-70b"),
     c("command-a-03-2025"),
-    c("openai/gpt-oss-120b:free"),
-    c("my-model", "workspace"),
+    c("openai/gpt-oss-120b"),
+    c("nvidia/nemotron-3-ultra-550b-a55b:free"),
+    c("nvidia/nemotron-3-ultra-550b-a55b"),
     c("qwen3"),
   ]).map((x) => x.model);
-  assert.deepEqual(ordered, ["my-model", "openai/gpt-oss-120b:free", "command-a-03-2025", "meta-llama/llama-3.3-70b", "qwen3"]);
+  assert.deepEqual(ordered, [
+    "nvidia/nemotron-3-ultra-550b-a55b",
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "openai/gpt-oss-120b",
+    "command-a-03-2025",
+    "nvidia/nemotron-3-super-120b-a12b",
+    "meta-llama/llama-3.3-70b",
+    "qwen3",
+  ]);
 });
 
 // ── artefatos ──
@@ -503,6 +536,23 @@ test("historyNote lembra ids de páginas e formulários; resumo não leva dados"
     '\n\n[Recursos nesta resposta: landing page "Clínica Sorriso" id=prod_1 status=DRAFT; formulário "Avaliação" id=form_1 status=DRAFT]',
   );
   assert.equal(historyNote([]), "");
+  const memo = "Grankefir Kefir Liofilizado 50G. Preço de vitrine: R$ 145,00. Identidade visual: cor de destaque #8F664D, fonte Roboto.";
+  const pages = rememberedPages([
+    {
+      kind: "references",
+      id: "r1",
+      title: "Página lida",
+      items: [
+        { title: "Home", url: "https://sensebiologicus.com.br/", snippet: "banner", memo },
+        { title: "Home de novo", url: "https://sensebiologicus.com.br", snippet: "banner", memo: `${memo} duplicada` },
+      ],
+    },
+  ]);
+  assert.equal(pages.length, 1);
+  assert.equal(pageKey(pages[0].url), pageKey("https://sensebiologicus.com.br/?cupom=1"));
+  assert.match(pagesNote(pages), /Não chame ler_pagina de novo/);
+  assert.match(pagesNote(pages), /#8F664D/);
+  assert.equal(rememberedPages([{ kind: "references", id: "r2", title: "Página lida", items: [{ title: "Home", url: "https://sensebiologicus.com.br/", snippet: "só o banner" }] }]).length, 0);
   assert.doesNotMatch(artifactSummary(artifacts[3]), /999/);
   assert.match(artifactSummary(artifacts[0]), /rascunho/);
 });

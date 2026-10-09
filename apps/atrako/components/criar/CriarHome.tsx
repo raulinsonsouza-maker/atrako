@@ -88,7 +88,7 @@ function CriarHomeInner() {
         </Link>
 
         <section>
-          <h2 className="mb-3 type-fine-print uppercase tracking-[0.14em] text-[var(--ink-muted-48)]">
+          <h2 className="mb-3 type-fine-print uppercase text-[var(--ink-muted-48)]">
             Plataformas
           </h2>
           <div className="criar-platform-grid">
@@ -123,7 +123,7 @@ function CriarHomeInner() {
         </section>
 
         <section className="criar-recent">
-          <h2 className="type-fine-print uppercase tracking-[0.14em] text-[var(--ink-muted-48)]">
+          <h2 className="type-fine-print uppercase text-[var(--ink-muted-48)]">
             Suas criações
           </h2>
 

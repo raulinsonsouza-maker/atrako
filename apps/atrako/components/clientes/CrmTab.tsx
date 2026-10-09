@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { FunilCrmSection } from "@/components/clientes/FunilCrmSection";
 import { SearchInput } from "@/components/ui/search-input";
+import { MetricGrid, MetricTile } from "@/components/ui";
 import {
   RefreshCw, Inbox, Search, X,
   ChevronLeft, ChevronRight, ChevronDown,
@@ -380,7 +381,7 @@ function StatusBadge({ status }: { status: string | null }) {
   if (!status) return <span className="text-[var(--border)]">—</span>;
   const cfg = STATUS_CFG[status] ?? { label: status, cls: "bg-[var(--muted)] text-[var(--muted-foreground)]" };
   return (
-    <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${cfg.cls}`}>
+    <span className={`inline-block rounded-full px-2 py-0.5 type-caption-strong ${cfg.cls}`}>
       {cfg.label}
     </span>
   );
@@ -439,7 +440,7 @@ function HorizontalBar({
         onClick ? "cursor-pointer hover:bg-primary/8" : ""
       } ${isActive ? "bg-primary/10 ring-1 ring-inset ring-primary/20" : ""}`}
     >
-      <span className={`w-28 shrink-0 truncate text-[11px] font-medium ${isActive ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`} title={label}>
+      <span className={`w-28 shrink-0 truncate type-caption-strong ${isActive ?"text-[var(--primary)]" :"text-[var(--foreground)]"}`} title={label}>
         {label}
       </span>
       <div className="flex min-w-0 flex-1 items-center">
@@ -454,10 +455,10 @@ function HorizontalBar({
           />
         </div>
       </div>
-      <span className="w-10 shrink-0 text-right tabular-nums text-[10px] text-[var(--muted-foreground)]">
+      <span className="w-10 shrink-0 text-right tabular-nums type-micro-legal text-[var(--muted-foreground)]">
         {pct.toFixed(1)}%
       </span>
-      <span className={`w-8 shrink-0 text-right tabular-nums text-[11px] font-semibold ${isActive ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
+      <span className={`w-8 shrink-0 text-right tabular-nums type-caption-strong ${isActive ?"text-[var(--primary)]" :"text-[var(--foreground)]"}`}>
         {value}
       </span>
     </div>
@@ -470,8 +471,8 @@ function DField({ label, value }: { label: string; value: React.ReactNode }) {
   if (value == null || value === "") return null;
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted-foreground)]">{label}</span>
-      <span className="text-sm text-[var(--foreground)]">{value}</span>
+      <span className="type-micro-legal uppercase text-[var(--muted-foreground)]">{label}</span>
+      <span className="type-caption text-[var(--foreground)]">{value}</span>
     </div>
   );
 }
@@ -479,7 +480,7 @@ function DField({ label, value }: { label: string; value: React.ReactNode }) {
 function DSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--primary)]">{title}</p>
+      <p className="type-micro-legal uppercase text-[var(--primary)]">{title}</p>
       <div className="grid grid-cols-2 gap-x-5 gap-y-3">{children}</div>
     </div>
   );
@@ -554,15 +555,15 @@ function LeadDetailDrawer({
               <div className="flex-1 min-w-0 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={lead.status} />
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-[var(--primary)]">
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 type-caption-strong text-[var(--primary)]">
                     {lead.etapa}
                   </span>
                 </div>
-                <h2 className="text-xl font-semibold leading-tight text-[var(--foreground)]">
+                <h2 className="type-tagline leading-tight text-[var(--foreground)]">
                   {lead.nome ?? lead.email ?? lead.telefone ?? "Sem identificação"}
                 </h2>
                 {lead.nome && (lead.email ?? lead.telefone) && (
-                  <p className="text-sm text-[var(--muted-foreground)]">{lead.email ?? lead.telefone}</p>
+                  <p className="type-caption text-[var(--muted-foreground)]">{lead.email ?? lead.telefone}</p>
                 )}
               </div>
               <button
@@ -642,7 +643,7 @@ function LeadDetailDrawer({
                     const m = getMomentoLabel(lead.momentoLead);
                     return m ? (
                       <DField label="Temperatura" value={
-                        <span className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${m.chip}`}>{m.label}</span>
+                        <span className={`inline-block rounded-full px-2.5 py-0.5 type-caption-strong ${m.chip}`}>{m.label}</span>
                       } />
                     ) : null;
                   })()}
@@ -702,7 +703,7 @@ function LeadDetailDrawer({
               <>
                 <div className="h-px bg-[var(--border)]" />
                 <div className="space-y-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--primary)]">Tags</p>
+                  <p className="type-micro-legal uppercase text-[var(--primary)]">Tags</p>
                   <div className="flex flex-wrap gap-1.5">
                     {[...cvTags]
                       .sort((a, b) => Number(isAlertaTag(b)) - Number(isAlertaTag(a)))
@@ -713,8 +714,8 @@ function LeadDetailDrawer({
                             key={tag}
                             className={
                               alerta
-                                ? "inline-flex items-center gap-1 rounded-full border border-red-500/25 bg-red-500/10 px-2.5 py-0.5 text-[11px] font-medium text-negative"
-                                : "rounded-full border border-[var(--border)] bg-[var(--muted)] px-2.5 py-0.5 text-[11px] text-[var(--foreground)]"
+                                ? "inline-flex items-center gap-1 rounded-full border border-red-500/25 bg-red-500/10 px-2.5 py-0.5 type-caption-strong text-negative"
+                                : "rounded-full border border-[var(--border)] bg-[var(--muted)] px-2.5 py-0.5 type-fine-print text-[var(--foreground)]"
                             }
                           >
                             {alerta && <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-red-400" />}
@@ -732,7 +733,7 @@ function LeadDetailDrawer({
               <>
                 <div className="h-px bg-[var(--border)]" />
                 <div className="space-y-3 rounded-xl border border-red-500/20 bg-red-500/5 p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-negative">Motivo de Perda</p>
+                  <p className="type-micro-legal uppercase text-negative">Motivo de Perda</p>
                   <div className="grid grid-cols-2 gap-x-5 gap-y-3">
                     <DField label="Motivo" value={<span className="text-negative">{cv.motivoCancelamento}</span>} />
                     {cv.submotivoCancelamento && (
@@ -754,17 +755,17 @@ function LeadDetailDrawer({
                 <div className="h-px bg-[var(--border)]" />
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--primary)]">
+                    <p className="type-micro-legal uppercase text-[var(--primary)]">
                       Respostas do Formulário
                     </p>
                     {formName && (
-                      <span className="truncate rounded-full bg-[var(--muted)] px-2 py-0.5 text-[10px] text-[var(--muted-foreground)]">
+                      <span className="truncate rounded-full bg-[var(--muted)] px-2 py-0.5 type-micro-legal text-[var(--muted-foreground)]">
                         {formName}
                       </span>
                     )}
                   </div>
                   {formLoading ? (
-                    <div className="flex items-center gap-2 text-[12px] text-[var(--muted-foreground)]">
+                    <div className="flex items-center gap-2 type-fine-print text-[var(--muted-foreground)]">
                       <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent" />
                       Carregando respostas…
                     </div>
@@ -832,20 +833,20 @@ function CampanhaSection({ data }: { data: AtribuicaoData }) {
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <span className={`inline-block h-2 w-2 rounded-full`} style={{ backgroundColor: cfg.hex }} />
-          <p className={`text-sm font-semibold ${cfg.color}`}>{cfg.label}</p>
-          <span className="text-xs text-[var(--muted-foreground)]">· {totalLeads} leads</span>
+          <p className={`type-caption-strong ${cfg.color}`}>{cfg.label}</p>
+          <span className="type-fine-print text-[var(--muted-foreground)]">· {totalLeads} leads</span>
           {investCanal > 0 && (
-            <span className="text-xs text-[var(--muted-foreground)]">
+            <span className="type-fine-print text-[var(--muted-foreground)]">
               · {formatCurrencyBR(investCanal)} investidos
             </span>
           )}
         </div>
         <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
-          <table className="min-w-[600px] w-full text-sm">
+          <table className="min-w-[600px] w-full type-caption">
             <thead>
               <tr className="border-b border-[var(--border)] bg-muted/30">
                 {["Conversão / Portal CRM", "Leads", "Visitou", "Em aberto", "Ganhos", "Conv%"].map((h) => (
-                  <th key={h} className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted-foreground)]">
+                  <th key={h} className="px-4 py-2.5 text-left type-micro-legal uppercase text-[var(--muted-foreground)]">
                     {h}
                   </th>
                 ))}
@@ -860,7 +861,7 @@ function CampanhaSection({ data }: { data: AtribuicaoData }) {
                   }`}
                 >
                   <td className="px-4 py-2.5">
-                    <span className="max-w-[200px] block truncate font-medium text-[var(--foreground)]" title={row.campanha}>
+                    <span className="max-w-[200px] block truncate font-semibold text-[var(--foreground)]" title={row.campanha}>
                       {row.campanha}
                     </span>
                   </td>
@@ -895,8 +896,8 @@ function CampanhaSection({ data }: { data: AtribuicaoData }) {
       <div className="flex items-start gap-3">
         <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">CRM</p>
-          <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">Por Portal de Entrada</h2>
+          <p className="type-micro-legal uppercase text-[var(--primary)]">CRM</p>
+          <h2 className="type-tagline text-[var(--foreground)]">Por Portal de Entrada</h2>
         </div>
       </div>
       <div className="space-y-6">
@@ -907,8 +908,8 @@ function CampanhaSection({ data }: { data: AtribuicaoData }) {
           <CampanhaTable rows={googleCampanhas} canal="GOOGLE" investCanal={data.investGoogle ?? 0} />
         )}
       </div>
-      <p className="text-[10px] text-[var(--muted-foreground)]">
-        "Portal de Entrada" = como o lead chegou ao CRM (ex: <span className="font-medium">RdStation</span> = integração via RD Station; <span className="font-medium">Painel Corretor</span> = cadastro pelo app do corretor). Não é o nome da campanha — nomes de campanha aparecem em CRM × Meta.
+      <p className="type-micro-legal text-[var(--muted-foreground)]">
+        "Portal de Entrada" = como o lead chegou ao CRM (ex: <span className="font-semibold">RdStation</span> = integração via RD Station; <span className="font-semibold">Painel Corretor</span> = cadastro pelo app do corretor). Não é o nome da campanha — nomes de campanha aparecem em CRM × Meta.
       </p>
     </div>
   );
@@ -965,7 +966,7 @@ function AdPreviewModal({ adId, adName, onClose, staticImageUrl }: { adId: strin
       >
         <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
           <Eye className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />
-          <p className="text-sm font-semibold text-[var(--foreground)] flex-1 min-w-0 truncate">{adName}</p>
+          <p className="type-caption-strong text-[var(--foreground)] flex-1 min-w-0 truncate">{adName}</p>
           <button onClick={onClose} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors flex-shrink-0 p-1" aria-label="Fechar">✕</button>
         </div>
         <div className="flex items-center justify-center bg-black min-h-[300px]">
@@ -974,7 +975,7 @@ function AdPreviewModal({ adId, adName, onClose, staticImageUrl }: { adId: strin
           ) : loading ? (
             <div className="flex flex-col items-center gap-3 py-12 text-[var(--muted-foreground)]">
               <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
-              <p className="text-xs">Carregando prévia…</p>
+              <p className="type-fine-print">Carregando prévia…</p>
             </div>
           ) : preview ? (
             (() => {
@@ -991,7 +992,7 @@ function AdPreviewModal({ adId, adName, onClose, staticImageUrl }: { adId: strin
           ) : (
             <div className="flex flex-col items-center gap-3 py-12 text-[var(--muted-foreground)]">
               <Eye className="w-12 h-12 opacity-20" />
-              <p className="text-xs">{failed ? "Prévia não disponível" : "Nenhuma prévia"}</p>
+              <p className="type-fine-print">{failed ? "Prévia não disponível" : "Nenhuma prévia"}</p>
             </div>
           )}
         </div>
@@ -1046,8 +1047,8 @@ function MetaHierarquiaSection({
       <div className="flex items-start gap-3">
         <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">CRM · Meta</p>
-          <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">Análise Detalhada do Meta</h2>
+          <p className="type-micro-legal uppercase text-[var(--primary)]">CRM · Meta</p>
+          <h2 className="type-tagline text-[var(--foreground)]">Análise Detalhada do Meta</h2>
         </div>
       </div>
 
@@ -1055,21 +1056,21 @@ function MetaHierarquiaSection({
       {totalGanhos > 0 && (
         <div className="flex flex-wrap gap-2">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-3 py-1.5">
-            <span className="text-xs font-semibold text-positive">{totalGanhos} {isAgencia ? "fechamento" : "venda"}{totalGanhos !== 1 ? "s" : ""}</span>
-            {totalValor > 0 && <span className="text-xs text-positive/60">· {formatCurrencyBR(totalValor)}</span>}
+            <span className="type-caption-strong text-positive">{totalGanhos} {isAgencia ? "fechamento" : "venda"}{totalGanhos !== 1 ? "s" : ""}</span>
+            {totalValor > 0 && <span className="type-fine-print text-positive/60">· {formatCurrencyBR(totalValor)}</span>}
           </div>
         </div>
       )}
 
       <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
-        <table className="min-w-[980px] w-full text-sm">
+        <table className="min-w-[980px] w-full type-caption">
           <thead>
             <tr className="border-b border-[var(--border)] bg-muted/30">
               {(isAgencia
                 ? ["Campanha / Conjunto / Anúncio", "Leads", "Atend.", "Descartados", "Fechamentos", "Valor", "Conv%"]
                 : ["Campanha / Conjunto / Anúncio", "Leads", "Visitas", "Atend.", "Descartados", "Vendas", "Valor", "Conv%"]
               ).map((h, i) => (
-                <th key={h} className={`px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted-foreground)] ${i === 0 ? "text-left" : "text-right"}`}>
+                <th key={h} className={`px-4 py-2.5 type-micro-legal uppercase text-[var(--muted-foreground)] ${i === 0 ?"text-left" :"text-right"}`}>
                   {h}
                 </th>
               ))}
@@ -1139,7 +1140,7 @@ function MetaHierarquiaSection({
                                 type="button"
                                 disabled={as.adsetId == null}
                                 onClick={() => onFilter(adsetActive ? null : { type: "metaAdset", value: as.adsetId!, label: `Conjunto: ${as.adsetName}` })}
-                                className={`max-w-[260px] truncate text-left text-xs font-medium ${as.adsetId == null ? "cursor-default" : "hover:text-[var(--primary)]"} ${adsetActive ? "text-[var(--primary)]" : "text-[var(--muted-foreground)]"}`}
+                                className={`max-w-[260px] truncate text-left type-caption-strong ${as.adsetId == null ?"cursor-default" :"hover:text-[var(--primary)]"} ${adsetActive ?"text-[var(--primary)]" :"text-[var(--muted-foreground)]"}`}
                                 title={as.adsetName}
                               >
                                 {as.adsetName}
@@ -1169,7 +1170,7 @@ function MetaHierarquiaSection({
                                     type="button"
                                     disabled={ad.adId == null}
                                     onClick={() => onFilter(adActive ? null : { type: "metaAd", value: ad.adId!, label: `Anúncio: ${ad.adName}` })}
-                                    className={`max-w-[200px] truncate text-left text-xs ${ad.adId == null ? "cursor-default" : "hover:text-[var(--primary)]"} ${adActive ? "font-semibold text-[var(--primary)]" : "text-[var(--muted-foreground)]"}`}
+                                    className={`max-w-[200px] truncate text-left type-caption-strong ${ad.adId == null ?"cursor-default" :"hover:text-[var(--primary)]"} ${adActive ?" text-[var(--primary)]" :"text-[var(--muted-foreground)]"}`}
                                     title={ad.adName}
                                   >
                                     {ad.adName}
@@ -1244,29 +1245,29 @@ function GoogleUtmHierarquiaSection({
       <div className="flex items-start gap-3">
         <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">CRM · Google</p>
-          <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">Análise Detalhada do Google</h2>
+          <p className="type-micro-legal uppercase text-[var(--primary)]">CRM · Google</p>
+          <h2 className="type-tagline text-[var(--foreground)]">Análise Detalhada do Google</h2>
         </div>
       </div>
 
       {totalGanhos > 0 && (
         <div className="flex flex-wrap gap-2">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-3 py-1.5">
-            <span className="text-xs font-semibold text-positive">{totalGanhos} {isAgencia ? (totalGanhos === 1 ? "fechamento" : "fechamentos") : (totalGanhos === 1 ? "venda" : "vendas")}</span>
-            {totalValor > 0 && <span className="text-xs text-positive/60">· {formatCurrencyBR(totalValor)}</span>}
+            <span className="type-caption-strong text-positive">{totalGanhos} {isAgencia ? (totalGanhos === 1 ? "fechamento" : "fechamentos") : (totalGanhos === 1 ? "venda" : "vendas")}</span>
+            {totalValor > 0 && <span className="type-fine-print text-positive/60">· {formatCurrencyBR(totalValor)}</span>}
           </div>
         </div>
       )}
 
       <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
-        <table className="min-w-[620px] w-full text-sm">
+        <table className="min-w-[620px] w-full type-caption">
           <thead>
             <tr className="border-b border-[var(--border)] bg-muted/30">
               {(isAgencia
                 ? ["Campanha / Grupo de Anúncios", "Leads", "Atend.", "Fechamentos", "Valor", "Conv%"]
                 : ["Campanha / Grupo de Anúncios", "Leads", "Visitas", "Atend.", "Vendas", "Valor", "Conv%"]
               ).map((h, i) => (
-                <th key={h} className={`px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted-foreground)] ${i === 0 ? "text-left" : "text-right"}`}>
+                <th key={h} className={`px-4 py-2.5 type-micro-legal uppercase text-[var(--muted-foreground)] ${i === 0 ?"text-left" :"text-right"}`}>
                   {h}
                 </th>
               ))}
@@ -1328,33 +1329,33 @@ function GoogleUtmHierarquiaSection({
                       <td className="py-2 pl-10 pr-4">
                         <div className="flex items-center gap-2">
                           <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full opacity-50" style={{ backgroundColor: googleHex }} />
-                          <span className="max-w-[310px] truncate text-xs text-[var(--muted-foreground)]" title={ag.adgroupName}>{ag.adgroupName}</span>
+                          <span className="max-w-[310px] truncate type-fine-print text-[var(--muted-foreground)]" title={ag.adgroupName}>{ag.adgroupName}</span>
                         </div>
                       </td>
                       <td className="py-2 pr-4 text-right">
-                        <span className="tabular-nums text-xs text-[var(--muted-foreground)]">{ag.leads.toLocaleString("pt-BR")}</span>
+                        <span className="tabular-nums type-fine-print text-[var(--muted-foreground)]">{ag.leads.toLocaleString("pt-BR")}</span>
                       </td>
                       {!isAgencia && (
                         <td className="py-2 pr-4 text-right">
                           {ag.visitou > 0
-                            ? <span className="tabular-nums text-xs text-amber-600/70">{ag.visitou.toLocaleString("pt-BR")}</span>
+                            ? <span className="tabular-nums type-fine-print text-amber-600/70">{ag.visitou.toLocaleString("pt-BR")}</span>
                             : <span className="opacity-20 text-[var(--muted-foreground)]">—</span>}
                         </td>
                       )}
                       <td className="py-2 pr-4 text-right">
                         {ag.andamento > 0
-                          ? <span className="tabular-nums text-xs text-primary/70">{ag.andamento.toLocaleString("pt-BR")}</span>
+                          ? <span className="tabular-nums type-fine-print text-primary/70">{ag.andamento.toLocaleString("pt-BR")}</span>
                           : <span className="opacity-20 text-[var(--muted-foreground)]">—</span>}
                       </td>
                       <td className="py-2 pr-4 text-right">
                         {ag.ganhos > 0
-                          ? <span className="tabular-nums text-xs font-semibold text-positive">{ag.ganhos.toLocaleString("pt-BR")}</span>
+                          ? <span className="tabular-nums type-caption-strong text-positive">{ag.ganhos.toLocaleString("pt-BR")}</span>
                           : <span className="opacity-20 text-[var(--muted-foreground)]">—</span>}
                       </td>
-                      <td className="py-2 pr-4 text-right tabular-nums text-xs text-muted-foreground/70">
+                      <td className="py-2 pr-4 text-right tabular-nums type-fine-print text-muted-foreground/70">
                         {ag.valor > 0 ? formatCurrencyBR(ag.valor) : <span className="opacity-20">—</span>}
                       </td>
-                      <td className="py-2 pr-4 text-right tabular-nums text-xs">
+                      <td className="py-2 pr-4 text-right tabular-nums type-fine-print">
                         {ag.leads > 0
                           ? <span className={ag.taxaGanho > 0 ? "font-semibold text-positive" : "text-muted-foreground/70"}>{ag.taxaGanho}%</span>
                           : <span className="opacity-20">—</span>}
@@ -1433,11 +1434,11 @@ function ReconversoesModal({
         <div className="flex items-start gap-3 px-5 pt-5 pb-4 border-b border-border">
           <div className="mt-1 h-8 w-1 shrink-0 rounded-full" style={{ backgroundColor: accentColor }} />
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: accentColor }}>{labelCanal}</p>
-            <h3 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
+            <p className="type-micro-legal uppercase " style={{ color: accentColor }}>{labelCanal}</p>
+            <h3 className="type-tagline text-[var(--foreground)]">
               Reconversões · {rows.length}
             </h3>
-            <p className="mt-0.5 text-xs text-[var(--muted-foreground)] leading-snug">
+            <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)] leading-snug">
               {isMeta
                 ? "Leads que já estavam no CRM e preencheram o formulário novamente no período"
                 : "Leads Google do período cujo e-mail já constava no CRM antes do período selecionado"}
@@ -1455,11 +1456,11 @@ function ReconversoesModal({
 
         {/* Table */}
         <div className="overflow-x-auto max-h-[68vh] overflow-y-auto">
-          <table className="min-w-[600px] w-full text-sm">
+          <table className="min-w-[600px] w-full type-caption">
             <thead className="sticky top-0 z-10 bg-[var(--card)] border-b border-border">
               <tr>
                 {["Lead", colAtrib, colConv, "No CRM desde", "Etapa atual"].map((h) => (
-                  <th key={h} className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted-foreground)] text-left whitespace-nowrap">
+                  <th key={h} className="px-5 py-3 type-micro-legal uppercase text-[var(--muted-foreground)] text-left whitespace-nowrap">
                     {h}
                   </th>
                 ))}
@@ -1470,25 +1471,25 @@ function ReconversoesModal({
                 <tr key={r.id} className="border-b border-border hover:bg-pearl transition-colors">
                   <td className="px-5 py-3.5">
                     <p className="font-semibold text-[var(--foreground)] leading-tight">{r.nome || "—"}</p>
-                    {r.email && <p className="text-[11px] text-[var(--muted-foreground)] mt-0.5">{r.email}</p>}
+                    {r.email && <p className="type-fine-print text-[var(--muted-foreground)] mt-0.5">{r.email}</p>}
                   </td>
                   <td className="px-5 py-3.5 max-w-[200px]">
-                    <p className="text-xs font-medium text-[var(--foreground)] leading-snug">{r.primary || "—"}</p>
-                    {r.secondary && <p className="text-[11px] text-[var(--muted-foreground)] mt-0.5 leading-snug">{r.secondary}</p>}
+                    <p className="type-caption-strong text-[var(--foreground)] leading-snug">{r.primary || "—"}</p>
+                    {r.secondary && <p className="type-fine-print text-[var(--muted-foreground)] mt-0.5 leading-snug">{r.secondary}</p>}
                   </td>
-                  <td className="px-5 py-3.5 text-xs text-[var(--muted-foreground)] tabular-nums whitespace-nowrap">
+                  <td className="px-5 py-3.5 type-fine-print text-[var(--muted-foreground)] tabular-nums whitespace-nowrap">
                     {formatDateBR(r.dataConversao)}
                   </td>
-                  <td className="px-5 py-3.5 text-xs text-[var(--muted-foreground)] tabular-nums whitespace-nowrap">
+                  <td className="px-5 py-3.5 type-fine-print text-[var(--muted-foreground)] tabular-nums whitespace-nowrap">
                     {formatDateBR(r.dataCrm)}
                   </td>
                   <td className="px-5 py-3.5">
                     {r.etapa ? (
-                      <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold" style={{ borderColor: `color-mix(in srgb, ${accentColor} 20%, transparent)`, backgroundColor: `color-mix(in srgb, ${accentColor} 8%, transparent)`, color: accentColor }}>
+                      <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 type-caption-strong " style={{ borderColor: `color-mix(in srgb, ${accentColor} 20%, transparent)`, backgroundColor: `color-mix(in srgb, ${accentColor} 8%, transparent)`, color: accentColor }}>
                         {r.etapa}
                       </span>
                     ) : (
-                      <span className="text-xs text-[var(--muted-foreground)] opacity-40">—</span>
+                      <span className="type-fine-print text-[var(--muted-foreground)] opacity-40">—</span>
                     )}
                   </td>
                 </tr>
@@ -1542,62 +1543,24 @@ function CrmTopKpiCards({
   const custoVenda  = vendas  > 0 && investTotal > 0 ? investTotal / vendas  : null;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-      {/* Faturamento Total */}
-      <div className="group relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 transition-all hover:border-emerald-500/40">
-        <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-500 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-[0.07]" />
-        <div className="mb-2 flex items-center gap-2">
-          <Banknote className="h-4 w-4 text-positive" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-positive">Faturamento</span>
-        </div>
-        <p className="text-2xl font-semibold tabular-nums leading-tight text-positive">
-          {faturamento > 0 ? formatCurrencyBR(faturamento) : "—"}
-        </p>
-        <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">valor total dos ganhos</p>
-      </div>
-      {/* Vendas */}
-      <div className="group relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 transition-all hover:border-emerald-500/40">
-        <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-500 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-[0.07]" />
-        <div className="mb-2 flex items-center gap-2">
-          <CheckCircle className="h-4 w-4 text-positive" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-positive">Vendas</span>
-        </div>
-        <p className="text-2xl font-semibold tabular-nums text-positive">{vendas}</p>
-        <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">negócios ganhos</p>
-      </div>
-      {/* Custo / Venda */}
-      <div className="group relative overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--primary)_25%,var(--border))] bg-[var(--card)] p-4 transition-all hover:border-[color-mix(in_srgb,var(--primary)_40%,var(--border))]">
-        <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--primary)] opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-[0.07]" />
-        <div className="mb-2 flex items-center gap-2">
-          <TrendingUp className="h-4 w-4 text-[var(--primary)]" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Custo / Venda</span>
-        </div>
-        <p className="text-2xl font-semibold tabular-nums text-[var(--foreground)]">
-          {custoVenda != null ? formatCurrencyBR(Math.round(custoVenda)) : "—"}
-        </p>
-      </div>
-      {/* Visitas */}
-      <div className="group relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 transition-all hover:border-[color-mix(in_srgb,var(--primary)_20%,var(--border))]">
-        <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--primary)] opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-[0.05]" />
-        <div className="mb-2 flex items-center gap-2">
-          <Home className="h-4 w-4 text-[var(--muted-foreground)]" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Visitas</span>
-        </div>
-        <p className="text-2xl font-semibold tabular-nums text-[var(--foreground)]">{visitas}</p>
-        <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">negociações com visita</p>
-      </div>
-      {/* Custo / Visita */}
-      <div className="group relative overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--primary)_25%,var(--border))] bg-[var(--card)] p-4 transition-all hover:border-[color-mix(in_srgb,var(--primary)_40%,var(--border))]">
-        <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--primary)] opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-[0.07]" />
-        <div className="mb-2 flex items-center gap-2">
-          <Wallet className="h-4 w-4 text-[var(--primary)]" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Custo / Visita</span>
-        </div>
-        <p className="text-2xl font-semibold tabular-nums text-[var(--foreground)]">
-          {custoVisita != null ? formatCurrencyBR(Math.round(custoVisita)) : "—"}
-        </p>
-      </div>
-    </div>
+    <MetricGrid>
+      <MetricTile
+        label="Faturamento"
+        value={faturamento > 0 ? formatCurrencyBR(faturamento) : "—"}
+        detail="valor total dos ganhos"
+        tone="positive"
+      />
+      <MetricTile label="Vendas" value={String(vendas)} detail="negócios ganhos" tone="positive" />
+      <MetricTile
+        label="Custo / Venda"
+        value={custoVenda != null ? formatCurrencyBR(Math.round(custoVenda)) : "—"}
+      />
+      <MetricTile label="Visitas" value={String(visitas)} detail="negociações com visita" />
+      <MetricTile
+        label="Custo / Visita"
+        value={custoVisita != null ? formatCurrencyBR(Math.round(custoVisita)) : "—"}
+      />
+    </MetricGrid>
   );
 }
 
@@ -1654,8 +1617,8 @@ function AtribuicaoSection({
       <div className="flex items-start gap-3">
         <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">CRM</p>
-          <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">Análise de Origem</h2>
+          <p className="type-micro-legal uppercase text-[var(--primary)]">CRM</p>
+          <h2 className="type-tagline text-[var(--foreground)]">Análise de Origem</h2>
         </div>
       </div>
 
@@ -1718,9 +1681,9 @@ function AtribuicaoSection({
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: cfg.hex }} />
-                              <span className="text-sm font-semibold text-[var(--foreground)]">{cfg.label}</span>
+                              <span className="type-caption-strong text-[var(--foreground)]">{cfg.label}</span>
                               {c.canal === "META" && (data.totalLeadsMeta ?? 0) > 0 && (
-                                <span className="rounded-full bg-muted/40 px-2 py-0.5 text-[10px] font-semibold text-[var(--muted-foreground)]">
+                                <span className="rounded-full bg-muted/40 px-2 py-0.5 type-micro-legal text-[var(--muted-foreground)]">
                                   {data.totalLeadsMeta} forms
                                 </span>
                               )}
@@ -1731,7 +1694,7 @@ function AtribuicaoSection({
                           {/* ── Hero: leads CRM em destaque ── */}
                           <div className="mt-4">
                             <div>
-                              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted-foreground)]">Leads no CRM</p>
+                              <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Leads no CRM</p>
                               <p className="mt-0.5 tabular-nums text-5xl font-semibold leading-none" style={{ color: cfg.hex }}>
                                 {c.leads.toLocaleString("pt-BR")}
                               </p>
@@ -1765,10 +1728,10 @@ function AtribuicaoSection({
                                       : "hover:bg-muted/40"
                                   }`}
                                 >
-                                  <p className={`text-xl font-semibold leading-none tabular-nums ${s.cls}`}>
+                                  <p className={`type-tagline leading-none tabular-nums ${s.cls}`}>
                                     {s.val > 0 ? s.val.toLocaleString("pt-BR") : (s.dash ? <span className="font-normal opacity-20 text-[var(--muted-foreground)]">—</span> : "0")}
                                   </p>
-                                  <p className="mt-1.5 text-[9px] font-semibold uppercase leading-tight tracking-[0.06em] text-[var(--muted-foreground)]">{s.label}</p>
+                                  <p className="mt-1.5 type-micro-legal uppercase leading-tight text-[var(--muted-foreground)]">{s.label}</p>
                                 </button>
                               );
                             })}
@@ -1783,7 +1746,7 @@ function AtribuicaoSection({
                               {perdidosPct > 0  && <div className="h-full bg-muted-foreground/30" style={{ width: `${perdidosPct}%` }} />}
                               {c.leads === 0    && <div className="h-full w-full rounded-full bg-muted/30" />}
                             </div>
-                            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-[var(--muted-foreground)]">
+                            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 type-micro-legal text-[var(--muted-foreground)]">
                               {c.ganhos > 0 && (
                                 <span className="flex items-center gap-1">
                                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/70" />
@@ -1819,7 +1782,7 @@ function AtribuicaoSection({
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); setReconversoesOpen(true); }}
-                                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/[0.07] px-3 py-1 text-[10px] font-semibold text-amber-600 transition-colors hover:bg-amber-400/[0.12]"
+                                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/[0.07] px-3 py-1 type-micro-legal text-amber-600 transition-colors hover:bg-amber-400/[0.12]"
                                 >
                                   <span className="h-1.5 w-1.5 rounded-full bg-amber-400/80" />
                                   {data.reconversoesMeta!.length} duplicado{data.reconversoesMeta!.length !== 1 ? "s" : ""}
@@ -1829,7 +1792,7 @@ function AtribuicaoSection({
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); setReconversoesGoogleOpen(true); }}
-                                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/[0.07] px-3 py-1 text-[10px] font-semibold text-amber-600 transition-colors hover:bg-amber-400/[0.12]"
+                                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/[0.07] px-3 py-1 type-micro-legal text-amber-600 transition-colors hover:bg-amber-400/[0.12]"
                                 >
                                   <span className="h-1.5 w-1.5 rounded-full bg-amber-400/80" />
                                   {data.reconversoesGoogle!.length} duplicado{data.reconversoesGoogle!.length !== 1 ? "s" : ""}
@@ -1841,8 +1804,8 @@ function AtribuicaoSection({
                           {/* ── Valor vendido ── */}
                           {c.ganhos > 0 && c.valor > 0 && (
                             <div className="mt-4 flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-2.5">
-                              <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-positive/70">Valor Vendido</p>
-                              <p className="tabular-nums text-sm font-semibold text-positive">{formatCurrencyBR(c.valor)}</p>
+                              <p className="type-micro-legal uppercase text-positive/70">Valor Vendido</p>
+                              <p className="tabular-nums type-caption-strong text-positive">{formatCurrencyBR(c.valor)}</p>
                             </div>
                           )}
 
@@ -1856,14 +1819,14 @@ function AtribuicaoSection({
                               }}
                             >
                               <div>
-                                <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--muted-foreground)]">CPL Real · CRM</p>
+                                <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">CPL Real · CRM</p>
                                 {meta.cplPlat != null && (
-                                  <p className="mt-0.5 text-[10px] text-muted-foreground/55">
+                                  <p className="mt-0.5 type-micro-legal text-muted-foreground/55">
                                     vs {formatCurrencyBR(meta.cplPlat)} plataforma
                                   </p>
                                 )}
                               </div>
-                              <p className="tabular-nums text-2xl font-semibold leading-none" style={{ color: cfg.hex }}>
+                              <p className="tabular-nums type-tagline leading-none" style={{ color: cfg.hex }}>
                                 {formatCurrencyBR(meta.cpl)}
                               </p>
                             </div>
@@ -1873,13 +1836,13 @@ function AtribuicaoSection({
                           {meta.invest > 0 && (
                             <div className={`mt-2 grid gap-2 ${meta.cac != null ? "grid-cols-2" : "grid-cols-1"}`}>
                               <div className="rounded-xl bg-muted/20 px-3 py-2.5">
-                                <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-[var(--muted-foreground)]">Investimento</p>
-                                <p className="mt-0.5 tabular-nums text-sm font-semibold text-[var(--foreground)]">{formatCurrencyBR(meta.invest)}</p>
+                                <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Investimento</p>
+                                <p className="mt-0.5 tabular-nums type-caption-strong text-[var(--foreground)]">{formatCurrencyBR(meta.invest)}</p>
                               </div>
                               {meta.cac != null && (
                                 <div className="rounded-xl bg-emerald-500/[0.07] px-3 py-2.5">
-                                  <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-positive/80">CAC Real</p>
-                                  <p className="mt-0.5 tabular-nums text-sm font-semibold text-positive">{formatCurrencyBR(meta.cac)}</p>
+                                  <p className="type-micro-legal uppercase text-positive/80">CAC Real</p>
+                                  <p className="mt-0.5 tabular-nums type-caption-strong text-positive">{formatCurrencyBR(meta.cac)}</p>
                                 </div>
                               )}
                             </div>
@@ -1897,10 +1860,10 @@ function AtribuicaoSection({
                     <div className="mb-3 flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <Layers className="h-3.5 w-3.5 shrink-0 text-[var(--primary)]" />
-                        <p className="text-sm font-semibold text-[var(--foreground)]">Fonte de Conversão</p>
+                        <p className="type-caption-strong text-[var(--foreground)]">Fonte de Conversão</p>
                       </div>
                       {leadsComConversao > 0 && (
-                        <span className="shrink-0 text-[10px] text-[var(--muted-foreground)]">
+                        <span className="shrink-0 type-micro-legal text-[var(--muted-foreground)]">
                           {leadsComConversao.toLocaleString("pt-BR")} de {totalLeads.toLocaleString("pt-BR")}
                         </span>
                       )}
@@ -1915,7 +1878,7 @@ function AtribuicaoSection({
                     </div>
                     <div className="max-h-[220px] flex-1 space-y-0.5 overflow-y-auto">
                       {porConversao.length === 0 ? (
-                        <p className="py-4 text-center text-xs text-[var(--muted-foreground)]">Nenhum resultado</p>
+                        <p className="py-4 text-center type-fine-print text-[var(--muted-foreground)]">Nenhum resultado</p>
                       ) : (
                         porConversao.map((c) => {
                           const isActive = activeFilter?.type === "conversao" && activeFilter.value === c.conversao;
@@ -1952,13 +1915,13 @@ function AtribuicaoSection({
               <div className="flex items-start gap-3">
                 <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">CRM · Meta</p>
-                  <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">Análise Detalhada do Meta</h2>
+                  <p className="type-micro-legal uppercase text-[var(--primary)]">CRM · Meta</p>
+                  <h2 className="type-tagline text-[var(--foreground)]">Análise Detalhada do Meta</h2>
                 </div>
               </div>
               <div className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--card)] px-5 py-6 text-center">
-                <p className="text-sm text-[var(--muted-foreground)]">Nenhum lead com rastreamento de campanha Meta no período selecionado.</p>
-                <p className="mt-1 text-xs text-muted-foreground/60">Os IDs de campanha são gravados no momento da entrada do lead via formulário Meta. Tente um período mais amplo.</p>
+                <p className="type-caption text-[var(--muted-foreground)]">Nenhum lead com rastreamento de campanha Meta no período selecionado.</p>
+                <p className="mt-1 type-fine-print text-muted-foreground/60">Os IDs de campanha são gravados no momento da entrada do lead via formulário Meta. Tente um período mais amplo.</p>
               </div>
             </div>
           )
@@ -2068,7 +2031,7 @@ export function CrmTab({
   return (
     <div className="space-y-8">
       {syncMutation.isError && (
-        <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-negative">
+        <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 type-caption text-negative">
           Erro ao sincronizar. Tente novamente.
         </div>
       )}
@@ -2077,12 +2040,12 @@ export function CrmTab({
       {leadFilter && (
         <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5">
           <Filter className="h-3.5 w-3.5 shrink-0 text-[var(--primary)]" />
-          <span className="text-[11px] text-[var(--muted-foreground)] flex-1 min-w-0 truncate">
+          <span className="type-fine-print text-[var(--muted-foreground)] flex-1 min-w-0 truncate">
             Filtro ativo: <span className="font-semibold text-[var(--primary)]">{leadFilter.label}</span>
           </span>
           <button
             onClick={() => setLeadFilter(null)}
-            className="flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-[var(--primary)] hover:bg-primary/20 transition-colors shrink-0"
+            className="flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1 type-caption-strong text-[var(--primary)] hover:bg-primary/20 transition-colors shrink-0"
           >
             <X className="h-3 w-3" />
             Limpar filtro
@@ -2117,16 +2080,16 @@ export function CrmTab({
         <div className="flex items-start gap-3">
           <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">CRM</p>
-            <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">Detalhamento dos Leads</h2>
+            <p className="type-micro-legal uppercase text-[var(--primary)]">CRM</p>
+            <h2 className="type-tagline text-[var(--foreground)]">Detalhamento dos Leads</h2>
           </div>
         </div>
 
         {/* Active filter chip */}
         {leadFilter && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] text-[var(--muted-foreground)]">Filtro ativo:</span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 py-1 pl-3 pr-2 text-[11px] font-semibold text-[var(--primary)]">
+            <span className="type-fine-print text-[var(--muted-foreground)]">Filtro ativo:</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 py-1 pl-3 pr-2 type-caption-strong text-[var(--primary)]">
               {leadFilter.label}
               <button
                 onClick={() => setLeadFilter(null)}
@@ -2136,7 +2099,7 @@ export function CrmTab({
                 <X className="h-2.5 w-2.5" />
               </button>
             </span>
-            <span className="text-[10px] text-[var(--muted-foreground)] opacity-60">
+            <span className="type-micro-legal text-[var(--muted-foreground)] opacity-60">
               {total.toLocaleString("pt-BR")} resultado{total !== 1 ? "s" : ""}
             </span>
           </div>
@@ -2176,15 +2139,15 @@ export function CrmTab({
                 <Inbox className="h-5 w-5 text-[var(--muted-foreground)]" />
               </div>
               <div>
-                <p className="text-sm font-medium text-[var(--foreground)]">Nenhum lead encontrado</p>
-                <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                <p className="type-caption-strong text-[var(--foreground)]">Nenhum lead encontrado</p>
+                <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                   Clique em Sincronizar para importar os leads do CRM.
                 </p>
               </div>
               <button
                 onClick={() => syncMutation.mutate()}
                 disabled={syncMutation.isPending}
-                className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-[var(--primary)] px-3 py-1.5 text-xs font-semibold text-[var(--primary-foreground)] transition-opacity disabled:opacity-60"
+                className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-[var(--primary)] px-3 py-1.5 type-caption-strong text-[var(--primary-foreground)] transition-opacity disabled:opacity-60"
               >
                 <RefreshCw className={`h-3 w-3 ${syncMutation.isPending ? "animate-spin" : ""}`} />
                 {syncMutation.isPending ? "Sincronizando…" : "Sincronizar agora"}
@@ -2194,16 +2157,16 @@ export function CrmTab({
         ) : total === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--card)] py-10">
             <Search className="h-6 w-6 text-[var(--muted-foreground)]" />
-            <p className="text-sm text-[var(--muted-foreground)]">Nenhum resultado para &quot;{debouncedSearch}&quot;</p>
+            <p className="type-caption text-[var(--muted-foreground)]">Nenhum resultado para &quot;{debouncedSearch}&quot;</p>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto rounded-2xl border border-[var(--border)]">
-              <table className="min-w-[680px] w-full text-sm">
+              <table className="min-w-[680px] w-full type-caption">
                 <thead>
                   <tr className="border-b border-[var(--border)] bg-muted/30">
                     {["Etapa", "Contato", "Origem", "Entrada", "Valor"].map((h) => (
-                      <th key={h} className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--muted-foreground)]">
+                      <th key={h} className="px-4 py-2.5 text-left type-micro-legal uppercase text-[var(--muted-foreground)]">
                         {h}
                       </th>
                     ))}
@@ -2225,17 +2188,17 @@ export function CrmTab({
                         }`}
                       >
                         <td className="px-4 py-2.5">
-                          <span className="max-w-[180px] block truncate rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-[var(--primary)]">
+                          <span className="max-w-[180px] block truncate rounded-full bg-primary/10 px-2 py-0.5 type-caption-strong text-[var(--primary)]">
                             {lead.etapa}
                           </span>
                         </td>
                         <td className="px-4 py-2.5">
                           <div className="max-w-[200px]">
-                            <p className="truncate font-medium text-[var(--foreground)]">
+                            <p className="truncate font-semibold text-[var(--foreground)]">
                               {lead.nome ?? lead.email ?? lead.telefone ?? "—"}
                             </p>
                             {lead.nome && lead.email && (
-                              <p className="truncate text-[11px] text-[var(--muted-foreground)]">{lead.email}</p>
+                              <p className="truncate type-fine-print text-[var(--muted-foreground)]">{lead.email}</p>
                             )}
                           </div>
                         </td>
@@ -2245,10 +2208,10 @@ export function CrmTab({
                               className="inline-block h-2 w-2 shrink-0 rounded-full"
                               style={{ backgroundColor: canalCfg.hex }}
                             />
-                            <span className={`text-[12px] font-semibold ${canalCfg.color}`}>{canalCfg.label}</span>
+                            <span className={`type-caption-strong ${canalCfg.color}`}>{canalCfg.label}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-2.5 tabular-nums text-[12px] text-[var(--muted-foreground)]">
+                        <td className="px-4 py-2.5 tabular-nums type-fine-print text-[var(--muted-foreground)]">
                           {formatDateBR(lead.dataEntrada)}
                         </td>
                         <td className="px-4 py-2.5 tabular-nums font-semibold text-positive">
@@ -2273,12 +2236,12 @@ export function CrmTab({
                 </button>
                 {pageNumbers(page, totalPages).map((n, idx) =>
                   n === "…" ? (
-                    <span key={`e-${idx}`} className="flex h-7 w-7 items-center justify-center text-xs text-[var(--muted-foreground)]">…</span>
+                    <span key={`e-${idx}`} className="flex h-7 w-7 items-center justify-center type-fine-print text-[var(--muted-foreground)]">…</span>
                   ) : (
                     <button
                       key={n}
                       onClick={() => setPage(n)}
-                      className={`flex h-7 w-7 items-center justify-center rounded-lg text-[11px] font-semibold transition-all ${
+                      className={`flex h-7 w-7 items-center justify-center rounded-lg type-caption-strong transition-all ${
                         page === n
                           ? "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm"
                           : "border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"

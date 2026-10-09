@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
+  Clock,
   Copy,
   ExternalLink,
   Loader2,
   Mail,
   MapPin,
-  MessageCircle,
+  Pencil,
   Phone,
   ShoppingBag,
   ShoppingCart,
@@ -24,10 +25,10 @@ import {
 } from "@/lib/commerce-attribution/describe";
 import { isClosedOrder, orderStatusLabel } from "@/lib/commerce-attribution/order-status";
 import { formatLocation, type OrderDetails } from "@/lib/commerce/order-details";
-import { PillSelect } from "@/components/ui/pill-select";
 import { Button, buttonClass } from "@/components/ui/button";
+import { PillSelect } from "@/components/ui/pill-select";
 import { cn } from "@/lib/utils";
-import { formatPhone, sourceLabel } from "@/components/crm/CrmLeadCard";
+import { formatPhone } from "@/components/crm/CrmLeadCard";
 import { LeadCommunications, type LeadCommunicationsData } from "@/components/crm/LeadCommunications";
 
 type JourneyItem = {
@@ -123,14 +124,6 @@ const LOST_REASON_LABELS: Record<string, string> = {
   reembolso: "Pedido reembolsado",
 };
 
-function fmtCurrency(v: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0,
-  }).format(v);
-}
-
 function fmtCents(cents: number, currency = "BRL") {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency }).format(cents / 100);
 }
@@ -199,7 +192,42 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   );
 }
 
-function SectionTitle({ icon: Icon, children }: { icon?: typeof Mail; children: React.ReactNode }) {
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function journeyTone(item: JourneyItem): "ok" | "neutral" {
+  if (
+    item.type === "marketplace.order.placed" ||
+    item.type === "commerce.order" ||
+    item.type === "lead.lost" ||
+    item.type === "cart.abandoned"
+  ) {
+    return "neutral";
+  }
+  if (/purchase|won|recovered|income/.test(item.type) || /pago/i.test(item.title)) return "ok";
+  return "neutral";
+}
+
+function JourneyMark({ item }: { item: JourneyItem }) {
+  const tone = journeyTone(item);
+  const Icon =
+    tone === "ok"
+      ? Check
+      : /placed|created|form|stage|order|booking/.test(item.type)
+        ? Pencil
+        : Clock;
+  return (
+    <span className="journey-rail-mark" data-tone={tone === "ok" ? "ok" : undefined}>
+      <Icon className="h-3.5 w-3.5" strokeWidth={2} />
+    </span>
+  );
+}
+
+function SectionTitle({ icon: Icon, children }: { icon?: typeof ShoppingBag; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2">
       {Icon ? <Icon className="h-4 w-4 text-[var(--ink-muted-48)]" strokeWidth={1.75} /> : null}
@@ -208,12 +236,11 @@ function SectionTitle({ icon: Icon, children }: { icon?: typeof Mail; children: 
   );
 }
 
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string | null }) {
+function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="panel-modal-stat">
-      <p className="type-micro-legal text-[var(--ink-muted-48)]">{label}</p>
-      <p className="mt-0.5 type-body-strong tabular-nums text-[var(--ink)]">{value}</p>
-      {hint ? <p className="type-micro-legal text-[var(--ink-muted-48)]">{hint}</p> : null}
+      <p className="type-caption text-[var(--ink-muted-48)]">{label}</p>
+      <p className="mt-1 type-body-strong tabular-nums text-[var(--ink)]">{value}</p>
     </div>
   );
 }
@@ -497,6 +524,7 @@ export function CrmLeadModal({
 }) {
   const qc = useQueryClient();
   const [showAllOrders, setShowAllOrders] = useState(false);
+  const [panelTab, setPanelTab] = useState<"jornada" | "pedidos" | "conversas" | "notas">("jornada");
   const { data, isLoading, isError } = useQuery({
     queryKey: ["crm-lead", workspaceId, leadId],
     queryFn: async () => {
@@ -548,21 +576,7 @@ export function CrmLeadModal({
   const boughtCents = profile?.ordersCount
     ? profile.totalSpentCents
     : paidOrders.reduce((s, o) => s + o.totalCents, 0);
-  const hasCommerce = boughtCount > 0 || (data?.orders?.length ?? 0) > 0 || (data?.carts?.length ?? 0) > 0;
-
-  const lastPurchaseAt = profile?.lastOrderAt ?? paidOrders[0]?.occurredAt ?? null;
-  const lastActivityAt = journey[0]?.at ?? null;
-  const recoverable = openCarts.filter((c) => !cartClosed(c));
   const openCents = openCarts.reduce((s, c) => s + c.totalCents, 0);
-
-  const latestSource =
-    (data?.orders ?? []).find((o) => o.paid && hasKnownOrigin(o.source))?.source ?? null;
-  const originValue = latestSource
-    ? latestSource.adMethod
-      ? "Meta Ads"
-      : latestSource.channelLabel
-    : sourceLabel(lead?.source ?? null) ?? "—";
-  const originHint = latestSource ? "da última compra" : "como entrou no CRM";
 
   return (
     <div
@@ -581,61 +595,82 @@ export function CrmLeadModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="panel-modal-header">
-          <div className="panel-modal-head-row flex items-start justify-between gap-3">
+          <div className="flex items-start gap-4">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--primary-glow)] type-caption-strong text-[var(--primary)]">
+              {lead ? initials(lead.name) : "…"}
+            </span>
             <div className="min-w-0 flex-1">
-              <h2 className="type-tagline text-[var(--ink)]">{isLoading ? "…" : lead?.name ?? "Lead"}</h2>
-              {lead ? (
-                <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1">
-                  {lead.email ? (
-                    <a
-                      href={`mailto:${lead.email}`}
-                      className="inline-flex min-w-0 items-center gap-1.5 type-caption text-[var(--ink-muted-80)] hover:text-[var(--primary)]"
-                    >
-                      <Mail className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-                      <span className="truncate">{lead.email}</span>
-                    </a>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="type-tagline truncate text-[var(--ink)]">{isLoading ? "…" : lead?.name ?? "Lead"}</h2>
+                  {lead && data?.stages.length ? (
+                    <PillSelect
+                      className="panel-modal-stage-chip mt-2"
+                      aria-label="Etapa do funil"
+                      value={lead.stageId ?? ""}
+                      onChange={(stageId) => {
+                        void moveStage(stageId);
+                      }}
+                      options={data.stages.map((s) => ({ value: s.id, label: s.name, color: s.color }))}
+                    />
+                  ) : lead ? (
+                    <span className="mt-2 inline-flex items-center rounded-full px-2.5 py-1 type-fine-print text-[var(--ink-muted-48)]">
+                      Sem etapa
+                    </span>
                   ) : null}
+                </div>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-xs)] border border-[var(--hairline)] text-[var(--ink-muted-48)] active:scale-95"
+                  aria-label="Fechar"
+                >
+                  <X className="h-4 w-4" strokeWidth={1.75} />
+                </button>
+              </div>
+              {lead ? (
+                <div className="mt-4 flex flex-col gap-2">
                   {lead.phone ? (
                     <a
                       href={`tel:${lead.phone}`}
-                      className="inline-flex items-center gap-1.5 type-caption tabular-nums text-[var(--ink-muted-80)] hover:text-[var(--primary)]"
+                      className="inline-flex items-center gap-2 type-caption tabular-nums text-[var(--ink-muted-80)]"
                     >
-                      <Phone className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+                      <Phone className="h-3.5 w-3.5 shrink-0 text-[var(--ink-muted-48)]" strokeWidth={1.75} />
                       {formatPhone(lead.phone)}
                     </a>
                   ) : null}
-                  {!lead.email && !lead.phone ? (
-                    <span className="type-caption text-[var(--ink-muted-48)]">Sem e-mail ou telefone</span>
+                  {lead.email ? (
+                    <a
+                      href={`mailto:${lead.email}`}
+                      className="inline-flex min-w-0 items-center gap-2 type-caption text-[var(--ink-muted-80)]"
+                    >
+                      <Mail className="h-3.5 w-3.5 shrink-0 text-[var(--ink-muted-48)]" strokeWidth={1.75} />
+                      <span className="truncate">{lead.email}</span>
+                    </a>
                   ) : null}
                   {lead.location ? (
-                    <span className="inline-flex items-center gap-1.5 type-caption text-[var(--ink-muted-80)]">
-                      <MapPin className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+                    <span className="inline-flex items-center gap-2 type-caption text-[var(--ink-muted-80)]">
+                      <MapPin className="h-3.5 w-3.5 shrink-0 text-[var(--ink-muted-48)]" strokeWidth={1.75} />
                       {lead.location}
                     </span>
+                  ) : null}
+                  {!lead.phone && !lead.email && !lead.location ? (
+                    <span className="type-caption text-[var(--ink-muted-48)]">Sem e-mail ou telefone</span>
                   ) : null}
                 </div>
               ) : null}
             </div>
-            <div className="panel-modal-head-actions flex shrink-0 items-center gap-2">
-              {lead && data?.stages.length ? (
-                <PillSelect
-                  className="panel-modal-stage"
-                  aria-label="Etapa"
-                  value={lead.stageId ?? ""}
-                  onChange={moveStage}
-                  options={data.stages.map((s) => ({ value: s.id, label: s.name, color: s.color }))}
-                />
-              ) : null}
-              <button
-                type="button"
-                onClick={onClose}
-                className="panel-modal-close inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-[var(--ink-muted-48)] hover:bg-[var(--canvas-parchment)] hover:text-[var(--ink)] active:scale-95"
-                aria-label="Fechar"
-              >
-                <X className="h-4 w-4" strokeWidth={1.75} />
-              </button>
-            </div>
           </div>
+          {lead ? (
+            <div className="panel-modal-stats">
+              <Stat label="Receita paga" value={fmtCents(boughtCents)} />
+              <Stat
+                label={boughtCount ? "Pedidos pagos" : openCents ? "Não pago" : "Pedidos pagos"}
+                value={boughtCount ? String(boughtCount) : openCents ? fmtCents(openCents) : "0"}
+              />
+              <Stat label="No CRM desde" value={fmtDate(lead.createdAt)} />
+            </div>
+          ) : null}
         </div>
 
         <div className="panel-modal-body">
@@ -647,175 +682,179 @@ export function CrmLeadModal({
             <p className="py-10 text-center type-caption text-[var(--ink-muted-48)]">Não foi possível carregar</p>
           ) : (
             <>
-              <div className="panel-modal-stats">
-                {hasCommerce ? (
-                  <Stat
-                    label="Comprou"
-                    value={boughtCount ? fmtCents(boughtCents) : "Ainda não"}
-                    hint={
-                      boughtCount
-                        ? `${boughtCount} ${boughtCount === 1 ? "pedido pago" : "pedidos pagos"}${profile?.ordersCount ? ` · ${profile.lifecycleLabel}` : ""}`
-                        : "nenhum pedido pago"
-                    }
-                  />
-                ) : (
-                  <Stat
-                    label="Valor do negócio"
-                    value={lead.dealValue ? fmtCurrency(lead.dealValue) : "—"}
-                    hint={lead.dealValue ? null : "não informado"}
-                  />
-                )}
-                {openCarts.length ? (
-                  <Stat
-                    label="Não finalizado"
-                    value={fmtCents(openCents)}
-                    hint={
-                      recoverable.length
-                        ? recoverable.length === 1 && recoverable[0].kind === "order"
-                          ? "aguardando pagamento"
-                          : "carrinho abandonado"
-                        : "não pagou"
-                    }
-                  />
-                ) : lastPurchaseAt ? (
-                  <Stat label="Última compra" value={fmtDate(lastPurchaseAt)} hint={fmtRelative(lastPurchaseAt)} />
-                ) : (
-                  <Stat
-                    label="Última atividade"
-                    value={lastActivityAt ? fmtDate(lastActivityAt) : "—"}
-                    hint={lastActivityAt ? fmtRelative(lastActivityAt) : null}
-                  />
-                )}
-                <Stat label="Origem" value={originValue} hint={originHint} />
-                <Stat label="No CRM desde" value={fmtDate(lead.createdAt)} hint={fmtRelative(lead.createdAt)} />
+              <div className="border-b border-[var(--hairline)]">
+                <div className="flex gap-6" role="tablist" aria-label="Lead">
+                  {(
+                    [
+                      ["jornada", "Jornada"],
+                      ["pedidos", "Pedidos"],
+                      ["conversas", "Conversas"],
+                      ["notas", "Notas"],
+                    ] as const
+                  ).map(([id, label]) => {
+                    const active = panelTab === id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        onClick={() => setPanelTab(id)}
+                        className={`-mb-px shrink-0 border-b-2 pb-2 type-nav-link active:scale-95 ${
+                          active
+                            ? "border-[var(--primary)] text-[var(--ink)]"
+                            : "border-transparent text-[var(--muted-foreground)]"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              {profile?.ordersCount ? (
-                <div className="mt-2 space-y-0.5 px-1">
-                  <p className="type-fine-print text-[var(--ink-muted-80)]">
-                    Ticket médio {fmtCents(profile.avgTicketCents)}
-                    {profile.avgIntervalDays ? ` · compra a cada ~${Math.round(profile.avgIntervalDays)} dias` : ""}
-                    {profile.nextPurchaseAt
-                      ? new Date(profile.nextPurchaseAt).getTime() < Date.now()
-                        ? ` · recompra esperada em ${fmtDate(profile.nextPurchaseAt)}, ainda não voltou`
-                        : ` · próxima compra esperada em ${fmtDate(profile.nextPurchaseAt)}`
-                      : ""}
-                  </p>
-                  <p className="type-fine-print text-[var(--ink-muted-48)]">
-                    Primeira compra {profile.firstOrderAt ? fmtDate(profile.firstOrderAt) : "—"} · última{" "}
-                    {profile.lastOrderAt ? fmtDate(profile.lastOrderAt) : "—"}
-                    {profile.topProducts.length
-                      ? ` · mais comprados: ${profile.topProducts.slice(0, 3).map((t) => t.title).join(", ")}`
-                      : ""}
-                  </p>
+              {panelTab === "jornada" ? (
+                <div className="mt-4" role="tabpanel">
+                  {!journey.length ? (
+                    <p className="type-fine-print text-[var(--ink-muted-48)]">Sem eventos ainda</p>
+                  ) : (
+                    <ol className="journey-rail">
+                      {journey.map((item, idx) => (
+                        <li key={`${item.at}-${item.type}-${idx}`} className="journey-rail-item">
+                          <JourneyMark item={item} />
+                          <div className="min-w-0 pt-0.5">
+                            <p className="type-fine-print text-[var(--ink-muted-48)]">{fmtDateTime(item.at)}</p>
+                            <p className="mt-0.5 type-caption-strong text-[var(--ink)]">{item.title}</p>
+                            {item.detail ? (
+                              <p className="mt-0.5 type-fine-print text-[var(--ink-muted-48)]">{item.detail}</p>
+                            ) : null}
+                            {item.href && item.href !== selfHref ? (
+                              <Link href={item.href} className="mt-0.5 inline-block type-fine-print text-[var(--primary)]">
+                                ver
+                              </Link>
+                            ) : null}
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
                 </div>
               ) : null}
 
-              {lead.status === "LOST" && lead.lostReason ? (
-                <div className="panel-modal-section mt-3">
-                  <SectionTitle>Motivo da perda</SectionTitle>
-                  <p className="mt-1 type-caption text-[var(--ink-muted-80)]">
-                    {LOST_REASON_LABELS[lead.lostReason] ?? lead.lostReason}
-                  </p>
-                  <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
-                    Contato mantido na base para reativação.
-                  </p>
-                </div>
-              ) : null}
-
-              {openCarts.length > 0 ? (
-                <div className="panel-modal-section mt-3 space-y-4">
-                  <SectionTitle icon={ShoppingCart}>
-                    {lead.status === "WON" ? "Nova compra não finalizada" : "Compra não finalizada"}
-                  </SectionTitle>
-                  {openCarts.map((cart, idx) => (
-                    <div key={cart.id} className={idx > 0 ? "border-t border-[var(--hairline)] pt-4" : undefined}>
-                      <CartBlock
-                        cart={cart}
-                        leadName={lead.name}
-                        order={(data?.orders ?? []).find(
-                          (o) => o.provider === cart.provider && o.externalId === cart.orderExternalId,
-                        )}
-                      />
+              {panelTab === "pedidos" ? (
+                <div className="mt-4 space-y-4" role="tabpanel">
+                  {openCarts.length > 0 ? (
+                    <div className="space-y-4">
+                      <SectionTitle icon={ShoppingCart}>
+                        {lead.status === "WON" ? "Nova compra não finalizada" : "Compra não finalizada"}
+                      </SectionTitle>
+                      {openCarts.map((cart, idx) => (
+                        <div key={cart.id} className={idx > 0 ? "border-t border-[var(--hairline)] pt-4" : undefined}>
+                          <CartBlock
+                            cart={cart}
+                            leadName={lead.name}
+                            order={(data?.orders ?? []).find(
+                              (o) => o.provider === cart.provider && o.externalId === cart.orderExternalId,
+                            )}
+                          />
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ) : null}
-
-              {orders.length ? (
-                <div className="panel-modal-section mt-3 space-y-4">
-                  <SectionTitle icon={ShoppingBag}>
-                    {allOrders.length > 1 ? `Pedidos (${allOrders.length})` : "Pedido"}
-                  </SectionTitle>
-                  {orders.map((order, idx) => (
-                    <div key={order.id} className={idx > 0 ? "border-t border-[var(--hairline)] pt-4" : undefined}>
-                      <OrderBlock order={order} leadLocation={lead.location} />
+                  ) : null}
+                  {orders.length ? (
+                    <div className="space-y-4">
+                      <SectionTitle icon={ShoppingBag}>
+                        {allOrders.length > 1 ? `Pedidos (${allOrders.length})` : "Pedido"}
+                      </SectionTitle>
+                      {orders.map((order, idx) => (
+                        <div key={order.id} className={idx > 0 ? "border-t border-[var(--hairline)] pt-4" : undefined}>
+                          <OrderBlock order={order} leadLocation={lead.location} />
+                        </div>
+                      ))}
+                      {allOrders.length > ORDERS_PREVIEW ? (
+                        <button
+                          type="button"
+                          onClick={() => setShowAllOrders((v) => !v)}
+                          className="type-caption text-[var(--primary)] active:scale-95"
+                        >
+                          {showAllOrders ? "Mostrar só os últimos" : `Ver todos os ${allOrders.length} pedidos`}
+                        </button>
+                      ) : null}
                     </div>
-                  ))}
-                  {allOrders.length > ORDERS_PREVIEW ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowAllOrders((v) => !v)}
-                      className="type-caption text-[var(--primary)] hover:underline"
-                    >
-                      {showAllOrders ? "Mostrar só os últimos" : `Ver todos os ${allOrders.length} pedidos`}
-                    </button>
+                  ) : null}
+                  {!openCarts.length && !orders.length ? (
+                    <p className="type-fine-print text-[var(--ink-muted-48)]">Nenhum pedido</p>
                   ) : null}
                 </div>
               ) : null}
 
-              {data?.communications ? (
-                <div className="mt-3">
-                  <LeadCommunications
-                    workspaceId={workspaceId}
-                    leadId={leadId}
-                    data={data.communications}
-                    showProfile={false}
-                    showHistory={false}
-                  />
+              {panelTab === "conversas" ? (
+                <div className="mt-4" role="tabpanel">
+                  {data?.communications ? (
+                    <LeadCommunications
+                      workspaceId={workspaceId}
+                      leadId={leadId}
+                      data={data.communications}
+                      showProfile={false}
+                      showHistory
+                    />
+                  ) : (
+                    <p className="type-fine-print text-[var(--ink-muted-48)]">Nenhuma conversa</p>
+                  )}
                 </div>
               ) : null}
 
-              <div className="panel-modal-section mt-3">
-                <div className="mb-3">
-                  <SectionTitle>Jornada</SectionTitle>
+              {panelTab === "notas" ? (
+                <div className="mt-4 space-y-3" role="tabpanel">
+                  {lead.status === "LOST" && lead.lostReason ? (
+                    <div>
+                      <p className="type-caption-strong text-[var(--ink)]">Motivo da perda</p>
+                      <p className="mt-1 type-caption text-[var(--ink-muted-80)]">
+                        {LOST_REASON_LABELS[lead.lostReason] ?? lead.lostReason}
+                      </p>
+                      <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
+                        Contato mantido na base para reativação.
+                      </p>
+                    </div>
+                  ) : null}
+                  {profile?.ordersCount ? (
+                    <div className="space-y-1">
+                      <p className="type-caption text-[var(--ink-muted-80)]">
+                        Ticket médio {fmtCents(profile.avgTicketCents)}
+                        {profile.avgIntervalDays ? ` · compra a cada ~${Math.round(profile.avgIntervalDays)} dias` : ""}
+                        {profile.nextPurchaseAt
+                          ? new Date(profile.nextPurchaseAt).getTime() < Date.now()
+                            ? ` · recompra esperada em ${fmtDate(profile.nextPurchaseAt)}, ainda não voltou`
+                            : ` · próxima compra esperada em ${fmtDate(profile.nextPurchaseAt)}`
+                          : ""}
+                      </p>
+                      <p className="type-fine-print text-[var(--ink-muted-48)]">
+                        Primeira compra {profile.firstOrderAt ? fmtDate(profile.firstOrderAt) : "—"} · última{" "}
+                        {profile.lastOrderAt ? fmtDate(profile.lastOrderAt) : "—"}
+                        {profile.topProducts.length
+                          ? ` · mais comprados: ${profile.topProducts.slice(0, 3).map((t) => t.title).join(", ")}`
+                          : ""}
+                      </p>
+                    </div>
+                  ) : null}
+                  {!(lead.status === "LOST" && lead.lostReason) && !profile?.ordersCount ? (
+                    <p className="type-fine-print text-[var(--ink-muted-48)]">Sem notas</p>
+                  ) : null}
                 </div>
-                {!journey.length ? (
-                  <p className="type-fine-print text-[var(--ink-muted-48)]">Sem eventos ainda</p>
-                ) : (
-                  <ol className="journey-rail">
-                    {journey.map((item, idx) => (
-                      <li key={`${item.at}-${item.type}-${idx}`} className="journey-rail-item">
-                        <span className="journey-rail-dot" />
-                        <p className="type-micro-legal text-[var(--ink-muted-48)]">{fmtDateTime(item.at)}</p>
-                        <p className="type-caption-strong text-[var(--ink)]">{item.title}</p>
-                        {item.detail ? (
-                          <p className="type-fine-print text-[var(--ink-muted-48)]">{item.detail}</p>
-                        ) : null}
-                        {item.href && item.href !== selfHref ? (
-                          <Link href={item.href} className="type-fine-print text-[var(--primary)] hover:underline">
-                            ver
-                          </Link>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ol>
-                )}
-              </div>
+              ) : null}
             </>
           )}
         </div>
 
         <div className="panel-modal-footer">
+          <Button type="button" variant="outline" size="toolbar" onClick={() => setPanelTab("notas")}>
+            Adicionar nota
+          </Button>
           {lead?.phone ? (
-            <Link href="/whatsapp" className={buttonClass({ variant: "primary", size: "toolbar" })}>
-              <MessageCircle className="h-3.5 w-3.5" strokeWidth={2} />
-              WhatsApp
+            <Link href="/whatsapp" className={buttonClass({ variant: "dark-utility", size: "toolbar" })}>
+              Conversar no WhatsApp
             </Link>
           ) : null}
-          <Button type="button" variant="outline" size="toolbar" onClick={onClose}>
-            Fechar
-          </Button>
         </div>
       </aside>
     </div>

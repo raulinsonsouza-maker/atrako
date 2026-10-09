@@ -45,7 +45,7 @@ function MediaImage({
         // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt="" className="h-full w-full object-cover" />
       ) : (
-        <div className="flex h-full min-h-[72px] items-center justify-center text-[10px] text-zinc-500">
+        <div className="flex h-full min-h-[72px] items-center justify-center type-micro-legal text-zinc-500">
           {item.media_type ?? "Post"}
         </div>
       )}
@@ -107,12 +107,12 @@ export function IgMediaPicker({
   return (
     <>
       {loading && (
-        <p className="text-[11px] text-zinc-500">Carregando publicações…</p>
+        <p className="type-fine-print text-zinc-500">Carregando publicações…</p>
       )}
 
       {warning && (
         <div className="space-y-2 rounded-lg border border-amber-200/80 bg-amber-50 px-2.5 py-2">
-          <p className="text-[11px] leading-snug text-amber-900">{warning}</p>
+          <p className="type-fine-print leading-snug text-amber-900">{warning}</p>
           {onRetry && (
             <button
               type="button"
@@ -120,7 +120,7 @@ export function IgMediaPicker({
                 e.stopPropagation();
                 onRetry();
               }}
-              className="text-[11px] font-semibold text-[#0084ff] hover:underline"
+              className="type-caption-strong text-[#0084ff] hover:underline"
             >
               Tentar novamente
             </button>
@@ -129,7 +129,7 @@ export function IgMediaPicker({
       )}
 
       {!loading && !warning && media.length === 0 && (
-        <p className="text-[11px] leading-snug text-zinc-500">
+        <p className="type-fine-print leading-snug text-zinc-500">
           Nenhuma publicação encontrada. Publique no Instagram ou escolha
           “qualquer publicação”.
         </p>
@@ -164,7 +164,7 @@ export function IgMediaPicker({
             e.stopPropagation();
             setModalOpen(true);
           }}
-          className="text-[12px] font-semibold text-[#0084ff] hover:underline"
+          className="type-caption-strong text-[#0084ff] hover:underline"
         >
           Mostrar todos{media.length > 4 ? ` (${media.length})` : ""}
         </button>
@@ -172,7 +172,7 @@ export function IgMediaPicker({
 
       {fallbackIdInput && warning && onFallbackIdChange && (
         <div onClick={(e) => e.stopPropagation()}>
-          <p className="mb-1 text-[11px] font-medium text-zinc-600">
+          <p className="mb-1 type-caption-strong text-zinc-600">
             Ou cole o ID da publicação
           </p>
           <input
@@ -197,7 +197,7 @@ export function IgMediaPicker({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3 border-b border-zinc-100 px-5 py-4">
-              <h3 className="text-[15px] font-semibold leading-snug text-zinc-900">
+              <h3 className="type-body-strong leading-snug text-zinc-900">
                 Selecione qualquer publicação ou reel para automatizar
               </h3>
               <button
@@ -222,7 +222,7 @@ export function IgMediaPicker({
 
             <div className="flex-1 overflow-y-auto px-5 py-4">
               {filtered.length === 0 ? (
-                <p className="py-8 text-center text-sm text-zinc-500">
+                <p className="py-8 text-center type-caption text-zinc-500">
                   Nenhuma publicação encontrada.
                 </p>
               ) : (
@@ -247,11 +247,11 @@ export function IgMediaPicker({
                       >
                         <MediaImage item={m} className="aspect-square w-full" />
                         <div className="space-y-0.5 px-2.5 py-2">
-                          <p className="line-clamp-2 text-[11px] leading-snug text-zinc-700">
+                          <p className="line-clamp-2 type-fine-print leading-snug text-zinc-700">
                             {snippet}
                           </p>
                           {when && (
-                            <p className="text-[10px] text-zinc-400">{when}</p>
+                            <p className="type-micro-legal text-zinc-400">{when}</p>
                           )}
                         </div>
                       </button>

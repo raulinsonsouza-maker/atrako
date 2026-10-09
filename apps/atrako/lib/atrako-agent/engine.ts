@@ -12,7 +12,7 @@ import {
   type PendingAction,
   type ToolSource,
 } from "./tools";
-import { MAX_ARTIFACTS_PER_ANSWER, artifactSummary, type Artifact } from "./artifacts";
+import { MAX_ARTIFACTS_PER_ANSWER, artifactSummary, pageKey, type Artifact, type RememberedPage } from "./artifacts";
 
 /**
  * Motor do Atrako: o modelo escolhe as ferramentas num loop de tool_calls
@@ -75,6 +75,8 @@ export type EngineInput<C extends EngineCandidate = EngineCandidate> = {
   question: string;
   /** Bloco [Anexos] da mensagem atual. Não entra na checagem de "pode montar". */
   contextNote?: string;
+  /** Páginas que esta conversa já leu. ler_pagina não busca de novo. */
+  knownPages?: RememberedPage[];
   vault?: PiiVault;
   onEvent?: (event: EngineEvent) => void;
   signal?: AbortSignal;
@@ -243,10 +245,33 @@ export async function runAtrakoEngine<C extends EngineCandidate>(input: EngineIn
   /** Mesma ferramenta + mesmos argumentos na mesma pergunta reaproveitam o resultado. */
   const toolCache = new Map<string, Promise<ToolPayload>>();
   const onceRuns = new Map<string, Promise<ToolPayload>>();
+  const remembered = [...(input.knownPages ?? [])];
   const userText = [...input.history.filter((m) => m.role === "user").map((m) => m.content), questionWithNote(input)].join("\n");
+
+  function alreadyRead(url: string): RememberedPage | undefined {
+    const key = pageKey(url);
+    return remembered.find((page) => pageKey(page.url) === key);
+  }
 
   async function executeTool(tool: AtrakoTool, callId: string, args: Record<string, unknown>): Promise<ToolPayload> {
     const started = Date.now();
+    if (tool.name === "ler_pagina") {
+      const url = typeof args.url === "string" ? args.url : "";
+      const hit = url ? alreadyRead(url) : undefined;
+      if (hit) {
+        return {
+          coverage: "available",
+          fonte: { tool: "ler_pagina", label: hit.title, note: "Página já lida nesta conversa." },
+          dados: {
+            titulo: hit.title,
+            url: hit.url,
+            conteudo: hit.memo,
+            ja_lida: true,
+            aviso: "Esta página já foi lida nesta conversa. Use o conteúdo e não leia de novo.",
+          },
+        };
+      }
+    }
     if (tool.longRunning) extendDeadline();
     emit({ type: "step", id: callId, tool: tool.name, label: tool.step });
     try {
@@ -272,6 +297,12 @@ export async function runAtrakoEngine<C extends EngineCandidate>(input: EngineIn
         artifacts.push(artifact);
         shown.push(artifactSummary(artifact));
         emit({ type: "artifact", artifact });
+      }
+      if (tool.name === "ler_pagina" && result.data && typeof result.data === "object") {
+        const data = result.data as { url?: string; titulo?: string; conteudo?: string };
+        if (data.url && data.conteudo && data.conteudo.length >= 80 && !alreadyRead(data.url)) {
+          remembered.push({ url: data.url, title: data.titulo || data.url, memo: data.conteudo.slice(0, 1600) });
+        }
       }
       return {
         coverage: result.coverage,

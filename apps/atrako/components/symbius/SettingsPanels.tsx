@@ -31,8 +31,8 @@ export function TagsSettingsPanel() {
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-6">
-      <h2 className="text-xl font-bold">Tags</h2>
-      <p className="mt-2 text-sm text-zinc-500">
+      <h2 className="type-tagline ">Tags</h2>
+      <p className="mt-2 type-caption text-zinc-500">
         Defina tags para usar em automações, segmentos e filtros de contatos.
       </p>
       <div className="mt-4 flex gap-2">
@@ -40,19 +40,19 @@ export function TagsSettingsPanel() {
           value={nome}
           onChange={(e) => setNome(e.target.value)}
           placeholder="Nova tag"
-          className="flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+          className="flex-1 rounded-lg border border-zinc-200 px-3 py-2 type-caption"
         />
-        <button type="button" onClick={() => void addTag()} className="symbius-btn-primary px-4 py-2 text-sm">
+        <button type="button" onClick={() => void addTag()} className="symbius-btn-primary px-4 py-2 type-caption">
           Adicionar
         </button>
       </div>
       <ul className="mt-4 space-y-2">
         {tags.map((t) => (
-          <li key={t.id} className="flex items-center justify-between rounded-lg border border-zinc-100 px-3 py-2 text-sm">
+          <li key={t.id} className="flex items-center justify-between rounded-lg border border-zinc-100 px-3 py-2 type-caption">
             <span>{t.nome}</span>
             <button
               type="button"
-              className="text-xs text-red-600"
+              className="type-fine-print text-red-600"
               onClick={() =>
                 void fetch(`/api/symbius/tags?id=${t.id}`, { method: "DELETE" }).then(
                   () => load(),
@@ -95,13 +95,13 @@ export function MembersSettingsPanel() {
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-6">
-      <h2 className="text-xl font-bold">Membros da equipe</h2>
+      <h2 className="type-tagline ">Membros da equipe</h2>
       <div className="mt-4 flex flex-wrap gap-2">
         <input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="E-mail do convite"
-          className="min-w-[200px] flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+          className="min-w-[200px] flex-1 rounded-lg border border-zinc-200 px-3 py-2 type-caption"
         />
         <PillSelect
           value={role}
@@ -112,14 +112,14 @@ export function MembersSettingsPanel() {
           ]}
           aria-label="Função do membro"
         />
-        <button type="button" onClick={() => void invite()} className="symbius-btn-primary px-4 py-2 text-sm">
+        <button type="button" onClick={() => void invite()} className="symbius-btn-primary px-4 py-2 type-caption">
           Convidar
         </button>
       </div>
       <ul className="mt-4 space-y-2">
         {members.map((m) => (
-          <li key={m.id} className="rounded-lg border border-zinc-100 px-3 py-2 text-sm">
-            <span className="font-medium">{m.nome}</span>
+          <li key={m.id} className="rounded-lg border border-zinc-100 px-3 py-2 type-caption">
+            <span className="font-semibold">{m.nome}</span>
             <span className="text-zinc-500"> · {m.email} · {m.role}</span>
           </li>
         ))}
@@ -206,8 +206,8 @@ export function IntegrationsSettingsPanel() {
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-4">
       {Toast}
-      <h2 className="text-xl font-bold">Integrações & Attribution</h2>
-      <label className="block text-sm">
+      <h2 className="type-tagline ">Integrações & Attribution</h2>
+      <label className="block type-caption">
         <span className="text-zinc-500">Webhook outbound</span>
         <input
           value={webhookUrl}
@@ -216,7 +216,7 @@ export function IntegrationsSettingsPanel() {
           placeholder="https://..."
         />
       </label>
-      <label className="block text-sm">
+      <label className="block type-caption">
         <span className="text-zinc-500">Google Sheet ID</span>
         <input
           value={googleSheetId}
@@ -224,7 +224,7 @@ export function IntegrationsSettingsPanel() {
           className="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2"
         />
       </label>
-      <label className="flex items-center gap-2 text-sm">
+      <label className="flex items-center gap-2 type-caption">
         <input
           type="checkbox"
           checked={syncCentralCrm}
@@ -235,15 +235,15 @@ export function IntegrationsSettingsPanel() {
 
       <div className="border-t border-zinc-100 pt-4 space-y-3">
         <h3 className="font-semibold">Symbius Tracker (landing)</h3>
-        <p className="text-xs text-zinc-500">
+        <p className="type-fine-print text-zinc-500">
           Cole o snippet na landing. Endpoints: POST /api/v1/identify, /api/v1/events, /api/v1/purchases
         </p>
         {snippet ? (
-          <pre className="overflow-x-auto rounded-lg bg-zinc-50 p-3 text-xs text-zinc-800 whitespace-pre-wrap">
+          <pre className="overflow-x-auto rounded-lg bg-zinc-50 p-3 type-fine-print text-zinc-800 whitespace-pre-wrap">
             {snippet}
           </pre>
         ) : (
-          <p className="text-sm text-amber-700">Gere uma API key para obter o snippet.</p>
+          <p className="type-caption text-amber-700">Gere uma API key para obter o snippet.</p>
         )}
       </div>
 
@@ -252,32 +252,32 @@ export function IntegrationsSettingsPanel() {
         <input
           value={metaPixelId}
           onChange={(e) => setMetaPixelId(e.target.value)}
-          className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-zinc-200 px-3 py-2 type-caption"
           placeholder="Meta Pixel ID"
         />
         <input
           value={metaCapiToken}
           onChange={(e) => setMetaCapiToken(e.target.value)}
-          className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-zinc-200 px-3 py-2 type-caption"
           placeholder="Meta CAPI access token"
         />
         <input
           value={ga4MeasurementId}
           onChange={(e) => setGa4MeasurementId(e.target.value)}
-          className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-zinc-200 px-3 py-2 type-caption"
           placeholder="GA4 Measurement ID (G-...)"
         />
         <input
           value={ga4ApiSecret}
           onChange={(e) => setGa4ApiSecret(e.target.value)}
-          className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-zinc-200 px-3 py-2 type-caption"
           placeholder="GA4 API Secret"
         />
       </div>
 
       <div className="border-t border-zinc-100 pt-4 space-y-3">
         <h3 className="font-semibold">Webhooks e-commerce</h3>
-        <p className="text-xs text-zinc-500">
+        <p className="type-fine-print text-zinc-500">
           Conectores WooCommerce, Shopify, Tray e Nuvemshop ficam em{" "}
           <a href="/config/conexoes" className="text-[var(--primary)] underline">
             Integrações
@@ -287,15 +287,15 @@ export function IntegrationsSettingsPanel() {
       </div>
 
       <div className="flex gap-2">
-        <button type="button" onClick={() => void save()} className="symbius-btn-primary px-4 py-2 text-sm">
+        <button type="button" onClick={() => void save()} className="symbius-btn-primary px-4 py-2 type-caption">
           Salvar
         </button>
-        <button type="button" onClick={() => void genKey()} className="symbius-btn-outline px-4 py-2 text-sm">
+        <button type="button" onClick={() => void genKey()} className="symbius-btn-outline px-4 py-2 type-caption">
           Gerar API key
         </button>
       </div>
       {apiKey && (
-        <p className="rounded-lg bg-zinc-50 p-3 font-mono text-xs break-all">{apiKey}</p>
+        <p className="rounded-lg bg-zinc-50 p-3 font-mono type-fine-print break-all">{apiKey}</p>
       )}
     </div>
   );
@@ -333,11 +333,11 @@ export function AiSettingsPanel() {
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-4">
       {Toast}
-      <h2 className="text-xl font-bold">IA (em breve)</h2>
-      <p className="text-sm text-amber-700 bg-amber-50 rounded-lg p-3">
+      <h2 className="type-tagline ">IA (em breve)</h2>
+      <p className="type-caption text-amber-700 bg-amber-50 rounded-lg p-3">
         Configuração salva para a fase dedicada de IA. Respostas automáticas ainda não estão ativas.
       </p>
-      <label className="flex items-center gap-2 text-sm">
+      <label className="flex items-center gap-2 type-caption">
         <input type="checkbox" checked={aiEnabled} onChange={(e) => setAiEnabled(e.target.checked)} />
         Habilitar IA (quando disponível)
       </label>
@@ -345,16 +345,16 @@ export function AiSettingsPanel() {
         value={aiKnowledgeBase}
         onChange={(e) => setAiKnowledgeBase(e.target.value)}
         rows={6}
-        className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+        className="w-full rounded-lg border border-zinc-200 px-3 py-2 type-caption"
         placeholder="Base de conhecimento (FAQ, produtos, tom da marca...)"
       />
       <input
         value={aiTone}
         onChange={(e) => setAiTone(e.target.value)}
-        className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+        className="w-full rounded-lg border border-zinc-200 px-3 py-2 type-caption"
         placeholder="Tom de voz (ex: amigável, profissional)"
       />
-      <button type="button" onClick={() => void save()} className="symbius-btn-primary px-4 py-2 text-sm">
+      <button type="button" onClick={() => void save()} className="symbius-btn-primary px-4 py-2 type-caption">
         Salvar configuração IA
       </button>
     </div>
@@ -398,26 +398,26 @@ export function InstagramDmSettings({
 
   return (
     <div className="space-y-4 border-t border-zinc-100 pt-4">
-      <label className="block text-sm">
-        <span className="font-medium">Resposta padrão</span>
+      <label className="block type-caption">
+        <span className="font-semibold">Resposta padrão</span>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={3}
-          className="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 type-caption"
           placeholder="Mensagem quando nenhum fluxo corresponder..."
         />
       </label>
-      <label className="block text-sm">
-        <span className="font-medium">Conversation starters (1 por linha, máx. 4)</span>
+      <label className="block type-caption">
+        <span className="font-semibold">Conversation starters (1 por linha, máx. 4)</span>
         <textarea
           value={starters}
           onChange={(e) => setStarters(e.target.value)}
           rows={4}
-          className="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 type-caption"
         />
       </label>
-      <button type="button" onClick={() => void save()} className="symbius-btn-primary px-4 py-2 text-sm">
+      <button type="button" onClick={() => void save()} className="symbius-btn-primary px-4 py-2 type-caption">
         Salvar Instagram
       </button>
     </div>

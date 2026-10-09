@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { MetricTile, SegmentedControl } from "@/components/ui";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   BarChart,
@@ -28,7 +29,7 @@ const tooltipStyle = {
     boxShadow: "0 8px 24px rgba(0,0,0,.35)",
     padding: "10px 14px",
   },
-  labelStyle: { color: "var(--foreground)", fontWeight: 600, marginBottom: 4 },
+  labelStyle: { color: "var(--foreground)", fontWeight: 500, marginBottom: 4 },
   itemStyle: { color: "var(--foreground)", fontSize: 13 },
 };
 
@@ -107,46 +108,16 @@ function KpiCard({
   title,
   value,
   sub,
-  icon: Icon,
-  accent,
   highlight,
 }: {
   title: string;
   value: string;
   sub: string;
-  icon: React.ElementType;
+  icon?: React.ElementType;
   accent?: boolean;
   highlight?: boolean;
 }) {
-  return (
-    <div
-      className={`group relative overflow-hidden rounded-2xl border p-4 transition-all ${
-        highlight
-          ? "border-green-500/30 bg-green-500/6 hover:border-green-500/50"
-          : accent
-          ? "border-[color-mix(in_srgb,var(--primary)_25%,var(--border))] bg-[var(--card)] hover:border-[color-mix(in_srgb,var(--primary)_40%,var(--border))]"
-          : "border-[var(--border)] bg-[var(--card)] hover:border-[color-mix(in_srgb,var(--primary)_20%,var(--border))]"
-      }`}
-    >
-      <div
-        className={`pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-[0.07] ${
-          highlight ? "bg-green-500" : "bg-[var(--primary)]"
-        }`}
-      />
-      <div className="mb-2 flex items-center gap-2">
-        <Icon
-          className={`h-4 w-4 ${highlight ? "text-positive" : accent ? "text-[var(--primary)]" : "text-[var(--muted-foreground)]"}`}
-        />
-        <span className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${highlight ? "text-positive" : "text-[var(--muted-foreground)]"}`}>
-          {title}
-        </span>
-      </div>
-      <p className={`text-2xl font-semibold tabular-nums ${highlight ? "text-positive" : "text-[var(--foreground)]"}`}>
-        {value}
-      </p>
-      <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">{sub}</p>
-    </div>
-  );
+  return <MetricTile label={title} value={value} detail={sub} tone={highlight ? "positive" : undefined} />;
 }
 
 interface ApiResponse {
@@ -239,8 +210,8 @@ function SectionHeader({ sub, title }: { sub: string; title: string }) {
     <div className="flex items-start gap-3">
       <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">{sub}</p>
-        <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">{title}</h2>
+        <p className="type-micro-legal uppercase text-[var(--primary)]">{sub}</p>
+        <h2 className="type-tagline text-[var(--foreground)]">{title}</h2>
       </div>
     </div>
   );
@@ -347,7 +318,7 @@ export function ImobLeadScoringPanel({
     return (
       <div className="flex items-center justify-center py-24">
         <RefreshCw className="h-5 w-5 animate-spin text-[var(--primary)]" />
-        <span className="ml-3 text-sm text-[var(--muted-foreground)]">Carregando leads…</span>
+        <span className="ml-3 type-caption text-[var(--muted-foreground)]">Carregando leads…</span>
       </div>
     );
   }
@@ -355,7 +326,7 @@ export function ImobLeadScoringPanel({
   if (error) {
     return (
       <div className="rounded-2xl border border-red-500/20 bg-red-500/6 px-6 py-10 text-center">
-        <p className="text-sm text-negative">{error instanceof Error ? error.message : "Erro ao carregar leads."}</p>
+        <p className="type-caption text-negative">{error instanceof Error ? error.message : "Erro ao carregar leads."}</p>
       </div>
     );
   }
@@ -395,7 +366,7 @@ export function ImobLeadScoringPanel({
 
       {/* Sync result message */}
       {syncMsg && (
-        <div className={`-mt-6 rounded-xl border px-4 py-2.5 text-xs ${
+        <div className={`-mt-6 rounded-xl border px-4 py-2.5 type-fine-print ${
           syncStatus === "error"
             ? "border-red-500/20 bg-red-500/6 text-negative"
             : "border-green-500/20 bg-green-500/6 text-positive"
@@ -407,13 +378,13 @@ export function ImobLeadScoringPanel({
       {/* ── Seletor de Formulário ── */}
       {formsRanking.length > 1 && (
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
-          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">
+          <p className="mb-3 type-micro-legal uppercase text-[var(--primary)]">
             Formulário
           </p>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => { setSelectedFormId(null); setGradeFilter(null); }}
-              className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-all ${
+              className={`flex items-center gap-2 rounded-xl border px-3 py-2 type-caption-strong transition-all ${
                 !selectedFormId
                   ? "border-primary/40 bg-primary/10 text-[var(--foreground)]"
                   : "border-[var(--border)] bg-muted/30 text-[var(--muted-foreground)] hover:border-primary/20 hover:text-[var(--foreground)]"
@@ -421,7 +392,7 @@ export function ImobLeadScoringPanel({
             >
               <span className={`h-1.5 w-1.5 rounded-full ${!selectedFormId ? "bg-[var(--primary)]" : "bg-[var(--muted-foreground)]"}`} />
               Todos os formulários
-              <span className={`rounded-full px-1.5 py-0.5 text-[10px] tabular-nums ${!selectedFormId ? "bg-primary/15 text-[var(--primary)]" : "bg-[var(--muted)] text-[var(--muted-foreground)]"}`}>
+              <span className={`rounded-full px-1.5 py-0.5 type-micro-legal tabular-nums ${!selectedFormId ?"bg-primary/15 text-[var(--primary)]" :"bg-[var(--muted)] text-[var(--muted-foreground)]"}`}>
                 {formsRanking.reduce((s, f) => s + f.total, 0)}
               </span>
             </button>
@@ -432,7 +403,7 @@ export function ImobLeadScoringPanel({
                 <button
                   key={f.formId}
                   onClick={() => { setSelectedFormId(isActive ? null : f.formId); setGradeFilter(null); }}
-                  className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-all ${
+                  className={`flex items-center gap-2 rounded-xl border px-3 py-2 type-caption-strong transition-all ${
                     isActive
                       ? "border-primary/40 bg-primary/10 text-[var(--foreground)]"
                       : "border-[var(--border)] bg-muted/30 text-[var(--muted-foreground)] hover:border-primary/20 hover:text-[var(--foreground)]"
@@ -440,10 +411,10 @@ export function ImobLeadScoringPanel({
                 >
                   <span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-[var(--primary)]" : "bg-[var(--muted-foreground)]"}`} />
                   <span className="max-w-[200px] truncate">{f.formName ?? f.formId}</span>
-                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] tabular-nums ${isActive ? "bg-primary/15 text-[var(--primary)]" : "bg-[var(--muted)] text-[var(--muted-foreground)]"}`}>
+                  <span className={`rounded-full px-1.5 py-0.5 type-micro-legal tabular-nums ${isActive ?"bg-primary/15 text-[var(--primary)]" :"bg-[var(--muted)] text-[var(--muted-foreground)]"}`}>
                     {f.total}
                   </span>
-                  <span className="text-[10px] text-positive">{mqlPct}% MQL</span>
+                  <span className="type-micro-legal text-positive">{mqlPct}% MQL</span>
                 </button>
               );
             })}
@@ -454,14 +425,14 @@ export function ImobLeadScoringPanel({
       {!hasData ? (
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-8 py-16 text-center">
           <Building2 className="mx-auto mb-4 h-10 w-10 text-muted-foreground/40" />
-          <p className="text-base font-semibold text-[var(--foreground)]">Nenhum lead encontrado</p>
-          <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+          <p className="type-body-strong text-[var(--foreground)]">Nenhum lead encontrado</p>
+          <p className="mt-1 type-caption text-[var(--muted-foreground)]">
             Use o botão abaixo para importar os leads dos formulários Meta.
           </p>
           <button
             onClick={triggerLeadSync}
             disabled={syncStatus === "syncing"}
-            className={`mt-5 inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-semibold transition-all ${
+            className={`mt-5 inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 type-caption-strong transition-all ${
               syncStatus === "syncing"
                 ? "border-primary/40 bg-primary/8 text-[var(--primary)] cursor-wait"
                 : syncStatus === "error"
@@ -473,7 +444,7 @@ export function ImobLeadScoringPanel({
             {syncStatus === "syncing" ? "Sincronizando formulários Meta…" : "Sincronizar leads agora"}
           </button>
           {syncMsg && (
-            <p className={`mt-3 text-xs ${syncStatus === "error" ? "text-negative" : "text-positive"}`}>
+            <p className={`mt-3 type-fine-print ${syncStatus ==="error" ?"text-negative" :"text-positive"}`}>
               {syncMsg}
             </p>
           )}
@@ -533,29 +504,24 @@ export function ImobLeadScoringPanel({
                     <div className="flex flex-col">
                       <div className="mb-4 flex items-center justify-between">
                         <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">Volume</p>
-                          <h3 className="mt-0.5 text-base font-semibold tracking-tight text-[var(--foreground)]">Performance geral</h3>
+                          <p className="type-micro-legal uppercase text-[var(--primary)]">Volume</p>
+                          <h3 className="mt-0.5 type-body-strong text-[var(--foreground)]">Performance geral</h3>
                         </div>
                         {onAgrupamentoChange && (
-                          <div className="flex overflow-hidden rounded-lg border border-[var(--border)] text-xs">
-                            <button
-                              onClick={() => onAgrupamentoChange("diario")}
-                              className={`px-2.5 py-1.5 font-semibold transition-colors ${isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"}`}
-                            >
-                              Diário
-                            </button>
-                            <button
-                              onClick={() => onAgrupamentoChange("semanal")}
-                              className={`px-2.5 py-1.5 font-semibold transition-colors ${!isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"}`}
-                            >
-                              Semanal
-                            </button>
-                          </div>
+                          <SegmentedControl
+                            aria-label="Agrupamento"
+                            value={isDiario ? "diario" : "semanal"}
+                            onChange={onAgrupamentoChange}
+                            options={[
+                              { value: "diario", label: "Diário" },
+                              { value: "semanal", label: "Semanal" },
+                            ]}
+                          />
                         )}
                       </div>
                       {chartData.length === 0 ? (
                         <div className="flex flex-1 items-center justify-center">
-                          <p className="text-sm text-[var(--muted-foreground)]">Sem dados de mídia no período.</p>
+                          <p className="type-caption text-[var(--muted-foreground)]">Sem dados de mídia no período.</p>
                         </div>
                       ) : (
                         <div className="h-[280px]">
@@ -626,8 +592,8 @@ export function ImobLeadScoringPanel({
                     <div className="flex items-start gap-2.5">
                       <div className="mt-0.5 h-7 w-1 shrink-0 rounded-full bg-gradient-to-b from-[var(--primary)] to-[color-mix(in_srgb,var(--primary)_40%,transparent)]" />
                       <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">Qualificação</p>
-                        <h3 className="mt-0.5 text-lg font-semibold tracking-tight text-[var(--foreground)]">
+                        <p className="type-micro-legal uppercase text-[var(--primary)]">Qualificação</p>
+                        <h3 className="mt-0.5 type-tagline text-[var(--foreground)]">
                           {isAcademy ? "Taxa de qualificados" : "Taxa MQL"}
                         </h3>
                       </div>
@@ -707,24 +673,24 @@ export function ImobLeadScoringPanel({
                         <div className="rounded-xl border border-[var(--border)] bg-muted/30 px-3.5 py-2.5">
                           <div className="flex items-center gap-1.5">
                             <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: gaugeColor, boxShadow: `0 0 6px ${gaugeColor}` }} />
-                            <span className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">{isAcademy ? "Qualif." : "MQL"}</span>
+                            <span className="type-micro-legal uppercase text-[var(--muted-foreground)]">{isAcademy ? "Qualif." : "MQL"}</span>
                           </div>
                           <div className="mt-0.5 flex items-baseline justify-between gap-2">
-                            <p className="text-2xl font-semibold tabular-nums leading-none" style={{ color: gaugeColor }}>{kpis.totalMql.toLocaleString("pt-BR")}</p>
+                            <p className="type-tagline tabular-nums leading-none" style={{ color: gaugeColor }}>{kpis.totalMql.toLocaleString("pt-BR")}</p>
                             {!isAcademy && (
-                              <span className="text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">{mqlPct.toFixed(0)}% do total</span>
+                              <span className="type-micro-legal tabular-nums text-[var(--muted-foreground)]">{mqlPct.toFixed(0)}% do total</span>
                             )}
                           </div>
                         </div>
                         <div className="rounded-xl border border-[var(--border)] bg-muted/30 px-3.5 py-2.5">
                           <div className="flex items-center gap-1.5">
                             <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
-                            <span className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Leads totais</span>
+                            <span className="type-micro-legal uppercase text-[var(--muted-foreground)]">Leads totais</span>
                           </div>
                           <div className="mt-0.5 flex items-baseline justify-between gap-2">
-                            <p className="text-2xl font-semibold tabular-nums leading-none text-[var(--foreground)]">{kpis.totalLeads.toLocaleString("pt-BR")}</p>
+                            <p className="type-tagline tabular-nums leading-none text-[var(--foreground)]">{kpis.totalLeads.toLocaleString("pt-BR")}</p>
                             {!isAcademy && (
-                              <span className="text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">no período</span>
+                              <span className="type-micro-legal tabular-nums text-[var(--muted-foreground)]">no período</span>
                             )}
                           </div>
                         </div>
@@ -732,11 +698,11 @@ export function ImobLeadScoringPanel({
                           <div className="rounded-xl border border-[var(--border)] bg-muted/30 px-3.5 py-2.5">
                             <div className="flex items-center gap-1.5">
                               <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
-                              <span className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Não qualificados</span>
+                              <span className="type-micro-legal uppercase text-[var(--muted-foreground)]">Não qualificados</span>
                             </div>
                             <div className="mt-0.5 flex items-baseline justify-between gap-2">
-                              <p className="text-2xl font-semibold tabular-nums leading-none text-[var(--muted-foreground)]">{(kpis.totalLeads - kpis.totalMql).toLocaleString("pt-BR")}</p>
-                              <span className="text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">{(100 - mqlPct).toFixed(0)}%</span>
+                              <p className="type-tagline tabular-nums leading-none text-[var(--muted-foreground)]">{(kpis.totalLeads - kpis.totalMql).toLocaleString("pt-BR")}</p>
+                              <span className="type-micro-legal tabular-nums text-[var(--muted-foreground)]">{(100 - mqlPct).toFixed(0)}%</span>
                             </div>
                           </div>
                         )}
@@ -746,7 +712,7 @@ export function ImobLeadScoringPanel({
                     {/* Icaraí (não Mirante): grade chips clicáveis */}
                     {!isAcademy && !isMirante && (
                       <div className="mt-5 space-y-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">Filtrar por grau</p>
+                        <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Filtrar por grau</p>
                         <div className="flex flex-wrap gap-2">
                           {gradeDistribuicao.filter((g) => g.total > 0).map((g) => {
                             const isActive = gradeFilter === g.grade;
@@ -755,14 +721,14 @@ export function ImobLeadScoringPanel({
                               <button
                                 key={g.grade}
                                 onClick={() => setGradeFilter(isActive ? null : g.grade)}
-                                className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold transition-all ${
+                                className={`flex items-center gap-1.5 rounded-full border px-3 py-1 type-caption-strong transition-all ${
                                   isActive
                                     ? "border-primary/40 bg-primary/10 text-[var(--foreground)]"
                                     : "border-[var(--border)] bg-muted/40 text-[var(--muted-foreground)] hover:border-primary/20 hover:text-[var(--foreground)]"
                                 }`}
                               >
                                 <span
-                                  className="inline-flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-semibold text-white"
+                                  className="inline-flex h-4 w-4 items-center justify-center rounded-full type-micro-legal text-white"
                                   style={{ backgroundColor: color }}
                                 >
                                   {g.grade}
@@ -775,7 +741,7 @@ export function ImobLeadScoringPanel({
                           {gradeFilter && (
                             <button
                               onClick={() => setGradeFilter(null)}
-                              className="rounded-full border border-primary/30 px-2 py-1 text-[10px] text-[var(--primary)] hover:bg-primary/8 transition-colors"
+                              className="rounded-full border border-primary/30 px-2 py-1 type-micro-legal text-[var(--primary)] hover:bg-primary/8 transition-colors"
                             >
                               ✕ limpar
                             </button>
@@ -804,9 +770,9 @@ export function ImobLeadScoringPanel({
                             >
                               <div className="flex items-center gap-1.5">
                                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-                                <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">{label}</span>
+                                <span className="type-micro-legal uppercase text-[var(--muted-foreground)]">{label}</span>
                               </div>
-                              <p className="mt-1 text-2xl font-semibold tabular-nums" style={{ color }}>{count}</p>
+                              <p className="mt-1 type-tagline tabular-nums" style={{ color }}>{count}</p>
                             </button>
                           );
                         })}
@@ -823,12 +789,12 @@ export function ImobLeadScoringPanel({
                         <div className="flex items-start gap-2.5">
                           <div className="mt-0.5 h-7 w-1 shrink-0 rounded-full bg-gradient-to-b from-[var(--primary)] to-[color-mix(in_srgb,var(--primary)_40%,transparent)]" />
                           <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">Critério de qualificação</p>
-                            <h3 className="mt-0.5 text-lg font-semibold tracking-tight text-[var(--foreground)]">Formação acadêmica dos leads</h3>
+                            <p className="type-micro-legal uppercase text-[var(--primary)]">Critério de qualificação</p>
+                            <h3 className="mt-0.5 type-tagline text-[var(--foreground)]">Formação acadêmica dos leads</h3>
                           </div>
                         </div>
                         {(degreeDistribuicao ?? []).length === 0 ? (
-                          <p className="mt-6 text-sm text-[var(--muted-foreground)]">Sem dados de formação no período.</p>
+                          <p className="mt-6 type-caption text-[var(--muted-foreground)]">Sem dados de formação no período.</p>
                         ) : (() => {
                           const filtered = (degreeDistribuicao ?? []).filter((d) => d.total > 0);
                           const top = filtered.reduce((a, b) => (b.total > a.total ? b : a), filtered[0]);
@@ -840,12 +806,12 @@ export function ImobLeadScoringPanel({
                               {top && (
                                 <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-muted/30 px-4 py-2.5">
                                   <div className="min-w-0">
-                                    <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Formação predominante</p>
-                                    <p className="mt-0.5 truncate text-sm font-semibold text-[var(--foreground)]">{top.degree}</p>
+                                    <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Formação predominante</p>
+                                    <p className="mt-0.5 truncate type-caption-strong text-[var(--foreground)]">{top.degree}</p>
                                   </div>
                                   <div className="text-right">
-                                    <p className="text-2xl font-semibold tabular-nums leading-none" style={{ color: topColor }}>{topPct.toFixed(0)}%</p>
-                                    <p className="text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">{top.total} leads</p>
+                                    <p className="type-tagline tabular-nums leading-none" style={{ color: topColor }}>{topPct.toFixed(0)}%</p>
+                                    <p className="type-micro-legal tabular-nums text-[var(--muted-foreground)]">{top.total} leads</p>
                                   </div>
                                 </div>
                               )}
@@ -858,11 +824,11 @@ export function ImobLeadScoringPanel({
                                       <div className="mb-1.5 flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                           <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}80` }} />
-                                          <span className="text-[12.5px] font-medium text-[var(--foreground)]">{d.degree}</span>
+                                          <span className="text-[12.5px] font-semibold text-[var(--foreground)]">{d.degree}</span>
                                         </div>
                                         <div className="flex items-baseline gap-2">
-                                          <span className="text-[15px] font-semibold tabular-nums text-[var(--foreground)]">{d.total}</span>
-                                          <span className="rounded-md bg-parchment px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">{pct.toFixed(0)}%</span>
+                                          <span className="type-body-strong tabular-nums text-[var(--foreground)]">{d.total}</span>
+                                          <span className="rounded-md bg-parchment px-1.5 py-0.5 type-micro-legal tabular-nums text-[var(--muted-foreground)]">{pct.toFixed(0)}%</span>
                                         </div>
                                       </div>
                                       <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted/40">
@@ -888,16 +854,16 @@ export function ImobLeadScoringPanel({
                         <div className="flex items-start gap-2.5">
                           <div className="mt-0.5 h-7 w-1 shrink-0 rounded-full bg-gradient-to-b from-[var(--primary)] to-[color-mix(in_srgb,var(--primary)_40%,transparent)]" />
                           <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">
+                            <p className="type-micro-legal uppercase text-[var(--primary)]">
                               {isMirante ? "Previsão de compra" : "Intenção de compra"}
                             </p>
-                            <h3 className="mt-0.5 text-lg font-semibold tracking-tight text-[var(--foreground)]">
+                            <h3 className="mt-0.5 type-tagline text-[var(--foreground)]">
                               {isMirante ? "Qual é sua previsão para compra?" : "Quando pretende adquirir?"}
                             </h3>
                           </div>
                         </div>
                         {timingDistribuicao.length === 0 ? (
-                          <p className="mt-6 text-sm text-[var(--muted-foreground)]">Campo não encontrado.</p>
+                          <p className="mt-6 type-caption text-[var(--muted-foreground)]">Campo não encontrado.</p>
                         ) : (() => {
                           const top = timingDistribuicao.reduce((a, b) => (b.total > a.total ? b : a), timingDistribuicao[0]);
                           const topPct = kpis.totalLeads > 0 && top ? (top.total / kpis.totalLeads) * 100 : 0;
@@ -908,12 +874,12 @@ export function ImobLeadScoringPanel({
                               {top && (
                                 <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-muted/30 px-4 py-2.5">
                                   <div className="min-w-0">
-                                    <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Maior previsão</p>
-                                    <p className="mt-0.5 truncate text-sm font-semibold text-[var(--foreground)]">{top.timing}</p>
+                                    <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Maior previsão</p>
+                                    <p className="mt-0.5 truncate type-caption-strong text-[var(--foreground)]">{top.timing}</p>
                                   </div>
                                   <div className="text-right">
-                                    <p className="text-2xl font-semibold tabular-nums leading-none" style={{ color: topColor }}>{topPct.toFixed(0)}%</p>
-                                    <p className="text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">{top.total} leads</p>
+                                    <p className="type-tagline tabular-nums leading-none" style={{ color: topColor }}>{topPct.toFixed(0)}%</p>
+                                    <p className="type-micro-legal tabular-nums text-[var(--muted-foreground)]">{top.total} leads</p>
                                   </div>
                                 </div>
                               )}
@@ -926,11 +892,11 @@ export function ImobLeadScoringPanel({
                                       <div className="mb-1.5 flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                           <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}80` }} />
-                                          <span className="text-[12.5px] font-medium text-[var(--foreground)]">{t.timing}</span>
+                                          <span className="text-[12.5px] font-semibold text-[var(--foreground)]">{t.timing}</span>
                                         </div>
                                         <div className="flex items-baseline gap-2">
-                                          <span className="text-[15px] font-semibold tabular-nums text-[var(--foreground)]">{t.total}</span>
-                                          <span className="rounded-md bg-parchment px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">{pct.toFixed(0)}%</span>
+                                          <span className="type-body-strong tabular-nums text-[var(--foreground)]">{t.total}</span>
+                                          <span className="rounded-md bg-parchment px-1.5 py-0.5 type-micro-legal tabular-nums text-[var(--muted-foreground)]">{pct.toFixed(0)}%</span>
                                         </div>
                                       </div>
                                       <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted/40">
@@ -962,10 +928,10 @@ export function ImobLeadScoringPanel({
                     <div className="relative flex items-start gap-2.5">
                       <div className="mt-0.5 h-7 w-1 shrink-0 rounded-full bg-gradient-to-b from-[var(--primary)] to-[color-mix(in_srgb,var(--primary)_40%,transparent)]" />
                       <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">
+                        <p className="type-micro-legal uppercase text-[var(--primary)]">
                           Capacidade financeira
                         </p>
-                        <h3 className="mt-0.5 text-lg font-semibold tracking-tight text-[var(--foreground)]">
+                        <h3 className="mt-0.5 type-tagline text-[var(--foreground)]">
                           Quanto pretende investir?
                         </h3>
                       </div>
@@ -980,11 +946,11 @@ export function ImobLeadScoringPanel({
                             <div className="mb-1.5 flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}80` }} />
-                                <span className="text-[12.5px] font-medium text-[var(--foreground)]">{t.invest}</span>
+                                <span className="text-[12.5px] font-semibold text-[var(--foreground)]">{t.invest}</span>
                               </div>
                               <div className="flex items-baseline gap-2">
-                                <span className="text-[15px] font-semibold tabular-nums text-[var(--foreground)]">{t.total}</span>
-                                <span className="rounded-md bg-parchment px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--muted-foreground)]">{pct.toFixed(0)}%</span>
+                                <span className="type-body-strong tabular-nums text-[var(--foreground)]">{t.total}</span>
+                                <span className="rounded-md bg-parchment px-1.5 py-0.5 type-micro-legal tabular-nums text-[var(--muted-foreground)]">{pct.toFixed(0)}%</span>
                               </div>
                             </div>
                             <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted/40">
@@ -1000,7 +966,7 @@ export function ImobLeadScoringPanel({
                           </div>
                         );
                       })}
-                      {investDistribuicao.length === 0 && <p className="text-sm text-[var(--muted-foreground)]">Campo não encontrado.</p>}
+                      {investDistribuicao.length === 0 && <p className="type-caption text-[var(--muted-foreground)]">Campo não encontrado.</p>}
                     </div>
                   </div>
                 )}
@@ -1029,41 +995,41 @@ export function ImobLeadScoringPanel({
               <div className="flex flex-wrap items-center gap-2">
                 {/* Chips de filtros ativos */}
                 {selectedCamp && (
-                  <span className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 px-2.5 py-1 text-[11px] font-medium text-[var(--foreground)]">
+                  <span className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 px-2.5 py-1 type-caption-strong text-[var(--foreground)]">
                     <span className="text-[var(--primary)]">Campanha:</span>
                     <span className="max-w-[140px] truncate">{selectedCamp.campaignName}</span>
                     <button onClick={() => { setSelectedCamp(null); setSelectedAdset(null); }} className="ml-0.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)]">✕</button>
                   </span>
                 )}
                 {selectedAdset && (
-                  <span className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 px-2.5 py-1 text-[11px] font-medium text-[var(--foreground)]">
+                  <span className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 px-2.5 py-1 type-caption-strong text-[var(--foreground)]">
                     <span className="text-[var(--primary)]">Conjunto:</span>
                     <span className="max-w-[120px] truncate">{selectedAdset.adsetName}</span>
                     <button onClick={() => setSelectedAdset(null)} className="ml-0.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)]">✕</button>
                   </span>
                 )}
                 {selectedFormId && (
-                  <span className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 px-2.5 py-1 text-[11px] font-medium text-[var(--foreground)]">
+                  <span className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 px-2.5 py-1 type-caption-strong text-[var(--foreground)]">
                     <span className="text-[var(--primary)]">Form:</span>
                     <span className="max-w-[120px] truncate">{formsRanking.find((f) => f.formId === selectedFormId)?.formName ?? selectedFormId}</span>
                     <button onClick={() => setSelectedFormId(null)} className="ml-0.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)]">✕</button>
                   </span>
                 )}
-                <span className="text-xs text-[var(--muted-foreground)]">
+                <span className="type-fine-print text-[var(--muted-foreground)]">
                   {displayedLeads.length} lead{displayedLeads.length !== 1 ? "s" : ""}
                   {leadsTruncated && !selectedCamp && !selectedAdset && !selectedFormId ? " (limitado a 500)" : ""}
                 </span>
               </div>
             </div>
             <div className="mt-4 overflow-x-auto">
-              <table className={`w-full text-sm ${isAcademy ? "min-w-[900px]" : "min-w-[820px]"}`}>
+              <table className={`w-full type-caption ${isAcademy ?"min-w-[900px]" :"min-w-[820px]"}`}>
                 <thead>
                   <tr className="border-b border-[var(--border)]">
                     {(isAcademy
                       ? ["Data", "Nome", "Status", "Formação", "Formulário", "Campanha", "Conjunto", "Anúncio"]
                       : ["Data", "Nome", "Grau", "Timing", "Campanha"]
                     ).map((h) => (
-                      <th key={h} className="pb-2 pr-3 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+                      <th key={h} className="pb-2 pr-3 text-left type-micro-legal uppercase text-[var(--muted-foreground)]">
                         {h}
                       </th>
                     ))}
@@ -1072,13 +1038,13 @@ export function ImobLeadScoringPanel({
                 <tbody className="divide-y divide-[var(--border)]">
                   {visibleLeads.map((lead) => (
                     <tr key={lead.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="py-2.5 pr-3 text-xs tabular-nums text-[var(--muted-foreground)] whitespace-nowrap">
+                      <td className="py-2.5 pr-3 type-fine-print tabular-nums text-[var(--muted-foreground)] whitespace-nowrap">
                         {new Date(lead.createdTime).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
                       </td>
-                      <td className="py-2.5 pr-3 text-xs text-[var(--foreground)]">
+                      <td className="py-2.5 pr-3 type-fine-print text-[var(--foreground)]">
                         <div className="max-w-[130px] truncate">{lead.fullName ?? "—"}</div>
                         {lead.telefone && (
-                          <div className="text-[10px] text-[var(--muted-foreground)]">{lead.telefone}</div>
+                          <div className="type-micro-legal text-[var(--muted-foreground)]">{lead.telefone}</div>
                         )}
                       </td>
 
@@ -1086,7 +1052,7 @@ export function ImobLeadScoringPanel({
                       {isAcademy ? (
                         <td className="py-2.5 pr-3">
                           <span
-                            className="rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap"
+                            className="rounded-full px-2 py-0.5 type-micro-legal whitespace-nowrap"
                             style={
                               lead.isMql
                                 ? { backgroundColor: "#22c55e20", color: "#22c55e" }
@@ -1100,13 +1066,13 @@ export function ImobLeadScoringPanel({
                         <td className="py-2.5 pr-3">
                           <div className="flex items-center gap-1.5">
                             <span
-                              className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold text-white"
+                              className="inline-flex h-5 w-5 items-center justify-center rounded-full type-micro-legal text-white"
                               style={{ backgroundColor: getGradeColor(lead.grade, isMirante) }}
                             >
                               {lead.grade}
                             </span>
                             {lead.isMql && (
-                              <span className="rounded-full bg-green-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-positive">
+                              <span className="rounded-full bg-green-500/15 px-1.5 py-0.5 type-micro-legal uppercase text-positive">
                                 MQL
                               </span>
                             )}
@@ -1116,10 +1082,10 @@ export function ImobLeadScoringPanel({
 
                       {/* Academy: Formação pill */}
                       {isAcademy ? (
-                        <td className="py-2.5 pr-3 text-xs">
+                        <td className="py-2.5 pr-3 type-fine-print">
                           {lead.degreeLabel ? (
                             <span
-                              className="rounded-full px-2 py-0.5 text-[10px] font-medium whitespace-nowrap"
+                              className="rounded-full px-2 py-0.5 type-micro-legal whitespace-nowrap"
                               style={{
                                 backgroundColor: `${DEGREE_COLORS[lead.degreeLabel] ?? "#94a3b8"}20`,
                                 color: DEGREE_COLORS[lead.degreeLabel] ?? "#94a3b8",
@@ -1133,9 +1099,9 @@ export function ImobLeadScoringPanel({
                         </td>
                       ) : (
                         /* Icaraí: Timing pill */
-                        <td className="py-2.5 pr-3 text-xs">
+                        <td className="py-2.5 pr-3 type-fine-print">
                           <span
-                            className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                            className="rounded-full px-2 py-0.5 type-micro-legal "
                             style={{
                               backgroundColor: `${TIMING_COLORS[lead.timingLabel] ?? "#94a3b8"}20`,
                               color: TIMING_COLORS[lead.timingLabel] ?? "#94a3b8",
@@ -1149,21 +1115,21 @@ export function ImobLeadScoringPanel({
                       {/* Icaraí only: Investimento — removido */}
 
                       {isAcademy && (
-                        <td className="py-2.5 pr-3 text-xs text-[var(--muted-foreground)]">
+                        <td className="py-2.5 pr-3 type-fine-print text-[var(--muted-foreground)]">
                           <div className="max-w-[120px] truncate">{lead.formName ?? "—"}</div>
                         </td>
                       )}
-                      <td className="py-2.5 pr-3 text-xs text-[var(--muted-foreground)]">
+                      <td className="py-2.5 pr-3 type-fine-print text-[var(--muted-foreground)]">
                         <div className="max-w-[120px] truncate">{lead.campaignName ?? "—"}</div>
                       </td>
 
                       {/* Academy: Conjunto + Anúncio */}
                       {isAcademy && (
                         <>
-                          <td className="py-2.5 pr-3 text-xs text-[var(--muted-foreground)]">
+                          <td className="py-2.5 pr-3 type-fine-print text-[var(--muted-foreground)]">
                             <div className="max-w-[120px] truncate">{lead.adsetName ?? "—"}</div>
                           </td>
-                          <td className="py-2.5 text-xs text-[var(--muted-foreground)]">
+                          <td className="py-2.5 type-fine-print text-[var(--muted-foreground)]">
                             <div className="max-w-[120px] truncate">{lead.adName ?? "—"}</div>
                           </td>
                         </>
@@ -1172,7 +1138,7 @@ export function ImobLeadScoringPanel({
                   ))}
                   {leads.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="py-10 text-center text-xs text-[var(--muted-foreground)]">
+                      <td colSpan={8} className="py-10 text-center type-fine-print text-[var(--muted-foreground)]">
                         Nenhum lead encontrado para os filtros selecionados
                       </td>
                     </tr>
@@ -1183,7 +1149,7 @@ export function ImobLeadScoringPanel({
             {leads.length > 20 && (
               <button
                 onClick={() => setShowAllLeads((v) => !v)}
-                className="mt-3 flex items-center gap-1.5 text-xs text-[var(--primary)] underline underline-offset-2"
+                className="mt-3 flex items-center gap-1.5 type-fine-print text-[var(--primary)] underline underline-offset-2"
               >
                 {showAllLeads ? (
                   <>
@@ -1202,7 +1168,7 @@ export function ImobLeadScoringPanel({
 
           {/* Legenda MQL */}
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--primary)]">
+            <p className="mb-3 type-micro-legal uppercase text-[var(--primary)]">
               Critérios de qualificação MQL
             </p>
             {isAcademy ? (
@@ -1217,8 +1183,8 @@ export function ImobLeadScoringPanel({
                       style={{ backgroundColor: item.color, marginTop: 4 }}
                     />
                     <div>
-                      <p className="text-xs font-semibold text-[var(--foreground)]">{item.title}</p>
-                      <p className="text-[10px] text-[var(--muted-foreground)]">{item.desc}</p>
+                      <p className="type-caption-strong text-[var(--foreground)]">{item.title}</p>
+                      <p className="type-micro-legal text-[var(--muted-foreground)]">{item.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -1241,14 +1207,14 @@ export function ImobLeadScoringPanel({
                 ).map((item) => (
                   <div key={item.grade} className="flex items-start gap-2">
                     <span
-                      className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"
+                      className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full type-micro-legal text-white"
                       style={{ backgroundColor: item.color }}
                     >
                       {item.grade}
                     </span>
                     <div>
-                      <p className="text-xs font-semibold text-[var(--foreground)]">{item.title}</p>
-                      <p className="text-[10px] text-[var(--muted-foreground)]">{item.desc}</p>
+                      <p className="type-caption-strong text-[var(--foreground)]">{item.title}</p>
+                      <p className="type-micro-legal text-[var(--muted-foreground)]">{item.desc}</p>
                     </div>
                   </div>
                 ))}

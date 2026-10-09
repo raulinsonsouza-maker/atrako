@@ -28,6 +28,8 @@ export type DesignBrief = {
   /** Seções da biblioteca, já anonimizadas, para adaptar. */
   referenciasBiblioteca?: string | null;
   produto: { nome: string; precoReais: number | null } | null;
+  /** Página real do produto na loja. Fatos de ativo, uso e resultado saem daqui. */
+  fichaProduto?: string | null;
   formulario: { nome: string; campos: string[] } | null;
   /** Mensagens do usuário na conversa: fonte de verdade para fatos (o briefing é resumo do assistente). */
   pedidoOriginal?: string | null;
@@ -49,21 +51,24 @@ const ATTEMPT_MS = 150_000;
 const DEFAULT_BUDGET_MS = 210_000;
 const MAX_ATTEMPTS = 4;
 
-/** Modelos maiores primeiro: HTML/CSS longos e coerentes pedem fôlego. */
+/**
+ * Página pede modelo grande. O chat do workspace (muitas vezes um modelo rápido)
+ * fica depois destes. Versão paga vem antes da grátis do mesmo nível.
+ */
 const DESIGN_PREFERENCE = [
-  /gpt-oss-120b|gpt-oss:120b/i,
+  /claude|gpt-5|gpt-4\.1(?!-mini)|gemini-2\.5-pro|gemini-3/i,
+  /nemotron-3-ultra|ultra-550/i,
   /command-a-plus/i,
-  /ultra/i,
+  /gpt-oss-120b|gpt-oss:120b/i,
   /gemma-?4|gemma4/i,
-  /nemotron-3-super/i,
-  /command-a/i,
+  /command-a(?!-plus)/i,
 ];
 
 export function orderForDesign(candidates: LlmCandidate[]): LlmCandidate[] {
   const rank = (c: LlmCandidate) => {
-    if (c.source === "workspace") return -1;
     const i = DESIGN_PREFERENCE.findIndex((re) => re.test(c.model));
-    return i === -1 ? DESIGN_PREFERENCE.length : i;
+    const tier = i === -1 ? (c.source === "workspace" ? DESIGN_PREFERENCE.length : DESIGN_PREFERENCE.length + 1) : i;
+    return tier * 2 + (/:free\b/i.test(c.model) ? 1 : 0);
   };
   return candidates
     .map((c, i) => ({ c, i }))
@@ -97,9 +102,9 @@ REGRAS DE HTML
 - Proibido: <script>, <form>, <input>, <select>, <textarea>, <iframe>, atributos on*, JavaScript.
 - Formulário e checkout são do Atrako. Marque o lugar exato com <atrako-form></atrako-form> (captura) ou <atrako-checkout></atrako-checkout> (venda), dentro de uma <section id="form"> ou <section id="checkout"> com título e argumentos ao redor. A plataforma renderiza ali um card branco de até 520px.
 - Botões de CTA são links: <a class="..." href="#form"> ou href="#checkout". Use vários CTAs ao longo da página.
-- Imagens: use SOMENTE as URLs da lista IMAGENS (e o logo, se houver). A primeira da lista, se for da pessoa, é a foto principal do hero. Coloque a foto de papel "hero" no hero e mais 1 a 3 fotos em seções. object-fit: cover, proporção definida, loading="lazy" fora do hero. Texto sobre foto só com overlay que garanta contraste. Toda <img> com alt descritivo. Se a lista vier vazia, construa o visual com CSS e SVG, sem inventar URL de imagem.
+- Imagens: use SOMENTE as URLs da lista IMAGENS (e o logo, se houver). A primeira da lista, se for da pessoa, é a foto principal do hero. O hero precisa de um <img> real com essa URL, dentro de <div class="container"><div class="hero-grid"> texto + foto </div></div>. A grade fica no .hero-grid, nunca no <section> (o section só tem o container). Proporção definida, object-fit: cover, loading="lazy" fora do hero, alt descritivo. Mais 1 a 3 fotos em seções. Proibido: <div class="image"> ou <div class="visual"> vazio. Se a lista vier vazia, não reserve coluna de foto: o hero é tipografia, sem inventar URL.
 - Vídeo: use <video controls> somente com as URLs da lista VÍDEOS, em <source src>. Sem autoplay. Se a lista vier vazia, não use <video>.
-- Nunca invente depoimentos, números, clientes, prêmios ou garantias que não foram informados. Sem prova social real, NÃO crie seção de depoimentos (nem com "placeholder"): use "como funciona", diferenciais concretos e respostas a objeções.
+- Nunca invente depoimentos, números, clientes, prêmios, garantias, ingredientes, ativos, prazos de resultado ("12h", "em 7 dias", "imediato"), selo cruelty-free, "usuárias relatam" ou "oferta especial" / "por apenas" / desconto. Se houver FICHA DO PRODUTO, ativos, benefícios, modo de uso, resultado e FAQ saem só dela. O pedido da pessoa manda no público, no visual e no botão. O preço que a pessoa disse vence o da ficha; não chame de desconto se ela não falou em promoção. Sem prova social real, NÃO crie seção de depoimentos. FAQ só com o que a ficha ou o pedido responde; use <details><summary>. Rodapé sem ano, a menos que o ano esteja no pedido.
 - Contato (telefone, e-mail, endereço) só se veio no briefing. Nada de 9999-9999 ou e-mail inventado.
 - Estrutura de cada seção: <section class="sec-<tipo> nome" data-section="<tipo>"><div class="container">…</div></section>. Nunca class="container" no próprio <section>. O hero é <section class="sec-hero hero" data-section="hero"> (nunca <header> com o h1).
 - Tipos de data-section, um por seção: ${LP_SECTION_KINDS.join(", ")}.
@@ -111,11 +116,11 @@ REGRAS DE CSS
 - Escreva CSS completo: tipografia (escala com clamp()), cores, espaçamentos, botões com estados :hover e :focus-visible, cards, FAQ, rodapé.
 - Comece com variáveis em :root (cores, fontes, raios). Elas são aplicadas só dentro da página automaticamente.
 - Container de até 1120px centralizado; seções com padding vertical generoso (clamp(64px, 10vw, 128px)).
-- Ritmo visual: alterne o fundo das seções (claro, tom suave do acento, uma seção escura de destaque). Hero em duas colunas no desktop (texto + foto ou elemento visual), uma coluna no celular. Prefira as classes fx-* do catálogo a recriar esses efeitos.
+- Ritmo visual: alterne o fundo das seções (claro, tom suave do acento, uma seção escura de destaque). Se o pedido for claro, clean ou focado no produto, o hero é fundo claro com a foto do produto — sem fx-aurora, fx-beams ou fx-lamp. Hero em duas colunas só quando houver foto, no .hero-grid, uma coluna no celular. Prefira as classes fx-* do catálogo, no máximo um efeito de texto no título.
 - Detalhe de agência: eyebrow (rótulo pequeno em caixa alta acima dos títulos), números grandes nos passos, ícones SVG consistentes, cards com borda fina, CTA com contraste forte.
 - Mobile first de verdade: inclua @media (max-width: 640px) e @media (min-width: 900px). Nada de rolagem horizontal.
-- Use as fontes de ===FONTES=== em font-family. Sem @import, sem !important.
-- Contraste AA. Um acento principal (a cor da marca, se informada).
+- Use as fontes de ===FONTES=== em font-family. Sem @import, sem !important. Se a direção visual citar uma fonte (ex.: Roboto), ===FONTES=== é essa fonte, não outra.
+- Contraste AA. O accent é a cor da marca informada, sem trocar por verde, roxo ou outra cor.
 
 ESTRUTURA SUGERIDA
 Captura: hero com promessa + CTA, problema/dor, benefícios, como funciona (3 passos), seção do formulário, FAQ (4-6 objeções reais), CTA final, rodapé simples.
@@ -146,10 +151,13 @@ function briefText(b: DesignBrief): string {
     b.estilo ? `Direção visual pedida: ${b.estilo}` : null,
     b.referencias ? `Referências pesquisadas:\n${b.referencias}` : null,
     b.pedidoOriginal
-      ? `Pedido original do usuário (única fonte de fatos):\n${b.pedidoOriginal}`
+      ? `Pedido da pessoa (público, visual e botão; também é fato):\n${b.pedidoOriginal}`
+      : null,
+    b.fichaProduto
+      ? `FICHA DO PRODUTO (página real da loja; ativos, modo de uso, benefícios e FAQ só daqui. O briefing pode ter inventado ingrediente: descarte o que não estiver nesta ficha):\n${b.fichaProduto}`
       : null,
     b.pedidoOriginal
-      ? `Briefing do assistente (use para tom e estrutura; garantia, bônus, depoimentos, números de resultado e pessoas só se estiverem no pedido original):\n${b.briefing}`
+      ? `Briefing do assistente (use para tom e estrutura; não acrescente ativo, prazo ou oferta que não estejam na ficha nem no pedido):\n${b.briefing}`
       : `Briefing do usuário:\n${b.briefing}`,
   ];
   return lines.filter(Boolean).join("\n");

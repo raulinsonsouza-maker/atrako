@@ -17,7 +17,7 @@ export default async function OnboardingPage() {
 
   return (
     <div className="p-6 md:p-10">
-      <p className="text-sm text-[var(--symbius-accent)]">Onboarding</p>
+      <p className="type-caption text-[var(--symbius-accent)]">Onboarding</p>
       <h1 className="mt-2 type-tagline">Bem-vindo ao Symbius Flow</h1>
       <p className="mt-2 text-[var(--symbius-muted)]">
         Complete estes passos para começar
@@ -28,20 +28,20 @@ export default async function OnboardingPage() {
           <Plug className="mt-1 h-6 w-6 text-[var(--symbius-primary)]" />
           <div className="flex-1">
             <p className="type-body-strong">1. Conectar Instagram</p>
-            <p className="mt-1 text-sm text-[var(--symbius-muted)]">
+            <p className="mt-1 type-caption text-[var(--symbius-muted)]">
               Vincule sua conta Professional via Instagram Login
             </p>
             {!hasIg && (
               <Link
                 href="/social/connect"
-                className="symbius-btn-primary mt-4 inline-flex gap-2 text-sm"
+                className="symbius-btn-primary mt-4 inline-flex gap-2 type-caption"
               >
                 Conectar
                 <ArrowRight className="h-4 w-4" />
               </Link>
             )}
             {hasIg && (
-              <p className="mt-2 text-sm text-[var(--symbius-accent)]">✓ Conectado</p>
+              <p className="mt-2 type-caption text-[var(--symbius-accent)]">✓ Conectado</p>
             )}
           </div>
         </div>
@@ -52,19 +52,19 @@ export default async function OnboardingPage() {
           <Workflow className="mt-1 h-6 w-6 text-[var(--symbius-accent)]" />
           <div className="flex-1">
             <p className="type-body-strong">2. Criar primeiro fluxo</p>
-            <p className="mt-1 text-sm text-[var(--symbius-muted)]">
+            <p className="mt-1 type-caption text-[var(--symbius-muted)]">
               Use um template de boas-vindas ou comentário→DM
             </p>
             {hasIg && !hasFluxo && (
               <Link
                 href="/social/flows/new"
-                className="symbius-btn-outline mt-4 inline-flex gap-2 text-sm"
+                className="symbius-btn-outline mt-4 inline-flex gap-2 type-caption"
               >
                 Criar fluxo
               </Link>
             )}
             {hasFluxo && (
-              <p className="mt-2 text-sm text-[var(--symbius-accent)]">✓ Fluxo criado</p>
+              <p className="mt-2 type-caption text-[var(--symbius-accent)]">✓ Fluxo criado</p>
             )}
           </div>
         </div>
@@ -77,7 +77,7 @@ export default async function OnboardingPage() {
             <p className="type-body-strong">3. Ir para o dashboard</p>
             {hasIg && (
               <form action={completeOnboarding}>
-                <button type="submit" className="symbius-btn-primary mt-4 text-sm">
+                <button type="submit" className="symbius-btn-primary mt-4 type-caption">
                   Concluir onboarding
                 </button>
               </form>

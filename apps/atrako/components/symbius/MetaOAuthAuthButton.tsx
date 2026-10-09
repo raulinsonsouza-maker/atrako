@@ -15,7 +15,7 @@ type Props = {
 export function MetaOAuthAuthButton({
   returnTo = "/social",
   label = "Entrar com Instagram",
-  className = "mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:opacity-60",
+  className = "mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 px-4 py-3.5 type-caption-strong text-white shadow-sm transition hover:opacity-95 disabled:opacity-60",
 }: Props) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
@@ -149,18 +149,18 @@ export function MetaOAuthAuthButton({
               <div className="text-center">
                 <p
                   id="meta-oauth-modal-title"
-                  className="text-lg font-semibold text-zinc-900"
+                  className="type-tagline text-zinc-900"
                 >
                   Não foi possível conectar
                 </p>
-                <p className="mt-3 text-sm text-red-700">{error}</p>
+                <p className="mt-3 type-caption text-red-700">{error}</p>
                 <button
                   type="button"
                   onClick={() => {
                     setError(null);
                     startOAuth();
                   }}
-                  className="mt-6 w-full rounded-xl bg-[#818cf8] px-4 py-3 text-sm font-semibold text-white hover:bg-[#6366f1]"
+                  className="mt-6 w-full rounded-xl bg-[#818cf8] px-4 py-3 type-caption-strong text-white hover:bg-[#6366f1]"
                 >
                   Tentar novamente
                 </button>
@@ -170,11 +170,11 @@ export function MetaOAuthAuthButton({
                 <Loader2 className="mx-auto h-10 w-10 animate-spin text-[#818cf8]" />
                 <p
                   id="meta-oauth-modal-title"
-                  className="mt-4 text-lg font-semibold text-zinc-900"
+                  className="mt-4 type-tagline text-zinc-900"
                 >
                   Conectando com Instagram
                 </p>
-                <p className="mt-2 text-sm text-zinc-500">
+                <p className="mt-2 type-caption text-zinc-500">
                   Complete o login na janela do Instagram. Esta página permanece
                   aberta.
                 </p>

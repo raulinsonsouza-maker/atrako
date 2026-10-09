@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ArrowRight, Loader2, ShoppingBag, X } from "lucide-react";
 import { BackLink } from "@/components/ui/back-link";
+import { MetricTile } from "@/components/ui";
 import { orderStatusLabel } from "@/lib/commerce-attribution/order-status";
 import { Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -148,8 +149,8 @@ function Produtos({
 
 function Card({ title, hint, children, fill = false }: { title?: string; hint?: string; children: ReactNode; fill?: boolean }) {
   return (
-    <div className={`rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 ${fill ? "flex min-h-0 flex-col" : ""}`}>
-      {title ? <p className="type-fine-print uppercase tracking-[0.18em] text-[var(--muted-foreground)]">{title}</p> : null}
+    <div className={`rel-card p-4 ${fill ? "flex min-h-0 flex-col" : ""}`}>
+      {title ? <p className="type-fine-print uppercase text-[var(--muted-foreground)]">{title}</p> : null}
       {hint ? <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">{hint}</p> : null}
       <div className={title || hint ? (fill ? "mt-3 flex min-h-0 flex-1 flex-col" : "mt-3") : fill ? "flex min-h-0 flex-1 flex-col" : ""}>{children}</div>
     </div>
@@ -236,7 +237,7 @@ function Lugares({
     <div>
       <div className="grid gap-4 lg:grid-cols-2">
         <div>
-          <p className="px-2 type-fine-print uppercase tracking-[0.18em] text-[var(--muted-foreground)]">Estados</p>
+          <p className="px-2 type-fine-print uppercase text-[var(--muted-foreground)]">Estados</p>
           <ul className="mt-1 max-h-80 space-y-0.5 overflow-y-auto">
             {estados.map((estado) => (
               <li key={estado.uf || "sem-local"}>
@@ -256,7 +257,7 @@ function Lugares({
           </ul>
         </div>
         <div>
-          <p className="px-2 type-fine-print uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+          <p className="px-2 type-fine-print uppercase text-[var(--muted-foreground)]">
             Cidades · {active.nome}
           </p>
           <ul className="mt-1 max-h-80 space-y-0.5 overflow-y-auto">
@@ -420,22 +421,8 @@ function Kpi({
   pressed?: boolean;
   onClick?: () => void;
 }) {
-  const valueColor = tone === "positive" ? "text-positive" : tone === "negative" ? "text-negative" : "text-[var(--foreground)]";
-  const className = `kpi-card-content w-full rounded-2xl border bg-[var(--card)] p-4 text-left ${
-    pressed ? "border-[var(--primary)]" : "border-[var(--border)]"
-  } ${onClick ? "active:scale-[0.99]" : ""}`;
-  const body = (
-    <>
-      <p className="type-fine-print uppercase tracking-[0.18em] text-[var(--muted-foreground)]">{label}</p>
-      <p className={`kpi-card-value mt-2 type-tagline tabular-nums ${valueColor}`}>{value}</p>
-      {hint ? <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">{hint}</p> : null}
-    </>
-  );
-  if (!onClick) return <div className={className}>{body}</div>;
   return (
-    <button type="button" aria-pressed={pressed} onClick={onClick} className={className}>
-      {body}
-    </button>
+    <MetricTile label={label} value={value} detail={hint} tone={tone} pressed={pressed} onClick={onClick} />
   );
 }
 
@@ -448,7 +435,7 @@ const chartTooltip = {
     boxShadow: "none",
     padding: "10px 14px",
   },
-  labelStyle: { color: "var(--foreground)", fontWeight: 600, marginBottom: 4 },
+  labelStyle: { color: "var(--foreground)", fontWeight: 500, marginBottom: 4 },
   itemStyle: { color: "var(--foreground)", fontSize: 13 },
 };
 
@@ -520,7 +507,7 @@ function ReceitaChart({
   const tickEvery = isMobile ? mobileTickInterval(rows.length) : rows.length > 16 ? Math.ceil(rows.length / 16) - 1 : 0;
   const titulo = agrupamento === "mes" ? "Receita por mês" : agrupamento === "semana" ? "Receita por semana" : "Receita por dia";
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+    <div className="rel-card p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="type-caption-strong text-[var(--foreground)]">{titulo}</p>
         <ul className="flex flex-wrap gap-1">
@@ -810,7 +797,7 @@ export function ComportamentoSection({ clienteId, query }: { clienteId: string; 
 
   if (isLoading || !data) {
     return (
-      <div className="flex items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 type-caption text-[var(--muted-foreground)]">
+      <div className="flex items-center gap-2 rel-card p-5 type-caption text-[var(--muted-foreground)]">
         <Loader2 className="h-4 w-4 animate-spin" /> Lendo comportamento de compra…
       </div>
     );
@@ -818,7 +805,7 @@ export function ComportamentoSection({ clienteId, query }: { clienteId: string; 
 
   if (isError) {
     return (
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 type-caption text-[var(--muted-foreground)]">
+      <div className="rel-card p-5 type-caption text-[var(--muted-foreground)]">
         Não foi possível carregar o comportamento de compra.
       </div>
     );

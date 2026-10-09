@@ -37,7 +37,7 @@ function OAuthCompleteInner() {
   if (error) {
     return (
       <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 p-8 text-center">
-        <p className="text-sm text-red-300">{error}</p>
+        <p className="type-caption text-red-300">{error}</p>
         <BackLink href="/social/connect">Conectar</BackLink>
       </div>
     );
@@ -46,14 +46,14 @@ function OAuthCompleteInner() {
   return (
     <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 p-8 text-center">
       <Loader2 className="h-8 w-8 animate-spin text-[var(--symbius-primary)]" />
-      <p className="text-sm text-[var(--symbius-muted)]">
+      <p className="type-caption text-[var(--symbius-muted)]">
         {closed
           ? "Pode fechar esta janela."
           : "Conexão concluída. Fechando…"}
       </p>
       <Link
         href={`/social/connect?step=${step}`}
-        className="text-sm text-[var(--symbius-primary)] underline"
+        className="type-caption text-[var(--symbius-primary)] underline"
       >
         Continuar no Symbius Flow
       </Link>

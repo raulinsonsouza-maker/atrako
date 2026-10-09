@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { AppPage } from "@/components/layout/AppPage";
+import { DateRangeFilter, resolveDateRange, type DateRangeValue } from "@/components/ui/date-range-filter";
+import { MetricGrid, MetricTile, SectionCard } from "@/components/ui";
 import { PillSelect } from "@/components/ui/pill-select";
 
 type AnalyticsData = {
@@ -63,12 +66,15 @@ export default function AnalyticsPage() {
   const [attr, setAttr] = useState<AttributionSummary | null>(null);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [model, setModel] = useState("first_touch");
-  const [from, setFrom] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 30);
-    return toInputDate(d);
+  const [range, setRange] = useState<DateRangeValue>(() => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 30);
+    return { preset: "custom", customInicio: toInputDate(start), customFim: toInputDate(end) };
   });
-  const [to, setTo] = useState(() => toInputDate(new Date()));
+  const resolved = resolveDateRange(range);
+  const from = resolved.dataInicio ?? range.customInicio;
+  const to = resolved.dataFim ?? range.customFim;
   const [spendDate, setSpendDate] = useState(() => toInputDate(new Date()));
   const [spendValue, setSpendValue] = useState("");
   const [spendPlatform, setSpendPlatform] = useState("meta");
@@ -139,14 +145,14 @@ export default function AnalyticsPage() {
 
   if (!data) {
     return (
-      <div className="min-h-full bg-[#f0f2f5] p-10">
-        <div className="h-8 w-48 animate-pulse rounded bg-zinc-200" />
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+      <AppPage title="Análises">
+        <div className="h-8 w-48 animate-pulse rounded bg-[var(--surface-pearl)]" />
+        <MetricGrid>
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 animate-pulse rounded-2xl bg-zinc-200" />
+            <div key={i} className="rel-kpi h-24 animate-pulse bg-[var(--surface-pearl)]" />
           ))}
-        </div>
-      </div>
+        </MetricGrid>
+      </AppPage>
     );
   }
 
@@ -160,36 +166,18 @@ export default function AnalyticsPage() {
   ];
 
   return (
-    <div className="min-h-full bg-[#f0f2f5] p-6 text-[var(--ink)] md:p-10">
-      <h1 className="type-tagline">Análises</h1>
-      <p className="mt-1 text-zinc-500">Automações e receita atribuída</p>
+    <AppPage title="Análises">
+      <p className="type-caption text-[var(--ink-muted-48)]">Automações e receita atribuída</p>
 
       {attr && (
         <section className="mt-8">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="type-tagline">Symbius Attribution</h2>
-              <p className="text-sm text-zinc-500">Receita por origem do lead</p>
+              <h2 className="type-body-strong text-[var(--ink)]">Atribuição</h2>
+              <p className="type-caption text-[var(--ink-muted-48)]">Receita por origem do lead</p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <label className="text-xs text-zinc-500">
-                De
-                <input
-                  type="date"
-                  value={from}
-                  onChange={(e) => setFrom(e.target.value)}
-                  className="ml-1 rounded-lg border border-[var(--hairline)] bg-white px-2 py-1.5 text-sm"
-                />
-              </label>
-              <label className="text-xs text-zinc-500">
-                Até
-                <input
-                  type="date"
-                  value={to}
-                  onChange={(e) => setTo(e.target.value)}
-                  className="ml-1 rounded-lg border border-[var(--hairline)] bg-white px-2 py-1.5 text-sm"
-                />
-              </label>
+            <div className="flex flex-wrap items-center gap-2">
+              <DateRangeFilter value={range} onChange={setRange} />
               <PillSelect
                 value={model}
                 onChange={setModel}
@@ -205,46 +193,25 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <div className="symbius-card">
-              <p className="text-sm text-zinc-500">Receita atribuída</p>
-              <p className="mt-1 type-tagline">{brl(attr.revenue)}</p>
-            </div>
-            <div className="symbius-card">
-              <p className="text-sm text-zinc-500">Leads</p>
-              <p className="mt-1 type-tagline">{attr.leads}</p>
-            </div>
-            <div className="symbius-card">
-              <p className="text-sm text-zinc-500">Clientes</p>
-              <p className="mt-1 type-tagline">{attr.customers}</p>
-            </div>
-            <div className="symbius-card">
-              <p className="text-sm text-zinc-500">Investimento</p>
-              <p className="mt-1 type-tagline">{brl(attr.spend)}</p>
-            </div>
-            <div className="symbius-card">
-              <p className="text-sm text-zinc-500">ROAS</p>
-              <p className="mt-1 type-tagline">
-                {attr.spend > 0 && attr.roas != null
-                  ? `${attr.roas.toFixed(2)}x`
-                  : "—"}
-              </p>
-              {attr.spend <= 0 ? (
-                <p className="mt-1 text-xs text-[var(--ink-muted-48)]">
-                  Informe o investimento abaixo
-                </p>
-              ) : null}
-            </div>
-          </div>
+          <MetricGrid className="mt-4">
+            <MetricTile label="Receita atribuída" value={brl(attr.revenue)} />
+            <MetricTile label="Leads" value={String(attr.leads)} />
+            <MetricTile label="Clientes" value={String(attr.customers)} />
+            <MetricTile label="Investimento" value={brl(attr.spend)} />
+            <MetricTile
+              label="ROAS"
+              value={attr.spend > 0 && attr.roas != null ? `${attr.roas.toFixed(2)}x` : "—"}
+              detail={attr.spend <= 0 ? "Informe o investimento abaixo" : undefined}
+            />
+          </MetricGrid>
 
-          <div className="mt-4 rounded-2xl border border-[var(--hairline)] bg-white p-4">
-            <h3 className="type-body-strong">Registrar investimento (Ads)</h3>
-            <div className="mt-3 flex flex-wrap gap-2">
+          <SectionCard className="mt-4" title="Registrar investimento (Ads)">
+            <div className="flex flex-wrap gap-2">
               <input
                 type="date"
                 value={spendDate}
                 onChange={(e) => setSpendDate(e.target.value)}
-                className="rounded-lg border border-[var(--hairline)] px-3 py-2 text-sm"
+                className="rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-3 py-2 type-caption text-[var(--ink)]"
               />
               <PillSelect
                 value={spendPlatform}
@@ -260,24 +227,24 @@ export default function AnalyticsPage() {
                 value={spendCampaign}
                 onChange={(e) => setSpendCampaign(e.target.value)}
                 placeholder="Campanha (opcional)"
-                className="min-w-[160px] flex-1 rounded-lg border border-[var(--hairline)] px-3 py-2 text-sm"
+                className="min-w-[160px] flex-1 rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-3 py-2 type-caption text-[var(--ink)]"
               />
               <input
                 value={spendValue}
                 onChange={(e) => setSpendValue(e.target.value)}
                 placeholder="R$ gasto"
-                className="w-28 rounded-lg border border-[var(--hairline)] px-3 py-2 text-sm"
+                className="w-28 rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-3 py-2 type-caption text-[var(--ink)]"
               />
               <button
                 type="button"
                 onClick={() => void saveSpend()}
-                className="symbius-btn-primary rounded-lg px-4 py-2 text-sm"
+                className="symbius-btn-primary rounded-lg px-4 py-2 type-caption"
               >
                 Salvar
               </button>
             </div>
             {spendMsg ? (
-              <p className="mt-2 text-xs text-zinc-500">{spendMsg}</p>
+              <p className="mt-2 type-fine-print text-[var(--ink-muted-48)]">{spendMsg}</p>
             ) : null}
             <button
               type="button"
@@ -312,10 +279,10 @@ export default function AnalyticsPage() {
             >
               Tentar sync Meta Ads (se configurado)
             </button>
-          </div>
+          </SectionCard>
 
-          <div className="mt-6 symbius-card overflow-hidden p-0">
-            <table className="w-full text-sm">
+          <SectionCard className="mt-6 overflow-hidden !p-0">
+            <table className="w-full type-caption">
               <thead className="bg-[var(--canvas-parchment)] text-[var(--ink-muted-48)]">
                 <tr>
                   <th className="px-4 py-3 text-left type-body-strong">Campanha</th>
@@ -329,7 +296,7 @@ export default function AnalyticsPage() {
                   <tr>
                     <td
                       colSpan={4}
-                      className="px-4 py-6 text-center text-zinc-500"
+                      className="px-4 py-6 text-center text-[var(--ink-muted-48)]"
                     >
                       Nenhuma compra atribuída ainda. Envie POST /api/v1/purchases.
                     </td>
@@ -338,8 +305,8 @@ export default function AnalyticsPage() {
                   attr.byCampaign.map((row) => (
                     <tr
                       key={`${row.source}-${row.medium}-${row.campaign}`}
-                      className={`cursor-pointer border-t border-zinc-100 ${
-                        selectedCampaign === row.campaign ? "bg-blue-50" : ""
+                      className={`cursor-pointer border-t border-[var(--hairline)] ${
+                        selectedCampaign === row.campaign ? "bg-[var(--chart-current)]" : ""
                       }`}
                       onClick={() =>
                         setSelectedCampaign((c) =>
@@ -348,7 +315,7 @@ export default function AnalyticsPage() {
                       }
                     >
                       <td className="px-4 py-3 type-body-strong">{row.campaign}</td>
-                      <td className="px-4 py-3 text-zinc-500">
+                      <td className="px-4 py-3 text-[var(--ink-muted-48)]">
                         {row.source} / {row.medium}
                       </td>
                       <td className="px-4 py-3 text-right">{row.orders}</td>
@@ -360,23 +327,19 @@ export default function AnalyticsPage() {
                 )}
               </tbody>
             </table>
-          </div>
+          </SectionCard>
 
           {selectedCampaign ? (
-            <div className="mt-4 symbius-card overflow-hidden p-0">
-              <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
-                <h3 className="type-body-strong">
-                  Pedidos · {selectedCampaign}
-                </h3>
-                <button
-                  type="button"
-                  className="text-sm text-[var(--primary)]"
-                  onClick={() => setSelectedCampaign(null)}
-                >
-                  Limpar filtro
-                </button>
-              </div>
-              <table className="w-full text-sm">
+            <SectionCard className="mt-4 overflow-hidden !p-0" title={`Pedidos · ${selectedCampaign}`} action={
+              <button
+                type="button"
+                className="type-caption text-[var(--primary)]"
+                onClick={() => setSelectedCampaign(null)}
+              >
+                Limpar filtro
+              </button>
+            }>
+              <table className="w-full type-caption">
                 <thead className="bg-[var(--canvas-parchment)] text-[var(--ink-muted-48)]">
                   <tr>
                     <th className="px-4 py-2 text-left">Pedido</th>
@@ -387,37 +350,34 @@ export default function AnalyticsPage() {
                 </thead>
                 <tbody>
                   {filteredOrders.map((o) => (
-                    <tr key={o.transaction_id} className="border-t border-zinc-100">
+                    <tr key={o.transaction_id} className="border-t border-[var(--hairline)]">
                       <td className="px-4 py-2 type-body-strong">
                         {o.transaction_id}
                       </td>
-                      <td className="px-4 py-2 font-mono text-xs text-zinc-500">
+                      <td className="px-4 py-2 font-mono type-fine-print text-[var(--ink-muted-48)]">
                         {o.st_id ?? "—"}
                       </td>
                       <td className="px-4 py-2 text-right">{brl(o.value)}</td>
-                      <td className="px-4 py-2 text-right text-zinc-500">
+                      <td className="px-4 py-2 text-right text-[var(--ink-muted-48)]">
                         {new Date(o.occurred_at).toLocaleString("pt-BR")}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
+            </SectionCard>
           ) : null}
         </section>
       )}
 
-      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <MetricGrid className="mt-6">
         {cards.map((c) => (
-          <div key={c.label} className="symbius-card">
-            <p className="text-sm text-zinc-500">{c.label}</p>
-            <p className="mt-1 type-tagline">{c.value}</p>
-          </div>
+          <MetricTile key={c.label} label={c.label} value={String(c.value)} />
         ))}
-      </div>
+      </MetricGrid>
 
-      <div className="mt-10 symbius-card overflow-hidden p-0">
-        <table className="w-full text-sm">
+      <SectionCard className="overflow-hidden !p-0">
+        <table className="w-full type-caption">
           <thead className="bg-[var(--canvas-parchment)] text-[var(--ink-muted-48)]">
             <tr>
               <th className="px-4 py-3 text-left type-body-strong">Fluxo</th>
@@ -428,13 +388,13 @@ export default function AnalyticsPage() {
           </thead>
           <tbody>
             {data.fluxos.map((f) => (
-              <tr key={f.id} className="border-t border-zinc-100">
+              <tr key={f.id} className="border-t border-[var(--hairline)]">
                 <td className="px-4 py-3 type-body-strong">
                   <Link href={`/social/flows/${f.id}`} className="text-[var(--primary)]">
                     {f.nome}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-zinc-500">{f.triggerType}</td>
+                <td className="px-4 py-3 text-[var(--ink-muted-48)]">{f.triggerType}</td>
                 <td className="px-4 py-3">
                   {f.status === "PUBLISHED" ? "No ar" : f.status}
                 </td>
@@ -445,7 +405,7 @@ export default function AnalyticsPage() {
             ))}
           </tbody>
         </table>
-      </div>
-    </div>
+      </SectionCard>
+    </AppPage>
   );
 }

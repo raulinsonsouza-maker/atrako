@@ -34,6 +34,16 @@ curl -fsS https://atrako.com.br/api/health
 curl -I https://atrako.com.br
 ```
 
+## Sync diário de mídia
+
+O `vercel.json` não dispara neste host. O crontab da VPS (UTC) chama o script às 05:00 BRT:
+
+```cron
+0 8 * * * /opt/apps/atrako/cron/daily-sync.sh
+```
+
+O script está em `apps/atrako/deploy/cron/daily-sync.sh`. Log: `/var/log/atrako-daily-sync.log`.
+
 ## Alternativa (build no PC)
 
 Só se o Docker Desktop local estiver ok — ver fluxo antigo com `docker save` + `scp` do `.tar`.

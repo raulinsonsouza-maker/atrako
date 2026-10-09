@@ -980,7 +980,7 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
             campaignName: s.metaCampaignName,
             adsetName: s.metaAdsetName,
             adName: s.metaAdName,
-          }).title
+          })
         : null;
     items.push({
       at: at.toISOString(),
@@ -991,7 +991,8 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
           storeProviderLabel(mo.provider),
           paid && method ? `pago com ${method}${paidLater ? ` ${fmtLag(at.getTime() - paidLater.getTime())} depois do pedido` : ""}` : null,
           itemsSummary(mo.items),
-          origin ? `Origem: ${origin}` : null,
+          origin ? `Origem: ${origin.title}` : null,
+          origin?.detail,
           isRevenueOrder(mo.status) ? conversionByOrder.get(key) ?? null : null,
           recoveredByOrder.has(key) && isRevenueOrder(mo.status) ? "pago depois de ficar pendente" : null,
           origin ? null : leadAttrDetail,

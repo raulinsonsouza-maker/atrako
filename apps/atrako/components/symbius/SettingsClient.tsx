@@ -83,12 +83,12 @@ function SettingRow({
         <div className="flex flex-wrap gap-2 lg:w-56 lg:justify-start">
           {children}
         </div>
-        <p className="flex-1 text-sm leading-relaxed text-[var(--ink-muted-48)] lg:max-w-md">
+        <p className="flex-1 type-caption leading-relaxed text-[var(--ink-muted-48)] lg:max-w-md">
           {description}
         </p>
       </div>
       {warning && (
-        <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 type-caption text-amber-800">
           {warning}
         </div>
       )}
@@ -202,7 +202,7 @@ function SettingsInner({ data }: { data: SettingsData }) {
         <nav className="flex-1 overflow-y-auto p-3">
           {groups.map(([group, items]) => (
             <div key={group} className="mb-5">
-              <p className="mb-1.5 px-2 type-micro-legal uppercase tracking-wide text-[var(--ink-muted-48)]">
+              <p className="mb-1.5 px-2 type-micro-legal uppercase text-[var(--ink-muted-48)]">
                 {group}
               </p>
               <div className="space-y-0.5">
@@ -211,7 +211,7 @@ function SettingsInner({ data }: { data: SettingsData }) {
                     key={item.id}
                     type="button"
                     onClick={() => go(item.id)}
-                    className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm ${
+                    className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left type-caption ${
                       section === item.id
                         ? "bg-[var(--primary-glow)] type-body-strong text-[var(--primary)]"
                         : "text-[var(--ink-muted-48)] hover:bg-[var(--canvas-parchment)]"
@@ -250,7 +250,7 @@ function SettingsInner({ data }: { data: SettingsData }) {
           {section === "geral" && (
             <div className="rounded-2xl border border-[var(--hairline)] bg-white p-6">
               <h2 className="type-tagline">Geral</h2>
-              <div className="mt-6 space-y-4 text-sm">
+              <div className="mt-6 space-y-4 type-caption">
                 <div>
                   <p className="text-[var(--ink-muted-48)]">Organização</p>
                   <p className="mt-1 type-body-strong">{data.orgName}</p>
@@ -269,26 +269,26 @@ function SettingsInner({ data }: { data: SettingsData }) {
               <h2 className="type-tagline">Assinaturas</h2>
               <div className="mt-6 grid gap-4 sm:grid-cols-3">
                 <div className="rounded-xl border border-[var(--hairline)] p-4">
-                  <p className="text-xs text-[var(--ink-muted-48)]">Contas IG</p>
-                  <p className="mt-1 text-2xl type-body-strong">
+                  <p className="type-fine-print text-[var(--ink-muted-48)]">Contas IG</p>
+                  <p className="mt-1 type-lead-airy type-body-strong">
                     {data.igAccounts.length}/{data.maxIgAccounts}
                   </p>
                 </div>
                 <div className="rounded-xl border border-[var(--hairline)] p-4">
-                  <p className="text-xs text-[var(--ink-muted-48)]">Automações</p>
-                  <p className="mt-1 text-2xl type-body-strong">
+                  <p className="type-fine-print text-[var(--ink-muted-48)]">Automações</p>
+                  <p className="mt-1 type-lead-airy type-body-strong">
                     {data.fluxosCount}/
                     {data.maxFluxos >= 999 ? "∞" : data.maxFluxos}
                   </p>
                 </div>
                 <div className="rounded-xl border border-[var(--hairline)] p-4">
-                  <p className="text-xs text-[var(--ink-muted-48)]">Membros</p>
-                  <p className="mt-1 text-2xl type-body-strong">
+                  <p className="type-fine-print text-[var(--ink-muted-48)]">Membros</p>
+                  <p className="mt-1 type-lead-airy type-body-strong">
                     {data.membersCount}/{data.maxMembers}
                   </p>
                 </div>
               </div>
-              <p className="mt-4 text-sm text-[var(--ink-muted-48)]">
+              <p className="mt-4 type-caption text-[var(--ink-muted-48)]">
                 Plano atual: <strong>{data.plan}</strong>. Upgrade e cobrança
                 automática em breve.
               </p>
@@ -322,12 +322,12 @@ function SettingsInner({ data }: { data: SettingsData }) {
           {section === "api" && (
             <div className="rounded-2xl border border-[var(--hairline)] bg-white p-6 space-y-3">
               <h2 className="type-tagline">API pública</h2>
-              <p className="text-sm text-[var(--ink-muted-48)]">
+              <p className="type-caption text-[var(--ink-muted-48)]">
                 Use a API key em Integrações com os headers{" "}
-                <code className="text-xs">x-api-key</code> e{" "}
-                <code className="text-xs">x-organization-id</code>.
+                <code className="type-fine-print">x-api-key</code> e{" "}
+                <code className="type-fine-print">x-organization-id</code>.
               </p>
-              <ul className="list-disc pl-5 text-sm text-[var(--ink-muted-80)] space-y-1">
+              <ul className="list-disc pl-5 type-caption text-[var(--ink-muted-80)] space-y-1">
                 <li>POST /api/v1/identify</li>
                 <li>POST /api/v1/events</li>
                 <li>POST /api/v1/purchases</li>
@@ -350,7 +350,7 @@ function SettingsInner({ data }: { data: SettingsData }) {
           {section === "tags_old" && (
             <div className="rounded-2xl border border-[var(--hairline)] bg-white p-6">
               <h2 className="type-tagline">Tags</h2>
-              <p className="mt-2 text-sm text-[var(--ink-muted-48)]">
+              <p className="mt-2 type-caption text-[var(--ink-muted-48)]">
                 Tags são aplicadas nos contatos pelas automações (nó “Adicionar
                 tag”) e aparecem em Contatos. Gestão visual de tags em breve.
               </p>
@@ -377,7 +377,7 @@ function SettingsInner({ data }: { data: SettingsData }) {
                 )}
                 <div>
                   <h2 className="type-tagline">Instagram</h2>
-                  <p className="text-sm text-[var(--ink-muted-48)]">
+                  <p className="type-caption text-[var(--ink-muted-48)]">
                     {account
                       ? `@${account.igUsername ?? "instagram"} · ${account.status}`
                       : "Nenhuma conta conectada"}
@@ -391,7 +391,7 @@ function SettingsInner({ data }: { data: SettingsData }) {
               </div>
 
               {!account ? (
-                <p className="text-sm text-[var(--ink-muted-48)]">
+                <p className="type-caption text-[var(--ink-muted-48)]">
                   Conecte uma conta Professional para configurar o canal.
                 </p>
               ) : (
@@ -523,7 +523,7 @@ function SettingsInner({ data }: { data: SettingsData }) {
             <div className="rounded-2xl border border-[var(--hairline)] bg-white p-10 text-center">
               <Plug className="mx-auto h-10 w-10 text-zinc-300" />
               <h2 className="mt-4 type-tagline">Em breve</h2>
-              <p className="mt-2 text-sm text-[var(--ink-muted-48)]">
+              <p className="mt-2 type-caption text-[var(--ink-muted-48)]">
                 Esta funcionalidade ainda não está disponível. O núcleo
                 Instagram + Attribution já está ativo.
               </p>

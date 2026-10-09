@@ -347,12 +347,50 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
   }
   const filtering = filters.length > 0;
   const carts = data?.abandonedCarts;
+
+  function clearBoardFilters() {
+    setQ("");
+    setQDebounced("");
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setOrigins([]);
+    changeDateRange(ALL_TIME);
+    setOpenCart(false);
+  }
   const fieldClass =
     "h-9 min-w-[120px] flex-1 rounded-[var(--radius-xs)] border border-[rgba(0,0,0,0.08)] bg-[var(--canvas)] px-4 type-caption text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary-focus)]";
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="crm-toolbar">
+        <div className="crm-toolbar-top">
+          <SegmentedControl
+            className="segmented-quiet"
+            aria-label="Visualização"
+            value={tab}
+            onChange={setTab}
+            options={[
+              { value: "pipeline", label: "Funil" },
+              { value: "list", label: "Lista" },
+            ]}
+          />
+          <div className="crm-toolbar-actions">
+            {tab === "pipeline" ? (
+              <IconButton
+                size="toolbar"
+                onClick={() => setFunnelConfigOpen(true)}
+                aria-label="Editar etapas do funil"
+                title="Editar etapas do funil"
+              >
+                <Settings2 className="h-4 w-4" strokeWidth={1.75} />
+              </IconButton>
+            ) : null}
+            <Button type="button" variant="primary" size="toolbar" onClick={() => setShowNew((v) => !v)}>
+              <Plus className="h-3.5 w-3.5" strokeWidth={2} />
+              Novo lead
+            </Button>
+          </div>
+        </div>
+
         <div className="crm-toolbar-filters">
           <div className="crm-toolbar-search">
             <SearchInput
@@ -370,33 +408,74 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
             options={originOptions}
             allLabel="Todas as origens"
           />
-          <SegmentedControl
-            aria-label="Visualização"
-            value={tab}
-            onChange={setTab}
-            options={[
-              { value: "pipeline", label: "Funil" },
-              { value: "list", label: "Lista" },
-            ]}
-          />
         </div>
 
-        <div className="crm-toolbar-actions">
-          {tab === "pipeline" ? (
-            <IconButton
-              size="toolbar"
-              onClick={() => setFunnelConfigOpen(true)}
-              aria-label="Editar etapas do funil"
-              title="Editar etapas do funil"
+        {data ? (
+          <div className={clsx("crm-filter-strip", isPlaceholderData && "opacity-60")}>
+            <button
+              type="button"
+              className="crm-filter-chip"
+              data-tone={filtering ? undefined : "ink"}
+              onClick={clearBoardFilters}
             >
-              <Settings2 className="h-4 w-4" strokeWidth={1.75} />
-            </IconButton>
-          ) : null}
-          <Button type="button" variant="primary" size="toolbar" onClick={() => setShowNew((v) => !v)}>
-            <Plus className="h-3.5 w-3.5" strokeWidth={2} />
-            Novo lead
-          </Button>
-        </div>
+              Todos os leads
+            </button>
+            {carts && carts.openCount > 0 && !openCart ? (
+              <button
+                type="button"
+                className="crm-filter-chip"
+                onClick={() => setOpenCart(true)}
+                title="Ver só quem tem carrinho aberto"
+              >
+                <ShoppingCart className="h-3.5 w-3.5" strokeWidth={1.75} />
+                {filtering ? (
+                  "Com carrinho aberto"
+                ) : (
+                  <>
+                    Carrinho aberto
+                    <span className="tabular-nums">{carts.openCount}</span>
+                    <span className="tabular-nums text-[var(--ink-muted-48)]">
+                      {fmtCompact(carts.openValueCents / 100)}
+                    </span>
+                  </>
+                )}
+              </button>
+            ) : null}
+            {filters.map((f) => (
+              <button
+                key={f.key}
+                type="button"
+                className="crm-filter-chip"
+                data-active="true"
+                onClick={f.clear}
+                aria-label={`Remover filtro ${f.label}`}
+              >
+                {f.label}
+                <X className="h-3 w-3" strokeWidth={2} />
+              </button>
+            ))}
+            <p className="ml-auto type-fine-print text-[var(--ink-muted-48)]">
+              {filtering ? (
+                <>
+                  <span className="tabular-nums text-[var(--ink)]">{data.totalCount}</span>{" "}
+                  {data.totalCount === 1 ? "lead" : "leads"}
+                  {data.totalValue > 0 ? (
+                    <>
+                      {" · "}
+                      <span className="tabular-nums text-[var(--ink)]">{fmtCompact(data.totalValue)}</span>
+                    </>
+                  ) : null}
+                </>
+              ) : carts && carts.recoveredMonthCents > 0 ? (
+                <>
+                  Recuperado no mês{" "}
+                  <span className="tabular-nums text-[var(--ink)]">{fmtCompact(carts.recoveredMonthCents / 100)}</span>
+                  {carts.recoveryRate != null ? ` · ${Math.round(carts.recoveryRate * 100)}%` : null}
+                </>
+              ) : null}
+            </p>
+          </div>
+        ) : null}
       </div>
 
       {showNew ? (
@@ -425,79 +504,6 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
             Salvar
           </Button>
         </form>
-      ) : null}
-
-      {data ? (
-        <div className={clsx("crm-filter-strip", isPlaceholderData && "opacity-60")}>
-          {carts && carts.openCount > 0 && !openCart ? (
-            <button
-              type="button"
-              className="crm-filter-chip"
-              onClick={() => setOpenCart(true)}
-              title="Ver só quem tem carrinho aberto"
-            >
-              <ShoppingCart className="h-3.5 w-3.5" strokeWidth={1.75} />
-              {filtering ? (
-                "Com carrinho aberto"
-              ) : (
-                <>
-                  <span className="tabular-nums">{carts.openCount}</span> carrinhos abertos
-                  <span className="tabular-nums text-[var(--ink-muted-48)]">
-                    {fmtCompact(carts.openValueCents / 100)}
-                  </span>
-                </>
-              )}
-            </button>
-          ) : null}
-          {filters.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              className="crm-filter-chip"
-              data-active="true"
-              onClick={f.clear}
-              aria-label={`Remover filtro ${f.label}`}
-            >
-              {f.label}
-              <X className="h-3 w-3" strokeWidth={2} />
-            </button>
-          ))}
-
-          <p className="ml-auto type-fine-print text-[var(--ink-muted-48)]">
-            {filtering ? (
-              <>
-                <span className="tabular-nums text-[var(--ink)]">{data.totalCount}</span>{" "}
-                {data.totalCount === 1 ? "lead" : "leads"}
-                {data.totalValue > 0 ? (
-                  <>
-                    {" · "}
-                    <span className="tabular-nums text-[var(--ink)]">{fmtCompact(data.totalValue)}</span>
-                  </>
-                ) : null}
-                {filters.length > 1 ? (
-                  <>
-                    {" · "}
-                    <button
-                      type="button"
-                      className="text-[var(--primary)] active:scale-95"
-                      onClick={() => {
-                        for (const f of filters) f.clear();
-                      }}
-                    >
-                      Limpar
-                    </button>
-                  </>
-                ) : null}
-              </>
-            ) : carts && carts.recoveredMonthCents > 0 ? (
-              <>
-                Recuperado no mês{" "}
-                <span className="tabular-nums text-[var(--ink)]">{fmtCompact(carts.recoveredMonthCents / 100)}</span>
-                {carts.recoveryRate != null ? ` · ${Math.round(carts.recoveryRate * 100)}%` : null}
-              </>
-            ) : null}
-          </p>
-        </div>
       ) : null}
 
       {isLoading && !data ? (

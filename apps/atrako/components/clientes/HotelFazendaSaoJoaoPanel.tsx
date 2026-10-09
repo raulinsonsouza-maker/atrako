@@ -1,5 +1,6 @@
 "use client";
 
+import { MetricTile, SegmentedControl } from "@/components/ui";
 import {
   Bar,
   CartesianGrid,
@@ -129,8 +130,8 @@ function ResortChartTooltip({
     <div
       className="rounded-[10px] border border-[var(--border)] bg-[var(--card)] px-4 py-3"
     >
-      <p className="mb-2 text-sm font-semibold text-[var(--foreground)]">{label}</p>
-      <div className="space-y-2 text-[13px]">
+      <p className="mb-2 type-caption-strong text-[var(--foreground)]">{label}</p>
+      <div className="space-y-2 type-caption">
         <div className="flex items-center justify-between gap-5">
           <span className="font-semibold text-[var(--primary)]">Faturamento</span>
           <span className="font-semibold text-[var(--primary)]">
@@ -138,20 +139,20 @@ function ResortChartTooltip({
           </span>
         </div>
         <div className="flex items-center justify-between gap-5">
-          <span className="font-medium text-foreground/80">Investimento</span>
+          <span className="font-semibold text-foreground/80">Investimento</span>
           <span className="font-semibold text-[var(--foreground)]">
             {formatCurrency(invest)}
           </span>
         </div>
         <div className="flex items-center justify-between gap-5">
-          <span className="font-medium text-foreground/80">Vendas</span>
+          <span className="font-semibold text-foreground/80">Vendas</span>
           <span className="font-semibold text-[var(--foreground)]">
             {formatInteger(Number(chartPoint?.Vendas ?? 0))}
           </span>
         </div>
         <div className="flex items-center justify-between gap-5 border-t border-border pt-2">
-          <span className="font-medium text-foreground/60 text-[11px]">Invest. / Fat.</span>
-          <span className={`font-semibold text-[11px] ${pct < 10 ? "text-positive" : pct < 15 ? "text-amber-600" : "text-negative"}`}>
+          <span className=" text-foreground/60 type-caption-strong">Invest. / Fat.</span>
+          <span className={` type-caption-strong ${pct < 10 ?"text-positive" : pct < 15 ?"text-amber-600" :"text-negative"}`}>
             {formatPercentage(pct, 1)}
             <span className="ml-1 opacity-60">{pct < 10 ? "✓" : "↑"}</span>
           </span>
@@ -175,23 +176,23 @@ function ResortKpi({
   accent?: boolean;
 }) {
   return (
-    <Card className="overflow-hidden rounded-2xl border-[var(--border)] bg-[var(--card)]">
+    <Card className="overflow-hidden bg-[var(--card)]">
       <CardContent className="flex items-start gap-4 p-5">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[var(--primary)]">
           <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+          <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
             {title}
           </p>
           <p
-            className={`mt-1 text-xl font-semibold leading-none tabular-nums ${
+            className={`mt-1 type-tagline leading-none tabular-nums ${
               accent ? "text-[var(--primary)]" : "text-[var(--foreground)]"
             }`}
           >
             {value}
           </p>
-          <p className="mt-1.5 text-[11px] text-[var(--muted-foreground)]">{sub}</p>
+          <p className="mt-1.5 type-fine-print text-[var(--muted-foreground)]">{sub}</p>
         </div>
       </CardContent>
     </Card>
@@ -209,26 +210,8 @@ function MetricCard({
   sub: string;
   highlight?: "ok" | "warn" | "danger" | "neutral";
 }) {
-  const valueColor =
-    highlight === "ok"
-      ? "text-positive"
-      : highlight === "warn"
-        ? "text-amber-600"
-        : highlight === "danger"
-          ? "text-negative"
-          : "text-[var(--foreground)]";
-
-  return (
-    <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
-        {label}
-      </p>
-      <p className={`mt-2 text-xl font-semibold tabular-nums ${valueColor}`}>
-        {value}
-      </p>
-      <p className="mt-1 text-[11px] text-[var(--muted-foreground)] leading-snug">{sub}</p>
-    </div>
-  );
+  const tone = highlight === "ok" ? "positive" : highlight === "danger" ? "negative" : undefined;
+  return <MetricTile label={label} value={value} detail={sub} tone={tone} />;
 }
 
 export function HotelFazendaSaoJoaoPanel({
@@ -305,14 +288,14 @@ export function HotelFazendaSaoJoaoPanel({
       {/* ── Chart + Funil side-by-side ── */}
       <div className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
         {/* Chart */}
-        <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
+        <Card className="overflow-hidden">
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
+                <h3 className="type-tagline text-[var(--foreground)]">
                   Performance de receita {isMensal ? "mensal" : isDiario ? "diária" : "semanal"}
                 </h3>
-                <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
                   {isMensal
                     ? "Agrupado por mês · Linha = faturamento (eixo esq.) · Barras = investimento (eixo dir.)"
                     : isDiario
@@ -322,20 +305,15 @@ export function HotelFazendaSaoJoaoPanel({
               </div>
               <div className="flex items-center gap-2">
                 {!isMensal && onAgrupamentoChange && (
-                  <div className="flex overflow-hidden rounded-lg border border-[var(--border)] text-xs">
-                    <button
-                      onClick={() => onAgrupamentoChange("diario")}
-                      className={`px-2.5 py-1.5 font-semibold transition-colors ${isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"}`}
-                    >
-                      Diário
-                    </button>
-                    <button
-                      onClick={() => onAgrupamentoChange("semanal")}
-                      className={`px-2.5 py-1.5 font-semibold transition-colors ${!isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"}`}
-                    >
-                      Semanal
-                    </button>
-                  </div>
+                  <SegmentedControl
+                    aria-label="Agrupamento"
+                    value={isDiario ? "diario" : "semanal"}
+                    onChange={onAgrupamentoChange}
+                    options={[
+                      { value: "diario", label: "Diário" },
+                      { value: "semanal", label: "Semanal" },
+                    ]}
+                  />
                 )}
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-[var(--primary)]">
                   <ReceiptText className="h-4 w-4" />
@@ -345,15 +323,15 @@ export function HotelFazendaSaoJoaoPanel({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-muted/20 px-3 py-1 text-[11px] font-medium text-[var(--muted-foreground)]">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-muted/20 px-3 py-1 type-caption-strong text-[var(--muted-foreground)]">
                 <span className="h-2 w-2 rounded-full bg-[var(--chart-spend)]" />
                 Investimento em mídia (barras)
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-muted/20 px-3 py-1 text-[11px] font-medium text-[var(--muted-foreground)]">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-muted/20 px-3 py-1 type-caption-strong text-[var(--muted-foreground)]">
                 <span className="h-2 w-2 rounded-full bg-[var(--primary)]" />
                 Faturamento gerado (linha)
               </span>
-              <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/8 px-3 py-1 text-[11px] font-medium text-[var(--foreground)]">
+              <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/8 px-3 py-1 type-caption-strong text-[var(--foreground)]">
                 {formatInteger(data.resumo.purchases)} vendas no período
               </span>
             </div>
@@ -419,21 +397,21 @@ export function HotelFazendaSaoJoaoPanel({
             </div>
             <div className="grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                   {isMensal ? "Maior receita mensal" : isDiario ? "Maior receita diária" : "Melhor semana de receita"}
                 </p>
-                <p className="mt-2 text-lg font-semibold text-[var(--foreground)]">
+                <p className="mt-2 type-tagline text-[var(--foreground)]">
                   {topFaturamentoWeek ? formatCurrency(topFaturamentoWeek.faturamento) : "—"}
                 </p>
-                <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+                <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                   {topFaturamentoWeek?.periodo ?? "Sem dados"}
                 </p>
               </div>
               <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                   {isMensal ? "Melhor ROAS mensal" : isDiario ? "Melhor ROAS diário" : "Melhor ROAS semanal"}
                 </p>
-                <p className="mt-2 text-lg font-semibold text-[var(--foreground)]">
+                <p className="mt-2 type-tagline text-[var(--foreground)]">
                   {topRoasWeek
                     ? `${topRoasWeek.roas.toLocaleString("pt-BR", {
                         minimumFractionDigits: 2,
@@ -441,18 +419,18 @@ export function HotelFazendaSaoJoaoPanel({
                       })}x`
                     : "—"}
                 </p>
-                <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+                <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                   {topRoasWeek?.periodo ?? "Sem dados"}
                 </p>
               </div>
               <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                   {isMensal ? "Pico de vendas mensal" : isDiario ? "Pico de vendas diário" : "Pico de vendas semanais"}
                 </p>
-                <p className="mt-2 text-lg font-semibold text-[var(--foreground)]">
+                <p className="mt-2 type-tagline text-[var(--foreground)]">
                   {topSalesWeek ? formatInteger(topSalesWeek.purchases) : "—"}
                 </p>
-                <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+                <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                   {topSalesWeek?.periodo ?? "Sem dados"}
                 </p>
               </div>
@@ -461,14 +439,14 @@ export function HotelFazendaSaoJoaoPanel({
         </Card>
 
         {/* Funil & Eficiência */}
-        <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
+        <Card className="overflow-hidden">
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
+                <h3 className="type-tagline text-[var(--foreground)]">
                   Funil & Eficiência
                 </h3>
-                <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
                   Conversão, custo e saúde financeira da operação.
                 </p>
               </div>
@@ -499,10 +477,10 @@ export function HotelFazendaSaoJoaoPanel({
                   : "border-red-500/30 bg-red-500/5"
             }`}>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                   Investimento / Faturamento
                 </p>
-                <span className={`text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                <span className={`type-micro-legal uppercase px-2 py-0.5 rounded-full ${
                   pctHighlight === "ok"
                     ? "text-positive bg-emerald-500/15"
                     : pctHighlight === "warn"
@@ -512,7 +490,7 @@ export function HotelFazendaSaoJoaoPanel({
                   {pctHighlight === "ok" ? "✓ Dentro da meta" : "↑ Acima da meta"}
                 </span>
               </div>
-              <p className={`text-xl font-semibold tabular-nums ${
+              <p className={`type-tagline tabular-nums ${
                 pctHighlight === "ok"
                   ? "text-positive"
                   : pctHighlight === "warn"
@@ -529,7 +507,7 @@ export function HotelFazendaSaoJoaoPanel({
                   style={{ width: `${Math.min(pctInvestFaturamento / 20 * 100, 100)}%` }}
                 />
               </div>
-              <p className="mt-1.5 text-[11px] text-[var(--muted-foreground)]">
+              <p className="mt-1.5 type-fine-print text-[var(--muted-foreground)]">
                 Meta: manter abaixo de 10% do faturamento
               </p>
             </div>
@@ -539,76 +517,76 @@ export function HotelFazendaSaoJoaoPanel({
 
       {/* ── Lead mix cards ── */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
+        <Card className="overflow-hidden">
           <CardContent className="flex items-start gap-3 p-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[var(--primary)]">
               <Globe className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+              <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                 Leads via Site
               </p>
-              <p className="mt-1 text-lg font-semibold text-[var(--foreground)]">
+              <p className="mt-1 type-tagline text-[var(--foreground)]">
                 {formatInteger(data.leadMix.websiteLeads)}
               </p>
-              <p className="mt-0.5 text-[11px] text-[var(--muted-foreground)]">
+              <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
                 Clicaram no anúncio e preencheram no site
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
+        <Card className="overflow-hidden">
           <CardContent className="flex items-start gap-3 p-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[var(--primary)]">
               <Users className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+              <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                 Leads Instantâneos
               </p>
-              <p className="mt-1 text-lg font-semibold text-[var(--foreground)]">
+              <p className="mt-1 type-tagline text-[var(--foreground)]">
                 {formatInteger(data.leadMix.onFacebookLeads)}
               </p>
-              <p className="mt-0.5 text-[11px] text-[var(--muted-foreground)]">
+              <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
                 Formulário nativo dentro do Meta/Facebook
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
+        <Card className="overflow-hidden">
           <CardContent className="flex items-start gap-3 p-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[var(--primary)]">
               <MessageSquareMore className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+              <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                 Conversas Iniciadas
               </p>
-              <p className="mt-1 text-lg font-semibold text-[var(--foreground)]">
+              <p className="mt-1 type-tagline text-[var(--foreground)]">
                 {formatInteger(data.leadMix.messagingConversationsStarted)}
               </p>
-              <p className="mt-0.5 text-[11px] text-[var(--muted-foreground)]">
+              <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
                 Contatos via WhatsApp ou Messenger direto
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
+        <Card className="overflow-hidden">
           <CardContent className="flex items-start gap-3 p-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[var(--primary)]">
               <BadgeDollarSign className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+              <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                 Receita por Lead
               </p>
-              <p className="mt-1 text-lg font-semibold text-[var(--foreground)]">
+              <p className="mt-1 type-tagline text-[var(--foreground)]">
                 {formatCurrency(receitaPorLead)}
               </p>
-              <p className="mt-0.5 text-[11px] text-[var(--muted-foreground)]">
+              <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
                 Faturamento ÷ total de leads gerados
               </p>
             </div>
@@ -622,17 +600,17 @@ export function HotelFazendaSaoJoaoPanel({
           <CardHeader className="border-b border-border/60 px-6 pb-5 pt-6 sm:px-8">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h3 className="text-xl font-semibold uppercase tracking-tight text-[var(--foreground)] sm:text-2xl">
+                <h3 className="type-tagline uppercase text-[var(--foreground)] ">
                   Resultado comercial
                   <span className="ml-2 text-primary">
                     {isMensal ? "Mês a mês" : isDiario ? "Dia a dia" : "Semana a semana"}
                   </span>
                 </h3>
-                <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+                <p className="mt-1 type-caption text-[var(--muted-foreground)]">
                   Foco em receita, vendas e eficiência para o resort.
                 </p>
               </div>
-              <span className="rounded-full border border-primary/25 bg-primary/12 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--foreground)]">
+              <span className="rounded-full border border-primary/25 bg-primary/12 px-3 py-1 type-caption-strong uppercase text-[var(--foreground)]">
                 {latestFiveSeries.length} {isMensal ? "meses" : isDiario ? "dias" : "semanas"}
               </span>
             </div>
@@ -642,7 +620,7 @@ export function HotelFazendaSaoJoaoPanel({
               <table className="w-full min-w-[860px] border-separate [border-spacing:0_10px]">
                 <thead>
                   <tr>
-                    <th className="w-[220px] px-3 text-left text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">
+                    <th className="w-[220px] px-3 text-left type-micro-legal uppercase text-[var(--muted-foreground)]">
                       Métrica
                     </th>
                     {latestFiveSeries.map((item, index) => {
@@ -656,13 +634,13 @@ export function HotelFazendaSaoJoaoPanel({
                         >
                           <div className="flex flex-col items-center gap-1">
                             <span
-                              className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
+                              className={`type-micro-legal uppercase ${
                                 isLatest ? "text-[var(--primary)]" : "text-[var(--muted-foreground)]"
                               }`}
                             >
                               {isLatest ? "Atual" : isDiario ? "Dia" : isMensal ? "Mês" : "Semana"}
                             </span>
-                            <span className="text-sm font-semibold whitespace-nowrap">{item.periodo}</span>
+                            <span className="type-caption-strong whitespace-nowrap">{item.periodo}</span>
                           </div>
                         </th>
                       );
@@ -696,7 +674,7 @@ export function HotelFazendaSaoJoaoPanel({
                   ].map((metric, metricIdx) => (
                     <tr key={metric.label}>
                       <td className="rounded-l-2xl bg-[var(--muted)] px-4 py-4">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--foreground)]">
+                        <p className="type-caption-strong uppercase text-[var(--foreground)]">
                           {metric.label}
                         </p>
                       </td>
@@ -724,7 +702,7 @@ export function HotelFazendaSaoJoaoPanel({
                                   : "bg-muted/50"
                             }`}
                           >
-                            <span className={`block text-sm font-semibold tabular-nums ${pctColor ?? "text-[var(--foreground)]"}`}>
+                            <span className={`block type-caption-strong tabular-nums ${pctColor ??"text-[var(--foreground)]"}`}>
                               {metric.render(item)}
                             </span>
                           </td>

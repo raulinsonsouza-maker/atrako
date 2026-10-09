@@ -3,6 +3,7 @@
 import React from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { MetricTile } from "@/components/ui";
 import {
   BarChart,
   Bar,
@@ -44,7 +45,7 @@ const tooltipStyle = {
     boxShadow: "0 8px 24px rgba(0,0,0,.35)",
     padding: "10px 14px",
   },
-  labelStyle: { color: "var(--foreground)", fontWeight: 600, marginBottom: 4 },
+  labelStyle: { color: "var(--foreground)", fontWeight: 500, marginBottom: 4 },
   itemStyle: { color: "var(--foreground)", fontSize: 13 },
 };
 
@@ -71,32 +72,14 @@ function KpiCard({
   title,
   value,
   sub,
-  icon: Icon,
-  accent,
 }: {
   title: string;
   value: string;
   sub: string;
-  icon: React.ElementType;
+  icon?: React.ElementType;
   accent?: boolean;
 }) {
-  return (
-    <Card className="group relative overflow-hidden rounded-2xl border-[var(--border)] transition-all hover:border-[color-mix(in_srgb,var(--primary)_20%,var(--border))]">
-      <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--primary)] opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-[0.05]" />
-      <CardContent className="flex items-start gap-4 p-5">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[var(--primary)]">
-          <Icon className="h-5 w-5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">{title}</p>
-          <p className={`mt-1 text-2xl font-semibold tabular-nums leading-none ${accent ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
-            {value}
-          </p>
-          <p className="mt-1.5 text-[11px] text-[var(--muted-foreground)]">{sub}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  return <MetricTile label={title} value={value} detail={sub} />;
 }
 
 function fmt(n: number) {
@@ -252,7 +235,7 @@ function BrazilMap({
       </ComposableMap>
       <div className="mt-2 flex items-center justify-center gap-2">
         <div className="h-2 w-24 rounded-full" style={{ background: "linear-gradient(to right, rgba(249,115,22,0.15), rgba(249,115,22,1))" }} />
-        <span className="text-[10px] text-[var(--muted-foreground)]">Intensidade de leads por UF</span>
+        <span className="type-micro-legal text-[var(--muted-foreground)]">Intensidade de leads por UF</span>
       </div>
     </div>
   );
@@ -398,19 +381,19 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
     return (
       <div className="space-y-4">
         {syncErrType === "account_access" && syncMsg ? (
-          <div className="rounded-2xl border border-amber-500/30 bg-amber-50 p-5 dark:bg-amber-950/20">
+          <div className="rel-card">
             <div className="flex items-start gap-3">
-              <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-600" />
+              <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-[var(--ink)]" />
               <div className="min-w-0">
-                <p className="font-semibold text-amber-800 dark:text-amber-600">
+                <p className="font-semibold text-[var(--ink)]">
                   Conta de anúncios não acessível pelo token
                 </p>
-                <p className="mt-1 text-sm text-amber-700 dark:text-amber-600">{syncMsg}</p>
-                <div className="mt-3 rounded-xl border border-amber-300/50 bg-white/60 p-3 dark:bg-amber-950/30">
-                  <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-600">
+                <p className="mt-1 type-caption text-[var(--ink)]">{syncMsg}</p>
+                <div className="mt-3 rounded-[var(--radius-sm)] border border-[var(--hairline)] bg-[var(--surface-pearl)] p-3">
+                  <p className="flex items-center gap-1.5 type-caption-strong text-[var(--ink)]">
                     <Info className="h-3.5 w-3.5" /> Como corrigir
                   </p>
-                  <ol className="mt-2 space-y-1 pl-4 text-xs text-amber-700 dark:text-amber-600 list-decimal">
+                  <ol className="mt-2 space-y-1 pl-4 type-fine-print text-[var(--ink)] list-decimal">
                     <li>Acesse <strong>business.facebook.com</strong> com a conta do administrador</li>
                     <li>Vá em <strong>Configurações do Negócio → Contas de Anúncios</strong></li>
                     <li>Encontre a conta do cliente e clique em <strong>Adicionar Pessoas</strong></li>
@@ -421,7 +404,7 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
                 <button
                   onClick={handleSync}
                   disabled={syncing}
-                  className="mt-3 inline-flex items-center gap-2 rounded-xl border border-amber-400/50 bg-white/80 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-white dark:bg-amber-950/30 dark:text-amber-600 dark:hover:bg-amber-950/50 disabled:opacity-60"
+                  className="mt-3 inline-flex items-center gap-2 rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-3 py-1.5 type-caption-strong text-[var(--ink)] disabled:opacity-60"
                 >
                   <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
                   {syncing ? "Verificando…" : "Tentar novamente"}
@@ -432,14 +415,14 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
         ) : (
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--card)] px-6 py-16 text-center">
             <AlertTriangle className="h-8 w-8 text-[var(--muted-foreground)]" />
-            <p className="text-sm font-medium text-[var(--foreground)]">Dados de leads indisponíveis</p>
-            <p className="max-w-sm text-xs text-[var(--muted-foreground)]">
+            <p className="type-caption-strong text-[var(--foreground)]">Dados de leads indisponíveis</p>
+            <p className="max-w-sm type-fine-print text-[var(--muted-foreground)]">
               {syncMsg ?? (error instanceof Error ? error.message : "Erro ao carregar dados de leads")}
             </p>
             <button
               onClick={handleSync}
               disabled={syncing}
-              className="mt-2 inline-flex items-center gap-2 rounded-xl bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-60"
+              className="mt-2 inline-flex items-center gap-2 rounded-xl bg-[var(--primary)] px-4 py-2 type-caption-strong text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-60"
             >
               <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
               {syncing ? "Sincronizando…" : "Sincronizar Leads"}
@@ -459,20 +442,20 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
         <div className="flex items-start gap-3">
           <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">Meta Lead Gen</p>
-            <h2 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-[var(--foreground)]">
+            <p className="type-micro-legal uppercase text-[var(--primary)]">Meta Lead Gen</p>
+            <h2 className="flex items-center gap-2 type-tagline text-[var(--foreground)]">
               Lead Scoring
               {isFetching && !isLoading && (
                 <RefreshCw className="h-3.5 w-3.5 animate-spin text-[var(--primary)] opacity-70" />
               )}
             </h2>
-            <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+            <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
               {data.dataInicio} → {data.dataFim} · {dateFilter.label}
             </p>
           </div>
         </div>
         {syncMsg && syncErrType !== "account_access" && (
-          <span className={`rounded-lg border px-3 py-1.5 text-xs ${syncErrType === "generic" || syncErrType === "permission" ? "border-amber-500/30 bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-600" : "border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)]"}`}>
+          <span className={`rounded-lg border px-3 py-1.5 type-fine-print ${syncErrType ==="generic" || syncErrType ==="permission" ?"border-[var(--hairline)] bg-[var(--canvas)] text-[var(--ink)]" :"border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)]"}`}>
             {syncMsg}
           </span>
         )}
@@ -480,21 +463,21 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
 
       {/* ── Account access error banner ── */}
       {syncErrType === "account_access" && syncMsg && (
-        <div className="rounded-2xl border border-amber-500/30 bg-amber-50 p-5 dark:bg-amber-950/20">
+        <div className="rel-card">
           <div className="flex items-start gap-3">
-            <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-600" />
+            <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-[var(--ink)]" />
             <div className="min-w-0">
-              <p className="font-semibold text-amber-800 dark:text-amber-600">
+              <p className="font-semibold text-[var(--ink)]">
                 Conta de anúncios não acessível pelo token
               </p>
-              <p className="mt-1 text-sm text-amber-700 dark:text-amber-600">
+              <p className="mt-1 type-caption text-[var(--ink)]">
                 {syncMsg}
               </p>
-              <div className="mt-3 rounded-xl border border-amber-300/50 bg-white/60 p-3 dark:bg-amber-950/30">
-                <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-600">
+              <div className="mt-3 rounded-[var(--radius-sm)] border border-[var(--hairline)] bg-[var(--surface-pearl)] p-3">
+                <p className="flex items-center gap-1.5 type-caption-strong text-[var(--ink)]">
                   <Info className="h-3.5 w-3.5" /> Como corrigir
                 </p>
-                <ol className="mt-2 space-y-1 pl-4 text-xs text-amber-700 dark:text-amber-600 list-decimal">
+                <ol className="mt-2 space-y-1 pl-4 type-fine-print text-[var(--ink)] list-decimal">
                   <li>Acesse <strong>business.facebook.com</strong> com a conta do administrador do Business Manager</li>
                   <li>Vá em <strong>Configurações do Negócio → Contas de Anúncios</strong></li>
                   <li>Encontre a conta do cliente (Miguel Imóveis) e clique em <strong>Adicionar Pessoas</strong></li>
@@ -510,37 +493,37 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
       {/* ── Barra de filtros ativos ── */}
       {hasAnyFilter && (
         <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--primary)]">Filtros ativos</span>
+          <span className="type-micro-legal uppercase text-[var(--primary)]">Filtros ativos</span>
           <div className="flex flex-1 flex-wrap gap-1.5">
             {tipoFilter && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-[var(--primary)]">
+              <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 type-caption-strong text-[var(--primary)]">
                 Tipo: {tipoFilter} <button onClick={() => setTipoFilter(null)} className="opacity-60 hover:opacity-100">✕</button>
               </span>
             )}
             {estadoFilter && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/10 px-2.5 py-0.5 text-[11px] font-medium text-primary">
+              <span className="inline-flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/10 px-2.5 py-0.5 type-caption-strong text-primary">
                 Estado: {estadoFilter} <button onClick={() => setEstadoFilter(null)} className="opacity-60 hover:opacity-100">✕</button>
               </span>
             )}
             {platformFilter && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-pink-500/30 bg-pink-500/10 px-2.5 py-0.5 text-[11px] font-medium text-pink-400">
+              <span className="inline-flex items-center gap-1 rounded-full border border-pink-500/30 bg-pink-500/10 px-2.5 py-0.5 type-caption-strong text-pink-400">
                 Plataforma: {platformFilter} <button onClick={() => setPlatformFilter(null)} className="opacity-60 hover:opacity-100">✕</button>
               </span>
             )}
             {faixaFilter && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-2.5 py-0.5 text-[11px] font-medium text-yellow-400">
+              <span className="inline-flex items-center gap-1 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-2.5 py-0.5 type-caption-strong text-yellow-400">
                 Faturamento: {formatFaixa(faixaFilter)} <button onClick={() => setFaixaFilter(null)} className="opacity-60 hover:opacity-100">✕</button>
               </span>
             )}
             {gradeFilter && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-positive">
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 type-caption-strong text-positive">
                 Grade: {gradeFilter} <button onClick={() => setGradeFilter(null)} className="opacity-60 hover:opacity-100">✕</button>
               </span>
             )}
           </div>
           <button
             onClick={clearAllFilters}
-            className="shrink-0 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1 text-[11px] font-semibold text-[var(--muted-foreground)] transition hover:text-[var(--foreground)]"
+            className="shrink-0 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1 type-caption-strong text-[var(--muted-foreground)] transition hover:text-[var(--foreground)]"
           >
             Limpar tudo
           </button>
@@ -581,8 +564,8 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className="text-base font-semibold text-[var(--foreground)]">Evolução de Leads</h3>
-              <p className="text-xs text-[var(--muted-foreground)]">
+              <h3 className="type-body-strong text-[var(--foreground)]">Evolução de Leads</h3>
+              <p className="type-fine-print text-[var(--muted-foreground)]">
                 Volume por tipo de empresa ({agrupamento === "mensal" ? "mês" : "semana"})
               </p>
             </div>
@@ -590,7 +573,7 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
               {tipoFilter !== null && (
                 <button
                   onClick={() => setTipoFilter(null)}
-                  className="rounded-lg border border-[var(--border)] bg-muted/50 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--muted-foreground)] transition hover:text-[var(--foreground)]"
+                  className="rounded-lg border border-[var(--border)] bg-muted/50 px-2.5 py-1.5 type-micro-legal uppercase text-[var(--muted-foreground)] transition hover:text-[var(--foreground)]"
                 >
                   Limpar ✕
                 </button>
@@ -600,7 +583,7 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
                   <button
                     key={a}
                     onClick={() => setAgrupamento(a)}
-                    className={`rounded-lg px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-all ${
+                    className={`rounded-lg px-3 py-1.5 type-caption-strong uppercase transition-all ${
                       agrupamento === a
                         ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
                         : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
@@ -640,12 +623,12 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
                     />
                     <div className="mb-1.5 flex items-center justify-between">
                       <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-                      <span className="text-[10px] font-semibold tabular-nums" style={{ color }}>{pct}%</span>
+                      <span className="type-micro-legal tabular-nums" style={{ color }}>{pct}%</span>
                     </div>
-                    <p className="text-xl font-semibold tabular-nums leading-none text-[var(--foreground)]">
+                    <p className="type-tagline tabular-nums leading-none text-[var(--foreground)]">
                       {fmt(t.total)}
                     </p>
-                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
+                    <p className="mt-1 type-micro-legal uppercase text-[var(--muted-foreground)]">
                       {t.tipo}
                     </p>
                     <div className="mt-2 h-0.5 overflow-hidden rounded-full bg-[var(--border)]">
@@ -660,7 +643,7 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
 
         <CardContent className="pt-0">
           {chartData.length === 0 ? (
-            <div className="flex h-48 items-center justify-center text-sm text-[var(--muted-foreground)]">
+            <div className="flex h-48 items-center justify-center type-caption text-[var(--muted-foreground)]">
               Nenhum dado de lead para o período selecionado
             </div>
           ) : (
@@ -703,9 +686,9 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
                       });
                       return (
                         <div style={tooltipStyle.contentStyle} className="min-w-[160px] space-y-1.5">
-                          <p className="text-xs font-semibold" style={tooltipStyle.labelStyle}>{label}</p>
+                          <p className="type-caption-strong " style={tooltipStyle.labelStyle}>{label}</p>
                           {totalEntry && (
-                            <p className="text-sm font-semibold" style={{ color: "var(--primary)" }}>
+                            <p className="type-caption-strong " style={{ color: "var(--primary)" }}>
                               {fmt(Number(totalEntry.value))} leads
                             </p>
                           )}
@@ -715,11 +698,11 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
                                 const v = chartData.find((d) => d.periodo === label)?.[t];
                                 return (
                                   <div key={t} className="flex items-center justify-between gap-4">
-                                    <span className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+                                    <span className="flex items-center gap-1.5 type-fine-print" style={{ color: "var(--muted-foreground)" }}>
                                       <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: getColor(t, i) }} />
                                       {t}
                                     </span>
-                                    <span className="text-[11px] font-semibold" style={{ color: "var(--foreground)" }}>{fmt(Number(v))}</span>
+                                    <span className="type-caption-strong " style={{ color: "var(--foreground)" }}>{fmt(Number(v))}</span>
                                   </div>
                                 );
                               })}
@@ -727,11 +710,11 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
                           )}
                           {cplEntry?.value != null && (
                             <div className="flex items-center justify-between gap-4 border-t border-border pt-1.5">
-                              <span className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+                              <span className="flex items-center gap-1.5 type-fine-print" style={{ color: "var(--muted-foreground)" }}>
                                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
                                 CPL
                               </span>
-                              <span className="text-[11px] font-semibold" style={{ color: "var(--primary)" }}>{fmtCurrency(Number(cplEntry.value))}</span>
+                              <span className="type-caption-strong " style={{ color: "var(--primary)" }}>{fmtCurrency(Number(cplEntry.value))}</span>
                             </div>
                           )}
                         </div>
@@ -780,13 +763,13 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
             <CardHeader className="pb-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-base font-semibold text-[var(--foreground)]">Classificação de Leads</h3>
-                  <p className="text-xs text-[var(--muted-foreground)]">Por faixa de faturamento declarado · clique para filtrar</p>
+                  <h3 className="type-body-strong text-[var(--foreground)]">Classificação de Leads</h3>
+                  <p className="type-fine-print text-[var(--muted-foreground)]">Por faixa de faturamento declarado · clique para filtrar</p>
                 </div>
                 {gradeFilter && (
                   <button
                     onClick={() => setGradeFilter(null)}
-                    className="rounded-lg border border-[var(--border)] bg-muted/50 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--muted-foreground)] transition hover:text-[var(--foreground)]"
+                    className="rounded-lg border border-[var(--border)] bg-muted/50 px-2.5 py-1.5 type-micro-legal uppercase text-[var(--muted-foreground)] transition hover:text-[var(--foreground)]"
                   >
                     Limpar ✕
                   </button>
@@ -846,17 +829,17 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
 
                       {/* Grade letter */}
                       <div
-                        className="flex h-11 w-11 items-center justify-center rounded-xl text-2xl font-semibold"
+                        className="flex h-11 w-11 items-center justify-center rounded-xl type-tagline "
                         style={{ color, backgroundColor: `${color}20` }}
                       >
                         {g.grade}
                       </div>
 
                       {/* Count */}
-                      <p className="mt-2.5 text-2xl font-semibold tabular-nums leading-none text-[var(--foreground)]">
+                      <p className="mt-2.5 type-tagline tabular-nums leading-none text-[var(--foreground)]">
                         {fmt(g.total)}
                       </p>
-                      <p className="mt-0.5 text-[10px] font-semibold tabular-nums" style={{ color }}>
+                      <p className="mt-0.5 type-micro-legal tabular-nums" style={{ color }}>
                         {pct.toFixed(1)}%
                       </p>
 
@@ -869,7 +852,7 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
                       </div>
 
                       {/* Label */}
-                      <p className="mt-2 text-[9px] font-semibold leading-tight text-[var(--muted-foreground)]">
+                      <p className="mt-2 type-micro-legal leading-tight text-[var(--muted-foreground)]">
                         {g.label}
                       </p>
                     </button>
@@ -880,7 +863,7 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
               {/* Legend */}
               <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
                 {data.gradeDistribuicao.map((g) => (
-                  <span key={g.grade} className="flex items-center gap-1.5 text-[10px] text-[var(--muted-foreground)]">
+                  <span key={g.grade} className="flex items-center gap-1.5 type-micro-legal text-[var(--muted-foreground)]">
                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: GRADE_COLORS[g.grade] }} />
                     <span className="font-semibold" style={{ color: GRADE_COLORS[g.grade] }}>{g.grade}</span>
                     <span>— {g.label}</span>
@@ -915,19 +898,19 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
                 <div className="mt-1 h-6 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-base font-semibold text-[var(--foreground)]">Leads por Estado</h3>
+                    <h3 className="type-body-strong text-[var(--foreground)]">Leads por Estado</h3>
                     {isHighConc && (
-                      <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--primary)]">
+                      <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 type-micro-legal uppercase text-[var(--primary)]">
                         Alta concentração na 1ª UF
                       </span>
                     )}
                     {isPicoAcimaMed && (
-                      <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-600">
+                      <span className="rounded-full border border-[var(--hairline)] bg-[var(--surface-pearl)] px-2.5 py-0.5 type-micro-legal uppercase text-[var(--ink)]">
                         Mês pico acima da média
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-[var(--muted-foreground)]">
+                  <p className="type-fine-print text-[var(--muted-foreground)]">
                     Derivado do DDD do telefone informado no formulário · clique no estado para filtrar
                   </p>
                 </div>
@@ -938,29 +921,29 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
             <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {/* Volume com UF */}
               <div className="rounded-2xl border border-[var(--border)] bg-pearl px-4 py-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Volume com UF</p>
-                <p className="mt-1 text-2xl font-semibold tabular-nums text-[var(--foreground)]">{fmt(totalEstados)}</p>
-                <p className="mt-0.5 text-[11px] text-[var(--muted-foreground)]">{numUfs} UFs · média {Math.round(avgPorUf)} / UF</p>
+                <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Volume com UF</p>
+                <p className="mt-1 type-tagline tabular-nums text-[var(--foreground)]">{fmt(totalEstados)}</p>
+                <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">{numUfs} UFs · média {Math.round(avgPorUf)} / UF</p>
               </div>
               {/* 1ª Colocada */}
               <div className="rounded-2xl border border-[var(--border)] bg-pearl px-4 py-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">1ª Colocada</p>
-                <p className="mt-1 text-2xl font-semibold tabular-nums text-[var(--primary)]">{top1?.estado ?? "—"}</p>
-                <p className="mt-0.5 text-[11px] text-[var(--muted-foreground)]">
+                <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">1ª Colocada</p>
+                <p className="mt-1 type-tagline tabular-nums text-[var(--primary)]">{top1?.estado ?? "—"}</p>
+                <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
                   {top1Pct.toFixed(1)}% do volume · {top1Ratio.toFixed(1)}× a méd/UF
                 </p>
               </div>
               {/* Top 3 UFs */}
               <div className="rounded-2xl border border-[var(--border)] bg-pearl px-4 py-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Top 3 UFs</p>
-                <p className="mt-1 text-2xl font-semibold tabular-nums text-[var(--foreground)]">{top3Pct.toFixed(1)}%</p>
-                <p className="mt-0.5 text-[11px] text-[var(--muted-foreground)]">Participação cumulativa</p>
+                <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Top 3 UFs</p>
+                <p className="mt-1 type-tagline tabular-nums text-[var(--foreground)]">{top3Pct.toFixed(1)}%</p>
+                <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">Participação cumulativa</p>
               </div>
               {/* Pico mensal */}
               <div className="rounded-2xl border border-[var(--border)] bg-pearl px-4 py-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Pico Mensal</p>
-                <p className="mt-1 text-2xl font-semibold tabular-nums text-[var(--foreground)]">{picoPeriodo?.periodo ?? "—"}</p>
-                <p className="mt-0.5 text-[11px] text-[var(--muted-foreground)]">
+                <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Pico Mensal</p>
+                <p className="mt-1 type-tagline tabular-nums text-[var(--foreground)]">{picoPeriodo?.periodo ?? "—"}</p>
+                <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
                   {picoPeriodo ? `${fmt(picoPeriodo.total)} leads · média ${Math.round(avgLeadsPorMes)}` : "Sem dados"}
                 </p>
               </div>
@@ -981,10 +964,10 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
                     </div>
                     {/* Lista de estados */}
                     <div className="flex-1 min-w-0">
-                    <p className="mb-1 text-[11px] font-semibold text-[var(--muted-foreground)]">
+                    <p className="mb-1 type-caption-strong text-[var(--muted-foreground)]">
                       Volume por estado · {numUfs} UFs com lead · {totalEstados} com UF · {fmt(data.kpis.totalLeads)} na base
                     </p>
-                    <p className="mb-2 text-[10px] text-[var(--muted-foreground)]">Role a lista para ver todas as UFs</p>
+                    <p className="mb-2 type-micro-legal text-[var(--muted-foreground)]">Role a lista para ver todas as UFs</p>
                     <div className="max-h-72 space-y-1 overflow-y-auto pr-1">
                       {data.estadosDistribuicao.map((e, i) => {
                         const pct = totalEstados > 0 ? (e.total / totalEstados) * 100 : 0;
@@ -1000,9 +983,9 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
                                 : "hover:bg-parchment"
                             }`}
                           >
-                            <span className="w-5 shrink-0 text-center text-[10px] font-semibold text-[var(--muted-foreground)]">{i + 1}</span>
+                            <span className="w-5 shrink-0 text-center type-micro-legal text-[var(--muted-foreground)]">{i + 1}</span>
                             <div className="w-[100px] shrink-0">
-                              <p className="text-xs font-semibold text-[var(--foreground)]">
+                              <p className="type-caption-strong text-[var(--foreground)]">
                                 {e.estado} <span className="font-normal text-[var(--muted-foreground)]">· {ESTADO_LABELS[e.estado] ?? e.estado}</span>
                               </p>
                             </div>
@@ -1010,7 +993,7 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
                               <div className="flex-1 overflow-hidden rounded-full bg-[var(--border)]" style={{ height: 6 }}>
                                 <div className="h-full rounded-full bg-[var(--primary)] transition-all" style={{ width: `${barWidth}%` }} />
                               </div>
-                              <span className="w-6 shrink-0 text-right text-sm font-semibold tabular-nums text-[var(--foreground)]">{e.total}</span>
+                              <span className="w-6 shrink-0 text-right type-caption-strong tabular-nums text-[var(--foreground)]">{e.total}</span>
                             </div>
                           </button>
                         );
@@ -1026,15 +1009,15 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
                 <CardHeader className="pb-1 pt-4">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h4 className="text-sm font-semibold text-[var(--foreground)]">
+                      <h4 className="type-caption-strong text-[var(--foreground)]">
                         Leads gerados por {agrupamento === "mensal" ? "mês" : "semana"}
                       </h4>
-                      <p className="text-[11px] text-[var(--muted-foreground)]">
+                      <p className="type-fine-print text-[var(--muted-foreground)]">
                         Clique na barra para filtrar o painel pelo {agrupamento === "mensal" ? "mês" : "semana"}. Linha tracejada = média no período.
                       </p>
                     </div>
                     {estadoFilter && (
-                      <span className="shrink-0 rounded-lg border border-primary/30 bg-primary/10 px-2 py-1 text-[10px] font-semibold text-[var(--primary)]">
+                      <span className="shrink-0 rounded-lg border border-primary/30 bg-primary/10 px-2 py-1 type-micro-legal text-[var(--primary)]">
                         {estadoFilter}
                       </span>
                     )}
@@ -1042,7 +1025,7 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
                 </CardHeader>
                 <CardContent>
                   {chartData.length === 0 ? (
-                    <div className="flex h-40 items-center justify-center text-xs text-[var(--muted-foreground)]">Sem dados</div>
+                    <div className="flex h-40 items-center justify-center type-fine-print text-[var(--muted-foreground)]">Sem dados</div>
                   ) : (
                     <div className="h-56">
                       <ResponsiveContainer width="100%" height="100%">
@@ -1093,8 +1076,8 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
           <div className="mb-4 flex items-start gap-3">
             <div className="mt-1 h-6 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
             <div>
-              <h3 className="text-base font-semibold text-[var(--foreground)]">Leads por Campanha</h3>
-              <p className="text-xs text-[var(--muted-foreground)]">Distribuição de leads por campanha com CPL estimado</p>
+              <h3 className="type-body-strong text-[var(--foreground)]">Leads por Campanha</h3>
+              <p className="type-fine-print text-[var(--muted-foreground)]">Distribuição de leads por campanha com CPL estimado</p>
             </div>
           </div>
           <Card className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)]">
@@ -1103,10 +1086,10 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
                 <table className="w-full min-w-[500px] border-separate [border-spacing:0_6px]">
                   <thead>
                     <tr>
-                      <th className="px-4 pb-1 text-left text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Campanha</th>
-                      <th className="px-4 pb-1 text-right text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Leads</th>
-                      <th className="px-4 pb-1 text-right text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Participação</th>
-                      <th className="px-4 pb-1 text-right text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Invest. Est.*</th>
+                      <th className="px-4 pb-1 text-left type-micro-legal uppercase text-[var(--muted-foreground)]">Campanha</th>
+                      <th className="px-4 pb-1 text-right type-micro-legal uppercase text-[var(--muted-foreground)]">Leads</th>
+                      <th className="px-4 pb-1 text-right type-micro-legal uppercase text-[var(--muted-foreground)]">Participação</th>
+                      <th className="px-4 pb-1 text-right type-micro-legal uppercase text-[var(--muted-foreground)]">Invest. Est.*</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1115,24 +1098,24 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
                         <td className="rounded-l-2xl bg-pearl px-4 py-3 transition-colors group-hover:bg-parchment">
                           <div className="flex items-center gap-2">
                             <Megaphone className="h-3.5 w-3.5 shrink-0 text-[var(--primary)]" />
-                            <span className="line-clamp-2 max-w-[400px] break-words text-xs font-medium leading-snug text-[var(--foreground)]">
+                            <span className="line-clamp-2 max-w-[400px] break-words type-caption-strong leading-snug text-[var(--foreground)]">
                               {c.campaignName ?? c.campaignId}
                             </span>
                           </div>
                         </td>
                         <td className="bg-pearl px-4 py-3 text-right transition-colors group-hover:bg-parchment">
-                          <span className="text-sm font-semibold text-[var(--primary)]">{fmt(c.leads)}</span>
+                          <span className="type-caption-strong text-[var(--primary)]">{fmt(c.leads)}</span>
                         </td>
                         <td className="bg-pearl px-4 py-3 text-right transition-colors group-hover:bg-parchment">
                           <div className="flex items-center justify-end gap-2">
                             <div className="h-1.5 w-20 overflow-hidden rounded-full bg-[var(--border)]">
                               <div className="h-full rounded-full bg-[var(--primary)]" style={{ width: `${c.participacao}%` }} />
                             </div>
-                            <span className="text-xs text-[var(--muted-foreground)]">{c.participacao.toFixed(1)}%</span>
+                            <span className="type-fine-print text-[var(--muted-foreground)]">{c.participacao.toFixed(1)}%</span>
                           </div>
                         </td>
                         <td className="rounded-r-2xl bg-pearl px-4 py-3 text-right transition-colors group-hover:bg-parchment">
-                          <span className="text-xs text-[var(--muted-foreground)]">
+                          <span className="type-fine-print text-[var(--muted-foreground)]">
                             {c.investimentoAtribuidoEst != null ? fmtCurrency(c.investimentoAtribuidoEst) : "—"}
                           </span>
                         </td>
@@ -1143,7 +1126,7 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
               </div>
             </CardContent>
           </Card>
-          <p className="mt-2 text-[10px] text-[var(--muted-foreground)]">
+          <p className="mt-2 type-micro-legal text-[var(--muted-foreground)]">
             * Investimento estimado: distribuição proporcional do total investido no canal META com base na parcela de leads por campanha. O Meta Ads API não expõe custo por campanha neste endpoint.
           </p>
         </section>
@@ -1156,8 +1139,8 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
             <div className="flex items-start gap-3">
               <div className="mt-1 h-6 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
               <div>
-                <h3 className="text-base font-semibold text-[var(--foreground)]">Distribuição</h3>
-                <p className="text-xs text-[var(--muted-foreground)]">Clique em qualquer barra ou card para filtrar os leads</p>
+                <h3 className="type-body-strong text-[var(--foreground)]">Distribuição</h3>
+                <p className="type-fine-print text-[var(--muted-foreground)]">Clique em qualquer barra ou card para filtrar os leads</p>
               </div>
             </div>
           </div>
@@ -1172,7 +1155,7 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
             };
             return (
               <div className="mb-6">
-                <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Plataforma</p>
+                <p className="mb-2 type-micro-legal uppercase text-[var(--muted-foreground)]">Plataforma</p>
                 <div className="flex flex-wrap gap-3">
                   {data.platformDistribuicao.map((p) => {
                     const pct = total > 0 ? Math.round((p.total / total) * 100) : 0;
@@ -1195,11 +1178,11 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
                         />
                         <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: color }} />
                         <div>
-                          <p className="text-sm font-semibold text-[var(--foreground)]">{p.platform}</p>
-                          <p className="text-[11px] text-[var(--muted-foreground)]">{p.total.toLocaleString("pt-BR")} leads · {pct}%</p>
+                          <p className="type-caption-strong text-[var(--foreground)]">{p.platform}</p>
+                          <p className="type-fine-print text-[var(--muted-foreground)]">{p.total.toLocaleString("pt-BR")} leads · {pct}%</p>
                         </div>
                         {isActive && (
-                          <span className="ml-2 text-[10px] font-semibold" style={{ color }}>✓ Ativo</span>
+                          <span className="ml-2 type-micro-legal " style={{ color }}>✓ Ativo</span>
                         )}
                       </button>
                     );
@@ -1214,8 +1197,8 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
             {data.tiposDistribuicao.length > 0 && (
               <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
                 <CardHeader className="pb-2 pt-4">
-                  <h4 className="text-sm font-semibold text-[var(--foreground)]">Por Tipo de Empresa</h4>
-                  <p className="text-[11px] text-[var(--muted-foreground)]">Clique na barra para filtrar</p>
+                  <h4 className="type-caption-strong text-[var(--foreground)]">Por Tipo de Empresa</h4>
+                  <p className="type-fine-print text-[var(--muted-foreground)]">Clique na barra para filtrar</p>
                 </CardHeader>
                 <CardContent>
                   <div className="h-56">
@@ -1267,8 +1250,8 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
             {data.faturamentoDistribuicao.length > 0 && (
               <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
                 <CardHeader className="pb-2 pt-4">
-                  <h4 className="text-sm font-semibold text-[var(--foreground)]">Por Faixa de Faturamento</h4>
-                  <p className="text-[11px] text-[var(--muted-foreground)]">Clique na barra para filtrar</p>
+                  <h4 className="type-caption-strong text-[var(--foreground)]">Por Faixa de Faturamento</h4>
+                  <p className="type-fine-print text-[var(--muted-foreground)]">Clique na barra para filtrar</p>
                 </CardHeader>
                 <CardContent>
                   <div className="h-56">
@@ -1328,8 +1311,8 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
           <div className="flex items-start gap-3">
             <div className="mt-1 h-6 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
             <div>
-              <h3 className="text-base font-semibold text-[var(--foreground)]">Leads Individuais</h3>
-              <p className="text-xs text-[var(--muted-foreground)]">
+              <h3 className="type-body-strong text-[var(--foreground)]">Leads Individuais</h3>
+              <p className="type-fine-print text-[var(--muted-foreground)]">
                 {data.totalFilteredCount.toLocaleString("pt-BR")} lead{data.totalFilteredCount !== 1 ? "s" : ""}
                 {hasAnyFilter ? " filtrados" : " no período"}
               </p>
@@ -1338,35 +1321,35 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
           {hasAnyFilter && (
             <div className="flex flex-wrap items-center gap-1.5">
               {tipoFilter && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-[var(--primary)]">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 type-caption-strong text-[var(--primary)]">
                   <span className="h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
                   Tipo: {tipoFilter}
                   <button onClick={() => setTipoFilter(null)} className="opacity-60 hover:opacity-100">✕</button>
                 </span>
               )}
               {estadoFilter && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-2.5 py-1 type-caption-strong text-primary">
                   <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
                   Estado: {estadoFilter}
                   <button onClick={() => setEstadoFilter(null)} className="opacity-60 hover:opacity-100">✕</button>
                 </span>
               )}
               {platformFilter && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-500/30 bg-pink-500/10 px-2.5 py-1 text-[11px] font-medium text-pink-400">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-500/30 bg-pink-500/10 px-2.5 py-1 type-caption-strong text-pink-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-pink-400" />
                   Plataforma: {platformFilter}
                   <button onClick={() => setPlatformFilter(null)} className="opacity-60 hover:opacity-100">✕</button>
                 </span>
               )}
               {faixaFilter && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-2.5 py-1 text-[11px] font-medium text-yellow-400">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-2.5 py-1 type-caption-strong text-yellow-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
                   Faturamento: {formatFaixa(faixaFilter)}
                   <button onClick={() => setFaixaFilter(null)} className="opacity-60 hover:opacity-100">✕</button>
                 </span>
               )}
               {gradeFilter && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-positive">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 type-caption-strong text-positive">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                   Grade: {gradeFilter}
                   <button onClick={() => setGradeFilter(null)} className="opacity-60 hover:opacity-100">✕</button>
@@ -1375,7 +1358,7 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
               {[tipoFilter, estadoFilter, platformFilter, faixaFilter, gradeFilter].filter(Boolean).length > 1 && (
                 <button
                   onClick={clearAllFilters}
-                  className="rounded-full border border-[var(--border)] bg-[var(--card)] px-2.5 py-1 text-[11px] font-semibold text-[var(--muted-foreground)] transition hover:text-[var(--foreground)]"
+                  className="rounded-full border border-[var(--border)] bg-[var(--card)] px-2.5 py-1 type-caption-strong text-[var(--muted-foreground)] transition hover:text-[var(--foreground)]"
                 >
                   Limpar tudo
                 </button>
@@ -1387,8 +1370,8 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
         {data.leads.length === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--card)] px-6 py-12 text-center">
             <Users className="h-8 w-8 text-[var(--muted-foreground)]" />
-            <p className="text-sm font-medium text-[var(--foreground)]">Nenhum lead encontrado</p>
-            <p className="text-xs text-[var(--muted-foreground)]">
+            <p className="type-caption-strong text-[var(--foreground)]">Nenhum lead encontrado</p>
+            <p className="type-fine-print text-[var(--muted-foreground)]">
               Ajuste os filtros ou sincronize os leads via botão acima.
             </p>
           </div>
@@ -1399,14 +1382,14 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
                 <table className="w-full min-w-[700px] border-separate [border-spacing:0_6px]">
                   <thead>
                     <tr>
-                      <th className="px-4 pb-1 text-left text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Data</th>
-                      <th className="px-4 pb-1 text-left text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Nome / Empresa</th>
-                      <th className="px-4 pb-1 text-left text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Tipo</th>
-                      <th className="px-4 pb-1 text-left text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Faturamento</th>
-                      <th className="px-4 pb-1 text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Grade</th>
-                      <th className="px-4 pb-1 text-left text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Est.</th>
-                      <th className="px-4 pb-1 text-left text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Plat.</th>
-                      <th className="px-4 pb-1 text-left text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Campanha</th>
+                      <th className="px-4 pb-1 text-left type-micro-legal uppercase text-[var(--muted-foreground)]">Data</th>
+                      <th className="px-4 pb-1 text-left type-micro-legal uppercase text-[var(--muted-foreground)]">Nome / Empresa</th>
+                      <th className="px-4 pb-1 text-left type-micro-legal uppercase text-[var(--muted-foreground)]">Tipo</th>
+                      <th className="px-4 pb-1 text-left type-micro-legal uppercase text-[var(--muted-foreground)]">Faturamento</th>
+                      <th className="px-4 pb-1 text-center type-micro-legal uppercase text-[var(--muted-foreground)]">Grade</th>
+                      <th className="px-4 pb-1 text-left type-micro-legal uppercase text-[var(--muted-foreground)]">Est.</th>
+                      <th className="px-4 pb-1 text-left type-micro-legal uppercase text-[var(--muted-foreground)]">Plat.</th>
+                      <th className="px-4 pb-1 text-left type-micro-legal uppercase text-[var(--muted-foreground)]">Campanha</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1424,47 +1407,47 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
                         return (
                           <tr key={lead.id} className="group">
                             <td className="rounded-l-2xl bg-pearl px-4 py-3 transition-colors group-hover:bg-parchment">
-                              <p className="whitespace-nowrap text-xs font-semibold text-[var(--foreground)]">{dateStr}</p>
+                              <p className="whitespace-nowrap type-caption-strong text-[var(--foreground)]">{dateStr}</p>
                             </td>
                             <td className="bg-pearl px-4 py-3 transition-colors group-hover:bg-parchment">
-                              <p className="max-w-[140px] truncate text-xs font-semibold text-[var(--foreground)]">
+                              <p className="max-w-[140px] truncate type-caption-strong text-[var(--foreground)]">
                                 {lead.fullName ?? lead.nomeEmpresa ?? "—"}
                               </p>
                               {lead.fullName && lead.nomeEmpresa && (
-                                <p className="max-w-[140px] truncate text-[11px] text-[var(--muted-foreground)]">{lead.nomeEmpresa}</p>
+                                <p className="max-w-[140px] truncate type-fine-print text-[var(--muted-foreground)]">{lead.nomeEmpresa}</p>
                               )}
                             </td>
                             <td className="bg-pearl px-4 py-3 transition-colors group-hover:bg-parchment">
-                              <span className="text-xs text-[var(--muted-foreground)]">{lead.tipoEmpresa ?? "—"}</span>
+                              <span className="type-fine-print text-[var(--muted-foreground)]">{lead.tipoEmpresa ?? "—"}</span>
                             </td>
                             <td className="bg-pearl px-4 py-3 transition-colors group-hover:bg-parchment">
-                              <span className="max-w-[130px] truncate text-xs text-[var(--muted-foreground)]">
+                              <span className="max-w-[130px] truncate type-fine-print text-[var(--muted-foreground)]">
                                 {formatFaixa(lead.faixaFaturamento)}
                               </span>
                             </td>
                             <td className="bg-pearl px-4 py-3 text-center transition-colors group-hover:bg-parchment">
                               <span
-                                className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-[11px] font-semibold"
+                                className="inline-flex h-6 w-6 items-center justify-center rounded-lg type-caption-strong "
                                 style={{ color: gradeColor, backgroundColor: `${gradeColor}20` }}
                               >
                                 {grade}
                               </span>
                             </td>
                             <td className="bg-pearl px-4 py-3 transition-colors group-hover:bg-parchment">
-                              <span className="text-xs font-semibold text-[var(--foreground)]">{lead.estado ?? "—"}</span>
+                              <span className="type-caption-strong text-[var(--foreground)]">{lead.estado ?? "—"}</span>
                             </td>
                             <td className="bg-pearl px-4 py-3 transition-colors group-hover:bg-parchment">
                               {lead.platform ? (
                                 <span className="inline-flex items-center gap-1.5">
                                   <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: platColor }} />
-                                  <span className="text-xs text-[var(--muted-foreground)]">{lead.platform}</span>
+                                  <span className="type-fine-print text-[var(--muted-foreground)]">{lead.platform}</span>
                                 </span>
                               ) : (
-                                <span className="text-xs text-[var(--muted-foreground)]">—</span>
+                                <span className="type-fine-print text-[var(--muted-foreground)]">—</span>
                               )}
                             </td>
                             <td className="rounded-r-2xl bg-pearl px-4 py-3 transition-colors group-hover:bg-parchment">
-                              <p className="max-w-[140px] truncate text-xs text-[var(--muted-foreground)]">
+                              <p className="max-w-[140px] truncate type-fine-print text-[var(--muted-foreground)]">
                                 {lead.campaignName ?? lead.formName ?? "—"}
                               </p>
                             </td>
@@ -1480,7 +1463,7 @@ export function LeadScoringPanel({ clienteId, dateFilter }: Props) {
         )}
 
         {data.leadsTruncated && (
-          <p className="mt-3 text-center text-[11px] text-[var(--muted-foreground)]">
+          <p className="mt-3 text-center type-fine-print text-[var(--muted-foreground)]">
             Exibindo 500 de {data.totalFilteredCount.toLocaleString("pt-BR")} leads. Use os filtros de tipo, estado, plataforma ou faturamento para refinar.
           </p>
         )}

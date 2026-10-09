@@ -123,7 +123,7 @@ const pct = (part: number, total: number) => (total > 0 ? round2((part / total) 
 const delta = (cur: number, prev: number) => (prev > 0 ? round2(((cur - prev) / prev) * 100) : null);
 
 function periodOf(args: Record<string, unknown>, rt: ToolRuntime): AtrakoPeriod {
-  return resolvePeriod(args, rt.ctx.today);
+  return resolvePeriod(args, rt.ctx.today, rt.ctx.timezone);
 }
 
 function periodSource(p: AtrakoPeriod): ToolSource["period"] {
@@ -356,15 +356,19 @@ async function salesSnapshot(clienteId: string, r: { gte: Date; lte: Date }) {
     ticketMedio: pedidos ? round2(receita / pedidos) : null,
     cancelados,
     investimentoMidia: investimento,
-    roasGeral: investimento > 0 ? round2(receita / investimento) : null,
     porLoja: stores,
     porOrigem: [...byOrigin.values()].map((b) => ({ ...b, receita: round2(b.receita) })).sort((a, b) => b.receita - a.receita),
-    midia: media.map((m) => ({
-      canal: PROVIDER_LABELS[m.canal] ?? m.canal,
-      investimento: round2(Number(m._sum.investimento ?? 0)),
-      comprasReportadas: m._sum.purchases ?? 0,
-      valorReportado: round2(Number(m._sum.websitePurchasesConversionValue ?? 0)),
-    })),
+    midia: media.map((m) => {
+      const investimentoCanal = round2(Number(m._sum.investimento ?? 0));
+      const valorReportado = round2(Number(m._sum.websitePurchasesConversionValue ?? 0));
+      return {
+        canal: PROVIDER_LABELS[m.canal] ?? m.canal,
+        investimento: investimentoCanal,
+        comprasReportadas: m._sum.purchases ?? 0,
+        valorReportado,
+        roas: investimentoCanal > 0 ? round2(valorReportado / investimentoCanal) : null,
+      };
+    }),
   };
 }
 
@@ -381,12 +385,13 @@ export const READ_TOOLS: AtrakoTool[] = [
     async run(args, rt) {
       const p = periodOf(args, rt);
       const id = rt.ctx.clienteId;
-      const [cur, prev, leads, prevLeads, carts, bookings, conversas] = await Promise.all([
+      const [cur, prev, leads, prevLeads, carts, recovery, bookings, conversas] = await Promise.all([
         salesSnapshot(id, range(p)),
         salesSnapshot(id, prevRange(p)),
         prisma.nativeLead.count({ where: { clienteId: id, createdAt: range(p) } }),
         prisma.nativeLead.count({ where: { clienteId: id, createdAt: prevRange(p) } }),
         getAbandonedCartSummary(id).catch(() => null),
+        getCartRecoveryMetrics(id, range(p)).catch(() => null),
         prisma.agendaBooking.count({ where: { clienteId: id, startAt: range(p) } }),
         prisma.waConversation.count({ where: { clienteId: id, createdAt: range(p) } }),
       ]);
@@ -401,12 +406,20 @@ export const READ_TOOLS: AtrakoTool[] = [
           },
           midia: {
             investimento: cur.investimentoMidia,
-            roasGeral: cur.roasGeral,
+            porCanal: cur.midia,
             variacaoInvestimentoPct: delta(cur.investimentoMidia, prev.investimentoMidia),
+            nota: "ROAS é o de cada canal (valor reportado pela plataforma ÷ investimento). Receita da loja inclui orgânico e não é ROAS.",
           },
           leadsNovos: { atual: leads, anterior: prevLeads, variacaoPct: delta(leads, prevLeads) },
-          carrinhosAbertos: carts
-            ? { quantidade: carts.openCount, valor: money(carts.openValueCents), taxaRecuperacao: carts.recoveryRate }
+          carrinhosNoPeriodo: recovery?.abandoned
+            ? { quantidade: recovery.abandoned.count, valor: money(recovery.abandoned.cents), recuperados: recovery.recovered.count }
+            : { quantidade: 0, valor: 0, recuperados: 0 },
+          estoqueAberto: carts
+            ? {
+                quantidade: carts.openCount,
+                valor: money(carts.openValueCents),
+                nota: "Saldo atual do funil, de qualquer data. Não é o período perguntado.",
+              }
             : null,
           agendamentos: bookings,
           conversasWhatsApp: conversas,
@@ -683,7 +696,7 @@ export const READ_TOOLS: AtrakoTool[] = [
     name: "carrinhos_abandonados",
     step: "Checando carrinhos abandonados",
     description:
-      "Totais de carrinhos abandonados: em aberto (quantidade e valor), recuperados no período, taxa de recuperação, quanto foi recuperado por mensagem vs sozinho, e por idade do carrinho. Para carrinhos individuais (último, maior, de quem, o que tinha) use carrinhos_lista.",
+      "Carrinhos do período pedido (abandonados e recuperados naquelas datas) e, separado, o saldo aberto agora. Pergunta com período usa só `periodo`. `estoqueAberto` ignora a data. Para um carrinho específico use carrinhos_lista.",
     parameters: periodSchema(),
     risk: "READ",
     async run(args, rt) {
@@ -694,15 +707,7 @@ export const READ_TOOLS: AtrakoTool[] = [
       ]);
       return {
         data: {
-          agora: summary
-            ? {
-                abertos: summary.openCount,
-                valorAberto: money(summary.openValueCents),
-                recuperadosNoMes: summary.recoveredMonthCount,
-                valorRecuperadoNoMes: money(summary.recoveredMonthCents),
-                taxaRecuperacaoPct: summary.recoveryRate == null ? null : round2(summary.recoveryRate * 100),
-              }
-            : null,
+          como_responder: "Pergunta de período: cite só `periodo`. `estoqueAberto` é o funil inteiro, com carrinhos de meses anteriores.",
           periodo: recovery
             ? {
                 abandonados: recovery.abandoned ? { quantidade: recovery.abandoned.count, valor: money(recovery.abandoned.cents) } : null,
@@ -713,6 +718,13 @@ export const READ_TOOLS: AtrakoTool[] = [
                 deClientesAntigos: recovery.fromCustomers.count,
                 deNovosClientes: recovery.fromNew.count,
                 porIdade: recovery.byAge.map((b) => ({ faixa: b.label, quantidade: b.count, valor: money(b.cents) })),
+              }
+            : null,
+          estoqueAberto: summary
+            ? {
+                quantidade: summary.openCount,
+                valor: money(summary.openValueCents),
+                nota: "Saldo aberto agora, fora do período.",
               }
             : null,
         },

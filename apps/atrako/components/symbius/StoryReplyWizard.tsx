@@ -174,7 +174,7 @@ export function StoryReplyWizard({
       }
       previewHeader={
         <>
-          <p className="text-[13px] font-semibold text-zinc-600">
+          <p className="type-caption-strong text-zinc-600">
             Visualização
           </p>
           <ActivateButton loading={loading} onClick={activate} />

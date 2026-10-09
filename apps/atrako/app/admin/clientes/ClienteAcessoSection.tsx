@@ -24,7 +24,7 @@ const ROLE_OPTIONS = [
 const ROLE_LABEL = Object.fromEntries(ROLE_OPTIONS.map((r) => [r.value, r.label]));
 
 const inputClass =
-  "w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm transition-colors focus:border-[var(--primary)]/40 focus:outline-none";
+  "w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 type-caption transition-colors focus:border-[var(--primary)]/40 focus:outline-none";
 
 export function ClienteAcessoSection({ clienteId }: { clienteId: string }) {
   const queryClient = useQueryClient();
@@ -91,7 +91,7 @@ export function ClienteAcessoSection({ clienteId }: { clienteId: string }) {
     <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--muted)]/10 p-4">
       <div className="flex items-center gap-2">
         <div className="h-1 w-1 rounded-full bg-[var(--primary)]" />
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+        <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
           Acesso do cliente
         </p>
       </div>
@@ -99,16 +99,16 @@ export function ClienteAcessoSection({ clienteId }: { clienteId: string }) {
       {members.length > 0 ? (
         <ul className="divide-y divide-[var(--border)] rounded-xl border border-[var(--border)]">
           {members.map((m) => (
-            <li key={m.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+            <li key={m.id} className="flex items-center justify-between gap-3 px-3 py-2 type-caption">
               <span className="truncate text-[var(--foreground)]">{m.email}</span>
-              <span className="shrink-0 text-xs text-[var(--muted-foreground)]">
+              <span className="shrink-0 type-fine-print text-[var(--muted-foreground)]">
                 {ROLE_LABEL[m.role] ?? m.role} · {m.hasPassword ? "senha definida" : "convite pendente"}
               </span>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-[var(--muted-foreground)]">
+        <p className="type-fine-print text-[var(--muted-foreground)]">
           Ninguém acessa a área do cliente deste workspace ainda.
         </p>
       )}
@@ -132,7 +132,7 @@ export function ClienteAcessoSection({ clienteId }: { clienteId: string }) {
         autoComplete="new-password"
         className={inputClass}
       />
-      <p className="text-[11px] text-[var(--muted-foreground)]">
+      <p className="type-fine-print text-[var(--muted-foreground)]">
         Defina a senha agora ou gere um link para o próprio cliente escolher. Para quem já tem acesso, os dois
         também servem para trocar a senha.
       </p>
@@ -146,9 +146,9 @@ export function ClienteAcessoSection({ clienteId }: { clienteId: string }) {
         </Button>
       </div>
 
-      {error ? <p className="text-sm text-[var(--accent)]">{error}</p> : null}
+      {error ? <p className="type-caption text-[var(--accent)]">{error}</p> : null}
       {success ? (
-        <div className="space-y-2 rounded-lg bg-[var(--success)]/10 px-3 py-2 text-sm text-[var(--success)]">
+        <div className="space-y-2 rounded-lg bg-[var(--success)]/10 px-3 py-2 type-caption text-[var(--success)]">
           <p className="flex items-center gap-2">
             <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
             {success}

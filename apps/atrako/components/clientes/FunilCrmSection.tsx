@@ -205,11 +205,11 @@ export function FunilCrmSection({
               key={kpi.label}
               className="rounded-xl border border-[var(--border)] bg-muted/20 px-4 py-3 text-center"
             >
-              <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
+              <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">
                 {kpi.label}
               </p>
               <p
-                className="mt-1 text-lg font-semibold tabular-nums"
+                className="mt-1 type-tagline tabular-nums"
                 style={{ color: kpi.color }}
               >
                 {kpi.value}
@@ -248,8 +248,8 @@ export function FunilCrmSection({
                 ))}
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-xl font-semibold tabular-nums text-[var(--foreground)]">{totalLeads}</p>
-                <p className="text-[9px] uppercase tracking-wide text-[var(--muted-foreground)]">leads</p>
+                <p className="type-tagline tabular-nums text-[var(--foreground)]">{totalLeads}</p>
+                <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">leads</p>
               </div>
             </div>
 
@@ -263,16 +263,16 @@ export function FunilCrmSection({
                         className="h-2 w-2 rounded-full"
                         style={{ background: macroColors[s.grupo] }}
                       />
-                      <span className="text-[11px] font-semibold text-[var(--foreground)]">{s.grupo}</span>
+                      <span className="type-caption-strong text-[var(--foreground)]">{s.grupo}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span
-                        className="text-[11px] font-semibold tabular-nums"
+                        className="type-caption-strong tabular-nums"
                         style={{ color: macroColors[s.grupo] }}
                       >
                         {s.count.toLocaleString("pt-BR")}
                       </span>
-                      <span className="w-8 text-right text-[10px] tabular-nums text-[var(--muted-foreground)]">
+                      <span className="w-8 text-right type-micro-legal tabular-nums text-[var(--muted-foreground)]">
                         {s.pct < 1 ? s.pct.toFixed(1) : Math.round(s.pct)}%
                       </span>
                     </div>
@@ -299,9 +299,9 @@ export function FunilCrmSection({
         {grouped.length > 0 && totalLeads > 0 && (
           <div className="rounded-xl overflow-hidden border border-border/60">
             <div className="px-4 py-2.5 flex items-center gap-2 bg-muted/20 border-b border-border/50">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">Distribuição por grupo</span>
+              <span className="type-micro-legal uppercase text-[var(--muted-foreground)]">Distribuição por grupo</span>
               <div className="flex-1" />
-              <span className="text-[10px] text-muted-foreground/60">{totalLeads.toLocaleString("pt-BR")} leads</span>
+              <span className="type-micro-legal text-muted-foreground/60">{totalLeads.toLocaleString("pt-BR")} leads</span>
             </div>
             <div className="p-3 space-y-2 bg-muted/5">
               <div className="flex h-7 rounded-lg overflow-hidden gap-0.5">
@@ -320,7 +320,7 @@ export function FunilCrmSection({
                       }}
                     >
                       {pct > 14 && (
-                        <span className="text-[10px] font-semibold text-white drop-shadow">
+                        <span className="type-micro-legal text-white drop-shadow">
                           {Math.round(pct)}%
                         </span>
                       )}
@@ -335,8 +335,8 @@ export function FunilCrmSection({
                   return (
                     <div key={g.grupo} className="flex items-center gap-1.5">
                       <span className="h-2 w-2 rounded-sm" style={{ background: color }} />
-                      <span className="text-[10px] text-[var(--muted-foreground)]">{g.grupo}</span>
-                      <span className="text-[10px] font-semibold tabular-nums" style={{ color }}>
+                      <span className="type-micro-legal text-[var(--muted-foreground)]">{g.grupo}</span>
+                      <span className="type-micro-legal tabular-nums" style={{ color }}>
                         {g.count.toLocaleString("pt-BR")}
                       </span>
                     </div>
@@ -370,12 +370,12 @@ export function FunilCrmSection({
                   >
                     <div className="flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em]" style={{ color }}>
+                      <p className="type-caption-strong uppercase " style={{ color }}>
                         {grupo.grupo}
                       </p>
                     </div>
                     <div
-                      className="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums"
+                      className="flex items-center gap-1.5 rounded-full px-2 py-0.5 type-micro-legal tabular-nums"
                       style={{ background: `${color}20`, color }}
                     >
                       {grupo.count.toLocaleString("pt-BR")} {grupo.count === 1 ? "lead" : "leads"} · {pctGrupo < 1 ? pctGrupo.toFixed(1) : Math.round(pctGrupo)}%
@@ -419,11 +419,11 @@ export function FunilCrmSection({
                             }}
                           />
                           <div className="relative flex items-center gap-3">
-                            <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-[var(--foreground)]">
+                            <p className="min-w-0 flex-1 truncate type-caption-strong text-[var(--foreground)]">
                               {e.etapa}
                             </p>
                             {e.valor > 0 && (
-                              <span className="hidden shrink-0 text-[10px] tabular-nums text-[var(--muted-foreground)] sm:inline">
+                              <span className="hidden shrink-0 type-micro-legal tabular-nums text-[var(--muted-foreground)] sm:inline">
                                 {fmtValor(e.valor)}
                               </span>
                             )}
@@ -440,11 +440,11 @@ export function FunilCrmSection({
                                 }}
                               />
                             </div>
-                            <span className="shrink-0 w-8 text-right text-[11px] tabular-nums text-[var(--muted-foreground)]">
+                            <span className="shrink-0 w-8 text-right type-fine-print tabular-nums text-[var(--muted-foreground)]">
                               {pctTotal < 1 ? pctTotal.toFixed(1) : Math.round(pctTotal)}%
                             </span>
                             <span
-                              className="w-12 shrink-0 text-right text-sm font-semibold tabular-nums"
+                              className="w-12 shrink-0 text-right type-caption-strong tabular-nums"
                               style={{ color }}
                             >
                               {e.count.toLocaleString("pt-BR")}

@@ -98,7 +98,7 @@ export function AccountSwitcher({
               <span className="symbius-account-name block truncate">
                 {shell.accountDisplayName}
               </span>
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+              <span className="type-micro-legal uppercase text-zinc-400">
                 {shell.plan}
               </span>
             </span>
@@ -142,16 +142,16 @@ export function AccountSwitcher({
                   </span>
                 )}
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">
+                  <span className="block truncate type-caption-strong ">
                     {w.nome}
                   </span>
-                  <span className="text-[10px] uppercase text-zinc-400">
+                  <span className="type-micro-legal uppercase text-zinc-400">
                     {w.plan}
                     {w.inboxUnread > 0 ? ` · ${w.inboxUnread} inbox` : ""}
                   </span>
                 </span>
                 {w.isActive && (
-                  <span className="text-[10px] font-semibold text-emerald-600">
+                  <span className="type-micro-legal text-emerald-600">
                     Ativa
                   </span>
                 )}
@@ -162,13 +162,13 @@ export function AccountSwitcher({
           {shell.igAccounts.length > 1 && (
             <>
               <div className="my-1 border-t border-zinc-100" />
-              <p className="px-3 py-1 text-[10px] font-semibold uppercase text-zinc-400">
+              <p className="px-3 py-1 type-micro-legal uppercase text-zinc-400">
                 Instagram ativo
               </p>
               <button
                 type="button"
                 onClick={() => switchIg(null)}
-                className={`block w-full px-3 py-1.5 text-left text-sm hover:bg-zinc-50 ${!shell.activeIgAccountId ? "font-semibold" : ""}`}
+                className={`block w-full px-3 py-1.5 text-left type-caption-strong hover:bg-zinc-50 ${!shell.activeIgAccountId ?"" :""}`}
               >
                 Todas as contas
               </button>
@@ -177,7 +177,7 @@ export function AccountSwitcher({
                   key={a.id}
                   type="button"
                   onClick={() => switchIg(a.id)}
-                  className={`block w-full px-3 py-1.5 text-left text-sm hover:bg-zinc-50 ${shell.activeIgAccountId === a.id ? "font-semibold" : ""}`}
+                  className={`block w-full px-3 py-1.5 text-left type-caption-strong hover:bg-zinc-50 ${shell.activeIgAccountId === a.id ?"" :""}`}
                 >
                   @{a.igUsername ?? a.pageName ?? a.id.slice(0, 6)}
                 </button>
@@ -192,13 +192,13 @@ export function AccountSwitcher({
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="Nome do workspace"
-                className="w-full rounded-lg border border-zinc-200 px-2 py-1.5 text-sm"
+                className="w-full rounded-lg border border-zinc-200 px-2 py-1.5 type-caption"
               />
               <button
                 type="button"
                 disabled={creating}
                 onClick={() => void createWorkspace()}
-                className="symbius-btn-primary w-full py-1.5 text-sm"
+                className="symbius-btn-primary w-full py-1.5 type-caption"
               >
                 Criar
               </button>
@@ -207,7 +207,7 @@ export function AccountSwitcher({
             <button
               type="button"
               onClick={() => setNewName("Nova conta")}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+              className="flex w-full items-center gap-2 px-3 py-2 type-caption-strong text-zinc-700 hover:bg-zinc-50"
             >
               <Plus className="h-4 w-4" />
               Nova Conta

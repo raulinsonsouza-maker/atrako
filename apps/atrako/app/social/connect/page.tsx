@@ -143,7 +143,7 @@ function ConnectWizard() {
       </p>
 
       {oauthError && (
-        <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
+        <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4 type-caption text-red-300">
           {oauthError}
         </div>
       )}
@@ -178,7 +178,7 @@ function ConnectWizard() {
             <h2 className="mt-4 type-tagline">
               Faltam apenas algumas etapas
             </h2>
-            <p className="mt-2 text-sm text-[var(--symbius-muted)]">
+            <p className="mt-2 type-caption text-[var(--symbius-muted)]">
               Você será redirecionado para o Instagram. Conceda as permissões e
               sua conta Professional será vinculada ao Symbius Flow — sem
               precisar de Página do Facebook.
@@ -220,11 +220,11 @@ function ConnectWizard() {
                 <h2 className="mt-4 type-tagline">
                   @{account?.igUsername ?? "instagram"}
                 </h2>
-                <p className="mt-2 text-sm text-[var(--symbius-muted)]">
+                <p className="mt-2 type-caption text-[var(--symbius-muted)]">
                   Conta Professional vinculada
                 </p>
                 {step === 3 && (
-                  <ul className="mt-6 space-y-2 text-left text-sm">
+                  <ul className="mt-6 space-y-2 text-left type-caption">
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-[var(--symbius-accent)]" />
                       Instagram Login autorizado
@@ -252,7 +252,7 @@ function ConnectWizard() {
           <div className="text-center">
             <CheckCircle2 className="mx-auto h-16 w-16 text-[var(--symbius-accent)]" />
             <h2 className="mt-4 type-tagline">Conectado com sucesso!</h2>
-            <p className="mt-2 text-sm text-[var(--symbius-muted)]">
+            <p className="mt-2 type-caption text-[var(--symbius-muted)]">
               {account?.igUsername
                 ? `@${account.igUsername} está pronta para automações`
                 : "Sua conta está pronta para automações"}

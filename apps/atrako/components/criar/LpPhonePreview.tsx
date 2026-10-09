@@ -33,7 +33,7 @@ function DraftScreen({ draft }: { draft: LpPreviewDraft }) {
         </span>
       </div>
       <div className="lp-phone-draft-body">
-        <p className="type-micro-legal uppercase tracking-wide text-[var(--ink-muted-48)]">
+        <p className="type-micro-legal uppercase text-[var(--ink-muted-48)]">
           {draft.brandName || "Oferta"}
         </p>
         <h2 className="lp-phone-draft-headline">

@@ -21,7 +21,12 @@ import { DesignError, runDesigner, type DesignBrief, type DesignOutput } from ".
 import { gatherStockImages, trackCredits } from "./images";
 import { pickStockImages, stockBriefLines, usedStockImages, type StockImage } from "./images-core";
 import { assessLpBrief } from "@/lib/criar/lp-brief";
+import { pageUrlsIn } from "./product-facts";
+import { completeBriefFromSite, type SiteBrand } from "./site-facts";
+import { inspectStorePage } from "./site-brand";
+import { ingestPublishedPage, libraryReferences, recordLibraryUses } from "@/lib/criar/lp-library/store";
 import { imagesForBrief, imagesFromDigest, namesFromDigest, videosFromDigest, attachmentOwnedBy } from "./attachments";
+import { loadProductDossier, type ProductDossier } from "./product-dossier";
 import { nullableString, objectSchema, type AtrakoTool, type ToolResult, type ToolRuntime } from "./tools";
 
 /**
@@ -36,16 +41,29 @@ const FORM_EDIT_PATH = "/forms";
 
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 
-function mediaFromConversation(userText: string | undefined, stock: StockImage[], workspaceId: string) {
+function mediaFromConversation(
+  userText: string | undefined,
+  stock: StockImage[],
+  workspaceId: string,
+  extras: Array<{ url: string; name: string }> = [],
+) {
   const text = userText ?? "";
   const own = (url: string) => attachmentOwnedBy(url, workspaceId);
   const videos = videosFromDigest(text).filter((video) => own(video.url));
+  const attached = imagesFromDigest(text).filter((img) => own(img.url));
+  const photos = [...attached, ...extras.filter((img) => img.url.startsWith("https://") && !attached.some((item) => item.url === img.url))];
   return {
-    imagens: imagesForBrief(imagesFromDigest(text).filter((img) => own(img.url)), stockBriefLines(stock)),
+    imagens: imagesForBrief(photos, stockBriefLines(stock)),
     videos: videos.map((video) => ({ url: video.url, nome: video.name })),
     videoUrls: videos.map((video) => video.url),
     anexos: namesFromDigest(text),
   };
+}
+
+function fichaTexto(dossier: ProductDossier | null): string | null {
+  if (!dossier) return null;
+  const head = [dossier.url ? `Fonte: ${dossier.url}` : null, dossier.title].filter(Boolean).join("\n");
+  return `${head}\n${dossier.text}`.slice(0, 4500);
 }
 
 const fieldItems = {
@@ -231,7 +249,7 @@ async function withStock(page: LpSalesPageV3, pool: StockImage[]): Promise<LpSal
   return { ...page, images: await trackCredits(used) };
 }
 
-const MIN_FIX_WINDOW_MS = 110_000;
+const MIN_FIX_WINDOW_MS = 200_000;
 
 /** Gera, valida e (se der tempo) corrige uma vez. */
 async function designPage(
@@ -244,10 +262,10 @@ async function designPage(
   const started = Date.now();
   /* Fatos aceitos: o que o usuário escreveu (o briefing é do assistente e pode inventar); na edição, o que já estava na página. */
   const said = rt.userText ?? [brief.briefing, brief.estilo, brief.cta, edit?.instructions].filter(Boolean).join("\n");
-  const source = [brief.negocio, brief.segmento, brief.produto?.nome, said, edit ? htmlText(edit.current.html) : null]
+  const source = [brief.negocio, brief.segmento, brief.produto?.nome, brief.fichaProduto, said, edit ? htmlText(edit.current.html) : null]
     .filter(Boolean)
     .join("\n");
-  const checks = { ...needs, source };
+  const checks = { ...needs, source, imageUrls: (brief.imagens ?? []).map((img) => img.url).filter(Boolean) };
   const first = await runDesigner(
     rt.ctx.clienteId,
     edit ? { mode: "edit", brief, current: edit.current, instructions: edit.instructions } : { mode: "create", brief },
@@ -368,7 +386,7 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
     longRunning: true,
     oncePerTurn: true,
     description:
-      "Cria a landing page em HTML, com formulário ou checkout do Atrako. Só chame DEPOIS que a pessoa concordou com o plano ('sim', 'pode montar'). Se faltar oferta, público, visual, botão ou o ok dela, a ferramenta não cria nada e devolve o que ainda falar. Fica em rascunho. Não publica.",
+      "Cria a landing page em HTML, com formulário ou checkout do Atrako. Se a pessoa passou o site ou disse para pegar as informações no site ('pegue tudo', 'pegue no site', 'comprar agora'), chame nesta mesma resposta: a ferramenta lê a loja e completa preço, visual e botão, sem questionário. Nos outros casos, só chame depois do 'sim' ou 'pode montar'. Fica em rascunho. Não publica.",
     parameters: objectSchema({
       nome: { type: "string", description: "Nome interno da página." },
       objetivo: {
@@ -412,17 +430,48 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
       const estilo = str(args.estilo, 1200);
       const cta = str(args.cta, 60);
       const priceReais = Number(args.preco_reais);
-      const priceCents = Number.isFinite(priceReais) && priceReais > 0 ? Math.round(priceReais * 100) : 0;
-      const gate = assessLpBrief({
+      const statedCents = Number.isFinite(priceReais) && priceReais > 0 ? Math.round(priceReais * 100) : 0;
+      rt.onProgress?.("Lendo o site e o produto");
+      const said = rt.userText ?? "";
+      const workspace = await workspaceBrand(rt.ctx.clienteId);
+      const dossier = await loadProductDossier({
+        clienteId: rt.ctx.clienteId,
+        query: [nome, briefing, rt.lastUserMessage ?? ""].filter(Boolean).join(" "),
+        userText: said,
+        negocio: workspace?.name || rt.ctx.nome,
+        signal: rt.signal,
+      }).catch(() => null);
+      let siteBrand: SiteBrand | null = dossier?.brand ?? null;
+      if (!siteBrand?.accent) {
+        const home = pageUrlsIn(said)[0];
+        if (home && home !== dossier?.url) {
+          const look = await inspectStorePage(home, rt.signal).catch(() => null);
+          siteBrand = look?.brand ?? siteBrand;
+        }
+      }
+      const filled = completeBriefFromSite({
         briefing,
         publico,
         estilo,
         cta,
         goal,
+        said,
+        productTitle: dossier?.title ?? null,
+        productText: dossier?.text ?? null,
+        priceCents: statedCents || dossier?.priceCents || 0,
+        brand: siteBrand,
+      });
+      const priceCents = filled.priceCents;
+      const gate = assessLpBrief({
+        briefing: filled.briefing,
+        publico: filled.publico,
+        estilo: filled.estilo,
+        cta: filled.cta,
+        goal,
         precoReais: priceCents ? priceCents / 100 : null,
         temProduto: Boolean(str(args.produto_checkout_id, 80)),
         lastUserMessage: rt.lastUserMessage ?? "",
-        anexos: namesFromDigest(rt.userText ?? ""),
+        anexos: namesFromDigest(said),
       });
       if (!gate.ok) return errorResult(tool, label, gate.falar);
       if (goal === "sales" && !commerceOn(rt)) return errorResult(tool, label, "O módulo de vendas (commerce) está desligado neste workspace.");
@@ -450,32 +499,40 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
         }
       }
 
-      const brand = await workspaceBrand(rt.ctx.clienteId);
+      const brand = workspace;
       const stock = await gatherStockImages(
         imageQueries(args, [rt.ctx.segmento, brand?.name || rt.ctx.nome].filter(Boolean).join(" ")),
       ).catch(() => [] as StockImage[]);
-      const media = mediaFromConversation(rt.userText, stock, rt.ctx.clienteId);
+      const media = mediaFromConversation(
+        rt.userText,
+        stock,
+        rt.ctx.clienteId,
+        dossier?.imageUrl ? [{ url: dossier.imageUrl, name: dossier.title }] : [],
+      );
       const library = await libraryReferences({
         clienteId: rt.ctx.clienteId,
         goal,
         segmento: rt.ctx.segmento,
-        estilo: str(args.estilo, 1200) || null,
+        estilo: filled.estilo || null,
       }).catch(() => "");
+      const offer = filled.briefing;
+      const who = filled.publico;
       const brief: DesignBrief = {
         negocio: brand?.name || rt.ctx.nome,
         segmento: rt.ctx.segmento,
         objetivo: goal,
         nome,
-        briefing: publico && !briefing.toLowerCase().includes(publico.toLowerCase()) ? `${briefing}\nPara quem: ${publico}` : briefing,
-        estilo: estilo || null,
+        briefing: who && !offer.toLowerCase().includes(who.toLowerCase()) ? `${offer}\nPara quem: ${who}` : offer,
+        estilo: filled.estilo || null,
         referencias: str(args.referencias, 3000) || null,
-        cta: cta || null,
-        corMarca: brand?.primaryColor ?? null,
+        cta: filled.cta || null,
+        corMarca: siteBrand?.accent ?? brand?.primaryColor ?? null,
         logoUrl: brand?.logoUrl ?? null,
         imagens: media.imagens,
         videos: media.videos,
         referenciasBiblioteca: library || null,
         produto: goal === "sales" ? { nome: checkout?.name ?? nome, precoReais: (checkout?.priceCents ?? priceCents) / 100 || null } : null,
+        fichaProduto: fichaTexto(dossier),
         formulario: form ? { nome: form.name, campos: flattenFields(form.steps).map((f) => f.label) } : null,
         pedidoOriginal: rt.userText?.slice(-4000) || null,
       };
@@ -497,7 +554,7 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
               theme: out.theme,
               formId: form?.id ?? null,
               checkoutProductId: checkout?.id ?? null,
-              brief: briefing,
+              brief: filled.briefing,
               references,
               generatedBy: out.model,
               videoUrls: media.videoUrls,
@@ -518,7 +575,7 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
           name: nome,
           slug,
           priceCents: goal === "sales" && !checkout ? priceCents : 0,
-          description: briefing.slice(0, 280),
+          description: filled.briefing.slice(0, 280),
           type: goal === "sales" ? "OTHER" : "SERVICE",
           status: "DRAFT",
           active: true,
@@ -593,12 +650,24 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
       }
       const form = current.formId ? await getCaptureFormById(rt.ctx.clienteId, current.formId) : null;
       const brand = await workspaceBrand(rt.ctx.clienteId);
+      const dossier = await loadProductDossier({
+        clienteId: rt.ctx.clienteId,
+        query: [product.name, current.brief].filter(Boolean).join(" "),
+        userText: rt.userText,
+        negocio: brand?.name || rt.ctx.nome,
+        signal: rt.signal,
+      }).catch(() => null);
       const asked = Array.isArray(args.imagens_busca)
         ? args.imagens_busca.filter((q): q is string => typeof q === "string" && q.trim().length > 1).slice(0, 4)
         : [];
       const fresh = asked.length ? await gatherStockImages(asked).catch(() => [] as StockImage[]) : [];
       const pool = pickStockImages([...fresh, ...asStock(current.images)], 6);
-      const media = mediaFromConversation(rt.userText, pool, rt.ctx.clienteId);
+      const media = mediaFromConversation(
+        rt.userText,
+        pool,
+        rt.ctx.clienteId,
+        dossier?.imageUrl ? [{ url: dossier.imageUrl, name: dossier.title }] : [],
+      );
       const library = await libraryReferences({
         clienteId: rt.ctx.clienteId,
         goal: current.goal,
@@ -620,6 +689,7 @@ export const CREATOR_TOOLS: AtrakoTool[] = [
         videos: media.videos,
         referenciasBiblioteca: library || null,
         produto: current.goal === "sales" ? { nome: product.name, precoReais: product.priceCents / 100 || null } : null,
+        fichaProduto: fichaTexto(dossier),
         formulario: form ? { nome: form.name, campos: flattenFields(form.steps).map((f) => f.label) } : null,
       };
       let designed;

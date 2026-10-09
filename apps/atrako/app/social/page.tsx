@@ -11,6 +11,8 @@ import {
 import { getSession } from "@/lib/symbius/auth";
 import { getOrganizationForSession } from "@/lib/symbius/tenant";
 import { IgAccountProfileCard } from "@/components/symbius/IgAccountProfileCard";
+import { AppPage } from "@/components/layout/AppPage";
+import { MetricGrid, MetricTile } from "@/components/ui";
 import { prisma } from "@/lib/db-social";
 
 export default async function SymbiusDashboardPage() {
@@ -74,29 +76,21 @@ export default async function SymbiusDashboardPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[var(--canvas)]">
-            <MessageSquare className="h-5 w-5 text-[var(--primary)]" strokeWidth={1.75} />
-          </span>
-          <div>
-            <h1 className="type-tagline text-[var(--ink)]">Instagram</h1>
-            <p className="type-caption text-[var(--ink-muted-48)]">
-              Instagram, automações e inbox ·{" "}
-              <Link href="/config/conexoes" className="text-[var(--primary)] hover:underline">
-                Integrações
-              </Link>
-            </p>
-          </div>
-        </div>
-        {ig ? (
+    <AppPage
+      title="Instagram"
+      actions={
+        ig ? (
           <span className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--success)]/10 px-2.5 py-1 type-fine-print text-[var(--success)]">
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
             @{ig.igUsername || "conectado"}
           </span>
-        ) : null}
-      </header>
+        ) : (
+          <Link href="/config/conexoes" className="type-fine-print text-[var(--primary)] hover:underline">
+            Integrações
+          </Link>
+        )
+      }
+    >
 
       {!ig ? (
         <div className="utility-card flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between !p-5">
@@ -120,8 +114,8 @@ export default async function SymbiusDashboardPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="utility-card !p-4 sm:col-span-2 lg:col-span-1">
+        <MetricGrid>
+          <div className="rel-kpi">
             <IgAccountProfileCard
               compact
               account={{
@@ -134,19 +128,10 @@ export default async function SymbiusDashboardPage() {
               }}
             />
           </div>
-          <div className="utility-card !p-4">
-            <p className="type-caption text-[var(--ink-muted-48)]">Contatos</p>
-            <p className="mt-1 type-tagline tabular-nums text-[var(--ink)]">{contatosCount}</p>
-          </div>
-          <div className="utility-card !p-4">
-            <p className="type-caption text-[var(--ink-muted-48)]">Automações LIVE</p>
-            <p className="mt-1 type-tagline tabular-nums text-[var(--ink)]">{publishedCount}</p>
-          </div>
-          <div className="utility-card !p-4">
-            <p className="type-caption text-[var(--ink-muted-48)]">Conversas</p>
-            <p className="mt-1 type-tagline tabular-nums text-[var(--ink)]">{inboxCount}</p>
-          </div>
-        </div>
+          <MetricTile label="Contatos" value={String(contatosCount)} />
+          <MetricTile label="Automações LIVE" value={String(publishedCount)} />
+          <MetricTile label="Conversas" value={String(inboxCount)} />
+        </MetricGrid>
       )}
 
       <section className="space-y-3">
@@ -208,6 +193,6 @@ export default async function SymbiusDashboardPage() {
           ))}
         </ul>
       </section>
-    </div>
+    </AppPage>
   );
 }

@@ -54,7 +54,7 @@ function Th({ label, col, sortKey, dir, onSort, right = true }: {
 }) {
   return (
     <th
-      className={`px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] cursor-pointer select-none hover:text-[var(--foreground)] transition-colors ${right ? "text-right" : "text-left"}`}
+      className={`px-3 py-2.5 type-micro-legal uppercase text-[var(--muted-foreground)] cursor-pointer select-none hover:text-[var(--foreground)] transition-colors ${right ?"text-right" :"text-left"}`}
       onClick={() => onSort(col)}
     >
       <span className={`inline-flex items-center gap-1 ${right ? "justify-end" : ""}`}>
@@ -65,7 +65,7 @@ function Th({ label, col, sortKey, dir, onSort, right = true }: {
 }
 
 const Td = ({ v, muted = false, highlight = false }: { v: string; muted?: boolean; highlight?: boolean }) => (
-  <td className={`px-3 py-3 text-right text-sm font-semibold tabular-nums ${muted ? "text-[var(--muted-foreground)]" : highlight ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>{v}</td>
+  <td className={`px-3 py-3 text-right type-caption-strong tabular-nums ${muted ?"text-[var(--muted-foreground)]" : highlight ?"text-[var(--primary)]" :"text-[var(--foreground)]"}`}>{v}</td>
 );
 
 const dash = "—";
@@ -132,25 +132,25 @@ export function LinkedInCampanhasPanel({ clienteId, filter }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-[var(--border)] bg-pearl px-4 py-3 flex items-center gap-3">
+      <div className="rel-card flex items-center gap-3 !py-3">
         <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
           <BarChart3 className="w-4 h-4 text-[var(--primary)]" />
         </div>
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--primary)]">LinkedIn Ads</p>
-          <p className="text-sm font-semibold text-[var(--foreground)] uppercase tracking-wider">Campanhas · Análise por período</p>
+          <p className="type-micro-legal uppercase text-[var(--primary)]">LinkedIn Ads</p>
+          <p className="type-caption-strong text-[var(--foreground)] uppercase ">Campanhas · Análise por período</p>
         </div>
       </div>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
-          <p className="text-sm text-[var(--muted-foreground)]">Carregando campanhas…</p>
+          <p className="type-caption text-[var(--muted-foreground)]">Carregando campanhas…</p>
         </div>
       ) : sorted.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
           <BarChart3 className="w-8 h-8 text-[var(--muted-foreground)] opacity-30" />
-          <p className="text-sm text-[var(--muted-foreground)]">Nenhuma campanha LinkedIn com dados no período.</p>
-          <p className="text-xs text-[var(--muted-foreground)] opacity-70">Os dados aparecem após o próximo sync.</p>
+          <p className="type-caption text-[var(--muted-foreground)]">Nenhuma campanha LinkedIn com dados no período.</p>
+          <p className="type-fine-print text-[var(--muted-foreground)] opacity-70">Os dados aparecem após o próximo sync.</p>
         </div>
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-[var(--border)]">
@@ -186,19 +186,19 @@ export function LinkedInCampanhasPanel({ clienteId, filter }: Props) {
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-2 min-w-0">
                         {isTop && (
-                          <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-[var(--primary)]">#1</span>
+                          <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 type-micro-legal uppercase text-[var(--primary)]">#1</span>
                         )}
-                        <span className={`shrink-0 text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded-full border whitespace-nowrap ${badge.color}`}>{badge.label}</span>
-                        <p className="text-sm font-semibold text-[var(--foreground)] truncate" title={c.nome}>{c.nome}</p>
+                        <span className={`shrink-0 type-micro-legal uppercase px-1.5 py-0.5 rounded-full border whitespace-nowrap ${badge.color}`}>{badge.label}</span>
+                        <p className="type-caption-strong text-[var(--foreground)] truncate" title={c.nome}>{c.nome}</p>
                       </div>
                     </td>
                     <td className="px-3 py-3">
                       {(() => { const sb = statusBadge(c.campaignStatus); return sb ? (
-                        <span className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-widest px-2 py-1 rounded-full border whitespace-nowrap ${sb.color}`}>
+                        <span className={`inline-flex items-center gap-1 type-micro-legal uppercase px-2 py-1 rounded-full border whitespace-nowrap ${sb.color}`}>
                           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${sb.dot}`} />
                           {sb.label}
                         </span>
-                      ) : <span className="text-xs text-[var(--muted-foreground)]">—</span>; })()}
+                      ) : <span className="type-fine-print text-[var(--muted-foreground)]">—</span>; })()}
                     </td>
                     <Td v={fmtBrl(c.investimento)} highlight />
                     <Td v={fmt(c.impressoes)} muted />
@@ -220,37 +220,37 @@ export function LinkedInCampanhasPanel({ clienteId, filter }: Props) {
             <tfoot>
               <tr className="border-t-2 border-primary/30 bg-primary/[0.06]">
                 <td className="px-3 py-3" colSpan={2}>
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--primary)]">Total · {campanhas.length} campanhas</span>
+                  <span className="type-micro-legal uppercase text-[var(--primary)]">Total · {campanhas.length} campanhas</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-semibold text-[var(--foreground)]">{fmtBrl(totais.investimento)}</span>
+                  <span className="type-caption-strong text-[var(--foreground)]">{fmtBrl(totais.investimento)}</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-semibold text-[var(--muted-foreground)]">{fmt(totais.impressoes)}</span>
+                  <span className="type-caption-strong text-[var(--muted-foreground)]">{fmt(totais.impressoes)}</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-semibold text-[var(--foreground)]">{fmt(totais.cliques)}</span>
+                  <span className="type-caption-strong text-[var(--foreground)]">{fmt(totais.cliques)}</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-semibold text-[var(--muted-foreground)]">{ctrTotal != null ? fmtPct(ctrTotal) : dash}</span>
+                  <span className="type-caption-strong text-[var(--muted-foreground)]">{ctrTotal != null ? fmtPct(ctrTotal) : dash}</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-semibold text-[var(--foreground)]">{cpcTotal != null ? fmtBrl(cpcTotal) : dash}</span>
+                  <span className="type-caption-strong text-[var(--foreground)]">{cpcTotal != null ? fmtBrl(cpcTotal) : dash}</span>
                 </td>
                 {hasLeads && <>
                   <td className="px-3 py-3 text-right">
-                    <span className="text-sm font-semibold text-[var(--foreground)]">{fmt(totais.leads)}</span>
+                    <span className="type-caption-strong text-[var(--foreground)]">{fmt(totais.leads)}</span>
                   </td>
                   <td className="px-3 py-3 text-right">
-                    <span className="text-sm font-semibold text-[var(--foreground)]">{cplTotal != null ? fmtBrl(cplTotal) : dash}</span>
+                    <span className="type-caption-strong text-[var(--foreground)]">{cplTotal != null ? fmtBrl(cplTotal) : dash}</span>
                   </td>
                 </>}
                 {hasConv && <>
                   <td className="px-3 py-3 text-right">
-                    <span className="text-sm font-semibold text-[var(--foreground)]">{fmt(totais.conversoes, 1)}</span>
+                    <span className="type-caption-strong text-[var(--foreground)]">{fmt(totais.conversoes, 1)}</span>
                   </td>
                   <td className="px-3 py-3 text-right">
-                    <span className="text-sm font-semibold text-[var(--foreground)]">{cpaTotal != null ? fmtBrl(cpaTotal) : dash}</span>
+                    <span className="type-caption-strong text-[var(--foreground)]">{cpaTotal != null ? fmtBrl(cpaTotal) : dash}</span>
                   </td>
                 </>}
               </tr>

@@ -11,7 +11,7 @@ export function PasswordField({ label, className = "", ...props }: PasswordField
   const [visible, setVisible] = useState(false);
 
   return (
-    <label className="block text-sm">
+    <label className="block type-caption">
       {label}
       <span className="relative mt-2 block">
         <input

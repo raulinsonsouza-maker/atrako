@@ -38,7 +38,7 @@ export function LegalPage({
       </header>
 
       <main className="mx-auto max-w-[720px] px-6 py-12 sm:py-16">
-        <p className="type-fine-print uppercase tracking-[0.14em] text-[var(--ink-muted-48)]">
+        <p className="type-fine-print uppercase text-[var(--ink-muted-48)]">
           Legal
         </p>
         <h1 className="type-tagline mt-3 text-[var(--ink)]">{title}</h1>

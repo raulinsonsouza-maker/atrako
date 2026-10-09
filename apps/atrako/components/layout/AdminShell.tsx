@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 import { logoutEverywhere } from "@/lib/auth/logoutClient";
 
 const ADMIN_NAV = [
@@ -60,8 +61,8 @@ export function AdminShell({
     <div className="flex min-h-screen bg-[var(--canvas-parchment)]">
       <aside className="sticky top-0 flex h-screen w-[240px] shrink-0 flex-col border-r border-[var(--hairline)] bg-[var(--surface-black)]">
         <div className="border-b border-[var(--surface-tile-2)] px-5 py-5">
-          <p className="type-nav-link text-[var(--on-dark)]">Atrako Admin</p>
-          <p className="type-fine-print mt-1 text-[var(--body-muted)]">Plataforma</p>
+          <BrandLogo tone="on-dark" />
+          <p className="type-fine-print mt-1 text-[var(--body-muted)]">Admin</p>
         </div>
 
         <nav className="flex flex-1 flex-col gap-0.5 px-3 py-4">

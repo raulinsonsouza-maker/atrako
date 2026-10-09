@@ -44,7 +44,7 @@ function Badge({
               : "bg-emerald-100 text-emerald-700";
   return (
     <span
-      className={`rounded-full px-2 py-0.5 type-micro-legal uppercase tracking-wide ${cls}`}
+      className={`rounded-full px-2 py-0.5 type-micro-legal uppercase ${cls}`}
     >
       {children}
     </span>
@@ -192,7 +192,7 @@ function NewFlowPageInner() {
           <h1 className="type-tagline text-[var(--ink)]">
             Como você quer criar sua automação?
           </h1>
-          <p className="mt-2 text-sm text-zinc-500">
+          <p className="mt-2 type-caption text-zinc-500">
             Escolha o caminho que faz mais sentido agora
           </p>
         </div>
@@ -211,7 +211,7 @@ function NewFlowPageInner() {
               <Sparkles className="h-9 w-9 text-[var(--primary)]" />
             </div>
             <h2 className="mt-5 type-tagline text-[var(--ink)]">Criar com Symbius IA</h2>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+            <p className="mt-2 type-caption leading-relaxed text-zinc-500">
               Descreva a automação e a IA faz o resto.
             </p>
           </button>
@@ -226,7 +226,7 @@ function NewFlowPageInner() {
               <Blocks className="h-9 w-9 text-[var(--primary)]" />
             </div>
             <h2 className="mt-5 type-tagline text-[var(--ink)]">Começar com template</h2>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+            <p className="mt-2 type-caption leading-relaxed text-zinc-500">
               Templates de automação que mais convertem no Instagram
             </p>
           </button>
@@ -242,7 +242,7 @@ function NewFlowPageInner() {
               <FilePlus2 className="h-9 w-9 text-[var(--ink-muted-80)]" />
             </div>
             <h2 className="mt-5 type-tagline text-[var(--ink)]">Criar do zero</h2>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+            <p className="mt-2 type-caption leading-relaxed text-zinc-500">
               Monte sua automação bloco a bloco, no seu ritmo.
             </p>
             {loading && (
@@ -266,7 +266,7 @@ function NewFlowPageInner() {
             <div className="flex items-center justify-between border-b border-[var(--hairline)] px-5 py-4">
               <div>
                 <h2 className="type-tagline text-[var(--ink)]">Escolha um template</h2>
-                <p className="text-sm text-zinc-500">
+                <p className="type-caption text-zinc-500">
                   Modelos prontos para Instagram
                 </p>
               </div>
@@ -294,7 +294,7 @@ function NewFlowPageInner() {
 
             <div className="flex min-h-0 flex-1 overflow-hidden">
               <aside className="hidden w-52 shrink-0 overflow-y-auto border-r border-zinc-100 p-4 sm:block">
-                <p className="mb-2 type-micro-legal uppercase tracking-wide text-[var(--ink-muted-48)]">
+                <p className="mb-2 type-micro-legal uppercase text-[var(--ink-muted-48)]">
                   Por objetivo
                 </p>
                 <nav className="mb-5 space-y-0.5">
@@ -306,7 +306,7 @@ function NewFlowPageInner() {
                         setObjective(f.id);
                         setTrigger(null);
                       }}
-                      className={`block w-full rounded-lg px-2.5 py-1.5 text-left text-sm ${
+                      className={`block w-full rounded-lg px-2.5 py-1.5 text-left type-caption ${
                         objective === f.id && !trigger
                           ? "bg-[var(--primary-glow)] type-body-strong text-[var(--primary)]"
                           : "text-[var(--ink-muted-48)] hover:bg-[var(--canvas-parchment)]"
@@ -316,7 +316,7 @@ function NewFlowPageInner() {
                     </button>
                   ))}
                 </nav>
-                <p className="mb-2 type-micro-legal uppercase tracking-wide text-[var(--ink-muted-48)]">
+                <p className="mb-2 type-micro-legal uppercase text-[var(--ink-muted-48)]">
                   Por gatilho
                 </p>
                 <nav className="space-y-0.5">
@@ -328,7 +328,7 @@ function NewFlowPageInner() {
                         setTrigger(f.id);
                         setObjective("all");
                       }}
-                      className={`block w-full rounded-lg px-2.5 py-1.5 text-left text-sm ${
+                      className={`block w-full rounded-lg px-2.5 py-1.5 text-left type-caption ${
                         trigger === f.id
                           ? "bg-[var(--primary-glow)] type-body-strong text-[var(--primary)]"
                           : "text-[var(--ink-muted-48)] hover:bg-[var(--canvas-parchment)]"
@@ -379,7 +379,7 @@ function NewFlowPageInner() {
                       />
                     ))}
                     {filtered.length === 0 && (
-                      <p className="col-span-full py-8 text-center text-sm text-zinc-500">
+                      <p className="col-span-full py-8 text-center type-caption text-zinc-500">
                         Nenhum modelo encontrado.
                       </p>
                     )}
@@ -427,7 +427,7 @@ function TemplateCard({
       <p className="mt-2.5 type-body-strong leading-snug text-[var(--ink)]">
         {t.title}
       </p>
-      <p className="mt-1.5 flex-1 text-sm text-zinc-500">{t.description}</p>
+      <p className="mt-1.5 flex-1 type-caption text-zinc-500">{t.description}</p>
     </button>
   );
 }

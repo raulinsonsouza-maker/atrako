@@ -15,7 +15,7 @@ import { createPiiVault, protectUserText } from "@/lib/atrako-agent/safety";
 import { attachmentDigest, sanitizeAttachments } from "@/lib/atrako-agent/attachments";
 import { describeImages } from "@/lib/atrako-agent/attachment-vision";
 import { checkAssistantRateLimit } from "@/lib/atrako-agent/limits";
-import { historyNote, type Artifact } from "@/lib/atrako-agent/artifacts";
+import { historyNote, pageKey, pagesNote, rememberedPages, type Artifact, type RememberedPage } from "@/lib/atrako-agent/artifacts";
 import { smallTalkReply } from "@/lib/atrako-agent/small-talk";
 
 export const runtime = "nodejs";
@@ -324,7 +324,14 @@ export async function POST(request: NextRequest) {
     };
   });
   const question = protectUserText(content, vault).text;
-  const contextNote = digest ? protectUserText(digest, vault).text : undefined;
+  const knownPages = history.reduce<RememberedPage[]>((pages, message) => {
+    for (const page of rememberedPages(((message.toolContext ?? {}) as ToolContext).artifacts)) {
+      if (pages.some((item) => pageKey(item.url) === pageKey(page.url))) continue;
+      pages.push(page);
+    }
+    return pages;
+  }, []);
+  const contextNote = [digest ? protectUserText(digest, vault).text : "", pagesNote(knownPages)].filter(Boolean).join("\n\n") || undefined;
 
   const conv = conversation;
   const started = Date.now();
@@ -402,6 +409,7 @@ export async function POST(request: NextRequest) {
           history: protectedHistory,
           question,
           contextNote,
+          knownPages,
           vault,
           signal: request.signal,
           onEvent: (e: EngineEvent) => send(e.type, e),

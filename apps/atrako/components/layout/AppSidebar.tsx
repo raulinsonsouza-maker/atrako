@@ -12,6 +12,7 @@ import {
   Settings2,
   PanelLeftOpen,
 } from "lucide-react";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 import { useModules } from "@/hooks/useModules";
 import { logoutEverywhere } from "@/lib/auth/logoutClient";
@@ -153,7 +154,7 @@ export function AppSidebar({
     collapsed ? (
       <div className="nav-collapsed-divider" aria-hidden />
     ) : (
-      <p className={`type-fine-print px-3 uppercase tracking-[0.16em] text-[var(--ink-muted-48)] ${className}`}>
+      <p className={`type-fine-print px-3 uppercase text-[var(--ink-muted-48)] ${className}`}>
         {title}
       </p>
     );
@@ -214,16 +215,16 @@ export function AppSidebar({
         <div className="flex flex-col items-center gap-2 px-2 py-4">
           <Link
             href={homeHref}
-            className="flex h-10 w-10 items-center justify-center rounded-sm bg-[var(--primary)] type-caption-strong text-[var(--on-primary)] active:scale-95"
+            className="flex h-10 w-10 items-center justify-center active:scale-95"
             {...tipProps("Atrako")}
           >
-            A
+            <BrandLogo tone="on-dark" crop="symbol" />
           </Link>
         </div>
       ) : (
-        <div className="flex items-center justify-between gap-2 px-3 py-4">
-          <Link href={homeHref} className="type-tagline px-1 text-[var(--on-dark)]">
-            Atrako
+        <div className="flex h-16 items-center justify-between gap-2 pl-4 pr-2">
+          <Link href={homeHref} className="flex h-8 items-center leading-none">
+            <BrandLogo tone="on-dark" />
           </Link>
           <button
             type="button"
@@ -244,7 +245,7 @@ export function AppSidebar({
 
         <div className="pt-1">
           {!collapsed ? (
-            <p className="type-fine-print px-3 pb-2 uppercase tracking-[0.16em] text-[var(--ink-muted-48)]">
+            <p className="type-fine-print px-3 pb-2 uppercase text-[var(--ink-muted-48)]">
               Criar
             </p>
           ) : null}

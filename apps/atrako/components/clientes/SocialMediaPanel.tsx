@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { MetricTile, SectionCard } from "@/components/ui";
 import { useQuery } from "@tanstack/react-query";
 import {
   ComposedChart,
@@ -133,23 +134,15 @@ function SectionHeader({ sub, title }: { sub: string; title: string }) {
     <div className="flex items-start gap-3">
       <div className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--primary)]" />
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">{sub}</p>
-        <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">{title}</h2>
+        <p className="type-micro-legal uppercase text-[var(--primary)]">{sub}</p>
+        <h2 className="type-tagline text-[var(--foreground)]">{title}</h2>
       </div>
     </div>
   );
 }
 
-function KpiCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub?: string }) {
-  return (
-    <div className="group relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 transition-all hover:border-[color-mix(in_srgb,var(--primary)_20%,var(--border))]">
-      <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--primary)] opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-[0.05]" />
-      <div className="mb-2 flex items-center gap-2 text-[var(--primary)]">{icon}</div>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">{label}</p>
-      <p className="mt-0.5 text-2xl font-semibold tracking-tight text-[var(--foreground)]">{value}</p>
-      {sub && <p className="mt-0.5 text-[11px] text-[var(--muted-foreground)]">{sub}</p>}
-    </div>
-  );
+function KpiCard({ label, value, sub }: { icon?: React.ReactNode; label: string; value: string; sub?: string }) {
+  return <MetricTile label={label} value={value} detail={sub} />;
 }
 
 function SkeletonCard({ h = 24 }: { h?: number }) {
@@ -169,7 +162,7 @@ const CustomTooltip = ({
 }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-xs shadow-xl">
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 type-fine-print shadow-xl">
       <p className="mb-1 font-semibold text-[var(--foreground)]">{label}</p>
       {payload.map((p, i) => (
         <p key={i} style={{ color: p.color }}>
@@ -191,7 +184,7 @@ function MediaBadge({ type }: { type: string }) {
   };
   const cfg = map[type] ?? { label: type, cls: "bg-muted/60 text-[var(--muted-foreground)]" };
   return (
-    <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${cfg.cls}`}>
+    <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 type-micro-legal uppercase ${cfg.cls}`}>
       {cfg.label}
     </span>
   );
@@ -230,7 +223,7 @@ function PostModal({ post, onClose }: { post: Post; onClose: () => void }) {
               <Instagram className="h-16 w-16 text-muted-foreground/30" />
             </div>
           )}
-          <div className="absolute bottom-3 left-3 rounded-lg bg-black/60 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
+          <div className="absolute bottom-3 left-3 rounded-lg bg-black/60 px-2 py-1 type-micro-legal uppercase text-white">
             {post.mediaType === "VIDEO" ? "Reel / Vídeo" : post.mediaType === "CAROUSEL_ALBUM" ? "Carrossel" : "Imagem"}
           </div>
         </div>
@@ -249,8 +242,8 @@ function PostModal({ post, onClose }: { post: Post; onClose: () => void }) {
               { label: "Taxa Eng.", value: fmtPct(post.taxaEngajamento) },
             ].map(({ label, value }) => (
               <div key={label} className="rounded-xl bg-muted/30 p-2.5 text-center">
-                <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">{label}</p>
-                <p className="mt-0.5 text-sm font-semibold text-[var(--foreground)]">{value}</p>
+                <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">{label}</p>
+                <p className="mt-0.5 type-caption-strong text-[var(--foreground)]">{value}</p>
               </div>
             ))}
           </div>
@@ -258,12 +251,12 @@ function PostModal({ post, onClose }: { post: Post; onClose: () => void }) {
           {/* Caption */}
           {post.caption && (
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)] mb-1">Legenda</p>
-              <p className="text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">{post.caption}</p>
+              <p className="type-micro-legal uppercase text-[var(--muted-foreground)] mb-1">Legenda</p>
+              <p className="type-caption text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">{post.caption}</p>
             </div>
           )}
 
-          <p className="text-[11px] text-[var(--muted-foreground)]">{fmtDate(post.timestamp)}</p>
+          <p className="type-fine-print text-[var(--muted-foreground)]">{fmtDate(post.timestamp)}</p>
         </div>
       </div>
     </div>
@@ -281,9 +274,9 @@ function MiniChart({ data, dataKey, title, sub, valueLabel, color = "var(--prima
   color?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
-      <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-[var(--primary)]">{sub}</p>
-      <p className="mb-4 text-base font-semibold text-[var(--foreground)]">{title}</p>
+    <div className="rel-card p-4">
+      <p className="mb-1 type-micro-legal uppercase text-[var(--primary)]">{sub}</p>
+      <p className="mb-4 type-body-strong text-[var(--foreground)]">{title}</p>
       <ResponsiveContainer width="100%" height={140}>
         <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
@@ -331,33 +324,33 @@ function OrganicPerformanceSection({ data, periodData }: { data: MonthRow[] | un
   const stripLabel = isPeriodFiltered ? "no período" : "últimos 12 meses";
 
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)]">
+    <div className="rel-card">
       {/* ── Header ── */}
       <div className="px-5 pt-5 pb-4 border-b border-[var(--border)]">
-        <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">Evolução mensal · últimos 12 meses</p>
-        <h3 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">Performance orgânica</h3>
+        <p className="type-micro-legal uppercase text-[var(--primary)]">Evolução mensal · últimos 12 meses</p>
+        <h3 className="type-tagline text-[var(--foreground)]">Performance orgânica</h3>
       </div>
 
       {/* ── KPI strip ── */}
       <div className="grid grid-cols-3 divide-x divide-[var(--border)] border-b border-[var(--border)]">
         <div className="px-5 py-3">
-          <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Taxa média</p>
-          <p className="text-2xl font-semibold text-[var(--primary)]">
+          <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Taxa média</p>
+          <p className="type-tagline text-[var(--primary)]">
             {avgTaxa.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
           </p>
-          <p className="text-[10px] text-[var(--muted-foreground)]">{stripLabel}</p>
+          <p className="type-micro-legal text-[var(--muted-foreground)]">{stripLabel}</p>
         </div>
         <div className="px-5 py-3">
-          <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Total engajadas</p>
-          <p className="text-2xl font-semibold text-[var(--foreground)]">{fmt(totalEng)}</p>
-          <p className="text-[10px] text-[var(--muted-foreground)]">{stripLabel}</p>
+          <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Total engajadas</p>
+          <p className="type-tagline text-[var(--foreground)]">{fmt(totalEng)}</p>
+          <p className="type-micro-legal text-[var(--muted-foreground)]">{stripLabel}</p>
         </div>
         <div className="px-5 py-3">
-          <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Melhor taxa</p>
-          <p className="text-2xl font-semibold text-[var(--foreground)]">
+          <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Melhor taxa</p>
+          <p className="type-tagline text-[var(--foreground)]">
             {peakEng.taxaEngajamento.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
           </p>
-          <p className="text-[10px] text-[var(--muted-foreground)]">{peakEng.label}</p>
+          <p className="type-micro-legal text-[var(--muted-foreground)]">{peakEng.label}</p>
         </div>
       </div>
 
@@ -382,7 +375,7 @@ function OrganicPerformanceSection({ data, periodData }: { data: MonthRow[] | un
                 if (!active || !payload?.length) return null;
                 const d = payload[0]?.payload as typeof enriched[0];
                 return (
-                  <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-xs shadow-xl min-w-[168px]">
+                  <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 type-fine-print shadow-xl min-w-[168px]">
                     <p className="mb-1.5 font-semibold text-[var(--foreground)]">{lbl}</p>
                     <p style={{ color: "var(--primary)" }}>Alcance: <span className="font-semibold">{fmtFull(d?.alcance ?? 0)}</span></p>
                     <p className="text-primary">Taxa de engaj.: <span className="font-semibold">{(d?.taxaEngajamento ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span></p>
@@ -410,15 +403,15 @@ function OrganicPerformanceSection({ data, periodData }: { data: MonthRow[] | un
         <div className="mt-3 flex flex-wrap items-center gap-4 px-2">
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-3 w-3 rounded-[3px]" style={{ background: "var(--primary)" }} />
-            <span className="text-[10px] text-[var(--muted-foreground)]">Alcance orgânico</span>
+            <span className="type-micro-legal text-[var(--muted-foreground)]">Alcance orgânico</span>
           </span>
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-0.5 w-5 rounded-full bg-blue-400" />
-            <span className="text-[10px] text-[var(--muted-foreground)]">Taxa de engajamento</span>
+            <span className="type-micro-legal text-[var(--muted-foreground)]">Taxa de engajamento</span>
           </span>
           <span className="flex items-center gap-1.5">
             <span className="inline-block w-5 border-t-2 border-dashed border-blue-400/60" />
-            <span className="text-[10px] text-[var(--muted-foreground)]">Média 12 meses</span>
+            <span className="type-micro-legal text-[var(--muted-foreground)]">Média 12 meses</span>
           </span>
         </div>
       </div>
@@ -437,9 +430,9 @@ function ActivityChart({ data, dataKey, labelKey, title, sub, color = "#3b82f6" 
   color?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
-      <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-[var(--primary)]">{sub}</p>
-      <p className="mb-4 text-base font-semibold text-[var(--foreground)]">{title}</p>
+    <div className="rel-card p-4">
+      <p className="mb-1 type-micro-legal uppercase text-[var(--primary)]">{sub}</p>
+      <p className="mb-4 type-body-strong text-[var(--foreground)]">{title}</p>
       <ResponsiveContainer width="100%" height={140}>
         <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
@@ -531,8 +524,8 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
     const msg = data?.error ?? (error instanceof Error ? error.message : "Erro desconhecido");
     return (
       <div className="rounded-2xl border border-red-500/20 bg-red-500/6 px-6 py-10 text-center">
-        <p className="text-sm font-medium text-negative">{msg}</p>
-        <p className="mt-1 text-xs text-negative/60">Verifique se o token Meta tem permissões de Instagram Insights.</p>
+        <p className="type-caption-strong text-negative">{msg}</p>
+        <p className="mt-1 type-fine-print text-negative/60">Verifique se o token Meta tem permissões de Instagram Insights.</p>
       </div>
     );
   }
@@ -541,8 +534,8 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--border)] bg-[var(--card)] px-6 py-16 text-center">
         <Instagram className="mb-4 h-10 w-10 text-muted-foreground/40" />
-        <p className="text-base font-semibold text-[var(--foreground)]">Instagram não configurado</p>
-        <p className="mt-2 max-w-sm text-sm text-[var(--muted-foreground)]">
+        <p className="type-body-strong text-[var(--foreground)]">Instagram não configurado</p>
+        <p className="mt-2 max-w-sm type-caption text-[var(--muted-foreground)]">
           Adicione o <strong>Instagram Business Account ID</strong> no cadastro deste cliente.
         </p>
       </div>
@@ -677,22 +670,22 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
         })()}
 
         {/* ── Followers chart (full width, ComposedChart) ── */}
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+        <div className="rel-card p-5">
           <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">Seguidores</p>
-              <h3 className="text-lg font-semibold text-[var(--foreground)]">Ganho de seguidores</h3>
-              <p className="text-xs text-[var(--muted-foreground)]">
+              <p className="type-micro-legal uppercase text-[var(--primary)]">Seguidores</p>
+              <h3 className="type-tagline text-[var(--foreground)]">Ganho de seguidores</h3>
+              <p className="type-fine-print text-[var(--muted-foreground)]">
                 Barras = ganho · Linha = total acumulado
               </p>
             </div>
             {/* Granularity toggle — hidden when YTD (forced mensal) */}
             {isYtd ? (
-              <span className="rounded-full border border-[var(--border)] bg-muted/60 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
+              <span className="rounded-full border border-[var(--border)] bg-muted/60 px-2.5 py-1 type-micro-legal uppercase text-[var(--muted-foreground)]">
                 Mensal
               </span>
             ) : (
-              <div className="flex overflow-hidden rounded-lg border border-[var(--border)] text-xs">
+              <div className="flex overflow-hidden rounded-lg border border-[var(--border)] type-fine-print">
                 {(["diario", "semanal", "mensal"] as const).map((g) => (
                   <button
                     key={g}
@@ -711,13 +704,13 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
           </div>
 
           {followerChartData.length === 0 ? (
-            <div className="flex h-48 items-center justify-center text-sm text-[var(--muted-foreground)]">
+            <div className="flex h-48 items-center justify-center type-caption text-[var(--muted-foreground)]">
               Sem dados no período selecionado
             </div>
           ) : (effectiveGranularity === "semanal" && (!weeklyData || weeklyData.length === 0)) ||
               (effectiveGranularity === "diario" && (!dailyData || dailyData.length === 0)) ? (
             <div className="flex h-48 flex-col items-center justify-center gap-2 text-center">
-              <p className="text-sm font-medium text-[var(--muted-foreground)]">
+              <p className="type-caption-strong text-[var(--muted-foreground)]">
                 Dados {effectiveGranularity === "diario" ? "diários" : "semanais"} disponíveis apenas para os últimos 90 dias
               </p>
             </div>
@@ -793,10 +786,10 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               {/* Gender pie */}
               {generoData.length > 0 && (
-                <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
+                <div className="rel-card p-4">
                   <div className="mb-3 flex items-center gap-2">
                     <Instagram className="h-4 w-4 text-[var(--primary)]" />
-                    <p className="text-base font-semibold text-[var(--foreground)]">Gênero</p>
+                    <p className="type-body-strong text-[var(--foreground)]">Gênero</p>
                   </div>
                   <div className="flex items-center gap-4">
                     <ResponsiveContainer width={180} height={180}>
@@ -830,7 +823,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                         <Tooltip
                           formatter={(value: number) => [`${fmtFull(value)} (${((value / totalGenero) * 100).toFixed(1)}%)`, ""]}
                           contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 10, fontSize: 12, color: "#fafafa" }}
-                          labelStyle={{ color: "#a1a1aa", fontWeight: 600, marginBottom: 2 }}
+                          labelStyle={{ color: "#a1a1aa", fontWeight: 500, marginBottom: 2 }}
                           itemStyle={{ color: "#fafafa" }}
                         />
                       </PieChart>
@@ -843,10 +836,10 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                               className="h-2.5 w-2.5 rounded-full shrink-0"
                               style={{ background: GENDER_COLORS[entry.key as keyof typeof GENDER_COLORS] ?? "#cbd5e1" }}
                             />
-                            <span className="text-xs text-[var(--muted-foreground)]">{entry.name}</span>
+                            <span className="type-fine-print text-[var(--muted-foreground)]">{entry.name}</span>
                           </div>
-                          <p className="pl-4 text-sm font-semibold text-[var(--foreground)]">{fmtFull(entry.value)}</p>
-                          <p className="pl-4 text-[10px] text-[var(--muted-foreground)]">{((entry.value / totalGenero) * 100).toFixed(1)}%</p>
+                          <p className="pl-4 type-caption-strong text-[var(--foreground)]">{fmtFull(entry.value)}</p>
+                          <p className="pl-4 type-micro-legal text-[var(--muted-foreground)]">{((entry.value / totalGenero) * 100).toFixed(1)}%</p>
                         </div>
                       ))}
                     </div>
@@ -856,10 +849,10 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
 
               {/* Age bar — vertical bars */}
               {faixaEtariaData.length > 0 && (
-                <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
+                <div className="rel-card p-4">
                   <div className="mb-3 flex items-center gap-2">
                     <Instagram className="h-4 w-4 text-[var(--primary)]" />
-                    <p className="text-base font-semibold text-[var(--foreground)]">Faixa Etária</p>
+                    <p className="type-body-strong text-[var(--foreground)]">Faixa Etária</p>
                   </div>
                   <ResponsiveContainer width="100%" height={190}>
                     <BarChart data={faixaEtariaData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
@@ -887,7 +880,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                         formatter={(v: number) => [fmtFull(v), "Seguidores"]}
                         cursor={{ fill: "var(--primary)", fillOpacity: 0.06 }}
                         contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 12, color: "var(--foreground)" }}
-                        labelStyle={{ color: "var(--foreground)", fontWeight: 600, marginBottom: 2 }}
+                        labelStyle={{ color: "var(--foreground)", fontWeight: 500, marginBottom: 2 }}
                       />
                       <Bar dataKey="value" fill="url(#ageGrad)" radius={[4, 4, 0, 0]} maxBarSize={48}>
                         <LabelList dataKey="value" position="top" formatter={(v: number) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)} style={{ fontSize: 9, fill: "var(--muted-foreground)" }} />
@@ -900,17 +893,17 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
 
             {/* Cities */}
             {demographics.cidades && demographics.cidades.length > 0 && (
-              <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] overflow-hidden">
+              <div className="mt-4 rel-card overflow-hidden">
                 <div className="border-b border-[var(--border)] px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-[var(--foreground)]">Seguidores por Cidade</p>
+                    <p className="type-caption-strong text-[var(--foreground)]">Seguidores por Cidade</p>
                   </div>
                 </div>
                 <div className="divide-y divide-[var(--border)]">
                   {demographics.cidades.map(({ cidade, seguidores }) => (
                     <div key={cidade} className="flex items-center justify-between px-4 py-2.5 hover:bg-muted/20">
-                      <span className="text-xs text-[var(--foreground)]">{cidade}</span>
-                      <span className="text-xs font-semibold text-[var(--foreground)]">{fmtFull(seguidores)}</span>
+                      <span className="type-fine-print text-[var(--foreground)]">{cidade}</span>
+                      <span className="type-caption-strong text-[var(--foreground)]">{fmtFull(seguidores)}</span>
                     </div>
                   ))}
                 </div>
@@ -925,7 +918,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
         {(postsLoading || (postsPeriod?.publicacoesTotal ?? 0) > 0) && (
           <div>
             <SectionHeader sub="Publicações · Orgânico" title="Resumo das publicações do período" />
-            <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+            <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
               Desempenho acumulado dos conteúdos publicados no período selecionado.
             </p>
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -992,31 +985,31 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
               {(() => {
                 const totalInterPeriod = postsPeriod?.interacoesTotaisTotal ?? allPosts.reduce((s, p) => s + p.curtidas + p.comentarios + p.salvos + p.compartilhamentos, 0);
                 return (
-                  <table className="w-full min-w-[860px] text-sm">
+                  <table className="w-full min-w-[860px] type-caption">
                     <thead>
                       <tr className="border-b border-[var(--border)] bg-muted/30">
-                        <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                        <th className="px-4 py-3 text-left type-micro-legal uppercase text-[var(--muted-foreground)]">
                           Publicação
                         </th>
-                        <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--primary)]">
+                        <th className="px-4 py-3 text-right type-micro-legal uppercase text-[var(--primary)]">
                           Visualizações
                         </th>
-                        <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                        <th className="px-4 py-3 text-right type-micro-legal uppercase text-[var(--muted-foreground)]">
                           Curtidas
                         </th>
-                        <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                        <th className="px-4 py-3 text-right type-micro-legal uppercase text-[var(--muted-foreground)]">
                           Coment.
                         </th>
-                        <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                        <th className="px-4 py-3 text-right type-micro-legal uppercase text-[var(--muted-foreground)]">
                           Salvos
                         </th>
-                        <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                        <th className="px-4 py-3 text-right type-micro-legal uppercase text-[var(--muted-foreground)]">
                           <Share2 className="h-3 w-3 inline-block" />
                         </th>
-                        <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                        <th className="px-4 py-3 text-right type-micro-legal uppercase text-[var(--muted-foreground)]">
                           Interações
                         </th>
-                        <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--primary)]">
+                        <th className="px-4 py-3 text-right type-micro-legal uppercase text-[var(--primary)]">
                           Peso
                         </th>
                       </tr>
@@ -1046,7 +1039,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                                       <ImageIcon className="h-5 w-5 text-muted-foreground/40" />
                                     </div>
                                   )}
-                                  <div className="absolute left-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--primary)] text-[9px] font-semibold text-white">
+                                  <div className="absolute left-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--primary)] type-micro-legal text-white">
                                     {idx + 1}
                                   </div>
                                 </div>
@@ -1054,26 +1047,26 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                                   <div className="flex items-center gap-1.5 mb-0.5">
                                     <MediaBadge type={post.mediaType} />
                                   </div>
-                                  <p className="truncate text-xs text-[var(--foreground)] max-w-[200px]" title={post.caption}>
+                                  <p className="truncate type-fine-print text-[var(--foreground)] max-w-[200px]" title={post.caption}>
                                     {post.caption || <span className="text-[var(--muted-foreground)]">(sem legenda)</span>}
                                   </p>
-                                  <p className="mt-0.5 text-[10px] text-[var(--muted-foreground)]">{fmtDate(post.timestamp)}</p>
+                                  <p className="mt-0.5 type-micro-legal text-[var(--muted-foreground)]">{fmtDate(post.timestamp)}</p>
                                 </div>
                                 <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
                               </div>
                             </td>
                             <td className="px-4 py-3 text-right">
-                              <span className="text-sm font-semibold text-[var(--primary)]">
+                              <span className="type-caption-strong text-[var(--primary)]">
                                 {fmt(post.videoViews ?? post.alcance)}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-right text-xs text-[var(--foreground)]">{fmt(post.curtidas)}</td>
-                            <td className="px-4 py-3 text-right text-xs text-[var(--foreground)]">{fmt(post.comentarios)}</td>
-                            <td className="px-4 py-3 text-right text-xs text-[var(--foreground)]">{fmt(post.salvos)}</td>
-                            <td className="px-4 py-3 text-right text-xs text-[var(--foreground)]">{fmt(post.compartilhamentos)}</td>
-                            <td className="px-4 py-3 text-right text-xs font-semibold text-[var(--foreground)]">{fmt(interacoes)}</td>
+                            <td className="px-4 py-3 text-right type-fine-print text-[var(--foreground)]">{fmt(post.curtidas)}</td>
+                            <td className="px-4 py-3 text-right type-fine-print text-[var(--foreground)]">{fmt(post.comentarios)}</td>
+                            <td className="px-4 py-3 text-right type-fine-print text-[var(--foreground)]">{fmt(post.salvos)}</td>
+                            <td className="px-4 py-3 text-right type-fine-print text-[var(--foreground)]">{fmt(post.compartilhamentos)}</td>
+                            <td className="px-4 py-3 text-right type-caption-strong text-[var(--foreground)]">{fmt(interacoes)}</td>
                             <td className="px-4 py-3 text-right">
-                              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-[var(--primary)]">
+                              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 type-caption-strong text-[var(--primary)]">
                                 {fmtPct(peso)}
                               </span>
                             </td>
@@ -1085,7 +1078,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                 );
               })()}
             </div>
-            <p className="mt-2 text-right text-[11px] text-[var(--muted-foreground)]">
+            <p className="mt-2 text-right type-fine-print text-[var(--muted-foreground)]">
               Clique em um Reel para ver detalhes completos
             </p>
           </div>
@@ -1100,31 +1093,31 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
               {(() => {
                 const totalInterPeriod = postsPeriod?.interacoesTotaisTotal ?? allPosts.reduce((s, p) => s + p.curtidas + p.comentarios + p.salvos + p.compartilhamentos, 0);
                 return (
-                  <table className="w-full min-w-[860px] text-sm">
+                  <table className="w-full min-w-[860px] type-caption">
                     <thead>
                       <tr className="border-b border-[var(--border)] bg-muted/30">
-                        <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                        <th className="px-4 py-3 text-left type-micro-legal uppercase text-[var(--muted-foreground)]">
                           Publicação
                         </th>
-                        <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--primary)]">
+                        <th className="px-4 py-3 text-right type-micro-legal uppercase text-[var(--primary)]">
                           Alcance
                         </th>
-                        <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                        <th className="px-4 py-3 text-right type-micro-legal uppercase text-[var(--muted-foreground)]">
                           Curtidas
                         </th>
-                        <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                        <th className="px-4 py-3 text-right type-micro-legal uppercase text-[var(--muted-foreground)]">
                           Coment.
                         </th>
-                        <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                        <th className="px-4 py-3 text-right type-micro-legal uppercase text-[var(--muted-foreground)]">
                           Salvos
                         </th>
-                        <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                        <th className="px-4 py-3 text-right type-micro-legal uppercase text-[var(--muted-foreground)]">
                           <Share2 className="h-3 w-3 inline-block" />
                         </th>
-                        <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                        <th className="px-4 py-3 text-right type-micro-legal uppercase text-[var(--muted-foreground)]">
                           Interações
                         </th>
-                        <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[var(--primary)]">
+                        <th className="px-4 py-3 text-right type-micro-legal uppercase text-[var(--primary)]">
                           Peso
                         </th>
                       </tr>
@@ -1154,7 +1147,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                                       <ImageIcon className="h-5 w-5 text-muted-foreground/40" />
                                     </div>
                                   )}
-                                  <div className="absolute left-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--primary)] text-[9px] font-semibold text-white">
+                                  <div className="absolute left-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--primary)] type-micro-legal text-white">
                                     {idx + 1}
                                   </div>
                                 </div>
@@ -1162,26 +1155,26 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                                   <div className="flex items-center gap-1.5 mb-0.5">
                                     <MediaBadge type={post.mediaType} />
                                   </div>
-                                  <p className="truncate text-xs text-[var(--foreground)] max-w-[200px]" title={post.caption}>
+                                  <p className="truncate type-fine-print text-[var(--foreground)] max-w-[200px]" title={post.caption}>
                                     {post.caption || <span className="text-[var(--muted-foreground)]">(sem legenda)</span>}
                                   </p>
-                                  <p className="mt-0.5 text-[10px] text-[var(--muted-foreground)]">{fmtDate(post.timestamp)}</p>
+                                  <p className="mt-0.5 type-micro-legal text-[var(--muted-foreground)]">{fmtDate(post.timestamp)}</p>
                                 </div>
                                 <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
                               </div>
                             </td>
                             <td className="px-4 py-3 text-right">
-                              <span className="text-sm font-semibold text-[var(--primary)]">
+                              <span className="type-caption-strong text-[var(--primary)]">
                                 {fmt(post.alcance)}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-right text-xs text-[var(--foreground)]">{fmt(post.curtidas)}</td>
-                            <td className="px-4 py-3 text-right text-xs text-[var(--foreground)]">{fmt(post.comentarios)}</td>
-                            <td className="px-4 py-3 text-right text-xs text-[var(--foreground)]">{fmt(post.salvos)}</td>
-                            <td className="px-4 py-3 text-right text-xs text-[var(--foreground)]">{fmt(post.compartilhamentos)}</td>
-                            <td className="px-4 py-3 text-right text-xs font-semibold text-[var(--foreground)]">{fmt(interacoes)}</td>
+                            <td className="px-4 py-3 text-right type-fine-print text-[var(--foreground)]">{fmt(post.curtidas)}</td>
+                            <td className="px-4 py-3 text-right type-fine-print text-[var(--foreground)]">{fmt(post.comentarios)}</td>
+                            <td className="px-4 py-3 text-right type-fine-print text-[var(--foreground)]">{fmt(post.salvos)}</td>
+                            <td className="px-4 py-3 text-right type-fine-print text-[var(--foreground)]">{fmt(post.compartilhamentos)}</td>
+                            <td className="px-4 py-3 text-right type-caption-strong text-[var(--foreground)]">{fmt(interacoes)}</td>
                             <td className="px-4 py-3 text-right">
-                              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-[var(--primary)]">
+                              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 type-caption-strong text-[var(--primary)]">
                                 {fmtPct(peso)}
                               </span>
                             </td>
@@ -1193,15 +1186,15 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
                 );
               })()}
             </div>
-            <p className="mt-2 text-right text-[11px] text-[var(--muted-foreground)]">
+            <p className="mt-2 text-right type-fine-print text-[var(--muted-foreground)]">
               Clique em um post para ver detalhes completos
             </p>
           </div>
         )}
 
         {reels.length === 0 && nonReels.length === 0 && allPosts.length > 0 && (
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-6 py-10 text-center">
-            <p className="text-sm text-[var(--muted-foreground)]">Nenhuma publicação encontrada no período selecionado.</p>
+          <div className="rel-card px-6 py-10 text-center">
+            <p className="type-caption text-[var(--muted-foreground)]">Nenhuma publicação encontrada no período selecionado.</p>
           </div>
         )}
 
@@ -1214,8 +1207,8 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
         )}
 
         {allPosts.length === 0 && !postsLoading && (
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-6 py-10 text-center">
-            <p className="text-sm text-[var(--muted-foreground)]">Nenhuma publicação encontrada no período selecionado.</p>
+          <div className="rel-card px-6 py-10 text-center">
+            <p className="type-caption text-[var(--muted-foreground)]">Nenhuma publicação encontrada no período selecionado.</p>
           </div>
         )}
       </div>

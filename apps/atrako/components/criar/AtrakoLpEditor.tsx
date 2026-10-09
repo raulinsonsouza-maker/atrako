@@ -141,7 +141,7 @@ export function AtrakoLpEditor({
   return (
     <div className="lp-editor">
       <aside className="lp-editor-rail">
-        <p className="type-fine-print uppercase tracking-[0.12em] text-[var(--ink-muted-48)]">
+        <p className="type-fine-print uppercase text-[var(--ink-muted-48)]">
           Seções
         </p>
         <ul className="lp-editor-list">
@@ -225,7 +225,7 @@ export function AtrakoLpEditor({
 
         {selected ? (
           <div className="lp-editor-props">
-            <p className="type-fine-print uppercase tracking-[0.12em] text-[var(--ink-muted-48)]">
+            <p className="type-fine-print uppercase text-[var(--ink-muted-48)]">
               Editar · {SECTION_LABEL[selected.type]}
             </p>
             <SectionFields section={selected} onChange={patchSelected} />

@@ -122,6 +122,13 @@ export async function reconcileOrderSources(
   }
 
   const now = new Date();
+  const existingByOrder = new Map(
+    (
+      await prisma.marketplaceOrderSource.findMany({
+        where: { orderId: { in: enriched.map((o) => o.id) } },
+      })
+    ).map((row) => [row.orderId, row]),
+  );
   let written = 0;
   for (const o of enriched) {
     if (o.day < range.dateFrom || o.day > range.dateTo) continue;
@@ -171,18 +178,33 @@ export async function reconcileOrderSources(
         matchedAt: now,
       };
     } else {
-      ad = {
-        adMethod: null,
-        adConfidence: null,
-        adWindow: null,
-        metaCampaignId: null,
-        metaCampaignName: null,
-        metaAdsetId: null,
-        metaAdsetName: null,
-        metaAdId: null,
-        metaAdName: null,
-        matchedAt: null,
-      };
+      // Sem UTM e sem compra do Meta neste recálculo: não apaga um cruzamento já gravado.
+      const prev = existingByOrder.get(o.id);
+      ad = prev?.adMethod
+        ? {
+            adMethod: prev.adMethod,
+            adConfidence: prev.adConfidence,
+            adWindow: prev.adWindow,
+            metaCampaignId: prev.metaCampaignId,
+            metaCampaignName: prev.metaCampaignName,
+            metaAdsetId: prev.metaAdsetId,
+            metaAdsetName: prev.metaAdsetName,
+            metaAdId: prev.metaAdId,
+            metaAdName: prev.metaAdName,
+            matchedAt: prev.matchedAt,
+          }
+        : {
+            adMethod: null,
+            adConfidence: null,
+            adWindow: null,
+            metaCampaignId: null,
+            metaCampaignName: null,
+            metaAdsetId: null,
+            metaAdsetName: null,
+            metaAdId: null,
+            metaAdName: null,
+            matchedAt: null,
+          };
     }
 
     const data = {

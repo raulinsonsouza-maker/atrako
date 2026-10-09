@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { MetricTile } from "@/components/ui";
 import {
   Bar,
   XAxis,
@@ -25,7 +26,7 @@ const tooltipStyle = {
     boxShadow: "0 8px 24px rgba(0,0,0,.35)",
     padding: "10px 14px",
   },
-  labelStyle: { color: "var(--foreground)", fontWeight: 600, marginBottom: 4 },
+  labelStyle: { color: "var(--foreground)", fontWeight: 500, marginBottom: 4 },
   itemStyle: { color: "var(--foreground)", fontSize: 13 },
 };
 
@@ -33,37 +34,14 @@ function KpiCard({
   title,
   value,
   sub,
-  icon: Icon,
-  accentValue,
 }: {
   title: string;
   value: string;
   sub: string;
-  icon: React.ElementType;
+  icon?: React.ElementType;
   accentValue?: boolean;
 }) {
-  return (
-    <Card className="group relative overflow-hidden rounded-2xl border-[var(--border)] transition-all hover:border-[color-mix(in_srgb,var(--primary)_20%,var(--border))]">
-      <CardContent className="flex items-start gap-4 p-5">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-600">
-          <Icon className="h-5 w-5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
-            {title}
-          </p>
-          <p
-            className={`mt-1 text-2xl font-semibold tabular-nums leading-none ${
-              accentValue ? "text-[var(--primary)]" : "text-[var(--foreground)]"
-            }`}
-          >
-            {value}
-          </p>
-          <p className="mt-1.5 text-[11px] text-[var(--muted-foreground)]">{sub}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  return <MetricTile label={title} value={value} detail={sub} />;
 }
 
 function formatDuration(seconds: number): string {
@@ -142,14 +120,14 @@ export function AnalyticsGA4Section({ data }: { data: AnalyticsGA4Data }) {
   const mensal = grafico.mensal;
 
   return (
-    <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
+    <Card className="overflow-hidden">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
+            <h2 className="type-tagline text-[var(--foreground)]">
               Comportamento (GA4)
             </h2>
-            <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+            <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
               Sessões, usuários ativos e engajamento do site
             </p>
           </div>

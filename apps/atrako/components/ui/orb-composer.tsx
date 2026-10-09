@@ -164,10 +164,11 @@ const OrbComposer = React.forwardRef<OrbComposerHandle, OrbComposerProps>(
         </button>
         <input
           ref={fileRef}
-          className="sr-only"
+          className="orb-composer-file-input"
           type="file"
           multiple
           accept={ACCEPT}
+          hidden
           tabIndex={-1}
           onChange={(e) => {
             takeFiles(e.target.files);

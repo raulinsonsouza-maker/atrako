@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, ShoppingBag } from "lucide-react";
 import { describeOrderOrigin, type OrderSourceView } from "@/lib/commerce-attribution/describe";
+import { MetricTile } from "@/components/ui";
 
 type VendasMeta = {
   meta: { purchases: number; valueCents: number; clickPurchases: number; viewPurchases: number };
@@ -33,13 +34,7 @@ type VendasMeta = {
 const brl = (cents: number) => (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 function Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
-      <p className="type-fine-print uppercase tracking-[0.18em] text-[var(--muted-foreground)]">{label}</p>
-      <p className="mt-2 type-tagline tabular-nums text-[var(--foreground)]">{value}</p>
-      {hint ? <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">{hint}</p> : null}
-    </div>
-  );
+  return <MetricTile label={label} value={value} detail={hint} />;
 }
 
 /** Quem comprou por qual anúncio: compras do Meta conciliadas com os pedidos da loja. */
@@ -55,7 +50,7 @@ export function MetaVendasIdentificadas({ clienteId, query }: { clienteId: strin
 
   if (isLoading || !data) {
     return (
-      <div className="flex items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 type-caption text-[var(--muted-foreground)]">
+      <div className="flex items-center gap-2 rel-card p-5 type-caption text-[var(--muted-foreground)]">
         <Loader2 className="h-4 w-4 animate-spin" /> Cruzando compras do Meta com os pedidos da loja…
       </div>
     );
@@ -90,7 +85,7 @@ export function MetaVendasIdentificadas({ clienteId, query }: { clienteId: strin
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left">
             <thead>
-              <tr className="type-fine-print uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+              <tr className="type-fine-print uppercase text-[var(--muted-foreground)]">
                 <th className="px-3 py-2 font-semibold">Campanha</th>
                 <th className="px-3 py-2 text-right font-semibold">Compras no Meta</th>
                 <th className="px-3 py-2 text-right font-semibold">Pedidos na loja</th>

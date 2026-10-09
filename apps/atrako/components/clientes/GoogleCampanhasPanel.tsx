@@ -58,7 +58,7 @@ function Th({ label, col, sortKey, dir, onSort, right = true }: {
 }) {
   return (
     <th
-      className={`px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] cursor-pointer select-none hover:text-[var(--foreground)] transition-colors ${right ? "text-right" : "text-left"}`}
+      className={`px-3 py-2.5 type-micro-legal uppercase text-[var(--muted-foreground)] cursor-pointer select-none hover:text-[var(--foreground)] transition-colors ${right ?"text-right" :"text-left"}`}
       onClick={() => onSort(col)}
     >
       <span className={`inline-flex items-center gap-1 ${right ? "justify-end" : ""}`}>
@@ -69,7 +69,7 @@ function Th({ label, col, sortKey, dir, onSort, right = true }: {
 }
 
 const Td = ({ v, muted = false, highlight = false }: { v: string; muted?: boolean; highlight?: boolean }) => (
-  <td className={`px-3 py-3 text-right text-sm font-semibold tabular-nums ${muted ? "text-[var(--muted-foreground)]" : highlight ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>{v}</td>
+  <td className={`px-3 py-3 text-right type-caption-strong tabular-nums ${muted ?"text-[var(--muted-foreground)]" : highlight ?"text-[var(--primary)]" :"text-[var(--foreground)]"}`}>{v}</td>
 );
 
 const dash = "—";
@@ -178,41 +178,41 @@ export function GoogleCampanhasPanel({ clienteId, filter, comparePrevious = fals
           <BarChart3 className="w-4 h-4 text-[var(--primary)]" />
         </div>
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--primary)]">Google Ads</p>
-          <p className="text-sm font-semibold text-[var(--foreground)] uppercase tracking-wider">Campanhas · Análise por período</p>
+          <p className="type-micro-legal uppercase text-[var(--primary)]">Google Ads</p>
+          <p className="type-caption-strong text-[var(--foreground)] uppercase ">Campanhas · Análise por período</p>
         </div>
       </div>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
-          <p className="text-sm text-[var(--muted-foreground)]">Carregando campanhas…</p>
+          <p className="type-caption text-[var(--muted-foreground)]">Carregando campanhas…</p>
         </div>
       ) : error ? (
-        <div className="flex items-center justify-center py-16"><p className="text-sm text-negative">{error instanceof Error ? error.message : "Erro ao carregar campanhas Google."}</p></div>
+        <div className="flex items-center justify-center py-16"><p className="type-caption text-negative">{error instanceof Error ? error.message : "Erro ao carregar campanhas Google."}</p></div>
       ) : data?.connection?.status === "DISCONNECTED" ? (
         <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
           <BarChart3 className="w-8 h-8 text-[var(--muted-foreground)] opacity-30" />
-          <p className="text-sm text-[var(--muted-foreground)]">Conecte o Google Ads em Configurações → Conexões.</p>
+          <p className="type-caption text-[var(--muted-foreground)]">Conecte o Google Ads em Configurações → Conexões.</p>
         </div>
       ) : !data?.connection?.accountSelected ? (
         <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
           <BarChart3 className="w-8 h-8 text-[var(--muted-foreground)] opacity-30" />
-          <p className="text-sm text-[var(--muted-foreground)]">Escolha a conta Google Ads usada por este dashboard.</p>
+          <p className="type-caption text-[var(--muted-foreground)]">Escolha a conta Google Ads usada por este dashboard.</p>
         </div>
       ) : data?.connection?.status === "SYNCING" ? (
         <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
-          <p className="text-sm text-[var(--muted-foreground)]">Sincronizando o histórico do Google Ads…</p>
+          <p className="type-caption text-[var(--muted-foreground)]">Sincronizando o histórico do Google Ads…</p>
         </div>
       ) : data?.connection?.lastSyncError ? (
         <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
-          <p className="text-sm text-negative">{data.connection.lastSyncError}</p>
-          <p className="text-xs text-[var(--muted-foreground)]">Tente novamente em Configurações → Conexões.</p>
+          <p className="type-caption text-negative">{data.connection.lastSyncError}</p>
+          <p className="type-fine-print text-[var(--muted-foreground)]">Tente novamente em Configurações → Conexões.</p>
         </div>
       ) : sorted.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
           <BarChart3 className="w-8 h-8 text-[var(--muted-foreground)] opacity-30" />
-          <p className="text-sm text-[var(--muted-foreground)]">Nenhuma campanha Google com gasto no período.</p>
-          <p className="text-xs text-[var(--muted-foreground)] opacity-70">A sincronização terminou, mas não houve gasto no período selecionado.</p>
+          <p className="type-caption text-[var(--muted-foreground)]">Nenhuma campanha Google com gasto no período.</p>
+          <p className="type-fine-print text-[var(--muted-foreground)] opacity-70">A sincronização terminou, mas não houve gasto no período selecionado.</p>
         </div>
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-[var(--border)]">
@@ -246,23 +246,23 @@ export function GoogleCampanhasPanel({ clienteId, filter, comparePrevious = fals
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-2 min-w-0">
                         {isTop && (
-                          <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-[var(--primary)]">#1</span>
+                          <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 type-micro-legal uppercase text-[var(--primary)]">#1</span>
                         )}
-                        <span className={`shrink-0 text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded-full border whitespace-nowrap ${badge.color}`}>{badge.label}</span>
-                        <p className="text-sm font-semibold text-[var(--foreground)] truncate" title={c.nome}>{c.nome}</p>
+                        <span className={`shrink-0 type-micro-legal uppercase px-1.5 py-0.5 rounded-full border whitespace-nowrap ${badge.color}`}>{badge.label}</span>
+                        <p className="type-caption-strong text-[var(--foreground)] truncate" title={c.nome}>{c.nome}</p>
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      {c.comparison?.state === "stopped" ? <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Sem veiculação</span> : (() => { const sb = statusBadge(c.campaignStatus); return sb ? (
-                        <span className={`inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-widest px-2 py-1 rounded-full border whitespace-nowrap ${sb.color}`}>
+                      {c.comparison?.state === "stopped" ? <span className="type-micro-legal uppercase text-[var(--muted-foreground)]">Sem veiculação</span> : (() => { const sb = statusBadge(c.campaignStatus); return sb ? (
+                        <span className={`inline-flex items-center gap-1 type-micro-legal uppercase px-2 py-1 rounded-full border whitespace-nowrap ${sb.color}`}>
                           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${sb.dot}`} />
                           {sb.label}
                         </span>
-                      ) : <span className="text-xs text-[var(--muted-foreground)]">—</span>; })()}
+                      ) : <span className="type-fine-print text-[var(--muted-foreground)]">—</span>; })()}
                     </td>
                     <td className="px-3 py-3 text-right">
-                      <span className="text-sm font-semibold tabular-nums text-[var(--primary)]">{fmtBrl(c.investimento)}</span>
-                      {c.comparison && <span className={`block text-[9px] font-semibold ${c.comparison.state === "stopped" ? "text-muted-foreground/70" : c.comparison.investimento == null ? "text-primary" : c.comparison.investimento >= 0 ? "text-positive" : "text-negative"}`}>
+                      <span className="type-caption-strong tabular-nums text-[var(--primary)]">{fmtBrl(c.investimento)}</span>
+                      {c.comparison && <span className={`block type-micro-legal ${c.comparison.state ==="stopped" ?"text-muted-foreground/70" : c.comparison.investimento == null ?"text-primary" : c.comparison.investimento >= 0 ?"text-positive" :"text-negative"}`}>
                         {c.comparison.state === "stopped" ? "Sem veiculação" : c.comparison.investimento == null ? "Nova" : `${c.comparison.investimento >= 0 ? "▲" : "▼"} ${Math.abs(c.comparison.investimento).toFixed(1)}%`}
                       </span>}
                     </td>
@@ -283,35 +283,35 @@ export function GoogleCampanhasPanel({ clienteId, filter, comparePrevious = fals
             <tfoot>
               <tr className="border-t-2 border-primary/30 bg-primary/[0.06]">
                 <td className="px-3 py-3" colSpan={2}>
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--primary)]">Total · {campanhas.length} campanhas</span>
+                  <span className="type-micro-legal uppercase text-[var(--primary)]">Total · {campanhas.length} campanhas</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-semibold text-[var(--foreground)]">{fmtBrl(totais.investimento)}</span>
+                  <span className="type-caption-strong text-[var(--foreground)]">{fmtBrl(totais.investimento)}</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-semibold text-[var(--muted-foreground)]">{fmt(totais.impressoes)}</span>
+                  <span className="type-caption-strong text-[var(--muted-foreground)]">{fmt(totais.impressoes)}</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-semibold text-[var(--foreground)]">{fmt(totais.cliques)}</span>
+                  <span className="type-caption-strong text-[var(--foreground)]">{fmt(totais.cliques)}</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-semibold text-[var(--muted-foreground)]">{ctrTotal != null ? fmtPct(ctrTotal) : dash}</span>
+                  <span className="type-caption-strong text-[var(--muted-foreground)]">{ctrTotal != null ? fmtPct(ctrTotal) : dash}</span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <span className="text-sm font-semibold text-[var(--foreground)]">{cpcTotal != null ? fmtBrl(cpcTotal) : dash}</span>
+                  <span className="type-caption-strong text-[var(--foreground)]">{cpcTotal != null ? fmtBrl(cpcTotal) : dash}</span>
                 </td>
                 {hasConv && <>
                   <td className="px-3 py-3 text-right">
-                    <span className="text-sm font-semibold text-[var(--foreground)]">{fmt(totais.conversoes, 1)}</span>
+                    <span className="type-caption-strong text-[var(--foreground)]">{fmt(totais.conversoes, 1)}</span>
                   </td>
                   <td className="px-3 py-3 text-right">
-                    <span className="text-sm font-semibold text-[var(--foreground)]">{cpaTotal != null ? fmtBrl(cpaTotal) : dash}</span>
+                    <span className="type-caption-strong text-[var(--foreground)]">{cpaTotal != null ? fmtBrl(cpaTotal) : dash}</span>
                   </td>
                   {hasValorConv && <td className="px-3 py-3 text-right">
-                    <span className="text-sm font-semibold text-[var(--primary)]">{fmtBrl(totais.conversaoValor)}</span>
+                    <span className="type-caption-strong text-[var(--primary)]">{fmtBrl(totais.conversaoValor)}</span>
                   </td>}
                   {hasValorConv && <td className="px-3 py-3 text-right">
-                    <span className="text-sm font-semibold text-[var(--primary)]">{roasTotal != null ? fmt(roasTotal, 2) + "x" : dash}</span>
+                    <span className="type-caption-strong text-[var(--primary)]">{roasTotal != null ? fmt(roasTotal, 2) + "x" : dash}</span>
                   </td>}
                 </>}
               </tr>

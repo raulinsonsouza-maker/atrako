@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, RefreshCcw, Store } from "lucide-react";
-import { PillSelect } from "@/components/ui/pill-select";
+import { useQuery } from "@tanstack/react-query";
+import { Area, Bar, CartesianGrid, ComposedChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { MetricGrid, MetricTile, SectionCard, SegmentedControl } from "@/components/ui";
+import { ChannelDisconnected } from "@/components/clientes/ChannelDisconnected";
+import { orderStatusLabel } from "@/lib/commerce-attribution/order-status";
+import { bucketYmd, diasEntre, rotuloEixo, rotuloTooltip } from "@/lib/chart-bucket";
 
 type EcommerceResponse = {
   provider: string;
@@ -22,9 +25,21 @@ type EcommerceResponse = {
     orders: number;
     gmvCents: number;
     avgTicketCents: number;
-    withPhonePct: number;
+    excludedOrders: number;
+    excludedCents: number;
     products?: number;
   };
+  series: Array<{ date: string; orders: number; gmvCents: number }>;
+  byStatus: Array<{ status: string; orders: number; gmvCents: number }>;
+  byStore: Array<{ provider: string; orders: number; gmvCents: number }>;
+  topProducts: Array<{
+    key: string;
+    title: string;
+    sku: string | null;
+    quantity: number;
+    revenueCents: number;
+    orders: number;
+  }>;
   orders: Array<{
     id: string;
     externalId: string;
@@ -48,6 +63,75 @@ function formatBrl(cents: number) {
   });
 }
 
+function statusText(status: string | null | undefined) {
+  if (!status || status === "unknown") return "Sem status";
+  return orderStatusLabel(status) ?? status;
+}
+
+function plainText(value: string) {
+  return value.replace(/<br\s*\/?>/gi, " ").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+}
+
+function ecommerceSerie(series: Array<{ date: string; orders: number; gmvCents: number }>) {
+  const ordered = [...series].sort((a, b) => a.date.localeCompare(b.date));
+  const first = ordered[0]?.date ?? "";
+  const last = ordered[ordered.length - 1]?.date ?? "";
+  const mensal = ordered.length > 1 && diasEntre(first, last) > 180;
+  if (!mensal) {
+    return {
+      mensal: false,
+      rows: ordered.map((row) => ({
+        ...row,
+        periodo: rotuloEixo(row.date, "dia", false),
+        rotulo: rotuloTooltip(row.date, "dia"),
+      })),
+    };
+  }
+  const buckets = new Map<string, { orders: number; gmvCents: number }>();
+  for (const row of ordered) {
+    const key = bucketYmd(row.date, "mes");
+    const current = buckets.get(key) ?? { orders: 0, gmvCents: 0 };
+    current.orders += row.orders;
+    current.gmvCents += row.gmvCents;
+    buckets.set(key, current);
+  }
+  const years = new Set([...buckets.keys()].map((key) => key.slice(0, 4)));
+  const multiYear = years.size > 1;
+  return {
+    mensal: true,
+    rows: [...buckets.entries()].map(([key, row]) => ({
+      date: key,
+      ...row,
+      periodo: rotuloEixo(key, "mes", multiYear),
+      rotulo: rotuloTooltip(key, "mes"),
+    })),
+  };
+}
+
+function EcommerceSerie({ series }: { series: Array<{ date: string; orders: number; gmvCents: number }> }) {
+  const grafico = ecommerceSerie(series);
+  return (
+    <SectionCard title={grafico.mensal ? "Evolução mensal de vendas" : "Evolução diária de vendas"}>
+      <div className="h-72 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={grafico.rows}>
+            <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
+            <XAxis dataKey="periodo" fontSize={11} tickLine={false} axisLine={false} stroke="var(--muted-foreground)" />
+            <YAxis yAxisId="money" tickFormatter={(v) => `R$${Math.round(Number(v) / 100)}`} fontSize={11} />
+            <YAxis yAxisId="orders" orientation="right" allowDecimals={false} fontSize={11} />
+            <Tooltip
+              labelFormatter={(_label, payload) => payload?.[0]?.payload?.rotulo ?? _label}
+              formatter={(value, name) => (name === "Pedidos" ? [value, name] : [formatBrl(Number(value)), name])}
+            />
+            <Area yAxisId="money" type="monotone" dataKey="gmvCents" name="GMV" fill="var(--primary)" stroke="var(--primary)" fillOpacity={0.16} />
+            <Bar yAxisId="orders" dataKey="orders" name="Pedidos" fill="var(--chart-spend)" />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    </SectionCard>
+  );
+}
+
 function providerLabel(p: string | undefined) {
   if (p === "SHOPIFY") return "Shopify";
   if (p === "TRAY") return "Tray";
@@ -59,14 +143,14 @@ function providerLabel(p: string | undefined) {
 export function EcommercePanel({
   clienteId,
   dateRange,
+  canConfigure = false,
 }: {
   clienteId: string;
   dateRange: { from: string; to: string };
+  /** Dono ou admin do workspace: pode abrir o conector. */
+  canConfigure?: boolean;
 }) {
-  const qc = useQueryClient();
   const [provider, setProvider] = useState("ALL");
-  const [syncing, setSyncing] = useState(false);
-  const [syncError, setSyncError] = useState<string | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["ecommerce", clienteId, provider, dateRange.from, dateRange.to],
@@ -83,33 +167,9 @@ export function EcommercePanel({
     enabled: !!clienteId,
   });
 
-  async function syncProvider(path: string) {
-    setSyncing(true);
-    setSyncError(null);
-    try {
-      const response = await fetch(path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workspaceId: clienteId }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.error || "Não foi possível sincronizar.");
-      await qc.invalidateQueries({ queryKey: ["ecommerce", clienteId] });
-    } catch (err) {
-      setSyncError(err instanceof Error ? err.message : "Falha na sincronização.");
-    } finally {
-      setSyncing(false);
-    }
-  }
-
-  const syncShopify = () => syncProvider("/api/atrako/shopify/sync");
-  const syncTray = () => syncProvider("/api/atrako/tray/sync");
-  const syncNuvemshop = () => syncProvider("/api/atrako/nuvemshop/sync");
-  const syncWooCommerce = () => syncProvider("/api/atrako/woocommerce/sync");
-
   if (isLoading) {
     return (
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8 text-center type-fine-print text-[var(--muted-foreground)]">
+      <div className="rel-card p-8 text-center type-fine-print text-[var(--muted-foreground)]">
         Carregando pedidos…
       </div>
     );
@@ -117,7 +177,7 @@ export function EcommercePanel({
 
   if (isError) {
     return (
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8 text-center type-fine-print text-negative">
+      <div className="rel-card p-8 text-center type-fine-print text-negative">
         Não foi possível carregar os dados do e-commerce.
       </div>
     );
@@ -125,131 +185,159 @@ export function EcommercePanel({
 
   if (!data?.connected) {
     return (
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8 text-center">
-        <Store className="mx-auto h-8 w-8 text-[var(--muted-foreground)]" strokeWidth={1.5} />
-        <p className="mt-3 type-body text-[var(--foreground)]">Loja não conectada</p>
-        <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
-          Conecte Shopify, Tray, Nuvemshop ou WooCommerce em Integrações para ver pedidos e GMV
-          aqui.
-        </p>
-        <Link
-          href={`/config/conexoes?workspaceId=${clienteId}`}
-          className="mt-4 inline-flex rounded-[var(--radius-xs)] bg-[var(--primary)] px-4 py-2 type-button-utility text-[var(--primary-foreground)] active:scale-95"
-        >
-          Conectar loja
-        </Link>
-      </div>
+      <ChannelDisconnected
+        title="Loja não conectada"
+        description="Conecte Shopify, Tray, Nuvemshop ou WooCommerce para ver pedidos e GMV aqui."
+        actionHref={canConfigure ? `/config/conexoes?workspaceId=${clienteId}` : null}
+        actionLabel="Conectar loja"
+      />
     );
   }
 
+  const connectedKeys = (["SHOPIFY", "TRAY", "NUVEMSHOP", "WOOCOMMERCE"] as const).filter(
+    (key) => data.providers?.[key]?.connected,
+  );
+  const storeOptions = [
+    ...(connectedKeys.length > 1 ? [{ value: "ALL", label: "Todas" }] : []),
+    ...connectedKeys.map((key) => ({ value: key, label: providerLabel(key) })),
+  ];
+  const selected = storeOptions.some((opt) => opt.value === provider)
+    ? provider
+    : storeOptions[0]?.value ?? "ALL";
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <PillSelect
-          size="toolbar"
-          value={provider}
+      {storeOptions.length > 0 ? (
+        <SegmentedControl
+          aria-label="Loja"
+          value={selected}
           onChange={setProvider}
-          options={[
-            { value: "ALL", label: "Todas as lojas" },
-            { value: "SHOPIFY", label: "Shopify" },
-            { value: "TRAY", label: "Tray" },
-            { value: "NUVEMSHOP", label: "Nuvemshop" },
-            { value: "WOOCOMMERCE", label: "WooCommerce" },
-          ]}
-          aria-label="Provedor e-commerce"
+          options={storeOptions}
         />
-        {data.storeLabel ? (
-          <p className="type-fine-print text-[var(--muted-foreground)]">{data.storeLabel}</p>
-        ) : null}
-        {data.providers?.SHOPIFY?.connected ? (
-          <button
-            type="button"
-            onClick={() => syncShopify()}
-            disabled={syncing}
-            className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] border border-[var(--border)] px-3 py-1.5 type-fine-print text-[var(--foreground)] active:scale-95 disabled:opacity-50"
-          >
-            {syncing ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <RefreshCcw className="h-3.5 w-3.5" />
-            )}
-            Sincronizar Shopify
-          </button>
-        ) : null}
-        {data.providers?.TRAY?.connected ? (
-          <button
-            type="button"
-            onClick={() => syncTray()}
-            disabled={syncing}
-            className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] border border-[var(--border)] px-3 py-1.5 type-fine-print text-[var(--foreground)] active:scale-95 disabled:opacity-50"
-          >
-            {syncing ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <RefreshCcw className="h-3.5 w-3.5" />
-            )}
-            Sincronizar Tray
-          </button>
-        ) : null}
-        {data.providers?.NUVEMSHOP?.connected ? (
-          <button
-            type="button"
-            onClick={() => syncNuvemshop()}
-            disabled={syncing}
-            className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] border border-[var(--border)] px-3 py-1.5 type-fine-print text-[var(--foreground)] active:scale-95 disabled:opacity-50"
-          >
-            {syncing ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <RefreshCcw className="h-3.5 w-3.5" />
-            )}
-            Sincronizar Nuvemshop
-          </button>
-        ) : null}
-        {data.providers?.WOOCOMMERCE?.connected ? (
-          <button
-            type="button"
-            onClick={syncWooCommerce}
-            disabled={syncing}
-            className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] border border-[var(--border)] px-3 py-1.5 type-fine-print text-[var(--foreground)] active:scale-95 disabled:opacity-50"
-          >
-            {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="h-3.5 w-3.5" />}
-            Sincronizar WooCommerce
-          </button>
-        ) : null}
-        {syncError ? <p role="alert" className="w-full type-fine-print text-red-600">{syncError}</p> : null}
-      </div>
+      ) : null}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        {[
-          { label: "Pedidos", value: String(data.kpis.orders) },
-          { label: "GMV", value: formatBrl(data.kpis.gmvCents) },
-          { label: "Ticket médio", value: formatBrl(data.kpis.avgTicketCents) },
-          { label: "Com telefone", value: `${data.kpis.withPhonePct}%` },
-          {
-            label: "Produtos",
-            value: String(data.kpis.products ?? data.catalogCount ?? 0),
-          },
-        ].map((kpi) => (
-          <div
-            key={kpi.label}
-            className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4"
-          >
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-              {kpi.label}
-            </p>
-            <p className="mt-2 text-2xl font-semibold tabular-nums text-[var(--foreground)]">
-              {kpi.value}
-            </p>
+      <MetricGrid>
+        <MetricTile label="Pedidos" value={data.kpis.orders.toLocaleString("pt-BR")} />
+        <MetricTile label="GMV" value={formatBrl(data.kpis.gmvCents)} />
+        <MetricTile label="Ticket médio" value={formatBrl(data.kpis.avgTicketCents)} />
+        <MetricTile
+          label="Fora da receita"
+          value={data.kpis.excludedOrders.toLocaleString("pt-BR")}
+          detail={formatBrl(data.kpis.excludedCents)}
+        />
+      </MetricGrid>
+
+      {data.series.length > 0 ? <EcommerceSerie series={data.series} /> : null}
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="rel-card overflow-hidden !p-0">
+          <div className="border-b border-[var(--border)] px-4 py-3">
+            <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Status dos pedidos</p>
           </div>
-        ))}
+          {data.byStatus.length === 0 ? (
+            <p className="px-4 py-8 text-center type-fine-print text-[var(--muted-foreground)]">
+              Sem pedidos no período.
+            </p>
+          ) : (
+            <ul className="divide-y divide-border/60">
+              {Object.values(
+                data.byStatus.reduce<Record<string, { label: string; orders: number; gmvCents: number }>>((acc, row) => {
+                  const label = statusText(row.status);
+                  const current = acc[label] ?? { label, orders: 0, gmvCents: 0 };
+                  current.orders += row.orders;
+                  current.gmvCents += row.gmvCents;
+                  acc[label] = current;
+                  return acc;
+                }, {}),
+              )
+                .sort((a, b) => b.gmvCents - a.gmvCents || b.orders - a.orders)
+                .map((row) => (
+                <li key={row.label} className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div>
+                    <p className="type-caption text-[var(--foreground)]">{row.label}</p>
+                    <p className="type-fine-print text-[var(--muted-foreground)]">
+                      {row.orders} pedido{row.orders === 1 ? "" : "s"}
+                    </p>
+                  </div>
+                  <p className="tabular-nums type-caption-strong text-[var(--foreground)]">
+                    {formatBrl(row.gmvCents)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="rel-card overflow-hidden !p-0">
+          <div className="border-b border-[var(--border)] px-4 py-3">
+            <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Produtos mais vendidos</p>
+            {data.catalogCount ? (
+              <p className="type-fine-print text-[var(--muted-foreground)]">
+                {data.catalogCount.toLocaleString("pt-BR")} no catálogo
+              </p>
+            ) : null}
+          </div>
+          {data.topProducts.length === 0 ? (
+            <p className="px-4 py-8 text-center type-fine-print text-[var(--muted-foreground)]">
+              Ainda sem itens no período.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-[420px] w-full type-caption">
+                <thead>
+                  <tr className="border-b border-[var(--border)] text-left type-micro-legal uppercase text-[var(--muted-foreground)]">
+                    <th className="px-4 py-3 type-caption-strong">Produto</th>
+                    <th className="px-4 py-3 text-right type-caption-strong">Unid.</th>
+                    <th className="px-4 py-3 text-right type-caption-strong">Pedidos</th>
+                    <th className="px-4 py-3 text-right type-caption-strong">Receita</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.topProducts.map((item) => (
+                    <tr key={item.key} className="border-b border-border/60">
+                      <td className="px-4 py-3">
+                        <div className="line-clamp-2 text-[var(--foreground)]">{plainText(item.title)}</div>
+                        {item.sku ? (
+                          <div className="type-fine-print text-[var(--muted-foreground)]">{item.sku}</div>
+                        ) : null}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums type-caption-strong">{item.quantity}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-[var(--muted-foreground)]">{item.orders}</td>
+                      <td className="px-4 py-3 text-right tabular-nums type-caption-strong">{formatBrl(item.revenueCents)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)]">
+      {data.byStore.length > 1 ? (
+        <div className="rel-card overflow-hidden !p-0">
+          <div className="border-b border-[var(--border)] px-4 py-3">
+            <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Por loja</p>
+          </div>
+          <ul className="divide-y divide-border/60">
+            {data.byStore.map((row) => (
+              <li key={row.provider} className="flex items-center justify-between gap-3 px-4 py-3">
+                <div>
+                  <p className="type-caption text-[var(--foreground)]">{providerLabel(row.provider)}</p>
+                  <p className="type-fine-print text-[var(--muted-foreground)]">
+                    {row.orders} pedido{row.orders === 1 ? "" : "s"}
+                  </p>
+                </div>
+                <p className="tabular-nums type-caption-strong text-[var(--foreground)]">{formatBrl(row.gmvCents)}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      <div className="rel-card overflow-hidden !p-0">
         <div className="border-b border-[var(--border)] px-4 py-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-            Pedidos recentes
-          </p>
+          <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Últimos pedidos</p>
+          <p className="type-fine-print text-[var(--muted-foreground)]">Amostra dos 10 mais recentes no período.</p>
         </div>
         {data.orders.length === 0 ? (
           <p className="px-4 py-8 text-center type-fine-print text-[var(--muted-foreground)]">
@@ -257,15 +345,15 @@ export function EcommercePanel({
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-[720px] w-full text-sm">
+            <table className="min-w-[720px] w-full type-caption">
               <thead>
-                <tr className="border-b border-[var(--border)] text-left text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-                  <th className="px-4 py-3 font-semibold">Pedido</th>
-                  <th className="px-4 py-3 font-semibold">Loja</th>
-                  <th className="px-4 py-3 font-semibold">Comprador</th>
-                  <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold text-right">Valor</th>
-                  <th className="px-4 py-3 font-semibold">Data</th>
+                <tr className="border-b border-[var(--border)] text-left type-micro-legal uppercase text-[var(--muted-foreground)]">
+                  <th className="px-4 py-3 type-caption-strong">Pedido</th>
+                  <th className="px-4 py-3 type-caption-strong">Loja</th>
+                  <th className="px-4 py-3 type-caption-strong">Comprador</th>
+                  <th className="px-4 py-3 type-caption-strong">Status</th>
+                  <th className="px-4 py-3 text-right type-caption-strong">Valor</th>
+                  <th className="px-4 py-3 type-caption-strong">Data</th>
                 </tr>
               </thead>
               <tbody>
@@ -274,35 +362,24 @@ export function EcommercePanel({
                     <td className="px-4 py-3 tabular-nums text-[var(--foreground)]">
                       #{order.externalId}
                       {order.leadId ? (
-                        <Link
-                          href="/crm"
-                          className="ml-2 text-[var(--primary)] hover:underline"
-                        >
+                        <Link href="/crm" className="ml-2 text-[var(--primary)] hover:underline">
                           Lead
                         </Link>
                       ) : null}
                     </td>
-                    <td className="px-4 py-3 text-[var(--muted-foreground)]">
-                      {providerLabel(order.provider)}
-                    </td>
+                    <td className="px-4 py-3 text-[var(--muted-foreground)]">{providerLabel(order.provider)}</td>
                     <td className="px-4 py-3">
-                      <div className="text-[var(--foreground)]">
-                        {order.buyerName || "—"}
-                      </div>
+                      <div className="text-[var(--foreground)]">{order.buyerName || "—"}</div>
                       <div className="type-fine-print text-[var(--muted-foreground)]">
                         {order.buyerPhone || order.buyerEmail || "Sem contato"}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-[var(--muted-foreground)]">
-                      {order.status || "—"}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums font-semibold text-[var(--foreground)]">
+                    <td className="px-4 py-3 text-[var(--muted-foreground)]">{statusText(order.status)}</td>
+                    <td className="px-4 py-3 text-right tabular-nums type-caption-strong text-[var(--foreground)]">
                       {order.totalCents != null ? formatBrl(order.totalCents) : "—"}
                     </td>
                     <td className="px-4 py-3 text-[var(--muted-foreground)]">
-                      {order.occurredAt
-                        ? new Date(order.occurredAt).toLocaleDateString("pt-BR")
-                        : "—"}
+                      {order.occurredAt ? new Date(order.occurredAt).toLocaleDateString("pt-BR") : "—"}
                     </td>
                   </tr>
                 ))}

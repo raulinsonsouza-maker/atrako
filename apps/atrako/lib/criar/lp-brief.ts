@@ -22,7 +22,7 @@ export type LpBriefGate =
   | { ok: false; falar: string };
 
 const SKIP =
-  /sem perguntar|pode montar agora|j[aá] pode criar|n[aã]o precisa perguntar/i;
+  /sem perguntar|pode montar agora|j[aá] pode criar|n[aã]o precisa perguntar|pegue tudo|de uma vez|pegue as informa|pegue no site|pegue do site/i;
 const AGREE =
   /^(sim|ok|pode|bora|fecha|perfeito|isso|confirmo|manda|t[aá]|beleza|fechado|pode sim)\b/i;
 const AGREE_IN =

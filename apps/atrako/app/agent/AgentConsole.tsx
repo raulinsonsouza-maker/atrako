@@ -16,6 +16,7 @@ import {
 } from "@/components/ui";
 import { buttonClass } from "@/components/ui/button";
 import { useOpenAppMenu } from "@/components/layout/AppShell";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { NotificationBell } from "@/components/relacionamento/NotificationBell";
 import { AssistantMarkdown, markdownToPlainText } from "./AssistantMarkdown";
 import { AssistantRequestError, streamAssistant } from "./assistantStream";
@@ -716,6 +717,7 @@ export default function AgentConsole() {
           </div>
           <span className="assistant-stage-title type-caption-strong">{hasThread ? active?.title ?? "" : ""}</span>
           <div className="assistant-stage-head-side assistant-stage-head-end">
+            <ThemeToggle />
             <NotificationBell />
             {hasThread ? (
               <IconButton size="toolbar" onClick={startNew} aria-label="Nova conversa" title="Nova conversa">

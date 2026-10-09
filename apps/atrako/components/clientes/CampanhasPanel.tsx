@@ -139,7 +139,7 @@ const CAMP_TYPE_META: Record<CampType, { label: string; color: string }> = {
   eventos:   { label: "Eventos",         color: "bg-sky-500/20 text-primary" },
   outro:     { label: "Outro",           color: "bg-parchment text-muted-foreground/50" },
 };
-const thClass = "px-4 pb-2 text-[10px] font-semibold uppercase tracking-[0.20em] text-[var(--muted-foreground)]";
+const thClass = "px-4 pb-2 type-micro-legal uppercase text-[var(--muted-foreground)]";
 
 type SortCol = "nome" | "status" | "diasAtivos" | "investimento" | "impressoes" | "cliques" | "ctr" | "resultados" | "mql" | "custoResultado" | "leads" | "cpl" | "purchases" | "cpa" | "faturamento" | "ticketMedio" | "roas" | "investFaturado";
 type SortDir = "asc" | "desc";
@@ -158,7 +158,7 @@ function SortTh({ col, label, align = "right", sortCol, sortDir, onSort }: {
   const active = col === sortCol;
   return (
     <th
-      className={`px-4 pb-2 text-[10px] font-semibold uppercase tracking-[0.20em] cursor-pointer select-none whitespace-nowrap text-${align} transition-colors ${active ? "text-[var(--primary)]" : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"}`}
+      className={`px-4 pb-2 type-micro-legal uppercase cursor-pointer select-none whitespace-nowrap text-${align} transition-colors ${active ?"text-[var(--primary)]" :"text-[var(--muted-foreground)] hover:text-[var(--foreground)]"}`}
       onClick={() => onSort(col)}
     >
       {label}
@@ -274,7 +274,7 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
             {hasResultados && <SortTh col="resultados" label={resultadoLabel} {...st} />}
             {showMqlCol && (
               <th
-                className={`px-4 pb-2 text-[10px] font-semibold uppercase tracking-[0.20em] text-right whitespace-nowrap cursor-pointer select-none transition-colors ${sortCol === "mql" ? "text-positive" : "text-positive hover:text-positive"}`}
+                className={`px-4 pb-2 type-micro-legal uppercase text-right whitespace-nowrap cursor-pointer select-none transition-colors ${sortCol ==="mql" ?"text-positive" :"text-positive hover:text-positive"}`}
                 onClick={() => handleSort("mql")}
                 title="Leads qualificados (MQL) — somente para campanhas de geração de leads"
               >
@@ -311,20 +311,20 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
                   <div className="flex items-start gap-2.5">
                     {/* Rank badge */}
                     {isTop ? (
-                      <span className="shrink-0 rounded-full bg-primary/20 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--primary)] mt-0.5">
+                      <span className="shrink-0 rounded-full bg-primary/20 px-2 py-0.5 type-micro-legal uppercase text-[var(--primary)] mt-0.5">
                         #1
                       </span>
                     ) : (
-                      <span className="text-[11px] font-semibold text-muted-foreground/50 tabular-nums shrink-0 w-5 text-right mt-0.5">
+                      <span className="type-caption-strong text-muted-foreground/50 tabular-nums shrink-0 w-5 text-right mt-0.5">
                         #{i + 1}
                       </span>
                     )}
                     <div className="min-w-0">
-                      <p className="text-[12px] font-semibold leading-snug text-[var(--foreground)] line-clamp-2 max-w-[360px]">
+                      <p className="type-caption-strong leading-snug text-[var(--foreground)] line-clamp-2 max-w-[360px]">
                         {c.nome}
                       </p>
                       {ctype !== "outro" && (
-                        <span className={`mt-1 inline-block text-[9px] font-semibold uppercase tracking-[0.16em] px-1.5 py-0.5 rounded-full ${typeColor}`}>
+                        <span className={`mt-1 inline-block type-micro-legal uppercase px-1.5 py-0.5 rounded-full ${typeColor}`}>
                           {typeLabel}
                         </span>
                       )}
@@ -335,49 +335,49 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
                 {/* Status */}
                 <td className={`px-4 py-4 ${bg}`}>
                   {c.comparison?.state === "stopped" ? (
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70">Sem veiculação</span>
+                    <span className="type-micro-legal uppercase text-muted-foreground/70">Sem veiculação</span>
                   ) : c.status === "ATIVA" ? (
-                    <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-positive">
+                    <span className="inline-flex items-center gap-1.5 type-micro-legal uppercase text-positive">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 animate-pulse" />
                       Ativa
                     </span>
                   ) : c.status === "PAUSADA" ? (
-                    <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/50">
+                    <span className="inline-flex items-center gap-1.5 type-micro-legal uppercase text-muted-foreground/50">
                       <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
                       Pausada
                     </span>
                   ) : (
-                    <span className="text-[11px] text-muted-foreground/50">—</span>
+                    <span className="type-fine-print text-muted-foreground/50">—</span>
                   )}
                 </td>
 
                 {/* Dias ativos */}
                 <td className={`px-4 py-4 text-right tabular-nums ${bg}`}>
-                  <span className="text-[13px] font-semibold text-[var(--foreground)]">
+                  <span className="type-caption-strong text-[var(--foreground)]">
                     {c.diasAtivos > 0 ? c.diasAtivos : "—"}
                   </span>
                   {c.diasAtivos > 0 && (
-                    <span className="block text-[10px] text-[var(--muted-foreground)] leading-none mt-0.5">
+                    <span className="block type-micro-legal text-[var(--muted-foreground)] leading-none mt-0.5">
                       {c.diasAtivos === 1 ? "dia" : "dias"}
                     </span>
                   )}
                 </td>
 
                 {/* Investido */}
-                <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>
+                <td className={`px-4 py-4 text-right tabular-nums type-caption text-[var(--muted-foreground)] ${bg}`}>
                   {fmtBrl(c.investimento)}
-                  {c.comparison && <span className={`block text-[9px] font-semibold ${c.comparison.state === "stopped" ? "text-muted-foreground/70" : c.comparison.investimento == null ? "text-primary" : c.comparison.investimento >= 0 ? "text-positive" : "text-negative"}`}>
+                  {c.comparison && <span className={`block type-micro-legal ${c.comparison.state ==="stopped" ?"text-muted-foreground/70" : c.comparison.investimento == null ?"text-primary" : c.comparison.investimento >= 0 ?"text-positive" :"text-negative"}`}>
                     {c.comparison.state === "stopped" ? "Sem veiculação" : c.comparison.investimento == null ? "Nova" : `${c.comparison.investimento >= 0 ? "▲" : "▼"} ${Math.abs(c.comparison.investimento).toFixed(1)}%`}
                   </span>}
                 </td>
 
                 {/* Impressões */}
-                <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>
+                <td className={`px-4 py-4 text-right tabular-nums type-caption text-[var(--muted-foreground)] ${bg}`}>
                   {fmt(c.impressoes)}
                 </td>
 
                 {/* Cliques */}
-                <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>
+                <td className={`px-4 py-4 text-right tabular-nums type-caption text-[var(--muted-foreground)] ${bg}`}>
                   {fmt(c.cliques)}
                 </td>
 
@@ -385,14 +385,14 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
                 {hasResultados && (
                   <td className={`px-4 py-4 text-right tabular-nums ${bg}`}>
                     {isNonConversion || !hasResult ? (
-                      <span className="text-[13px] text-muted-foreground/50">—</span>
+                      <span className="type-caption text-muted-foreground/50">—</span>
                     ) : (
                       <div>
-                        <span className={`text-[14px] font-semibold ${isTop ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
+                        <span className={`type-caption-strong ${isTop ?"text-[var(--primary)]" :"text-[var(--foreground)]"}`}>
                           {fmt(c.resultados ?? 0)}
                         </span>
                         {c.resultType && c.resultType !== dominantResultType && (
-                          <span className="block text-[9px] text-[var(--muted-foreground)] mt-0.5 leading-none uppercase tracking-wide">
+                          <span className="block type-micro-legal text-[var(--muted-foreground)] mt-0.5 leading-none uppercase ">
                             {c.resultType === "conversas" ? "conv." : c.resultType === "visitas" ? "vis." : c.resultType === "leads" ? "leads" : ""}
                           </span>
                         )}
@@ -408,11 +408,11 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
                   return (
                     <td className={`px-4 py-4 text-right tabular-nums ${bg}`}>
                       {!isLead ? (
-                        <span className="text-[13px] text-muted-foreground/50" title="MQL aplica-se apenas a campanhas de geração de leads">—</span>
+                        <span className="type-caption text-muted-foreground/50" title="MQL aplica-se apenas a campanhas de geração de leads">—</span>
                       ) : mql > 0 ? (
-                        <span className="text-[14px] font-semibold text-positive">{fmt(mql)}</span>
+                        <span className="type-caption-strong text-positive">{fmt(mql)}</span>
                       ) : (
-                        <span className="text-[13px] text-muted-foreground/50">0</span>
+                        <span className="type-caption text-muted-foreground/50">0</span>
                       )}
                     </td>
                   );
@@ -420,7 +420,7 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
 
                 {/* Custo por resultado */}
                 {hasResultados && (
-                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>
+                  <td className={`px-4 py-4 text-right tabular-nums type-caption text-[var(--muted-foreground)] ${bg}`}>
                     {isNonConversion || !hasResult ? (
                       <span className="text-muted-foreground/50">—</span>
                     ) : (
@@ -433,9 +433,9 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
                 {hasSales && (
                   <td className={`px-4 py-4 text-right tabular-nums ${bg}`}>
                     {isNonConversion ? (
-                      <span className="text-[13px] text-muted-foreground/50">—</span>
+                      <span className="type-caption text-muted-foreground/50">—</span>
                     ) : (
-                      <span className={`text-[13px] font-semibold ${isTop && c.faturamento > 0 ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}>
+                      <span className={`type-caption-strong ${isTop && c.faturamento > 0 ?"text-[var(--primary)]" :"text-[var(--foreground)]"}`}>
                         {c.faturamento > 0 ? fmtBrl(c.faturamento) : "—"}
                       </span>
                     )}
@@ -444,14 +444,14 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
 
                 {/* Ticket Médio */}
                 {hasSales && (
-                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>
+                  <td className={`px-4 py-4 text-right tabular-nums type-caption text-[var(--muted-foreground)] ${bg}`}>
                     {isNonConversion ? <span className="text-muted-foreground/50">—</span> : (c.ticketMedio !== null ? fmtBrl(c.ticketMedio) : "—")}
                   </td>
                 )}
 
                 {/* ROAS */}
                 {hasSales && (
-                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>
+                  <td className={`px-4 py-4 text-right tabular-nums type-caption text-[var(--muted-foreground)] ${bg}`}>
                     {isNonConversion ? <span className="text-muted-foreground/50">—</span> : (c.roas !== null ? fmt(c.roas, 2) + "x" : "—")}
                   </td>
                 )}
@@ -468,7 +468,7 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
                           ? "text-amber-600 font-semibold"
                           : "text-negative font-semibold";
                   return (
-                    <td className={`px-4 py-4 text-right tabular-nums text-[13px] ${color} ${bg}`} title="Investimento ÷ Faturamento (meta: abaixo de 10%)">
+                    <td className={`px-4 py-4 text-right tabular-nums type-caption ${color} ${bg}`} title="Investimento ÷ Faturamento (meta: abaixo de 10%)">
                       {isNonConversion || ratio == null ? <span className="text-muted-foreground/50">—</span> : `${fmt(ratio, 2)}%`}
                     </td>
                   );
@@ -487,46 +487,46 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
         <tfoot>
           <tr>
             <td className="rounded-l-2xl bg-parchment px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--foreground)]">Total</p>
+              <p className="type-caption-strong uppercase text-[var(--foreground)]">Total</p>
             </td>
             <td className="bg-parchment px-4 py-3" />
             <td className="bg-parchment px-4 py-3" />
-            <td className="bg-parchment px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--foreground)]">
+            <td className="bg-parchment px-4 py-3 text-right tabular-nums type-caption-strong text-[var(--foreground)]">
               {fmtBrl(totals.investimento)}
             </td>
-            <td className="bg-parchment px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--foreground)]">
+            <td className="bg-parchment px-4 py-3 text-right tabular-nums type-caption-strong text-[var(--foreground)]">
               {fmt(totals.impressoes)}
             </td>
-            <td className="bg-parchment px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--foreground)]">
+            <td className="bg-parchment px-4 py-3 text-right tabular-nums type-caption-strong text-[var(--foreground)]">
               {fmt(totals.cliques)}
             </td>
             {hasResultados && (
-              <td className="bg-parchment px-4 py-3 text-right tabular-nums text-[15px] font-semibold text-[var(--primary)]">
+              <td className="bg-parchment px-4 py-3 text-right tabular-nums type-body-strong text-[var(--primary)]">
                 {fmt(totals.resultados)}
               </td>
             )}
             {showMqlCol && (
-              <td className="bg-parchment px-4 py-3 text-right tabular-nums text-[15px] font-semibold text-positive">
+              <td className="bg-parchment px-4 py-3 text-right tabular-nums type-body-strong text-positive">
                 {fmt(totals.mql)}
               </td>
             )}
             {hasResultados && (
-              <td className="bg-parchment px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--foreground)]">
+              <td className="bg-parchment px-4 py-3 text-right tabular-nums type-caption-strong text-[var(--foreground)]">
                 {totalCustoResultado !== null ? fmtBrl(totalCustoResultado) : "—"}
               </td>
             )}
             {hasSales && (
-              <td className="bg-parchment px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--primary)]">
+              <td className="bg-parchment px-4 py-3 text-right tabular-nums type-caption-strong text-[var(--primary)]">
                 {totals.faturamento > 0 ? fmtBrl(totals.faturamento) : "—"}
               </td>
             )}
             {hasSales && (
-              <td className="bg-parchment px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--foreground)]">
+              <td className="bg-parchment px-4 py-3 text-right tabular-nums type-caption-strong text-[var(--foreground)]">
                 {totals.purchases > 0 && totals.faturamento > 0 ? fmtBrl(totals.faturamento / totals.purchases) : "—"}
               </td>
             )}
             {hasSales && (
-              <td className="bg-parchment px-4 py-3 text-right tabular-nums text-[13px] font-semibold text-[var(--foreground)]">
+              <td className="bg-parchment px-4 py-3 text-right tabular-nums type-caption-strong text-[var(--foreground)]">
                 {totalRoas !== null ? fmt(totalRoas, 2) + "x" : "—"}
               </td>
             )}
@@ -541,7 +541,7 @@ function CampanhasTable({ campanhas, onSelect, mqlByCampaignName }: { campanhas:
                       ? "text-amber-600"
                       : "text-negative";
               return (
-                <td className={`bg-parchment px-4 py-3 text-right tabular-nums text-[13px] font-semibold ${color}`} title="Investimento ÷ Faturamento (meta: abaixo de 10%)">
+                <td className={`bg-parchment px-4 py-3 text-right tabular-nums type-caption-strong ${color}`} title="Investimento ÷ Faturamento (meta: abaixo de 10%)">
                   {ratio == null ? "—" : `${fmt(ratio, 2)}%`}
                 </td>
               );
@@ -605,7 +605,7 @@ function ConjuntosTable({ conjuntos, onSelect, parentCampType, mqlByAdsetId, cli
             <SortTh col="cpc" label="CPC" {...st} />
             {hasLeads && <SortTh col="leads" label="Leads" {...st} />}
             {mqlByAdsetId && hasLeads && (
-              <th className="px-4 pb-2 text-[10px] font-semibold uppercase tracking-[0.20em] text-right whitespace-nowrap text-positive">
+              <th className="px-4 pb-2 type-micro-legal uppercase text-right whitespace-nowrap text-positive">
                 MQL
               </th>
             )}
@@ -630,22 +630,22 @@ function ConjuntosTable({ conjuntos, onSelect, parentCampType, mqlByAdsetId, cli
                 <td className={`rounded-l-2xl px-4 py-4 ${bg}`}>
                   <div className="flex items-center gap-2.5">
                     {isTop ? (
-                      <span className="shrink-0 rounded-full bg-primary/20 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--primary)]">#1</span>
+                      <span className="shrink-0 rounded-full bg-primary/20 px-2 py-0.5 type-micro-legal uppercase text-[var(--primary)]">#1</span>
                     ) : (
-                      <span className="text-[11px] font-semibold text-muted-foreground/50 tabular-nums shrink-0 w-5 text-right">#{i + 1}</span>
+                      <span className="type-caption-strong text-muted-foreground/50 tabular-nums shrink-0 w-5 text-right">#{i + 1}</span>
                     )}
-                    <p className="text-[12px] font-semibold leading-snug text-[var(--foreground)] line-clamp-2 max-w-[360px]">{c.adsetName}</p>
+                    <p className="type-caption-strong leading-snug text-[var(--foreground)] line-clamp-2 max-w-[360px]">{c.adsetName}</p>
                   </div>
                 </td>
-                <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>{fmtBrl(c.spend)}</td>
-                <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>{fmt(c.impressions)}</td>
-                <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>{fmt(c.clicks)}</td>
-                <td className={`px-4 py-4 text-right tabular-nums text-[13px] ${c.ctr !== null && c.ctr >= 1 ? "text-positive font-semibold" : "text-[var(--muted-foreground)]"} ${bg}`}>
+                <td className={`px-4 py-4 text-right tabular-nums type-caption text-[var(--muted-foreground)] ${bg}`}>{fmtBrl(c.spend)}</td>
+                <td className={`px-4 py-4 text-right tabular-nums type-caption text-[var(--muted-foreground)] ${bg}`}>{fmt(c.impressions)}</td>
+                <td className={`px-4 py-4 text-right tabular-nums type-caption text-[var(--muted-foreground)] ${bg}`}>{fmt(c.clicks)}</td>
+                <td className={`px-4 py-4 text-right tabular-nums type-caption-strong ${c.ctr !== null && c.ctr >= 1 ?"text-positive" :"text-[var(--muted-foreground)]"} ${bg}`}>
                   {c.ctr !== null ? fmtPct(c.ctr) : "—"}
                 </td>
-                <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>{c.cpc !== null ? fmtBrl(c.cpc) : "—"}</td>
+                <td className={`px-4 py-4 text-right tabular-nums type-caption text-[var(--muted-foreground)] ${bg}`}>{c.cpc !== null ? fmtBrl(c.cpc) : "—"}</td>
                 {hasLeads && (
-                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] ${isTop && c.leads > 0 ? "text-[var(--primary)] font-semibold text-[15px]" : "text-[var(--muted-foreground)]"} ${bg}`}>
+                  <td className={`px-4 py-4 text-right tabular-nums type-caption ${isTop && c.leads > 0 ?"text-[var(--primary)] type-body-strong" :"text-[var(--muted-foreground)]"} ${bg}`}>
                     {c.leads > 0 ? fmt(c.leads) : "—"}
                   </td>
                 )}
@@ -655,52 +655,52 @@ function ConjuntosTable({ conjuntos, onSelect, parentCampType, mqlByAdsetId, cli
                   return (
                     <td className={`px-4 py-4 text-right tabular-nums ${bg}`}>
                       {mql > 0
-                        ? <span className="text-[14px] font-semibold text-positive">{fmt(mql)}</span>
-                        : <span className="text-[13px] text-muted-foreground/50">—</span>}
+                        ? <span className="type-caption-strong text-positive">{fmt(mql)}</span>
+                        : <span className="type-caption text-muted-foreground/50">—</span>}
                     </td>
                   );
                 })()}
                 {hasLeads && (
-                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>
+                  <td className={`px-4 py-4 text-right tabular-nums type-caption text-[var(--muted-foreground)] ${bg}`}>
                     {c.cpl !== null ? fmtBrl(c.cpl) : "—"}
                   </td>
                 )}
                 {hasConversas && (
-                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] ${isTop && (c.conversas ?? 0) > 0 ? "text-[var(--primary)] font-semibold text-[15px]" : (c.conversas ?? 0) > 0 ? "text-primary font-semibold" : "text-muted-foreground/50"} ${bg}`}>
+                  <td className={`px-4 py-4 text-right tabular-nums type-caption-strong ${isTop && (c.conversas ?? 0) > 0 ?"text-[var(--primary)] type-body-strong" : (c.conversas ?? 0) > 0 ?"text-primary" :"text-muted-foreground/50"} ${bg}`}>
                     {(c.conversas ?? 0) > 0 ? fmt(c.conversas) : "—"}
                   </td>
                 )}
                 {hasConversas && (
-                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>
+                  <td className={`px-4 py-4 text-right tabular-nums type-caption text-[var(--muted-foreground)] ${bg}`}>
                     {c.custoConversa !== null ? fmtBrl(c.custoConversa) : "—"}
                   </td>
                 )}
                 {hasSales && (
-                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] ${isTop && c.purchases > 0 ? "text-[var(--primary)] font-semibold text-[15px]" : c.purchases > 0 ? "text-[var(--foreground)]" : "text-muted-foreground/50"} ${bg}`}>
+                  <td className={`px-4 py-4 text-right tabular-nums type-caption ${isTop && c.purchases > 0 ?"text-[var(--primary)] type-body-strong" : c.purchases > 0 ?"text-[var(--foreground)]" :"text-muted-foreground/50"} ${bg}`}>
                     {c.purchases > 0 ? fmt(c.purchases) : "—"}
                   </td>
                 )}
                 {hasSales && (
-                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>
+                  <td className={`px-4 py-4 text-right tabular-nums type-caption text-[var(--muted-foreground)] ${bg}`}>
                     {c.cpa !== null ? fmtBrl(c.cpa) : "—"}
                   </td>
                 )}
                 {hasSales && (
-                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>
+                  <td className={`px-4 py-4 text-right tabular-nums type-caption text-[var(--muted-foreground)] ${bg}`}>
                     {c.faturamento > 0 ? fmtBrl(c.faturamento) : "—"}
                   </td>
                 )}
                 {hasSales && (
-                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>
+                  <td className={`px-4 py-4 text-right tabular-nums type-caption text-[var(--muted-foreground)] ${bg}`}>
                     {c.ticketMedio !== null ? fmtBrl(c.ticketMedio) : "—"}
                   </td>
                 )}
                 {hasSales && (
-                  <td className={`px-4 py-4 text-right tabular-nums text-[13px] font-semibold ${c.roas !== null && c.roas >= 1 ? "text-positive" : "text-[var(--muted-foreground)]"} ${bg}`}>
+                  <td className={`px-4 py-4 text-right tabular-nums type-caption-strong ${c.roas !== null && c.roas >= 1 ?"text-positive" :"text-[var(--muted-foreground)]"} ${bg}`}>
                     {c.roas !== null ? fmt(c.roas, 2) + "x" : "—"}
                   </td>
                 )}
-                <td className={`px-4 py-4 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] ${bg}`}>{c.adCount}</td>
+                <td className={`px-4 py-4 text-right tabular-nums type-caption text-[var(--muted-foreground)] ${bg}`}>{c.adCount}</td>
                 <td className={`rounded-r-2xl px-2 py-4 ${bg}`}>
                   <div className="flex items-center gap-0.5 justify-end">
                     <button
@@ -786,7 +786,7 @@ function VideoModal({ c, onClose }: { c: Criativo; onClose: () => void }) {
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
           <Play className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />
-          <p className="text-sm font-semibold text-[var(--foreground)] flex-1 min-w-0 truncate">{c.adName}</p>
+          <p className="type-caption-strong text-[var(--foreground)] flex-1 min-w-0 truncate">{c.adName}</p>
           <button
             onClick={onClose}
             className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors flex-shrink-0 p-1"
@@ -816,7 +816,7 @@ function VideoModal({ c, onClose }: { c: Criativo; onClose: () => void }) {
           ) : iframeLoading ? (
             <div className="flex flex-col items-center gap-3 py-12 text-[var(--muted-foreground)]">
               <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
-              <p className="text-xs">Carregando prévia do Meta…</p>
+              <p className="type-fine-print">Carregando prévia do Meta…</p>
             </div>
           ) : metaPreview ? (
             (() => {
@@ -841,14 +841,14 @@ function VideoModal({ c, onClose }: { c: Criativo; onClose: () => void }) {
                 ? <img src={thumbUpgraded} alt={c.adName} className="w-full max-h-[50vh] object-contain" />
                 : <Play className="w-12 h-12 opacity-20" />
               }
-              <p className="text-xs mt-2 opacity-60">Prévia não disponível</p>
+              <p className="type-fine-print mt-2 opacity-60">Prévia não disponível</p>
             </div>
           ) : thumbUpgraded ? (
             <img src={thumbUpgraded} alt={c.adName} className="w-full max-h-[70vh] object-contain" />
           ) : (
             <div className="flex flex-col items-center gap-3 py-12 text-[var(--muted-foreground)]">
               <Play className="w-12 h-12 opacity-20" />
-              <p className="text-xs">Nenhuma prévia disponível</p>
+              <p className="type-fine-print">Nenhuma prévia disponível</p>
             </div>
           )}
         </div>
@@ -912,7 +912,7 @@ function CriativosTable({ criativos, parentCampType, mqlByAdId }: { criativos: C
               <SortTh col="cpm" label="CPM" {...st} />
               {hasLeads && <SortTh col="leads" label="Leads" {...st} />}
               {mqlByAdId && hasLeads && (
-                <th className="px-4 pb-2 text-[10px] font-semibold uppercase tracking-[0.20em] text-right whitespace-nowrap text-positive">
+                <th className="px-4 pb-2 type-micro-legal uppercase text-right whitespace-nowrap text-positive">
                   MQL
                 </th>
               )}
@@ -970,22 +970,22 @@ function CriativosTable({ criativos, parentCampType, mqlByAdId }: { criativos: C
                       {/* Text block */}
                       <div className="min-w-0 flex-1">
                         {/* Ad name */}
-                        <p className="text-[13px] font-semibold text-[var(--foreground)] leading-snug line-clamp-1">{c.adName}</p>
+                        <p className="type-caption-strong text-[var(--foreground)] leading-snug line-clamp-1">{c.adName}</p>
 
                         {/* Ad copy: headline + body */}
                         {hasAdCopy && (
                           <div className="mt-1 space-y-0.5">
                             {c.title && (
-                              <p className="text-[11px] text-foreground/60 font-medium line-clamp-1 leading-snug">{c.title}</p>
+                              <p className="type-caption-strong text-foreground/60 line-clamp-1 leading-snug">{c.title}</p>
                             )}
                             {c.body && (
-                              <p className="text-[11px] text-[var(--muted-foreground)] line-clamp-2 leading-relaxed">{c.body}</p>
+                              <p className="type-fine-print text-[var(--muted-foreground)] line-clamp-2 leading-relaxed">{c.body}</p>
                             )}
                           </div>
                         )}
 
                         {/* Meta row: type · status · days · click hint */}
-                        <p className="text-[11px] text-[var(--muted-foreground)] mt-1.5 flex items-center gap-1.5 flex-wrap">
+                        <p className="type-fine-print text-[var(--muted-foreground)] mt-1.5 flex items-center gap-1.5 flex-wrap">
                           {isVideo
                             ? <><Play className="w-2.5 h-2.5 flex-shrink-0" /> Vídeo</>
                             : <><Eye className="w-2.5 h-2.5 flex-shrink-0" /> Imagem</>
@@ -1007,26 +1007,26 @@ function CriativosTable({ criativos, parentCampType, mqlByAdId }: { criativos: C
                     </div>
                   </td>
 
-                  <td className={`px-4 py-3 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
+                  <td className={`px-4 py-3 text-right tabular-nums type-caption text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
                     {fmtBrl(c.spend)}
                   </td>
-                  <td className={`px-4 py-3 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
+                  <td className={`px-4 py-3 text-right tabular-nums type-caption text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
                     {fmt(c.impressions)}
                   </td>
-                  <td className={`px-4 py-3 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
+                  <td className={`px-4 py-3 text-right tabular-nums type-caption text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
                     {fmt(c.clicks)}
                   </td>
-                  <td className={`px-4 py-3 text-right tabular-nums text-[13px] whitespace-nowrap ${bg} ${c.ctr !== null && c.ctr >= 1 ? "text-positive" : "text-[var(--muted-foreground)]"}`}>
+                  <td className={`px-4 py-3 text-right tabular-nums type-caption whitespace-nowrap ${bg} ${c.ctr !== null && c.ctr >= 1 ?"text-positive" :"text-[var(--muted-foreground)]"}`}>
                     {c.ctr !== null ? fmtPct(c.ctr) : "—"}
                   </td>
-                  <td className={`px-4 py-3 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
+                  <td className={`px-4 py-3 text-right tabular-nums type-caption text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
                     {c.cpc !== null ? fmtBrl(c.cpc) : "—"}
                   </td>
-                  <td className={`${!hasLeads && !hasSales && !hasConversas ? "rounded-r-2xl" : ""} px-4 py-3 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
+                  <td className={`${!hasLeads && !hasSales && !hasConversas ?"rounded-r-2xl" :""} px-4 py-3 text-right tabular-nums type-caption text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
                     {c.cpm !== null ? fmtBrl(c.cpm) : "—"}
                   </td>
                   {hasLeads && (
-                    <td className={`px-4 py-3 text-right tabular-nums text-[13px] whitespace-nowrap ${isTop && c.leads > 0 ? "text-[var(--primary)] font-semibold text-[15px]" : "text-[var(--muted-foreground)]"} ${bg}`}>
+                    <td className={`px-4 py-3 text-right tabular-nums type-caption whitespace-nowrap ${isTop && c.leads > 0 ?"text-[var(--primary)] type-body-strong" :"text-[var(--muted-foreground)]"} ${bg}`}>
                       {c.leads > 0 ? fmt(c.leads) : "—"}
                     </td>
                   )}
@@ -1036,48 +1036,48 @@ function CriativosTable({ criativos, parentCampType, mqlByAdId }: { criativos: C
                     return (
                       <td className={`px-4 py-3 text-right tabular-nums whitespace-nowrap ${bg}`}>
                         {mql > 0
-                          ? <span className="text-[14px] font-semibold text-positive">{fmt(mql)}</span>
-                          : <span className="text-[13px] text-muted-foreground/50">—</span>}
+                          ? <span className="type-caption-strong text-positive">{fmt(mql)}</span>
+                          : <span className="type-caption text-muted-foreground/50">—</span>}
                       </td>
                     );
                   })()}
                   {hasLeads && (
-                    <td className={`${!hasSales && !hasConversas ? "rounded-r-2xl" : ""} px-4 py-3 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
+                    <td className={`${!hasSales && !hasConversas ?"rounded-r-2xl" :""} px-4 py-3 text-right tabular-nums type-caption text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
                       {c.cpl !== null ? fmtBrl(c.cpl) : "—"}
                     </td>
                   )}
                   {hasConversas && (
-                    <td className={`px-4 py-3 text-right tabular-nums text-[13px] whitespace-nowrap ${isTop && (c.conversas ?? 0) > 0 ? "text-[var(--primary)] font-semibold text-[15px]" : (c.conversas ?? 0) > 0 ? "text-primary font-semibold" : "text-muted-foreground/50"} ${bg}`}>
+                    <td className={`px-4 py-3 text-right tabular-nums type-caption-strong whitespace-nowrap ${isTop && (c.conversas ?? 0) > 0 ?"text-[var(--primary)] type-body-strong" : (c.conversas ?? 0) > 0 ?"text-primary" :"text-muted-foreground/50"} ${bg}`}>
                       {(c.conversas ?? 0) > 0 ? fmt(c.conversas) : "—"}
                     </td>
                   )}
                   {hasConversas && (
-                    <td className={`${!hasSales ? "rounded-r-2xl" : ""} px-4 py-3 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
+                    <td className={`${!hasSales ?"rounded-r-2xl" :""} px-4 py-3 text-right tabular-nums type-caption text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
                       {c.custoConversa !== null ? fmtBrl(c.custoConversa) : "—"}
                     </td>
                   )}
                   {hasSales && (
-                    <td className={`px-4 py-3 text-right tabular-nums text-[13px] whitespace-nowrap ${isTop && c.purchases > 0 ? "text-[var(--primary)] font-semibold text-[15px]" : c.purchases > 0 ? "text-[var(--foreground)]" : "text-muted-foreground/50"} ${bg}`}>
+                    <td className={`px-4 py-3 text-right tabular-nums type-caption whitespace-nowrap ${isTop && c.purchases > 0 ?"text-[var(--primary)] type-body-strong" : c.purchases > 0 ?"text-[var(--foreground)]" :"text-muted-foreground/50"} ${bg}`}>
                       {c.purchases > 0 ? fmt(c.purchases) : "—"}
                     </td>
                   )}
                   {hasSales && (
-                    <td className={`px-4 py-3 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
+                    <td className={`px-4 py-3 text-right tabular-nums type-caption text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
                       {c.cpa !== null ? fmtBrl(c.cpa) : "—"}
                     </td>
                   )}
                   {hasSales && (
-                    <td className={`px-4 py-3 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
+                    <td className={`px-4 py-3 text-right tabular-nums type-caption text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
                       {c.faturamento > 0 ? fmtBrl(c.faturamento) : "—"}
                     </td>
                   )}
                   {hasSales && (
-                    <td className={`px-4 py-3 text-right tabular-nums text-[13px] text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
+                    <td className={`px-4 py-3 text-right tabular-nums type-caption text-[var(--muted-foreground)] whitespace-nowrap ${bg}`}>
                       {c.ticketMedio !== null ? fmtBrl(c.ticketMedio) : "—"}
                     </td>
                   )}
                   {hasSales && (
-                    <td className={`rounded-r-2xl px-4 py-3 text-right tabular-nums text-[13px] font-semibold whitespace-nowrap ${c.roas !== null && c.roas >= 1 ? "text-positive" : "text-[var(--muted-foreground)]"} ${bg}`}>
+                    <td className={`rounded-r-2xl px-4 py-3 text-right tabular-nums type-caption-strong whitespace-nowrap ${c.roas !== null && c.roas >= 1 ?"text-positive" :"text-[var(--muted-foreground)]"} ${bg}`}>
                       {c.roas !== null ? fmt(c.roas, 2) + "x" : "—"}
                     </td>
                   )}
@@ -1129,12 +1129,12 @@ function CriativoCard({ c }: { c: Criativo }) {
             {isVideo && (
               <button
                 onClick={(e) => { e.stopPropagation(); setShowModal(true); }}
-                className="text-[10px] font-semibold bg-black/80 text-white px-2 py-1 rounded-full flex items-center gap-1 hover:bg-[var(--primary)] transition-colors"
+                className="type-micro-legal bg-black/80 text-white px-2 py-1 rounded-full flex items-center gap-1 hover:bg-[var(--primary)] transition-colors"
               >
                 <Play className="w-2.5 h-2.5" /> Assistir
               </button>
             )}
-            <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${isActive ? "bg-emerald-500/25 text-positive" : "bg-parchment text-[var(--muted-foreground)]"}`}>
+            <span className={`type-micro-legal px-2 py-1 rounded-full ${isActive ?"bg-emerald-500/25 text-positive" :"bg-parchment text-[var(--muted-foreground)]"}`}>
               {isActive ? "Ativo" : (c.effectiveStatus ?? "—")}
             </span>
           </div>
@@ -1142,10 +1142,10 @@ function CriativoCard({ c }: { c: Criativo }) {
 
         {/* Info */}
         <div className="p-4 flex-1 flex flex-col gap-3">
-          <p className="text-sm font-semibold text-[var(--foreground)] line-clamp-2 leading-snug">{c.adName}</p>
+          <p className="type-caption-strong text-[var(--foreground)] line-clamp-2 leading-snug">{c.adName}</p>
           {(c.title || c.body) && (
-            <div className="text-xs text-[var(--muted-foreground)] space-y-1">
-              {c.title && <p className="font-medium text-foreground/70 line-clamp-1">{c.title}</p>}
+            <div className="type-fine-print text-[var(--muted-foreground)] space-y-1">
+              {c.title && <p className="font-semibold text-foreground/70 line-clamp-1">{c.title}</p>}
               {c.body && <p className="line-clamp-2 leading-relaxed">{c.body}</p>}
             </div>
           )}
@@ -1158,8 +1158,8 @@ function CriativoCard({ c }: { c: Criativo }) {
               ...(c.cpc !== null ? [{ label: "CPC", value: fmtBrl(c.cpc) }] : []),
             ].map(({ label, value }) => (
               <div key={label} className="flex flex-col gap-1">
-                <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">{label}</span>
-                <span className="text-sm font-semibold tabular-nums text-[var(--foreground)]">{value}</span>
+                <span className="type-micro-legal uppercase text-[var(--muted-foreground)]">{label}</span>
+                <span className="type-caption-strong tabular-nums text-[var(--foreground)]">{value}</span>
               </div>
             ))}
           </div>
@@ -1241,7 +1241,7 @@ export function CampanhasPanel({ clienteId, dateFilter, canal = "geral", mqlByCa
       : null;
 
   return (
-    <div className="rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)] overflow-hidden">
+    <div className="rel-card overflow-hidden !p-0">
       {/* ── Header ── */}
       <div className="px-6 py-5 sm:px-8 border-b border-border flex items-center gap-4">
         {!isRoot && (
@@ -1252,7 +1252,7 @@ export function CampanhasPanel({ clienteId, dateFilter, canal = "geral", mqlByCa
 
         <div className="flex-1 min-w-0">
           {!isRoot && (
-            <nav className="flex items-center gap-1.5 text-[11px] text-[var(--muted-foreground)] mb-1 flex-wrap">
+            <nav className="flex items-center gap-1.5 type-fine-print text-[var(--muted-foreground)] mb-1 flex-wrap">
               <button onClick={() => { setSelectedCampanha(null); setSelectedConjunto(null); }} className="hover:text-[var(--foreground)] hover:underline transition-colors">
                 Campanhas
               </button>
@@ -1275,7 +1275,7 @@ export function CampanhasPanel({ clienteId, dateFilter, canal = "geral", mqlByCa
             </nav>
           )}
 
-          <h3 className="text-xl font-semibold uppercase tracking-tight text-[var(--foreground)] sm:text-2xl flex items-center gap-2.5">
+          <h3 className="type-tagline uppercase text-[var(--foreground)] flex items-center gap-2.5">
             {isRoot && <BarChart3 className="w-5 h-5 text-[var(--primary)] flex-shrink-0" />}
             {nivel === "conjuntos" && <Target className="w-5 h-5 text-[var(--primary)] flex-shrink-0" />}
             {nivel === "criativos" && <Eye className="w-5 h-5 text-[var(--primary)] flex-shrink-0" />}
@@ -1285,7 +1285,7 @@ export function CampanhasPanel({ clienteId, dateFilter, canal = "geral", mqlByCa
                 {canal === "meta" || canal === "geral" ? (
                   <a
                     href={`/criar/campanha-meta?workspaceId=${clienteId}`}
-                    className="ml-auto text-[11px] font-semibold normal-case tracking-normal rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 text-[var(--primary-foreground)] active:scale-95"
+                    className="ml-auto type-caption-strong normal-case rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 text-[var(--primary-foreground)] active:scale-95"
                   >
                     Criar campanha
                   </a>
@@ -1298,14 +1298,14 @@ export function CampanhasPanel({ clienteId, dateFilter, canal = "geral", mqlByCa
             )}
           </h3>
           {isRoot && (
-            <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+            <p className="mt-1 type-caption text-[var(--muted-foreground)]">
               Clique em uma campanha para ver conjuntos e criativos.
             </p>
           )}
         </div>
 
         {countLabel && !isLoading && (
-          <span className="rounded-full border border-primary/25 bg-primary/12 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--foreground)] flex-shrink-0">
+          <span className="rounded-full border border-primary/25 bg-primary/12 px-3 py-1 type-caption-strong uppercase text-[var(--foreground)] flex-shrink-0">
             {countLabel}
           </span>
         )}
@@ -1313,24 +1313,24 @@ export function CampanhasPanel({ clienteId, dateFilter, canal = "geral", mqlByCa
 
       {/* ── Body ── */}
       {isLoading && (
-        <div className="flex items-center justify-center py-16 text-[var(--muted-foreground)] text-sm gap-2.5">
+        <div className="flex items-center justify-center py-16 text-[var(--muted-foreground)] type-caption gap-2.5">
           <div className="w-4 h-4 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
           Carregando…
         </div>
       )}
 
       {isError && (
-        <div className="text-center py-12 text-[var(--muted-foreground)] text-sm">
+        <div className="text-center py-12 text-[var(--muted-foreground)] type-caption">
           {error instanceof Error ? error.message : "Erro ao carregar dados. Tente novamente."}
         </div>
       )}
 
       {!isLoading && !isError && nivel === "campanhas" && (
         campanhas.length === 0 ? (
-          <div className="text-center py-16 text-[var(--muted-foreground)] text-sm">
+          <div className="text-center py-16 text-[var(--muted-foreground)] type-caption">
             <BarChart3 className="w-9 h-9 mx-auto mb-3 opacity-20" />
-            <p className="font-medium">Nenhuma campanha encontrada no período.</p>
-            <p className="text-xs mt-1.5 opacity-60">Os dados aparecem após o próximo sync.</p>
+            <p className="font-semibold">Nenhuma campanha encontrada no período.</p>
+            <p className="type-fine-print mt-1.5 opacity-60">Os dados aparecem após o próximo sync.</p>
           </div>
         ) : (
           <div className="px-3 pb-5 pt-4 sm:px-5 sm:pb-6">
@@ -1341,10 +1341,10 @@ export function CampanhasPanel({ clienteId, dateFilter, canal = "geral", mqlByCa
 
       {!isLoading && !isError && nivel === "conjuntos" && (
         conjuntos.length === 0 ? (
-          <div className="text-center py-16 text-[var(--muted-foreground)] text-sm">
+          <div className="text-center py-16 text-[var(--muted-foreground)] type-caption">
             <Target className="w-9 h-9 mx-auto mb-3 opacity-20" />
-            <p className="font-medium">Nenhum conjunto encontrado para esta campanha.</p>
-            <p className="text-xs mt-1.5 opacity-60">Os conjuntos aparecem após o próximo sync de criativos.</p>
+            <p className="font-semibold">Nenhum conjunto encontrado para esta campanha.</p>
+            <p className="type-fine-print mt-1.5 opacity-60">Os conjuntos aparecem após o próximo sync de criativos.</p>
           </div>
         ) : (
           <div className="px-3 pb-5 pt-4 sm:px-5 sm:pb-6">
@@ -1355,10 +1355,10 @@ export function CampanhasPanel({ clienteId, dateFilter, canal = "geral", mqlByCa
 
       {!isLoading && !isError && nivel === "criativos" && (
         criativos.length === 0 ? (
-          <div className="text-center py-16 text-[var(--muted-foreground)] text-sm">
+          <div className="text-center py-16 text-[var(--muted-foreground)] type-caption">
             <Eye className="w-9 h-9 mx-auto mb-3 opacity-20" />
-            <p className="font-medium">Nenhum criativo encontrado para este conjunto.</p>
-            <p className="text-xs mt-1.5 opacity-60">Os criativos aparecem após o próximo sync.</p>
+            <p className="font-semibold">Nenhum criativo encontrado para este conjunto.</p>
+            <p className="type-fine-print mt-1.5 opacity-60">Os criativos aparecem após o próximo sync.</p>
           </div>
         ) : (
           <div className="px-3 pb-5 pt-4 sm:px-5 sm:pb-6">

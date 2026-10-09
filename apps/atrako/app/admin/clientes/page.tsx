@@ -176,18 +176,18 @@ function FormField({
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+      <label className="mb-1.5 block type-caption-strong uppercase text-[var(--muted-foreground)]">
         {label}
         {required && <span className="ml-1 text-[var(--primary)]">*</span>}
       </label>
       {children}
-      {hint && <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">{hint}</p>}
+      {hint && <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">{hint}</p>}
     </div>
   );
 }
 
 const inputClass =
-  "w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm transition-colors focus:border-[var(--primary)]/40 focus:outline-none";
+  "w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 type-caption transition-colors focus:border-[var(--primary)]/40 focus:outline-none";
 
 function getConta(cliente: ClienteAdmin, plataforma: "GOOGLE_ADS" | "META" | "GOOGLE_ANALYTICS" | "INSTAGRAM" | "LINKEDIN") {
   return cliente.contas.find((conta) => conta.plataforma === plataforma);
@@ -307,7 +307,7 @@ function SegmentoCombobox({
       {open && (
         <div className="absolute left-0 top-full z-50 mt-1 max-h-52 w-[calc(100%-2.75rem)] overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-xl">
           {filtered.length === 0 && (
-            <div className="px-4 py-3 text-xs text-[var(--muted-foreground)]">
+            <div className="px-4 py-3 type-fine-print text-[var(--muted-foreground)]">
               {inputVal ? `Pressione + para criar "${inputVal}"` : "Nenhum segmento cadastrado"}
             </div>
           )}
@@ -315,7 +315,7 @@ function SegmentoCombobox({
             <button
               type="button"
               onMouseDown={() => select("")}
-              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-xs text-[var(--muted-foreground)] transition hover:bg-[var(--muted)]"
+              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left type-fine-print text-[var(--muted-foreground)] transition hover:bg-[var(--muted)]"
             >
               <X className="h-3 w-3" /> Limpar seleção
             </button>
@@ -325,7 +325,7 @@ function SegmentoCombobox({
               key={s.id}
               type="button"
               onMouseDown={() => select(s.nome)}
-              className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm transition hover:bg-[var(--muted)] ${
+              className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-left type-caption transition hover:bg-[var(--muted)] ${
                 value === s.nome ? "bg-[var(--primary)]/5 font-semibold" : ""
               }`}
             >
@@ -432,7 +432,7 @@ function ClienteForm({
           <CardHeader className="flex flex-row items-center justify-between border-b border-[var(--border)] bg-gradient-to-b from-[var(--primary)]/[0.03] to-transparent pb-5">
             <div>
               <CardTitle>{title}</CardTitle>
-              <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+              <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                 Configure os IDs de conta que alimentam o dashboard.
               </p>
             </div>
@@ -482,8 +482,8 @@ function ClienteForm({
                         : "border-[var(--border)] bg-[var(--background)]"
                     }`}
                   >
-                    <span className="block text-sm font-semibold text-[var(--foreground)]">{opt.title}</span>
-                    <span className="mt-0.5 block text-xs text-[var(--muted-foreground)]">{opt.desc}</span>
+                    <span className="block type-caption-strong text-[var(--foreground)]">{opt.title}</span>
+                    <span className="mt-0.5 block type-fine-print text-[var(--muted-foreground)]">{opt.desc}</span>
                   </button>
                 ))}
               </div>
@@ -491,7 +491,7 @@ function ClienteForm({
 
             {/* ── Google Ads ── */}
             <div className="space-y-3 rounded-xl border border-[var(--border)] bg-[var(--muted)]/20 p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">Google Ads</p>
+              <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Google Ads</p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField label="ID da conta Google Ads" hint="Pode colar com ou sem hífens.">
                   <input
@@ -543,7 +543,7 @@ function ClienteForm({
                     />
                   )}
                   {conexaoGoogleId && googleAdsLoginCustomerId && (
-                    <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+                    <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                       MCC: <span className="font-mono text-[var(--primary)]">{googleAdsLoginCustomerId}</span>
                     </p>
                   )}
@@ -553,7 +553,7 @@ function ClienteForm({
 
             {/* ── Meta Ads ── */}
             <div className="space-y-3 rounded-xl border border-[var(--border)] bg-[var(--muted)]/20 p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">Meta Ads</p>
+              <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Meta Ads</p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField label="ID da conta Meta Ads" hint="Pode colar com ou sem act_.">
                   <input
@@ -605,7 +605,7 @@ function ClienteForm({
 
             {/* ── LinkedIn Ads ── */}
             <div className="space-y-3 rounded-xl border border-[var(--border)] bg-[var(--muted)]/20 p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">LinkedIn Ads</p>
+              <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">LinkedIn Ads</p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField label="ID da conta LinkedIn Ads" hint="Numérico, pode colar a URN completa (urn:li:sponsoredAccount:...).">
                   <input
@@ -743,8 +743,8 @@ function ClienteForm({
 
             <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--muted)]/20 p-4">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">Contexto comercial do InPilot</p>
-                <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">Contexto comercial do InPilot</p>
+                <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                   Informações administrativas para contextualizar análises. Não substituem os dados observados e não alteram regras ou permissões.
                 </p>
               </div>
@@ -778,7 +778,7 @@ function ClienteForm({
                   onChange={(e) => setAtivo(e.target.checked)}
                   className="h-4 w-4 rounded border-[var(--border)] accent-[var(--primary)]"
                 />
-                <span className="text-sm text-[var(--foreground)]">{ativo ? "Ativo" : "Churn"}</span>
+                <span className="type-caption text-[var(--foreground)]">{ativo ? "Ativo" : "Churn"}</span>
               </label>
               <label className="flex cursor-pointer items-center gap-2.5">
                 <input
@@ -787,7 +787,7 @@ function ClienteForm({
                   onChange={(e) => setSyncAfterSave(e.target.checked)}
                   className="h-4 w-4 rounded border-[var(--border)] accent-[var(--primary)]"
                 />
-                <span className="text-sm text-[var(--foreground)]">Sincronizar após salvar</span>
+                <span className="type-caption text-[var(--foreground)]">Sincronizar após salvar</span>
               </label>
               <label className="flex cursor-pointer items-center gap-2.5">
                 <input
@@ -796,7 +796,7 @@ function ClienteForm({
                   onChange={(e) => setLeadScoringEnabled(e.target.checked)}
                   className="h-4 w-4 rounded border-[var(--border)] accent-[var(--primary)]"
                 />
-                <span className="text-sm text-[var(--foreground)]">Lead Scoring ativado</span>
+                <span className="type-caption text-[var(--foreground)]">Lead Scoring ativado</span>
               </label>
               <label className="flex cursor-pointer items-center gap-2.5">
                 <input
@@ -805,7 +805,7 @@ function ClienteForm({
                   onChange={(e) => setSocialMediaAtivo(e.target.checked)}
                   className="h-4 w-4 rounded border-[var(--border)] accent-[var(--primary)]"
                 />
-                <span className="text-sm text-[var(--foreground)]">Social Media ativado</span>
+                <span className="type-caption text-[var(--foreground)]">Social Media ativado</span>
               </label>
               <label className="flex cursor-pointer items-center gap-2.5">
                 <input
@@ -814,7 +814,7 @@ function ClienteForm({
                   onChange={(e) => setTelegramAtivo(e.target.checked)}
                   className="h-4 w-4 rounded border-[var(--border)] accent-[var(--primary)]"
                 />
-                <span className="text-sm text-[var(--foreground)]">Resumo diário no Telegram</span>
+                <span className="type-caption text-[var(--foreground)]">Resumo diário no Telegram</span>
               </label>
               <label className="flex cursor-pointer items-center gap-2.5">
                 <input
@@ -823,7 +823,7 @@ function ClienteForm({
                   onChange={(e) => setInPilotEnabled(e.target.checked)}
                   className="h-4 w-4 rounded border-[var(--border)] accent-[var(--primary)]"
                 />
-                <span className="text-sm text-[var(--foreground)]">{inPilotEnabled ? "InPilot ativado" : "InPilot desativado"}</span>
+                <span className="type-caption text-[var(--foreground)]">{inPilotEnabled ? "InPilot ativado" : "InPilot desativado"}</span>
               </label>
             </div>
 
@@ -838,13 +838,13 @@ function ClienteForm({
             )}
 
             {error && (
-              <div className="flex items-center gap-2 rounded-lg bg-[var(--accent)]/10 px-3 py-2 text-sm text-[var(--accent)]">
+              <div className="flex items-center gap-2 rounded-lg bg-[var(--accent)]/10 px-3 py-2 type-caption text-[var(--accent)]">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                 {error}
               </div>
             )}
             {success && (
-              <div className="flex items-center gap-2 rounded-lg bg-[var(--success)]/10 px-3 py-2 text-sm text-[var(--success)]">
+              <div className="flex items-center gap-2 rounded-lg bg-[var(--success)]/10 px-3 py-2 type-caption text-[var(--success)]">
                 <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                 {success}
               </div>
@@ -853,7 +853,7 @@ function ClienteForm({
             <div className="flex justify-end gap-2 border-t border-[var(--border)] pt-4">
               <button
                 onClick={onClose}
-                className="rounded-xl border border-[var(--border)] px-5 py-2.5 text-sm font-medium text-[var(--muted-foreground)] transition hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
+                className="rounded-xl border border-[var(--border)] px-5 py-2.5 type-caption-strong text-[var(--muted-foreground)] transition hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
               >
                 Cancelar
               </button>
@@ -894,7 +894,7 @@ function ClienteForm({
                   })
                 }
                 disabled={pending}
-                className="rounded-xl bg-[var(--primary)] px-5 py-2.5 text-sm font-semibold text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-50"
+                className="rounded-xl bg-[var(--primary)] px-5 py-2.5 type-caption-strong text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-50"
               >
                 {pending ? "Salvando..." : submitLabel}
               </button>
@@ -1119,19 +1119,19 @@ function CrmConfigSection({
   }
 
   const inputClass =
-    "w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm focus:border-[var(--primary)]/40 focus:outline-none";
+    "w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 type-caption focus:border-[var(--primary)]/40 focus:outline-none";
 
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--muted)]/10 p-4 space-y-4">
       <div className="flex items-center gap-2">
         <div className="h-1 w-1 rounded-full bg-[var(--primary)]" />
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+        <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
           Integração CRM
         </p>
       </div>
 
       <div className="space-y-1">
-        <label className="text-xs font-medium text-[var(--muted-foreground)]">Plataforma CRM</label>
+        <label className="type-caption-strong text-[var(--muted-foreground)]">Plataforma CRM</label>
         <PillSelect
           className="w-full"
           size="field"
@@ -1145,7 +1145,7 @@ function CrmConfigSection({
       {tipo === "CVCRM" && (
         <>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-[var(--muted-foreground)]">
+            <label className="type-caption-strong text-[var(--muted-foreground)]">
               Domínio CV CRM
             </label>
             <input
@@ -1157,7 +1157,7 @@ function CrmConfigSection({
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-[var(--muted-foreground)]">Email</label>
+            <label className="type-caption-strong text-[var(--muted-foreground)]">Email</label>
             <input
               type="email"
               value={email}
@@ -1167,7 +1167,7 @@ function CrmConfigSection({
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-[var(--muted-foreground)]">Token de API</label>
+            <label className="type-caption-strong text-[var(--muted-foreground)]">Token de API</label>
             <input
               type="password"
               value={token}
@@ -1177,7 +1177,7 @@ function CrmConfigSection({
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-[var(--muted-foreground)]">
+            <label className="type-caption-strong text-[var(--muted-foreground)]">
               Filtro por tags{" "}
               <span className="font-normal text-[var(--muted-foreground)]/70">(apenas leads com essas tags — separe por vírgula)</span>
             </label>
@@ -1189,7 +1189,7 @@ function CrmConfigSection({
               className={`${inputClass} resize-none`}
             />
             {tagFilterText.trim() && (
-              <p className="text-[10px] text-[var(--muted-foreground)]/70">
+              <p className="type-micro-legal text-[var(--muted-foreground)]/70">
                 Tags ativas:{" "}
                 {tagFilterText.split(/[\n,]/).map((t) => t.trim()).filter(Boolean).map((t) => (
                   <code key={t} className="mr-1 rounded bg-[var(--muted)]/60 px-1 py-0.5 font-mono">{t}</code>
@@ -1199,14 +1199,14 @@ function CrmConfigSection({
           </div>
 
           <div className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--background)]/40 p-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+            <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">
               Filtros de atribuição{" "}
               <span className="font-normal normal-case tracking-normal text-[var(--muted-foreground)]/70">
                 — só contam leads cujos campos batem com estes valores. Vazio = sem filtro. Separe por vírgula.
               </span>
             </p>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--muted-foreground)]">
+              <label className="type-caption-strong text-[var(--muted-foreground)]">
                 Mídia original{" "}
                 <span className="font-normal text-[var(--muted-foreground)]/70">(canal pago: Meta / Google)</span>
               </label>
@@ -1219,7 +1219,7 @@ function CrmConfigSection({
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--muted-foreground)]">
+              <label className="type-caption-strong text-[var(--muted-foreground)]">
                 Origens{" "}
                 <span className="font-normal text-[var(--muted-foreground)]/70">(origem original do lead — campo &quot;Origens&quot; no CV CRM)</span>
               </label>
@@ -1232,7 +1232,7 @@ function CrmConfigSection({
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--muted-foreground)]">
+              <label className="type-caption-strong text-[var(--muted-foreground)]">
                 Origem do último{" "}
                 <span className="font-normal text-[var(--muted-foreground)]/70">(inclua &quot;Busca Orgânica&quot; p/ contar Google orgânico)</span>
               </label>
@@ -1246,7 +1246,7 @@ function CrmConfigSection({
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-[var(--muted-foreground)]">
+                <label className="type-caption-strong text-[var(--muted-foreground)]">
                   Conversão original
                 </label>
                 <input
@@ -1258,7 +1258,7 @@ function CrmConfigSection({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-[var(--muted-foreground)]">
+                <label className="type-caption-strong text-[var(--muted-foreground)]">
                   Conversão último
                 </label>
                 <input
@@ -1277,23 +1277,23 @@ function CrmConfigSection({
       {tipo === "RDSTATION_CRM" && (
         <>
           <div className="space-y-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+            <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">
               Credenciais do App RD Station
             </p>
-            <div className="rounded-lg bg-[var(--muted)]/30 px-3 py-2 text-[11px] text-[var(--muted-foreground)] space-y-1">
+            <div className="rounded-lg bg-[var(--muted)]/30 px-3 py-2 type-fine-print text-[var(--muted-foreground)] space-y-1">
               <p>
                 Crie um app em{" "}
                 <strong>app.rdstation.com.br → App Store → Meus Apps</strong> com a URL de
                 callback:
               </p>
-              <code className="block break-all rounded bg-[var(--muted)]/60 px-1.5 py-1 font-mono text-[10px] select-all">
+              <code className="block break-all rounded bg-[var(--muted)]/60 px-1.5 py-1 font-mono type-micro-legal select-all">
                 {typeof window !== "undefined"
                   ? `${window.location.origin}/api/auth/rd-station/callback`
                   : "/api/auth/rd-station/callback"}
               </code>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--muted-foreground)]">Client ID</label>
+              <label className="type-caption-strong text-[var(--muted-foreground)]">Client ID</label>
               <input
                 type="text"
                 value={rdClientId}
@@ -1303,7 +1303,7 @@ function CrmConfigSection({
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--muted-foreground)]">
+              <label className="type-caption-strong text-[var(--muted-foreground)]">
                 Client Secret
               </label>
               <input
@@ -1316,29 +1316,29 @@ function CrmConfigSection({
             </div>
           </div>
           <div className="space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+            <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">
               Autenticação OAuth
             </p>
             {rdConnected ? (
               <div className="flex items-center gap-3 flex-wrap">
-                <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-600">
+                <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 type-caption-strong text-emerald-600">
                   <CheckCircle2 className="h-3 w-3" /> Conectado
                 </span>
                 <a
                   href={`/api/auth/rd-station/start?clienteId=${clienteId}`}
-                  className="flex items-center gap-1 text-xs text-[var(--muted-foreground)] hover:text-[var(--primary)] transition-colors"
+                  className="flex items-center gap-1 type-fine-print text-[var(--muted-foreground)] hover:text-[var(--primary)] transition-colors"
                 >
                   <RefreshCw className="h-3 w-3" /> Reconectar
                 </a>
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-[11px] text-[var(--muted-foreground)]">
+                <p className="type-fine-print text-[var(--muted-foreground)]">
                   Salve as credenciais acima e depois clique para autorizar.
                 </p>
                 <a
                   href={`/api/auth/rd-station/start?clienteId=${clienteId}`}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#1877F2] px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#1877F2] px-4 py-2 type-caption-strong text-white transition hover:opacity-90"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                   Conectar via RD Station
@@ -1352,7 +1352,7 @@ function CrmConfigSection({
       {tipo === "KOMMO" && (
         <>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-[var(--muted-foreground)]">
+            <label className="type-caption-strong text-[var(--muted-foreground)]">
               Subdomínio Kommo
             </label>
             <input
@@ -1364,7 +1364,7 @@ function CrmConfigSection({
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-[var(--muted-foreground)]">
+            <label className="type-caption-strong text-[var(--muted-foreground)]">
               Access Token
             </label>
             <input
@@ -1380,12 +1380,12 @@ function CrmConfigSection({
 
       {tipo === "EXACT_SPOTTER" && (
         <>
-          <div className="rounded-lg bg-[var(--muted)]/30 px-3 py-2 text-[11px] text-[var(--muted-foreground)] space-y-0.5">
+          <div className="rounded-lg bg-[var(--muted)]/30 px-3 py-2 type-fine-print text-[var(--muted-foreground)] space-y-0.5">
             <p>Token gerado em <strong>CONFIGURAÇÕES → INTEGRAÇÕES</strong> no Exact Spotter.</p>
-            <p className="text-[10px] opacity-70">O token é enviado no header <code className="font-mono">token_exact</code> em cada requisição.</p>
+            <p className="type-micro-legal opacity-70">O token é enviado no header <code className="font-mono">token_exact</code> em cada requisição.</p>
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-[var(--muted-foreground)]">Token de API</label>
+            <label className="type-caption-strong text-[var(--muted-foreground)]">Token de API</label>
             <input
               type="password"
               value={spotterToken}
@@ -1395,14 +1395,14 @@ function CrmConfigSection({
             />
           </div>
           <div className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--background)]/40 p-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+            <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">
               Filtros de origem{" "}
               <span className="font-normal normal-case tracking-normal text-[var(--muted-foreground)]/70">
                 — deixe vazio para importar todos os leads. Separe por vírgula.
               </span>
             </p>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--muted-foreground)]">
+              <label className="type-caption-strong text-[var(--muted-foreground)]">
                 Origens permitidas{" "}
                 <span className="font-normal text-[var(--muted-foreground)]/70">(filtra pelo campo &quot;source&quot; do lead — ex.: Meta Ads, Google Ads)</span>
               </label>
@@ -1414,7 +1414,7 @@ function CrmConfigSection({
                 className={inputClass}
               />
               {spotterAllowedSources.trim() && (
-                <p className="text-[10px] text-[var(--muted-foreground)]/70">
+                <p className="type-micro-legal text-[var(--muted-foreground)]/70">
                   Origens ativas:{" "}
                   {spotterAllowedSources.split(/[\n,]/).map((t) => t.trim()).filter(Boolean).map((t) => (
                     <code key={t} className="mr-1 rounded bg-[var(--muted)]/60 px-1 py-0.5 font-mono">{t}</code>
@@ -1423,7 +1423,7 @@ function CrmConfigSection({
               )}
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--muted-foreground)]">
+              <label className="type-caption-strong text-[var(--muted-foreground)]">
                 Etapas permitidas{" "}
                 <span className="font-normal text-[var(--muted-foreground)]/70">(filtra pelo campo &quot;stage&quot; — ex.: Entrada, Qualificados)</span>
               </label>
@@ -1447,13 +1447,13 @@ function CrmConfigSection({
             onChange={(e) => setAtivo(e.target.checked)}
             className="h-4 w-4 rounded border-[var(--border)] accent-[var(--primary)]"
           />
-          <span className="text-sm text-[var(--foreground)]">Integração ativa</span>
+          <span className="type-caption text-[var(--foreground)]">Integração ativa</span>
         </label>
       )}
 
       {statusMsg && (
         <div
-          className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+          className={`flex items-center gap-2 rounded-lg px-3 py-2 type-caption ${
             statusMsg.ok
               ? "bg-emerald-500/10 text-emerald-600"
               : "bg-[var(--accent)]/10 text-[var(--accent)]"
@@ -1472,7 +1472,7 @@ function CrmConfigSection({
         <button
           onClick={handleSave}
           disabled={loading}
-          className="rounded-xl bg-[var(--primary)] px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+          className="rounded-xl bg-[var(--primary)] px-4 py-2 type-caption-strong text-white transition hover:opacity-90 disabled:opacity-50"
         >
           {loading ? "Salvando..." : "Salvar CRM"}
         </button>
@@ -1480,7 +1480,7 @@ function CrmConfigSection({
           <button
             onClick={handleTest}
             disabled={testLoading}
-            className="rounded-xl border border-[var(--border)] px-4 py-2 text-xs font-semibold text-[var(--foreground)] transition hover:bg-[var(--muted)] disabled:opacity-50"
+            className="rounded-xl border border-[var(--border)] px-4 py-2 type-caption-strong text-[var(--foreground)] transition hover:bg-[var(--muted)] disabled:opacity-50"
           >
             {testLoading ? "Testando..." : "Testar conexão"}
           </button>
@@ -1489,7 +1489,7 @@ function CrmConfigSection({
           <button
             onClick={handleRemove}
             disabled={loading}
-            className="ml-auto rounded-xl border border-[var(--border)] px-4 py-2 text-xs font-medium text-[var(--muted-foreground)] transition hover:bg-[var(--muted)]"
+            className="ml-auto rounded-xl border border-[var(--border)] px-4 py-2 type-caption-strong text-[var(--muted-foreground)] transition hover:bg-[var(--muted)]"
           >
             Remover CRM
           </button>
@@ -1523,7 +1523,7 @@ function RdMarketingConfigSection({
   const [initialLoaded, setInitialLoaded] = useState(false);
 
   const inputClass =
-    "w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm focus:border-[var(--primary)]/40 focus:outline-none";
+    "w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 type-caption focus:border-[var(--primary)]/40 focus:outline-none";
 
   useEffect(() => {
     if (initialLoaded) return;
@@ -1685,27 +1685,27 @@ function RdMarketingConfigSection({
     <div className="rounded-xl border border-[var(--border)] bg-[var(--muted)]/10 p-4 space-y-4">
       <div className="flex items-center gap-2">
         <div className="h-1 w-1 rounded-full bg-[var(--primary)]" />
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+        <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
           RD Station Marketing (Enriquecimento de Leads)
         </p>
       </div>
 
-      <div className="rounded-lg bg-[var(--muted)]/30 px-3 py-2 text-[11px] text-[var(--muted-foreground)] space-y-1">
+      <div className="rounded-lg bg-[var(--muted)]/30 px-3 py-2 type-fine-print text-[var(--muted-foreground)] space-y-1">
         <p>
           Crie um app em <strong>app.rdstation.com.br → App Store → Meus Apps</strong> com a URL de callback:
         </p>
-        <code className="block break-all rounded bg-[var(--muted)]/60 px-1.5 py-1 font-mono text-[10px] select-all">
+        <code className="block break-all rounded bg-[var(--muted)]/60 px-1.5 py-1 font-mono type-micro-legal select-all">
           {typeof window !== "undefined"
             ? `${window.location.origin}/api/auth/rd-marketing/callback`
             : "/api/auth/rd-marketing/callback"}
         </code>
-        <p className="text-[10px]">
+        <p className="type-micro-legal">
           Usado para enriquecer leads com campos de qualificação (faturamento, segmento, cargo, investimento) vindos do Marketing.
         </p>
       </div>
 
       <div className="space-y-1">
-        <label className="text-xs font-medium text-[var(--muted-foreground)]">Client ID</label>
+        <label className="type-caption-strong text-[var(--muted-foreground)]">Client ID</label>
         <input
           type="text"
           value={mktClientId}
@@ -1716,7 +1716,7 @@ function RdMarketingConfigSection({
       </div>
 
       <div className="space-y-1">
-        <label className="text-xs font-medium text-[var(--muted-foreground)]">Client Secret</label>
+        <label className="type-caption-strong text-[var(--muted-foreground)]">Client Secret</label>
         <input
           type="password"
           value={mktClientSecret}
@@ -1728,14 +1728,14 @@ function RdMarketingConfigSection({
 
       <div className="space-y-1">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-medium text-[var(--muted-foreground)]">
+          <label className="type-caption-strong text-[var(--muted-foreground)]">
             ID da Segmentação (fonte primária de leads)
           </label>
           {mktConnected && (
             <button
               onClick={handleDiscover}
               disabled={discoverLoading}
-              className="text-[10px] font-semibold text-[var(--primary)] hover:opacity-70 disabled:opacity-40 transition-opacity"
+              className="type-micro-legal text-[var(--primary)] hover:opacity-70 disabled:opacity-40 transition-opacity"
             >
               {discoverLoading ? "Buscando..." : "Descobrir →"}
             </button>
@@ -1765,35 +1765,35 @@ function RdMarketingConfigSection({
             className={inputClass}
           />
         )}
-        <p className="text-[10px] text-[var(--muted-foreground)]">
+        <p className="type-micro-legal text-[var(--muted-foreground)]">
           ID da segmentação RD que contém os leads a importar. Use "Descobrir" para listar as segmentações da conta.
         </p>
       </div>
 
       <div className="space-y-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+        <p className="type-micro-legal uppercase text-[var(--muted-foreground)]">
           Autenticação OAuth
         </p>
         {mktConnected ? (
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-600">
+            <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 type-caption-strong text-emerald-600">
               <CheckCircle2 className="h-3 w-3" /> Conectado
             </span>
             <a
               href={`/api/auth/rd-marketing/start?clienteId=${clienteId}`}
-              className="flex items-center gap-1 text-xs text-[var(--muted-foreground)] hover:text-[var(--primary)] transition-colors"
+              className="flex items-center gap-1 type-fine-print text-[var(--muted-foreground)] hover:text-[var(--primary)] transition-colors"
             >
               <RefreshCw className="h-3 w-3" /> Reconectar
             </a>
           </div>
         ) : (
           <div className="space-y-2">
-            <p className="text-[11px] text-[var(--muted-foreground)]">
+            <p className="type-fine-print text-[var(--muted-foreground)]">
               Salve as credenciais acima e depois clique para autorizar.
             </p>
             <a
               href={`/api/auth/rd-marketing/start?clienteId=${clienteId}`}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#1877F2] px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#1877F2] px-4 py-2 type-caption-strong text-white transition hover:opacity-90"
             >
               <ExternalLink className="h-3.5 w-3.5" />
               Conectar via RD Station Marketing
@@ -1809,12 +1809,12 @@ function RdMarketingConfigSection({
           onChange={(e) => setAtivo(e.target.checked)}
           className="h-4 w-4 rounded border-[var(--border)] accent-[var(--primary)]"
         />
-        <span className="text-sm text-[var(--foreground)]">Enriquecimento ativo</span>
+        <span className="type-caption text-[var(--foreground)]">Enriquecimento ativo</span>
       </label>
 
       {statusMsg && (
         <div
-          className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+          className={`flex items-center gap-2 rounded-lg px-3 py-2 type-caption ${
             statusMsg.ok
               ? "bg-emerald-500/10 text-emerald-600"
               : "bg-[var(--accent)]/10 text-[var(--accent)]"
@@ -1833,7 +1833,7 @@ function RdMarketingConfigSection({
         <button
           onClick={handleSave}
           disabled={loading}
-          className="rounded-xl bg-[var(--primary)] px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+          className="rounded-xl bg-[var(--primary)] px-4 py-2 type-caption-strong text-white transition hover:opacity-90 disabled:opacity-50"
         >
           {loading ? "Salvando..." : "Salvar Marketing"}
         </button>
@@ -1841,7 +1841,7 @@ function RdMarketingConfigSection({
           <button
             onClick={handleRdSync}
             disabled={rdSyncLoading || enrichLoading || testLoading}
-            className="rounded-xl bg-[var(--primary)]/10 border border-[var(--primary)]/20 px-4 py-2 text-xs font-semibold text-[var(--primary)] transition hover:bg-[var(--primary)]/20 disabled:opacity-50"
+            className="rounded-xl bg-[var(--primary)]/10 border border-[var(--primary)]/20 px-4 py-2 type-caption-strong text-[var(--primary)] transition hover:bg-[var(--primary)]/20 disabled:opacity-50"
           >
             {rdSyncLoading ? "Sincronizando..." : "Sync contatos RD →"}
           </button>
@@ -1850,7 +1850,7 @@ function RdMarketingConfigSection({
           <button
             onClick={handleEnrich}
             disabled={enrichLoading || testLoading || rdSyncLoading}
-            className="rounded-xl border border-[var(--border)] px-4 py-2 text-xs font-semibold text-[var(--foreground)] transition hover:bg-[var(--muted)] disabled:opacity-50"
+            className="rounded-xl border border-[var(--border)] px-4 py-2 type-caption-strong text-[var(--foreground)] transition hover:bg-[var(--muted)] disabled:opacity-50"
           >
             {enrichLoading ? "Enriquecendo..." : "Enriquecer leads agora"}
           </button>
@@ -1859,7 +1859,7 @@ function RdMarketingConfigSection({
           <button
             onClick={handleTest}
             disabled={testLoading || enrichLoading || rdSyncLoading}
-            className="rounded-xl border border-[var(--border)] px-4 py-2 text-xs font-semibold text-[var(--foreground)] transition hover:bg-[var(--muted)] disabled:opacity-50"
+            className="rounded-xl border border-[var(--border)] px-4 py-2 type-caption-strong text-[var(--foreground)] transition hover:bg-[var(--muted)] disabled:opacity-50"
           >
             {testLoading ? "Testando..." : "Testar conexão"}
           </button>
@@ -1868,7 +1868,7 @@ function RdMarketingConfigSection({
           <button
             onClick={handleRemove}
             disabled={loading}
-            className="ml-auto rounded-xl border border-[var(--border)] px-4 py-2 text-xs font-medium text-[var(--muted-foreground)] transition hover:bg-[var(--muted)]"
+            className="ml-auto rounded-xl border border-[var(--border)] px-4 py-2 type-caption-strong text-[var(--muted-foreground)] transition hover:bg-[var(--muted)]"
           >
             Remover
           </button>

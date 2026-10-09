@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, CheckCircle2, Circle, Loader2, Mail, MessageCircle } from "lucide-react";
-import { InfoHint } from "@/components/ui";
+import { InfoHint, MetricTile, SectionCard } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 export type Tone = "ok" | "warn" | "bad" | undefined;
@@ -29,18 +29,14 @@ export function RelSection({
   className?: string;
 }) {
   return (
-    <section className={cn("rel-card", className)}>
-      {title || action ? (
-        <header className="rel-section-head">
-          <div className="flex min-w-0 items-center gap-1">
-            {title ? <h2 className="type-body-strong truncate text-[var(--ink)]">{title}</h2> : null}
-            {info ? <InfoHint>{info}</InfoHint> : null}
-          </div>
-          {action ? <div className="flex shrink-0 items-center gap-2">{action}</div> : null}
-        </header>
-      ) : null}
-      {children ? <div>{children}</div> : null}
-    </section>
+    <SectionCard
+      className={className}
+      title={title}
+      info={info ? <InfoHint>{info}</InfoHint> : undefined}
+      action={action}
+    >
+      {children}
+    </SectionCard>
   );
 }
 
@@ -72,19 +68,13 @@ export function RelKpi({
   delta?: { current: number; previous: number };
 }) {
   return (
-    <div className="rel-kpi">
-      <span className="flex min-h-[22px] items-center gap-0.5 type-fine-print text-[var(--ink-muted-48)]">
-        {label}
-        {info ? <InfoHint>{info}</InfoHint> : null}
-      </span>
-      <span className="type-tagline tabular-nums text-[var(--ink)]">{value}</span>
-      {detail || delta ? (
-        <span className="flex flex-wrap items-center gap-x-2 type-micro-legal text-[var(--ink-muted-48)]">
-          {delta ? <Delta current={delta.current} previous={delta.previous} /> : null}
-          {detail ? <span className="truncate">{detail}</span> : null}
-        </span>
-      ) : null}
-    </div>
+    <MetricTile
+      label={label}
+      value={value}
+      detail={detail}
+      info={info ? <InfoHint>{info}</InfoHint> : undefined}
+      delta={delta ? <Delta current={delta.current} previous={delta.previous} /> : undefined}
+    />
   );
 }
 

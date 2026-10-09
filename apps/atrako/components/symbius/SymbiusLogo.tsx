@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Zap } from "lucide-react";
 
 export function SymbiusLogo({ size = "md" }: { size?: "sm" | "md" }) {
-  const text = size === "sm" ? "text-lg" : "text-xl";
+  const text = size === "sm" ? "type-tagline" : "type-tagline";
   return (
-    <Link href="/" className="inline-flex items-center gap-2 font-display font-bold">
+    <Link href="/" className="inline-flex items-center gap-2 font-display font-semibold">
       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--symbius-primary)]">
         <Zap className="h-5 w-5 text-white" />
       </span>
@@ -21,16 +21,16 @@ export function SymbiusMarketingHeader() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <SymbiusLogo />
         <nav className="flex items-center gap-3">
-          <Link href="/pricing" className="hidden text-sm text-[var(--symbius-muted)] hover:text-white sm:block">
+          <Link href="/pricing" className="hidden type-caption text-[var(--symbius-muted)] hover:text-white sm:block">
             Planos
           </Link>
-          <Link href="/privacy" className="hidden text-sm text-[var(--symbius-muted)] hover:text-white md:block">
+          <Link href="/privacy" className="hidden type-caption text-[var(--symbius-muted)] hover:text-white md:block">
             Privacidade
           </Link>
-          <Link href="/login" className="symbius-btn-outline px-4 py-2 text-sm">
+          <Link href="/login" className="symbius-btn-outline px-4 py-2 type-caption">
             Entrar
           </Link>
-          <Link href="/signup" className="symbius-btn-primary px-4 py-2 text-sm">
+          <Link href="/signup" className="symbius-btn-primary px-4 py-2 type-caption">
             Criar conta grátis
           </Link>
         </nav>

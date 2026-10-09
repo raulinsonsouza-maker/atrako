@@ -37,25 +37,25 @@ colors:
   negative: "#dc2626"
 
 typography:
-  hero-display: { fontSize: 56px, fontWeight: 600, lineHeight: 1.07, letterSpacing: -0.28px }
-  display-lg: { fontSize: 40px, fontWeight: 600, lineHeight: 1.1, letterSpacing: 0 }
-  display-md: { fontSize: 34px, fontWeight: 600, lineHeight: 1.47, letterSpacing: -0.374px }
-  lead: { fontSize: 28px, fontWeight: 400, lineHeight: 1.14, letterSpacing: 0.196px }
-  lead-airy: { fontSize: 24px, fontWeight: 300, lineHeight: 1.5, letterSpacing: 0 }
-  tagline: { fontSize: 21px, fontWeight: 600, lineHeight: 1.19, letterSpacing: 0.231px }
-  body-strong: { fontSize: 17px, fontWeight: 600, lineHeight: 1.24, letterSpacing: -0.374px }
-  body: { fontSize: 17px, fontWeight: 400, lineHeight: 1.47, letterSpacing: -0.374px }
-  dense-link: { fontSize: 17px, fontWeight: 400, lineHeight: 2.41, letterSpacing: 0 }
-  caption: { fontSize: 14px, fontWeight: 400, lineHeight: 1.43, letterSpacing: -0.224px }
-  caption-strong: { fontSize: 14px, fontWeight: 600, lineHeight: 1.29, letterSpacing: -0.224px }
-  button-large: { fontSize: 18px, fontWeight: 300, lineHeight: 1.0, letterSpacing: 0 }
-  button-utility: { fontSize: 14px, fontWeight: 400, lineHeight: 1.29, letterSpacing: -0.224px }
-  fine-print: { fontSize: 12px, fontWeight: 400, lineHeight: 1.0, letterSpacing: -0.12px }
-  micro-legal: { fontSize: 10px, fontWeight: 400, lineHeight: 1.3, letterSpacing: -0.08px }
-  # SaaS sidebar adaptation (not Apple horizontal nav 12px)
-  nav-link: { fontSize: 14px, fontWeight: 600, lineHeight: 1.29, letterSpacing: -0.224px }
+  hero-display: { fontSize: 56px, fontWeight: 500, lineHeight: 1.07, letterSpacing: -0.03em }
+  display-lg: { fontSize: 40px, fontWeight: 500, lineHeight: 1.1, letterSpacing: -0.025em }
+  display-md: { fontSize: 34px, fontWeight: 500, lineHeight: 1.2, letterSpacing: -0.02em }
+  lead: { fontSize: 28px, fontWeight: 400, lineHeight: 1.2, letterSpacing: -0.02em }
+  lead-airy: { fontSize: 24px, fontWeight: 300, lineHeight: 1.5, letterSpacing: -0.015em }
+  tagline: { fontSize: 20px, fontWeight: 500, lineHeight: 1.25, letterSpacing: -0.02em }
+  body-strong: { fontSize: 15px, fontWeight: 500, lineHeight: 1.5, letterSpacing: -0.011em }
+  body: { fontSize: 15px, fontWeight: 400, lineHeight: 1.5, letterSpacing: -0.011em }
+  dense-link: { fontSize: 15px, fontWeight: 400, lineHeight: 2.2, letterSpacing: -0.011em }
+  caption: { fontSize: 13px, fontWeight: 400, lineHeight: 1.45, letterSpacing: -0.011em }
+  caption-strong: { fontSize: 13px, fontWeight: 500, lineHeight: 1.45, letterSpacing: -0.011em }
+  button-large: { fontSize: 18px, fontWeight: 400, lineHeight: 1.0, letterSpacing: -0.011em }
+  button-utility: { fontSize: 13px, fontWeight: 400, lineHeight: 1.3, letterSpacing: -0.011em }
+  fine-print: { fontSize: 12px, fontWeight: 400, lineHeight: 1.35, letterSpacing: -0.01em }
+  micro-legal: { fontSize: 10px, fontWeight: 400, lineHeight: 1.35, letterSpacing: 0 }
+  # SaaS sidebar
+  nav-link: { fontSize: 13px, fontWeight: 500, lineHeight: 1.35, letterSpacing: -0.011em }
 
-# Inter substitute: display tracking -0.01em extra; body line-height 1.44
+# Geist. Ênfase da interface é 500. 600 fica raro.
 
 rounded:
   none: 0px
@@ -140,14 +140,14 @@ components:
   assistant-contact-card: { file: app/agent/ContactCard.tsx, css: ".assistant-contact-card / .assistant-contact-*", note: "Cartão do cliente na conversa — reaproveita CrmLeadCard (pipeline-lead-card), chips de compra (etapa, ciclo de vida, pedidos) e o carrinho com miniaturas, total e status da mensagem de recuperação; ações Abrir no CRM / Copiar link de recuperação / Ver jornada" }
   assistant-test-card: { css: ".assistant-test-card / .assistant-test-*", note: "Resultado de teste do formulário/checkout — checklist com ícone circular (ok = --primary, falha = --danger) e os valores enviados em linhas dt/dd" }
   footer: { file: components/ui/site-footer.tsx }
-  global-nav: { file: components/layout/AppSidebar.tsx, note: "SaaS rail — type-nav-link 14/600 + type-fine-print desc; pairs with type-tagline page titles. Início (Assistente + Dashboard) · Criar · Operação; rodapé só ícones (Configuração, Sair). Conta escolhida no título do Dashboard, nunca listada no menu" }
+  global-nav: { file: components/layout/AppSidebar.tsx, note: "SaaS rail — type-nav-link 13/500 + type-fine-print desc; pairs with type-tagline page titles. Início (Assistente + Dashboard) · Criar · Operação; rodapé só ícones (Configuração, Sair). Conta escolhida no título do Dashboard, nunca listada no menu" }
 
 rules:
   do:
     - Single accent Action Blue for all interactive
     - Store / marketing headlines type-hero-display / type-display-lg with negative tracking
-    - App shell page titles type-tagline (21) — same scale as sidebar brand; never type-display-lg beside global-nav
-    - Body 17px type-body weight 400
+    - App shell page titles type-tagline (20/500) — same scale as sidebar brand; never type-display-lg beside global-nav
+    - Body 15px type-body weight 400; emphasis is weight 500 (type-body-strong, type-caption-strong, type-nav-link)
     - Alternate light/dark tiles for section rhythm
     - CTA / buttons use radius-xs (~5px) — not pill; pill only for search, chips, pill-select
     - shadow-product only on product imagery
@@ -157,10 +157,10 @@ rules:
     - Second brand accent
     - Shadows on cards buttons text
     - Decorative gradients
-    - font-weight 500 / font-medium
+    - font-weight 600 / font-bold on UI chrome (use 500)
     - Round full-bleed tiles
     - Pill-shaped CTAs / primary buttons (use radius-xs)
-    - Body line-height below 1.44 (Inter) / 1.47 (SF)
+    - Body line-height below 1.5
     - primary-on-dark on light surfaces
     - Marketing display scale (display-lg / lead) inside AppShell pages
     - Native HTML select / option menus — browser chrome breaks the DS

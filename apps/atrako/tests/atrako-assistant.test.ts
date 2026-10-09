@@ -171,7 +171,13 @@ test("resolvePeriod calcula janelas inclusivas e o período anterior", () => {
   const custom = resolvePeriod({ inicio: "2026-10-01", fim: "2026-12-31" }, today);
   assert.equal(custom.preset, "personalizado");
   assert.equal(custom.endLabel, "2026-10-07", "fim futuro é cortado em hoje");
-  assert.equal(custom.end.getHours(), 23);
+  assert.equal(custom.start.toISOString(), "2026-10-01T03:00:00.000Z");
+  assert.equal(custom.end.toISOString(), "2026-10-08T02:59:59.999Z");
+
+  const ontem = resolvePeriod({ periodo: "ontem" }, today);
+  assert.equal(ontem.startLabel, "2026-10-06");
+  assert.equal(ontem.start.toISOString(), "2026-10-06T03:00:00.000Z");
+  assert.equal(ontem.end.toISOString(), "2026-10-07T02:59:59.999Z");
 });
 
 // ---------------------------------------------------------------- ações DRAFT

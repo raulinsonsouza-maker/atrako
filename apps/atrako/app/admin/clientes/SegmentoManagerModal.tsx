@@ -92,7 +92,7 @@ function CreateTab({ onClose }: { onClose: () => void }) {
   return (
     <div className="space-y-4">
       <div>
-        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+        <label className="mb-1.5 block type-caption-strong uppercase text-[var(--muted-foreground)]">
           Nome do segmento
         </label>
         <div className="flex items-center gap-2">
@@ -105,25 +105,25 @@ function CreateTab({ onClose }: { onClose: () => void }) {
             onChange={(e) => setNome(e.target.value)}
             placeholder="Ex.: Imobiliário"
             onKeyDown={(e) => e.key === "Enter" && nome.trim() && mutation.mutate()}
-            className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm transition-colors focus:border-[var(--primary)]/40 focus:outline-none"
+            className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 type-caption transition-colors focus:border-[var(--primary)]/40 focus:outline-none"
           />
         </div>
       </div>
 
       <div>
-        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+        <label className="mb-1.5 block type-caption-strong uppercase text-[var(--muted-foreground)]">
           Cor da tag
         </label>
         <ColorPicker value={cor} onChange={setCor} />
       </div>
 
-      {err && <p className="text-[11px] text-red-500">{err}</p>}
+      {err && <p className="type-fine-print text-red-500">{err}</p>}
 
       <div className="flex justify-end gap-2 pt-1">
         <button
           type="button"
           onClick={onClose}
-          className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--muted-foreground)] transition hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
+          className="rounded-xl border border-[var(--border)] px-4 py-2 type-caption-strong text-[var(--muted-foreground)] transition hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
         >
           Fechar
         </button>
@@ -131,7 +131,7 @@ function CreateTab({ onClose }: { onClose: () => void }) {
           type="button"
           onClick={() => mutation.mutate()}
           disabled={!nome.trim() || mutation.isPending}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--primary)] px-4 py-2 type-caption-strong text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-50"
         >
           <Plus className="h-3.5 w-3.5" />
           {mutation.isPending ? "Criando..." : "Criar segmento"}
@@ -173,7 +173,7 @@ function EditTab({ segmentos }: { segmentos: Segmento[] }) {
 
   if (segmentos.length === 0) {
     return (
-      <p className="py-6 text-center text-sm text-[var(--muted-foreground)]">
+      <p className="py-6 text-center type-caption text-[var(--muted-foreground)]">
         Nenhum segmento cadastrado ainda.
       </p>
     );
@@ -181,7 +181,7 @@ function EditTab({ segmentos }: { segmentos: Segmento[] }) {
 
   return (
     <div className="space-y-2">
-      {err && <p className="text-[11px] text-red-500">{err}</p>}
+      {err && <p className="type-fine-print text-red-500">{err}</p>}
       {segmentos.map((s) =>
         editingId === s.id ? (
           <div
@@ -193,7 +193,7 @@ function EditTab({ segmentos }: { segmentos: Segmento[] }) {
               <input
                 value={editNome}
                 onChange={(e) => setEditNome(e.target.value)}
-                className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-1.5 text-sm focus:border-[var(--primary)]/40 focus:outline-none"
+                className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-1.5 type-caption focus:border-[var(--primary)]/40 focus:outline-none"
               />
             </div>
             <ColorPicker value={editCor} onChange={setEditCor} />
@@ -201,7 +201,7 @@ function EditTab({ segmentos }: { segmentos: Segmento[] }) {
               <button
                 type="button"
                 onClick={() => setEditingId(null)}
-                className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--muted-foreground)] transition hover:bg-[var(--muted)]"
+                className="rounded-lg border border-[var(--border)] px-3 py-1.5 type-caption-strong text-[var(--muted-foreground)] transition hover:bg-[var(--muted)]"
               >
                 Cancelar
               </button>
@@ -209,7 +209,7 @@ function EditTab({ segmentos }: { segmentos: Segmento[] }) {
                 type="button"
                 onClick={() => updateMutation.mutate()}
                 disabled={!editNome.trim() || updateMutation.isPending}
-                className="rounded-lg bg-[var(--primary)] px-3 py-1.5 text-xs font-semibold text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-50"
+                className="rounded-lg bg-[var(--primary)] px-3 py-1.5 type-caption-strong text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-50"
               >
                 {updateMutation.isPending ? "Salvando..." : "Salvar"}
               </button>
@@ -221,9 +221,9 @@ function EditTab({ segmentos }: { segmentos: Segmento[] }) {
             className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2.5"
           >
             <div className="h-4 w-4 shrink-0 rounded-md" style={{ backgroundColor: s.cor }} />
-            <span className="flex-1 text-sm font-medium text-[var(--foreground)]">{s.nome}</span>
+            <span className="flex-1 type-caption-strong text-[var(--foreground)]">{s.nome}</span>
             <span
-              className="mr-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white"
+              className="mr-1 rounded-full px-2 py-0.5 type-micro-legal uppercase text-white"
               style={{ backgroundColor: s.cor }}
             >
               {s.nome}
@@ -266,7 +266,7 @@ export function SegmentoManagerModal({ onClose }: SegmentoManagerModalProps) {
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl">
         <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
-          <h3 className="text-sm font-bold text-[var(--foreground)]">Gerenciar Segmentos</h3>
+          <h3 className="type-caption-strong text-[var(--foreground)]">Gerenciar Segmentos</h3>
           <button
             type="button"
             onClick={onClose}
@@ -282,7 +282,7 @@ export function SegmentoManagerModal({ onClose }: SegmentoManagerModalProps) {
               key={t}
               type="button"
               onClick={() => setTab(t)}
-              className={`rounded-t-lg px-4 py-2 text-xs font-semibold transition ${
+              className={`rounded-t-lg px-4 py-2 type-caption-strong transition ${
                 tab === t
                   ? "border-b-2 border-[var(--primary)] text-[var(--primary)]"
                   : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"

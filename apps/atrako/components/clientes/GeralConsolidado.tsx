@@ -5,9 +5,11 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CartRecoveryMetrics, RepurchaseMetrics } from "@/lib/commerce/customer-metrics";
+import { channelColor } from "@/lib/commerce-attribution/channel-color";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { rotuloEixo, rotuloTooltip, type ChartAgrupamento } from "@/lib/chart-bucket";
 import { mobileTickInterval } from "@/lib/chart-mobile";
+import { MetricTile } from "@/components/ui";
 
 type Consolidado = {
   clientes?: RepurchaseMetrics | null;
@@ -51,15 +53,6 @@ type Consolidado = {
   cancelados?: number;
   /** Receita por origem do pedido (anúncio, orgânico, direto, marketplace…). */
   origens?: Array<{ id: string; label: string; pedidos: number; receitaCents: number }>;
-  meta?: {
-    investimento: number;
-    comprasReportadas: number;
-    valorReportado: number;
-    identificadas: number;
-    pedidos: number;
-    receita: number;
-    roas: number | null;
-  } | null;
 };
 
 const pct = (part: number, total: number) => (total > 0 ? Math.round((part / total) * 100) : 0);
@@ -67,7 +60,28 @@ const roasText = (roas: number | null | undefined) => (roas != null ? `${roas.to
 
 const MEDIA_LABELS: Record<string, string> = { META: "Meta Ads", GOOGLE: "Google Ads" };
 
-/** Geral de loja: resultado real da loja + de onde vieram as vendas (atribuição cruzada). */
+/** Loja própria: o pedido nasce nela e a origem é como o cliente chegou. */
+const STORE_PROVIDERS = new Set(["WOOCOMMERCE", "SHOPIFY", "NUVEMSHOP", "TRAY"]);
+/** Chaves de `orderOriginKey` quando o pedido é da loja (não marketplace nem checkout). */
+const TRAFFIC_ORIGINS = new Set([
+  "meta_ads",
+  "google_ads",
+  "instagram",
+  "facebook",
+  "google_organic",
+  "email",
+  "whatsapp",
+  "direct",
+  "referral",
+  "admin",
+  "other",
+  "unknown",
+]);
+const MARKETPLACES = new Set(["MERCADO_LIVRE", "SHOPEE", "TIKTOK_SHOP"]);
+
+type OrigemVenda = { id: string; label: string; pedidos: number; receitaCents: number };
+
+/** Geral de loja: resultado real + onde a venda entrou (loja, marketplace) e como o cliente chegou. */
 function EcommerceGeral({
   data,
   origem,
@@ -81,10 +95,17 @@ function EcommerceGeral({
 }) {
   const { totais, canaisMidia, canaisVenda } = data;
   const origens = data.origens ?? [];
-  const meta = data.meta;
   const totalCents = origens.reduce((s, o) => s + o.receitaCents, 0);
   const totalPedidosOrigens = origens.reduce((s, o) => s + o.pedidos, 0);
   const semOrigem = origens.find((o) => o.id === "unknown");
+  const lojasDoPeriodo = canaisVenda.filter((c) => STORE_PROVIDERS.has(c.id));
+  const lojasSig = lojasDoPeriodo.map((l) => `${l.id}:${l.label}:${l.receitaCents}:${l.pedidos}`).join("|");
+  const [lojas, setLojas] = useState(lojasDoPeriodo);
+  const [lojasSigVista, setLojasSigVista] = useState(origem ? "" : lojasSig);
+  if (!origem && !fetching && lojasSig !== lojasSigVista) {
+    setLojas(lojasDoPeriodo);
+    setLojasSigVista(lojasSig);
+  }
   const origemLabel = origem ? origens.find((o) => o.id === origem)?.label ?? "Origem selecionada" : null;
   const midiaLabel = origem
     ? data.midiaDaOrigem
@@ -95,7 +116,7 @@ function EcommerceGeral({
 
   return (
     <section className={`space-y-4 transition-opacity ${fetching ? "opacity-60" : ""}`}>
-      <div className="kpi-grid grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="rel-kpi-grid">
         <Kpi
           label="Receita"
           value={brl(totais.receita)}
@@ -120,110 +141,192 @@ function EcommerceGeral({
 
       <VendasSerie data={data} origemLabel={origemLabel} />
 
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <p className="type-caption-strong text-[var(--foreground)]">De onde vieram as vendas</p>
-          {origem ? (
-            <button
-              type="button"
-              onClick={() => onOrigem(null)}
-              className="type-caption text-[var(--primary)] underline-offset-2 hover:underline"
-            >
-              Ver todas as origens
-            </button>
-          ) : canaisVenda.length > 1 ? (
-            <p className="type-fine-print text-[var(--muted-foreground)]">
-              {canaisVenda.map((c) => `${c.label} ${brl(c.receitaCents / 100)}`).join(" · ")}
-            </p>
-          ) : null}
-        </div>
-
-        {origens.length === 0 ? (
-          <p className="mt-3 type-fine-print text-[var(--muted-foreground)]">Nenhuma venda no período.</p>
-        ) : (
-          <ul className="mt-3 space-y-1">
-            {origens.map((o) => {
-              const share = pct(o.receitaCents, totalCents);
-              const muted = o.id === "unknown";
-              const selected = origem === o.id;
-              const dimmed = Boolean(origem) && !selected;
-              return (
-                <li key={o.id}>
-                  <button
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() => onOrigem(selected ? null : o.id)}
-                    title={selected ? "Ver todas as origens" : `Filtrar a tela por ${o.label}`}
-                    className={`grid w-full grid-cols-[minmax(0,9rem)_1fr_auto] items-center gap-3 rounded-[var(--radius-xs)] px-2 py-1.5 text-left transition active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-focus)] ${
-                      selected ? "bg-[var(--divider-soft)]" : "hover:bg-[var(--divider-soft)]"
-                    } ${dimmed ? "opacity-50" : ""}`}
-                  >
-                    <span
-                      className={`truncate ${selected ? "type-caption-strong" : "type-caption"} ${
-                        muted && !selected ? "text-[var(--muted-foreground)]" : "text-[var(--foreground)]"
-                      }`}
-                    >
-                      {o.label}
-                    </span>
-                    <div className="h-2 overflow-hidden rounded-full bg-[var(--divider-soft)]">
-                      <div
-                        className={`h-full rounded-full ${
-                          selected || o.id === "meta_ads"
-                            ? "bg-[var(--primary)]"
-                            : muted
-                              ? "bg-[var(--border)]"
-                              : "bg-muted-foreground/40"
-                        }`}
-                        style={{ width: `${Math.max(2, share)}%` }}
-                      />
-                    </div>
-                    <span className="type-caption tabular-nums text-[var(--foreground)]">
-                      {brl(o.receitaCents / 100)}
-                      <span className="ml-2 inline-block w-16 text-right text-[var(--muted-foreground)]">
-                        {o.pedidos} · {share}%
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-
-        {meta ? (
-          <div className="mt-5 grid gap-4 border-t border-[var(--divider-soft)] pt-4 sm:grid-cols-3">
-            <div>
-              <p className="type-fine-print text-[var(--muted-foreground)]">Compras no Meta</p>
-              <p className="mt-1 type-body-strong tabular-nums text-[var(--foreground)]">
-                {meta.comprasReportadas} · {brl(meta.valorReportado)}
-              </p>
-            </div>
-            <div>
-              <p className="type-fine-print text-[var(--muted-foreground)]">Confirmadas na loja</p>
-              <p className="mt-1 type-body-strong tabular-nums text-[var(--foreground)]">
-                {meta.pedidos} · {brl(meta.receita)}
-              </p>
-            </div>
-            <div>
-              <p className="type-fine-print text-[var(--muted-foreground)]">Retorno do Meta</p>
-              <p className={`mt-1 type-body-strong tabular-nums ${meta.roas != null && meta.roas >= 1 ? "text-positive" : meta.roas != null && meta.roas > 0 ? "text-negative" : "text-[var(--foreground)]"}`}>
-                {roasText(meta.roas)}
-              </p>
-            </div>
-          </div>
-        ) : null}
-
-        {semOrigem && semOrigem.pedidos === totalPedidosOrigens ? (
-          <p className="mt-4 type-fine-print text-[var(--muted-foreground)]">
-            A origem dos pedidos é calculada na próxima sincronização.
-          </p>
-        ) : null}
-      </div>
+      <VendasPorLugar
+        origens={origens}
+        lojas={lojas}
+        totalCents={totalCents}
+        origem={origem}
+        onOrigem={onOrigem}
+        semOrigem={Boolean(semOrigem && semOrigem.pedidos === totalPedidosOrigens)}
+      />
 
       {data.clientes || data.recuperacao ? (
         <ClientesERecuperacao clientes={data.clientes ?? null} recuperacao={data.recuperacao ?? null} />
       ) : null}
     </section>
+  );
+}
+
+function VendasPorLugar({
+  origens,
+  lojas,
+  totalCents,
+  origem,
+  onOrigem,
+  semOrigem,
+}: {
+  origens: OrigemVenda[];
+  lojas: OrigemVenda[];
+  totalCents: number;
+  origem: string | null;
+  onOrigem: (id: string | null) => void;
+  semOrigem: boolean;
+}) {
+  const chegada = origens.filter((o) => TRAFFIC_ORIGINS.has(o.id));
+  const lugares = origens.filter((o) => !TRAFFIC_ORIGINS.has(o.id));
+  const temLoja = chegada.length > 0;
+  const titulo = temLoja && lugares.length === 0 ? "Como chegaram" : "Onde vendeu";
+  const lojaCents = chegada.reduce((s, o) => s + o.receitaCents, 0);
+  const nomeLoja = lojas.length === 1 ? lojas[0].label : lojas.length > 1 ? "Lojas" : "Loja";
+  const lugarTitulo =
+    lugares.length < 2 ? null : lugares.every((o) => MARKETPLACES.has(o.id)) ? "Marketplaces" : "Outros pontos de venda";
+
+  return (
+    <div className="rel-card p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="type-caption-strong text-[var(--foreground)]">{titulo}</p>
+        {origem ? (
+          <button
+            type="button"
+            onClick={() => onOrigem(null)}
+            className="type-caption text-[var(--primary)] underline-offset-2 hover:underline"
+          >
+            Ver todas
+          </button>
+        ) : temLoja && lugares.length === 0 && lojas.length === 1 ? (
+          <p className="type-fine-print text-[var(--muted-foreground)]">{lojas[0].label}</p>
+        ) : null}
+      </div>
+
+      {origens.length === 0 ? (
+        <p className="mt-3 type-fine-print text-[var(--muted-foreground)]">Nenhuma venda no período.</p>
+      ) : (
+        <div className="mt-4 space-y-5">
+          {temLoja ? (
+            <div>
+              {lugares.length > 0 ? (
+                <div className="flex items-baseline justify-between gap-3 px-2">
+                  <p className="type-caption-strong text-[var(--foreground)]">{nomeLoja}</p>
+                  <ValorOrigem cents={lojaCents} share={pct(lojaCents, totalCents)} />
+                </div>
+              ) : null}
+              {lugares.length > 0 && lojas.length > 1 ? (
+                <ul className="mt-1">
+                  {lojas.map((loja) => (
+                    <li key={loja.id} className="flex items-baseline justify-between gap-3 px-2 py-1">
+                      <span className="type-caption text-[var(--foreground)]">{loja.label}</span>
+                      <span className="type-caption tabular-nums text-[var(--foreground)]">{brl(loja.receitaCents / 100)}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {lugares.length > 0 ? (
+                <p className="px-2 pb-1 pt-3 type-fine-print text-[var(--muted-foreground)]">
+                  {lojas.length > 1 ? "Como o cliente chegou, somando as lojas" : "Como o cliente chegou"}
+                </p>
+              ) : null}
+              <ul className="space-y-1">
+                {chegada.map((o) => (
+                  <OrigemButton
+                    key={o.id}
+                    row={o}
+                    share={pct(o.receitaCents, totalCents)}
+                    selected={origem === o.id}
+                    dimmed={Boolean(origem) && origem !== o.id}
+                    nested={lugares.length > 0}
+                    onPick={() => onOrigem(origem === o.id ? null : o.id)}
+                  />
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {lugares.length > 0 ? (
+            <div className={temLoja ? "border-t border-[var(--divider-soft)] pt-4" : undefined}>
+              {lugarTitulo ? <p className="px-2 pb-1 type-fine-print text-[var(--muted-foreground)]">{lugarTitulo}</p> : null}
+              <ul className="space-y-1">
+                {lugares.map((o) => (
+                  <OrigemButton
+                    key={o.id}
+                    row={o}
+                    share={pct(o.receitaCents, totalCents)}
+                    selected={origem === o.id}
+                    dimmed={Boolean(origem) && origem !== o.id}
+                    nested={false}
+                    onPick={() => onOrigem(origem === o.id ? null : o.id)}
+                  />
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      {semOrigem ? (
+        <p className="mt-4 type-fine-print text-[var(--muted-foreground)]">
+          A origem dos pedidos é calculada na próxima sincronização.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function ValorOrigem({ cents, share, pedidos }: { cents: number; share: number; pedidos?: number }) {
+  return (
+    <span className="shrink-0 type-caption tabular-nums text-[var(--foreground)]">
+      {brl(cents / 100)}
+      {pedidos != null ? <span className="text-[var(--muted-foreground)]"> · {pedidos.toLocaleString("pt-BR")}</span> : null}
+      <span className="text-[var(--muted-foreground)]"> · {share}%</span>
+    </span>
+  );
+}
+
+function OrigemButton({
+  row,
+  share,
+  selected,
+  dimmed,
+  nested,
+  onPick,
+}: {
+  row: OrigemVenda;
+  share: number;
+  selected: boolean;
+  dimmed: boolean;
+  nested: boolean;
+  onPick: () => void;
+}) {
+  const color = channelColor(row.id) ?? "var(--border)";
+  const muted = row.id === "unknown";
+  return (
+    <li>
+      <button
+        type="button"
+        aria-pressed={selected}
+        onClick={onPick}
+        title={selected ? "Ver todas" : `Filtrar por ${row.label}`}
+        className={`w-full rounded-[var(--radius-xs)] py-1.5 text-left transition active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-focus)] ${
+          nested ? "pl-5 pr-2" : "px-2"
+        } ${selected ? "bg-[var(--divider-soft)]" : "hover:bg-[var(--divider-soft)]"} ${dimmed ? "opacity-50" : ""}`}
+      >
+        <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />
+            <span
+              className={`truncate ${selected ? "type-caption-strong" : "type-caption"} ${
+                muted && !selected ? "text-[var(--muted-foreground)]" : "text-[var(--foreground)]"
+              }`}
+            >
+              {row.label}
+            </span>
+          </span>
+          <ValorOrigem cents={row.receitaCents} share={share} pedidos={row.pedidos} />
+        </span>
+        <span className="mt-1.5 flex h-1.5 overflow-hidden rounded-full bg-[var(--divider-soft)]">
+          <span className="h-full rounded-full" style={{ width: `${Math.max(2, share)}%`, background: color }} />
+        </span>
+      </button>
+    </li>
   );
 }
 
@@ -243,10 +346,10 @@ function ClientesERecuperacao({
   const note =
     c && c.unidentified.count > 0 ? `${num(c.unidentified.count)} pedidos sem contato ficam fora da recompra` : null;
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+    <div className="rel-card p-5">
       <p className="type-caption-strong text-[var(--foreground)]">Clientes e recuperação</p>
 
-      <div className="kpi-grid mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="rel-kpi-grid mt-4">
         {c ? (
           <>
             <Kpi
@@ -306,7 +409,7 @@ function SplitBar({ title, parts }: { title: string; parts: Array<{ label: strin
   const total = parts.reduce((s, p) => s + p.cents, 0);
   return (
     <div>
-      <p className="type-fine-print uppercase tracking-[0.18em] text-[var(--muted-foreground)]">{title}</p>
+      <p className="type-fine-print uppercase text-[var(--muted-foreground)]">{title}</p>
       <div className="mt-2 flex h-2 overflow-hidden rounded-full bg-[var(--divider-soft)]">
         {total > 0
           ? parts.map((p, i) =>
@@ -342,7 +445,7 @@ const chartTooltip = {
     boxShadow: "none",
     padding: "10px 14px",
   },
-  labelStyle: { color: "var(--foreground)", fontWeight: 600, marginBottom: 4 },
+  labelStyle: { color: "var(--foreground)", fontWeight: 500, marginBottom: 4 },
   itemStyle: { color: "var(--foreground)", fontSize: 13 },
 };
 
@@ -363,10 +466,10 @@ function VendasSerie({ data, origemLabel }: { data: Consolidado; origemLabel: st
   const titulo = agrupamento === "mes" ? "Vendas por mês" : agrupamento === "semana" ? "Vendas por semana" : "Vendas por dia";
 
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+    <div className="rel-card p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="type-caption-strong text-[var(--foreground)]">{titulo}</p>
-        <p className="type-fine-print text-[var(--muted-foreground)]">{origemLabel ?? "Todas as origens"}</p>
+        <p className="type-fine-print text-[var(--muted-foreground)]">{origemLabel ?? "Todas as vendas"}</p>
       </div>
       <div className="mt-4 h-48">
         <ResponsiveContainer width="100%" height="100%">
@@ -423,17 +526,7 @@ function Kpi({
   hint?: string;
   tone?: "positive" | "negative";
 }) {
-  const valueColor =
-    tone === "positive" ? "text-positive" : tone === "negative" ? "text-negative" : "text-[var(--foreground)]";
-  return (
-    <div className="kpi-card-content rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
-      <p className="type-fine-print uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-        {label}
-      </p>
-      <p className={`kpi-card-value mt-2 type-tagline tabular-nums ${valueColor}`}>{value}</p>
-      {hint ? <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">{hint}</p> : null}
-    </div>
-  );
+  return <MetricTile label={label} value={value} detail={hint} tone={tone} />;
 }
 
 export function GeralConsolidado({
@@ -458,7 +551,7 @@ export function GeralConsolidado({
 
   if (isLoading || !data) {
     return (
-      <div className="flex items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 type-caption text-[var(--muted-foreground)]">
+      <div className="flex items-center gap-2 rel-card p-5 type-caption text-[var(--muted-foreground)]">
         <Loader2 className="h-4 w-4 animate-spin" /> Somando todos os canais…
       </div>
     );
@@ -482,7 +575,7 @@ export function GeralConsolidado({
 
   return (
     <section className="space-y-4">
-      <div className="kpi-grid grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="rel-kpi-grid">
         <Kpi
           label="Receita"
           value={brl(totais.receita)}
@@ -515,7 +608,7 @@ export function GeralConsolidado({
       </div>
 
       {showRel && rel ? (
-        <div className="kpi-grid grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="rel-kpi-grid">
           <Kpi
             label="Receita via relacionamento"
             value={brl(rel.receitaAtribuida)}
@@ -537,8 +630,8 @@ export function GeralConsolidado({
       ) : null}
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
-          <p className="type-fine-print uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+        <div className="rel-card p-4">
+          <p className="type-fine-print uppercase text-[var(--muted-foreground)]">
             Vendas por canal
           </p>
           {canaisVenda.length === 0 ? (
@@ -570,8 +663,8 @@ export function GeralConsolidado({
           )}
         </div>
 
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
-          <p className="type-fine-print uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+        <div className="rel-card p-4">
+          <p className="type-fine-print uppercase text-[var(--muted-foreground)]">
             Mídia por canal
           </p>
           {canaisMidia.length === 0 ? (

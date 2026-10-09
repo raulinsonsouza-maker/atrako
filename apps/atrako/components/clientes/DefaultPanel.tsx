@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { MetricTile, SectionCard, SegmentedControl } from "@/components/ui";
 import {
   Bar,
   XAxis,
@@ -26,7 +27,7 @@ const tooltipStyle = {
     boxShadow: "none",
     padding: "10px 14px",
   },
-  labelStyle: { color: "var(--foreground)", fontWeight: 600, marginBottom: 4 },
+  labelStyle: { color: "var(--foreground)", fontWeight: 500, marginBottom: 4 },
   itemStyle: { color: "var(--foreground)", fontSize: 13 },
 };
 
@@ -34,52 +35,16 @@ function KpiCard({
   title,
   value,
   sub,
-  icon: Icon,
-  accentValue,
   tone,
 }: {
   title: string;
   value: string;
   sub?: string;
-  icon: React.ElementType;
+  icon?: React.ElementType;
   accentValue?: boolean;
   tone?: "positive" | "negative";
 }) {
-  const valueColor =
-    tone === "positive"
-      ? "text-[var(--positive)]"
-      : tone === "negative"
-        ? "text-[var(--negative)]"
-        : accentValue
-          ? "text-[var(--primary)]"
-          : "text-[var(--foreground)]";
-  return (
-    <Card className="overflow-hidden rounded-2xl border-[var(--border)] bg-[var(--canvas)]">
-      <CardContent className="kpi-card-content flex items-start gap-4 p-5">
-        <div className="kpi-card-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--chart-current)] text-[var(--primary)]">
-          <Icon className="h-[18px] w-[18px]" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="type-fine-print uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-            {title}
-          </p>
-          <p className={`kpi-card-value mt-2 whitespace-nowrap type-tagline tabular-nums ${valueColor}`}>
-            {value}
-          </p>
-          {sub ? <p className="mt-1.5 type-fine-print leading-snug text-[var(--muted-foreground)]">{sub}</p> : null}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function SectionHeader({ title, subtitle }: { title: string; subtitle: string }) {
-  return (
-    <div>
-      <h2 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">{title}</h2>
-      <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">{subtitle}</p>
-    </div>
-  );
+  return <MetricTile label={title} value={value} detail={sub} tone={tone} />;
 }
 
 type MetricRow = { investimento: number; leads: number; conversas?: number; impressoes: number; cliques: number; purchases?: number };
@@ -193,7 +158,7 @@ export function DefaultPanel({
       {/* KPI cards — modo e-commerce (Granarolo, D'or) */}
       {ecommerceGoogleMode ? (
         <>
-          <section className="kpi-grid grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <section className="rel-kpi-grid">
             <KpiCard
               title={canal === "google" ? "Investimento Google" : canal === "meta" ? "Investimento Meta" : "Investimento"}
               value={formatCurrency(resumo.investimento)}
@@ -217,7 +182,7 @@ export function DefaultPanel({
               tone={roas <= 0 ? undefined : roas >= 1 ? "positive" : "negative"}
             />
           </section>
-          <section className="kpi-grid grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+          <section className="rel-kpi-grid">
             <KpiCard
               title={canal === "google" ? "Faturamento pelo Google" : canal === "meta" ? "Faturamento pelo Meta" : "Faturamento pelos anúncios"}
               value={valorConversao > 0 ? formatCurrency(valorConversao) : "—"}
@@ -232,7 +197,7 @@ export function DefaultPanel({
         </>
       ) : (
         /* KPI cards — modo padrão */
-        <section className="kpi-grid grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="rel-kpi-grid">
           <KpiCard
             title={canal === "google" ? "Investimento Google" : "Investimento"}
             value={formatCurrency(resumo.investimento)}
@@ -267,7 +232,7 @@ export function DefaultPanel({
 
       {/* KPI row extra — modo Miguel Google (CTR + Taxa de Conversão) */}
       {!ecommerceGoogleMode && miguelGoogleMode && (
-        <section className="kpi-grid grid gap-4 sm:grid-cols-2">
+        <section className="rel-kpi-grid">
           <KpiCard
             title="CTR"
             value={
@@ -291,7 +256,7 @@ export function DefaultPanel({
 
       {/* KPI row extra — modo conversas + engajamento (Clínica e Spa) */}
       {!ecommerceGoogleMode && conversasEngajamentoMode && (
-        <section className="kpi-grid grid gap-4 sm:grid-cols-2">
+        <section className="rel-kpi-grid">
           <KpiCard
             title="Cliques (Engajamento)"
             value={(resumo.cliques ?? 0).toLocaleString("pt-BR")}
@@ -311,7 +276,7 @@ export function DefaultPanel({
 
       {/* KPI row extra — breakdown de resultados (Miguel Imóveis) */}
       {!ecommerceGoogleMode && miguelImoveisMode && (
-        <section className="kpi-grid grid gap-4 sm:grid-cols-2">
+        <section className="rel-kpi-grid">
           <KpiCard
             title="Conversas (Mensagem)"
             value={(resumo.conversasMensagem ?? 0).toLocaleString("pt-BR")}
@@ -327,7 +292,7 @@ export function DefaultPanel({
 
       {/* KPI row extra — engajamento Instagram (Academy Americana) */}
       {!ecommerceGoogleMode && academyEngajamentoMode && (resumo.profileVisits ?? 0) > 0 && (
-        <section className="kpi-grid grid gap-4 sm:grid-cols-3">
+        <section className="rel-kpi-grid">
           <KpiCard
             title="Visitas ao Perfil"
             value={(resumo.profileVisits ?? 0).toLocaleString("pt-BR")}
@@ -356,7 +321,7 @@ export function DefaultPanel({
 
       {/* KPI row extra — Conversas B2B (Kombucha da Cá) */}
       {!ecommerceGoogleMode && kombuchaMode && (resumo.conversasB2b ?? 0) > 0 && (
-        <section className="kpi-grid grid gap-4 sm:grid-cols-2">
+        <section className="rel-kpi-grid">
           <KpiCard
             title="Conversas B2B (Mensagem)"
             value={(resumo.conversasB2b ?? 0).toLocaleString("pt-BR")}
@@ -378,60 +343,34 @@ export function DefaultPanel({
 
       {/* Performance chart */}
       {chartData.length > 0 && (
-        <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
-          <CardHeader className="pb-2">
-            <div className="flex items-start justify-between">
-              {(() => {
-                const periodoLabel = isMensal ? "mês" : isDiario ? "dia" : "semana";
-                return (
-                  <SectionHeader
-                    title={canal === "google" ? "Performance Google" : "Volume geral de performance"}
-                    subtitle={
-                      ecommerceGoogleMode
-                        ? `Investimento e compras por ${periodoLabel}`
-                        : canal === "google"
-                        ? `Investimento e conversões por ${periodoLabel}`
-                        : visitasMode
-                          ? `Investimento e visitas ao perfil por ${periodoLabel}`
-                          : comprasMode
-                            ? `Investimento e compras por ${periodoLabel}`
-                            : miguelImoveisMode
-                              ? `Investimento e resultados por ${periodoLabel}`
-                              : conversasMode
-                              ? `Investimento e conversas por ${periodoLabel}`
-                              : kombuchaMode
-                              ? `Investimento e adições ao carrinho por ${periodoLabel}`
-                              : lpViewsMode
-                              ? `Investimento e views de LP por ${periodoLabel}`
-                              : `Investimento e leads por ${periodoLabel}`
-                    }
-                  />
-                );
-              })()}
-              <div className="flex items-center gap-2">
-                {!isMensal && onAgrupamentoChange && (
-                  <div className="flex overflow-hidden rounded-lg border border-[var(--border)] text-xs">
-                    <button
-                      onClick={() => onAgrupamentoChange("diario")}
-                      className={`px-2.5 py-1.5 font-semibold transition-colors ${isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"}`}
-                    >
-                      Diário
-                    </button>
-                    <button
-                      onClick={() => onAgrupamentoChange("semanal")}
-                      className={`px-2.5 py-1.5 font-semibold transition-colors ${!isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"}`}
-                    >
-                      Semanal
-                    </button>
-                  </div>
-                )}
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--chart-current)] text-[var(--primary)]">
-                  <TrendingUp className="h-4 w-4" />
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
+        <SectionCard
+          title={canal === "google" ? "Performance Google" : "Volume geral de performance"}
+          subtitle={(() => {
+            const periodoLabel = isMensal ? "mês" : isDiario ? "dia" : "semana";
+            if (ecommerceGoogleMode) return `Investimento e compras por ${periodoLabel}`;
+            if (canal === "google") return `Investimento e conversões por ${periodoLabel}`;
+            if (visitasMode) return `Investimento e visitas ao perfil por ${periodoLabel}`;
+            if (comprasMode) return `Investimento e compras por ${periodoLabel}`;
+            if (miguelImoveisMode) return `Investimento e resultados por ${periodoLabel}`;
+            if (conversasMode) return `Investimento e conversas por ${periodoLabel}`;
+            if (kombuchaMode) return `Investimento e adições ao carrinho por ${periodoLabel}`;
+            if (lpViewsMode) return `Investimento e views de LP por ${periodoLabel}`;
+            return `Investimento e leads por ${periodoLabel}`;
+          })()}
+          action={
+            !isMensal && onAgrupamentoChange ? (
+              <SegmentedControl
+                aria-label="Agrupamento"
+                value={isDiario ? "diario" : "semanal"}
+                onChange={onAgrupamentoChange}
+                options={[
+                  { value: "diario", label: "Diário" },
+                  { value: "semanal", label: "Semanal" },
+                ]}
+              />
+            ) : undefined
+          }
+        >
             <div className="h-64 md:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={chartData}>
@@ -505,13 +444,12 @@ export function DefaultPanel({
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+        </SectionCard>
       )}
 
       {/* Weekly breakdown table */}
       {latestFiveSeries.length > 0 && (
-        <Card className="overflow-hidden rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)]">
+        <Card className="overflow-hidden">
           <CardHeader className="border-b border-border/60 px-4 pb-5 pt-6 sm:px-8">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="flex items-start gap-4">
@@ -526,22 +464,22 @@ export function DefaultPanel({
                         {isMensal ? "mês a mês" : isDiario ? "dia a dia" : "semana a semana"}
                       </span>
                     </h3>
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">
+                    <span className="type-micro-legal uppercase text-[var(--muted-foreground)]">
                       {dateFilter.label}
                     </span>
                   </div>
-                  <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+                  <p className="mt-1 type-caption text-[var(--muted-foreground)]">
                     Visão comparativa com leitura rápida das principais métricas por {isMensal ? "mês" : isDiario ? "dia" : "semana"}.
                   </p>
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-[var(--border)] bg-[var(--canvas)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
+                <span className="rounded-full border border-[var(--border)] bg-[var(--canvas)] px-3 py-1 type-caption-strong uppercase text-[var(--muted-foreground)]">
                   {latestFiveSeries.length} {isMensal ? "meses" : isDiario ? "dias" : "semanas"}
                 </span>
                 {latestPeriod && (
-                  <span className="rounded-full border border-primary/20 bg-[var(--chart-current)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--primary)]">
+                  <span className="rounded-full border border-primary/20 bg-[var(--chart-current)] px-3 py-1 type-caption-strong uppercase text-[var(--primary)]">
                     Atual: {latestPeriod}
                   </span>
                 )}
@@ -553,7 +491,7 @@ export function DefaultPanel({
               <table className="table-sticky-first w-full min-w-[860px] border-separate [border-spacing:0_10px]">
                 <thead>
                   <tr>
-                    <th className="w-[150px] px-3 sm:w-[220px] text-left text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">
+                    <th className="w-[150px] px-3 sm:w-[220px] text-left type-micro-legal uppercase text-[var(--muted-foreground)]">
                       Métrica
                     </th>
                     {latestFiveSeries.map((s: { periodo: string }, periodIdx: number) => {
@@ -567,13 +505,13 @@ export function DefaultPanel({
                         >
                           <div className="flex flex-col items-center gap-1">
                             <span
-                              className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
+                              className={`type-micro-legal uppercase ${
                                 isLatest ? "text-[var(--primary)]" : "text-[var(--muted-foreground)]"
                               }`}
                             >
                               {isLatest ? "Atual" : isMensal ? "Mês" : isDiario ? "Dia" : "Semana"}
                             </span>
-                            <span className="text-sm font-semibold whitespace-nowrap">{s.periodo}</span>
+                            <span className="type-caption-strong whitespace-nowrap">{s.periodo}</span>
                           </div>
                         </th>
                       );
@@ -586,10 +524,10 @@ export function DefaultPanel({
                       <td className={`rounded-l-2xl px-4 py-4 ${metric.isSubRow ? "bg-[var(--surface-pearl)] pl-7" : "bg-[var(--canvas-parchment)]"}`}>
                         <div className="flex items-center justify-between gap-3">
                           <div>
-                            <p className={`font-semibold uppercase tracking-[0.18em] ${metric.isSubRow ? "text-[10px] text-[var(--muted-foreground)]" : "text-[11px] text-[var(--foreground)]"}`}>
+                            <p className={`font-semibold uppercase tracking-[0.18em] ${metric.isSubRow ? "type-micro-legal text-[var(--muted-foreground)]" : "type-fine-print text-[var(--foreground)]"}`}>
                               {metric.isSubRow ? `↳ ${metric.label}` : metric.label}
                             </p>
-                            <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+                            <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                               {metric.description}
                             </p>
                           </div>
@@ -610,7 +548,7 @@ export function DefaultPanel({
                             }`}
                           >
                             <div className="flex flex-col items-center gap-1">
-                              <span className={`tabular-nums font-semibold ${metric.isSubRow ? "text-xs text-[var(--muted-foreground)]" : isLatest ? "text-sm text-[var(--primary)]" : "text-sm text-[var(--foreground)]"}`}>
+                              <span className={`tabular-nums font-semibold ${metric.isSubRow ? "type-fine-print text-[var(--muted-foreground)]" : isLatest ? "type-caption text-[var(--primary)]" : "type-caption text-[var(--foreground)]"}`}>
                                 {metric.format(metric.value(s))}
                               </span>
                             </div>

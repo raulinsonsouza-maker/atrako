@@ -197,7 +197,7 @@
   border-radius: 8px;
   background: #111827;
   color: #fff;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
 }
 
@@ -337,7 +337,7 @@
   background: #0066cc;
   color: #fff;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 22px;
   text-align: center;
 }
@@ -480,7 +480,7 @@
 }
 
 .symbius-reauth-banner-cta {
-  font-weight: 600;
+  font-weight: 500;
   color: #92400e;
   text-decoration: underline;
 }
@@ -552,7 +552,7 @@
 
 .symbius-bottom-nav-item.is-active {
   color: #0066cc;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .symbius-bottom-nav-badge {

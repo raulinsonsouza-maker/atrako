@@ -99,18 +99,18 @@ export default function InternalUsersPage() {
         <div className="flex items-start gap-3">
           <div className="mt-1 h-8 w-1 rounded-full bg-[var(--primary)]" />
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">Administração</p>
-            <h1 className="text-2xl font-extrabold tracking-tight">Usuários internos</h1>
-            <p className="mt-1 text-sm text-[var(--muted-foreground)]">Crie acessos locais e controle função e status.</p>
+            <p className="type-micro-legal uppercase text-[var(--primary)]">Administração</p>
+            <h1 className="type-lead-airy font-extrabold ">Usuários internos</h1>
+            <p className="mt-1 type-caption text-[var(--muted-foreground)]">Crie acessos locais e controle função e status.</p>
           </div>
         </div>
-        <Link href="/admin/configuracoes" className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] px-3 py-2 text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+        <Link href="/admin/configuracoes" className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] px-3 py-2 type-fine-print text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
           <ArrowLeft className="h-3.5 w-3.5" /> Configurações
         </Link>
       </header>
 
-      {error && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</div>}
-      {message && <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300"><CheckCircle2 className="h-4 w-4" />{message}</div>}
+      {error && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 type-caption text-red-300">{error}</div>}
+      {message && <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 type-caption text-emerald-300"><CheckCircle2 className="h-4 w-4" />{message}</div>}
 
       <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
         <div className="mb-4 flex items-center gap-2">
@@ -118,10 +118,10 @@ export default function InternalUsersPage() {
           <h2 className="font-semibold">Criar usuário</h2>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="usuário (3–40 caracteres)" className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm" />
-          <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome de exibição (opcional)" className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm" />
+          <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="usuário (3–40 caracteres)" className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 type-caption" />
+          <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome de exibição (opcional)" className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 type-caption" />
           <div className="relative">
-            <input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Senha (mínimo 12)" className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 pr-11 text-sm" />
+            <input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Senha (mínimo 12)" className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 pr-11 type-caption" />
             <button type="button" onClick={() => setShowPassword((current) => !current)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"} className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -138,15 +138,15 @@ export default function InternalUsersPage() {
             aria-label="Função"
           />
         </div>
-        <button onClick={() => void createUser()} disabled={saving} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[var(--primary)] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
+        <button onClick={() => void createUser()} disabled={saving} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[var(--primary)] px-5 py-2.5 type-caption-strong text-white disabled:opacity-50">
           {saving ? "Criando…" : "Criar usuário"}
         </button>
       </section>
 
       <section className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)]">
         <div className="border-b border-[var(--border)] px-5 py-4"><h2 className="font-semibold">Acessos cadastrados</h2></div>
-        {loading ? <p className="p-5 text-sm text-[var(--muted-foreground)]">Carregando…</p> : users.length === 0 ? (
-          <p className="p-5 text-sm text-[var(--muted-foreground)]">Nenhum usuário interno cadastrado.</p>
+        {loading ? <p className="p-5 type-caption text-[var(--muted-foreground)]">Carregando…</p> : users.length === 0 ? (
+          <p className="p-5 type-caption text-[var(--muted-foreground)]">Nenhum usuário interno cadastrado.</p>
         ) : (
           <div className="divide-y divide-[var(--border)]">
             {users.map((user) => (
@@ -156,8 +156,8 @@ export default function InternalUsersPage() {
                     {user.role === "ADMIN" ? <Shield className="h-4 w-4" /> : <UserRound className="h-4 w-4" />}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold">{user.name || user.username}</p>
-                    <p className="text-xs text-[var(--muted-foreground)]">@{user.username} · senha definida</p>
+                    <p className="type-caption-strong ">{user.name || user.username}</p>
+                    <p className="type-fine-print text-[var(--muted-foreground)]">@{user.username} · senha definida</p>
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -170,8 +170,8 @@ export default function InternalUsersPage() {
                     ]}
                     aria-label={`Função de ${user.name || user.username}`}
                   />
-                  <button onClick={() => void resetPassword(user)} className="inline-flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs"><KeyRound className="h-3.5 w-3.5" /> Redefinir</button>
-                  <button onClick={() => void updateUser(user.id, { active: !user.active })} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${user.active ? "border-emerald-500/30 text-emerald-400" : "border-red-500/30 text-red-400"}`}>
+                  <button onClick={() => void resetPassword(user)} className="inline-flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1.5 type-fine-print"><KeyRound className="h-3.5 w-3.5" /> Redefinir</button>
+                  <button onClick={() => void updateUser(user.id, { active: !user.active })} className={`rounded-lg border px-3 py-1.5 type-caption-strong ${user.active ?"border-emerald-500/30 text-emerald-400" :"border-red-500/30 text-red-400"}`}>
                     {user.active ? "Ativo" : "Desativado"}
                   </button>
                 </div>

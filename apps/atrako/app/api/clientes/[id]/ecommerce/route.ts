@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getWorkspaceConnection } from "@/lib/atrako/workspace-connections";
 import { requireClienteAccess } from "@/lib/portalSession";
+import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
 
 const ECOMMERCE_PROVIDERS = ["WOOCOMMERCE", "SHOPIFY", "TRAY", "NUVEMSHOP"] as const;
 type EcommerceProvider = (typeof ECOMMERCE_PROVIDERS)[number];
@@ -89,11 +90,11 @@ export async function GET(
       : {}),
   };
 
-  const [orders, aggregates, catalogCount] = await Promise.all([
+  const [orders, statusGroups, storeGroups, metricRows, itemRows, catalogCount] = await Promise.all([
     prisma.marketplaceOrder.findMany({
       where,
       orderBy: { occurredAt: "desc" },
-      take: 50,
+      take: 10,
       select: {
         id: true,
         externalId: true,
@@ -110,10 +111,35 @@ export async function GET(
         provider: true,
       },
     }),
-    prisma.marketplaceOrder.aggregate({
+    prisma.marketplaceOrder.groupBy({
+      by: ["status"],
       where,
       _count: { _all: true },
       _sum: { totalCents: true },
+    }),
+    provider === "ALL"
+      ? prisma.marketplaceOrder.groupBy({
+          by: ["provider", "status"],
+          where,
+          _count: { _all: true },
+          _sum: { totalCents: true },
+        })
+      : Promise.resolve([]),
+    prisma.marketplaceOrder.findMany({
+      where,
+      select: { occurredAt: true, totalCents: true, status: true },
+    }),
+    prisma.marketplaceOrderItem.findMany({
+      where: { order: where },
+      select: {
+        title: true,
+        quantity: true,
+        lineTotalCents: true,
+        externalItemId: true,
+        sku: true,
+        orderId: true,
+        order: { select: { status: true } },
+      },
     }),
     prisma.marketplaceCatalogItem.count({
       where: {
@@ -123,18 +149,89 @@ export async function GET(
     }),
   ]);
 
-  const withPhone = await prisma.marketplaceOrder.count({
-    where: {
-      ...where,
-      OR: [
-        { buyerPhone: { not: null } },
-        { contact: { phone: { not: null } } },
-      ],
-    },
-  });
+  let revenueOrders = 0;
+  let gmvCents = 0;
+  let excludedOrders = 0;
+  let excludedCents = 0;
+  const byDate = new Map<string, { date: string; orders: number; gmvCents: number }>();
+  for (const row of metricRows) {
+    const cents = row.totalCents ?? 0;
+    if (!isRevenueOrder(row.status)) {
+      excludedOrders += 1;
+      excludedCents += cents;
+      continue;
+    }
+    revenueOrders += 1;
+    gmvCents += cents;
+    if (!row.occurredAt) continue;
+    const date = row.occurredAt.toISOString().slice(0, 10);
+    const current = byDate.get(date) ?? { date, orders: 0, gmvCents: 0 };
+    current.orders += 1;
+    current.gmvCents += cents;
+    byDate.set(date, current);
+  }
 
-  const orderCount = aggregates._count._all;
-  const gmvCents = aggregates._sum.totalCents ?? 0;
+  const byStatus = statusGroups
+    .map((group) => ({
+      status: group.status || "unknown",
+      orders: group._count._all,
+      gmvCents: group._sum.totalCents ?? 0,
+    }))
+    .sort((a, b) => b.gmvCents - a.gmvCents || b.orders - a.orders);
+
+  const storeMap = new Map<string, { provider: string; orders: number; gmvCents: number }>();
+  for (const group of storeGroups) {
+    if (!isRevenueOrder(group.status)) continue;
+    const current = storeMap.get(group.provider) ?? {
+      provider: group.provider,
+      orders: 0,
+      gmvCents: 0,
+    };
+    current.orders += group._count._all;
+    current.gmvCents += group._sum.totalCents ?? 0;
+    storeMap.set(group.provider, current);
+  }
+  const byStore = [...storeMap.values()].sort((a, b) => b.gmvCents - a.gmvCents);
+
+  type ProductAgg = {
+    key: string;
+    title: string;
+    sku: string | null;
+    quantity: number;
+    revenueCents: number;
+    orderIds: Set<string>;
+  };
+  const productMap = new Map<string, ProductAgg>();
+  for (const row of itemRows) {
+    if (!isRevenueOrder(row.order.status)) continue;
+    const key = row.externalItemId || row.sku || row.title;
+    const prev = productMap.get(key);
+    if (prev) {
+      prev.quantity += row.quantity;
+      prev.revenueCents += row.lineTotalCents;
+      prev.orderIds.add(row.orderId);
+    } else {
+      productMap.set(key, {
+        key,
+        title: row.title,
+        sku: row.sku,
+        quantity: row.quantity,
+        revenueCents: row.lineTotalCents,
+        orderIds: new Set([row.orderId]),
+      });
+    }
+  }
+  const topProducts = [...productMap.values()]
+    .map((item) => ({
+      key: item.key,
+      title: item.title,
+      sku: item.sku,
+      quantity: item.quantity,
+      revenueCents: item.revenueCents,
+      orders: item.orderIds.size,
+    }))
+    .sort((a, b) => b.revenueCents - a.revenueCents || b.quantity - a.quantity)
+    .slice(0, 5);
 
   const connected =
     wooConnected || shopifyConnected || trayConnected || nuvemshopConnected;
@@ -178,12 +275,17 @@ export async function GET(
     storeLabel,
     catalogCount,
     kpis: {
-      orders: orderCount,
+      orders: revenueOrders,
       gmvCents,
-      avgTicketCents: orderCount > 0 ? Math.round(gmvCents / orderCount) : 0,
-      withPhonePct: orderCount > 0 ? Math.round((withPhone / orderCount) * 100) : 0,
+      avgTicketCents: revenueOrders > 0 ? Math.round(gmvCents / revenueOrders) : 0,
+      excludedOrders,
+      excludedCents,
       products: catalogCount,
     },
+    series: [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)),
+    byStatus,
+    byStore,
+    topProducts,
     orders: orders.map((o) => ({
       ...o,
       occurredAt: o.occurredAt?.toISOString() ?? null,

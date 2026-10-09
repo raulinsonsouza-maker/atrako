@@ -23,8 +23,8 @@ function PortalNotFound() {
         </svg>
       </div>
       <div>
-        <h1 className="text-xl font-bold text-[var(--foreground)]">Acesso não encontrado</h1>
-        <p className="mt-2 max-w-sm text-sm text-[var(--muted-foreground)]">
+        <h1 className="type-tagline text-[var(--foreground)]">Acesso não encontrado</h1>
+        <p className="mt-2 max-w-sm type-caption text-[var(--muted-foreground)]">
           Este link de acesso não é válido ou foi desativado. Solicite um novo link à sua agência.
         </p>
       </div>

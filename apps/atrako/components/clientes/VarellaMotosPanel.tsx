@@ -1,5 +1,6 @@
 "use client";
 
+import { MetricTile, SegmentedControl } from "@/components/ui";
 import {
   Bar,
   CartesianGrid,
@@ -110,8 +111,8 @@ function VarellaTooltip({ active, payload, label }: TooltipProps<number, string>
     <div
       className="rounded-[10px] border border-[var(--border)] bg-[var(--card)] px-4 py-3"
     >
-      <p className="mb-2 text-sm font-semibold text-[var(--foreground)]">{label}</p>
-      <div className="space-y-2 text-[13px]">
+      <p className="mb-2 type-caption-strong text-[var(--foreground)]">{label}</p>
+      <div className="space-y-2 type-caption">
         <div className="flex items-center justify-between gap-5">
           <span className="font-semibold text-[var(--primary)]">Faturamento</span>
           <span className="font-semibold text-[var(--primary)]">
@@ -119,13 +120,13 @@ function VarellaTooltip({ active, payload, label }: TooltipProps<number, string>
           </span>
         </div>
         <div className="flex items-center justify-between gap-5">
-          <span className="font-medium text-[var(--muted-foreground)]">Investimento</span>
+          <span className="font-semibold text-[var(--muted-foreground)]">Investimento</span>
           <span className="font-semibold text-[var(--foreground)]">
             {formatCurrency(Number(point?.Investimento ?? 0))}
           </span>
         </div>
         <div className="flex items-center justify-between gap-5">
-          <span className="font-medium text-positive">Compras</span>
+          <span className="font-semibold text-positive">Compras</span>
           <span className="font-semibold text-positive">
             {formatInteger(Number(point?.Compras ?? 0))}
           </span>
@@ -139,40 +140,14 @@ function VarellaKpi({
   title,
   value,
   sub,
-  icon: Icon,
-  accent = false,
 }: {
   title: string;
   value: string;
   sub: string;
-  icon: React.ElementType;
+  icon?: React.ElementType;
   accent?: boolean;
 }) {
-  return (
-    <Card className="h-full overflow-hidden rounded-2xl border-[var(--border)] bg-[var(--card)]">
-      <CardContent className="flex h-full items-start gap-3 p-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-[var(--primary)]">
-          <Icon className="h-4 w-4" />
-        </div>
-        <div className="min-w-0 flex-1 overflow-hidden">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
-            {title}
-          </p>
-          <p
-            className={`mt-0.5 text-lg font-semibold leading-tight tabular-nums truncate ${
-              accent ? "text-[var(--primary)]" : "text-[var(--foreground)]"
-            }`}
-            title={value}
-          >
-            {value}
-          </p>
-          <p className="mt-1 truncate text-[10px] leading-tight text-[var(--muted-foreground)]" title={sub}>
-            {sub}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  return <MetricTile label={title} value={value} detail={sub} />;
 }
 
 export function VarellaMotosPanel({
@@ -243,14 +218,14 @@ export function VarellaMotosPanel({
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
-        <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
+        <Card className="overflow-hidden">
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
+                <h3 className="type-tagline text-[var(--foreground)]">
                   Performance de e-commerce
                 </h3>
-                <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
                   {isMensal
                     ? "Comparativo mensal entre investimento e faturamento, com destaque para compras."
                     : isDiario
@@ -259,34 +234,29 @@ export function VarellaMotosPanel({
                 </p>
               </div>
               {!isMensal && onAgrupamentoChange && (
-                <div className="flex overflow-hidden rounded-lg border border-[var(--border)] text-xs">
-                  <button
-                    onClick={() => onAgrupamentoChange("diario")}
-                    className={`px-2.5 py-1.5 font-semibold transition-colors ${isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"}`}
-                  >
-                    Diário
-                  </button>
-                  <button
-                    onClick={() => onAgrupamentoChange("semanal")}
-                    className={`px-2.5 py-1.5 font-semibold transition-colors ${!isDiario ? "bg-[var(--primary)] text-white" : "text-[var(--muted-foreground)] hover:bg-muted/50 hover:text-[var(--foreground)]"}`}
-                  >
-                    Semanal
-                  </button>
-                </div>
+                <SegmentedControl
+                  aria-label="Agrupamento"
+                  value={isDiario ? "diario" : "semanal"}
+                  onChange={onAgrupamentoChange}
+                  options={[
+                    { value: "diario", label: "Diário" },
+                    { value: "semanal", label: "Semanal" },
+                  ]}
+                />
               )}
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-muted/20 px-3 py-1 text-[11px] font-medium text-[var(--muted-foreground)]">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-muted/20 px-3 py-1 type-caption-strong text-[var(--muted-foreground)]">
                 <span className="h-2 w-2 rounded-full bg-[var(--chart-spend)]" />
                 Investimento
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-muted/20 px-3 py-1 text-[11px] font-medium text-[var(--muted-foreground)]">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-muted/20 px-3 py-1 type-caption-strong text-[var(--muted-foreground)]">
                 <span className="h-2 w-2 rounded-full bg-[var(--primary)]" />
                 Faturamento
               </span>
-              <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/8 px-3 py-1 text-[11px] font-medium text-[var(--foreground)]">
+              <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/8 px-3 py-1 type-caption-strong text-[var(--foreground)]">
                 {formatInteger(data.resumo.purchases)} compras no período
               </span>
             </div>
@@ -339,21 +309,21 @@ export function VarellaMotosPanel({
             </div>
             <div className="grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                   {isMensal ? "Maior faturamento mensal" : isDiario ? "Maior faturamento diário" : "Maior faturamento semanal"}
                 </p>
-                <p className="mt-2 text-lg font-semibold text-[var(--foreground)]">
+                <p className="mt-2 type-tagline text-[var(--foreground)]">
                   {topRevenueWeek ? formatCurrency(topRevenueWeek.faturamento) : "—"}
                 </p>
-                <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+                <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                   {topRevenueWeek?.periodo ?? "Sem dados"}
                 </p>
               </div>
               <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                   {isMensal ? "Melhor ROAS mensal" : isDiario ? "Melhor ROAS diário" : "Melhor ROAS semanal"}
                 </p>
-                <p className="mt-2 text-lg font-semibold text-[var(--foreground)]">
+                <p className="mt-2 type-tagline text-[var(--foreground)]">
                   {topRoasWeek
                     ? `${topRoasWeek.roas.toLocaleString("pt-BR", {
                         minimumFractionDigits: 2,
@@ -361,18 +331,18 @@ export function VarellaMotosPanel({
                       })}x`
                     : "—"}
                 </p>
-                <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+                <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                   {topRoasWeek?.periodo ?? "Sem dados"}
                 </p>
               </div>
               <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                   Pico de compras
                 </p>
-                <p className="mt-2 text-lg font-semibold text-[var(--foreground)]">
+                <p className="mt-2 type-tagline text-[var(--foreground)]">
                   {topSalesWeek ? formatInteger(topSalesWeek.purchases) : "—"}
                 </p>
-                <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+                <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                   {topSalesWeek?.periodo ?? "Sem dados"}
                 </p>
               </div>
@@ -380,20 +350,20 @@ export function VarellaMotosPanel({
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
+        <Card className="overflow-hidden">
           <CardHeader className="pb-2">
             <div>
-              <h3 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
+              <h3 className="type-tagline text-[var(--foreground)]">
                 Eficiência da mídia
               </h3>
-              <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+              <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
                 Funil de conversão: alcance, impressões, cliques, checkout e compras.
               </p>
             </div>
           </CardHeader>
           <CardContent>
             <div className="rounded-2xl border border-border/60 bg-muted/10 p-4">
-              <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">
+              <p className="mb-4 type-caption-strong uppercase text-[var(--foreground)]">
                 Funil de mídia
               </p>
               <div className="flex flex-col gap-2">
@@ -435,10 +405,10 @@ export function VarellaMotosPanel({
                       className="absolute inset-y-0 left-0 rounded-l-xl bg-primary/12"
                       style={{ width: `${step.widthPct}%` }}
                     />
-                    <p className="relative z-10 text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                    <p className="relative z-10 type-caption-strong uppercase text-[var(--muted-foreground)]">
                       {step.label}
                     </p>
-                    <p className="relative z-10 text-lg font-semibold tabular-nums text-[var(--foreground)]">
+                    <p className="relative z-10 type-tagline tabular-nums text-[var(--foreground)]">
                       {step.value > 0 ? formatInteger(step.value) : "—"}
                     </p>
                   </div>
@@ -472,16 +442,16 @@ export function VarellaMotosPanel({
             icon: Percent,
           },
         ].map((item) => (
-          <Card key={item.label} className="overflow-hidden rounded-2xl border-[var(--border)]">
+          <Card key={item.label} className="overflow-hidden">
             <CardContent className="flex items-center gap-3 p-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-[var(--primary)]">
                 <item.icon className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                   {item.label}
                 </p>
-                <p className="mt-1 text-lg font-semibold text-[var(--foreground)]">{item.value}</p>
+                <p className="mt-1 type-tagline text-[var(--foreground)]">{item.value}</p>
               </div>
             </CardContent>
           </Card>
@@ -493,57 +463,57 @@ export function VarellaMotosPanel({
           ["META", data.channelMix.meta],
           ["Google", data.channelMix.google],
         ] as const).map(([label, mix]) => (
-          <Card key={label} className="overflow-hidden rounded-2xl border-[var(--border)]">
+          <Card key={label} className="overflow-hidden">
             <CardHeader className="pb-2">
               <div>
-                <h3 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
+                <h3 className="type-tagline text-[var(--foreground)]">
                   Mix de canal · {label}
                 </h3>
-                <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
                   Participação do canal no consolidado do período.
                 </p>
               </div>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                   Investimento
                 </p>
-                <p className="mt-2 text-lg font-semibold text-[var(--foreground)]">
+                <p className="mt-2 type-tagline text-[var(--foreground)]">
                   {formatCurrency(mix.investimento)}
                 </p>
-                <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+                <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                   {formatPercentage(mix.investimentoShare)}
                 </p>
               </div>
               <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                   Compras
                 </p>
-                <p className="mt-2 text-lg font-semibold text-[var(--foreground)]">
+                <p className="mt-2 type-tagline text-[var(--foreground)]">
                   {formatInteger(mix.purchases)}
                 </p>
-                <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+                <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                   {formatPercentage(mix.purchasesShare)}
                 </p>
               </div>
               <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                   Faturamento
                 </p>
-                <p className="mt-2 text-lg font-semibold text-[var(--foreground)]">
+                <p className="mt-2 type-tagline text-[var(--foreground)]">
                   {formatCurrency(mix.faturamento)}
                 </p>
-                <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+                <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
                   {formatPercentage(mix.faturamentoShare)}
                 </p>
               </div>
               {mix.roas != null && (
                 <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                  <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                     ROAS
                   </p>
-                  <p className="mt-2 text-lg font-semibold text-[var(--foreground)]">
+                  <p className="mt-2 type-tagline text-[var(--foreground)]">
                     {mix.roas.toLocaleString("pt-BR", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
@@ -554,10 +524,10 @@ export function VarellaMotosPanel({
               )}
               {mix.cpc != null && (
                 <div className="rounded-2xl border border-[var(--border)] bg-muted/20 p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                  <p className="type-caption-strong uppercase text-[var(--muted-foreground)]">
                     CPC
                   </p>
-                  <p className="mt-2 text-lg font-semibold text-[var(--foreground)]">
+                  <p className="mt-2 type-tagline text-[var(--foreground)]">
                     {formatCurrency(mix.cpc)}
                   </p>
                 </div>
@@ -572,17 +542,17 @@ export function VarellaMotosPanel({
           <CardHeader className="border-b border-border/60 px-6 pb-5 pt-6 sm:px-8">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h3 className="text-xl font-semibold uppercase tracking-tight text-[var(--foreground)] sm:text-2xl">
+                <h3 className="type-tagline uppercase text-[var(--foreground)] ">
                   Resultado comercial
                   <span className="ml-2 text-primary">
                     {isMensal ? "Mês a mês" : isDiario ? "Dia a dia" : "Semana a semana"}
                   </span>
                 </h3>
-                <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+                <p className="mt-1 type-caption text-[var(--muted-foreground)]">
                   {isDiario ? "Leitura focada em receita, compras e eficiência por dia." : isMensal ? "Leitura focada em receita, compras e eficiência por mês." : "Leitura focada em receita, compras e eficiência por semana."}
                 </p>
               </div>
-              <span className="rounded-full border border-primary/25 bg-primary/12 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--foreground)]">
+              <span className="rounded-full border border-primary/25 bg-primary/12 px-3 py-1 type-caption-strong uppercase text-[var(--foreground)]">
                 {latestFiveSeries.length} {isMensal ? "meses" : isDiario ? "dias" : "semanas"}
               </span>
             </div>
@@ -592,7 +562,7 @@ export function VarellaMotosPanel({
               <table className="w-full min-w-[980px] border-separate [border-spacing:0_10px]">
                 <thead>
                   <tr>
-                    <th className="w-[220px] px-3 text-left text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">
+                    <th className="w-[220px] px-3 text-left type-micro-legal uppercase text-[var(--muted-foreground)]">
                       Métrica
                     </th>
                     {latestFiveSeries.map((item, index) => {
@@ -606,13 +576,13 @@ export function VarellaMotosPanel({
                         >
                           <div className="flex flex-col items-center gap-1">
                             <span
-                              className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
+                              className={`type-micro-legal uppercase ${
                                 isLatest ? "text-[var(--primary)]" : "text-[var(--muted-foreground)]"
                               }`}
                             >
                               {isLatest ? "Atual" : isDiario ? "Dia" : isMensal ? "Mês" : "Semana"}
                             </span>
-                            <span className="text-sm font-semibold whitespace-nowrap">{item.periodo}</span>
+                            <span className="type-caption-strong whitespace-nowrap">{item.periodo}</span>
                           </div>
                         </th>
                       );
@@ -643,7 +613,7 @@ export function VarellaMotosPanel({
                   ].map((metric, metricIdx) => (
                     <tr key={metric.label}>
                       <td className="rounded-l-2xl bg-[var(--muted)] px-4 py-4">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--foreground)]">
+                        <p className="type-caption-strong uppercase text-[var(--foreground)]">
                           {metric.label}
                         </p>
                       </td>
@@ -660,7 +630,7 @@ export function VarellaMotosPanel({
                                   : "bg-muted/50"
                             }`}
                           >
-                            <span className="text-sm font-semibold tabular-nums text-[var(--foreground)]">
+                            <span className="type-caption-strong tabular-nums text-[var(--foreground)]">
                               {metric.render(item)}
                             </span>
                           </td>

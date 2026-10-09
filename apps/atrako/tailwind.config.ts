@@ -69,6 +69,15 @@ const config: Config = {
         sans: ["var(--font-sans)"],
         display: ["var(--font-display)"],
       },
+      fontWeight: {
+        medium: "500",
+        semibold: "500",
+      },
+      fontSize: {
+        xs: ["12px", { lineHeight: "1.35", letterSpacing: "-0.01em" }],
+        sm: ["13px", { lineHeight: "1.45", letterSpacing: "-0.011em" }],
+        base: ["15px", { lineHeight: "1.5", letterSpacing: "-0.011em" }],
+      },
       spacing: {
         xxs: "var(--space-xxs)",
         xs: "var(--space-xs)",

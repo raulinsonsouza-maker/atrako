@@ -185,7 +185,7 @@ const TOOLTIP = {
     fontSize: 12,
     padding: "8px 12px",
   },
-  labelStyle: { color: "rgba(255,255,255,0.5)", fontWeight: 600, marginBottom: 2 },
+  labelStyle: { color: "rgba(255,255,255,0.5)", fontWeight: 500, marginBottom: 2 },
   cursor: { fill: "rgba(255,255,255,0.04)" },
 };
 
@@ -196,7 +196,7 @@ function Section({ icon: Icon, title, children }: { icon: React.ElementType; tit
     <div className="rounded-2xl border border-border bg-pearl p-4 space-y-3">
       <div className="flex items-center gap-2">
         <Icon className="w-3.5 h-3.5 text-[var(--primary)] flex-shrink-0" />
-        <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">{title}</span>
+        <span className="type-micro-legal uppercase text-[var(--primary)]">{title}</span>
       </div>
       {children}
     </div>
@@ -206,26 +206,26 @@ function Section({ icon: Icon, title, children }: { icon: React.ElementType; tit
 function Row({ label: lbl, value, accent }: { label: string; value: React.ReactNode; accent?: boolean }) {
   return (
     <div className="flex items-start justify-between gap-3">
-      <span className="text-[12px] text-[var(--muted-foreground)] shrink-0">{lbl}</span>
-      <span className={`text-[12px] font-medium text-right ${accent ? "text-[var(--foreground)]" : "text-foreground/80"}`}>{value}</span>
+      <span className="type-fine-print text-[var(--muted-foreground)] shrink-0">{lbl}</span>
+      <span className={`type-caption-strong text-right ${accent ?"text-[var(--foreground)]" :"text-foreground/80"}`}>{value}</span>
     </div>
   );
 }
 
 function Pill({ text, color }: { text: string; color?: string }) {
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${color ?? "bg-parchment text-muted-foreground"}`}>
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 type-micro-legal ${color ??"bg-parchment text-muted-foreground"}`}>
       {text}
     </span>
   );
 }
 
 function ChipList({ items, empty = "Nenhum" }: { items: string[]; empty?: string }) {
-  if (!items.length) return <span className="text-[12px] text-muted-foreground/50 italic">{empty}</span>;
+  if (!items.length) return <span className="type-fine-print text-muted-foreground/50 italic">{empty}</span>;
   return (
     <div className="flex flex-wrap gap-1.5 mt-0.5">
       {items.map((t, i) => (
-        <span key={i} className="rounded-full border border-border bg-parchment px-2.5 py-0.5 text-[11px] text-foreground/70">
+        <span key={i} className="rounded-full border border-border bg-parchment px-2.5 py-0.5 type-fine-print text-foreground/70">
           {t}
         </span>
       ))}
@@ -239,7 +239,7 @@ function TabBtn({ active, onClick, icon: Icon, children }: {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 px-4 py-3 text-[12px] font-semibold border-b-2 transition-colors whitespace-nowrap ${
+      className={`flex items-center gap-1.5 px-4 py-3 type-caption-strong border-b-2 transition-colors whitespace-nowrap ${
         active
           ? "border-[var(--primary)] text-[var(--primary)]"
           : "border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
@@ -254,9 +254,9 @@ function TabBtn({ active, onClick, icon: Icon, children }: {
 function KpiCard({ title, value, sub }: { title: string; value: React.ReactNode; sub?: string }) {
   return (
     <div className="rounded-xl border border-border bg-pearl p-3 flex-1 min-w-0">
-      <p className="text-[9px] font-semibold uppercase tracking-[0.20em] text-[var(--muted-foreground)] truncate">{title}</p>
-      <p className="text-base font-semibold text-[var(--foreground)] mt-1 leading-none truncate">{value}</p>
-      {sub && <p className="text-[10px] text-[var(--muted-foreground)] mt-1 truncate">{sub}</p>}
+      <p className="type-micro-legal uppercase text-[var(--muted-foreground)] truncate">{title}</p>
+      <p className="type-body-strong text-[var(--foreground)] mt-1 leading-none truncate">{value}</p>
+      {sub && <p className="type-micro-legal text-[var(--muted-foreground)] mt-1 truncate">{sub}</p>}
     </div>
   );
 }
@@ -265,11 +265,11 @@ function RankedRow({ lbl, value, max, right }: { lbl: string; value: number; max
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
     <div className="flex items-center gap-2">
-      <span className="w-28 text-[11px] text-foreground/70 truncate shrink-0">{lbl}</span>
+      <span className="w-28 type-fine-print text-foreground/70 truncate shrink-0">{lbl}</span>
       <div className="flex-1 h-1.5 bg-parchment rounded-full overflow-hidden">
         <div className="h-full bg-[var(--primary)] rounded-full" style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-[11px] font-semibold text-[var(--foreground)] w-14 text-right shrink-0">{right}</span>
+      <span className="type-caption-strong text-[var(--foreground)] w-14 text-right shrink-0">{right}</span>
     </div>
   );
 }
@@ -311,8 +311,8 @@ function PerfTab({ insights }: { insights: InsightsData }) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-2 text-center">
         <BarChart3 className="w-8 h-8 text-[var(--muted-foreground)] opacity-30" />
-        <p className="text-sm font-medium text-[var(--foreground)]">Sem dados no período</p>
-        <p className="text-[12px] text-[var(--muted-foreground)] max-w-[260px]">
+        <p className="type-caption-strong text-[var(--foreground)]">Sem dados no período</p>
+        <p className="type-fine-print text-[var(--muted-foreground)] max-w-[260px]">
           Nenhuma métrica encontrada para este conjunto no período selecionado.
         </p>
       </div>
@@ -407,7 +407,7 @@ function PerfTab({ insights }: { insights: InsightsData }) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-[12px] text-muted-foreground/50 italic">
+            <p className="type-fine-print text-muted-foreground/50 italic">
               Dados demográficos de leads indisponíveis para este conjunto.
             </p>
           )}
@@ -429,7 +429,7 @@ function PerfTab({ insights }: { insights: InsightsData }) {
             ))}
           </div>
           {!hasLeads && (
-            <p className="text-[10px] text-muted-foreground/50 italic mt-1">Exibindo investimento (sem leads registrados)</p>
+            <p className="type-micro-legal text-muted-foreground/50 italic mt-1">Exibindo investimento (sem leads registrados)</p>
           )}
         </Section>
       )}
@@ -584,8 +584,8 @@ export function AdsetDetailModal({
             <Target className="w-4 h-4 text-[var(--primary)]" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--primary)]">Conjunto de Anúncios</p>
-            <h2 className="text-[14px] font-semibold text-[var(--foreground)] leading-snug mt-0.5 line-clamp-2">{adsetName}</h2>
+            <p className="type-micro-legal uppercase text-[var(--primary)]">Conjunto de Anúncios</p>
+            <h2 className="type-caption-strong text-[var(--foreground)] leading-snug mt-0.5 line-clamp-2">{adsetName}</h2>
           </div>
           <button
             onClick={onClose}
@@ -614,15 +614,15 @@ export function AdsetDetailModal({
               {loading && (
                 <div className="flex flex-col items-center justify-center py-16 gap-3 text-[var(--muted-foreground)]">
                   <div className="w-5 h-5 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
-                  <span className="text-sm">Buscando dados na Meta API…</span>
+                  <span className="type-caption">Buscando dados na Meta API…</span>
                 </div>
               )}
 
               {!loading && error && (
                 <div className="flex flex-col items-center justify-center py-16 gap-2 text-center">
                   <Info className="w-8 h-8 text-negative opacity-50" />
-                  <p className="text-sm font-medium text-[var(--foreground)]">Erro ao carregar detalhes</p>
-                  <p className="text-[12px] text-[var(--muted-foreground)] max-w-[280px]">{error}</p>
+                  <p className="type-caption-strong text-[var(--foreground)]">Erro ao carregar detalhes</p>
+                  <p className="type-fine-print text-[var(--muted-foreground)] max-w-[280px]">{error}</p>
                 </div>
               )}
 
@@ -632,13 +632,13 @@ export function AdsetDetailModal({
                     <Row label="Nome" value={data.campaign?.name ?? "—"} accent />
                     {objInfo && (
                       <div className="flex items-center justify-between">
-                        <span className="text-[12px] text-[var(--muted-foreground)]">Objetivo</span>
+                        <span className="type-fine-print text-[var(--muted-foreground)]">Objetivo</span>
                         <Pill text={objInfo.label} color={objInfo.color} />
                       </div>
                     )}
                     {data.campaign?.status && (
                       <div className="flex items-center justify-between">
-                        <span className="text-[12px] text-[var(--muted-foreground)]">Status</span>
+                        <span className="type-fine-print text-[var(--muted-foreground)]">Status</span>
                         <Pill
                           text={STATUS_LABELS[data.campaign.status] ?? data.campaign.status}
                           color={STATUS_STYLE[data.campaign.status] ?? "bg-parchment text-muted-foreground"}
@@ -650,7 +650,7 @@ export function AdsetDetailModal({
                   <Section icon={Target} title="Conjunto">
                     {effStatus && (
                       <div className="flex items-center justify-between">
-                        <span className="text-[12px] text-[var(--muted-foreground)]">Status</span>
+                        <span className="type-fine-print text-[var(--muted-foreground)]">Status</span>
                         <Pill
                           text={STATUS_LABELS[effStatus] ?? effStatus}
                           color={STATUS_STYLE[effStatus] ?? "bg-parchment text-muted-foreground"}
@@ -682,7 +682,7 @@ export function AdsetDetailModal({
                       <Row label="Valor do lance" value={fmtBrl(data.bid_amount)} />
                     )}
                     {!data.daily_budget && !data.lifetime_budget && (
-                      <p className="text-[12px] text-muted-foreground/50 italic">Orçamento definido na campanha</p>
+                      <p className="type-fine-print text-muted-foreground/50 italic">Orçamento definido na campanha</p>
                     )}
                   </Section>
 
@@ -699,8 +699,8 @@ export function AdsetDetailModal({
                       <div className="flex items-center gap-2 rounded-xl bg-primary/8 border border-primary/20 px-3 py-2">
                         <Zap className="w-3.5 h-3.5 text-[var(--primary)] flex-shrink-0" />
                         <div>
-                          <p className="text-[12px] font-semibold text-[var(--primary)]">Advantage+ Audience ativado</p>
-                          <p className="text-[11px] text-[var(--muted-foreground)] mt-0.5">
+                          <p className="type-caption-strong text-[var(--primary)]">Advantage+ Audience ativado</p>
+                          <p className="type-fine-print text-[var(--muted-foreground)] mt-0.5">
                             A Meta expande automaticamente o público para encontrar mais resultados.
                           </p>
                         </div>
@@ -708,7 +708,7 @@ export function AdsetDetailModal({
                     ) : (
                       <div className="flex items-center gap-2 rounded-xl bg-parchment border border-border px-3 py-2">
                         <Settings2 className="w-3.5 h-3.5 text-[var(--muted-foreground)] flex-shrink-0" />
-                        <p className="text-[12px] text-[var(--muted-foreground)]">Segmentação manual (controles definidos)</p>
+                        <p className="type-fine-print text-[var(--muted-foreground)]">Segmentação manual (controles definidos)</p>
                       </div>
                     )}
                     <Row label="Faixa etária" value={ageLabel} accent />
@@ -719,19 +719,19 @@ export function AdsetDetailModal({
                     <Section icon={MapPin} title="Localizações">
                       {countries.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1.5">Países</p>
+                          <p className="type-micro-legal uppercase text-[var(--muted-foreground)] mb-1.5">Países</p>
                           <ChipList items={countries} />
                         </div>
                       )}
                       {regions.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1.5">Estados</p>
+                          <p className="type-micro-legal uppercase text-[var(--muted-foreground)] mb-1.5">Estados</p>
                           <ChipList items={regions} />
                         </div>
                       )}
                       {cities.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1.5">Cidades</p>
+                          <p className="type-micro-legal uppercase text-[var(--muted-foreground)] mb-1.5">Cidades</p>
                           <ChipList items={cities} />
                         </div>
                       )}
@@ -750,13 +750,13 @@ export function AdsetDetailModal({
                     <Section icon={Users} title="Públicos Personalizados">
                       {inclAudiences.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-positive/70 mb-1.5">Incluir</p>
+                          <p className="type-micro-legal uppercase text-positive/70 mb-1.5">Incluir</p>
                           <ChipList items={inclAudiences} />
                         </div>
                       )}
                       {exclAudiences.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-negative/70 mb-1.5">Excluir</p>
+                          <p className="type-micro-legal uppercase text-negative/70 mb-1.5">Excluir</p>
                           <ChipList items={exclAudiences} />
                         </div>
                       )}
@@ -767,20 +767,20 @@ export function AdsetDetailModal({
                     <Section icon={Target} title="Interesses e Comportamentos">
                       {interests.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1.5">Interesses</p>
+                          <p className="type-micro-legal uppercase text-[var(--muted-foreground)] mb-1.5">Interesses</p>
                           <ChipList items={interests} />
                         </div>
                       )}
                       {behaviors.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1.5">Comportamentos</p>
+                          <p className="type-micro-legal uppercase text-[var(--muted-foreground)] mb-1.5">Comportamentos</p>
                           <ChipList items={behaviors} />
                         </div>
                       )}
                     </Section>
                   )}
 
-                  <p className="text-center text-[10px] text-muted-foreground/50 pb-2">ID do conjunto: {data.id}</p>
+                  <p className="text-center type-micro-legal text-muted-foreground/50 pb-2">ID do conjunto: {data.id}</p>
                 </>
               )}
             </>
@@ -792,15 +792,15 @@ export function AdsetDetailModal({
               {insightsLoading && (
                 <div className="flex flex-col items-center justify-center py-16 gap-3 text-[var(--muted-foreground)]">
                   <div className="w-5 h-5 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
-                  <span className="text-sm">Buscando métricas na Meta API…</span>
+                  <span className="type-caption">Buscando métricas na Meta API…</span>
                 </div>
               )}
 
               {!insightsLoading && insightsError && (
                 <div className="flex flex-col items-center justify-center py-16 gap-2 text-center">
                   <Info className="w-8 h-8 text-negative opacity-50" />
-                  <p className="text-sm font-medium text-[var(--foreground)]">Erro ao carregar métricas</p>
-                  <p className="text-[12px] text-[var(--muted-foreground)] max-w-[280px]">{insightsError}</p>
+                  <p className="type-caption-strong text-[var(--foreground)]">Erro ao carregar métricas</p>
+                  <p className="type-fine-print text-[var(--muted-foreground)] max-w-[280px]">{insightsError}</p>
                 </div>
               )}
 

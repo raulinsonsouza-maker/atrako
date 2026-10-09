@@ -98,7 +98,7 @@ export function ContactsClient({ initialContacts }: { initialContacts: ContactRo
         <button
           type="button"
           onClick={() => void exportCsv()}
-          className="symbius-btn-outline inline-flex items-center gap-1 px-3 py-2 text-sm"
+          className="symbius-btn-outline inline-flex items-center gap-1 px-3 py-2 type-caption"
         >
           <Download className="h-4 w-4" />
           Exportar CSV
@@ -107,17 +107,17 @@ export function ContactsClient({ initialContacts }: { initialContacts: ContactRo
 
       {selected.size > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 bg-white p-3">
-          <span className="text-sm text-zinc-500">{selected.size} selecionado(s)</span>
+          <span className="type-caption text-zinc-500">{selected.size} selecionado(s)</span>
           <input
             value={bulkTag}
             onChange={(e) => setBulkTag(e.target.value)}
             placeholder="Tag para adicionar"
-            className="rounded-lg border border-zinc-200 px-2 py-1 text-sm"
+            className="rounded-lg border border-zinc-200 px-2 py-1 type-caption"
           />
           <button
             type="button"
             onClick={() => void bulkAddTag()}
-            className="symbius-btn-outline inline-flex items-center gap-1 px-3 py-1.5 text-sm"
+            className="symbius-btn-outline inline-flex items-center gap-1 px-3 py-1.5 type-caption"
           >
             <Tag className="h-4 w-4" />
             Aplicar tag

@@ -1,3 +1,4 @@
+import { pickCatalogProduct, productTitleScore } from "../lib/atrako-agent/product-facts";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { excerptFromFile } from "../lib/atrako-agent/attachment-text";
@@ -90,5 +91,18 @@ describe("anexos", () => {
     if (!arquivo.ok) assert.match(arquivo.falar, /fachada\.jpg/);
     const pode = assessLpBrief({ ...base, lastUserMessage: "pode montar" });
     assert.equal(pode.ok, true);
+  });
+});
+
+describe("ficha do produto", () => {
+  it("escolhe o hidratante de olhos e ignora a máscara", () => {
+    const query = "Hidratante para Área dos Olhos Anti Stress";
+    const picked = pickCatalogProduct(query, [
+      { title: "Máscara para área dos olhos Anti Stress", productUrl: "https://loja.example/mascara", imageUrl: null, priceCents: 12230 },
+      { title: "Hidratante para Área dos Olhos Anti Stress", productUrl: "https://loja.example/hidratante", imageUrl: "https://loja.example/foto.jpg", priceCents: 14630 },
+    ]);
+    assert.equal(picked?.productUrl, "https://loja.example/hidratante");
+    assert.ok((picked?.score ?? 0) >= 0.55);
+    assert.equal(productTitleScore(query, "Kit de shampoo"), 0);
   });
 });

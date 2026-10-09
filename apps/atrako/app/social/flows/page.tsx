@@ -214,7 +214,7 @@ export default function FlowsPage() {
             <div className="mx-auto max-w-lg rounded-2xl border border-[var(--hairline)] bg-white p-10 text-center">
               <Lightbulb className="mx-auto h-10 w-10 text-amber-400" />
               <h2 className="mt-4 type-tagline">Modelos básicos</h2>
-              <p className="mt-2 text-sm text-zinc-500">
+              <p className="mt-2 type-caption text-zinc-500">
                 Escolha um template pronto e publique em poucos passos.
               </p>
               <Link
@@ -232,7 +232,7 @@ export default function FlowsPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="type-tagline">Sequências</h2>
-                  <p className="mt-1 text-sm text-zinc-500">
+                  <p className="mt-1 type-caption text-zinc-500">
                     Drip campaigns ativadas quando uma tag é aplicada ao contato.
                   </p>
                 </div>
@@ -258,7 +258,7 @@ export default function FlowsPage() {
               </div>
               <div className="mt-6 space-y-2">
                 {filtered.length === 0 ? (
-                  <p className="text-sm text-zinc-500">Nenhuma sequência ainda.</p>
+                  <p className="type-caption text-zinc-500">Nenhuma sequência ainda.</p>
                 ) : (
                   filtered.map((f) => (
                     <Link
@@ -267,7 +267,7 @@ export default function FlowsPage() {
                       className="flex items-center justify-between rounded-xl border border-[var(--hairline)] bg-white px-4 py-3 hover:border-[var(--primary)]"
                     >
                       <span className="type-body-strong">{f.nome}</span>
-                      <span className="text-xs text-zinc-500">{f.status}</span>
+                      <span className="type-fine-print text-zinc-500">{f.status}</span>
                     </Link>
                   ))
                 )}
@@ -360,7 +360,7 @@ export default function FlowsPage() {
                     <button
                       type="button"
                       onClick={() => deleteFolder(p.id)}
-                      className="absolute -right-1 -top-1 hidden h-5 w-5 items-center justify-center rounded-full bg-zinc-800 text-[10px] text-white group-hover:flex"
+                      className="absolute -right-1 -top-1 hidden h-5 w-5 items-center justify-center rounded-full bg-zinc-800 type-micro-legal text-white group-hover:flex"
                       title="Excluir pasta"
                     >
                       ×
@@ -374,7 +374,7 @@ export default function FlowsPage() {
                       value={folderName}
                       onChange={(e) => setFolderName(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && createFolder()}
-                      className="w-36 border-0 bg-transparent text-sm outline-none"
+                      className="w-36 border-0 bg-transparent type-caption outline-none"
                       placeholder="Nome da pasta"
                       autoFocus
                     />
@@ -388,7 +388,7 @@ export default function FlowsPage() {
                     <button
                       type="button"
                       onClick={() => setCreatingFolder(false)}
-                      className="text-sm text-[var(--ink-muted-48)]"
+                      className="type-caption text-[var(--ink-muted-48)]"
                     >
                       ✕
                     </button>
@@ -404,7 +404,7 @@ export default function FlowsPage() {
                   </button>
                 )}
 
-                <div className="ml-auto flex items-center gap-3 text-sm text-zinc-500">
+                <div className="ml-auto flex items-center gap-3 type-caption text-zinc-500">
                   <span className="inline-flex items-center gap-1.5 opacity-50">
                     <Trash2 className="h-4 w-4" />
                     Lixeira
@@ -461,7 +461,7 @@ export default function FlowsPage() {
                 </div>
               ) : (
                 <div className="mt-6">
-                  <div className="mb-2 hidden grid-cols-[auto_1fr_5rem_4.5rem_6.5rem] items-center gap-3 px-4 type-caption-strong uppercase tracking-wide text-[var(--ink-muted-48)] md:grid">
+                  <div className="mb-2 hidden grid-cols-[auto_1fr_5rem_4.5rem_6.5rem] items-center gap-3 px-4 type-caption-strong uppercase text-[var(--ink-muted-48)] md:grid">
                     <input
                       type="checkbox"
                       checked={allSelected}
@@ -512,7 +512,7 @@ function SideBtn({
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm transition ${
+      className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left type-caption transition ${
         active
           ? "bg-[var(--canvas-parchment)] type-body-strong text-[var(--ink)]"
           : "text-[var(--ink-muted-48)] hover:bg-[var(--canvas-parchment)]"
@@ -532,13 +532,13 @@ function SideBtn({
 function LiveBadge({ status }: { status: string }) {
   if (status === "PUBLISHED") {
     return (
-      <span className="inline-flex shrink-0 rounded bg-[#e11d48] px-1.5 py-0.5 type-micro-legal uppercase tracking-wide text-white">
+      <span className="inline-flex shrink-0 rounded bg-[#e11d48] px-1.5 py-0.5 type-micro-legal uppercase text-white">
         LIVE
       </span>
     );
   }
   return (
-    <span className="inline-flex shrink-0 rounded bg-zinc-200 px-1.5 py-0.5 type-micro-legal uppercase tracking-wide text-[var(--ink-muted-48)]">
+    <span className="inline-flex shrink-0 rounded bg-zinc-200 px-1.5 py-0.5 type-micro-legal uppercase text-[var(--ink-muted-48)]">
       Rascunho
     </span>
   );
@@ -577,7 +577,7 @@ function FluxoRow({
               {f.nome}
             </Link>
           </div>
-          <p className="mt-1 line-clamp-2 text-sm text-zinc-500">
+          <p className="mt-1 line-clamp-2 type-caption text-zinc-500">
             {triggerLabel(f.triggerType)}
           </p>
           <div className="mt-2 md:hidden" onClick={(e) => e.stopPropagation()}>
@@ -594,15 +594,15 @@ function FluxoRow({
         </div>
       </div>
       <p className="text-left type-tagline tabular-nums text-[var(--ink)] md:text-right">
-        <span className="mr-2 text-xs font-normal text-[var(--ink-muted-48)] md:hidden">
+        <span className="mr-2 type-fine-print font-normal text-[var(--ink-muted-48)] md:hidden">
           Execuções
         </span>
         {exec}
       </p>
-      <p className="text-left text-sm tabular-nums text-zinc-500 md:text-right">
-        <span className="mr-2 text-xs text-[var(--ink-muted-48)] md:hidden">CTR</span>—
+      <p className="text-left type-caption tabular-nums text-zinc-500 md:text-right">
+        <span className="mr-2 type-fine-print text-[var(--ink-muted-48)] md:hidden">CTR</span>—
       </p>
-      <p className="text-left text-sm text-zinc-500 md:text-right">
+      <p className="text-left type-caption text-zinc-500 md:text-right">
         {formatRelativePt(f.updatedAt)}
       </p>
     </div>
@@ -634,7 +634,7 @@ function FluxoCard({
           />
           <LiveBadge status={f.status} />
         </div>
-        <span className="text-xs text-[var(--ink-muted-48)]">
+        <span className="type-fine-print text-[var(--ink-muted-48)]">
           {formatRelativePt(f.updatedAt)}
         </span>
       </div>
@@ -644,12 +644,12 @@ function FluxoCard({
       >
         {f.nome}
       </Link>
-      <p className="mt-1 line-clamp-2 text-sm text-zinc-500">
+      <p className="mt-1 line-clamp-2 type-caption text-zinc-500">
         {triggerLabel(f.triggerType)}
       </p>
       <div className="mt-4 flex items-end justify-between border-t border-zinc-100 pt-3">
         <div>
-          <p className="text-[10px] uppercase text-[var(--ink-muted-48)]">Execuções</p>
+          <p className="type-micro-legal uppercase text-[var(--ink-muted-48)]">Execuções</p>
           <p className="type-tagline">{f._count?.execucoes ?? 0}</p>
         </div>
         <PillSelect

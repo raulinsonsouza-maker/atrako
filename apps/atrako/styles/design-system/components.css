@@ -6208,15 +6208,15 @@ button.rel-list-row:active {
   width: auto;
 }
 
-.brand-logo-light {
+.brand-logo img.brand-logo-light {
   display: none;
 }
 
-html[data-theme="dark"] .brand-logo-adaptive .brand-logo-dark {
+html[data-theme="dark"] .brand-logo-adaptive img.brand-logo-dark {
   display: none;
 }
 
-html[data-theme="dark"] .brand-logo-adaptive .brand-logo-light {
+html[data-theme="dark"] .brand-logo-adaptive img.brand-logo-light {
   display: block;
 }
 

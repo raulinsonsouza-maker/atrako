@@ -99,6 +99,11 @@ export function StayPublic({ slug }: { slug: string }) {
     if (resumePay) setStep("pay");
   }, [resumePay]);
 
+  useEffect(() => {
+    if (!property || !month || window.location.hash !== "#reserva") return;
+    document.getElementById("reserva")?.scrollIntoView({ block: "start" });
+  }, [property, month]);
+
   const busy = useMemo(() => new Set(occupied), [occupied]);
   const quote = property && checkIn && checkOut
     ? quoteStay({

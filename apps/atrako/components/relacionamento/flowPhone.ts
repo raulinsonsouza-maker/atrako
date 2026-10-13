@@ -16,6 +16,11 @@ export const TRIGGER_LABEL: Record<string, string> = {
   lead_lost: "Lead marcado como perdido",
   lead_welcome: "Novo cadastro",
   date_based: "Data importante",
+  stay_unpaid: "Reserva sem pagamento",
+  stay_confirmed: "Reserva confirmada",
+  stay_checkin: "Véspera do check-in",
+  stay_checkout: "Manhã da saída",
+  stay_thanks: "Depois da estadia",
 };
 
 export type StepPreview =

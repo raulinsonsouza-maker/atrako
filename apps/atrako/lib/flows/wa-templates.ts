@@ -181,6 +181,85 @@ export const WA_TEMPLATE_LIBRARY: WaTemplateDef[] = [
     buttons: [{ type: "URL", text: "Ver produtos" }, OPTOUT],
   },
   {
+    purpose: "sales_welcome",
+    category: "UTILITY",
+    body: {
+      proximo: "Oi {{first_name}}, recebemos seu contato na {{store_name}}. Alguém da equipe fala com você em breve.",
+      neutro: "Olá {{first_name}}, recebemos seu contato na {{store_name}}. A equipe retorna em breve.",
+      formal: "Olá {{first_name}}. Confirmamos o recebimento do seu contato na {{store_name}}. Nossa equipe retornará em breve.",
+    },
+    buttons: [],
+  },
+  {
+    purpose: "sales_followup",
+    category: "MARKETING",
+    body: {
+      proximo: "Oi {{first_name}}, se ainda fizer sentido conversar sobre o que você pediu na {{store_name}}, é só responder.",
+      neutro: "Olá {{first_name}}, seguimos à disposição na {{store_name}} caso queira retomar a conversa.",
+      formal: "Olá {{first_name}}. Permanecemos à disposição na {{store_name}} para retomar o assunto quando for conveniente.",
+    },
+    buttons: [OPTOUT],
+  },
+  {
+    purpose: "stay_unpaid",
+    category: "UTILITY",
+    body: {
+      proximo:
+        "Oi {{first_name}}, sua reserva {{order_ref}} na {{store_name}} aguarda o Pix de {{order_total}}. Pague pelo link abaixo para manter as datas.",
+      neutro:
+        "Olá {{first_name}}, a reserva {{order_ref}} na {{store_name}} aguarda o pagamento de {{order_total}}. Acesse o link abaixo para pagar.",
+      formal:
+        "Olá {{first_name}}. A reserva {{order_ref}} na {{store_name}} aguarda o pagamento de {{order_total}}. Utilize o link abaixo para concluir.",
+    },
+    buttons: [{ type: "URL", text: "Pagar reserva" }],
+  },
+  {
+    purpose: "stay_confirmed",
+    category: "UTILITY",
+    body: {
+      proximo:
+        "Oi {{first_name}}, sua reserva {{order_ref}} na {{store_name}} está confirmada. O valor pago foi {{order_total}}. Os detalhes estão no link abaixo.",
+      neutro:
+        "Olá {{first_name}}, a reserva {{order_ref}} na {{store_name}} está confirmada, no valor de {{order_total}}. Acompanhe pelo link abaixo.",
+      formal:
+        "Olá {{first_name}}. A reserva {{order_ref}} na {{store_name}} está confirmada, no valor de {{order_total}}. Consulte os detalhes no link abaixo.",
+    },
+    buttons: [{ type: "URL", text: "Ver reserva" }],
+  },
+  {
+    purpose: "stay_checkin",
+    category: "UTILITY",
+    body: {
+      proximo:
+        "Oi {{first_name}}, amanhã é o check-in da reserva {{order_ref}} na {{store_name}}. Até logo.",
+      neutro:
+        "Olá {{first_name}}, o check-in da reserva {{order_ref}} na {{store_name}} é amanhã.",
+      formal:
+        "Olá {{first_name}}. O check-in da reserva {{order_ref}} na {{store_name}} ocorre amanhã.",
+    },
+    buttons: [{ type: "URL", text: "Ver detalhes" }],
+  },
+  {
+    purpose: "stay_checkout",
+    category: "UTILITY",
+    body: {
+      proximo: "Oi {{first_name}}, hoje é a saída da reserva {{order_ref}} na {{store_name}}. Até a próxima.",
+      neutro: "Olá {{first_name}}, o check-out da reserva {{order_ref}} na {{store_name}} é hoje.",
+      formal: "Olá {{first_name}}. O check-out da reserva {{order_ref}} na {{store_name}} ocorre hoje.",
+    },
+    buttons: [{ type: "URL", text: "Ver reserva" }],
+  },
+  {
+    purpose: "stay_thanks",
+    category: "UTILITY",
+    body: {
+      proximo: "Oi {{first_name}}, obrigado por ficar na {{store_name}}. Quando quiser repetir, a reserva {{order_ref}} mostra como foi.",
+      neutro: "Olá {{first_name}}, obrigado pela estadia na {{store_name}}.",
+      formal: "Olá {{first_name}}. Agradecemos a estadia na {{store_name}}.",
+    },
+    buttons: [{ type: "URL", text: "Ver a casa" }],
+  },
+  {
     purpose: "welcome",
     category: "MARKETING",
     body: {
@@ -551,7 +630,7 @@ export async function createWaTemplateFromDef(
 }
 
 /** Ao conectar o WA: cria os templates padrão no tom da loja (até 100 criações/h — aqui ~13). */
-export async function ensureDefaultWaTemplates(workspaceId: string, tone?: EmailTone) {
+export async function ensureDefaultWaTemplates(workspaceId: string, tone?: EmailTone, purposes?: string[]) {
   const wa = await resolveWhatsApp(workspaceId);
   if (!wa?.wabaId) return { created: 0, skipped: true };
   const theme = await prisma.emailTheme.findUnique({ where: { clienteId: workspaceId } });
@@ -566,7 +645,10 @@ export async function ensureDefaultWaTemplates(workspaceId: string, tone?: Email
   const have = new Set(existing.map((e) => e.purpose));
   let created = 0;
   const errors: string[] = [];
-  for (const def of WA_TEMPLATE_LIBRARY) {
+  const library = purposes?.length
+    ? WA_TEMPLATE_LIBRARY.filter((def) => purposes.includes(def.purpose))
+    : WA_TEMPLATE_LIBRARY;
+  for (const def of library) {
     if (have.has(def.purpose)) continue;
     try {
       await createWaTemplateFromDef(workspaceId, def, t);

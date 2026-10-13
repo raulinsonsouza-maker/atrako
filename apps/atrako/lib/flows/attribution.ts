@@ -166,7 +166,7 @@ export async function onOrderPaid(input: OrderPaidInput) {
     clienteId: input.workspaceId,
     contactId,
     reason: "purchased",
-    triggers: SALES_TRIGGERS,
+    triggers: input.provider === "STAY" ? [...SALES_TRIGGERS, "stay_unpaid"] : SALES_TRIGGERS,
     conversion: { orderRef: input.orderRef, cents: input.totalCents, at: input.paidAt },
   });
 
@@ -214,6 +214,11 @@ export async function onOrderPaid(input: OrderPaidInput) {
         },
       });
     }
+  }
+
+  // Estadia não entra em pós-compra nem segunda compra da loja.
+  if (input.provider === "STAY") {
+    return { contactId, attribution, profile: { ordersCount: profile.ordersCount, lifecycle: profile.lifecycle } };
   }
 
   // Pós-compra + segunda compra — só pedido recente (sync/backfill de histórico não dispara)

@@ -11,6 +11,7 @@
 
 import { Prisma } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/db";
+import { captureExternalLead } from "@/lib/crm/capture-external";
 import { RdMarketingClient, normalizeEnrichment } from "./client";
 
 export interface SyncRdContactsResult {
@@ -191,10 +192,28 @@ export async function syncRdMarketingContacts(
               },
             });
             created++;
-          } else {
-            // Sem CrmConfig: apenas conta como skipped (sem como criar o stub)
+          } else if (!crmConfig) {
             skipped++;
           }
+
+          const phone = fullContact.mobile_phone ?? fullContact.personal_phone ?? null;
+          await captureExternalLead({
+            workspaceId: clienteId,
+            name: rdContact.name ?? fullContact.name ?? null,
+            email: email ?? null,
+            phone,
+            source: "rd",
+            welcome: !existing,
+            metadata: {
+              channel: "rd",
+              rdContactId: rdContact.uuid,
+              utm_source: enrichment.utmSource ?? null,
+              utm_medium: enrichment.utmMedium ?? null,
+              utm_campaign: enrichment.utmCampaign ?? null,
+              campaignName: enrichment.utmCampaign ?? enrichment.origemMarketing ?? null,
+            },
+            payload: { email, phone, nome: rdContact.name ?? fullContact.name },
+          }).catch(() => null);
         } catch {
           skipped++;
         }

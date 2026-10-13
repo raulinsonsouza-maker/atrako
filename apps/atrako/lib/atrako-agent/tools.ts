@@ -67,6 +67,13 @@ export type ToolRuntime = {
   userText?: string;
   /** Só a mensagem desta vez. A confirmação da página olha para ela, não para o histórico. */
   lastUserMessage?: string;
+  /** Só o atendimento no WhatsApp preenche. O agente do app não manda mensagem nem cobra. */
+  attendance?: {
+    leadId: string;
+    conversationId: string;
+    phone: string;
+    contactId: string | null;
+  };
 };
 
 type JsonSchema = Record<string, unknown>;
@@ -81,6 +88,8 @@ export type AtrakoTool = {
   risk: "READ" | "DRAFT" | "WRITE";
   /** Só aparece se o módulo estiver ligado no workspace. */
   module?: ModuleKey;
+  /** Aparece se qualquer um destes módulos estiver ligado. */
+  anyModule?: ModuleKey[];
   /** Ferramenta demorada (gera página com IA): estende o prazo total da resposta. */
   longRunning?: boolean;
   /** Cria recurso: depois de um sucesso, novas chamadas na mesma resposta não criam outro. */
@@ -773,6 +782,7 @@ export const READ_TOOLS: AtrakoTool[] = [
       "Vendas consolidadas de lojas (Shopify, Nuvemshop, Tray, Woo), marketplaces (Mercado Livre, Shopee, TikTok Shop) e checkout Atrako: receita, pedidos, ticket médio, por loja e por origem de tráfego, investimento em mídia e ROAS geral. Não traz frete, estado nem líquido do marketplace — para isso use marketplaces_visao.",
     parameters: periodSchema(),
     risk: "READ",
+    anyModule: ["commerce", "food"],
     async run(args, rt) {
       const p = periodOf(args, rt);
       const [cur, prev] = await Promise.all([salesSnapshot(rt.ctx.clienteId, range(p)), salesSnapshot(rt.ctx.clienteId, prevRange(p))]);
@@ -804,6 +814,7 @@ export const READ_TOOLS: AtrakoTool[] = [
       canal: nullableString("Marketplace: mercadolivre, shopee, tiktok ou null para todos.", ["mercadolivre", "shopee", "tiktok"]),
     }),
     risk: "READ",
+    module: "commerce",
     async run(args, rt) {
       const p = periodOf(args, rt);
       const providers = marketplaceProviders(args.canal);
@@ -828,6 +839,7 @@ export const READ_TOOLS: AtrakoTool[] = [
       "Base de clientes: novos vs recorrentes no período, participação da recompra na receita, intervalo médio entre compras e ciclo de vida da base (ativos, em risco, perdidos…). Para gênero, horário, cidade, produtos e quem mais compra, use comportamento_compra.",
     parameters: periodSchema(),
     risk: "READ",
+    module: "commerce",
     async run(args, rt) {
       const p = periodOf(args, rt);
       const [metrics, lifecycle] = await Promise.all([
@@ -864,6 +876,7 @@ export const READ_TOOLS: AtrakoTool[] = [
       "Quem compra neste período: receita nova e de recompra, ticket do pedido e ticket por cliente, LTV, gênero estimado pelo nome, origem, produtos, o que compram depois, maiores compradores, estado e cidade, e os horários com mais pedidos. Use em pergunta sobre clientes, recompra, gênero, horário, lugar ou produto. Não use em saudação.",
     parameters: periodSchema(),
     risk: "READ",
+    module: "commerce",
     async run(args, rt) {
       const p = periodOf(args, rt);
       const view = await getComportamento(rt.ctx.clienteId, {
@@ -892,6 +905,7 @@ export const READ_TOOLS: AtrakoTool[] = [
       "Carrinhos do período pedido (abandonados e recuperados naquelas datas) e, separado, o saldo aberto agora. Pergunta com período usa só `periodo`. `estoqueAberto` ignora a data. Para um carrinho específico use carrinhos_lista.",
     parameters: periodSchema(),
     risk: "READ",
+    module: "commerce",
     async run(args, rt) {
       const p = periodOf(args, rt);
       const [summary, recovery] = await Promise.all([
@@ -937,6 +951,7 @@ export const READ_TOOLS: AtrakoTool[] = [
       limite: { type: ["integer", "null"], description: "1 a 10 (padrão 5). 'O último' = 1." },
     }),
     risk: "READ",
+    module: "commerce",
     async run(args, rt) {
       const status = args.status === "recuperados" || args.status === "todos" ? args.status : "abertos";
       const limit = Number(args.limite) > 0 ? Number(args.limite) : 5;
@@ -1141,6 +1156,7 @@ export const READ_TOOLS: AtrakoTool[] = [
     description: "Instagram: alcance, impressões, engajamento, novos seguidores e total de seguidores, com comparação.",
     parameters: periodSchema(),
     risk: "READ",
+    module: "social",
     async run(args, rt) {
       const p = periodOf(args, rt);
       const ws = rt.ctx.clienteId;
@@ -1284,7 +1300,11 @@ export const READ_TOOLS: AtrakoTool[] = [
 /** Ferramentas disponíveis para o workspace (respeita módulos desligados). */
 export function toolsForWorkspace(ctx: AtrakoWorkspaceContext, extra: AtrakoTool[] = []): AtrakoTool[] {
   const enabled = new Set(ctx.modules);
-  const gate = (t: AtrakoTool) => !t.module || enabled.size === 0 || enabled.has(t.module);
+  const gate = (t: AtrakoTool) => {
+    if (enabled.size === 0) return true;
+    if (t.anyModule?.length) return t.anyModule.some((key) => enabled.has(key));
+    return !t.module || enabled.has(t.module);
+  };
   return [...READ_TOOLS, ...extra].filter(gate);
 }
 

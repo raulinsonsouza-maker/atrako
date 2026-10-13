@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { resolveMetaCredentials } from "@/lib/config/resolveIntegracao";
 import { dddToEstado } from "@/lib/utils/dddToEstado";
 import { isSyntheticDemoCliente } from "@/lib/demo/syntheticDemo";
+import { captureExternalLead } from "@/lib/crm/capture-external";
 
 function getFieldValue(
   fieldData: Array<{ name: string; values: string[] }>,
@@ -190,7 +191,28 @@ export async function syncMetaLeadsCliente(
               rawFieldData: fd as object,
             },
           });
-          if (isNew) leadsCreated++;
+          if (isNew) {
+            leadsCreated++;
+            await captureExternalLead({
+              workspaceId: clienteId,
+              name: fullName,
+              email: emailLead,
+              phone: telefone,
+              source: "meta_lead",
+              welcome: true,
+              metadata: {
+                channel: "meta",
+                campaignId: lead.campaign_id ?? null,
+                campaignName: lead.campaign_name ?? null,
+                adId: lead.ad_id ?? null,
+                adName: lead.ad_name ?? null,
+                formId: form.id,
+                formName: form.name,
+                metaLeadId: lead.id,
+              },
+              payload: { email: emailLead, phone: telefone, nome: fullName },
+            }).catch((err) => console.warn("[metaLeadsSync] native", err instanceof Error ? err.message : err));
+          }
         } catch (e) {
           leadsFailed++;
           console.error(`[metaLeadsSync] Failed to upsert lead ${lead.id} for client ${clienteId}:`, e instanceof Error ? e.message : e);
@@ -305,7 +327,27 @@ export async function syncMetaLeadsCliente(
                   rawFieldData: fd as object,
                 },
               });
-              if (isNew) leadsCreated++;
+              if (isNew) {
+                leadsCreated++;
+                await captureExternalLead({
+                  workspaceId: clienteId,
+                  name: fullName,
+                  email: emailLead,
+                  phone: telefone,
+                  source: "meta_lead",
+                  welcome: true,
+                  metadata: {
+                    channel: "meta",
+                    campaignId: lead.campaign_id ?? null,
+                    campaignName: lead.campaign_name ?? null,
+                    adId: lead.ad_id ?? null,
+                    adName: lead.ad_name ?? null,
+                    formId: lead.form_id ?? null,
+                    metaLeadId: lead.id,
+                  },
+                  payload: { email: emailLead, phone: telefone, nome: fullName },
+                }).catch((err) => console.warn("[metaLeadsSync] native", err instanceof Error ? err.message : err));
+              }
             } catch (e) {
               leadsFailed++;
               console.error(`[metaLeadsSync] T4 failed lead ${lead.id}:`, e instanceof Error ? e.message : e);

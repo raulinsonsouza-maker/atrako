@@ -20,6 +20,7 @@ const PUBLIC_PREFIXES = [
   "/f/",
   "/p/",
   "/cardapio/",
+  "/estadia/",
   "/checkout",
   "/obrigado",
   "/r/",

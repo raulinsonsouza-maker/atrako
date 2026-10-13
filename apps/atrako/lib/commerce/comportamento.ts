@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
 import { orderOriginKey, originLabel } from "@/lib/commerce-attribution/store-source";
 import { orderDetails } from "@/lib/commerce/order-details";
+import { mlItemPhotos } from "@/lib/integrations/mercadolivre/item-photos";
 import { genderFromName } from "@/lib/geo/gender";
 import { stateName } from "@/lib/geo/place";
 
@@ -104,6 +105,7 @@ type ItemRow = {
   quantity: number | null;
   lineTotalCents: number | null;
   unitPriceCents?: number | null;
+  externalItemId?: string | null;
   imageUrl?: string | null;
   productUrl?: string | null;
 };
@@ -413,6 +415,8 @@ function finishAggregate(
     receita: number;
     orders: Set<string>;
     buyers: Map<string, Set<string>>;
+    imageUrl: string | null;
+    productUrl: string | null;
   };
   const products = new Map<string, Prod>();
   const byBuyerOrders = new Map<string, Array<{ id: string; keys: Map<string, string> }>>();
@@ -510,8 +514,8 @@ function finishAggregate(
         receita: 0,
         orders: new Set<string>(),
         buyers: new Map<string, Set<string>>(),
-        imageUrl: null as string | null,
-        productUrl: null as string | null,
+        imageUrl: null,
+        productUrl: null,
       };
       prod.imageUrl = prod.imageUrl ?? httpUrl(item.imageUrl);
       prod.productUrl = prod.productUrl ?? httpUrl(item.productUrl);
@@ -796,7 +800,7 @@ const orderSelect = {
   cityRaw: true,
   contact: { select: { name: true, gender: true } },
   source: { select: { channel: true } },
-  items: { select: { title: true, sku: true, quantity: true, unitPriceCents: true, lineTotalCents: true, imageUrl: true, productUrl: true } },
+  items: { select: { title: true, sku: true, quantity: true, unitPriceCents: true, lineTotalCents: true, externalItemId: true, imageUrl: true, productUrl: true } },
 } as const;
 
 type Loaded = {
@@ -850,6 +854,61 @@ function filtroAtivo(filtro?: FiltroComportamento) {
   );
 }
 
+async function photosByItemId(clienteId: string, ids: string[]) {
+  const unique = [...new Set(ids.map((id) => id.trim()).filter(Boolean))].slice(0, 80);
+  const photos = new Map<string, string>();
+  if (!unique.length) return photos;
+
+  const catalog = await prisma.marketplaceCatalogItem.findMany({
+    where: { clienteId, externalId: { in: unique }, imageUrl: { not: null } },
+    select: { externalId: true, imageUrl: true },
+  });
+  for (const row of catalog) {
+    if (row.imageUrl) photos.set(row.externalId, row.imageUrl);
+  }
+
+  const mlIds = unique.filter((id) => !photos.has(id));
+  const chunks: string[][] = [];
+  for (let i = 0; i < mlIds.length; i += 20) chunks.push(mlIds.slice(i, i + 20));
+  const batches = await Promise.all(chunks.map((chunk) => mlItemPhotos(chunk).catch(() => new Map<string, string>())));
+  for (const batch of batches) {
+    for (const [id, src] of batch) photos.set(id, src);
+  }
+  return photos;
+}
+
+/** Pedido do Mercado Livre não grava foto. A lista usa o anúncio, como a tela do pedido. */
+async function fillMissingItemPhotos(clienteId: string, orders: BehaviorOrder[]) {
+  const ids: string[] = [];
+  for (const order of orders) {
+    for (const item of order.items) {
+      if (!httpUrl(item.imageUrl) && item.externalItemId) ids.push(item.externalItemId);
+    }
+  }
+  const photos = await photosByItemId(clienteId, ids);
+  if (!photos.size) return;
+
+  const applied: Array<{ externalItemId: string; imageUrl: string }> = [];
+  for (const order of orders) {
+    order.items = order.items.map((item) => {
+      if (httpUrl(item.imageUrl) || !item.externalItemId) return item;
+      const imageUrl = httpUrl(photos.get(item.externalItemId));
+      if (!imageUrl) return item;
+      applied.push({ externalItemId: item.externalItemId, imageUrl });
+      return { ...item, imageUrl };
+    });
+  }
+
+  await Promise.all(
+    [...new Map(applied.map((row) => [row.externalItemId, row.imageUrl])).entries()].map(([externalItemId, imageUrl]) =>
+      prisma.marketplaceOrderItem.updateMany({
+        where: { externalItemId, imageUrl: null, order: { clienteId } },
+        data: { imageUrl },
+      }),
+    ),
+  ).catch(() => null);
+}
+
 export async function getComportamento(
   clienteId: string,
   range: { start: Date; end: Date; previousStart: Date; previousEnd: Date },
@@ -892,6 +951,8 @@ export async function getComportamento(
   }
   let lifetimeReceita = 0;
   for (const cents of lifetimePorComprador.values()) lifetimeReceita += cents;
+
+  await fillMissingItemPhotos(clienteId, current);
 
   const base = {
     current,

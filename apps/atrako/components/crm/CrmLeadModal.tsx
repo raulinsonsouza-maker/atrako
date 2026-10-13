@@ -111,8 +111,15 @@ type LeadDetail = {
     shipping: string | null;
     lostReason: string | null;
     lostAt: string | null;
+    notes?: Array<{ id: string; text: string; at: string }>;
+    ownerMemberId?: string | null;
+    ownerName?: string | null;
+    campaignName?: string | null;
+    adName?: string | null;
+    formName?: string | null;
     createdAt: string;
   };
+  members?: Array<{ id: string; name: string; email: string }>;
   stages: Array<{ id: string; name: string; color: string }>;
   journey: JourneyItem[];
   carts: LeadCart[];
@@ -127,6 +134,10 @@ const LOST_REASON_LABELS: Record<string, string> = {
   carrinho_expirado: "6 meses sem compra depois do carrinho",
   contato_invalido: "E-mail e WhatsApp não chegam",
   reembolso: "Pedido reembolsado",
+  preco: "Preço",
+  sem_fit: "Sem fit",
+  concorrente: "Concorrente",
+  sem_resposta: "Sem resposta",
 };
 
 function fmtCents(cents: number, currency = "BRL") {
@@ -526,15 +537,19 @@ function OriginBox({ order, label = "Origem da compra" }: { order: LeadOrder; la
 export function CrmLeadModal({
   workspaceId,
   leadId,
+  salesMode = false,
   onClose,
 }: {
   workspaceId: string;
   leadId: string;
+  salesMode?: boolean;
   onClose: () => void;
 }) {
   const qc = useQueryClient();
   const [showAllOrders, setShowAllOrders] = useState(false);
   const [panelTab, setPanelTab] = useState<"jornada" | "pedidos" | "conversas" | "notas">("jornada");
+  const [noteText, setNoteText] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
   const { data, isLoading, isError } = useQuery({
     queryKey: ["crm-lead", workspaceId, leadId],
     queryFn: async () => {
@@ -701,7 +716,16 @@ export function CrmLeadModal({
               ) : null}
             </div>
           </div>
-          {lead ? (
+          {lead && salesMode ? (
+            <div className="panel-modal-stats">
+              <Stat
+                label="Valor"
+                value={lead.dealValue != null ? lead.dealValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
+              />
+              <Stat label="Origem" value={lead.campaignName || lead.sourceLabel || "—"} />
+              <Stat label="No CRM desde" value={fmtDate(lead.createdAt)} />
+            </div>
+          ) : lead ? (
             <div className="panel-modal-stats">
               <Stat label="Receita paga" value={fmtCents(boughtCents)} />
               <Stat
@@ -727,10 +751,10 @@ export function CrmLeadModal({
                   {(
                     [
                       ["jornada", "Jornada"],
-                      ["pedidos", "Pedidos"],
+                      ...(!salesMode ? [["pedidos", "Pedidos"]] : []),
                       ["conversas", "Conversas"],
                       ["notas", "Notas"],
-                    ] as const
+                    ] as Array<["jornada" | "pedidos" | "conversas" | "notas", string]>
                   ).map(([id, label]) => {
                     const active = panelTab === id;
                     return (
@@ -846,6 +870,70 @@ export function CrmLeadModal({
 
               {panelTab === "notas" ? (
                 <div className="mt-4 space-y-3" role="tabpanel">
+                  {salesMode ? (
+                    <PillSelect
+                      size="field"
+                      value={lead.ownerMemberId ?? ""}
+                      onChange={(ownerMemberId) => {
+                        void fetch(`/api/atrako/crm/leads/${leadId}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            workspaceId,
+                            action: "owner",
+                            ownerMemberId: ownerMemberId || null,
+                          }),
+                        }).then(() => qc.invalidateQueries({ queryKey: ["crm-lead", workspaceId, leadId] }));
+                      }}
+                      options={[
+                        { value: "", label: "Sem responsável" },
+                        ...(data?.members ?? []).map((m) => ({ value: m.id, label: m.name })),
+                      ]}
+                      aria-label="Responsável"
+                    />
+                  ) : null}
+                  {(lead.notes ?? []).length ? (
+                    <ul className="space-y-3">
+                      {lead.notes?.map((note) => (
+                        <li key={note.id}>
+                          <p className="type-caption text-[var(--ink)]">{note.text}</p>
+                          <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">{fmtDate(note.at)}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="type-fine-print text-[var(--ink-muted-48)]">Sem notas</p>
+                  )}
+                  <form
+                    className="flex gap-2"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const text = noteText.trim();
+                      if (!text || savingNote) return;
+                      setSavingNote(true);
+                      void fetch(`/api/atrako/crm/leads/${leadId}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ workspaceId, action: "note", text }),
+                      })
+                        .then(async (r) => {
+                          if (!r.ok) return;
+                          setNoteText("");
+                          await qc.invalidateQueries({ queryKey: ["crm-lead", workspaceId, leadId] });
+                        })
+                        .finally(() => setSavingNote(false));
+                    }}
+                  >
+                    <input
+                      className="h-11 min-w-0 flex-1 rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-4 type-caption text-[var(--ink)] outline-none"
+                      value={noteText}
+                      onChange={(e) => setNoteText(e.target.value)}
+                      placeholder="Escreva uma nota"
+                    />
+                    <Button type="submit" variant="primary" size="toolbar" disabled={savingNote || !noteText.trim()}>
+                      Salvar
+                    </Button>
+                  </form>
                   {lead.status === "LOST" && lead.lostReason ? (
                     <div>
                       <p className="type-caption-strong text-[var(--ink)]">Motivo da perda</p>
@@ -877,9 +965,6 @@ export function CrmLeadModal({
                       </p>
                     </div>
                   ) : null}
-                  {!(lead.status === "LOST" && lead.lostReason) && !profile?.ordersCount ? (
-                    <p className="type-fine-print text-[var(--ink-muted-48)]">Sem notas</p>
-                  ) : null}
                 </div>
               ) : null}
             </>
@@ -891,7 +976,10 @@ export function CrmLeadModal({
             Adicionar nota
           </Button>
           {lead?.phone ? (
-            <Link href="/whatsapp" className={buttonClass({ variant: "dark-utility", size: "toolbar" })}>
+            <Link
+              href={`/whatsapp?phone=${encodeURIComponent(lead.phone)}`}
+              className={buttonClass({ variant: "dark-utility", size: "toolbar" })}
+            >
               Conversar no WhatsApp
             </Link>
           ) : null}

@@ -1274,7 +1274,7 @@
 .crm-filter-chip[data-tone="ink"] {
   border-color: transparent;
   background: var(--ink);
-  color: var(--on-dark);
+  color: var(--canvas);
   font-weight: 500;
 }
 

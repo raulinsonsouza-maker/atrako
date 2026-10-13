@@ -81,7 +81,7 @@ function stepTitle(s: FlowStep, storeName: string) {
   return body ? body.replace(/[*_~]/g, "").slice(0, 90) : s.label;
 }
 
-export function FlowsTab({ workspaceId }: { workspaceId: string }) {
+export function FlowsTab({ workspaceId, pack }: { workspaceId: string; pack?: "stay" | "food" | "inside_sales" }) {
   const qc = useQueryClient();
   const [period] = useState(() => lastDaysPeriod(30));
   const [open, setOpen] = useState<string | null>(null);
@@ -90,10 +90,10 @@ export function FlowsTab({ workspaceId }: { workspaceId: string }) {
   const [editing, setEditing] = useState<{ flowId: string; stepId: string; focus?: "fallback" } | null>(null);
   const [tabs, setTabs] = useState<Record<string, PhoneChannel>>({});
   const [error, setError] = useState<string | null>(null);
-  const key = ["rel-flows", workspaceId];
+  const key = ["rel-flows", workspaceId, pack ?? "edition"];
   const { data, isLoading } = useQuery({
     queryKey: [...key, period.qs],
-    queryFn: () => api<{ flows: Flow[]; store: FlowStore }>(`/api/atrako/relacionamento/flows?workspaceId=${workspaceId}&${period.qs}`),
+    queryFn: () => api<{ flows: Flow[]; store: FlowStore }>(`/api/atrako/relacionamento/flows?workspaceId=${workspaceId}&${period.qs}${pack ? `&pack=${pack}` : ""}`),
     placeholderData: (prev) => prev,
   });
   const post = useMutation({
@@ -128,9 +128,9 @@ export function FlowsTab({ workspaceId }: { workspaceId: string }) {
     return (
       <section className="rel-card">
         <RelEmpty
-          text="Carrinho, pós-compra, recompra, aniversário e mais — prontos com o visual da sua loja. Começam pausados."
+          text={pack === "stay" ? "Pix pendente, confirmação, véspera, saída e um obrigado. Começam ligados." : "Carrinho, pós-compra, recompra, aniversário e mais — prontos com o visual da sua loja. Começam pausados."}
           action={
-            <Button disabled={post.isPending} onClick={() => post.mutate({ action: "ensure_defaults" })}>
+            <Button disabled={post.isPending} onClick={() => post.mutate({ action: "ensure_defaults", ...(pack ? { pack } : {}) })}>
               {post.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Criar fluxos
             </Button>
@@ -154,7 +154,7 @@ export function FlowsTab({ workspaceId }: { workspaceId: string }) {
             Cada fluxo é uma sequência automática de mensagens. Cada contato fica em um fluxo por vez; comprou, respondeu ou descadastrou, sai do fluxo.
           </InfoHint>
         </div>
-        <Button variant="ghost" disabled={post.isPending} onClick={() => post.mutate({ action: "ensure_defaults" })}>
+        <Button variant="ghost" disabled={post.isPending} onClick={() => post.mutate({ action: "ensure_defaults", ...(pack ? { pack } : {}) })}>
           Completar fluxos
         </Button>
       </div>

@@ -119,6 +119,14 @@ export async function POST(
         where: { id: order.id },
         data: { status: "CONFIRMED", paidAt: new Date(), confirmedAt: new Date() },
       });
+      const { closeLeadMatchingCheckout } = await import("@/lib/attendance/payment");
+      await closeLeadMatchingCheckout({
+        workspaceId,
+        phone: order.customerPhone,
+        kind: "agenda",
+        ref: link.slug,
+        amount: priceCents / 100,
+      }).catch(() => null);
       return NextResponse.json({ ok: true, orderId: order.id, status: "CONFIRMED" });
     }
 

@@ -12,6 +12,7 @@ import {
   CalendarDays,
   FileText,
   HeartHandshake,
+  House,
   Instagram,
   MessageSquare,
   ShoppingBag,
@@ -32,6 +33,7 @@ export const MODULE_KEYS = [
   "agenda",
   "commerce",
   "food",
+  "hospedagem",
   "finance",
   "forms",
 ] as const;
@@ -171,6 +173,7 @@ export const MODULES: ModuleDef[] = [
     // O editor de Páginas (/criar/oferta, /p/*) também serve LPs de captura: só checkout/vendas são da Loja.
     routes: ["/commerce", "/checkout"],
     apiPrefixes: ["/api/atrako/commerce/checkout"],
+    criarPlatforms: ["loja"],
     criarModules: ["upsell", "cupom"],
     disableWarning: "Páginas de venda e checkouts publicados ficam indisponíveis. Landing pages de captura continuam no ar.",
   },
@@ -184,6 +187,17 @@ export const MODULES: ModuleDef[] = [
     routes: ["/food"],
     apiPrefixes: ["/api/atrako/food"],
     disableWarning: "O cardápio público deixa de receber pedidos. Os pedidos já feitos continuam na fila.",
+  },
+  {
+    key: "hospedagem",
+    label: "Hospedagem",
+    description: "Imóvel e reservas",
+    icon: House,
+    defaultRelease: "BETA",
+    nav: true,
+    routes: ["/hospedagem"],
+    apiPrefixes: ["/api/atrako/stay"],
+    disableWarning: "A página pública do imóvel deixa de receber reservas. As reservas já feitas continuam na lista.",
   },
   {
     key: "finance",

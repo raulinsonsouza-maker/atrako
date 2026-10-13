@@ -42,8 +42,11 @@ function drinkTemplate(item) {
 
 function feeCents() {
   const pickup = document.querySelector('[name="fulfillment"]:checked')?.value === "pickup";
-  if (!menu) return pickup ? 0 : 500;
-  return pickup || !menu.deliveryEnabled ? 0 : menu.deliveryFeeCents;
+  if (pickup || (menu && !menu.deliveryEnabled)) return 0;
+  if (checkoutDiscount && Number.isFinite(checkoutDiscount.deliveryFeeCents)) return checkoutDiscount.deliveryFeeCents;
+  if (menu?.deliveryByDistance) return null;
+  if (!menu) return 500;
+  return menu.deliveryFeeCents;
 }
 
 function cartSubtotal() {
@@ -71,9 +74,9 @@ function updateCart() {
   $("#cartCount").textContent = count;
   $("#cartTotal").textContent = money(subtotal);
   $("#subtotal").textContent = money(subtotal);
-  $("#grandTotal").textContent = money(subtotal + fee);
+  $("#grandTotal").textContent = money(subtotal + (fee || 0));
   const feeLabel = document.querySelector(".cart-summary div:nth-child(2) strong");
-  if (feeLabel) feeLabel.textContent = fee ? money(fee) : "Grátis";
+  if (feeLabel) feeLabel.textContent = fee == null ? "a calcular" : fee ? money(fee) : "Grátis";
   document.body.classList.toggle("has-cart", count > 0);
   try { localStorage.setItem("lepido-lines-v2", JSON.stringify([...lines.values()])); } catch {}
   $("#cartItems").innerHTML = count ? [...lines.values()].map((line) => {
@@ -280,7 +283,7 @@ function renderCheckout() {
   const subtotal = cartSubtotal();
   const fee = feeCents();
   const discount = checkoutDiscount?.discountCents || 0;
-  const total = checkoutDiscount?.totalCents ?? subtotal + fee;
+  const total = checkoutDiscount?.totalCents ?? subtotal + (fee || 0);
   $("#checkoutItems").innerHTML = [...lines.values()].map((line) => {
     const item = itemById(line.itemId);
     if (!item) return "";
@@ -289,11 +292,32 @@ function renderCheckout() {
     return `<div class="checkout-item"><span>${item.imageUrl ? `<img src="${item.imageUrl}" alt="" />` : item.emoji || ""}</span><div><strong>${line.quantity}x ${item.name}</strong><small>${money(unit)} cada ${note}</small></div><b>${money(unit * line.quantity)}</b></div>`;
   }).join("");
   $("#checkoutSubtotal").textContent = money(subtotal);
-  $("#checkoutDelivery").textContent = fee ? money(fee) : "Grátis";
+  $("#checkoutDelivery").textContent = fee == null ? "Informe a localização" : fee ? money(fee) : "Grátis";
+  const distance = $("#checkoutDistance");
+  if (distance) {
+    const km = checkoutDiscount?.distanceKm;
+    distance.hidden = km == null;
+    distance.textContent = km == null ? "" : `${Number(km).toLocaleString("pt-BR")} km em linha reta`;
+  }
   $("#checkoutDiscount").textContent = `− ${money(discount)}`;
   $("#discountRow").classList.toggle("is-visible", discount > 0);
   $("#checkoutGrandTotal").textContent = money(total);
   $("#placeOrderTotal").textContent = money(total);
+}
+
+function currentAddress() {
+  const street = $("#checkoutStreet").value;
+  const number = $("#checkoutNumber").value;
+  const saved = savedAddress && savedAddress.street === street && String(savedAddress.number || "") === number ? savedAddress : null;
+  return {
+    cep: $("#checkoutCep").value,
+    street,
+    number,
+    complement: $("#checkoutComplement").value,
+    neighborhood: $("#checkoutNeighborhood").value,
+    lat: saved?.lat ?? null,
+    lng: saved?.lng ?? null,
+  };
 }
 
 function requestId() {
@@ -321,13 +345,8 @@ function checkoutPayload(preview) {
       const value = Number(raw);
       return Number.isFinite(value) && value > 0 ? Math.round(value * 100) : null;
     })(),
-    address: {
-      cep: $("#checkoutCep").value,
-      street: $("#checkoutStreet").value,
-      number: $("#checkoutNumber").value,
-      complement: $("#checkoutComplement").value,
-      neighborhood: $("#checkoutNeighborhood").value,
-    },
+    expectedTotalCents: preview ? null : checkoutDiscount?.totalCents ?? null,
+    address: currentAddress(),
     items: [...lines.values()].map((line) => ({
       itemId: line.itemId,
       quantity: line.quantity,
@@ -349,11 +368,14 @@ async function refreshQuote() {
   if (!res.ok) {
     checkoutDiscount = null;
     renderCheckout();
-    if ($("#couponInput").value.trim()) showToast(data.error || "Não foi possível calcular o pedido.");
+    updateCart();
+    const waitingLocation = data.error === "Compartilhe a localização para calcular o frete.";
+    if ($("#couponInput").value.trim() || (menu?.deliveryByDistance && !waitingLocation)) showToast(data.error || "Não foi possível calcular o pedido.");
     return;
   }
   checkoutDiscount = data;
   renderCheckout();
+  updateCart();
 }
 
 const ADDRESS_KEY = "lepido-address-v1";
@@ -453,9 +475,20 @@ $("#closeLocation")?.addEventListener("click", closeLocation);
 $("#locationOverlay")?.addEventListener("click", closeLocation);
 $("#locationCep")?.addEventListener("input", async (event) => {
   event.target.value = formatCep(event.target.value);
-  locationDraft = event.target.value.replace(/\D/g, "").length === 8 ? await lookupCep(event.target.value) : null;
+  const digits = event.target.value.replace(/\D/g, "");
+  const previous = locationDraft;
+  const found = digits.length === 8 ? await lookupCep(event.target.value) : null;
+  if (digits.length === 8 && !found) {
+    locationDraft = previous?.lat != null ? { ...previous, cep: event.target.value } : null;
+    showToast("CEP não encontrado.");
+  } else if (found) {
+    locationDraft = { ...(previous || {}), ...found, lat: previous?.lat, lng: previous?.lng };
+  } else if (previous?.lat != null) {
+    locationDraft = { ...previous, cep: event.target.value };
+  } else {
+    locationDraft = null;
+  }
   paintLocationFound();
-  if (event.target.value.replace(/\D/g, "").length === 8 && !locationDraft) showToast("CEP não encontrado.");
 });
 $("#useLocation")?.addEventListener("click", () => {
   if (!navigator.geolocation) {
@@ -467,16 +500,19 @@ $("#useLocation")?.addEventListener("click", () => {
   navigator.geolocation.getCurrentPosition(async (position) => {
     try {
       const { latitude, longitude } = position.coords;
+      locationDraft = { ...(locationDraft || {}), lat: latitude, lng: longitude };
       const geo = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=pt`).then((res) => res.json());
       const cep = String(geo.postcode || "").replace(/\D/g, "");
       if (cep.length !== 8) {
-        showToast("Achei a região, mas não o CEP. Digite o CEP.");
+        paintLocationFound();
+        showToast("Localização salva. Digite o CEP para completar a rua.");
         return;
       }
       $("#locationCep").value = formatCep(cep);
-      locationDraft = await lookupCep(cep);
+      const found = await lookupCep(cep);
+      locationDraft = { ...(found || {}), lat: latitude, lng: longitude, cep: formatCep(cep) };
       paintLocationFound();
-      if (!locationDraft) showToast("CEP não encontrado.");
+      if (!found) showToast("CEP não encontrado. A localização já está salva.");
       else $("#locationNumber").focus();
     } catch {
       showToast("Não foi possível ler esse ponto.");
@@ -508,6 +544,7 @@ $("#saveLocation")?.addEventListener("click", () => {
   paintLocation();
   applyAddressToForm();
   closeLocation();
+  refreshQuote().catch(() => {});
   showToast("Entrega neste endereço.");
 });
 
@@ -652,6 +689,31 @@ $("#checkoutPhone")?.addEventListener("input", (event) => {
   event.target.value = digits.replace(/^(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3").replace(/-$/, "");
 });
 $("#applyCoupon")?.addEventListener("click", () => { refreshQuote().catch(() => showToast("Não foi possível validar o cupom.")); });
+["#checkoutStreet", "#checkoutNumber", "#checkoutNeighborhood", "#checkoutCep"].forEach((selector) => {
+  $(selector)?.addEventListener("change", () => { refreshQuote().catch(() => {}); });
+});
+$("#sendFoodCode")?.addEventListener("click", async () => {
+  const res = await fetch(`/api/atrako/food/public/${slug}/customer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "send", name: $("#checkoutName").value, phone: $("#checkoutPhone").value }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { showToast(data.error || "Não foi possível enviar o código."); return; }
+  if (!data.sent) { showToast("O código chega se você já conversou com a loja no WhatsApp. O pedido segue sem ele."); return; }
+  $("#foodCodeField").hidden = false;
+  showToast("Código enviado no WhatsApp.");
+});
+$("#verifyFoodCode")?.addEventListener("click", async () => {
+  const res = await fetch(`/api/atrako/food/public/${slug}/customer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "verify", phone: $("#checkoutPhone").value, code: $("#foodCode").value, address: currentAddress() }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { showToast(data.error || "Código incorreto."); return; }
+  showToast("Celular confirmado. Seus endereços ficam salvos.");
+});
 $("#checkoutForm")?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = event.currentTarget;
@@ -666,6 +728,14 @@ $("#checkoutForm")?.addEventListener("submit", async (event) => {
       body: JSON.stringify(checkoutPayload(false)),
     });
     const data = await res.json().catch(() => ({}));
+    if (res.status === 409) {
+      showToast(data.error || "O frete mudou. Confira o novo valor.");
+      if (Number.isFinite(data.totalCents)) {
+        checkoutDiscount = { ...(checkoutDiscount || {}), totalCents: data.totalCents, deliveryFeeCents: data.deliveryFeeCents, distanceKm: data.distanceKm };
+        renderCheckout();
+      }
+      return;
+    }
     if (!res.ok) {
       showToast(data.error || "Não foi possível registrar o pedido.");
       return;
@@ -706,6 +776,13 @@ async function boot() {
   }
   menu = await res.json();
   savedAddress = readSavedAddress();
+  if (!savedAddress?.lat) {
+    const saved = await fetch(`/api/atrako/food/public/${slug}/customer`).then((response) => response.json()).catch(() => ({}));
+    if (Array.isArray(saved.addresses) && saved.addresses[0]?.lat != null) {
+      savedAddress = saved.addresses[0];
+      localStorage.setItem(ADDRESS_KEY, JSON.stringify(savedAddress));
+    }
+  }
   paintLocation();
   items = menu.items || [];
   const plates = items.filter((item) => item.category !== "bebidas");

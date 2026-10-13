@@ -113,7 +113,20 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "workspaceId, leadId e stageId required" }, { status: 400 });
   }
   try {
-    const lead = await updateLeadStage({ workspaceId, leadId, stageId });
+    const dealRaw = b.dealValue;
+    const dealValue =
+      typeof dealRaw === "number"
+        ? dealRaw
+        : typeof dealRaw === "string" && dealRaw.trim()
+          ? Number(dealRaw.replace(/\./g, "").replace(",", "."))
+          : undefined;
+    const lead = await updateLeadStage({
+      workspaceId,
+      leadId,
+      stageId,
+      dealValue: dealValue != null && Number.isFinite(dealValue) ? dealValue : undefined,
+      lostReason: typeof b.lostReason === "string" ? b.lostReason : undefined,
+    });
     return NextResponse.json({
       ok: true,
       id: lead.id,

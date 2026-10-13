@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { Prisma } from "@/lib/generated/prisma";
 import { asItemSchedule, asWeekHours, type WeekHours } from "@/lib/food/availability";
+import { asDeliveryRules, rulesConfigured, validCoord, validateBands, type DeliveryBand } from "@/lib/food/delivery";
 
 function itemKey(name: string) {
   const base = name
@@ -142,6 +143,52 @@ export async function reorderFood(input: {
   for (const row of input.items ?? []) {
     await prisma.foodItem.updateMany({ where: { id: row.id, storeId: store.id }, data: { sortOrder: row.sortOrder } });
   }
+  return { ok: true as const };
+}
+
+export async function saveStoreDelivery(input: {
+  workspaceId: string;
+  deliveryEnabled: boolean;
+  pickupEnabled: boolean;
+  minOrderCents: number;
+  pickupAddress: string;
+  rules: unknown;
+}) {
+  const store = await prisma.foodStore.findUnique({ where: { clienteId: input.workspaceId } });
+  if (!store) return { ok: false as const, error: "Loja não encontrada" };
+  const rules = asDeliveryRules(input.rules);
+  const hasOrigin = rules.lat != null || rules.lng != null;
+  if (hasOrigin) {
+    if (rules.lat == null || rules.lng == null || !validCoord(rules.lat, rules.lng)) {
+      return { ok: false as const, error: "Latitude e longitude da casa estão fora do intervalo." };
+    }
+    const bands = validateBands(rules.bands);
+    if (!bands.ok) return bands;
+    const last = [...rules.bands].filter((band) => band.active).sort((a, b) => a.maxKm - b.maxKm).at(-1);
+    if (rules.maxKm == null || rules.maxKm < (last?.maxKm ?? 0)) {
+      return { ok: false as const, error: "A distância máxima precisa cobrir a última faixa." };
+    }
+  }
+  const stored = hasOrigin && rulesConfigured({ ...rules, bands: rules.bands })
+    ? {
+        lat: rules.lat,
+        lng: rules.lng,
+        maxKm: rules.maxKm,
+        freeDeliveryEnabled: rules.freeDeliveryEnabled,
+        freeDeliveryMinCents: rules.freeDeliveryMinCents,
+        bands: rules.bands satisfies DeliveryBand[],
+      }
+    : {};
+  await prisma.foodStore.update({
+    where: { id: store.id },
+    data: {
+      deliveryEnabled: input.deliveryEnabled,
+      pickupEnabled: input.pickupEnabled,
+      minOrderCents: Math.max(0, Math.round(input.minOrderCents) || 0),
+      pickupAddress: input.pickupAddress.trim().slice(0, 255) || null,
+      deliveryRules: stored,
+    },
+  });
   return { ok: true as const };
 }
 

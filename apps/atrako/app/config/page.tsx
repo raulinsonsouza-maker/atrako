@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   Link2,
   Loader2,
+  MessageCircle,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -36,6 +37,19 @@ const GROUPS: Array<{ title: string; links: HubLink[] }> = [
   {
     title: "Negócio",
     links: [
+      {
+        href: "/config/atendimento",
+        label: "Atendimento",
+        desc: "Ficha da empresa e o agente no WhatsApp",
+        icon: MessageCircle,
+        status: ({ config }) => {
+          const attendance = (config?.settings?.messagingPrefs?.attendance ?? {}) as { mode?: string; waEnabled?: boolean };
+          if (attendance.mode === "sell" && attendance.waEnabled) return "WhatsApp · fecha a venda";
+          if (attendance.mode === "qualify" && attendance.waEnabled) return "WhatsApp · primeiro atendimento";
+          if (attendance.mode === "qualify" || attendance.mode === "sell") return "Ficha pronta";
+          return "Não configurado";
+        },
+      },
       {
         href: "/config/empresa",
         label: "Empresa",

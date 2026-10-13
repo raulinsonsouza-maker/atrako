@@ -5,6 +5,7 @@ import {
   type AnalystPeriodContext,
 } from "@/lib/analyst/dataTools";
 import { formatLocalDate, parseLocalDate, previousPeriod } from "@/lib/hotelAnalysis";
+import { attendanceFromPrefs, describeAttendance, type AttendanceProfile } from "@/lib/attendance/profile";
 import type { ModulesMap } from "@/lib/modules/registry";
 
 /**
@@ -53,6 +54,8 @@ export type AtrakoWorkspaceContext = {
   /** Data de hoje no fuso do workspace (meia-noite local). */
   today: Date;
   commercial: NonNullable<AnalystPeriodContext["commercialContext"]>;
+  /** Ficha de Configurações → Atendimento. Null quando ainda não foi preenchida. */
+  attendance: AttendanceProfile | null;
   coverage: AtrakoCoverage;
   /** Módulos ligados (chaves). */
   modules: string[];
@@ -337,11 +340,12 @@ export async function loadWorkspaceContext(input: {
     }),
     prisma.workspaceSettings.findUnique({
       where: { clienteId: input.clienteId },
-      select: { timezone: true, currency: true, locale: true },
+      select: { timezone: true, currency: true, locale: true, messagingPrefs: true },
     }),
     detectCoverage(input.clienteId),
   ]);
   if (!cliente) return null;
+  const attendance = attendanceFromPrefs(settings?.messagingPrefs);
   const timezone = settings?.timezone || "America/Sao_Paulo";
   const modules = input.modules
     ? Object.entries(input.modules)
@@ -369,6 +373,7 @@ export async function loadWorkspaceContext(input: {
       diferenciais: cliente.diferenciais,
       observacoesAnaliticas: cliente.observacoesAnaliticas,
     },
+    attendance: describeAttendance(attendance) ? attendance : null,
     coverage,
     modules,
     actor: input.actor,
@@ -479,6 +484,9 @@ export function describeWorkspaceContext(ctx: AtrakoWorkspaceContext): string {
     `Hoje: ${formatLocalDate(ctx.today)} · fuso ${ctx.timezone} · moeda ${ctx.currency}`,
     `Objetivo de mídia configurado: ${ctx.objetivoMidia}`,
     commercial.length ? `Contexto comercial:\n${commercial.join("\n")}` : "Contexto comercial: não preenchido.",
+    ctx.attendance
+      ? `Ficha de atendimento:\n${describeAttendance(ctx.attendance)}`
+      : "Ficha de atendimento: não preenchida. Use o contexto comercial quando existir.",
     `Fontes com dados: ${withData.length ? withData.join(", ") : "nenhuma ainda"}`,
     `Fontes ainda sem dados: ${withoutData.length ? withoutData.join(", ") : "—"}`,
     "Vendas = soma de lojas, marketplaces e checkout Atrako: se qualquer um deles tem pedidos, o negócio tem dados de venda.",

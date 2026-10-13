@@ -5,6 +5,7 @@ import {
   processWebhookPayload,
   verifyWebhookSignature,
 } from "@/lib/instagram/automationEngine";
+import { ingestMetaLeadgenWebhook, payloadHasLeadgen } from "@/lib/crm/meta-leadgen";
 
 export async function GET(request: NextRequest) {
   const { verifyToken } = getSymbiusMetaConfig();
@@ -31,6 +32,16 @@ export async function POST(request: NextRequest) {
     payload = JSON.parse(rawBody) as unknown;
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  if (payloadHasLeadgen(payload)) {
+    try {
+      const result = await ingestMetaLeadgenWebhook(payload);
+      return NextResponse.json({ ok: true, leadgen: result.ingested });
+    } catch (e) {
+      console.error("[webhook/meta] leadgen", e);
+      return NextResponse.json({ error: "Leadgen failed" }, { status: 500 });
+    }
   }
 
   // Persistir raw antes do processar — se falhar, Meta deve retentar (5xx)

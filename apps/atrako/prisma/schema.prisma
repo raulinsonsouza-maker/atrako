@@ -87,6 +87,8 @@ model Cliente {
   marketplaceOrders          MarketplaceOrder[]
   foodStores                 FoodStore[]
   foodOrders                 FoodOrder[]
+  stayProperties             StayProperty[]
+  stayReservations           StayReservation[]
   metaAdPurchases            MetaAdPurchaseDaily[]
   marketplaceSellerSnapshots MarketplaceSellerSnapshot[]
   marketplaceCatalogItems    MarketplaceCatalogItem[]
@@ -1050,6 +1052,7 @@ model NativeContact {
   waConversations WaConversation[]
   commerceOrders  CommerceOrder[]
   foodOrders      FoodOrder[]
+  stayReservations StayReservation[]
   marketplaceOrders MarketplaceOrder[]
   profile         CustomerProfile?
   importantDates  ContactImportantDate[]
@@ -2508,6 +2511,8 @@ model FoodStore {
   pickupInstructions String?  @db.VarChar(255)
   /// Horário da semana. Vazio = aberto o dia todo enquanto aceita pedidos. Chave 0–6 (domingo–sábado).
   hours              Json     @default("{}")
+  /// Origem e faixas de frete. Sem latitude ou sem faixa ativa, vale deliveryFeeCents.
+  deliveryRules      Json     @default("{}")
   nextNumber         Int      @default(1000)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -2616,6 +2621,8 @@ model FoodOrder {
   channel            String    @default("STORE") @db.VarChar(16)
   fulfillment        String    @db.VarChar(16)
   address            Json?
+  /// Fotografia do frete no momento do pedido. Mudar a faixa depois não altera este JSON.
+  deliveryQuote      Json?
   paymentMethod      String    @db.VarChar(24)
   /// PENDING | APPROVED | REJECTED | REFUNDED | PAY_ON_DELIVERY
   paymentStatus      String    @default("PENDING") @db.VarChar(24)
@@ -2676,4 +2683,100 @@ model FoodOrderEvent {
   order     FoodOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId, createdAt])
+}
+
+/// Imóvel de temporada do workspace. Um por cliente nesta versão.
+model StayProperty {
+  id                String   @id @default(cuid())
+  clienteId         String   @unique
+  slug              String   @unique @db.VarChar(80)
+  name              String   @db.VarChar(160)
+  headline          String?  @db.VarChar(200)
+  story             String?  @db.Text
+  concept           String?  @db.Text
+  /// { src, alt }[]
+  photos            Json     @default("[]")
+  /// { title, text }[]
+  features          Json     @default("[]")
+  /// { value, label }[]
+  highlights        Json     @default("[]")
+  nightlyCents      Int      @default(89000)
+  cleaningFeeCents  Int      @default(0)
+  minNights         Int      @default(2)
+  maxNights         Int      @default(14)
+  checkInTime       String   @default("15:00") @db.VarChar(5)
+  checkOutTime      String   @default("11:00") @db.VarChar(5)
+  timezone          String   @default("America/Sao_Paulo") @db.VarChar(64)
+  published         Boolean  @default(true)
+  acceptingBookings Boolean  @default(true)
+  /// 0 = hero estático com a primeira foto. Acima disso, sequência em /stay/frames.
+  heroFrameCount    Int      @default(0)
+  nextNumber        Int      @default(1000)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  cliente           Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  blocks            StayBlock[]
+  reservations      StayReservation[]
+}
+
+/// Noites fechadas pelo anfitrião. endDate é o dia do check-out (exclusivo).
+model StayBlock {
+  id         String       @id @default(cuid())
+  propertyId String
+  startDate  String       @db.VarChar(10)
+  endDate    String       @db.VarChar(10)
+  reason     String?      @db.VarChar(160)
+  createdAt  DateTime     @default(now())
+  property   StayProperty @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId, startDate])
+}
+
+model StayReservation {
+  id               String    @id @default(cuid())
+  clienteId        String
+  propertyId       String
+  number           Int
+  publicToken      String    @unique @db.VarChar(64)
+  clientRequestId  String?   @db.VarChar(80)
+  contactId        String?
+  leadId           String?
+  guestName        String    @db.VarChar(200)
+  guestEmail       String?   @db.VarChar(255)
+  guestPhone       String    @db.VarChar(40)
+  phoneE164        String?   @db.VarChar(20)
+  guests           Int       @default(1)
+  /// YYYY-MM-DD. checkOut é exclusivo.
+  checkIn          String    @db.VarChar(10)
+  checkOut         String    @db.VarChar(10)
+  nights           Int
+  amountCents      Int
+  nightlyCents     Int
+  cleaningFeeCents Int       @default(0)
+  /// PENDING_PAYMENT | CONFIRMED | CANCELLED | EXPIRED
+  status           String    @default("PENDING_PAYMENT") @db.VarChar(24)
+  /// STORE | MANUAL
+  channel          String    @default("STORE") @db.VarChar(16)
+  notes            String?   @db.Text
+  mpOrderId        String?   @db.VarChar(120)
+  pixQrCode        String?   @db.Text
+  pixQrCodeBase64  String?   @db.Text
+  pixCopyPaste     String?   @db.Text
+  holdExpiresAt    DateTime?
+  paidAt           DateTime?
+  confirmedAt      DateTime?
+  reminderSentAt   DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  cliente          Cliente        @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  property         StayProperty   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  contact          NativeContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  @@unique([propertyId, clientRequestId])
+  @@unique([propertyId, number])
+  @@index([clienteId, checkIn])
+  @@index([clienteId, status])
+  @@index([mpOrderId])
+  @@index([contactId])
+  @@index([propertyId, status])
 }

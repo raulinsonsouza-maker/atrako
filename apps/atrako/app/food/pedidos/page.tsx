@@ -27,6 +27,7 @@ type FoodOrder = {
   totalCents: number;
   changeForCents: number | null;
   address: { street?: string; number?: string; complement?: string; neighborhood?: string } | null;
+  deliveryQuote: { distanceKm?: number | null; method?: string; feeCents?: number } | null;
   createdAt: string;
   items: FoodItemLine[];
 };
@@ -212,6 +213,7 @@ export default function FoodOrdersPage() {
                 {order.fulfillment === "DELIVERY" && order.address ? (
                   <p>{[order.address.street, order.address.number, order.address.complement].filter(Boolean).join(", ")}{order.address.neighborhood ? ` · ${order.address.neighborhood}` : ""}</p>
                 ) : null}
+                {order.deliveryQuote?.distanceKm != null ? <p>{order.deliveryQuote.distanceKm.toLocaleString("pt-BR")} km em linha reta · frete {brl(order.deliveryQuote.feeCents ?? 0)}</p> : null}
                 {order.paymentMethod === "CASH" && order.changeForCents ? <p>Troco para {brl(order.changeForCents)}</p> : null}
                 {order.items.map((item) => (
                   <p key={item.id}>

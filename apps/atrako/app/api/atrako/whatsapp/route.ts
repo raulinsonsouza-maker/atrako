@@ -5,6 +5,7 @@ import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { resolveWhatsApp } from "@/lib/config/resolveConnection";
 import {
   handoffConversation,
+  resumeAgentConversation,
   sendAndPersistCta,
   sendAndPersistTemplate,
   sendAndPersistText,
@@ -100,6 +101,15 @@ export async function POST(request: NextRequest) {
       }
     }
     return NextResponse.json({ ok: true, status: "HANDED_OFF" });
+  }
+
+  if (action === "resume") {
+    const conversationId = typeof b.conversationId === "string" ? b.conversationId : "";
+    if (!conversationId) {
+      return NextResponse.json({ error: "conversationId required" }, { status: 400 });
+    }
+    await resumeAgentConversation(conversationId, workspaceId);
+    return NextResponse.json({ ok: true, status: "OPEN" });
   }
 
   const to = typeof b.to === "string" ? b.to : "";

@@ -10,6 +10,7 @@ import { channelColor } from "@/lib/commerce-attribution/channel-color";
 import { CrmLeadModal } from "./CrmLeadModal";
 import { CrmFunnelConfigModal } from "./CrmFunnelConfigModal";
 import { CrmStageHeader } from "./CrmStageHeader";
+import { PillSelect } from "@/components/ui/pill-select";
 import { SearchInput } from "@/components/ui/search-input";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
@@ -31,7 +32,15 @@ type StageCol = {
 const ABANDON_ROLES = new Set(["ABANDONED", "ABANDONED_30", "ABANDONED_60", "ABANDONED_90"]);
 const VALUE_ROLES = new Set([...ABANDON_ROLES, "WON", "LOST"]);
 
+const LOST_OPTIONS = [
+  { value: "preco", label: "Preço" },
+  { value: "sem_fit", label: "Sem fit" },
+  { value: "concorrente", label: "Concorrente" },
+  { value: "sem_resposta", label: "Sem resposta" },
+];
+
 type PipelineData = {
+  preset?: "leads" | "ecommerce";
   stages: StageCol[];
   sources?: Array<{ value: string; count: number }>;
   /** Canais de aquisição no período, com contagem. */
@@ -95,6 +104,14 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
   const [phone, setPhone] = useState("");
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [funnelConfigOpen, setFunnelConfigOpen] = useState(false);
+  const [closeAsk, setCloseAsk] = useState<{
+    leadId: string;
+    fromStageId: string;
+    toStageId: string;
+    role: "WON" | "LOST";
+  } | null>(null);
+  const [closeAmount, setCloseAmount] = useState("");
+  const [closeReason, setCloseReason] = useState("sem_resposta");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -169,7 +186,11 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
   const [boardHeight, setBoardHeight] = useState<number | null>(null);
   const [visibleStageId, setVisibleStageId] = useState<string | null>(null);
   const boardReady = tab === "pipeline" && !!data;
-  const hasCartsLine = Boolean(data?.abandonedCarts);
+  const salesMode = (data?.preset ?? "leads") !== "ecommerce";
+  const visibleStages = (data?.stages ?? []).filter(
+    (stage) => !(salesMode && stage.role && ABANDON_ROLES.has(stage.role)),
+  );
+  const hasCartsLine = !salesMode && Boolean(data?.abandonedCarts);
   const stageKey = data?.stages.map((s) => s.id).join(",") ?? "";
   useEffect(() => {
     if (!boardReady) return;
@@ -222,7 +243,19 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
       setMovingLeadId(leadId);
       const prev = data;
       const lead = prev.stages.flatMap((s) => s.leads).find((l) => l.id === leadId);
-      if (!lead) return;
+      if (!lead) {
+        setMovingLeadId(null);
+        return;
+      }
+      const target = prev.stages.find((s) => s.id === toStageId);
+      if (target?.role === "WON" || target?.role === "LOST") {
+        setCloseAsk({ leadId, fromStageId, toStageId, role: target.role });
+        setCloseAmount(lead.dealValue != null ? String(lead.dealValue).replace(".", ",") : "");
+        setCloseReason("sem_resposta");
+        setMovingLeadId(null);
+        setDragOverStage(null);
+        return;
+      }
       // Colunas trazem só parte dos cards: ajusta o total em vez de recontar a lista.
       const value = lead.dealValue ?? 0;
       const nextStages = prev.stages.map((s) => {
@@ -296,7 +329,32 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
   }
 
   const allLeads = data?.stages.flatMap((s) => s.leads) ?? [];
-  const boardCols = data?.stages.length ?? 0;
+  const boardCols = visibleStages.length;
+
+  async function confirmClose(e: React.FormEvent) {
+    e.preventDefault();
+    if (!closeAsk) return;
+    const amount = Number(closeAmount.replace(/\./g, "").replace(",", "."));
+    if (closeAsk.role === "WON" && (!Number.isFinite(amount) || amount < 0)) return;
+    setMovingLeadId(closeAsk.leadId);
+    try {
+      const r = await fetch("/api/atrako/crm/leads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          workspaceId,
+          leadId: closeAsk.leadId,
+          stageId: closeAsk.toStageId,
+          ...(closeAsk.role === "WON" ? { dealValue: amount } : { lostReason: closeReason }),
+        }),
+      });
+      if (!r.ok) throw new Error("move failed");
+      setCloseAsk(null);
+      await qc.invalidateQueries({ queryKey: ["crm-pipeline", workspaceId] });
+    } finally {
+      setMovingLeadId(null);
+    }
+  }
   const stageOptions = useMemo<PillSelectOption[]>(
     () =>
       (data?.stages ?? [])
@@ -420,7 +478,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
             >
               Todos os leads
             </button>
-            {carts && carts.openCount > 0 && !openCart ? (
+            {!salesMode && carts && carts.openCount > 0 && !openCart ? (
               <button
                 type="button"
                 className="crm-filter-chip"
@@ -512,15 +570,15 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
         </div>
       ) : tab === "pipeline" ? (
         <>
-        {data?.stages.length ? (
+        {visibleStages.length ? (
           <div ref={stageStripRef} className="pipeline-stage-strip" aria-label="Etapas do funil">
-            {data.stages.map((stage) => (
+            {visibleStages.map((stage) => (
               <button
                 key={stage.id}
                 type="button"
                 className="crm-filter-chip"
                 data-chip-stage={stage.id}
-                data-active={(visibleStageId ?? data.stages[0]?.id) === stage.id ? "true" : "false"}
+                data-active={(visibleStageId ?? visibleStages[0]?.id) === stage.id ? "true" : "false"}
                 style={{ ["--stage-color" as string]: stage.color }}
                 onClick={() => scrollToStage(stage.id)}
               >
@@ -540,7 +598,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
             flex: boardHeight ? "none" : undefined,
           }}
         >
-          {(data?.stages ?? []).map((stage) => {
+          {visibleStages.map((stage) => {
             const isDrop = dragOverStage === stage.id;
             const canEdit = stage.id !== "_none";
             return (
@@ -597,7 +655,8 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
                         lead={lead}
                         drag
                         onOpen={setOpenLeadId}
-                        showOpenCart={!ABANDON_ROLES.has(stage.role ?? "")}
+                        showOpenCart={!salesMode && !ABANDON_ROLES.has(stage.role ?? "")}
+                        hideAbandon={salesMode}
                         stages={stageOptions}
                         stageId={stage.id}
                         onMove={(to) => void handleDrop(lead.id, stage.id, to)}
@@ -698,13 +757,58 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
         <CrmLeadModal
           workspaceId={workspaceId}
           leadId={openLeadId}
+          salesMode={salesMode}
           onClose={() => setOpenLeadId(null)}
         />
+      ) : null}
+
+      {closeAsk ? (
+        <div className="funnel-config-backdrop" role="dialog" aria-modal="true" aria-labelledby="close-lead-title">
+          <form onSubmit={(e) => void confirmClose(e)} className="funnel-config-modal">
+            <header className="funnel-config-header">
+              <h2 id="close-lead-title" className="type-tagline text-[var(--ink)]">
+                {closeAsk.role === "WON" ? "Valor do negócio" : "Motivo da perda"}
+              </h2>
+            </header>
+            <div className="funnel-config-body">
+              {closeAsk.role === "WON" ? (
+                <label className="block">
+                  <span className="type-micro-legal text-[var(--ink-muted-48)]">Valor em reais</span>
+                  <input
+                    className="mt-1.5 h-11 w-full rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-4 type-caption text-[var(--ink)] outline-none"
+                    value={closeAmount}
+                    onChange={(e) => setCloseAmount(e.target.value)}
+                    inputMode="decimal"
+                    placeholder="0,00"
+                    autoFocus
+                  />
+                </label>
+              ) : (
+                <PillSelect
+                  size="field"
+                  value={closeReason}
+                  onChange={setCloseReason}
+                  options={LOST_OPTIONS}
+                  aria-label="Motivo da perda"
+                />
+              )}
+            </div>
+            <div className="flex justify-end gap-2 px-5 pb-5">
+              <Button type="button" variant="outline" size="toolbar" onClick={() => setCloseAsk(null)}>
+                Cancelar
+              </Button>
+              <Button type="submit" variant="primary" size="toolbar" disabled={Boolean(movingLeadId)}>
+                Confirmar
+              </Button>
+            </div>
+          </form>
+        </div>
       ) : null}
 
       {funnelConfigOpen ? (
         <CrmFunnelConfigModal
           workspaceId={workspaceId}
+          hideAbandoned={salesMode}
           stages={(data?.stages ?? [])
             .filter((s) => s.id !== "_none")
             .map((s) => ({

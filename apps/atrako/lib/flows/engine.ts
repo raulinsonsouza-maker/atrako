@@ -27,6 +27,11 @@ export const FLOW_TRIGGERS = [
   "lead_lost",
   "lead_welcome",
   "date_based",
+  "stay_unpaid",
+  "stay_confirmed",
+  "stay_checkin",
+  "stay_checkout",
+  "stay_thanks",
 ] as const;
 export type FlowTrigger = (typeof FLOW_TRIGGERS)[number];
 
@@ -49,7 +54,13 @@ export const SALES_TRIGGERS: FlowTrigger[] = [
  * Status do pedido Food (food_confirmed, food_out_for_delivery, …) sai por template
  * UTILITY em lib/food/status-message, com pricingCategory utility, fora desta cota.
  */
-const TRANSACTIONAL_TRIGGERS = new Set<string>(["order_unpaid"]);
+const TRANSACTIONAL_TRIGGERS = new Set<string>([
+  "order_unpaid",
+  "stay_unpaid",
+  "stay_confirmed",
+  "stay_checkin",
+  "stay_checkout",
+]);
 
 const LEASE_MS = 10 * 60_000;
 const HOUR = 3_600_000;
@@ -399,8 +410,11 @@ async function processEnrollment(id: string, now: Date, cache: WsCache): Promise
   }
 
   const ws = await wsInfo(cache, e.clienteId);
-  const allowed = nextAllowedTime(now, ws.timezone, ws.prefs.sendStartHour, ws.prefs.sendEndHour);
-  if (allowed > now) return reschedule(id, allowed);
+  const transactional = TRANSACTIONAL_TRIGGERS.has(flow.trigger);
+  if (!transactional) {
+    const allowed = nextAllowedTime(now, ws.timezone, ws.prefs.sendStartHour, ws.prefs.sendEndHour);
+    if (allowed > now) return reschedule(id, allowed);
+  }
 
   // Grupo de controle: percorre o fluxo sem enviar (mede conversão)
   if (e.holdout) return advance(e, steps, now, "skipped");
@@ -436,7 +450,6 @@ async function processEnrollment(id: string, now: Date, cache: WsCache): Promise
     stepPosition: e.stepIndex,
   };
   const data: FlowContextData = ctx;
-  const transactional = TRANSACTIONAL_TRIGGERS.has(flow.trigger);
 
   // Já enviado (queda após envio, antes de avançar): não reenviar
   const already = await prisma.messageDelivery.findFirst({

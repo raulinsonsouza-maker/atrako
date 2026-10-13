@@ -22,8 +22,21 @@ type Item = {
   groups: Array<{ name: string; minSelect: number; maxSelect: number; options: Option[] }>;
 };
 type Category = { id: string; name: string; active: boolean; sortOrder: number };
+type Band = { minKm: string; maxKm: string; fee: string };
 type Store = {
   hours: Record<string, Array<{ start: string; end: string }>>;
+  deliveryEnabled: boolean;
+  pickupEnabled: boolean;
+  minOrderCents: number;
+  pickupAddress: string | null;
+  deliveryRules: {
+    lat?: number | null;
+    lng?: number | null;
+    maxKm?: number | null;
+    freeDeliveryEnabled?: boolean;
+    freeDeliveryMinCents?: number;
+    bands?: Array<{ minKm: number; maxKm: number; feeCents: number; active?: boolean }>;
+  } | null;
   categories: Category[];
   items: Item[];
 };
@@ -157,6 +170,13 @@ export default function FoodMenuPage() {
         );
       })}
       {store ? <HoursEditor hours={store.hours ?? {}} onSave={(hours) => save.mutate({ action: "hours", hours })} /> : null}
+      {store ? (
+        <DeliveryEditor
+          store={store}
+          error={save.error instanceof Error ? save.error.message : ""}
+          onSave={(body) => save.mutate({ action: "delivery", ...body })}
+        />
+      ) : null}
     </section>
   );
 }
@@ -361,6 +381,103 @@ function HoursEditor({ hours, onSave }: { hours: Store["hours"]; onSave: (hours:
       )}
       {hint ? <p className="food-muted">{hint}</p> : null}
       <button type="button" className="food-button" onClick={save}>Salvar horário</button>
+    </section>
+  );
+}
+
+function DeliveryEditor({ store, error, onSave }: { store: Store; error: string; onSave: (body: Record<string, unknown>) => void }) {
+  const rules = store.deliveryRules ?? {};
+  const [address, setAddress] = useState(store.pickupAddress ?? "");
+  const [lat, setLat] = useState(rules.lat != null ? String(rules.lat) : "");
+  const [lng, setLng] = useState(rules.lng != null ? String(rules.lng) : "");
+  const [maxKm, setMaxKm] = useState(rules.maxKm != null ? String(rules.maxKm) : "");
+  const [minOrder, setMinOrder] = useState(store.minOrderCents ? (store.minOrderCents / 100).toFixed(2).replace(".", ",") : "");
+  const [free, setFree] = useState(Boolean(rules.freeDeliveryEnabled));
+  const [freeMin, setFreeMin] = useState(rules.freeDeliveryMinCents ? (rules.freeDeliveryMinCents / 100).toFixed(2).replace(".", ",") : "");
+  const [deliveryOn, setDeliveryOn] = useState(store.deliveryEnabled !== false);
+  const [pickupOn, setPickupOn] = useState(store.pickupEnabled !== false);
+  const [bands, setBands] = useState<Band[]>(() =>
+    (rules.bands ?? []).filter((band) => band.active !== false).map((band) => ({
+      minKm: String(band.minKm),
+      maxKm: String(band.maxKm),
+      fee: (band.feeCents / 100).toFixed(2).replace(".", ","),
+    })),
+  );
+  const [hint, setHint] = useState("");
+
+  function km(value: string) {
+    const number = Number(value.replace(",", "."));
+    return Number.isFinite(number) ? number : NaN;
+  }
+
+  return (
+    <section className="food-panel food-hours">
+      <h2>Entrega e áreas atendidas</h2>
+      <p className="food-muted">A distância é em linha reta, do ponto da casa até o cliente. Um exemplo: R$ 5 até 3 km, R$ 7 até 5 km, R$ 10 até 10 km e R$ 15 até 15 km. Esses valores não entram sozinhos.</p>
+      <div className="food-hours__modes">
+        <button type="button" className={deliveryOn ? "is-on" : ""} onClick={() => setDeliveryOn((value) => !value)}>
+          <strong>Entrega</strong>
+          <span>{deliveryOn ? "Ligada" : "Desligada"}</span>
+        </button>
+        <button type="button" className={pickupOn ? "is-on" : ""} onClick={() => setPickupOn((value) => !value)}>
+          <strong>Retirada</strong>
+          <span>{pickupOn ? "Ligada" : "Desligada"}</span>
+        </button>
+      </div>
+      <label className="food-muted">Endereço da casa
+        <input value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Rua, número, bairro" />
+      </label>
+      <div className="food-row">
+        <input aria-label="Latitude" value={lat} onChange={(event) => setLat(event.target.value)} placeholder="Latitude" />
+        <input aria-label="Longitude" value={lng} onChange={(event) => setLng(event.target.value)} placeholder="Longitude" />
+      </div>
+      <p className="food-muted">Confira o ponto no OpenStreetMap e cole a latitude e a longitude.</p>
+      <div className="food-row">
+        <input aria-label="Distância máxima em km" value={maxKm} onChange={(event) => setMaxKm(event.target.value)} placeholder="Até quantos km" />
+        <input aria-label="Pedido mínimo" value={minOrder} onChange={(event) => setMinOrder(event.target.value)} placeholder="Pedido mínimo R$" />
+      </div>
+      <button type="button" className={free ? "food-button" : "food-button ghost"} onClick={() => setFree((value) => !value)}>
+        {free ? "Entrega grátis ligada" : "Entrega grátis desligada"}
+      </button>
+      {free ? <input aria-label="Valor mínimo para entrega grátis" value={freeMin} onChange={(event) => setFreeMin(event.target.value)} placeholder="Grátis a partir de R$" /> : null}
+      {bands.map((band, index) => (
+        <div key={index} className="food-row">
+          <input aria-label="Quilômetro inicial" value={band.minKm} onChange={(event) => setBands(bands.map((row, rowIndex) => rowIndex === index ? { ...row, minKm: event.target.value } : row))} placeholder="De km" />
+          <input aria-label="Quilômetro final" value={band.maxKm} onChange={(event) => setBands(bands.map((row, rowIndex) => rowIndex === index ? { ...row, maxKm: event.target.value } : row))} placeholder="Até km" />
+          <input aria-label="Preço da faixa" value={band.fee} onChange={(event) => setBands(bands.map((row, rowIndex) => rowIndex === index ? { ...row, fee: event.target.value } : row))} placeholder="R$" />
+          <button type="button" className="food-hours__remove" onClick={() => setBands(bands.filter((_, rowIndex) => rowIndex !== index))}>Tirar</button>
+        </div>
+      ))}
+      <button type="button" className="food-hours__add" onClick={() => {
+        const last = bands.at(-1);
+        const start = last ? last.maxKm : "0";
+        setBands([...bands, { minKm: start, maxKm: "", fee: "" }]);
+      }}>+ faixa</button>
+      {hint || error ? <p className="food-muted">{hint || error}</p> : null}
+      <button type="button" className="food-button" onClick={() => {
+        const parsed = bands.map((band) => ({ minKm: km(band.minKm), maxKm: km(band.maxKm), feeCents: reaisToCents(band.fee), active: true }));
+        if (lat.trim() || lng.trim()) {
+          if (parsed.some((band) => !Number.isFinite(band.minKm) || !Number.isFinite(band.maxKm))) {
+            setHint("Preencha o começo e o fim de cada faixa.");
+            return;
+          }
+        }
+        setHint("");
+        onSave({
+          deliveryEnabled: deliveryOn,
+          pickupEnabled: pickupOn,
+          minOrderCents: reaisToCents(minOrder),
+          pickupAddress: address,
+          rules: {
+            lat: lat.trim() ? km(lat) : null,
+            lng: lng.trim() ? km(lng) : null,
+            maxKm: maxKm.trim() ? km(maxKm) : null,
+            freeDeliveryEnabled: free,
+            freeDeliveryMinCents: reaisToCents(freeMin),
+            bands: parsed,
+          },
+        });
+      }}>Salvar entrega</button>
     </section>
   );
 }

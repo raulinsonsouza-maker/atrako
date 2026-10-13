@@ -627,7 +627,13 @@ export const PLAYBOOKS: PlaybookDef[] = [
 ];
 
 export function playbookByKey(key: string | null | undefined) {
-  return PLAYBOOKS.find((p) => p.key === key) ?? null;
+  if (!key) return null;
+  return (
+    PLAYBOOKS.find((p) => p.key === key) ??
+    INSIDE_SALES_PLAYBOOKS.find((p) => p.key === key) ??
+    STAY_PLAYBOOKS.find((p) => p.key === key) ??
+    null
+  );
 }
 
 function stepContent(def: StepDef, tone: Tone) {
@@ -636,20 +642,273 @@ function stepContent(def: StepDef, tone: Tone) {
   return {};
 }
 
+/** Boas-vindas e perda de inside sales: contato comercial, sem cupom de loja. */
+export const INSIDE_SALES_PLAYBOOKS: PlaybookDef[] = [
+  {
+    key: "lead_welcome",
+    name: "Boas-vindas",
+    description: "Lead novo: a equipe entra em contato",
+    trigger: "lead_welcome",
+    priority: 45,
+    steps: [
+      {
+        copyKey: "sales.welcome.email",
+        delayMinutes: 5,
+        channel: "EMAIL",
+        email: (t) =>
+          recEmail(
+            pick(t, { proximo: "Recebemos seu contato, {{primeiro_nome}}", neutro: "Recebemos seu contato", formal: "Confirmamos o recebimento do seu contato" }),
+            "A equipe vai falar com você",
+            pick(t, { proximo: "Que bom ter você aqui", neutro: "Boas-vindas", formal: "Seja bem-vindo(a)" }),
+            "Recebemos seu interesse. Alguém da equipe entra em contato para entender o que você precisa.",
+            "Falar com a equipe",
+          ),
+      },
+      {
+        copyKey: "sales.welcome.wa",
+        delayMinutes: 10,
+        channel: "WHATSAPP",
+        conditions: { requiresPhone: true },
+        whatsapp: () => wa("sales_welcome"),
+      },
+    ],
+  },
+  {
+    key: "lead_lost",
+    name: "Lead perdido",
+    description: "Depois da perda, um contato sem oferta de loja",
+    trigger: "lead_lost",
+    priority: 40,
+    steps: [
+      {
+        copyKey: "sales.lost.email",
+        delayMinutes: 2 * D,
+        channel: "EMAIL",
+        email: (t) =>
+          recEmail(
+            pick(t, { proximo: "{{primeiro_nome}}, seguimos por aqui", neutro: "Seguimos à disposição", formal: "Continuamos à disposição" }),
+            "Se fizer sentido retomar, é só responder",
+            "A conversa fica aberta",
+            "Se o momento não era agora, tudo bem. Quando quiser retomar, responda esta mensagem.",
+            "Retomar conversa",
+          ),
+      },
+      {
+        copyKey: "sales.lost.wa",
+        delayMinutes: 3 * D,
+        channel: "WHATSAPP",
+        conditions: { requiresPhone: true },
+        whatsapp: () => wa("sales_followup"),
+      },
+    ],
+  },
+];
+
+const stayMail = (tone: Tone, subject: ByTone, preheader: string, heading: string, text: string, button: string) =>
+  email(pick(tone, subject), preheader, [
+    { type: "heading", text: heading },
+    { type: "text", text: `${greet(tone)} ${text}` },
+    { type: "button", label: button },
+    { type: "signature" },
+  ]);
+
+export const STAY_PLAYBOOKS: PlaybookDef[] = [
+  {
+    key: "stay_unpaid",
+    name: "Reserva sem pagamento",
+    description: "WhatsApp na hora e e-mail enquanto as datas ainda estão separadas",
+    trigger: "stay_unpaid",
+    priority: 5,
+    steps: [
+      {
+        copyKey: "stay.unpaid.wa",
+        delayMinutes: 0,
+        channel: "WHATSAPP",
+        whatsapp: (t) => wa("stay_unpaid", stayMail(t, { proximo: "{{primeiro_nome}}, suas datas ainda estão separadas" }, "Conclua o pagamento para manter a estadia", "Falta o pagamento da reserva", "A estadia na {{loja}} continua separada até o pagamento de {{total}}. Se o prazo acabar, as noites voltam a ficar livres.", "Pagar reserva")),
+      },
+      {
+        copyKey: "stay.unpaid.email",
+        delayMinutes: 8,
+        channel: "EMAIL",
+        email: (t) =>
+          stayMail(
+            t,
+            { proximo: "{{primeiro_nome}}, suas datas ainda estão separadas", neutro: "Sua reserva aguarda o pagamento", formal: "Sua reserva aguarda o pagamento" },
+            "Conclua o pagamento para manter a estadia",
+            "Falta o pagamento da reserva",
+            "A estadia na {{loja}} continua separada até o pagamento de {{total}}. Se o prazo acabar, as noites voltam a ficar livres.",
+            "Pagar reserva",
+          ),
+      },
+    ],
+  },
+  {
+    key: "stay_confirmed",
+    name: "Reserva confirmada",
+    description: "E-mail e WhatsApp assim que o pagamento entra",
+    trigger: "stay_confirmed",
+    priority: 6,
+    steps: [
+      {
+        copyKey: "stay.confirmed.wa",
+        delayMinutes: 0,
+        channel: "WHATSAPP",
+        whatsapp: (t) => wa("stay_confirmed", stayMail(t, { proximo: "Reserva confirmada no {{loja}}" }, "Sua estadia está garantida", "Sua reserva está confirmada", "O {{loja}} está reservado. O valor pago foi {{total}}.", "Ver reserva")),
+      },
+      {
+        copyKey: "stay.confirmed.email",
+        delayMinutes: 0,
+        channel: "EMAIL",
+        email: (t) =>
+          stayMail(
+            t,
+            { proximo: "Reserva confirmada no {{loja}}", neutro: "Sua reserva está confirmada", formal: "Confirmamos a sua reserva" },
+            "Sua estadia está garantida",
+            "Sua reserva está confirmada",
+            "O {{loja}} está reservado. O valor pago foi {{total}}.",
+            "Ver reserva",
+          ),
+      },
+    ],
+  },
+  {
+    key: "stay_checkin",
+    name: "Véspera do check-in",
+    description: "Aviso no dia anterior à chegada",
+    trigger: "stay_checkin",
+    priority: 7,
+    steps: [
+      {
+        copyKey: "stay.checkin.wa",
+        delayMinutes: 0,
+        channel: "WHATSAPP",
+        whatsapp: (t) => wa("stay_checkin", stayMail(t, { proximo: "Amanhã é o check-in no {{loja}}" }, "Sua chegada é amanhã", "Seu check-in é amanhã", "Amanhã você entra no {{loja}}.", "Ver detalhes")),
+      },
+      {
+        copyKey: "stay.checkin.email",
+        delayMinutes: 0,
+        channel: "EMAIL",
+        email: (t) =>
+          stayMail(
+            t,
+            { proximo: "Amanhã é o check-in no {{loja}}", neutro: "Seu check-in é amanhã", formal: "Lembrete de check-in" },
+            "Sua chegada é amanhã",
+            "Seu check-in é amanhã",
+            "Amanhã você entra no {{loja}}.",
+            "Ver detalhes",
+          ),
+      },
+    ],
+  },
+  {
+    key: "stay_checkout",
+    name: "Manhã da saída",
+    description: "Aviso no dia do check-out",
+    trigger: "stay_checkout",
+    priority: 8,
+    steps: [
+      {
+        copyKey: "stay.checkout.wa",
+        delayMinutes: 0,
+        channel: "WHATSAPP",
+        whatsapp: (t) => wa("stay_checkout", stayMail(t, { proximo: "Hoje é a saída do {{loja}}" }, "O check-out é hoje", "Hoje é o dia da saída", "A saída do {{loja}} é hoje.", "Ver reserva")),
+      },
+      {
+        copyKey: "stay.checkout.email",
+        delayMinutes: 0,
+        channel: "EMAIL",
+        email: (t) =>
+          stayMail(
+            t,
+            { proximo: "Hoje é a saída do {{loja}}", neutro: "O check-out é hoje", formal: "Lembrete de check-out" },
+            "O check-out é hoje",
+            "Hoje é o dia da saída",
+            "A saída do {{loja}} é hoje.",
+            "Ver reserva",
+          ),
+      },
+    ],
+  },
+  {
+    key: "stay_thanks",
+    name: "Depois da estadia",
+    description: "Um obrigado no dia seguinte à saída, sem cupom",
+    trigger: "stay_thanks",
+    priority: 9,
+    steps: [
+      {
+        copyKey: "stay.thanks.email",
+        delayMinutes: 0,
+        channel: "EMAIL",
+        email: (t) =>
+          stayMail(
+            t,
+            { proximo: "Obrigado por ficar no {{loja}}", neutro: "Obrigado pela estadia", formal: "Agradecemos a sua estadia" },
+            "Foi um prazer receber você",
+            "Obrigado pela estadia",
+            "Esperamos você de volta no {{loja}} quando quiser repetir esses dias.",
+            "Ver a casa",
+          ),
+      },
+      {
+        copyKey: "stay.thanks.wa",
+        delayMinutes: 30,
+        channel: "WHATSAPP",
+        conditions: { requiresPhone: true },
+        whatsapp: () => wa("stay_thanks"),
+      },
+    ],
+  },
+];
+
+export function playbooksForEdition(edition: string | null | undefined): PlaybookDef[] {
+  if (edition === "stay") return STAY_PLAYBOOKS;
+  if (edition === "inside_sales") return INSIDE_SALES_PLAYBOOKS;
+  if (edition === "food" || edition === "ecommerce") return PLAYBOOKS;
+  return [...PLAYBOOKS, ...INSIDE_SALES_PLAYBOOKS, ...STAY_PLAYBOOKS];
+}
+
+export function flowKeysForPack(pack: string | null | undefined): string[] | null {
+  if (pack === "stay") return STAY_PLAYBOOKS.map((p) => p.key);
+  if (pack === "inside_sales") return INSIDE_SALES_PLAYBOOKS.map((p) => p.key);
+  if (pack === "food" || pack === "ecommerce") return PLAYBOOKS.map((p) => p.key);
+  return null;
+}
+
 /** Cria os fluxos padrão que faltam (idempotente). */
-export async function ensureDefaultFlows(workspaceId: string, opts?: { status?: "ACTIVE" | "PAUSED" }) {
+export async function ensureDefaultFlows(
+  workspaceId: string,
+  opts?: { status?: "ACTIVE" | "PAUSED"; playbooks?: PlaybookDef[] },
+) {
+  const list = opts?.playbooks ?? PLAYBOOKS;
   const { theme } = await loadEmailTheme(workspaceId);
   const tone = theme.tone;
   const existing = await prisma.messageFlow.findMany({
-    where: { clienteId: workspaceId, key: { in: PLAYBOOKS.map((p) => p.key) } },
+    where: { clienteId: workspaceId, key: { in: list.map((p) => p.key) } },
     select: { key: true },
   });
   const have = new Set(existing.map((f) => f.key));
   let created = 0;
-  for (const p of PLAYBOOKS) {
+  for (const p of list) {
     if (have.has(p.key)) continue;
     if (await createPlaybookFlow(workspaceId, p, tone, p.defaultStatus ?? opts?.status ?? "ACTIVE")) created++;
   }
+  for (const p of list) {
+    if (!p.key.startsWith("stay_")) continue;
+    await prisma.messageFlow.updateMany({
+      where: { clienteId: workspaceId, key: p.key, NOT: { trigger: p.trigger } },
+      data: { trigger: p.trigger },
+    });
+  }
+  await prisma.messageFlowStep.updateMany({
+    where: {
+      copyKey: "stay.unpaid.email",
+      delayMinutes: 5 * 60,
+      customized: false,
+      flow: { clienteId: workspaceId, key: "stay_unpaid" },
+    },
+    data: { delayMinutes: 8 },
+  });
   return { created };
 }
 

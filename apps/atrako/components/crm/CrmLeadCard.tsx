@@ -93,6 +93,7 @@ export function CrmLeadCard({
   drag,
   onOpen,
   showOpenCart = true,
+  hideAbandon = false,
   stages,
   stageId,
   onMove,
@@ -102,6 +103,7 @@ export function CrmLeadCard({
   onOpen?: (leadId: string) => void;
   /** Colunas de abandono já dizem isso. */
   showOpenCart?: boolean;
+  hideAbandon?: boolean;
   /** Celular: arrastar não funciona no toque, então o card mostra um seletor de etapa (oculto no desktop via CSS). */
   stages?: PillSelectOption[];
   stageId?: string;
@@ -171,7 +173,7 @@ export function CrmLeadCard({
               Carrinho aberto · {formatCurrency(lead.openCartCents / 100)}
             </span>
           ) : null}
-          {!showOpenCart && cartAge ? (
+          {!hideAbandon && !showOpenCart && cartAge ? (
             <span className="pipeline-lead-time type-micro-legal" data-heat={cartAge.heat} title={`Abandonou o carrinho em ${cartAge.on}`}>
               Abandonado {cartAge.label}
             </span>
@@ -183,7 +185,7 @@ export function CrmLeadCard({
         </div>
         {lead.phone ? (
           <a
-            href="/whatsapp"
+            href={`/whatsapp?phone=${encodeURIComponent(lead.phone)}`}
             onClick={(e) => e.stopPropagation()}
             className="pipeline-lead-wa"
             title="WhatsApp"

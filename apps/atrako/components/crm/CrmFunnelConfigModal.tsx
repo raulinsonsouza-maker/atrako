@@ -88,9 +88,10 @@ function toDrafts(stages: Props["stages"]): {
 export function CrmFunnelConfigModal({
   workspaceId,
   stages,
+  hideAbandoned = false,
   onClose,
   onSaved,
-}: Props) {
+}: Props & { hideAbandoned?: boolean }) {
   const initial = useMemo(() => toDrafts(stages), [stages]);
   const [entry, setEntry] = useState(initial.entry);
   const [abandoned, setAbandoned] = useState(initial.abandoned);
@@ -189,7 +190,7 @@ export function CrmFunnelConfigModal({
           entryColor: entry.color,
           wonName: won.name.trim(),
           wonColor: won.color,
-          ...(abandoned
+          ...(!hideAbandoned && abandoned
             ? { abandonedName: abandoned.name.trim(), abandonedColor: abandoned.color }
             : {}),
           ...(lost ? { lostName: lost.name.trim(), lostColor: lost.color } : {}),
@@ -279,7 +280,7 @@ export function CrmFunnelConfigModal({
             />
           </section>
 
-          {abandoned ? (
+          {!hideAbandoned && abandoned ? (
             <section className="funnel-config-section">
               <p className="type-caption-strong text-[var(--ink)]">Carrinho abandonado</p>
               <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">

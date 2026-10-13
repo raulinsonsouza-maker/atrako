@@ -239,6 +239,8 @@
           <div class="checkout-card__heading"><span>2</span><div><small>QUEM VAI RECEBER?</small><h2>Seus dados</h2></div></div>
           <div class="field"><label for="checkoutName">Nome</label><input id="checkoutName" name="customerName" autocomplete="name" placeholder="Como podemos te chamar?" required /></div>
           <div class="field"><label for="checkoutPhone">Celular</label><input id="checkoutPhone" name="phone" type="tel" autocomplete="tel" placeholder="(00) 00000-0000" required /></div>
+          <button class="text-button" id="sendFoodCode" type="button">Receber código no WhatsApp</button>
+          <div class="field" id="foodCodeField" hidden><label for="foodCode">Código</label><input id="foodCode" inputmode="numeric" autocomplete="one-time-code" placeholder="000000" /><button class="text-button" id="verifyFoodCode" type="button">Confirmar celular</button></div>
         </section>
 
         <section class="checkout-card">
@@ -258,6 +260,7 @@
           <div class="checkout-totals">
             <div><span>Subtotal</span><strong id="checkoutSubtotal"></strong></div>
             <div><span>Entrega</span><strong id="checkoutDelivery"></strong></div>
+            <p class="fine" id="checkoutDistance" hidden></p>
             <div class="discount-row" id="discountRow"><span>Desconto</span><strong id="checkoutDiscount"></strong></div>
             <div class="checkout-totals__grand"><span>Total</span><strong id="checkoutGrandTotal"></strong></div>
           </div>

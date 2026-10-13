@@ -702,7 +702,7 @@ function ClienteForm({
               </FormField>
             </div>
 
-            <FormField label="Versão do Atrako" hint="A equipe escolhe uma versão por cliente. Food liga cardápio e pedidos. Personalizado mantém os módulos como estão. O endereço público do Food usa o slug da empresa, por exemplo /cardapio/lepido.">
+            <FormField label="Versão do Atrako" hint="A equipe escolhe uma versão por cliente. Food usa /cardapio/slug. Aluguel por temporada usa /estadia/slug. Personalizado mantém os módulos como estão.">
               <PillSelect
                 className="w-full"
                 size="field"

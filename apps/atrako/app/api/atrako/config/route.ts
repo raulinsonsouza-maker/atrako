@@ -10,6 +10,14 @@ import { assertCanManageConfig, requireWorkspaceAccess } from "@/lib/tenancy/wor
 import { resolveModules, sanitizeModulesPatch } from "@/lib/modules/resolve";
 
 import { normalizePrimaryHex } from "@/lib/brand/primaryColor";
+import { parseAttendance } from "@/lib/attendance/profile";
+
+function sanitizeMessagingPrefs(raw: unknown) {
+  if (!raw || typeof raw !== "object") return undefined;
+  const prefs = { ...(raw as Record<string, unknown>) };
+  if ("attendance" in prefs) prefs.attendance = parseAttendance(prefs.attendance);
+  return prefs;
+}
 
 async function configResponse(workspaceId: string) {
   const config = await getWorkspaceConfig(workspaceId);
@@ -112,10 +120,7 @@ export async function PATCH(request: NextRequest) {
       b.formsPrefs && typeof b.formsPrefs === "object"
         ? (b.formsPrefs as Record<string, unknown>)
         : undefined,
-    messagingPrefs:
-      b.messagingPrefs && typeof b.messagingPrefs === "object"
-        ? (b.messagingPrefs as Record<string, unknown>)
-        : undefined,
+    messagingPrefs: sanitizeMessagingPrefs(b.messagingPrefs),
   });
 
   return configResponse(workspaceId);

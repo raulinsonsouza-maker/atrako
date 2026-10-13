@@ -34,7 +34,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     /** Studio LP full-bleed (estilo GreatPages) */
     pathname.startsWith("/criar/oferta") ||
     pathname.startsWith("/criar/paginas") ||
-    pathname.startsWith("/food");
+    pathname.startsWith("/food") ||
+    pathname.startsWith("/hospedagem") ||
+    pathname.startsWith("/estadia");
   const moduleEmbed = pathname.startsWith("/modules/");
   /** O assistente tem header próprio (histórico, título, sino, nova conversa). */
   const ownHeader = pathname.startsWith("/assistente");

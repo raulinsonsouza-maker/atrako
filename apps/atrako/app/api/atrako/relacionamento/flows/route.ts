@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@/lib/generated/prisma";
 import { bad, gate, parseRange, readBody, str, flowActor } from "@/lib/flows/api";
-import { ensureDefaultFlows, refreshDefaultCopy, resetStepCopy, playbookByKey } from "@/lib/flows/playbooks";
+import { ensureDefaultFlows, flowKeysForPack, playbookByKey, playbooksForEdition, refreshDefaultCopy, resetStepCopy, STAY_PLAYBOOKS } from "@/lib/flows/playbooks";
 import { emailContentProblems, sanitizeEmailContent } from "@/lib/flows/render-email";
 import { previewEmail } from "@/lib/flows/preview";
 import { isEmailContent, type WhatsAppContent } from "@/lib/flows/types";
@@ -17,10 +17,14 @@ export async function GET(request: NextRequest) {
   const ws = g.workspaceId;
   const { since, until, days } = parseRange(request);
   const range = { gte: since, lte: until };
+  const pack = request.nextUrl.searchParams.get("pack");
+  const settings = await prisma.workspaceSettings.findUnique({ where: { clienteId: ws }, select: { edition: true } });
+  if (pack === "stay") await ensureDefaultFlows(ws, { playbooks: STAY_PLAYBOOKS });
+  const keys = flowKeysForPack(pack) ?? flowKeysForPack(settings?.edition);
 
   const [flows, stepStats, active, conv] = await Promise.all([
     prisma.messageFlow.findMany({
-      where: { clienteId: ws },
+      where: { clienteId: ws, ...(keys ? { key: { in: keys } } : {}) },
       orderBy: { priority: "asc" },
       include: { steps: { orderBy: { position: "asc" } } },
     }),
@@ -172,8 +176,12 @@ export async function POST(request: NextRequest) {
   const ws = g.workspaceId;
 
   switch (action) {
-    case "ensure_defaults":
-      return NextResponse.json(await ensureDefaultFlows(ws, { status: "PAUSED" }));
+    case "ensure_defaults": {
+      const pack = str(body.pack);
+      const settings = await prisma.workspaceSettings.findUnique({ where: { clienteId: ws }, select: { edition: true } });
+      if (pack === "stay") return NextResponse.json(await ensureDefaultFlows(ws, { playbooks: STAY_PLAYBOOKS }));
+      return NextResponse.json(await ensureDefaultFlows(ws, { playbooks: playbooksForEdition(pack || settings?.edition), status: "PAUSED" }));
+    }
 
     case "refresh_copy": {
       const tone = str(body.tone);

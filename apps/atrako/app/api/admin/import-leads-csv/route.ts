@@ -196,6 +196,26 @@ async function processRows(rows: Record<string, string>[], clienteId: string) {
           data: { clienteId, metaLeadId: leadId, ...data },
         });
         created++;
+        const { captureExternalLead } = await import("@/lib/crm/capture-external");
+        await captureExternalLead({
+          workspaceId: clienteId,
+          name: fullName,
+          email: data.emailLead,
+          phone: phone,
+          source: "csv",
+          welcome: true,
+          metadata: {
+            channel: "meta",
+            campaignId,
+            campaignName: data.campaignName,
+            adId,
+            adName: data.adName,
+            formId,
+            formName: data.formName,
+            metaLeadId: leadId,
+          },
+          payload: { email: data.emailLead, phone, nome: fullName },
+        }).catch((err) => console.warn("[import-leads-csv] native", err instanceof Error ? err.message : err));
       }
     } catch (e) {
       errors.push(`id=${leadId}: ${e instanceof Error ? e.message : String(e)}`);

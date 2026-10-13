@@ -64,9 +64,21 @@ export async function onLeadCaptured(input: {
   // Boas-vindas só para quem ainda não comprou (comprador entra no pós-compra)
   const [profile, contact] = await Promise.all([
     prisma.customerProfile.findUnique({ where: { contactId: input.contactId }, select: { ordersCount: true } }),
-    prisma.nativeContact.findUnique({ where: { id: input.contactId }, select: { email: true, phone: true } }),
+    prisma.nativeContact.findUnique({ where: { id: input.contactId }, select: { email: true, phone: true, phoneE164: true } }),
   ]);
-  if ((profile?.ordersCount ?? 0) > 0 || (!contact?.email && !contact?.phone)) return;
+  if ((profile?.ordersCount ?? 0) > 0 || (!contact?.email && !contact?.phone && !contact?.phoneE164)) return;
+  const { loadAttendance, sendAgentWelcome, welcomeBlockedByAgent } = await import("@/lib/attendance/welcome");
+  const { profile: attendance } = await loadAttendance(input.workspaceId);
+  if (welcomeBlockedByAgent(attendance)) {
+    if (input.leadId) {
+      await sendAgentWelcome({
+        workspaceId: input.workspaceId,
+        contactId: input.contactId,
+        leadId: input.leadId,
+      }).catch((err) => console.warn("[attendance] welcome", err instanceof Error ? err.message : err));
+    }
+    return;
+  }
   await enrollContact({
     clienteId: input.workspaceId,
     trigger: "lead_welcome",

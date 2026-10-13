@@ -185,6 +185,18 @@ export async function approveOrder(orderId: string) {
     productNames,
   }).catch(() => null);
 
+  if (productIds[0]) {
+    const { announceIfAgentCheckout } = await import("@/lib/attendance/payment");
+    await announceIfAgentCheckout({
+      workspaceId: updated.clienteId,
+      contactId: updated.contactId,
+      phone: updated.phone,
+      kind: "checkout",
+      ref: productIds[0],
+      amount: updated.totalCents / 100,
+    }).catch(() => null);
+  }
+
   await markCartsRecovered({
     workspaceId: updated.clienteId,
     contactId: updated.contactId,

@@ -25,7 +25,7 @@ export async function upsertWaConversation(input: {
   const phone = normalizeWaPhone(input.phone);
   const windowExpiresAt = input.openWindow ? new Date(Date.now() + WINDOW_MS) : undefined;
 
-  return prisma.waConversation.upsert({
+  const conversation = await prisma.waConversation.upsert({
     where: { clienteId_phone: { clienteId: input.workspaceId, phone } },
     create: {
       clienteId: input.workspaceId,
@@ -40,9 +40,16 @@ export async function upsertWaConversation(input: {
       contactName: input.contactName ?? undefined,
       contactId: input.contactId ?? undefined,
       lastMessageAt: new Date(),
-      ...(windowExpiresAt ? { windowExpiresAt, status: "OPEN" } : {}),
+      ...(windowExpiresAt ? { windowExpiresAt } : {}),
     },
   });
+  if (windowExpiresAt && conversation.status !== "HANDED_OFF") {
+    return prisma.waConversation.update({
+      where: { id: conversation.id },
+      data: { status: "OPEN", windowExpiresAt },
+    });
+  }
+  return conversation;
 }
 
 export async function persistOutboundMessage(input: {
@@ -79,9 +86,9 @@ export async function persistInboundMessage(input: {
     const existing = await prisma.waMessage.findUnique({
       where: { clienteId_wamid: { clienteId: input.workspaceId, wamid: input.wamid } },
     });
-    if (existing) return existing;
+    if (existing) return { ...existing, duplicate: true as const };
   }
-  return prisma.waMessage.create({
+  const created = await prisma.waMessage.create({
     data: {
       clienteId: input.workspaceId,
       conversationId: input.conversationId,
@@ -92,6 +99,7 @@ export async function persistInboundMessage(input: {
       status: "received",
     },
   });
+  return { ...created, duplicate: false as const };
 }
 
 export async function sendAndPersistText(input: {
@@ -188,6 +196,13 @@ export async function sendAndPersistTemplate(input: {
     templateName,
   });
   return { conversationId: conversation.id, wamid };
+}
+
+export async function resumeAgentConversation(conversationId: string, workspaceId: string) {
+  return prisma.waConversation.updateMany({
+    where: { id: conversationId, clienteId: workspaceId, status: "HANDED_OFF" },
+    data: { status: "OPEN", handedOffAt: null },
+  });
 }
 
 export async function handoffConversation(conversationId: string, workspaceId: string) {

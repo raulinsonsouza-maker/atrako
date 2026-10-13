@@ -17,6 +17,7 @@ import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 import { useOAuthPopup } from "@/hooks/useOAuthPopup";
 import { useModules } from "@/hooks/useModules";
 import { moduleForConnection } from "@/lib/modules/registry";
+import { editionAllowsConnector } from "@/lib/modules/editions";
 import type { AtrakoOAuthMessage } from "@/lib/oauth/openOAuthPopup";
 import { parseGoogleAdsConnectionMetadata } from "@/lib/googleAds/types";
 import { ConfigPage } from "../_components";
@@ -275,7 +276,7 @@ function ConexoesHubInner() {
   const qc = useQueryClient();
   const searchParams = useSearchParams();
   const { workspaceId, setWorkspaceId, isLoading: loadingClientes } = useActiveWorkspace();
-  const { isEnabled: isModuleEnabled } = useModules();
+  const { isEnabled: isModuleEnabled, edition } = useModules();
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [selectedAdAccount, setSelectedAdAccount] = useState("");
   const [selectingAd, setSelectingAd] = useState(false);
@@ -1079,6 +1080,7 @@ function ConexoesHubInner() {
           {CATEGORIES.map((cat) => {
             const list = items
               .filter((i) => i.category === cat.id)
+              .filter((i) => editionAllowsConnector(edition, i.provider))
               .filter((i) => {
                 const mod = moduleForConnection(i.category, i.provider);
                 return !mod || isModuleEnabled(mod.key);

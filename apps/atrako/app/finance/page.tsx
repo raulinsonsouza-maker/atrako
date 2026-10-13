@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { PillSelect } from "@/components/ui/pill-select";
 import { MetricTile } from "@/components/ui";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
+import { useModules } from "@/hooks/useModules";
+import { editionLedgerSources } from "@/lib/modules/editions";
 
 type Entry = {
   id: string;
@@ -29,6 +31,7 @@ type Entry = {
 const SOURCE_LABELS: Record<string, string> = {
   commerce: "Vendas",
   food: "Food",
+  stay: "Hospedagem",
   manual: "Manual",
   agenda: "Agenda",
   crm: "CRM",
@@ -73,6 +76,7 @@ function amountTone(type: string) {
 export default function FinancePage() {
   const qc = useQueryClient();
   const { workspaceId, setWorkspaceId, workspaces } = useActiveWorkspace();
+  const { edition } = useModules();
   const [desc, setDesc] = useState("");
   const [amount, setAmount] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
@@ -139,11 +143,14 @@ export default function FinancePage() {
   }
 
   const sources = useMemo(() => {
-    const s = new Set(["commerce", "manual", "agenda", "crm", "whatsapp", "forms"]);
-    for (const e of entries) s.add(e.source);
-    if (sourceFilter) s.add(sourceFilter);
+    const allowed = editionLedgerSources(edition);
+    const s = new Set(allowed ?? ["commerce", "manual", "agenda", "crm", "whatsapp", "forms"]);
+    if (!allowed) {
+      for (const e of entries) s.add(e.source);
+    }
+    if (sourceFilter && s.has(sourceFilter)) s.add(sourceFilter);
     return Array.from(s).sort();
-  }, [entries, sourceFilter]);
+  }, [entries, sourceFilter, edition]);
 
   const showWorkspaceSelect = workspaces.length > 1;
 

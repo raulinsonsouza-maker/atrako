@@ -16,6 +16,32 @@ import { waCapacity, waRateFor } from "@/lib/flows/wa-limits";
 import { upcomingDates } from "@/lib/flows/calendar";
 import { notify } from "@/lib/notifications";
 
+/** Origem do card: `campaign:{slug}`, no limite do campo do lead. */
+export function campaignLeadSource(name: string, calendarKey: string | null | undefined, id: string) {
+  const raw = (calendarKey || name || id).normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const slug = raw.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+  return `campaign:${slug || id.slice(0, 12)}`.slice(0, 80);
+}
+
+async function openCampaignCard(
+  c: { id: string; clienteId: string; name: string; calendarKey?: string | null },
+  contact: { name: string | null; email: string | null; phone: string | null; phoneE164?: string | null; waOptOutAt?: Date | null },
+) {
+  if (contact.waOptOutAt) return;
+  const phone = contact.phoneE164 || contact.phone;
+  if (!phone && !contact.email && !contact.name) return;
+  const { captureExternalLead } = await import("@/lib/crm/capture-external");
+  await captureExternalLead({
+    workspaceId: c.clienteId,
+    name: contact.name,
+    email: contact.email,
+    phone,
+    source: campaignLeadSource(c.name, c.calendarKey, c.id),
+    metadata: { campaignId: c.id, campaignName: c.name, channel: "whatsapp" },
+    welcome: false,
+  });
+}
+
 const DAY = 86_400_000;
 const HOUR = 3_600_000;
 const LEASE_MS = 10 * 60_000;
@@ -543,6 +569,9 @@ async function sendCampaignBatch(
       if (res.status === "SENT") {
         any = true;
         results.set(r.id, { status: "SENT", deliveryId: res.deliveryId });
+        await openCampaignCard(c, contact).catch((err) =>
+          console.warn("[campaigns] card", err instanceof Error ? err.message : err),
+        );
       } else if (res.status === "DEFERRED") {
         // Limite do portfólio: volta para a fila (próxima onda)
         results.set(r.id, { status: "PENDING", error: res.reason });

@@ -43,6 +43,7 @@ const ctx: AtrakoWorkspaceContext = {
   locale: "pt-BR",
   today: new Date(2026, 9, 7),
   commercial: { produtoServico: "Rodízio de carnes" } as AtrakoWorkspaceContext["commercial"],
+  attendance: null,
   coverage: {
     metaAds: true,
     googleAds: false,

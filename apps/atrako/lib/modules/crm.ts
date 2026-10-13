@@ -2,8 +2,9 @@
  * CRM nativo — leads do workspace (NativeLead + Person hub).
  */
 
-import type { Prisma } from "@/lib/generated/prisma";
+import { Prisma } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/db";
+import { upsertLedgerEntry } from "@/lib/atrako/finance-ledger";
 import { upsertPersonAndLead } from "@/lib/atrako/person";
 import { withStageHistory } from "@/lib/crm/stage-history";
 import { contactLocation, formatLocation } from "@/lib/commerce/order-details";
@@ -653,6 +654,7 @@ export async function getPipelineBoard(
       0,
     ),
     newThisWeek,
+    preset: pipeline.preset,
     won: Math.max(
       statusCount("WON"),
       byStage
@@ -722,10 +724,30 @@ function mapLead(l: {
   };
 }
 
+export const MANUAL_LOST_REASONS = ["preco", "sem_fit", "concorrente", "sem_resposta"] as const;
+export type ManualLostReason = (typeof MANUAL_LOST_REASONS)[number];
+
+export const MANUAL_LOST_LABELS: Record<ManualLostReason, string> = {
+  preco: "Preço",
+  sem_fit: "Sem fit",
+  concorrente: "Concorrente",
+  sem_resposta: "Sem resposta",
+};
+
+function asMeta(raw: unknown): Record<string, unknown> {
+  return raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+}
+
+export function isManualLostReason(value: string): value is ManualLostReason {
+  return (MANUAL_LOST_REASONS as readonly string[]).includes(value);
+}
+
 export async function updateLeadStage(input: {
   workspaceId: string;
   leadId: string;
   stageId: string;
+  dealValue?: number | null;
+  lostReason?: string | null;
 }) {
   const stage =
     input.stageId === "_none"
@@ -744,27 +766,119 @@ export async function updateLeadStage(input: {
 
   const status = isWonStage(stage) ? "WON" : isLostStage(stage) ? "LOST" : "OPEN";
   const nextStageId = stage?.id ?? null;
-  const meta =
-    lead.metadata && typeof lead.metadata === "object" && !Array.isArray(lead.metadata)
-      ? (lead.metadata as Record<string, unknown>)
-      : {};
-  return prisma.nativeLead.update({
+  const meta = asMeta(lead.metadata);
+  const deal =
+    status === "WON" && typeof input.dealValue === "number" && Number.isFinite(input.dealValue) && input.dealValue >= 0
+      ? input.dealValue
+      : null;
+  const reason =
+    status === "LOST" && typeof input.lostReason === "string" && isManualLostReason(input.lostReason)
+      ? input.lostReason
+      : null;
+  const now = new Date();
+  const nextMeta = withStageHistory(
+    {
+      ...meta,
+      ...(reason ? { lostReason: reason, lostAt: now.toISOString() } : {}),
+    },
+    {
+      stageId: nextStageId,
+      stage: stage?.name ?? null,
+      role: (stage as { role?: string | null } | null)?.role ?? null,
+      at: now,
+      by: "manual",
+      ...(reason ? { reason: MANUAL_LOST_LABELS[reason] } : {}),
+    },
+  );
+  const updated = await prisma.nativeLead.update({
     where: { id: lead.id },
     data: {
       stageId: nextStageId,
       status,
-      ...(nextStageId !== lead.stageId
-        ? {
-            metadata: withStageHistory(meta, {
-              stageId: nextStageId,
-              stage: stage?.name ?? null,
-              role: (stage as { role?: string | null } | null)?.role ?? null,
-              by: "manual",
-            }) as never,
-          }
-        : {}),
+      ...(deal != null ? { dealValue: new Prisma.Decimal(deal) } : {}),
+      ...(nextStageId !== lead.stageId || reason ? { metadata: nextMeta as Prisma.InputJsonValue } : {}),
     },
     include: { contact: true, stage: true },
+  });
+
+  if (deal != null && deal > 0) {
+    const who = updated.contact?.name ?? "Lead";
+    await upsertLedgerEntry({
+      clienteId: input.workspaceId,
+      type: "INCOME",
+      amount: deal,
+      occurredAt: now,
+      source: "crm",
+      sourceRef: updated.id,
+      idempotencyKey: `crm-won:${updated.id}`,
+      leadId: updated.id,
+      contact: who,
+      description: `Negócio ganho · ${who}`,
+    }).catch((err) => console.warn("[crm] caixa", err instanceof Error ? err.message : err));
+  }
+
+  if (reason && updated.contactId) {
+    const { enrollContact } = await import("@/lib/flows/engine");
+    await enrollContact({
+      clienteId: input.workspaceId,
+      trigger: "lead_lost",
+      contactId: updated.contactId,
+      leadId: updated.id,
+      refType: "lead",
+      refId: updated.id,
+      context: {},
+    }).catch((err) => console.warn("[crm] lead_lost", err instanceof Error ? err.message : err));
+  }
+
+  return updated;
+}
+
+export type LeadNote = { id: string; text: string; at: string };
+
+export async function addLeadNote(input: { workspaceId: string; leadId: string; text: string }) {
+  const text = input.text.trim().slice(0, 2000);
+  if (!text) throw new Error("Nota vazia");
+  const lead = await prisma.nativeLead.findFirst({
+    where: { id: input.leadId, clienteId: input.workspaceId },
+  });
+  if (!lead) throw new Error("Lead não encontrado");
+  const meta = asMeta(lead.metadata);
+  const prev = Array.isArray(meta.notes) ? (meta.notes as LeadNote[]) : [];
+  const note: LeadNote = { id: `n_${Date.now().toString(36)}`, text, at: new Date().toISOString() };
+  return prisma.nativeLead.update({
+    where: { id: lead.id },
+    data: { metadata: { ...meta, notes: [...prev, note].slice(-40) } as Prisma.InputJsonValue },
+  });
+}
+
+export async function setLeadOwner(input: {
+  workspaceId: string;
+  leadId: string;
+  ownerMemberId: string | null;
+}) {
+  const lead = await prisma.nativeLead.findFirst({
+    where: { id: input.leadId, clienteId: input.workspaceId },
+  });
+  if (!lead) throw new Error("Lead não encontrado");
+  let ownerName: string | null = null;
+  if (input.ownerMemberId) {
+    const member = await prisma.workspaceMember.findFirst({
+      where: { id: input.ownerMemberId, clienteId: input.workspaceId, active: true },
+      select: { id: true, name: true, email: true },
+    });
+    if (!member) throw new Error("Responsável inválido");
+    ownerName = member.name?.trim() || member.email;
+  }
+  const meta = asMeta(lead.metadata);
+  return prisma.nativeLead.update({
+    where: { id: lead.id },
+    data: {
+      metadata: {
+        ...meta,
+        ownerMemberId: input.ownerMemberId,
+        ownerName,
+      } as Prisma.InputJsonValue,
+    },
   });
 }
 
@@ -1038,6 +1152,22 @@ export async function applyPipelinePreset(
   if (preset === "leads") await ensureDefaultPipeline(clienteId);
   else await normalizeStageOrder(clienteId);
   return { preset, dryRun: false, moved: leads.length, stages: byStage };
+}
+
+/** Tira colunas de carrinho. Os cards voltam para Novo. */
+export async function stripStorePipelineStages(clienteId: string) {
+  const pipeline = await ensureDefaultPipeline(clienteId);
+  const entry = pipeline.stages.find((s) => s.role === STAGE_ROLE_ENTRY);
+  const store = pipeline.stages.filter((s) => isAbandonFamilyRole(s.role));
+  if (!entry || !store.length) return { removed: 0 };
+  await prisma.nativeLead.updateMany({
+    where: { clienteId, stageId: { in: store.map((s) => s.id) } },
+    data: { stageId: entry.id, status: "OPEN" },
+  });
+  for (const stage of store) {
+    await prisma.crmStage.delete({ where: { id: stage.id } });
+  }
+  return { removed: store.length };
 }
 
 /** Etapa de entrada (Novo) — onde o lead entra no funil. */

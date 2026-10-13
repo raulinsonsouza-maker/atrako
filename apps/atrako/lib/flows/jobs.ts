@@ -51,10 +51,12 @@ export async function runStepsJob() {
     }
     const { runDueCampaigns } = await import("@/lib/flows/campaigns");
     const campaigns = await runDueCampaigns();
+    const { flushPendingWelcomes } = await import("@/lib/attendance/welcome");
+    const welcomes = await flushPendingWelcomes().catch((e) => ({ error: String(e) }));
     // Quem vigia o job de hora em hora (que vigia os demais) é o de 5 min.
     const { alertStaleJobs } = await import("@/lib/notifications/reminders");
     await alertStaleJobs(new Date(), ["flows.hourly"]).catch(() => []);
-    return { ...totals, campaigns };
+    return { ...totals, campaigns, welcomes };
   });
 }
 

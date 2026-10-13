@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { isPublicModuleEnabled } from "@/lib/modules/resolve";
 import { asItemSchedule, asWeekHours, isItemOrderable } from "@/lib/food/availability";
+import { asDeliveryRules, rulesConfigured } from "@/lib/food/delivery";
 
 export async function GET(
   _request: NextRequest,
@@ -34,6 +35,7 @@ export async function GET(
     deliveryEnabled: store.deliveryEnabled,
     pickupEnabled: store.pickupEnabled,
     deliveryFeeCents: store.deliveryFeeCents,
+    deliveryByDistance: rulesConfigured(asDeliveryRules(store.deliveryRules)),
     minOrderCents: store.minOrderCents,
     pickupName: store.pickupName,
     pickupAddress: store.pickupAddress,

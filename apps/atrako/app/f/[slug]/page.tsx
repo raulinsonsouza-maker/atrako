@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { FormField } from "@atrako/forms";
+import { collectClientAttribution } from "@/lib/criar/lp-attribution";
 
 const fieldClass =
   "mt-3 h-12 w-full rounded-[var(--radius-xs)] border border-[rgba(0,0,0,0.08)] bg-[var(--canvas)] px-5 type-body text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary-focus)]";
@@ -78,6 +79,7 @@ export default function PublicFormPage() {
           action: "complete",
           slug,
           answers: payload,
+          ...collectClientAttribution({ formSlug: slug }),
           ...(previewToken ? { preview: previewToken } : {}),
         }),
       });

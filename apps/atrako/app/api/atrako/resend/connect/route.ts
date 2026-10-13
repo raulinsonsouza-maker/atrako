@@ -272,8 +272,9 @@ export async function POST(request: NextRequest) {
   }
 
   if (verified) {
-    const { ensureDefaultFlows } = await import("@/lib/flows/playbooks");
-    await ensureDefaultFlows(workspaceId).catch((err) =>
+    const { ensureDefaultFlows, playbooksForEdition } = await import("@/lib/flows/playbooks");
+    const settings = await prisma.workspaceSettings.findUnique({ where: { clienteId: workspaceId }, select: { edition: true } });
+    await ensureDefaultFlows(workspaceId, { playbooks: playbooksForEdition(settings?.edition) }).catch((err) =>
       console.warn("[resend] ensureDefaultFlows", err),
     );
   }

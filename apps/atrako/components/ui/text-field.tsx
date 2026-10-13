@@ -31,7 +31,7 @@ const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
             id={inputId}
             type={isPassword && revealed ? "text" : type}
             className={cn(
-              "h-11 w-full rounded-[var(--radius-xs)] border border-[rgba(0,0,0,0.08)] bg-[var(--canvas)] px-5 type-body text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary-focus)] disabled:opacity-50",
+              "h-11 w-full rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas-parchment)] px-5 type-body text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary-focus)] disabled:opacity-50",
               isPassword && "pr-12",
             )}
             {...props}
@@ -59,5 +59,36 @@ const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
   },
 );
 TextField.displayName = "TextField";
+
+export function TextArea({
+  label,
+  hint,
+  value,
+  onChange,
+  rows = 3,
+}: {
+  label: string;
+  hint?: string;
+  value: string;
+  onChange: (value: string) => void;
+  rows?: number;
+}) {
+  const id = React.useId();
+  return (
+    <div className="block">
+      <label htmlFor={id} className="type-caption-strong text-[var(--ink)]">
+        {label}
+      </label>
+      <textarea
+        id={id}
+        rows={rows}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-2 w-full rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas-parchment)] px-5 py-3 type-body text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary-focus)]"
+      />
+      {hint ? <p className="mt-1.5 type-fine-print text-[var(--ink-muted-48)]">{hint}</p> : null}
+    </div>
+  );
+}
 
 export { TextField };

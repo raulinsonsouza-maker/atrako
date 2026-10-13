@@ -46,6 +46,18 @@ export async function POST(request: NextRequest) {
         "",
     );
 
+    const refParam = request.nextUrl.searchParams.get("ref")?.trim() || "";
+    const leadRef = refParam.startsWith("lead:") ? refParam : externalRef;
+    if (leadRef.startsWith("lead:")) {
+      const { applyLeadPaymentWebhook } = await import("@/lib/attendance/payment");
+      await applyLeadPaymentWebhook({
+        leadId: leadRef.slice("lead:".length),
+        paymentId: dataId,
+        hintedStatus,
+      });
+      return NextResponse.json({ ok: true, lead: true });
+    }
+
     if (externalRef.startsWith("food:")) {
       const { applyFoodPaymentWebhook } = await import("@/lib/food/orders");
       await applyFoodPaymentWebhook({
@@ -54,6 +66,16 @@ export async function POST(request: NextRequest) {
         hintedStatus,
       });
       return NextResponse.json({ ok: true, food: true });
+    }
+
+    if (externalRef.startsWith("stay:")) {
+      const { applyStayPaymentWebhook } = await import("@/lib/stay/reservations");
+      await applyStayPaymentWebhook({
+        reservationId: externalRef.slice("stay:".length),
+        mpOrderId: dataId || null,
+        hintedStatus,
+      });
+      return NextResponse.json({ ok: true, stay: true });
     }
 
     let order =
@@ -100,11 +122,50 @@ export async function POST(request: NextRequest) {
     }
 
     if (!order && dataId) {
+      const stay = await prisma.stayReservation.findFirst({ where: { mpOrderId: dataId }, select: { id: true } });
+      if (stay) {
+        const { applyStayPaymentWebhook } = await import("@/lib/stay/reservations");
+        await applyStayPaymentWebhook({ reservationId: stay.id, mpOrderId: dataId, hintedStatus });
+        return NextResponse.json({ ok: true, stay: true });
+      }
       const food = await prisma.foodOrder.findFirst({ where: { mpOrderId: dataId }, select: { id: true } });
       if (food) {
         const { applyFoodPaymentWebhook } = await import("@/lib/food/orders");
         await applyFoodPaymentWebhook({ orderId: food.id, mpOrderId: dataId, hintedStatus });
         return NextResponse.json({ ok: true, food: true });
+      }
+    }
+
+    if (!order && externalRef) {
+      const agendaOrder = await prisma.agendaCheckoutOrder.findUnique({
+        where: { id: externalRef },
+        include: { checkoutLink: true, product: true },
+      });
+      if (agendaOrder) {
+        let status = hintedStatus;
+        if (dataId) {
+          try {
+            const mp = await getMercadoPagoOrder(agendaOrder.product.clienteId, dataId);
+            status = String(mp?.status || status);
+          } catch {
+            /* keep body status */
+          }
+        }
+        if (isPaid(status) && agendaOrder.status !== "CONFIRMED") {
+          await prisma.agendaCheckoutOrder.update({
+            where: { id: agendaOrder.id },
+            data: { status: "CONFIRMED", paidAt: new Date(), confirmedAt: new Date() },
+          });
+          const { closeLeadMatchingCheckout } = await import("@/lib/attendance/payment");
+          await closeLeadMatchingCheckout({
+            workspaceId: agendaOrder.product.clienteId,
+            phone: agendaOrder.customerPhone,
+            kind: "agenda",
+            ref: agendaOrder.checkoutLink.slug,
+            amount: agendaOrder.product.priceCents / 100,
+          });
+        }
+        return NextResponse.json({ ok: true, agendaCheckout: true });
       }
     }
 

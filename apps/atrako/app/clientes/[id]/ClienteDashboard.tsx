@@ -23,6 +23,7 @@ import { RelacionamentoPanel } from "@/components/clientes/RelacionamentoPanel";
 import { GeralConsolidado } from "@/components/clientes/GeralConsolidado";
 import { ComportamentoSection } from "@/components/clientes/ComportamentoSection";
 import { SocialMediaPanel } from "@/components/clientes/SocialMediaPanel";
+import { editionAllowsDashboardChannel } from "@/lib/modules/editions";
 import { HotelFazendaSaoJoaoPanel } from "@/components/clientes/HotelFazendaSaoJoaoPanel";
 import { HotelAnalystPanel } from "@/components/clientes/HotelAnalystPanel";
 import { TertuliaPanel } from "@/components/clientes/TertuliaPanel";
@@ -538,6 +539,7 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
   /** Mesma chave do useModules: cache compartilhado quando é o workspace ativo. */
   const { data: relConfig } = useQuery<{
     canManage?: boolean;
+    settings?: { edition?: string | null };
     modules?: Record<string, { enabled?: boolean }>;
     connections?: Array<{ provider: string; status: string; hasCredentials: boolean }>;
   }>({
@@ -854,10 +856,12 @@ function formatPercentage(value: number) {
     if (connected) return true;
     return canConfigure;
   };
-  const showMeta = showDefaultChannel(metaConnected, portalMode ? clienteKnown : metaKnown);
-  const showGoogle = showDefaultChannel(googleConnected, portalMode ? clienteKnown : workspaceKnown);
-  const showMarketplaces = showDefaultChannel(marketplaceSubs.length > 0, workspaceKnown);
-  const showEcommerce = showDefaultChannel(ecommerceConnected, workspaceKnown);
+  const edition = relConfig?.settings?.edition ?? null;
+  const channelAllowed = (channel: string) => editionAllowsDashboardChannel(edition, channel);
+  const showMeta = channelAllowed("meta") && showDefaultChannel(metaConnected, portalMode ? clienteKnown : metaKnown);
+  const showGoogle = channelAllowed("google") && showDefaultChannel(googleConnected, portalMode ? clienteKnown : workspaceKnown);
+  const showMarketplaces = channelAllowed("marketplaces") && showDefaultChannel(marketplaceSubs.length > 0, workspaceKnown);
+  const showEcommerce = channelAllowed("ecommerce") && showDefaultChannel(ecommerceConnected, workspaceKnown);
   const showCrm = showOptInChannel(hasCrm, crmKnown);
   const showRelacionamento = showOptInChannel(hasRelacionamento, workspaceKnown);
 
@@ -954,7 +958,7 @@ function formatPercentage(value: number) {
         "geral",
         ...(showMeta ? ["meta"] : []),
         ...(showGoogle ? ["google"] : []),
-        ...(hasLinkedin ? ["linkedin"] : []),
+        ...(hasLinkedin && channelAllowed("linkedin") ? ["linkedin"] : []),
         ...(isMiguelImoveis(cliente) ? ["imoveis"] : []),
         ...(showCrm ? ["crm"] : []),
         ...(showRelacionamento ? ["relacionamento"] : []),

@@ -4,7 +4,7 @@ import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { getPersonJourney, storeProviderLabel } from "@/lib/atrako/person";
 import type { AbandonedCartItem } from "@/lib/crm/abandoned-cart";
-import { ensureDefaultPipeline } from "@/lib/modules/crm";
+import { addLeadNote, ensureDefaultPipeline, setLeadOwner } from "@/lib/modules/crm";
 import { leadCommunications } from "@/lib/flows/lead-card";
 import { CHANNEL_LABELS, wooVisitExtras, type OrderChannel } from "@/lib/commerce-attribution/store-source";
 import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
@@ -36,7 +36,28 @@ export async function GET(request: NextRequest, ctx: Ctx) {
   const pipeline = await ensureDefaultPipeline(workspaceId);
 
   const sources = (lead.contact?.metadata as { sources?: string[] } | null)?.sources;
-  const leadMeta = (lead.metadata ?? {}) as { lostReason?: string; lostAt?: string };
+  const leadMeta = (lead.metadata ?? {}) as {
+    lostReason?: string;
+    lostAt?: string;
+    notes?: Array<{ id?: string; text?: string; at?: string }>;
+    ownerMemberId?: string | null;
+    ownerName?: string | null;
+    campaignName?: string | null;
+    adName?: string | null;
+    formName?: string | null;
+    utm_campaign?: string | null;
+  };
+  const notes = Array.isArray(leadMeta.notes)
+    ? leadMeta.notes
+        .filter((n) => typeof n?.text === "string" && n.text.trim())
+        .map((n) => ({ id: n.id ?? n.at ?? n.text, text: n.text as string, at: n.at ?? lead.createdAt.toISOString() }))
+    : [];
+  const members = await prisma.workspaceMember.findMany({
+    where: { clienteId: workspaceId, active: true },
+    select: { id: true, name: true, email: true },
+    orderBy: { name: "asc" },
+    take: 40,
+  });
 
   const cartRows = await prisma.abandonedCart.findMany({
     where: {
@@ -243,9 +264,16 @@ export async function GET(request: NextRequest, ctx: Ctx) {
       shipping: mlCard?.shipping ?? null,
       lostReason: leadMeta.lostReason ?? null,
       lostAt: leadMeta.lostAt ?? null,
+      notes,
+      ownerMemberId: leadMeta.ownerMemberId ?? null,
+      ownerName: leadMeta.ownerName ?? null,
+      campaignName: leadMeta.campaignName ?? leadMeta.utm_campaign ?? null,
+      adName: leadMeta.adName ?? null,
+      formName: leadMeta.formName ?? null,
       createdAt: lead.createdAt.toISOString(),
       updatedAt: lead.updatedAt.toISOString(),
     },
+    members: members.map((m) => ({ id: m.id, name: m.name?.trim() || m.email, email: m.email })),
     carts,
     stages: pipeline.stages.map((s) => ({
       id: s.id,
@@ -254,4 +282,38 @@ export async function GET(request: NextRequest, ctx: Ctx) {
     })),
     journey: journey?.items ?? [],
   });
+}
+
+export async function PATCH(request: NextRequest, ctx: Ctx) {
+  const { id } = await ctx.params;
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const workspaceId = typeof body.workspaceId === "string" ? body.workspaceId : "";
+  if (!workspaceId) return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
+  const access = await requireWorkspaceAccess(workspaceId, "operate");
+  if (!access.ok) return access.response;
+  try {
+    if (body.action === "note") {
+      await addLeadNote({
+        workspaceId,
+        leadId: id,
+        text: typeof body.text === "string" ? body.text : "",
+      });
+    } else if (body.action === "owner") {
+      await setLeadOwner({
+        workspaceId,
+        leadId: id,
+        ownerMemberId: typeof body.ownerMemberId === "string" && body.ownerMemberId ? body.ownerMemberId : null,
+      });
+    } else {
+      return NextResponse.json({ error: "ação inválida" }, { status: 400 });
+    }
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Falha" }, { status: 400 });
+  }
+  return NextResponse.json({ ok: true });
 }

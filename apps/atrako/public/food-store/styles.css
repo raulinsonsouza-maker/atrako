@@ -337,6 +337,8 @@ main { max-width: 680px; margin: 0 auto; min-height: 100vh; padding-bottom: 120p
 .coupon { display: flex; gap: 6px; margin-top: 12px; }.coupon input { min-width: 0; flex: 1; height: 42px; border: 1px dashed #d5c5bc; border-radius: 11px; padding: 0 11px; background: white; font: .68rem 'DM Sans'; }
 .coupon button { border: 0; border-radius: 11px; padding: 0 13px; background: var(--ink); color: white; font-size: .63rem; font-weight: 800; }
 .checkout-totals { display: grid; gap: 8px; margin-top: 15px; padding-top: 13px; border-top: 1px solid #eadfd7; }
+.checkout-totals .fine { margin: 0; color: var(--muted); font-size: .69rem; }
+.text-button { border: 0; background: transparent; color: var(--red); font: inherit; font-size: .78rem; font-weight: 500; padding: 0 0 8px; cursor: pointer; }
 .checkout-totals > div { display: flex; justify-content: space-between; color: var(--muted); font-size: .69rem; }.discount-row { display: none !important; color: #31812b !important; }.discount-row.is-visible { display: flex !important; }
 .checkout-totals__grand { color: var(--ink) !important; font-size: .92rem !important; font-weight: 800; padding-top: 4px; }
 .terms-check { display: flex; align-items: flex-start; gap: 9px; padding: 5px 2px; color: var(--muted); font-size: .63rem; line-height: 1.4; }.terms-check input { accent-color: var(--red); margin-top: 1px; }

@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { Loader2, Send } from "lucide-react";
@@ -63,6 +63,14 @@ export default function WhatsAppInboxPage() {
     enabled: Boolean(workspaceId && selectedId),
     refetchInterval: 5000,
   });
+  useEffect(() => {
+    if (selectedId || !data?.conversations?.length) return;
+    const phone = new URLSearchParams(window.location.search).get("phone")?.replace(/\D/g, "") ?? "";
+    if (phone.length < 8) return;
+    const tail = phone.slice(-8);
+    const match = data.conversations.find((c) => c.phone.replace(/\D/g, "").endsWith(tail));
+    if (match) setSelectedId(match.id);
+  }, [data?.conversations, selectedId]);
   const selected = thread?.conversation ?? data?.conversations?.find((c) => c.id === selectedId);
   const windowOpen = useMemo(() => {
     if (!selected?.windowExpiresAt) return false;
@@ -129,6 +137,16 @@ export default function WhatsAppInboxPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ workspaceId, action: "handoff", conversationId: selectedId }),
+    });
+    qc.invalidateQueries({ queryKey: ["wa-thread", workspaceId, selectedId] });
+    qc.invalidateQueries({ queryKey: ["wa-inbox", workspaceId] });
+  }
+  async function resumeAgent() {
+    if (!workspaceId || !selectedId) return;
+    await fetch("/api/atrako/whatsapp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workspaceId, action: "resume", conversationId: selectedId }),
     });
     qc.invalidateQueries({ queryKey: ["wa-thread", workspaceId, selectedId] });
     qc.invalidateQueries({ queryKey: ["wa-inbox", workspaceId] });
@@ -239,7 +257,15 @@ export default function WhatsAppInboxPage() {
                     >
                       Passar para atendente
                     </button>
-                  ) : null}
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={resumeAgent}
+                      className="rounded-lg border border-[var(--hairline)] px-3 py-1.5 type-fine-print"
+                    >
+                      Devolver ao agente
+                    </button>
+                  )}
                 </div>
               </div>
               <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4">

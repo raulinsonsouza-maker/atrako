@@ -25,6 +25,7 @@ export function useModules() {
   });
 
   const modules = (data?.modules ?? null) as ModulesMap | null;
+  const edition = (data?.settings?.edition as string | undefined) ?? null;
 
   const isEnabled = useCallback(
     (key: ModuleKey) => (modules ? modules[key]?.enabled === true : getModuleDef(key).core === true),
@@ -34,5 +35,5 @@ export function useModules() {
   /** Enquanto carrega aponta para /assistente; o layout de lá redireciona se estiver desligado. */
   const homeHref = modules && !modules.assistente?.enabled ? homeFallback(workspaceId) : "/assistente";
 
-  return { modules, isEnabled, isLoading, isReady: isFetched && Boolean(modules), homeHref };
+  return { modules, edition, isEnabled, isLoading, isReady: isFetched && Boolean(modules), homeHref };
 }

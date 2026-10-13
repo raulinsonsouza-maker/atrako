@@ -73,11 +73,20 @@ export type EngineInput<C extends EngineCandidate = EngineCandidate> = {
   history: HistoryMessage[];
   /** Pergunta já protegida (sem PII em claro). */
   question: string;
+  /** Instruções extras desta conversa. O agente do app não recebe as do WhatsApp. */
+  instructions?: string;
   /** Bloco [Anexos] da mensagem atual. Não entra na checagem de "pode montar". */
   contextNote?: string;
   /** Páginas que esta conversa já leu. ler_pagina não busca de novo. */
   knownPages?: RememberedPage[];
   vault?: PiiVault;
+  /** Contexto do lead, só no atendimento do WhatsApp. */
+  attendance?: {
+    leadId: string;
+    conversationId: string;
+    phone: string;
+    contactId: string | null;
+  };
   onEvent?: (event: EngineEvent) => void;
   signal?: AbortSignal;
   maxRounds?: number;
@@ -132,10 +141,11 @@ function questionWithNote(input: Pick<EngineInput, "question" | "contextNote">) 
   return note ? `${input.question}\n\n${note}` : input.question;
 }
 
-export function buildMessages(input: Pick<EngineInput, "ctx" | "tools" | "history" | "question" | "contextNote">): Msg[] {
-  const system = buildAtrakoSystemPrompt({
+export function buildMessages(input: Pick<EngineInput, "ctx" | "tools" | "history" | "question" | "contextNote" | "instructions">): Msg[] {
+  const base = buildAtrakoSystemPrompt({
     workspace: describeWorkspaceContext(input.ctx),
   });
+  const system = input.instructions?.trim() ? `${base}\n\n${input.instructions.trim()}` : base;
   return [
     { role: "system", content: system },
     ...input.history.slice(-12).map((m) => ({ role: m.role, content: m.content.slice(0, 4000) }) as Msg),
@@ -282,6 +292,7 @@ export async function runAtrakoEngine<C extends EngineCandidate>(input: EngineIn
         onProgress: (label) => emit({ type: "step", id: callId, tool: tool.name, label }),
         userText,
         lastUserMessage: input.question,
+        attendance: input.attendance,
       });
       const ms = Date.now() - started;
       steps.push({ tool: tool.name, label: tool.step, source: result.source.label, args, coverage: result.coverage, ms });

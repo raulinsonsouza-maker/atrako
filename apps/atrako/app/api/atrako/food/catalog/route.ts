@@ -3,7 +3,7 @@ import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { requireModuleApi } from "@/lib/modules/resolve";
 import { foodCanManage, foodPanelRole } from "@/lib/food/panel";
 import { asWeekHours } from "@/lib/food/availability";
-import { reorderFood, saveFoodCategory, saveFoodItem, saveStoreHours, storeForWorkspace } from "@/lib/food/editor";
+import { reorderFood, saveFoodCategory, saveFoodItem, saveStoreDelivery, saveStoreHours, storeForWorkspace } from "@/lib/food/editor";
 
 export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
@@ -65,6 +65,16 @@ export async function POST(request: NextRequest) {
     if (!saved.ok) return NextResponse.json({ error: saved.error }, { status: 400 });
   } else if (action === "hours") {
     const saved = await saveStoreHours(workspaceId, asWeekHours(body.hours));
+    if (!saved.ok) return NextResponse.json({ error: saved.error }, { status: 400 });
+  } else if (action === "delivery") {
+    const saved = await saveStoreDelivery({
+      workspaceId,
+      deliveryEnabled: body.deliveryEnabled !== false,
+      pickupEnabled: body.pickupEnabled !== false,
+      minOrderCents: Number(body.minOrderCents) || 0,
+      pickupAddress: typeof body.pickupAddress === "string" ? body.pickupAddress : "",
+      rules: body.rules,
+    });
     if (!saved.ok) return NextResponse.json({ error: saved.error }, { status: 400 });
   } else {
     return NextResponse.json({ error: "Ação inválida" }, { status: 400 });

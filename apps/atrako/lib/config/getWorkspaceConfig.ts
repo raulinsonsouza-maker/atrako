@@ -50,6 +50,7 @@ export async function getWorkspaceConfig(workspaceId: string) {
       formsPrefs: (settings.formsPrefs as Record<string, unknown>) ?? {},
       messagingPrefs: (settings.messagingPrefs as Record<string, unknown>) ?? {},
       onboardingStep: settings.onboardingStep,
+      edition: settings.edition,
     },
     connections,
   };

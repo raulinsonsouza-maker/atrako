@@ -86,6 +86,55 @@ export async function createMercadoPagoOrder(input: CreateMpOrderInput) {
   };
 }
 
+export async function getMercadoPagoPayment(workspaceId: string, paymentId: string) {
+  const res = await mpFetch(workspaceId, `/v1/payments/${paymentId}`);
+  const data = (await res.json()) as {
+    status?: string;
+    external_reference?: string;
+    transaction_amount?: number;
+  };
+  if (!res.ok) throw new Error("Falha ao buscar pagamento MP");
+  return {
+    status: String(data.status ?? ""),
+    externalReference: String(data.external_reference ?? ""),
+    amount: Number(data.transaction_amount ?? 0),
+  };
+}
+
+export async function listMpInstallments(workspaceId: string, bin: string, amount: number) {
+  const creds = await resolveMercadoPago(workspaceId);
+  if (!creds?.publicKey) throw new Error("Mercado Pago sem chave pública neste workspace");
+  const url = new URL("https://api.mercadopago.com/v1/payment_methods/installments");
+  url.searchParams.set("public_key", creds.publicKey);
+  url.searchParams.set("bin", bin);
+  url.searchParams.set("amount", amount.toFixed(2));
+  const res = await fetch(url);
+  const data = (await res.json()) as Array<{
+    payment_method_id?: string;
+    payer_costs?: Array<{
+      installments?: number;
+      installment_amount?: number;
+      total_amount?: number;
+      recommended_message?: string;
+    }>;
+  }>;
+  if (!res.ok || !Array.isArray(data) || !data[0]) {
+    throw new Error("Não foi possível consultar as parcelas.");
+  }
+  const row = data[0];
+  return {
+    paymentMethodId: String(row.payment_method_id || ""),
+    options: (row.payer_costs ?? [])
+      .filter((item) => Number(item.installments) >= 1)
+      .map((item) => ({
+        installments: Number(item.installments),
+        installmentAmountCents: Math.round(Number(item.installment_amount || 0) * 100),
+        totalAmountCents: Math.round(Number(item.total_amount || 0) * 100),
+        label: item.recommended_message || `${item.installments}x`,
+      })),
+  };
+}
+
 export async function getMercadoPagoOrder(workspaceId: string, mpOrderId: string) {
   const res = await mpFetch(workspaceId, `/v1/orders/${mpOrderId}`);
   const data = await res.json();

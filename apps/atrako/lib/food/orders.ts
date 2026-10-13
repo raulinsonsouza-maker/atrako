@@ -20,6 +20,8 @@ import {
   type QuoteLine,
 } from "@/lib/food/quote";
 import { asItemSchedule, asWeekHours, isItemOrderable } from "@/lib/food/availability";
+import { asDeliveryRules, quoteDelivery, type DeliverySnapshot } from "@/lib/food/delivery";
+import { rememberFoodAddress } from "@/lib/food/customer";
 import { sendFoodStatusMessage } from "@/lib/food/status-message";
 
 export const FOOD_REF_PREFIX = "food:";
@@ -30,6 +32,8 @@ type AddressInput = {
   number?: string;
   complement?: string;
   neighborhood?: string;
+  lat?: number | null;
+  lng?: number | null;
 };
 
 export type FoodChannel = "STORE" | "WHATSAPP" | "COUNTER";
@@ -44,6 +48,8 @@ export type CreateFoodOrderInput = {
   phone: string;
   couponCode?: string | null;
   changeForCents?: number | null;
+  expectedTotalCents?: number | null;
+  verifiedContactId?: string | null;
   address?: AddressInput | null;
   items: Array<{
     itemId: string;
@@ -164,6 +170,8 @@ export async function previewFoodOrder(input: CreateFoodOrderInput) {
     deliveryFeeCents: priced.quote.deliveryFeeCents,
     totalCents: priced.quote.totalCents,
     couponCode: priced.quote.couponCode,
+    distanceKm: priced.delivery.distanceKm,
+    deliveryMethod: priced.delivery.method,
   };
 }
 
@@ -177,18 +185,32 @@ async function priceCheckout(input: CreateFoodOrderInput) {
     ? await prisma.foodCoupon.findFirst({ where: { storeId: store.id, code: couponCode, active: true } })
     : null;
   if (couponCode && !coupon) return { ok: false as const, error: "Cupom não encontrado.", status: 400 };
+  const subtotalCents = loaded.lines.reduce((sum, line) => sum + line.priceCents * line.quantity, 0);
+  const destination =
+    input.address?.lat != null && input.address?.lng != null
+      ? { lat: Number(input.address.lat), lng: Number(input.address.lng) }
+      : null;
+  const delivery = quoteDelivery({
+    rules: asDeliveryRules(store.deliveryRules),
+    fulfillment: input.fulfillment,
+    deliveryEnabled: store.deliveryEnabled,
+    flatFeeCents: store.deliveryFeeCents,
+    subtotalCents,
+    destination,
+  });
+  if (!delivery.ok) return { ok: false as const, error: delivery.error, status: 400 };
   const quote = quoteFoodOrder({
     acceptingOrders: store.acceptingOrders && store.status === "PUBLISHED",
     deliveryEnabled: store.deliveryEnabled,
     pickupEnabled: store.pickupEnabled,
-    deliveryFeeCents: store.deliveryFeeCents,
+    deliveryFeeCents: delivery.snapshot.feeCents,
     minOrderCents: store.minOrderCents,
     fulfillment: input.fulfillment,
     lines: loaded.lines,
     coupon: coupon ? { code: coupon.code, type: coupon.type === "FIXED" ? "FIXED" : "PERCENT", value: coupon.value } : null,
   });
   if (!quote.ok) return { ok: false as const, error: quote.error, status: 400 };
-  return { ok: true as const, store, loaded, quote, coupon };
+  return { ok: true as const, store, loaded, quote, coupon, delivery: delivery.snapshot };
 }
 
 export async function createFoodOrder(input: CreateFoodOrderInput) {
@@ -208,7 +230,17 @@ export async function createFoodOrder(input: CreateFoodOrderInput) {
 
   const priced = await priceCheckout(input);
   if (!priced.ok) return priced;
-  const { store, loaded, quote } = priced;
+  const { store, loaded, quote, delivery } = priced;
+  if (input.expectedTotalCents != null && input.expectedTotalCents !== quote.totalCents) {
+    return {
+      ok: false as const,
+      error: "O frete mudou. Confira o novo valor antes de confirmar.",
+      status: 409,
+      totalCents: quote.totalCents,
+      deliveryFeeCents: quote.deliveryFeeCents,
+      distanceKm: delivery.distanceKm,
+    };
+  }
 
   const existing = await prisma.foodOrder.findUnique({
     where: { storeId_clientRequestId: { storeId: store.id, clientRequestId: input.clientRequestId.slice(0, 80) } },
@@ -265,8 +297,10 @@ export async function createFoodOrder(input: CreateFoodOrderInput) {
                 number: input.address?.number ?? "",
                 complement: input.address?.complement ?? "",
                 neighborhood: input.address?.neighborhood ?? "",
+                ...(delivery.destination ? { lat: delivery.destination.lat, lng: delivery.destination.lng } : {}),
               }
             : Prisma.JsonNull,
+        deliveryQuote: delivery as DeliverySnapshot,
         paymentMethod: input.paymentMethod,
         paymentStatus: payOnDelivery ? "PAY_ON_DELIVERY" : "PENDING",
         fulfillmentStatus: "NEW",
@@ -292,6 +326,19 @@ export async function createFoodOrder(input: CreateFoodOrderInput) {
       include: { items: true },
     });
   });
+
+  const trusted = input.channel === "WHATSAPP" || (input.verifiedContactId != null && input.verifiedContactId === contact.id);
+  if (trusted && delivery.destination && input.address) {
+    await rememberFoodAddress(contact.id, {
+      cep: input.address.cep ?? "",
+      street: input.address.street ?? "",
+      number: input.address.number ?? "",
+      complement: input.address.complement ?? "",
+      neighborhood: input.address.neighborhood ?? "",
+      lat: delivery.destination.lat,
+      lng: delivery.destination.lng,
+    }).catch(() => null);
+  }
 
   await notify({
     clienteId: store.clienteId,

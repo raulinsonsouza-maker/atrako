@@ -34,6 +34,7 @@ export type FlowContextData = {
   destination?: string | null;
   orderRef?: string | null;
   provider?: string | null;
+  storeName?: string | null;
   couponExpires?: string | null;
   includePurchased?: boolean;
 };
@@ -136,7 +137,7 @@ export async function prepareEmail(input: {
 
   const ctx = {
     contactName: input.contact.name,
-    storeName: brand.storeName,
+    storeName: input.data.storeName || brand.storeName,
     couponCode: input.couponCode ?? null,
     couponExpires: input.data.couponExpires ?? null,
     items,
@@ -328,7 +329,7 @@ export async function sendWhatsAppMessage(input: {
     where: { id: input.clienteId },
     select: { nome: true, logoUrl: true },
   });
-  const storeName = cliente?.nome ?? "Loja";
+  const storeName = input.data.storeName || cliente?.nome || "Loja";
   const originUrl = getServerPublicOrigin();
   const token = newTrackingToken();
   const items = input.data.items ?? [];

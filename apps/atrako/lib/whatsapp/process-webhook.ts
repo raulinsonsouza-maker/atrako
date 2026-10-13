@@ -26,6 +26,7 @@ type WaChangeValue = {
     text?: { body?: string };
     button?: { text?: string; payload?: string };
     interactive?: { button_reply?: { id?: string; title?: string }; list_reply?: { title?: string } };
+    location?: { latitude?: number; longitude?: number };
   }>;
   statuses?: Array<{
     id?: string;
@@ -88,12 +89,16 @@ export async function processWhatsAppWebhookPayload(payload: unknown) {
       for (const msg of value.messages ?? []) {
         if (!msg.from) continue;
         const phone = normalizeWaPhone(msg.from);
+        const location =
+          msg.type === "location" && msg.location && Number.isFinite(Number(msg.location.latitude))
+            ? { lat: Number(msg.location.latitude), lng: Number(msg.location.longitude) }
+            : null;
         const bodyText =
           msg.text?.body ||
           msg.button?.text ||
           msg.interactive?.button_reply?.title ||
           msg.interactive?.list_reply?.title ||
-          (msg.type ? `[${msg.type}]` : null);
+          (location ? "Localização recebida" : msg.type ? `[${msg.type}]` : null);
 
         const { contact, lead } = await upsertPersonAndLead({
           workspaceId,
@@ -111,26 +116,46 @@ export async function processWhatsAppWebhookPayload(payload: unknown) {
           openWindow: true,
         });
 
-        await persistInboundMessage({
+        const saved = await persistInboundMessage({
           workspaceId,
           conversationId: conversation.id,
           body: bodyText,
           wamid: msg.id ?? null,
           type: msg.type || "text",
         });
+        if (saved.duplicate) continue;
 
-        await handleFlowInbound(workspaceId, contact.id, msg).catch((e) =>
-          console.warn("[whatsapp/webhook] flow inbound failed", e instanceof Error ? e.message : e),
-        );
+        const flow = await handleFlowInbound(workspaceId, contact.id, msg).catch((e) => {
+          console.warn("[whatsapp/webhook] flow inbound failed", e instanceof Error ? e.message : e);
+          return null;
+        });
+        if (flow?.action === "optout_all" || flow?.action === "optout_marketing" || flow?.action === "handoff") {
+          continue;
+        }
 
         const { handleFoodWhatsAppMessage } = await import("@/lib/food/whatsapp-order");
-        await handleFoodWhatsAppMessage({
+        const foodHandled = await handleFoodWhatsAppMessage({
           workspaceId,
           conversationId: conversation.id,
           phone,
           contactName: contact.name,
           body: bodyText,
-        }).catch((e) => console.warn("[whatsapp/webhook] food order failed", e instanceof Error ? e.message : e));
+          location,
+        }).catch((e) => {
+          console.warn("[whatsapp/webhook] food order failed", e instanceof Error ? e.message : e);
+          return false;
+        });
+        if (!foodHandled) {
+          const { handleAttendanceInbound } = await import("@/lib/attendance/run");
+          await handleAttendanceInbound({
+            workspaceId,
+            conversationId: conversation.id,
+            contactId: contact.id,
+            leadId: lead.id,
+            phone,
+            body: bodyText,
+          }).catch((e) => console.warn("[whatsapp/webhook] attendance failed", e instanceof Error ? e.message : e));
+        }
 
         const event = createEvent({
           name: "conversation.started",

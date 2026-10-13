@@ -389,13 +389,20 @@ const LEAD_SOURCE_LABELS: Record<string, string> = {
   magalu: "Magalu",
   instagram: "Instagram",
   whatsapp: "WhatsApp",
+  campaign: "Campanha WhatsApp",
   meta: "Meta",
+  meta_lead: "Meta Lead Ads",
+  rd: "RD Station",
+  csv: "Planilha",
+  stay: "Hospedagem",
+  food: "Food",
 };
 
 /** `mercadolivre` e `MERCADO_LIVRE` viram o mesmo nome. */
 export function leadSourceLabel(source: string) {
   const raw = source.trim();
   const upper = raw.toUpperCase().replace(/[\s-]+/g, "_");
+  if (raw.toLowerCase().startsWith("campaign:")) return LEAD_SOURCE_LABELS.campaign;
   return STORE_PROVIDER_LABELS[upper] ?? LEAD_SOURCE_LABELS[raw.toLowerCase()] ?? raw;
 }
 

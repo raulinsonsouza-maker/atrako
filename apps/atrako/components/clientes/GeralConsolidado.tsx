@@ -9,7 +9,7 @@ import { channelColor } from "@/lib/commerce-attribution/channel-color";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { rotuloEixo, rotuloTooltip, type ChartAgrupamento } from "@/lib/chart-bucket";
 import { mobileTickInterval } from "@/lib/chart-mobile";
-import { MetricTile } from "@/components/ui";
+import { MetricTile, PillSelect } from "@/components/ui";
 
 type Consolidado = {
   clientes?: RepurchaseMetrics | null;
@@ -42,6 +42,14 @@ type Consolidado = {
     participacao: number | null;
   };
   canaisVenda: Array<{ id: string; label: string; pedidos: number; receitaCents: number }>;
+  /** Cada ponto de venda com a conversão dele (loja: como chegou; marketplace: o próprio canal). */
+  detalheCanais?: Array<{
+    id: string;
+    label: string;
+    pedidos: number;
+    receitaCents: number;
+    origens: Array<{ id: string; label: string; pedidos: number; receitaCents: number }>;
+  }>;
   canaisMidia: Array<{
     id: string;
     label: string;
@@ -60,25 +68,6 @@ const roasText = (roas: number | null | undefined) => (roas != null ? `${roas.to
 
 const MEDIA_LABELS: Record<string, string> = { META: "Meta Ads", GOOGLE: "Google Ads" };
 
-/** Loja própria: o pedido nasce nela e a origem é como o cliente chegou. */
-const STORE_PROVIDERS = new Set(["WOOCOMMERCE", "SHOPIFY", "NUVEMSHOP", "TRAY"]);
-/** Chaves de `orderOriginKey` quando o pedido é da loja (não marketplace nem checkout). */
-const TRAFFIC_ORIGINS = new Set([
-  "meta_ads",
-  "google_ads",
-  "instagram",
-  "facebook",
-  "google_organic",
-  "email",
-  "whatsapp",
-  "direct",
-  "referral",
-  "admin",
-  "other",
-  "unknown",
-]);
-const MARKETPLACES = new Set(["MERCADO_LIVRE", "SHOPEE", "TIKTOK_SHOP"]);
-
 type OrigemVenda = { id: string; label: string; pedidos: number; receitaCents: number };
 
 /** Geral de loja: resultado real + onde a venda entrou (loja, marketplace) e como o cliente chegou. */
@@ -93,19 +82,12 @@ function EcommerceGeral({
   onOrigem: (id: string | null) => void;
   fetching: boolean;
 }) {
-  const { totais, canaisMidia, canaisVenda } = data;
+  const { totais, canaisMidia } = data;
   const origens = data.origens ?? [];
-  const totalCents = origens.reduce((s, o) => s + o.receitaCents, 0);
+  const canais = data.detalheCanais ?? [];
+  const totalCents = canais.reduce((s, c) => s + c.receitaCents, 0) || origens.reduce((s, o) => s + o.receitaCents, 0);
   const totalPedidosOrigens = origens.reduce((s, o) => s + o.pedidos, 0);
   const semOrigem = origens.find((o) => o.id === "unknown");
-  const lojasDoPeriodo = canaisVenda.filter((c) => STORE_PROVIDERS.has(c.id));
-  const lojasSig = lojasDoPeriodo.map((l) => `${l.id}:${l.label}:${l.receitaCents}:${l.pedidos}`).join("|");
-  const [lojas, setLojas] = useState(lojasDoPeriodo);
-  const [lojasSigVista, setLojasSigVista] = useState(origem ? "" : lojasSig);
-  if (!origem && !fetching && lojasSig !== lojasSigVista) {
-    setLojas(lojasDoPeriodo);
-    setLojasSigVista(lojasSig);
-  }
   const origemLabel = origem ? origens.find((o) => o.id === origem)?.label ?? "Origem selecionada" : null;
   const midiaLabel = origem
     ? data.midiaDaOrigem
@@ -142,8 +124,7 @@ function EcommerceGeral({
       <VendasSerie data={data} origemLabel={origemLabel} />
 
       <VendasPorLugar
-        origens={origens}
-        lojas={lojas}
+        canais={canais}
         totalCents={totalCents}
         origem={origem}
         onOrigem={onOrigem}
@@ -157,108 +138,109 @@ function EcommerceGeral({
   );
 }
 
+type CanalVenda = OrigemVenda & { origens: OrigemVenda[] };
+
 function VendasPorLugar({
-  origens,
-  lojas,
+  canais,
   totalCents,
   origem,
   onOrigem,
   semOrigem,
 }: {
-  origens: OrigemVenda[];
-  lojas: OrigemVenda[];
+  canais: CanalVenda[];
   totalCents: number;
   origem: string | null;
   onOrigem: (id: string | null) => void;
   semOrigem: boolean;
 }) {
-  const chegada = origens.filter((o) => TRAFFIC_ORIGINS.has(o.id));
-  const lugares = origens.filter((o) => !TRAFFIC_ORIGINS.has(o.id));
-  const temLoja = chegada.length > 0;
-  const titulo = temLoja && lugares.length === 0 ? "Como chegaram" : "Onde vendeu";
-  const lojaCents = chegada.reduce((s, o) => s + o.receitaCents, 0);
-  const nomeLoja = lojas.length === 1 ? lojas[0].label : lojas.length > 1 ? "Lojas" : "Loja";
-  const lugarTitulo =
-    lugares.length < 2 ? null : lugares.every((o) => MARKETPLACES.has(o.id)) ? "Marketplaces" : "Outros pontos de venda";
+  const ids = canais.map((c) => c.id).join("|");
+  const forced = origem && canais.some((c) => c.id === origem) ? origem : "";
+  const [canalId, setCanalId] = useState(canais[0]?.id ?? "");
+  const [sig, setSig] = useState("");
+  const nextSig = `${ids}#${forced}`;
+  if (nextSig !== sig) {
+    setSig(nextSig);
+    setCanalId(forced || (canais.some((c) => c.id === canalId) ? canalId : canais[0]?.id ?? ""));
+  }
+  const ativo = canais.find((c) => c.id === canalId) ?? canais[0];
+  const varios = canais.length > 1;
+  const soLoja = canais.length === 1 && (canais[0]?.origens.length ?? 0) > 0;
+  const titulo = soLoja ? "Como chegaram" : "Onde vendeu";
+  const base = ativo && ativo.origens.length > 0 ? ativo.receitaCents : totalCents;
 
   return (
     <div className="rel-card p-5">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="type-caption-strong text-[var(--foreground)]">{titulo}</p>
-        {origem ? (
-          <button
-            type="button"
-            onClick={() => onOrigem(null)}
-            className="type-caption text-[var(--primary)] underline-offset-2 hover:underline"
-          >
-            Ver todas
-          </button>
-        ) : temLoja && lugares.length === 0 && lojas.length === 1 ? (
-          <p className="type-fine-print text-[var(--muted-foreground)]">{lojas[0].label}</p>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-3">
+          {origem ? (
+            <button
+              type="button"
+              onClick={() => onOrigem(null)}
+              className="type-caption text-[var(--primary)] underline-offset-2 hover:underline"
+            >
+              Ver todas
+            </button>
+          ) : null}
+          {varios ? (
+            <PillSelect
+              size="toolbar"
+              align="right"
+              aria-label="Canal de venda"
+              value={ativo?.id ?? ""}
+              onChange={setCanalId}
+              options={canais.map((c) => ({ value: c.id, label: c.label, count: c.pedidos }))}
+            />
+          ) : soLoja ? (
+            <p className="type-fine-print text-[var(--muted-foreground)]">{canais[0].label}</p>
+          ) : null}
+        </div>
       </div>
 
-      {origens.length === 0 ? (
+      {canais.length === 0 || !ativo ? (
         <p className="mt-3 type-fine-print text-[var(--muted-foreground)]">Nenhuma venda no período.</p>
+      ) : ativo.origens.length > 0 ? (
+        <div className="mt-4">
+          {varios ? (
+            <>
+              <div className="flex items-baseline justify-between gap-3 px-2">
+                <p className="type-caption-strong text-[var(--foreground)]">{ativo.label}</p>
+                <ValorOrigem
+                  cents={ativo.receitaCents}
+                  share={pct(ativo.receitaCents, totalCents)}
+                  pedidos={ativo.pedidos}
+                />
+              </div>
+              <p className="px-2 pb-1 pt-3 type-fine-print text-[var(--muted-foreground)]">Como o cliente chegou</p>
+            </>
+          ) : null}
+          <ul className="space-y-1">
+            {ativo.origens.map((o) => (
+              <OrigemButton
+                key={o.id}
+                row={o}
+                share={pct(o.receitaCents, base)}
+                selected={origem === o.id}
+                dimmed={Boolean(origem) && origem !== o.id}
+                nested={false}
+                onPick={() => onOrigem(origem === o.id ? null : o.id)}
+              />
+            ))}
+          </ul>
+        </div>
       ) : (
-        <div className="mt-4 space-y-5">
-          {temLoja ? (
-            <div>
-              {lugares.length > 0 ? (
-                <div className="flex items-baseline justify-between gap-3 px-2">
-                  <p className="type-caption-strong text-[var(--foreground)]">{nomeLoja}</p>
-                  <ValorOrigem cents={lojaCents} share={pct(lojaCents, totalCents)} />
-                </div>
-              ) : null}
-              {lugares.length > 0 && lojas.length > 1 ? (
-                <ul className="mt-1">
-                  {lojas.map((loja) => (
-                    <li key={loja.id} className="flex items-baseline justify-between gap-3 px-2 py-1">
-                      <span className="type-caption text-[var(--foreground)]">{loja.label}</span>
-                      <span className="type-caption tabular-nums text-[var(--foreground)]">{brl(loja.receitaCents / 100)}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-              {lugares.length > 0 ? (
-                <p className="px-2 pb-1 pt-3 type-fine-print text-[var(--muted-foreground)]">
-                  {lojas.length > 1 ? "Como o cliente chegou, somando as lojas" : "Como o cliente chegou"}
-                </p>
-              ) : null}
-              <ul className="space-y-1">
-                {chegada.map((o) => (
-                  <OrigemButton
-                    key={o.id}
-                    row={o}
-                    share={pct(o.receitaCents, totalCents)}
-                    selected={origem === o.id}
-                    dimmed={Boolean(origem) && origem !== o.id}
-                    nested={lugares.length > 0}
-                    onPick={() => onOrigem(origem === o.id ? null : o.id)}
-                  />
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          {lugares.length > 0 ? (
-            <div className={temLoja ? "border-t border-[var(--divider-soft)] pt-4" : undefined}>
-              {lugarTitulo ? <p className="px-2 pb-1 type-fine-print text-[var(--muted-foreground)]">{lugarTitulo}</p> : null}
-              <ul className="space-y-1">
-                {lugares.map((o) => (
-                  <OrigemButton
-                    key={o.id}
-                    row={o}
-                    share={pct(o.receitaCents, totalCents)}
-                    selected={origem === o.id}
-                    dimmed={Boolean(origem) && origem !== o.id}
-                    nested={false}
-                    onPick={() => onOrigem(origem === o.id ? null : o.id)}
-                  />
-                ))}
-              </ul>
-            </div>
-          ) : null}
+        <div className="mt-4">
+          <p className="px-2 pb-1 type-fine-print text-[var(--muted-foreground)]">A venda já entra por este canal</p>
+          <ul className="space-y-1">
+            <OrigemButton
+              row={ativo}
+              share={pct(ativo.receitaCents, totalCents)}
+              selected={origem === ativo.id}
+              dimmed={Boolean(origem) && origem !== ativo.id}
+              nested={false}
+              onPick={() => onOrigem(origem === ativo.id ? null : ativo.id)}
+            />
+          </ul>
         </div>
       )}
 
@@ -538,7 +520,7 @@ export function GeralConsolidado({
   query: string;
 }) {
   const [origem, setOrigem] = useState<string | null>(null);
-  const { data, isLoading, isPlaceholderData } = useQuery({
+  const { data, isLoading, isError, isPlaceholderData } = useQuery({
     queryKey: ["cliente-consolidado", clienteId, query, origem],
     queryFn: async () => {
       const qs = origem ? `${query}&origem=${encodeURIComponent(origem)}` : query;
@@ -547,7 +529,16 @@ export function GeralConsolidado({
       return (await res.json()) as Consolidado;
     },
     placeholderData: keepPreviousData,
+    retry: false,
   });
+
+  if (isError) {
+    return (
+      <div className="rel-card p-5 type-caption text-[var(--muted-foreground)]">
+        Não foi possível somar os canais. Entre de novo para testar esta conta.
+      </div>
+    );
+  }
 
   if (isLoading || !data) {
     return (

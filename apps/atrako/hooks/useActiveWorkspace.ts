@@ -37,6 +37,7 @@ export function useActiveWorkspace() {
         Array<{ id: string; nome: string; slug?: string; ativo?: boolean }>
       >;
     },
+    retry: false,
   });
 
   const workspaceId = useMemo(() => {

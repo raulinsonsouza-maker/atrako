@@ -24,7 +24,7 @@ function inline(text: string, keyBase: string): ReactNode[] {
     if (!part) return null;
     if (part.startsWith("**") && part.endsWith("**")) {
       return (
-        <strong key={key} className="font-semibold">
+        <strong key={key}>
           {part.slice(2, -2)}
         </strong>
       );

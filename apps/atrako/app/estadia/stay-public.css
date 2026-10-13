@@ -4,6 +4,7 @@
   --ink: #172019;
   --cream: #f1f0e9;
   --line: rgba(23, 32, 25, 0.18);
+  position: relative;
   min-height: 100vh;
   background: var(--cream);
   color: var(--ink);
@@ -12,7 +13,7 @@
 .stay-public a { color: inherit; text-decoration: none; }
 .stay-public button, .stay-public input { font: inherit; }
 .stay-public .site-nav {
-  position: fixed; z-index: 30; top: 0; left: 0; right: 0;
+  position: absolute; z-index: 30; top: 0; left: 0; right: 0;
   display: flex; justify-content: space-between; align-items: center;
   padding: 22px 4vw; color: white; mix-blend-mode: difference;
 }

@@ -695,10 +695,26 @@ function Pares({ pares }: { pares: Comportamento["pares"] }) {
   );
 }
 
+const VISITA = new Set([
+  "meta_ads",
+  "google_ads",
+  "instagram",
+  "facebook",
+  "google_organic",
+  "email",
+  "whatsapp",
+  "direct",
+  "referral",
+  "admin",
+  "other",
+  "unknown",
+]);
+
 type Filtro = {
   genero?: "f" | "m" | "u";
   produto?: string;
   origem?: string;
+  canal?: string;
   compra?: "nova" | "recompra";
   dia?: number;
   hora?: number;
@@ -711,6 +727,7 @@ function filtroQuery(base: string, filtro: Filtro) {
   if (filtro.genero) params.set("genero", filtro.genero);
   if (filtro.produto) params.set("produto", filtro.produto);
   if (filtro.origem) params.set("origem", filtro.origem);
+  if (filtro.canal) params.set("canal", filtro.canal);
   if (filtro.compra) params.set("compra", filtro.compra);
   if (filtro.dia != null) params.set("dia", String(filtro.dia));
   if (filtro.hora != null) params.set("hora", String(filtro.hora));
@@ -782,7 +799,7 @@ function PedidoNoCard({ compra }: { compra: Comportamento["topCompradores"][numb
 
 export function ComportamentoSection({ clienteId, query }: { clienteId: string; query: string }) {
   const [filtro, setFiltro] = useState<Filtro>({});
-  const [rotulos, setRotulos] = useState<{ produto?: string; origem?: string; lugar?: string }>({});
+  const [rotulos, setRotulos] = useState<{ produto?: string; origem?: string; canal?: string; lugar?: string }>({});
   const [comprador, setComprador] = useState<Comportamento["topCompradores"][number] | null>(null);
   const pedido = filtroQuery(query, filtro);
   const { data, isLoading, isPlaceholderData, isError } = useQuery({
@@ -815,10 +832,13 @@ export function ComportamentoSection({ clienteId, query }: { clienteId: string; 
   const generoVisao = data.facetas?.genero ?? data.genero;
   const produtosVisao = data.facetas?.produtos ?? data.produtos;
   const origensVisao = data.facetas?.origens ?? data.origens;
+  const canaisVisao = data.facetas?.canais ?? data.canais ?? [];
+  const origensVisita = origensVisao.filter((row) => VISITA.has(row.id));
   const heatmapVisao = data.facetas?.heatmap ?? data.heatmap;
   const estadosVisao = data.facetas?.estados ?? data.estados;
   const produtoNome = rotulos.produto ?? produtosVisao.find((row) => row.id === filtro.produto)?.nome;
   const origemNome = rotulos.origem ?? origensVisao.find((row) => row.id === filtro.origem)?.label;
+  const canalNome = rotulos.canal ?? canaisVisao.find((row) => row.id === filtro.canal)?.label;
   const estadoNome = rotulos.lugar ?? estadosVisao.find((row) => row.uf === filtro.uf)?.nome;
   const recompraVisao = data.facetas?.recompra ?? data.recompra;
   const serieVisao = data.facetas?.serie ?? data.serie;
@@ -841,6 +861,13 @@ export function ComportamentoSection({ clienteId, query }: { clienteId: string; 
       id: "produto",
       label: `Produto · ${produtoNome ?? "Produto"}`,
       off: () => setFiltro((atual) => ({ ...atual, produto: undefined })),
+    });
+  }
+  if (filtro.canal) {
+    chips.push({
+      id: "canal",
+      label: `Canal · ${canalNome ?? "Canal"}`,
+      off: () => setFiltro((atual) => ({ ...atual, canal: undefined })),
     });
   }
   if (filtro.origem) {
@@ -922,21 +949,37 @@ export function ComportamentoSection({ clienteId, query }: { clienteId: string; 
         <Kpi label="Ticket da recompra" value={money(data.tickets.recompraCents)} tone={ticketTone(data.tickets.recompraCents, before.recompraCents)} />
       </div>
 
-      <Card title="Origem">
-        {origensVisao.length === 0 ? (
-          <p className="type-fine-print text-[var(--muted-foreground)]">Nenhuma venda paga no período.</p>
-        ) : (
+      {canaisVisao.length > 0 ? (
+        <Card title="Canal">
           <Origens
-            origens={origensVisao}
+            origens={canaisVisao}
+            selecionado={filtro.canal ?? null}
+            onSelect={(id) => {
+              const nome = canaisVisao.find((row) => row.id === id)?.label;
+              setRotulos((atual) => ({ ...atual, canal: nome }));
+              setFiltro((atual) => ({
+                ...atual,
+                canal: atual.canal === id ? undefined : id,
+                origem: undefined,
+              }));
+            }}
+          />
+        </Card>
+      ) : null}
+
+      {origensVisita.length > 0 ? (
+        <Card title="Origem">
+          <Origens
+            origens={origensVisita}
             selecionado={filtro.origem ?? null}
             onSelect={(id) => {
-              const nome = origensVisao.find((row) => row.id === id)?.label;
+              const nome = origensVisita.find((row) => row.id === id)?.label;
               setRotulos((atual) => ({ ...atual, origem: nome }));
               setFiltro((atual) => ({ ...atual, origem: atual.origem === id ? undefined : id }));
             }}
           />
-        )}
-      </Card>
+        </Card>
+      ) : null}
 
       <div className="grid items-start gap-3 lg:grid-cols-2">
         <Card title={comprador ? undefined : "Top 10 compradores"}>

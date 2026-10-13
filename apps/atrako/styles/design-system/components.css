@@ -7770,31 +7770,56 @@ nav.channel-tabs::-webkit-scrollbar {
 }
 
 /* Markdown das respostas (negrito, listas, tabelas). */
+.assistant-md {
+  font-variant-numeric: tabular-nums;
+}
+
+.assistant-md strong {
+  font-weight: 500;
+}
+
 .assistant-md > * + * {
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .assistant-md-heading {
-  margin-top: 16px;
+  margin-top: 18px;
   color: var(--ink);
 }
 
 .assistant-md-ul,
 .assistant-md-ol {
-  padding-left: 20px;
+  margin: 0;
 }
 
 .assistant-md-ul {
-  list-style: disc;
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.assistant-md-ul li {
+  position: relative;
+  padding-left: 16px;
+}
+
+.assistant-md-ul li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--primary);
 }
 
 .assistant-md-ol {
+  display: grid;
+  gap: 8px;
+  padding-left: 1.25rem;
   list-style: decimal;
-}
-
-.assistant-md-ul li + li,
-.assistant-md-ol li + li {
-  margin-top: 4px;
 }
 
 .assistant-md-code {
@@ -7816,11 +7841,12 @@ nav.channel-tabs::-webkit-scrollbar {
   border-collapse: collapse;
   font-size: 13px;
   line-height: 1.4;
+  font-variant-numeric: tabular-nums;
 }
 
 .assistant-md-table th,
 .assistant-md-table td {
-  padding: 8px 12px;
+  padding: 10px 14px;
   text-align: left;
   white-space: nowrap;
 }
@@ -7939,7 +7965,50 @@ nav.channel-tabs::-webkit-scrollbar {
 
 .chart-card-plot {
   height: 220px;
-  margin-left: -8px;
+  margin-left: -4px;
+}
+
+.chart-card-compare {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 18px 24px;
+}
+
+.chart-card-compare-item {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.chart-card-compare-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-card-meter {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--canvas-parchment);
+}
+
+.chart-card-meter > span {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+}
+
+.chart-card-delta {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted-48);
+}
+
+.chart-card-delta[data-dir="up"] {
+  color: var(--success);
+}
+
+.chart-card-delta[data-dir="down"] {
+  color: var(--danger);
 }
 
 .chart-card-legend {
@@ -7988,8 +8057,21 @@ nav.channel-tabs::-webkit-scrollbar {
 }
 
 .chart-card-donut-plot {
+  position: relative;
   width: 160px;
   height: 160px;
+}
+
+.chart-card-donut-total {
+  position: absolute;
+  inset: 28%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  text-align: center;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
 }
 
 .chart-card-funnel {
@@ -8004,7 +8086,7 @@ nav.channel-tabs::-webkit-scrollbar {
 
 .chart-card-funnel-track {
   display: block;
-  height: 8px;
+  height: 10px;
   border-radius: var(--radius-full);
   background: var(--canvas-parchment);
   overflow: hidden;

@@ -115,6 +115,7 @@ export async function GET(
   ]);
 
   type Bucket = { id: string; label: string; pedidos: number; receitaCents: number };
+  type CanalAcc = Bucket & { origens: Map<string, Bucket> };
   const add = (map: Map<string, Bucket>, id: string, label: string, cents: number) => {
     const row = map.get(id) ?? { id, label, pedidos: 0, receitaCents: 0 };
     row.pedidos += 1;
@@ -123,6 +124,15 @@ export async function GET(
   };
   const porLoja = new Map<string, Bucket>();
   const porOrigem = new Map<string, Bucket>();
+  const porCanal = new Map<string, CanalAcc>();
+  const touchCanal = (id: string, label: string) => {
+    let row = porCanal.get(id);
+    if (!row) {
+      row = { id, label, pedidos: 0, receitaCents: 0, origens: new Map() };
+      porCanal.set(id, row);
+    }
+    return row;
+  };
   const vendasDia = new Map<string, { receitaCents: number; pedidos: number }>();
   const addDia = (at: Date | null, cents: number) => {
     if (!at) return;
@@ -149,6 +159,10 @@ export async function GET(
         ? "Sem origem"
         : CHANNEL_LABELS[key as OrderChannel] ?? key;
     add(porOrigem, key, label, cents);
+    const canal = touchCanal(o.provider, lojaLabel);
+    canal.pedidos += 1;
+    canal.receitaCents += cents;
+    if (SITE_PROVIDERS.has(o.provider)) add(canal.origens, key, label, cents);
     if (origem && key !== origem) continue;
     add(porLoja, o.provider, lojaLabel, cents);
     addDia(o.occurredAt, cents);
@@ -163,6 +177,9 @@ export async function GET(
       receitaCents: checkout.reduce((s, c) => s + (c.totalCents ?? 0), 0),
     };
     porOrigem.set(row.id, { ...row });
+    const canalCheckout = touchCanal(row.id, row.label);
+    canalCheckout.pedidos = row.pedidos;
+    canalCheckout.receitaCents = row.receitaCents;
     if (!origem || origem === row.id) {
       canaisVenda.push(row);
       for (const c of checkout) addDia(c.createdAt, c.totalCents ?? 0);
@@ -237,6 +254,18 @@ export async function GET(
   const metaMidia = !filtro || filtro === "meta_ads" ? canaisMidia.find((m) => m.id === "META") : undefined;
   const metaReceita = (porOrigem.get("meta_ads")?.receitaCents ?? 0) / 100;
   const origens = fonteVendas === "lojas" ? [...porOrigem.values()].sort((a, b) => b.receitaCents - a.receitaCents) : [];
+  const detalheCanais =
+    fonteVendas === "lojas"
+      ? [...porCanal.values()]
+          .map((c) => ({
+            id: c.id,
+            label: c.label,
+            pedidos: c.pedidos,
+            receitaCents: c.receitaCents,
+            origens: [...c.origens.values()].sort((a, b) => b.receitaCents - a.receitaCents),
+          }))
+          .sort((a, b) => b.receitaCents - a.receitaCents)
+      : [];
 
   // Série de vendas: por dia até ~2 meses, por semana até ~6 meses, por mês no ano.
   const start = new Date(Date.UTC(dataInicio.getFullYear(), dataInicio.getMonth(), dataInicio.getDate()));
@@ -288,6 +317,7 @@ export async function GET(
       participacao: receita > 0 ? Math.round((relReceita / receita) * 1000) / 10 : null,
     },
     canaisVenda,
+    detalheCanais,
     canaisMidia,
     cancelados,
     origens,

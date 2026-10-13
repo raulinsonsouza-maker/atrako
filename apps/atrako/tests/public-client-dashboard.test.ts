@@ -24,6 +24,19 @@ test("mixed clients expose the safe Social Media capability without exposing the
   assert.equal("gestor" in result, false);
   assert.equal("contas" in result, false);
   assert.equal("inPilotAvailable" in result, false);
+  assert.deepEqual(result.linkedPlatforms, []);
+});
+
+test("marca a plataforma ligada sem devolver o id da conta de anúncio", () => {
+  const result = buildPublicClienteDashboard({
+    ...baseClient,
+    perfilPanel: null,
+    contas: [{ plataforma: "META", accountIdPlataforma: "act_123" }],
+  });
+
+  assert.equal("contas" in result, false);
+  assert.deepEqual(result.linkedPlatforms, ["META"]);
+  assert.equal(JSON.stringify(result).includes("act_123"), false);
 });
 
 test("social-only clients expose only the public social-only mode indicator", () => {

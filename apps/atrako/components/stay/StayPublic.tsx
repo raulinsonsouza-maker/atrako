@@ -283,9 +283,13 @@ export function StayPublic({ slug }: { slug: string }) {
               {nights.length && quote?.ok ? (
                 <>
                   <ul>
-                    {nights.map((night) => (
-                      <li key={night}><span>{nightLabel(night)}</span><span>{brl(property.nightlyCents)}</span></li>
-                    ))}
+                    <li>
+                      <span>{nightLabel(checkIn!)} a {nightLabel(checkOut!)}</span>
+                    </li>
+                    <li>
+                      <span>{quote.nights} {quote.nights === 1 ? "noite" : "noites"}</span>
+                      <span>{brl(quote.nights * property.nightlyCents)}</span>
+                    </li>
                     {property.cleaningFeeCents ? <li><span>Limpeza</span><span>{brl(property.cleaningFeeCents)}</span></li> : null}
                   </ul>
                   <div className="stay-quote-total">

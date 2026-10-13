@@ -5,6 +5,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  LabelList,
   Line,
   LineChart,
   Pie,
@@ -34,11 +35,12 @@ export function formatChartValue(value: unknown, unit: ChartUnit, compact = fals
   const n = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(n)) return "—";
   if (unit === "currency") {
+    const useCompact = compact && Math.abs(n) >= 1000;
     return n.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL",
-      notation: compact && Math.abs(n) >= 10_000 ? "compact" : "standard",
-      maximumFractionDigits: compact || Math.abs(n) >= 1000 ? 0 : 2,
+      notation: useCompact ? "compact" : "standard",
+      maximumFractionDigits: useCompact || Math.abs(n) >= 1000 ? 0 : 2,
     });
   }
   if (unit === "percent") return `${n.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
@@ -48,7 +50,7 @@ export function formatChartValue(value: unknown, unit: ChartUnit, compact = fals
   });
 }
 
-const axisTick = { fill: "var(--ink-muted-48)", fontSize: 12 };
+const axisTick = { fill: "var(--ink-muted-80)", fontSize: 12 };
 
 function ChartTooltip({
   active,
@@ -68,7 +70,7 @@ function ChartTooltip({
       {payload.map((p, i) => (
         <p key={i} className="type-caption text-[var(--ink)]">
           <span className="chart-card-dot" style={{ background: p.color }} aria-hidden />
-          {p.name}: <strong className="font-semibold">{formatChartValue(p.value, unit)}</strong>
+          {p.name}: <strong className="font-medium">{formatChartValue(p.value, unit)}</strong>
         </p>
       ))}
     </div>
@@ -119,7 +121,7 @@ function Donut({ chart }: { chart: ChartArtifact }) {
       <div className="chart-card-donut-plot">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie data={rows} dataKey="value" nameKey="name" innerRadius="62%" outerRadius="100%" stroke="none" isAnimationActive={false}>
+            <Pie data={rows} dataKey="value" nameKey="name" innerRadius="64%" outerRadius="100%" stroke="none" paddingAngle={rows.length > 1 ? 1.5 : 0} isAnimationActive={false}>
               {rows.map((_, i) => (
                 <Cell key={i} fill={colors[i % colors.length]} />
               ))}
@@ -127,6 +129,9 @@ function Donut({ chart }: { chart: ChartArtifact }) {
             <Tooltip content={<ChartTooltip unit={chart.unit} />} />
           </PieChart>
         </ResponsiveContainer>
+        <p className="chart-card-donut-total type-caption-strong text-[var(--ink)]">
+          {formatChartValue(total, chart.unit, total >= 10_000)}
+        </p>
       </div>
       <ul className="chart-card-legend chart-card-legend-stack">
         {rows.map((r, i) => (
@@ -143,43 +148,145 @@ function Donut({ chart }: { chart: ChartArtifact }) {
   );
 }
 
-export function ChartCard({ chart }: { chart: ChartArtifact }) {
-  const empty = !chart.data.length;
+function seriesMax(chart: ChartArtifact) {
+  let max = 0;
+  for (const row of chart.data) {
+    for (const s of chart.series) {
+      const n = Number(row[s.key] ?? 0);
+      if (Number.isFinite(n)) max = Math.max(max, Math.abs(n));
+    }
+  }
+  return max;
+}
+
+function pointColor(label: string, value: number, max: number, i: number) {
+  const l = label.toLowerCase();
+  if (l === "anterior") return "var(--chart-spend)";
+  if (l === "atual") return "var(--primary)";
+  if (max > 0 && value === max) return "var(--primary)";
+  return PALETTE[(i + 1) % PALETTE.length];
+}
+
+/** Duas ou três categorias curtas: o número é o gráfico, a barra só compara a escala. */
+function isCompactCompare(chart: ChartArtifact) {
+  if (chart.chart !== "bar" || chart.series.length !== 1 || chart.data.length < 2 || chart.data.length > 3) return false;
+  return chart.data.every((d) => String(d[chart.xKey] ?? "").length <= 18);
+}
+
+function periodDelta(rows: Array<{ label: string; value: number }>) {
+  const prev = rows.find((r) => r.label.toLowerCase() === "anterior");
+  const cur = rows.find((r) => r.label.toLowerCase() === "atual");
+  if (!prev || !cur || !prev.value) return null;
+  const pct = ((cur.value - prev.value) / Math.abs(prev.value)) * 100;
+  const abs = Math.abs(pct).toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+  const dir = pct > 0.05 ? "up" : pct < -0.05 ? "down" : "flat";
+  const text = dir === "up" ? `+${abs}%` : dir === "down" ? `−${abs}%` : "0%";
+  return { dir, text };
+}
+
+function Compare({ chart }: { chart: ChartArtifact }) {
+  const key = chart.series[0]?.key ?? "value";
+  const rows = chart.data.map((d) => ({
+    label: String(d[chart.xKey] ?? ""),
+    value: Number(d[key] ?? 0) || 0,
+  }));
+  const max = Math.max(1, ...rows.map((r) => Math.abs(r.value)));
+  const delta = periodDelta(rows);
   return (
-    <figure className="assistant-chart-card">
+    <>
       <figcaption className="flex flex-wrap items-baseline justify-between gap-2">
         <span className="type-caption-strong text-[var(--ink)]">{chart.title}</span>
-        {chart.series.length > 1 && chart.chart !== "donut" && chart.chart !== "funnel" ? (
-          <ul className="chart-card-legend">
-            {chart.series.map((s, i) => (
-              <li key={s.key} className="type-fine-print text-[var(--ink-muted-80)]">
-                <span className="chart-card-dot" style={{ background: colorFor(s, i) }} aria-hidden />
-                {s.label}
-              </li>
-            ))}
-          </ul>
+        {delta ? (
+          <span className="chart-card-delta type-caption-strong" data-dir={delta.dir}>
+            {delta.text}
+          </span>
         ) : null}
       </figcaption>
+      <div className="chart-card-compare">
+        {rows.map((r, i) => (
+          <div key={`${r.label}-${i}`} className="chart-card-compare-item">
+            <span className="type-fine-print text-[var(--ink-muted-48)]">{r.label}</span>
+            <span className="chart-card-compare-value type-tagline text-[var(--ink)]">
+              {formatChartValue(r.value, chart.unit)}
+            </span>
+            <span className="chart-card-meter">
+              <span
+                style={{
+                  width: `${Math.max(r.value > 0 ? 4 : 0, (Math.abs(r.value) / max) * 100)}%`,
+                  background: pointColor(r.label, r.value, max, i),
+                }}
+              />
+            </span>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function CategoryTick({ x, y, payload }: { x?: number; y?: number; payload?: { value?: string } }) {
+  const text = String(payload?.value ?? "");
+  const short = text.length > 22 ? `${text.slice(0, 20)}…` : text;
+  return (
+    <text x={x} y={y} dy={4} textAnchor="end" fill="var(--ink-muted-80)" fontSize={12}>
+      {short}
+    </text>
+  );
+}
+
+export function ChartCard({ chart }: { chart: ChartArtifact }) {
+  const empty = !chart.data.length;
+  const compact = isCompactCompare(chart);
+  const max = seriesMax(chart);
+  const axisCompact = max >= 10_000;
+  const yWidth = chart.unit === "currency" ? 78 : 44;
+  const horizontal =
+    chart.chart === "bar" && chart.data.some((d) => String(d[chart.xKey] ?? "").length > 14);
+  const showBarValues = chart.series.length === 1 && chart.data.length <= 6;
+  const peak = Math.max(
+    0,
+    ...chart.data.map((d) => Number(d[chart.series[0]?.key ?? ""] ?? 0) || 0),
+  );
+
+  return (
+    <figure className="assistant-chart-card">
+      {compact && !empty ? (
+        <Compare chart={chart} />
+      ) : (
+        <figcaption className="flex flex-wrap items-baseline justify-between gap-2">
+          <span className="type-caption-strong text-[var(--ink)]">{chart.title}</span>
+          {chart.series.length > 1 && chart.chart !== "donut" && chart.chart !== "funnel" ? (
+            <ul className="chart-card-legend">
+              {chart.series.map((s, i) => (
+                <li key={s.key} className="type-fine-print text-[var(--ink-muted-80)]">
+                  <span className="chart-card-dot" style={{ background: colorFor(s, i) }} aria-hidden />
+                  {s.label}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </figcaption>
+      )}
 
       {empty ? (
         <p className="type-caption text-[var(--ink-muted-48)]">Sem dados no período.</p>
-      ) : chart.chart === "funnel" ? (
+      ) : compact ? null : chart.chart === "funnel" ? (
         <Funnel chart={chart} />
       ) : chart.chart === "donut" ? (
         <Donut chart={chart} />
       ) : (
-        <div className="chart-card-plot">
+        <div className="chart-card-plot" style={horizontal ? { height: Math.max(180, chart.data.length * 36) } : undefined}>
           <ResponsiveContainer width="100%" height="100%">
             {chart.chart === "line" ? (
-              <LineChart data={chart.data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+              <LineChart data={chart.data} margin={{ top: 8, right: 8, bottom: 0, left: 4 }}>
                 <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
                 <XAxis dataKey={chart.xKey} tick={axisTick} tickLine={false} axisLine={false} minTickGap={16} />
                 <YAxis
                   tick={axisTick}
                   tickLine={false}
                   axisLine={false}
-                  width={64}
-                  tickFormatter={(v) => formatChartValue(v, chart.unit, true)}
+                  width={yWidth}
+                  tickFormatter={(v) => formatChartValue(v, chart.unit, axisCompact)}
                 />
                 <Tooltip content={<ChartTooltip unit={chart.unit} />} />
                 {chart.series.map((s, i) => (
@@ -197,16 +304,49 @@ export function ChartCard({ chart }: { chart: ChartArtifact }) {
                   />
                 ))}
               </LineChart>
+            ) : horizontal ? (
+              <BarChart data={chart.data} layout="vertical" margin={{ top: 4, right: 12, bottom: 0, left: 4 }}>
+                <CartesianGrid horizontal={false} stroke="var(--divider-soft)" />
+                <XAxis
+                  type="number"
+                  tick={axisTick}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v) => formatChartValue(v, chart.unit, axisCompact)}
+                />
+                <YAxis type="category" dataKey={chart.xKey} tick={CategoryTick} tickLine={false} axisLine={false} width={132} />
+                <Tooltip cursor={{ fill: "var(--chart-current)" }} content={<ChartTooltip unit={chart.unit} />} />
+                {chart.series.map((s, i) => (
+                  <Bar
+                    key={s.key}
+                    dataKey={s.key}
+                    name={s.label}
+                    fill={colorFor(s, i)}
+                    radius={[0, 4, 4, 0]}
+                    barSize={12}
+                    isAnimationActive={false}
+                  >
+                    {chart.series.length === 1
+                      ? chart.data.map((d, di) => (
+                          <Cell
+                            key={di}
+                            fill={pointColor(String(d[chart.xKey] ?? ""), Number(d[s.key] ?? 0) || 0, peak, di)}
+                          />
+                        ))
+                      : null}
+                  </Bar>
+                ))}
+              </BarChart>
             ) : (
-              <BarChart data={chart.data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+              <BarChart data={chart.data} margin={{ top: showBarValues ? 22 : 8, right: 8, bottom: 0, left: 4 }} barCategoryGap="22%">
                 <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
                 <XAxis dataKey={chart.xKey} tick={axisTick} tickLine={false} axisLine={false} minTickGap={8} />
                 <YAxis
                   tick={axisTick}
                   tickLine={false}
                   axisLine={false}
-                  width={64}
-                  tickFormatter={(v) => formatChartValue(v, chart.unit, true)}
+                  width={yWidth}
+                  tickFormatter={(v) => formatChartValue(v, chart.unit, axisCompact)}
                 />
                 <Tooltip cursor={{ fill: "var(--chart-current)" }} content={<ChartTooltip unit={chart.unit} />} />
                 {chart.series.map((s, i) => (
@@ -216,9 +356,27 @@ export function ChartCard({ chart }: { chart: ChartArtifact }) {
                     name={s.label}
                     fill={colorFor(s, i)}
                     radius={[4, 4, 0, 0]}
-                    maxBarSize={36}
+                    maxBarSize={chart.data.length <= 4 ? 48 : 28}
                     isAnimationActive={false}
-                  />
+                  >
+                    {chart.series.length === 1
+                      ? chart.data.map((d, di) => (
+                          <Cell
+                            key={di}
+                            fill={pointColor(String(d[chart.xKey] ?? ""), Number(d[s.key] ?? 0) || 0, peak, di)}
+                          />
+                        ))
+                      : null}
+                    {showBarValues ? (
+                      <LabelList
+                        dataKey={s.key}
+                        position="top"
+                        formatter={(v) => formatChartValue(v, chart.unit, axisCompact)}
+                        fill="var(--ink-muted-80)"
+                        fontSize={12}
+                      />
+                    ) : null}
+                  </Bar>
                 ))}
               </BarChart>
             )}

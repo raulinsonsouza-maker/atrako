@@ -16,6 +16,7 @@ import { AnalyticsGA4Section } from "@/components/clientes/AnalyticsGA4Section";
 import { ImoveisPanel } from "@/components/clientes/ImoveisPanel";
 
 import { CrmTab } from "@/components/clientes/CrmTab";
+import { CrmPipelineBoard } from "@/components/crm/CrmPipelineBoard";
 import { MarketplacePanel, type MarketplaceSub } from "@/components/clientes/MarketplacePanel";
 import { EcommercePanel } from "@/components/clientes/EcommercePanel";
 import { ChannelDisconnected } from "@/components/clientes/ChannelDisconnected";
@@ -423,9 +424,10 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
     [presetPeriodo, customInicio, customFim]
   );
 
-  const { data: cliente, isLoading: clienteLoading } = useQuery({
+  const { data: cliente, isLoading: clienteLoading, isError: clienteError } = useQuery({
     queryKey: ["cliente", id],
     queryFn: () => fetchCliente(id),
+    retry: false,
   });
 
   const socialMediaOnly = isSocialMediaOnly(cliente);
@@ -461,12 +463,12 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
   const [loaderVisible, setLoaderVisible] = React.useState(true);
   const [loaderFading, setLoaderFading] = React.useState(false);
   React.useEffect(() => {
-    if (!clienteLoading && cliente) {
-      setLoaderFading(true);
-      const t = setTimeout(() => setLoaderVisible(false), 450);
-      return () => clearTimeout(t);
-    }
-  }, [clienteLoading, cliente]);
+    if (clienteLoading) return;
+    if (!cliente && !clienteError) return;
+    setLoaderFading(true);
+    const t = setTimeout(() => setLoaderVisible(false), 450);
+    return () => clearTimeout(t);
+  }, [clienteLoading, cliente, clienteError]);
   const { data: resumo } = useQuery({
     queryKey: ["resumo", id, canal, dateFilter.periodo, dateFilter.dataInicio, dateFilter.dataFim],
     queryFn: () => fetchResumo(id, canal as "geral" | "meta" | "google", dateFilter),
@@ -535,7 +537,6 @@ export function ClienteDashboard({ id, portalMode = false }: { id: string; porta
     enabled: !!id && !!cliente && !socialMediaOnly && !portalMode,
   });
   const hasCrm = crmFunil?.configured === true;
-  const crmKnown = portalMode || crmFunil !== undefined;
   /** Mesma chave do useModules: cache compartilhado quando é o workspace ativo. */
   const { data: relConfig } = useQuery<{
     canManage?: boolean;
@@ -830,13 +831,21 @@ function formatPercentage(value: number) {
     if (!row?.hasCredentials) return false;
     return row.status !== "DISCONNECTED" && row.status !== "REVOKED";
   };
-  const contaOn = (plataforma: string) =>
-    Boolean(
-      (cliente as { contas?: { plataforma?: string; accountIdPlataforma?: string | null }[] } | undefined)?.contas?.some(
-        (ct) => ct.plataforma?.toUpperCase() === plataforma && ct.accountIdPlataforma,
+  const contaOn = (plataforma: string) => {
+    const key = plataforma.toUpperCase();
+    const fromConta = (
+      cliente as { contas?: { plataforma?: string; accountIdPlataforma?: string | null }[] } | undefined
+    )?.contas?.some((ct) => ct.plataforma?.toUpperCase() === key && ct.accountIdPlataforma);
+    if (fromConta) return true;
+    return Boolean(
+      (cliente as { linkedPlatforms?: string[] } | undefined)?.linkedPlatforms?.some(
+        (item) => item.toUpperCase() === key,
       ),
     );
-  const metaConnected = portalMode ? contaOn("META") : metaPronta || contaOn("META");
+  };
+  // O hub (Conexões) já conta como Meta ligado. health "ready" só marca a conta de anúncio escolhida.
+  const metaHubConnected = !portalMode && (providerOn("META_ADS") || metaStatus?.connected === true);
+  const metaConnected = portalMode ? contaOn("META") : metaPronta || contaOn("META") || metaHubConnected;
   const googleConnected = portalMode
     ? contaOn("GOOGLE_ADS") || contaOn("GOOGLE")
     : providerOn("GOOGLE_ADS") || contaOn("GOOGLE_ADS") || contaOn("GOOGLE");
@@ -862,7 +871,8 @@ function formatPercentage(value: number) {
   const showGoogle = channelAllowed("google") && showDefaultChannel(googleConnected, portalMode ? clienteKnown : workspaceKnown);
   const showMarketplaces = channelAllowed("marketplaces") && showDefaultChannel(marketplaceSubs.length > 0, workspaceKnown);
   const showEcommerce = channelAllowed("ecommerce") && showDefaultChannel(ecommerceConnected, workspaceKnown);
-  const showCrm = showOptInChannel(hasCrm, crmKnown);
+  const legacyCrm = hasCrm && isImobClient(cliente);
+  const showCrm = channelAllowed("crm") && (portalMode ? legacyCrm : true);
   const showRelacionamento = showOptInChannel(hasRelacionamento, workspaceKnown);
 
   const conexoesHref = `/config/conexoes?workspaceId=${id}`;
@@ -882,14 +892,7 @@ function formatPercentage(value: number) {
             actionLabel: "Conectar Google",
             actionHref: canConfigure ? conexoesHref : null,
           }
-        : canal === "crm" && crmKnown && !hasCrm
-          ? {
-              title: "CRM não conectado",
-              description: "Ative o funil para acompanhar leads e conversões.",
-              actionLabel: "Configurar CRM",
-              actionHref: canConfigure ? modulosHref : null,
-            }
-          : canal === "relacionamento" && workspaceKnown && !hasRelacionamento
+        : canal === "relacionamento" && workspaceKnown && !hasRelacionamento
             ? {
                 title: "Relacionamento não conectado",
                 description: "Ative o módulo para acompanhar a base e as mensagens.",
@@ -1065,6 +1068,15 @@ function formatPercentage(value: number) {
           </p>
         </div>
       )}
+
+      {clienteError && !cliente ? (
+        <div className="rel-card p-5">
+          <p className="type-body text-[var(--ink)]">A sessão local não autorizou este cliente.</p>
+          <Link href="/sign-in" className="type-body mt-2 inline-block text-[var(--primary)]">
+            Entrar novamente
+          </Link>
+        </div>
+      ) : null}
 
       <div className="flex min-h-0 flex-col gap-5">
       {!portalMode ? (
@@ -1283,15 +1295,21 @@ function formatPercentage(value: number) {
 
       {/* ── CRM tab ── */}
       {!analystOpen && canal === "crm" && id && (
-        <CrmTab
-          clienteId={id}
-          dateRange={{
-            from: dateFilter.dataInicio ?? new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10),
-            to: dateFilter.dataFim ?? new Date().toISOString().slice(0, 10),
-          }}
-          perfilPanel={cliente?.perfilPanel}
-          slug={cliente?.slug}
-        />
+        legacyCrm ? (
+          <CrmTab
+            clienteId={id}
+            dateRange={{
+              from: dateFilter.dataInicio ?? new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10),
+              to: dateFilter.dataFim ?? new Date().toISOString().slice(0, 10),
+            }}
+            perfilPanel={cliente?.perfilPanel}
+            slug={cliente?.slug}
+          />
+        ) : (
+          <React.Suspense fallback={null}>
+            <CrmPipelineBoard workspaceId={id} />
+          </React.Suspense>
+        )
       )}
 
       {!analystOpen && canal === "relacionamento" && id && (

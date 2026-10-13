@@ -40,6 +40,15 @@ export type Comportamento = {
     ticketCents: number | null;
     recompraPct: number | null;
   }>;
+  /** Ponto de venda: loja, marketplace ou checkout. */
+  canais: Array<{
+    id: string;
+    label: string;
+    clientes: number;
+    receitaCents: number;
+    ticketCents: number | null;
+    recompraPct: number | null;
+  }>;
   topCompradores: Array<{
     id: string;
     nome: string;
@@ -273,16 +282,28 @@ function brtSlot(date: Date): { day: number; hour: number } | null {
   return { day, hour };
 }
 
+const CANAL_LABEL: Record<string, string> = {
+  WOOCOMMERCE: "WooCommerce",
+  SHOPIFY: "Shopify",
+  NUVEMSHOP: "Nuvemshop",
+  TRAY: "Tray",
+  MERCADO_LIVRE: "Mercado Livre",
+  SHOPEE: "Shopee",
+  TIKTOK_SHOP: "TikTok Shop",
+  CHECKOUT: "Checkout Atrako",
+};
+
 export type FiltroComportamento = {
   genero?: "f" | "m" | "u";
   produto?: string;
   origem?: string;
+  canal?: string;
   compra?: "nova" | "recompra";
   dia?: number;
   hora?: number;
   uf?: string;
   cidade?: string;
-  pular?: Array<"genero" | "produto" | "origem" | "horario" | "lugar" | "compra">;
+  pular?: Array<"genero" | "produto" | "origem" | "canal" | "horario" | "lugar" | "compra">;
 };
 
 function orderGender(order: Pick<BehaviorOrder, "contactGender" | "contactName" | "buyerName">): "f" | "m" | "u" {
@@ -298,6 +319,7 @@ function matchesFiltro(order: Tagged, filtro: FiltroComportamento): boolean {
   if (!skip.has("genero") && filtro.genero && orderGender(order) !== filtro.genero) return false;
   if (!skip.has("produto") && filtro.produto && !order.items.some((item) => productKey(item) === filtro.produto)) return false;
   if (!skip.has("origem") && filtro.origem && orderOriginKey(order.provider, order.channel) !== filtro.origem) return false;
+  if (!skip.has("canal") && filtro.canal && order.provider !== filtro.canal) return false;
   if (!skip.has("compra") && filtro.compra) {
     if (!order.key) return false;
     if (filtro.compra === "recompra" && !order.repeat) return false;
@@ -321,6 +343,7 @@ export type ComportamentoResposta = Comportamento & {
     genero: Comportamento["genero"];
     produtos: Comportamento["produtos"];
     origens: Comportamento["origens"];
+    canais: Comportamento["canais"];
     heatmap: number[][];
     estados: Comportamento["estados"];
     recompra: Comportamento["recompra"];
@@ -394,6 +417,10 @@ function finishAggregate(
     string,
     { label: string; buyers: Set<string>; receita: number; recompra: number }
   >();
+  const channels = new Map<
+    string,
+    { label: string; buyers: Set<string>; receita: number; recompra: number }
+  >();
   const buyers = new Map<
     string,
     { nome: string; pedidos: number; receita: number; compras: Comportamento["topCompradores"][number]["compras"] }
@@ -434,6 +461,17 @@ function finishAggregate(
     if (order.key) origin.buyers.add(order.key);
     if (order.repeat) origin.recompra += order.cents;
     origins.set(originId, origin);
+
+    const canal = channels.get(order.provider) ?? {
+      label: CANAL_LABEL[order.provider] ?? order.provider,
+      buyers: new Set<string>(),
+      receita: 0,
+      recompra: 0,
+    };
+    canal.receita += order.cents;
+    if (order.key) canal.buyers.add(order.key);
+    if (order.repeat) canal.recompra += order.cents;
+    channels.set(order.provider, canal);
 
     if (order.key) {
       const nome = (order.contactName || order.buyerName || order.buyerEmail || "Sem nome").trim();
@@ -583,6 +621,16 @@ function finishAggregate(
       receitaCents: lifetimeReceitaCents,
     },
     origens: [...origins.entries()]
+      .map(([id, row]) => ({
+        id,
+        label: row.label,
+        clientes: row.buyers.size,
+        receitaCents: row.receita,
+        ticketCents: div(row.receita, row.buyers.size),
+        recompraPct: row.receita > 0 ? Math.round((row.recompra / row.receita) * 1000) / 10 : null,
+      }))
+      .sort((a, b) => b.receitaCents - a.receitaCents),
+    canais: [...channels.entries()]
       .map(([id, row]) => ({
         id,
         label: row.label,
@@ -850,7 +898,7 @@ function toBehavior(row: Loaded): BehaviorOrder | null {
 function filtroAtivo(filtro?: FiltroComportamento) {
   if (!filtro) return false;
   return Boolean(
-    filtro.genero || filtro.produto || filtro.origem || filtro.compra || filtro.dia != null || filtro.hora != null || filtro.uf != null || filtro.cidade,
+    filtro.genero || filtro.produto || filtro.origem || filtro.canal || filtro.compra || filtro.dia != null || filtro.hora != null || filtro.uf != null || filtro.cidade,
   );
 }
 
@@ -972,6 +1020,7 @@ export async function getComportamento(
     genero: faceta("genero").genero,
     produtos: faceta("produto").produtos,
     origens: faceta("origem").origens,
+    canais: faceta("canal").canais,
     heatmap: faceta("horario").heatmap,
     estados: faceta("lugar").estados,
     recompra: compraVista.recompra,

@@ -207,6 +207,40 @@ describe("comportamento", () => {
     assert.equal(serie.serieAgrupamento, "semana");
   });
 
+  it("separa loja e marketplace e o filtro de canal recorta o resto", () => {
+    const base = {
+      current: [
+        order({ id: "loja", totalCents: 10000 }),
+        order({
+          id: "ml",
+          provider: "MERCADO_LIVRE",
+          channel: null,
+          contactId: "c2",
+          buyerEmail: "ml@ex.com",
+          totalCents: 4000,
+        }),
+      ],
+      previous: [],
+      priorKeys: new Set<string>(),
+      lifetimeReceitaCents: 0,
+      lifetimeCompradores: 0,
+    };
+    const todos = aggregateComportamento(base);
+    assert.deepEqual(
+      todos.canais.map((row) => row.id),
+      ["WOOCOMMERCE", "MERCADO_LIVRE"],
+    );
+    assert.equal(todos.canais[0]?.label, "WooCommerce");
+    assert.equal(todos.canais[1]?.label, "Mercado Livre");
+    assert.equal(todos.tickets.pedidos, 2);
+    const soMl = aggregateComportamento(base, { canal: "MERCADO_LIVRE" });
+    assert.equal(soMl.tickets.pedidos, 1);
+    assert.equal(soMl.tickets.receitaCents, 4000);
+    const lista = aggregateComportamento(base, { canal: "MERCADO_LIVRE", pular: ["canal"] });
+    assert.equal(lista.canais.length, 2);
+    assert.equal(lista.tickets.pedidos, 2);
+  });
+
   it("filtra pela origem e a lista de origens ignora o próprio filtro", () => {
     const base = {
       current: [

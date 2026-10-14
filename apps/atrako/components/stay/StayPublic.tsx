@@ -163,14 +163,17 @@ export function StayPublic({ slug }: { slug: string }) {
   function renderMonth(value: string) {
     const [year, mon] = value.split("-").map(Number);
     const cells = monthCells(year, mon);
+    while (cells.length % 7 !== 0) cells.push(null);
     const monthName = new Date(Date.UTC(year, mon - 1, 1)).toLocaleDateString("pt-BR", {
       month: "long",
-      year: "numeric",
       timeZone: "UTC",
     });
     return (
       <div className="stay-month" key={value}>
-        <p className="stay-month-name">{monthName}</p>
+        <header className="stay-month-head">
+          <p className="stay-month-name">{monthName}</p>
+          <span className="stay-month-year">{year}</span>
+        </header>
         <div className="stay-cal">
           {WEEK.map((label) => <span key={`${value}-${label}`} className="dow">{label}</span>)}
           {cells.map((date, index) => {

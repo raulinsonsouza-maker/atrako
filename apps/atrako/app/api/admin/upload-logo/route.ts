@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireInternalAdmin } from "@/lib/internalAccess";
 import { writeAuditLog } from "@/lib/internalUsers";
+import { saveUpload, uploadsDir } from "@/lib/uploads";
 
 const USE_BLOB = !!process.env.BLOB_READ_WRITE_TOKEN;
 
@@ -15,20 +16,11 @@ async function deleteFromBlob(url: string): Promise<void> {
   await del(url);
 }
 
-async function uploadToFilesystem(buffer: Buffer, filename: string): Promise<string> {
-  const { writeFile, mkdir } = await import("fs/promises");
-  const path = await import("path");
-  const dir = path.join(process.cwd(), "public", "logos");
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, filename), buffer);
-  return `/logos/${filename}`;
-}
-
 async function deleteFromFilesystem(url: string): Promise<void> {
   const { unlink } = await import("fs/promises");
   const path = await import("path");
   const filename = path.basename(url);
-  const filePath = path.join(process.cwd(), "public", "logos", filename);
+  const filePath = path.join(uploadsDir("logos"), filename);
   try {
     await unlink(filePath);
   } catch {
@@ -59,7 +51,7 @@ export async function POST(req: NextRequest) {
   try {
     const url = USE_BLOB
       ? await uploadToBlob(buffer, filename)
-      : await uploadToFilesystem(buffer, filename);
+      : await saveUpload("logos", filename, buffer);
     await writeAuditLog({
       action: "CLIENT_LOGO_UPLOADED",
       actorInternalUserId: access.user.id,

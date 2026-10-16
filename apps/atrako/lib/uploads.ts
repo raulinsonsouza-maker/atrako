@@ -6,7 +6,7 @@
 
 import path from "path";
 
-export const UPLOAD_FILENAME = /^[A-Za-z0-9_-]{1,160}\.(png|jpe?g|webp|gif|pdf|txt|md|csv|docx|mp4|webm)$/;
+export const UPLOAD_FILENAME = /^[A-Za-z0-9_-]{1,160}\.(png|jpe?g|webp|gif|svg|pdf|txt|md|csv|docx|mp4|webm)$/;
 
 const CONTENT_TYPES: Record<string, string> = {
   png: "image/png",
@@ -14,6 +14,7 @@ const CONTENT_TYPES: Record<string, string> = {
   jpeg: "image/jpeg",
   webp: "image/webp",
   gif: "image/gif",
+  svg: "image/svg+xml",
   pdf: "application/pdf",
   txt: "text/plain; charset=utf-8",
   md: "text/markdown; charset=utf-8",

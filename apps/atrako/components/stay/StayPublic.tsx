@@ -180,7 +180,15 @@ export function StayPublic({ slug }: { slug: string }) {
             if (!date) return <span key={`${value}-e-${index}`} />;
             const state = dayState(date);
             return (
-              <button key={date} type="button" data-state={state} onClick={() => pick(date)} aria-label={nightLabel(date)}>
+              <button
+                key={date}
+                type="button"
+                data-state={state}
+                data-today={date === today ? "true" : undefined}
+                data-bound={state === "start" && !checkOut ? "solo" : undefined}
+                onClick={() => pick(date)}
+                aria-label={nightLabel(date)}
+              >
                 {Number(date.slice(8))}
               </button>
             );
@@ -273,8 +281,8 @@ export function StayPublic({ slug }: { slug: string }) {
           </div>
           <div className="stay-cal-card">
             <div className="month-nav">
-              <button type="button" onClick={() => setMonth((value) => shiftMonth(value, -1))}>Anterior</button>
-              <button type="button" onClick={() => setMonth((value) => shiftMonth(value, 1))}>Próximo</button>
+              <button type="button" aria-label="Mês anterior" onClick={() => setMonth((value) => shiftMonth(value, -1))}>‹</button>
+              <button type="button" aria-label="Próximo mês" onClick={() => setMonth((value) => shiftMonth(value, 1))}>›</button>
             </div>
             <div className="stay-months">
               {renderMonth(month)}

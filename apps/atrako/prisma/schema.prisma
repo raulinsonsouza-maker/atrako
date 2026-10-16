@@ -1859,10 +1859,16 @@ model WaConversation {
   contactName     String?        @db.VarChar(200)
   status          String         @default("OPEN") @db.VarChar(40)
   windowExpiresAt DateTime?
+  /// Free entry point (CTWA / Page CTA): até 7 dias após 1ª resposta do business.
+  fepExpiresAt    DateTime?
+  /// ctwa | page_cta | organic | lp | form | remarketing | …
+  entrySource     String?        @db.VarChar(40)
   lastMessageAt   DateTime?
   handedOffAt     DateTime?
   /// Rascunho de pedido Food na conversa oficial. Não é um segundo cardápio.
   foodCart        Json?
+  /// Estado do playbook de qualificação inside sales (franchise_regicenter, …).
+  qualification   Json?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   cliente         Cliente        @relation(fields: [clienteId], references: [id], onDelete: Cascade)

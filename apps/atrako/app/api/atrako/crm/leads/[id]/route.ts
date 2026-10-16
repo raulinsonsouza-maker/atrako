@@ -12,6 +12,8 @@ import { contactLocation, formatLocation, orderDetails } from "@/lib/commerce/or
 import { describeMlBuyer, parseMlBuyerFacts } from "@/lib/integrations/mercadolivre/buyer-facts";
 import { refreshMlBuyerIfThin } from "@/lib/integrations/mercadolivre/enrich-buyer";
 import { leadSourceLabel } from "@/lib/atrako/person";
+import { parseLeadQualification } from "@/lib/qualification/store";
+import { FIELD_DEFS } from "@/lib/qualification/fields";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -270,6 +272,29 @@ export async function GET(request: NextRequest, ctx: Ctx) {
       campaignName: leadMeta.campaignName ?? leadMeta.utm_campaign ?? null,
       adName: leadMeta.adName ?? null,
       formName: leadMeta.formName ?? null,
+      qualification: (() => {
+        const q = parseLeadQualification(lead.metadata);
+        if (!q.answers || !Object.keys(q.answers).length) return null;
+        const crmLabel = Object.fromEntries(FIELD_DEFS.map((f) => [f.key, f.crmLabel]));
+        return {
+          playbookId: q.playbookId,
+          priority: q.priority,
+          filledPercent: q.filledPercent,
+          currentState: q.currentState,
+          missing: q.missing,
+          answers: Object.entries(q.answers)
+            .filter(([, a]) => a && String(a.value || "").trim())
+            .map(([key, a]) => ({
+              key,
+              fieldLabel: crmLabel[key as keyof typeof crmLabel] || key,
+              label: a!.label,
+              value: a!.value,
+              code: a!.code ?? null,
+              source: a!.source,
+              at: a!.at,
+            })),
+        };
+      })(),
       createdAt: lead.createdAt.toISOString(),
       updatedAt: lead.updatedAt.toISOString(),
     },

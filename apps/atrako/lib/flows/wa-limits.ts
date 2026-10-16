@@ -25,6 +25,8 @@ const DEFAULT_RATES = [
   { category: "marketing", priceMicros: 321_700 },
   { category: "utility", priceMicros: 35_000 },
   { category: "authentication", priceMicros: 35_000 },
+  /** Service (free-form) após o tier free de 1.000/mês — mesma faixa utility. */
+  { category: "service", priceMicros: 35_000 },
 ];
 const DEFAULT_RATES_FROM = new Date("2026-10-01T00:00:00Z");
 let ratesSeeded = false;

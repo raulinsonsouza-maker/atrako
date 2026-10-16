@@ -53,10 +53,12 @@ export async function runStepsJob() {
     const campaigns = await runDueCampaigns();
     const { flushPendingWelcomes } = await import("@/lib/attendance/welcome");
     const welcomes = await flushPendingWelcomes().catch((e) => ({ error: String(e) }));
+    const { processDueQualifyCadence } = await import("@/lib/qualification/cadence");
+    const qualifyCadence = await processDueQualifyCadence(40).catch((e) => ({ error: String(e) }));
     // Quem vigia o job de hora em hora (que vigia os demais) é o de 5 min.
     const { alertStaleJobs } = await import("@/lib/notifications/reminders");
     await alertStaleJobs(new Date(), ["flows.hourly"]).catch(() => []);
-    return { ...totals, campaigns, welcomes };
+    return { ...totals, campaigns, welcomes, qualifyCadence };
   });
 }
 

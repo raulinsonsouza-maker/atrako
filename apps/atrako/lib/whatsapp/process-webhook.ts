@@ -25,7 +25,11 @@ type WaChangeValue = {
     type?: string;
     text?: { body?: string };
     button?: { text?: string; payload?: string };
-    interactive?: { button_reply?: { id?: string; title?: string }; list_reply?: { title?: string } };
+    interactive?: {
+      button_reply?: { id?: string; title?: string };
+      list_reply?: { id?: string; title?: string };
+    };
+    referral?: { source_type?: string; source_id?: string; body?: string };
     location?: { latitude?: number; longitude?: number };
   }>;
   statuses?: Array<{
@@ -93,6 +97,11 @@ export async function processWhatsAppWebhookPayload(payload: unknown) {
           msg.type === "location" && msg.location && Number.isFinite(Number(msg.location.latitude))
             ? { lat: Number(msg.location.latitude), lng: Number(msg.location.longitude) }
             : null;
+        const replyId =
+          msg.interactive?.button_reply?.id ||
+          msg.interactive?.list_reply?.id ||
+          msg.button?.payload ||
+          null;
         const bodyText =
           msg.text?.body ||
           msg.button?.text ||
@@ -100,12 +109,20 @@ export async function processWhatsAppWebhookPayload(payload: unknown) {
           msg.interactive?.list_reply?.title ||
           (location ? "Localização recebida" : msg.type ? `[${msg.type}]` : null);
 
+        const referralType = (msg.referral?.source_type || "").toLowerCase();
+        const entrySource =
+          referralType === "ad" || referralType === "advertisement"
+            ? "ctwa"
+            : referralType === "post" || referralType === "page"
+              ? "page_cta"
+              : null;
+
         const { contact, lead } = await upsertPersonAndLead({
           workspaceId,
           name: contactName,
           phone,
-          source: "whatsapp",
-          metadata: { channel: "whatsapp", lastInboundAt: new Date().toISOString() },
+          source: entrySource === "ctwa" ? "whatsapp_ctwa" : "whatsapp",
+          metadata: { channel: "whatsapp", lastInboundAt: new Date().toISOString(), entrySource },
         });
 
         const conversation = await upsertWaConversation({
@@ -114,6 +131,7 @@ export async function processWhatsAppWebhookPayload(payload: unknown) {
           contactName: contact.name,
           contactId: contact.id,
           openWindow: true,
+          entrySource: entrySource ?? undefined,
         });
 
         const saved = await persistInboundMessage({
@@ -124,6 +142,13 @@ export async function processWhatsAppWebhookPayload(payload: unknown) {
           type: msg.type || "text",
         });
         if (saved.duplicate) continue;
+
+        if (replyId && saved.id) {
+          await prisma.waMessage.update({
+            where: { id: saved.id },
+            data: { metadata: { replyId } },
+          }).catch(() => null);
+        }
 
         const flow = await handleFlowInbound(workspaceId, contact.id, msg).catch((e) => {
           console.warn("[whatsapp/webhook] flow inbound failed", e instanceof Error ? e.message : e);
@@ -145,17 +170,32 @@ export async function processWhatsAppWebhookPayload(payload: unknown) {
           console.warn("[whatsapp/webhook] food order failed", e instanceof Error ? e.message : e);
           return false;
         });
-        if (!foodHandled) {
-          const { handleAttendanceInbound } = await import("@/lib/attendance/run");
-          await handleAttendanceInbound({
-            workspaceId,
-            conversationId: conversation.id,
-            contactId: contact.id,
-            leadId: lead.id,
-            phone,
-            body: bodyText,
-          }).catch((e) => console.warn("[whatsapp/webhook] attendance failed", e instanceof Error ? e.message : e));
-        }
+        if (foodHandled) continue;
+
+        const { handleQualificationInbound } = await import("@/lib/qualification/engine");
+        const qualifyHandled = await handleQualificationInbound({
+          workspaceId,
+          conversationId: conversation.id,
+          contactId: contact.id,
+          leadId: lead.id,
+          phone,
+          body: bodyText,
+          replyId,
+        }).catch((e) => {
+          console.warn("[whatsapp/webhook] qualification failed", e instanceof Error ? e.message : e);
+          return false;
+        });
+        if (qualifyHandled) continue;
+
+        const { handleAttendanceInbound } = await import("@/lib/attendance/run");
+        await handleAttendanceInbound({
+          workspaceId,
+          conversationId: conversation.id,
+          contactId: contact.id,
+          leadId: lead.id,
+          phone,
+          body: bodyText,
+        }).catch((e) => console.warn("[whatsapp/webhook] attendance failed", e instanceof Error ? e.message : e));
 
         const event = createEvent({
           name: "conversation.started",

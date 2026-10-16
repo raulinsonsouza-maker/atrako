@@ -12,7 +12,6 @@ import { applyWaErrorToContact, patchWhatsAppMetadata, refreshWaAccountInfo, tie
 import { exitEnrollments, handleAsyncWaFailure, pauseContactFlows } from "@/lib/flows/engine";
 import { promoteApprovedVersion } from "@/lib/flows/wa-templates";
 import { parseBirthdayReply, upsertContactBirthday } from "@/lib/flows/important-dates";
-import { sendWhatsAppText } from "@/lib/integrations/whatsapp/messages";
 import { notify } from "@/lib/notifications";
 
 export const OPTOUT_PAYLOAD = "atk_optout";
@@ -158,10 +157,12 @@ async function captureBirthdayReply(workspaceId: string, contactId: string, from
   const saved = await upsertContactBirthday({ workspaceId, contactId, raw, source: "whatsapp" });
   if (!saved) return false;
   if (from) {
-    await sendWhatsAppText({
+    const { sendAndPersistText } = await import("@/lib/whatsapp/domain");
+    await sendAndPersistText({
       workspaceId,
       to: from,
       body: `Anotado: ${String(saved.day).padStart(2, "0")}/${String(saved.month).padStart(2, "0")}. Obrigado! No dia, você recebe um presente da gente.`,
+      contactId,
     }).catch(() => null);
   }
   return true;

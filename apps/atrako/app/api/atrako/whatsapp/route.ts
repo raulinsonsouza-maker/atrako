@@ -80,6 +80,13 @@ export async function POST(request: NextRequest) {
     const conv = await prisma.waConversation.findFirst({
       where: { id: conversationId, clienteId: workspaceId },
     });
+    if (conv?.qualification && typeof conv.qualification === "object") {
+      const q = { ...(conv.qualification as Record<string, unknown>), automationStatus: "paused", currentState: "human_handoff" };
+      await prisma.waConversation.update({
+        where: { id: conversationId },
+        data: { qualification: q },
+      });
+    }
     if (conv) {
       try {
         const { createEvent, publishEventBatch } = await import("@atrako/events");

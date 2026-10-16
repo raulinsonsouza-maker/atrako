@@ -220,6 +220,11 @@ export async function processWhatsAppEventSideEffects(event: {
           previewBody: body,
         });
       } else {
+        const conv = await upsertWaConversation({ workspaceId, phone, contactId });
+        if (!isWithinCustomerWindow(conv.windowExpiresAt)) {
+          console.info("[wa-triggers] booking CTA skipped (no window / no template)", workspaceId);
+          return;
+        }
         await sendAndPersistCta({
           workspaceId,
           to: phone,

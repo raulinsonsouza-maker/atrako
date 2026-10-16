@@ -127,6 +127,13 @@ Em `/config/rastreamento` (`WorkspaceSettings.tracking`): `pixelId` + `capiToken
 
 Templates vivem em `WaTemplateRef` por workspace (sync com a WABA, criação dos recomendados no estúdio de `/relacionamento`). Não existe mais `WHATSAPP_TEMPLATE_*` no env do shell: o envio legado de carrinho/boas-vindas/agenda só usa `templateName` vindo do evento ou texto/CTA dentro da janela de 24h.
 
+## WhatsApp Cloud API (regras Meta 2025–2026)
+
+- **Envio canônico:** `lib/whatsapp/send-gate.ts` — opt-out, janela 24h (formato), categoria (`service` / `marketing` / `utility`), throttle `131049`, `MessageDelivery` + `WaMessage`.
+- **Janela 24h** controla se dá para mandar free-form/interactive; **não** significa mensagem grátis. Service messages têm **1.000 free/mês por número**; depois cobram.
+- **FEP (CTWA / Page CTA):** até **7 dias** após a 1ª resposta do business (`WaConversation.fepExpiresAt`). Dentro do FEP o custo Meta esperado é zero (exceto Meta Business Agent).
+- **Qualificação inside sales:** `lib/qualification/*` + `messagingPrefs.qualification.enabled`. Forms com `fieldKey` estáveis; WhatsApp só pergunta o que falta. Seed Regicenter: `scripts/seed-regicenter-qualify.ts`.
+
 ## Fluxo
 
 1. Staff configura app em `/admin/apps`.

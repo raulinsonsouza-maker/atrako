@@ -1,13 +1,10 @@
 /**
  * Domínio WhatsApp — conversas, mensagens, handoff e envio com persistência.
+ * Envios passam pelo send-gate (janela 24h, opt-out, MessageDelivery).
  */
 
 import { prisma } from "@/lib/db";
-import {
-  sendWhatsAppText,
-  sendWhatsAppCtaUrl,
-  sendWhatsAppTemplate,
-} from "@/lib/integrations/whatsapp/messages";
+import type { ReplyButton, ListRow } from "@/lib/integrations/whatsapp/messages";
 
 export function normalizeWaPhone(phone: string) {
   return phone.replace(/\D/g, "");
@@ -21,6 +18,7 @@ export async function upsertWaConversation(input: {
   contactName?: string | null;
   contactId?: string | null;
   openWindow?: boolean;
+  entrySource?: string | null;
 }) {
   const phone = normalizeWaPhone(input.phone);
   const windowExpiresAt = input.openWindow ? new Date(Date.now() + WINDOW_MS) : undefined;
@@ -34,6 +32,7 @@ export async function upsertWaConversation(input: {
       contactId: input.contactId ?? null,
       status: "OPEN",
       windowExpiresAt: windowExpiresAt ?? null,
+      entrySource: input.entrySource ?? null,
       lastMessageAt: new Date(),
     },
     update: {
@@ -41,6 +40,7 @@ export async function upsertWaConversation(input: {
       contactId: input.contactId ?? undefined,
       lastMessageAt: new Date(),
       ...(windowExpiresAt ? { windowExpiresAt } : {}),
+      ...(input.entrySource ? { entrySource: input.entrySource } : {}),
     },
   });
   if (windowExpiresAt && conversation.status !== "HANDED_OFF") {
@@ -122,29 +122,15 @@ export async function sendAndPersistText(input: {
     contactId = contact.id;
     contactName = contact.name;
   }
-  const conversation = await upsertWaConversation({
-    workspaceId: input.workspaceId,
-    phone: input.to,
-    contactId,
-    contactName,
-  });
-  const { wamid } = await sendWhatsAppText({
+  const { gateSendText } = await import("@/lib/whatsapp/send-gate");
+  const result = await gateSendText({
     workspaceId: input.workspaceId,
     to: input.to,
     body: input.body,
+    contactId,
+    contactName,
   });
-  await persistOutboundMessage({
-    workspaceId: input.workspaceId,
-    conversationId: conversation.id,
-    body: input.body,
-    wamid,
-    type: "text",
-  });
-  await prisma.waConversation.update({
-    where: { id: conversation.id },
-    data: { lastMessageAt: new Date(), contactId: contactId || undefined },
-  });
-  return { conversationId: conversation.id, wamid, contactId };
+  return { conversationId: result.conversationId, wamid: result.wamid, contactId };
 }
 
 export async function sendAndPersistCta(input: {
@@ -154,21 +140,10 @@ export async function sendAndPersistCta(input: {
   buttonText: string;
   url: string;
   contactId?: string | null;
+  contactName?: string | null;
 }) {
-  const conversation = await upsertWaConversation({
-    workspaceId: input.workspaceId,
-    phone: input.to,
-    contactId: input.contactId,
-  });
-  const { wamid } = await sendWhatsAppCtaUrl(input);
-  await persistOutboundMessage({
-    workspaceId: input.workspaceId,
-    conversationId: conversation.id,
-    body: `${input.body}\n${input.url}`,
-    wamid,
-    type: "interactive",
-  });
-  return { conversationId: conversation.id, wamid };
+  const { gateSendCta } = await import("@/lib/whatsapp/send-gate");
+  return gateSendCta(input);
 }
 
 export async function sendAndPersistTemplate(input: {
@@ -179,23 +154,38 @@ export async function sendAndPersistTemplate(input: {
   bodyParams?: string[];
   buttonUrlSuffix?: string;
   contactId?: string | null;
+  contactName?: string | null;
   previewBody?: string;
+  category?: "marketing" | "utility" | "authentication";
 }) {
-  const conversation = await upsertWaConversation({
-    workspaceId: input.workspaceId,
-    phone: input.to,
-    contactId: input.contactId,
-  });
-  const { wamid, templateName } = await sendWhatsAppTemplate(input);
-  await persistOutboundMessage({
-    workspaceId: input.workspaceId,
-    conversationId: conversation.id,
-    body: input.previewBody || `[template:${templateName}]`,
-    wamid,
-    type: "template",
-    templateName,
-  });
-  return { conversationId: conversation.id, wamid };
+  const { gateSendTemplate } = await import("@/lib/whatsapp/send-gate");
+  return gateSendTemplate(input);
+}
+
+export async function sendAndPersistReplyButtons(input: {
+  workspaceId: string;
+  to: string;
+  body: string;
+  buttons: ReplyButton[];
+  contactId?: string | null;
+  contactName?: string | null;
+}) {
+  const { gateSendReplyButtons } = await import("@/lib/whatsapp/send-gate");
+  return gateSendReplyButtons(input);
+}
+
+export async function sendAndPersistList(input: {
+  workspaceId: string;
+  to: string;
+  body: string;
+  buttonText: string;
+  sectionTitle?: string;
+  rows: ListRow[];
+  contactId?: string | null;
+  contactName?: string | null;
+}) {
+  const { gateSendList } = await import("@/lib/whatsapp/send-gate");
+  return gateSendList(input);
 }
 
 export async function resumeAgentConversation(conversationId: string, workspaceId: string) {

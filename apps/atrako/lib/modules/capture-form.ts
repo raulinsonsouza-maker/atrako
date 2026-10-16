@@ -209,12 +209,16 @@ export async function completeCaptureForm(input: {
     typeof attr.pageSlug === "string" && attr.pageSlug.trim()
       ? attr.pageSlug.trim()
       : undefined;
-  const source = pageSlug
-    ? `lp:${pageSlug}`
-    : form.source || "form";
+  const formSource = (form.source || "").toLowerCase();
+  const playbookSource = formSource.includes("franquia") || form.slug.includes("franquia");
+  const source = playbookSource
+    ? `franquia:${form.slug}`
+    : pageSlug
+      ? `lp:${pageSlug}`
+      : form.source || "form";
 
   const metadata: Record<string, unknown> = {
-    channel: pageSlug ? "lp" : "form",
+    channel: pageSlug ? "lp" : form.steps.length > 1 ? "typeform" : "form",
     convertedAt: new Date().toISOString(),
     ...attr,
     formId: form.id,
@@ -246,8 +250,22 @@ export async function completeCaptureForm(input: {
       contactId: lead.contactId,
       leadId: lead.id,
       payload: { ...flat, aniversario: byType.date ?? flat.aniversario, consent: byType.consent ?? flat.consent },
-      source: pageSlug ? "lp" : "form",
+      source: playbookSource ? source : pageSlug ? "lp" : "form",
     }).catch((err) => console.warn("[capture-form] flows", err instanceof Error ? err.message : err));
+  }
+
+  try {
+    const { ingestFormAnswersIntoLead } = await import("@/lib/qualification/ingest");
+    await ingestFormAnswersIntoLead({
+      workspaceId: form.clienteId,
+      leadId: lead.id,
+      contactId: lead.contactId,
+      source,
+      flat,
+      channel: pageSlug || form.slug.includes("-lp") ? "lp" : form.steps.length > 1 ? "typeform" : "form",
+    });
+  } catch (err) {
+    console.warn("[capture-form] qualification ingest", err instanceof Error ? err.message : err);
   }
 
   return { leadId: lead.id, formId: form.id };

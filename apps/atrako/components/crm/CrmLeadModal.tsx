@@ -117,6 +117,22 @@ type LeadDetail = {
     campaignName?: string | null;
     adName?: string | null;
     formName?: string | null;
+    qualification?: {
+      playbookId: string;
+      priority: "A" | "B" | "C" | null;
+      filledPercent: number;
+      currentState: string;
+      missing: string[];
+      answers: Array<{
+        key: string;
+        fieldLabel: string;
+        label: string;
+        value: string;
+        code: string | null;
+        source: string;
+        at: string;
+      }>;
+    } | null;
     createdAt: string;
   };
   members?: Array<{ id: string; name: string; email: string }>;
@@ -746,6 +762,50 @@ export function CrmLeadModal({
             <p className="py-10 text-center type-caption text-[var(--ink-muted-48)]">Não foi possível carregar</p>
           ) : (
             <>
+              {lead.qualification?.answers?.length ? (
+                <div className="mb-4 rounded-[var(--radius-xs)] border border-[var(--hairline)] p-3">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <span className="type-caption-strong text-[var(--ink)]">Qualificação</span>
+                    {lead.qualification.priority ? (
+                      <span
+                        className={`rounded-[var(--radius-xs)] px-2 py-0.5 type-fine-print ${
+                          lead.qualification.priority === "A"
+                            ? "bg-[var(--primary)] text-white"
+                            : lead.qualification.priority === "B"
+                              ? "bg-[var(--surface-muted)] text-[var(--ink)]"
+                              : "bg-[var(--hairline)] text-[var(--ink-muted-80)]"
+                        }`}
+                      >
+                        Prioridade {lead.qualification.priority}
+                      </span>
+                    ) : null}
+                    <span className="type-fine-print text-[var(--ink-muted-48)]">
+                      {lead.qualification.filledPercent}% preenchido
+                    </span>
+                    {lead.phone ? (
+                      <a
+                        href={`/whatsapp?phone=${encodeURIComponent(lead.phone)}`}
+                        className="ml-auto type-fine-print text-[var(--primary)]"
+                      >
+                        Abrir WhatsApp
+                      </a>
+                    ) : null}
+                  </div>
+                  <ul className="grid gap-1.5">
+                    {lead.qualification.answers.map((a) => (
+                      <li key={a.key} className="flex justify-between gap-3 type-caption">
+                        <span className="text-[var(--ink-muted-80)]">{a.fieldLabel}</span>
+                        <span className="text-right text-[var(--ink)]">{a.label || a.value}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {lead.qualification.priority === "A" || lead.qualification.priority === "B" ? (
+                    <p className="mt-2 type-fine-print text-[var(--ink-muted-80)]">
+                      Próxima ação: agendar primeira reunião
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
               <div className="border-b border-[var(--hairline)]">
                 <div className="flex gap-6" role="tablist" aria-label="Lead">
                   {(

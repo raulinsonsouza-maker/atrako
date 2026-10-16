@@ -4,11 +4,26 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { FormField } from "@atrako/forms";
+import type { FormField, FormStep } from "@atrako/forms";
 import { collectClientAttribution } from "@/lib/criar/lp-attribution";
+import { FormFieldControl, isFieldValueValid } from "@/components/forms/FormFieldControl";
 
-const fieldClass =
-  "mt-3 h-12 w-full rounded-[var(--radius-xs)] border border-[rgba(0,0,0,0.08)] bg-[var(--canvas)] px-5 type-body text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary-focus)]";
+function formPresentation(name: string, layout: "block" | "wizard", slug: string) {
+  const cleaned = name.replace(/\s*[—–-]\s*(LP|Qualificação|Qualify)\s*$/i, "").trim() || name;
+  const brand = cleaned.replace(/^Franquia\s+/i, "").trim() || cleaned;
+  if (layout === "block" || /lp/i.test(slug)) {
+    return {
+      brand: cleaned.startsWith("Franquia") ? cleaned : `Franquia ${brand}`,
+      title: "Fale com a equipe",
+      lead: "Deixe seus dados. Em poucos minutos a gente continua no WhatsApp.",
+    };
+  }
+  return {
+    brand: cleaned.startsWith("Franquia") ? cleaned : `Franquia ${brand}`,
+    title: null as string | null,
+    lead: null as string | null,
+  };
+}
 
 export default function PublicFormPage() {
   const params = useParams();
@@ -16,8 +31,8 @@ export default function PublicFormPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
-  const [fields, setFields] = useState<FormField[]>([]);
-  const [step, setStep] = useState(0);
+  const [steps, setSteps] = useState<FormStep[]>([]);
+  const [stepIdx, setStepIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -39,8 +54,7 @@ export default function PublicFormPage() {
         if (!r.ok) throw new Error(j.error || "Formulário não encontrado");
         if (cancelled) return;
         setName(j.form.name);
-        const flat = (j.form.steps as Array<{ fields: FormField[] }>).flatMap((s) => s.fields);
-        setFields(flat);
+        setSteps((j.form.steps as FormStep[]) ?? []);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Erro");
       } finally {
@@ -52,18 +66,33 @@ export default function PublicFormPage() {
     };
   }, [slug]);
 
-  const current = fields[step];
-  const progress = fields.length ? Math.round(((step + (done ? 1 : 0)) / fields.length) * 100) : 0;
-  const value = current ? answers[current.id] ?? "" : "";
+  const currentStep = steps[stepIdx];
+  const fields = currentStep?.fields ?? [];
+  const layout: "block" | "wizard" =
+    steps.length === 1 && (steps[0]?.fields?.length ?? 0) > 1 ? "block" : "wizard";
+  const progress = steps.length
+    ? Math.round(((stepIdx + 1) / steps.length) * 100)
+    : 0;
+  const copy = formPresentation(name, layout, slug);
 
   const canNext = useMemo(() => {
-    if (!current) return false;
-    const v = value.trim();
-    if (v && current.type === "email" && !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(v)) return false;
-    if (v && current.type === "date" && !/^\d{2}\/\d{2}(\/\d{4})?$/.test(v)) return false;
-    if (!current.required) return true;
-    return v.length > 0;
-  }, [current, value]);
+    if (!fields.length) return false;
+    return fields.every((f) => isFieldValueValid(f, answers[f.id] ?? "", answers));
+  }, [fields, answers]);
+
+  function setField(field: FormField, value: string) {
+    setAnswers((prev) => {
+      const next = { ...prev, [field.id]: value };
+      if (field.type === "state") {
+        for (const step of steps) {
+          for (const f of step.fields) {
+            if (f.type === "city" && (f.dependsOn || "state") === field.id) next[f.id] = "";
+          }
+        }
+      }
+      return next;
+    });
+  }
 
   async function finish(finalAnswers: Record<string, string>) {
     setSubmitting(true);
@@ -95,150 +124,141 @@ export default function PublicFormPage() {
 
   function onNext(e: React.FormEvent) {
     e.preventDefault();
-    if (!current || !canNext) return;
-    const nextAnswers = { ...answers, [current.id]: value.trim() };
-    setAnswers(nextAnswers);
-    if (step >= fields.length - 1) {
-      void finish(nextAnswers);
+    if (!canNext) return;
+    if (stepIdx >= steps.length - 1) {
+      void finish(answers);
     } else {
-      setStep((s) => s + 1);
+      setStepIdx((s) => s + 1);
     }
   }
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--canvas-parchment)]">
+      <div className="capture-form-done">
         <Loader2 className="h-6 w-6 animate-spin text-[var(--primary)]" />
       </div>
     );
   }
 
-  if (error && !fields.length) {
+  if (error && !steps.length) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--canvas-parchment)] px-6">
-        <p className="type-body text-[var(--ink-muted-80)]">{error}</p>
+      <div className="capture-form-done">
+        <p className="type-body">{error}</p>
       </div>
     );
   }
 
   if (done) {
+    const first =
+      (answers.name || answers.nome || "")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)[0] || "";
+    const isQualify = /qualify/i.test(slug);
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[var(--canvas)] px-6 text-center">
-        <h1 className="type-display-md text-[var(--ink)]">{previewToken ? "Teste concluído" : "Obrigado"}</h1>
-        <p className="type-body text-[var(--ink-muted-80)]">
+      <div className="capture-form-done">
+        <h1 className="type-display-md">
+          {previewToken ? "Teste ok" : first ? `Pronto, ${first}` : "Tudo certo"}
+        </h1>
+        <p className="type-body">
           {previewToken
-            ? "Modo teste: as respostas passaram na validação e nada foi salvo."
-            : "Recebemos suas respostas."}
+            ? "As respostas passaram na validação. Neste modo de teste nada foi salvo."
+            : isQualify
+              ? "Suas respostas já estão com a equipe de expansão. Vamos te chamar no WhatsApp para o próximo passo."
+              : "Cadastro feito. Vamos te chamar no WhatsApp em breve para continuar."}
         </p>
       </div>
     );
   }
 
+  const last = stepIdx >= steps.length - 1;
+  const wizardQuestion =
+    fields[0]?.type === "consent" ? "Para continuar" : fields[0]?.label || currentStep?.title || "";
+
+  const progressPct = Math.min(100, progress);
+
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--canvas)] text-[var(--ink)]">
-      <div className="h-1 w-full bg-[var(--surface-chip-translucent)]">
-        <div
-          className="h-full bg-[var(--primary)] transition-all"
-          style={{ width: `${Math.min(100, progress)}%` }}
-        />
-      </div>
-      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-16">
-        <p className="type-fine-print text-[var(--ink-muted-48)]">
-          {name}
-          {previewToken ? " · Modo teste — nada será salvo" : ""}
-        </p>
-        <form onSubmit={onNext} className="mt-4">
-          <h1 className="type-lead text-[var(--ink)]">{current?.label}</h1>
-          {current?.type === "consent" ? (
-            <button
-              type="button"
-              role="checkbox"
-              aria-checked={value === "sim"}
-              onClick={() => setAnswers((a) => ({ ...a, [current.id]: value === "sim" ? "" : "sim" }))}
-              className={`mt-6 flex w-full items-start gap-3 rounded-[var(--radius-xs)] border px-5 py-4 text-left type-body active:scale-[0.99] ${
-                value === "sim"
-                  ? "border-[var(--primary)] bg-[var(--primary-glow)] text-[var(--ink)]"
-                  : "border-[var(--hairline)] bg-[var(--canvas)] text-[var(--ink)]"
-              }`}
-            >
-              <span
-                className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-[var(--radius-xs)] border ${
-                  value === "sim" ? "border-[var(--primary)] bg-[var(--primary)] text-[var(--on-primary)]" : "border-[var(--hairline)]"
-                }`}
-                aria-hidden
-              >
-                {value === "sim" ? "✓" : ""}
-              </span>
-              <span>Aceito receber novidades e ofertas por e-mail e WhatsApp. Posso cancelar quando quiser.</span>
-            </button>
-          ) : current?.type === "date" ? (
-            <input
-              autoFocus
-              className={fieldClass}
-              inputMode="numeric"
-              placeholder="DD/MM"
-              maxLength={10}
-              value={value}
-              onChange={(e) => {
-                const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
-                const masked =
-                  digits.length <= 2 ? digits : digits.length <= 4 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-                setAnswers((a) => ({ ...a, [current.id]: masked }));
-              }}
-              required={current?.required}
-            />
-          ) : current?.type === "choice" && current.options?.length ? (
-            <div className="mt-6 flex flex-col gap-2">
-              {current.options.map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() =>
-                    setAnswers((a) => ({ ...a, [current.id]: opt }))
-                  }
-                  className={`rounded-[var(--radius-xs)] border px-5 py-3 text-left type-body active:scale-[0.99] ${
-                    value === opt
-                      ? "border-[var(--primary)] bg-[var(--primary-glow)] text-[var(--primary)]"
-                      : "border-[var(--hairline)] bg-[var(--canvas)] text-[var(--ink)]"
-                  }`}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <input
-              autoFocus
-              className={fieldClass}
-              type={
-                current?.type === "email"
-                  ? "email"
-                  : current?.type === "phone"
-                    ? "tel"
-                    : current?.type === "number"
-                      ? "number"
-                      : "text"
-              }
-              value={value}
-              onChange={(e) =>
-                current && setAnswers((a) => ({ ...a, [current.id]: e.target.value }))
-              }
-              required={current?.required}
-            />
-          )}
-          {error ? <p className="mt-3 type-caption text-[var(--danger)]">{error}</p> : null}
-          <div className="mt-8">
-            <Button type="submit" variant="store-hero" disabled={!canNext || submitting}>
-              {submitting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : step >= fields.length - 1 ? (
-                "Enviar"
-              ) : (
-                "Continuar"
-              )}
-            </Button>
+    <div className={`capture-form-page ${layout === "wizard" ? "capture-form-wizard" : ""}`}>
+      {layout === "block" ? (
+        <div className="capture-form-progress" aria-hidden>
+          <div className="capture-form-progress-bar" style={{ width: `${progressPct}%` }} />
+        </div>
+      ) : null}
+
+      <div className="capture-form-center">
+        {layout === "block" ? (
+          <div className="capture-form-card">
+            <p className="capture-form-brand type-fine-print">
+              {copy.brand}
+              {previewToken ? " · Modo teste" : ""}
+            </p>
+            <h1 className="capture-form-title type-tagline">{copy.title}</h1>
+            {copy.lead ? <p className="capture-form-lead type-body">{copy.lead}</p> : null}
+
+            <form onSubmit={onNext}>
+              <div className="capture-form-fields">
+                {fields.map((f) => (
+                  <FormFieldControl
+                    key={f.id}
+                    field={f}
+                    value={answers[f.id] ?? ""}
+                    answers={answers}
+                    onChange={(v) => setField(f, v)}
+                    variant="block"
+                  />
+                ))}
+              </div>
+              {error ? <p className="mt-3 type-caption text-[var(--danger)]">{error}</p> : null}
+              <div className="capture-form-actions">
+                <Button type="submit" variant="store-hero" className="w-full" disabled={!canNext || submitting}>
+                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enviar"}
+                </Button>
+              </div>
+            </form>
           </div>
-        </form>
+        ) : (
+          <form onSubmit={onNext}>
+            <p className="capture-form-wizard-step type-fine-print">
+              {copy.brand}
+              {previewToken ? " · Modo teste" : ""}
+            </p>
+            <div
+              className="capture-form-track"
+              role="progressbar"
+              aria-valuenow={progressPct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label="Progresso"
+            >
+              <div className="capture-form-track-bar" style={{ width: `${progressPct}%` }} />
+            </div>
+            <h1 className="capture-form-wizard-q type-display-md">{wizardQuestion}</h1>
+            {fields.map((f, i) => (
+              <FormFieldControl
+                key={f.id}
+                field={f.type === "consent" ? f : { ...f, label: f.label }}
+                value={answers[f.id] ?? ""}
+                answers={answers}
+                onChange={(v) => setField(f, v)}
+                variant="wizard"
+                hideLabel={f.type !== "consent" && f.type !== "state" && f.type !== "city"}
+                autoFocus={i === 0 && (f.type === "text" || f.type === "email" || f.type === "phone")}
+              />
+            ))}
+            {error ? <p className="mt-3 type-caption text-[var(--danger)]">{error}</p> : null}
+            <div className="capture-form-actions">
+              <Button type="submit" variant="store-hero" className="w-full" disabled={!canNext || submitting}>
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : last ? (
+                  "Enviar"
+                ) : (
+                  "Continuar"
+                )}
+              </Button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

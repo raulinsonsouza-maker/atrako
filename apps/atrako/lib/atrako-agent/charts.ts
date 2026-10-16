@@ -176,7 +176,6 @@ function crm(data: Row): ChartArtifact | null {
     xKey: "etapa",
     series: [{ key: "leads", label: "Leads" }],
     data: etapas.map((e) => ({ etapa: str(e.etapa, "Etapa"), leads: num(e.leads) })),
-    note: "Porcentagem ao lado = passagem em relação à etapa anterior.",
   });
 }
 

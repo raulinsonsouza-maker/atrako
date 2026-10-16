@@ -11,6 +11,7 @@ import { contactLocation, formatLocation } from "@/lib/commerce/order-details";
 import { isEcommerceCliente } from "@/lib/clientProfiles";
 import { brtDayBounds, getLeadAcquisition } from "@/lib/crm/lead-channel";
 import { originLabel } from "@/lib/commerce-attribution/store-source";
+import { franchiseSourceLabel } from "@/lib/qualification/crm-labels";
 
 export const STAGE_ROLE_ENTRY = "ENTRY";
 export const STAGE_ROLE_WON = "WON";
@@ -704,6 +705,7 @@ function mapLead(l: {
   updatedAt: Date;
   contact: { name: string; email: string | null; phone: string | null; metadata?: unknown } | null;
 }, channel?: string) {
+  const franchiseLabel = l.source ? franchiseSourceLabel(l.source) : null;
   return {
     id: l.id,
     contactId: l.contactId,
@@ -713,7 +715,10 @@ function mapLead(l: {
     location: formatLocation(contactLocation(l.contact?.metadata)),
     source: l.source,
     channel: channel && channel !== "unknown" ? channel : null,
-    channelLabel: channel && channel !== "unknown" ? originLabel(channel) : null,
+    /** Preferência: rótulo humano da franquia; senão canal de aquisição. */
+    channelLabel:
+      franchiseLabel ||
+      (channel && channel !== "unknown" ? originLabel(channel) : null),
     status: l.status,
     dealValue: l.dealValue != null ? Number(l.dealValue) : null,
     stageId: l.stageId,

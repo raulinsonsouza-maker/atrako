@@ -85,7 +85,20 @@ export function formatPhone(phone: string) {
 
 export function sourceLabel(source: string | null) {
   if (!source) return null;
-  return SOURCE_LABEL[source.toLowerCase()] ?? source.charAt(0).toUpperCase() + source.slice(1);
+  const s = source.toLowerCase();
+  if (s.includes("franquia-regicenter-qualify") || (s.startsWith("franquia:") && s.includes("qualify"))) {
+    return "Qualificação";
+  }
+  if (s.includes("franquia-regicenter-lp") || (s.startsWith("franquia:") && s.includes("-lp"))) {
+    return "Landing page";
+  }
+  if (s.startsWith("franquia:")) return "Franquia";
+  if (s.startsWith("lp:")) return "Landing page";
+  if (s.includes(":")) {
+    const rest = s.slice(s.indexOf(":") + 1).replace(/[-_]/g, " ");
+    return rest.charAt(0).toUpperCase() + rest.slice(1);
+  }
+  return SOURCE_LABEL[s] ?? source.charAt(0).toUpperCase() + source.slice(1);
 }
 
 export function CrmLeadCard({

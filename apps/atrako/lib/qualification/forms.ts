@@ -1,9 +1,11 @@
 /**
  * Specs dos CaptureForms Regicenter (ids = fieldKeys).
+ * LP = 1 passo com vários campos (form padrão para anúncio).
+ * Qualify = um campo por passo (typeform / passo a passo).
  */
 
 import type { FormStep } from "@atrako/forms";
-import { labelsFor } from "./choices";
+import { labelsFor, REGICENTER_FRANCHISE_INVESTMENT } from "./choices";
 
 export const REGICENTER_LP_FORM = {
   name: "Franquia Regicenter — LP",
@@ -17,19 +19,14 @@ export const REGICENTER_LP_FORM = {
         { id: "name", type: "text" as const, label: "Seu nome", required: true },
         { id: "phone", type: "phone" as const, label: "WhatsApp", required: true },
         { id: "email", type: "email" as const, label: "E-mail", required: true },
-        { id: "city", type: "text" as const, label: "Cidade", required: true },
+        { id: "state", type: "state" as const, label: "Estado", required: true },
+        { id: "city", type: "city" as const, label: "Cidade", required: true, dependsOn: "state" },
         {
           id: "best_contact_time",
           type: "choice" as const,
           label: "Melhor horário para contato",
           required: false,
           options: labelsFor("best_contact_time"),
-        },
-        {
-          id: "wa_opt_in",
-          type: "consent" as const,
-          label: "Autorizo contato da Regicenter por WhatsApp e e-mail sobre a franquia",
-          required: true,
         },
       ],
     },
@@ -44,7 +41,12 @@ export const REGICENTER_QUALIFY_FORM = {
     { id: "s_name", title: "Nome", fields: [{ id: "name", type: "text" as const, label: "Qual é o seu nome?", required: true }] },
     { id: "s_phone", title: "WhatsApp", fields: [{ id: "phone", type: "phone" as const, label: "Qual seu WhatsApp?", required: true }] },
     { id: "s_email", title: "E-mail", fields: [{ id: "email", type: "email" as const, label: "Qual seu e-mail?", required: true }] },
-    { id: "s_city", title: "Cidade", fields: [{ id: "city", type: "text" as const, label: "Em qual cidade você está?", required: true }] },
+    { id: "s_state", title: "Estado", fields: [{ id: "state", type: "state" as const, label: "Em qual estado você está?", required: true }] },
+    {
+      id: "s_city",
+      title: "Cidade",
+      fields: [{ id: "city", type: "city" as const, label: "Em qual cidade você está?", required: true, dependsOn: "state" }],
+    },
     {
       id: "s_niche",
       title: "Área",
@@ -104,21 +106,9 @@ export const REGICENTER_QUALIFY_FORM = {
         {
           id: "investment_status",
           type: "choice" as const,
-          label: "Por último: sobre o investimento inicial da franquia, qual é o seu momento?",
+          label: `Por último: o investimento inicial da franquia é ${REGICENTER_FRANCHISE_INVESTMENT}. Qual é o seu momento?`,
           required: true,
           options: labelsFor("investment_status"),
-        },
-      ],
-    },
-    {
-      id: "s_consent",
-      title: "Consentimento",
-      fields: [
-        {
-          id: "wa_opt_in",
-          type: "consent" as const,
-          label: "Autorizo contato da Regicenter por WhatsApp e e-mail sobre a franquia",
-          required: true,
         },
       ],
     },

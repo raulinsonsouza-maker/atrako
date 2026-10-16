@@ -37,9 +37,10 @@ export interface OrbComposerProps {
   "aria-label"?: string;
 }
 
-const MAX_FIELD_H = 200;
-/** Mantém em sincronia com `.orb-composer-field { line-height }`. */
+/** Mantém em sincronia com `.orb-composer-field { line-height }` e `max-height`. */
 const FIELD_LINE_H = 24;
+const MAX_LINES = 5;
+const MAX_FIELD_H = FIELD_LINE_H * MAX_LINES;
 
 /**
  * Campo de pergunta do assistente (YAML: orb-composer). Pílula com anel girando em `--primary`
@@ -81,10 +82,12 @@ const OrbComposer = React.forwardRef<OrbComposerHandle, OrbComposerProps>(
     React.useLayoutEffect(() => {
       const el = fieldRef.current;
       if (!el) return;
-      el.style.height = "auto";
-      const h = Math.min(el.scrollHeight, MAX_FIELD_H);
+      // zera antes de medir — com flex/height indefinido, `auto` reporta 1 linha e esconde o resto
+      el.style.height = "0px";
+      const full = el.scrollHeight;
+      const h = Math.max(FIELD_LINE_H, Math.min(full, MAX_FIELD_H));
       el.style.height = `${h}px`;
-      el.style.overflowY = el.scrollHeight > MAX_FIELD_H ? "auto" : "hidden";
+      el.style.overflowY = full > MAX_FIELD_H ? "auto" : "hidden";
       setMultiline(h > FIELD_LINE_H + 4);
     }, [value]);
 

@@ -84,20 +84,11 @@ function Funnel({ chart }: { chart: ChartArtifact }) {
   return (
     <ol className="chart-card-funnel">
       {rows.map((r, i) => {
-        const prev = i > 0 ? rows[i - 1].value : null;
-        const rate = prev ? (r.value / prev) * 100 : null;
         return (
           <li key={`${r.label}-${i}`} className="chart-card-funnel-row">
             <div className="flex items-baseline justify-between gap-3">
               <span className="type-caption text-[var(--ink)]">{r.label}</span>
-              <span className="type-caption-strong text-[var(--ink)]">
-                {formatChartValue(r.value, chart.unit)}
-                {rate !== null ? (
-                  <span className="type-fine-print ml-2 text-[var(--ink-muted-48)]">
-                    {rate.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%
-                  </span>
-                ) : null}
-              </span>
+              <span className="type-caption-strong text-[var(--ink)]">{formatChartValue(r.value, chart.unit)}</span>
             </div>
             <span className="chart-card-funnel-track">
               <span className="chart-card-funnel-bar" style={{ width: `${Math.max(2, (r.value / max) * 100)}%` }} />

@@ -337,6 +337,8 @@ test("chartsFor monta funil do CRM e ignora a etapa de perdidos", () => {
     ],
   });
   assert.equal(c.chart, "funnel");
+  assert.equal(c.note, undefined);
+  assert.equal(JSON.stringify(c).includes("passagem"), false);
   assert.deepEqual(c.data, [
     { etapa: "Novo", leads: 40 },
     { etapa: "Qualificado", leads: 12 },

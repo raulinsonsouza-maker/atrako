@@ -16,12 +16,22 @@ import {
   parseConversationQualify,
   parseLeadQualification,
   saveConversationQualify,
+  snapshotFromAnswers,
   writeLeadAnswers,
   type ConversationQualifyState,
 } from "./store";
-import { doneCopy, fieldPrompt, followUpCopy, openCopy, presentationCopy } from "./messages";
-import { applyPriorityRouting } from "./routing";
-import { classifyLead, snapshotFromAnswers } from "./classify";
+import {
+  doneCopy,
+  fieldPrompt,
+  followUpCopy,
+  openCopy,
+  postFormFollowUpCopy,
+  postFormOpenCopy,
+  postFormPresentationCopy,
+  presentationCopy,
+} from "./messages";
+import { applyPriorityRouting, applySoftPriorityRouting } from "./routing";
+import { classifyLead } from "./classify";
 
 const HUMAN_RE =
   /(quero|preciso|pode|chama).{0,30}(atendente|pessoa|humano)|falar com (algu[eé]m|uma pessoa|atendente)|atendente humano/i;
@@ -108,34 +118,34 @@ export async function startQualificationFlow(input: {
       leadId: input.leadId,
       playbookId: prefs.playbookId,
       patch: {},
-      currentState: "qualified",
-      cadenceStatus: priority === "C" ? "running" : "done",
+      currentState: "awaiting_post_form_engagement",
+      cadenceStatus: "running",
       forcePriority: priority,
     });
     await saveConversationQualify(conversation.id, input.workspaceId, {
       playbookId: prefs.playbookId,
-      automationStatus: priority === "C" ? "active" : "done",
-      currentState: "qualified",
+      automationStatus: "active",
+      currentState: "awaiting_post_form_engagement",
       awaitingField: null,
       startedAt: new Date().toISOString(),
       qualifiedAt: new Date().toISOString(),
     });
-    const open = openCopy(input.contactName, city, 0);
-    await sendAndPersistText({
+    const open = postFormOpenCopy(input.contactName, city);
+    await sendAndPersistReplyButtons({
       workspaceId: input.workspaceId,
       to: input.phone,
       body: open.body,
+      buttons: open.buttons,
       contactId: input.contactId,
       contactName: input.contactName,
     });
-    await applyPriorityRouting({
+    await applySoftPriorityRouting({
       workspaceId: input.workspaceId,
       leadId: input.leadId,
-      conversationId: conversation.id,
       priority,
       contactName: input.contactName,
     });
-    return { started: true as const, conversationId: conversation.id, complete: true };
+    return { started: true as const, conversationId: conversation.id, complete: false };
   }
 
   const open = openCopy(input.contactName, city, missing.length);
@@ -183,10 +193,12 @@ async function askNext(input: {
   const missing = missingFieldKeys(input.answers, input.askKeys);
   if (!missing.length) {
     const priority = classifyLead(snapshotFromAnswers(input.answers));
-    await sendAndPersistText({
+    const open = postFormOpenCopy(input.contactName, input.answers.city?.value ?? null);
+    await sendAndPersistReplyButtons({
       workspaceId: input.workspaceId,
       to: input.phone,
-      body: doneCopy(input.contactName),
+      body: `Pronto! ${open.body}`,
+      buttons: open.buttons,
       contactId: input.contactId,
       contactName: input.contactName,
     });
@@ -195,25 +207,24 @@ async function askNext(input: {
       leadId: input.leadId,
       playbookId: input.playbookId,
       patch: {},
-      currentState: "qualified",
-      cadenceStatus: priority === "C" ? "running" : "done",
+      currentState: "awaiting_post_form_engagement",
+      cadenceStatus: "running",
       forcePriority: priority,
     });
     await saveConversationQualify(input.conversationId, input.workspaceId, {
       ...input.state,
-      automationStatus: priority === "C" ? "active" : "done",
-      currentState: "qualified",
+      automationStatus: "active",
+      currentState: "awaiting_post_form_engagement",
       awaitingField: null,
       qualifiedAt: new Date().toISOString(),
     });
-    await applyPriorityRouting({
+    await applySoftPriorityRouting({
       workspaceId: input.workspaceId,
       leadId: input.leadId,
-      conversationId: input.conversationId,
       priority,
       contactName: input.contactName,
     });
-    return { handled: true as const, done: true };
+    return { handled: true as const, done: false };
   }
 
   const next = missing[0]!;
@@ -292,9 +303,75 @@ export async function handleQualificationInbound(input: {
   const askKeys = prefs.askKeys.length ? prefs.askKeys : WA_ASK_ORDER;
   const contactName = conversation.contactName;
 
-  if (state.currentState === "awaiting_start_choice" || replyId === "START_QUALIFICATION" || replyId === "SHOW_PRESENTATION") {
+  const postForm =
+    state.currentState === "awaiting_post_form_engagement" ||
+    replyId === "WANT_MEETING" ||
+    replyId === "LATER_OK";
+
+  if (postForm || state.currentState === "awaiting_start_choice" || replyId === "START_QUALIFICATION" || replyId === "SHOW_PRESENTATION") {
+    if (replyId === "WANT_MEETING" || /quero (conversar|falar|agendar)|marcar (uma )?conversa/i.test(text)) {
+      const priority = classifyLead(snapshotFromAnswers(q.answers));
+      await sendAndPersistText({
+        workspaceId: input.workspaceId,
+        to: input.phone,
+        body: doneCopy(contactName),
+        contactId: input.contactId,
+        contactName,
+      });
+      await writeLeadAnswers({
+        workspaceId: input.workspaceId,
+        leadId: input.leadId,
+        playbookId: prefs.playbookId,
+        patch: {},
+        currentState: "meeting_requested",
+        cadenceStatus: "done",
+        forcePriority: priority,
+      });
+      await saveConversationQualify(input.conversationId, input.workspaceId, {
+        ...state,
+        automationStatus: "done",
+        currentState: "meeting_requested",
+        awaitingField: null,
+      });
+      await applyPriorityRouting({
+        workspaceId: input.workspaceId,
+        leadId: input.leadId,
+        conversationId: input.conversationId,
+        priority,
+        contactName,
+      });
+      return true;
+    }
+
+    if (replyId === "LATER_OK" || /^depois$/i.test(text)) {
+      await sendAndPersistText({
+        workspaceId: input.workspaceId,
+        to: input.phone,
+        body: "Sem problema. Quando quiser, é só mandar uma mensagem por aqui.",
+        contactId: input.contactId,
+        contactName,
+      });
+      await writeLeadAnswers({
+        workspaceId: input.workspaceId,
+        leadId: input.leadId,
+        playbookId: prefs.playbookId,
+        patch: {},
+        currentState: "awaiting_post_form_engagement",
+        cadenceStatus: "running",
+      });
+      await saveConversationQualify(input.conversationId, input.workspaceId, {
+        ...state,
+        currentState: "awaiting_post_form_engagement",
+        awaitingField: null,
+      });
+      return true;
+    }
+
     if (replyId === "SHOW_PRESENTATION" || /apresenta/i.test(text)) {
-      const p = presentationCopy();
+      const p =
+        state.currentState === "awaiting_post_form_engagement" || postForm
+          ? postFormPresentationCopy()
+          : presentationCopy();
       await sendAndPersistReplyButtons({
         workspaceId: input.workspaceId,
         to: input.phone,
@@ -305,13 +382,19 @@ export async function handleQualificationInbound(input: {
       });
       await saveConversationQualify(input.conversationId, input.workspaceId, {
         ...state,
-        currentState: "awaiting_start_choice",
+        currentState:
+          state.currentState === "awaiting_post_form_engagement" || postForm
+            ? "awaiting_post_form_engagement"
+            : "awaiting_start_choice",
         presentationSentAt: new Date().toISOString(),
         awaitingField: null,
       });
       return true;
     }
-    if (replyId === "START_QUALIFICATION" || /come[cç]ar|sim|ok|bora/i.test(text)) {
+    if (
+      state.currentState === "awaiting_start_choice" &&
+      (replyId === "START_QUALIFICATION" || /come[cç]ar|sim|ok|bora/i.test(text))
+    ) {
       return (await askNext({
         workspaceId: input.workspaceId,
         conversationId: input.conversationId,

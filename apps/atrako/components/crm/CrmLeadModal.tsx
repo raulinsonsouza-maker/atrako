@@ -11,6 +11,7 @@ import {
   Loader2,
   Mail,
   MapPin,
+  MessageCircle,
   Pencil,
   Phone,
   ShoppingBag,
@@ -120,8 +121,11 @@ type LeadDetail = {
     qualification?: {
       playbookId: string;
       priority: "A" | "B" | "C" | null;
+      priorityLabel?: string | null;
       filledPercent: number;
       currentState: string;
+      cadenceStatus?: string;
+      nextAction?: string | null;
       missing: string[];
       answers: Array<{
         key: string;
@@ -271,10 +275,18 @@ function SectionTitle({ icon: Icon, children }: { icon?: typeof ShoppingBag; chi
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="panel-modal-stat">
-      <p className="type-caption text-[var(--ink-muted-48)]">{label}</p>
-      <p className="mt-1 type-body-strong tabular-nums text-[var(--ink)]">{value}</p>
+      <p className="panel-modal-stat-label type-fine-print">{label}</p>
+      <p className="panel-modal-stat-value type-caption-strong tabular-nums" title={value}>
+        {value}
+      </p>
     </div>
   );
+}
+
+function priorityTone(priority: "A" | "B" | "C" | null | undefined): "ok" | "warn" | undefined {
+  if (priority === "A") return "ok";
+  if (priority === "B") return "warn";
+  return undefined;
 }
 
 function ProductThumb({ src }: { src?: string | null }) {
@@ -590,6 +602,12 @@ export function CrmLeadModal({
     };
   }, [onClose]);
 
+  useEffect(() => {
+    if (salesMode && (panelTab === "conversas" || panelTab === "pedidos")) {
+      setPanelTab("jornada");
+    }
+  }, [salesMode, panelTab]);
+
   async function moveStage(stageId: string) {
     if (!data?.lead.stageId || stageId === data.lead.stageId) return;
     const r = await fetch("/api/atrako/crm/leads", {
@@ -678,47 +696,35 @@ export function CrmLeadModal({
                 </button>
               </div>
               {lead ? (
-                <div className="mt-4 flex flex-col gap-2">
+                <div className="panel-modal-contacts">
                   {lead.phone ? (
-                    <a
-                      href={`tel:${lead.phone}`}
-                      className="inline-flex items-center gap-2 type-caption tabular-nums text-[var(--ink-muted-80)]"
-                    >
+                    <a href={`tel:${lead.phone}`} className="type-caption tabular-nums">
                       <Phone className="h-3.5 w-3.5 shrink-0 text-[var(--ink-muted-48)]" strokeWidth={1.75} />
                       {formatPhone(lead.phone)}
                     </a>
                   ) : null}
                   {lead.email ? (
-                    <a
-                      href={`mailto:${lead.email}`}
-                      className="inline-flex min-w-0 items-center gap-2 type-caption text-[var(--ink-muted-80)]"
-                    >
+                    <a href={`mailto:${lead.email}`} className="type-caption">
                       <Mail className="h-3.5 w-3.5 shrink-0 text-[var(--ink-muted-48)]" strokeWidth={1.75} />
                       <span className="truncate">{lead.email}</span>
                     </a>
                   ) : null}
                   {lead.location ? (
-                    <span className="inline-flex items-center gap-2 type-caption text-[var(--ink-muted-80)]">
+                    <span className="type-caption">
                       <MapPin className="h-3.5 w-3.5 shrink-0 text-[var(--ink-muted-48)]" strokeWidth={1.75} />
                       {lead.location}
                     </span>
                   ) : null}
-                  {lead.address ? (
-                    <span className="type-caption text-[var(--ink-muted-80)]">{lead.address}</span>
-                  ) : null}
+                  {lead.address ? <span className="type-caption">{lead.address}</span> : null}
                   {lead.nickname ? (
-                    <span className="type-caption text-[var(--ink-muted-80)]">Apelido no Mercado Livre: {lead.nickname}</span>
+                    <span className="type-caption">Apelido no Mercado Livre: {lead.nickname}</span>
                   ) : null}
-                  {lead.document ? (
-                    <span className="type-caption tabular-nums text-[var(--ink-muted-80)]">{lead.document}</span>
-                  ) : null}
-                  {lead.shipping ? (
-                    <span className="type-caption text-[var(--ink-muted-80)]">Envio {lead.shipping}</span>
-                  ) : null}
+                  {lead.document ? <span className="type-caption tabular-nums">{lead.document}</span> : null}
+                  {lead.shipping ? <span className="type-caption">Envio {lead.shipping}</span> : null}
                   {purchaseLine ? (
-                    <span className="inline-flex items-start gap-2 type-caption text-[var(--ink-muted-80)]">
-                      <ShoppingBag className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--ink-muted-48)]" strokeWidth={1.75} />
-                      <span>{purchaseLine}</span>
+                    <span className="type-caption">
+                      <ShoppingBag className="h-3.5 w-3.5 shrink-0 text-[var(--ink-muted-48)]" strokeWidth={1.75} />
+                      {purchaseLine}
                     </span>
                   ) : null}
                   {!lead.phone && !lead.email ? (
@@ -734,12 +740,23 @@ export function CrmLeadModal({
           </div>
           {lead && salesMode ? (
             <div className="panel-modal-stats">
-              <Stat
-                label="Valor"
-                value={lead.dealValue != null ? lead.dealValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
-              />
-              <Stat label="Origem" value={lead.campaignName || lead.sourceLabel || "—"} />
-              <Stat label="No CRM desde" value={fmtDate(lead.createdAt)} />
+              {lead.qualification ? (
+                <Stat
+                  label="Prioridade"
+                  value={lead.qualification.priorityLabel || "—"}
+                />
+              ) : (
+                <Stat
+                  label="Valor"
+                  value={
+                    lead.dealValue != null
+                      ? lead.dealValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+                      : "—"
+                  }
+                />
+              )}
+              <Stat label="Origem" value={lead.sourceLabel || lead.formName || lead.campaignName || "—"} />
+              <Stat label="Entrou" value={fmtDate(lead.createdAt)} />
             </div>
           ) : lead ? (
             <div className="panel-modal-stats">
@@ -748,7 +765,7 @@ export function CrmLeadModal({
                 label={boughtCount ? "Pedidos pagos" : openCents ? "Não pago" : "Pedidos pagos"}
                 value={boughtCount ? String(boughtCount) : openCents ? fmtCents(openCents) : "0"}
               />
-              <Stat label="No CRM desde" value={fmtDate(lead.createdAt)} />
+              <Stat label="Entrou" value={fmtDate(lead.createdAt)} />
             </div>
           ) : null}
         </div>
@@ -763,56 +780,59 @@ export function CrmLeadModal({
           ) : (
             <>
               {lead.qualification?.answers?.length ? (
-                <div className="mb-4 rounded-[var(--radius-xs)] border border-[var(--hairline)] p-3">
-                  <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <span className="type-caption-strong text-[var(--ink)]">Qualificação</span>
-                    {lead.qualification.priority ? (
+                <section className="panel-modal-qualify">
+                  <div className="panel-modal-qualify-head">
+                    <h3 className="type-caption-strong">Do formulário</h3>
+                    {lead.qualification.priorityLabel ? (
                       <span
-                        className={`rounded-[var(--radius-xs)] px-2 py-0.5 type-fine-print ${
-                          lead.qualification.priority === "A"
-                            ? "bg-[var(--primary)] text-white"
-                            : lead.qualification.priority === "B"
-                              ? "bg-[var(--surface-muted)] text-[var(--ink)]"
-                              : "bg-[var(--hairline)] text-[var(--ink-muted-80)]"
-                        }`}
+                        className="rel-badge type-micro-legal"
+                        data-tone={priorityTone(lead.qualification.priority)}
                       >
-                        Prioridade {lead.qualification.priority}
+                        {lead.qualification.priorityLabel}
                       </span>
                     ) : null}
-                    <span className="type-fine-print text-[var(--ink-muted-48)]">
-                      {lead.qualification.filledPercent}% preenchido
-                    </span>
+                    {lead.qualification.filledPercent < 100 ? (
+                      <span className="type-fine-print text-[var(--ink-muted-48)]">
+                        {lead.qualification.filledPercent}% respondido
+                      </span>
+                    ) : null}
                     {lead.phone ? (
                       <a
                         href={`/whatsapp?phone=${encodeURIComponent(lead.phone)}`}
-                        className="ml-auto type-fine-print text-[var(--primary)]"
+                        className="panel-modal-qualify-wa type-fine-print"
                       >
-                        Abrir WhatsApp
+                        <MessageCircle className="h-3.5 w-3.5" strokeWidth={1.75} />
+                        WhatsApp
                       </a>
                     ) : null}
                   </div>
-                  <ul className="grid gap-1.5">
+                  <dl className="panel-modal-qualify-grid">
                     {lead.qualification.answers.map((a) => (
-                      <li key={a.key} className="flex justify-between gap-3 type-caption">
-                        <span className="text-[var(--ink-muted-80)]">{a.fieldLabel}</span>
-                        <span className="text-right text-[var(--ink)]">{a.label || a.value}</span>
-                      </li>
+                      <div key={a.key} className="panel-modal-qualify-item">
+                        <dt className="type-fine-print">{a.fieldLabel}</dt>
+                        <dd className="type-caption-strong">{a.label || a.value}</dd>
+                      </div>
                     ))}
-                  </ul>
-                  {lead.qualification.priority === "A" || lead.qualification.priority === "B" ? (
-                    <p className="mt-2 type-fine-print text-[var(--ink-muted-80)]">
-                      Próxima ação: agendar primeira reunião
-                    </p>
+                  </dl>
+                  {lead.qualification.nextAction ? (
+                    <div className="panel-modal-qualify-next">
+                      <span className="type-micro-legal">Próximo passo</span>
+                      <p className="type-caption">{lead.qualification.nextAction}</p>
+                    </div>
                   ) : null}
-                </div>
+                </section>
               ) : null}
-              <div className="border-b border-[var(--hairline)]">
-                <div className="flex gap-6" role="tablist" aria-label="Lead">
+              <div className="panel-modal-tabs">
+                <div className="panel-modal-tabs-list" role="tablist" aria-label="Lead">
                   {(
                     [
                       ["jornada", "Jornada"],
-                      ...(!salesMode ? [["pedidos", "Pedidos"]] : []),
-                      ["conversas", "Conversas"],
+                      ...(!salesMode
+                        ? ([
+                            ["pedidos", "Pedidos"],
+                            ["conversas", "Conversas"],
+                          ] as const)
+                        : []),
                       ["notas", "Notas"],
                     ] as Array<["jornada" | "pedidos" | "conversas" | "notas", string]>
                   ).map(([id, label]) => {
@@ -824,7 +844,7 @@ export function CrmLeadModal({
                         role="tab"
                         aria-selected={active}
                         onClick={() => setPanelTab(id)}
-                        className={`-mb-px shrink-0 border-b-2 pb-2 type-nav-link active:scale-95 ${
+                        className={`-mb-px shrink-0 border-b-2 pb-2.5 pt-2 type-nav-link active:scale-95 ${
                           active
                             ? "border-[var(--primary)] text-[var(--ink)]"
                             : "border-transparent text-[var(--muted-foreground)]"
@@ -838,7 +858,7 @@ export function CrmLeadModal({
               </div>
 
               {panelTab === "jornada" ? (
-                <div className="mt-4" role="tabpanel">
+                <div className="panel-modal-panel" role="tabpanel">
                   {!journey.length ? (
                     <p className="type-fine-print text-[var(--ink-muted-48)]">Sem eventos ainda</p>
                   ) : (
@@ -866,7 +886,7 @@ export function CrmLeadModal({
               ) : null}
 
               {panelTab === "pedidos" ? (
-                <div className="mt-4 space-y-4" role="tabpanel">
+                <div className="panel-modal-panel space-y-4" role="tabpanel">
                   {openCarts.length > 0 ? (
                     <div className="space-y-4">
                       <SectionTitle icon={ShoppingCart}>
@@ -912,8 +932,8 @@ export function CrmLeadModal({
                 </div>
               ) : null}
 
-              {panelTab === "conversas" ? (
-                <div className="mt-4" role="tabpanel">
+              {panelTab === "conversas" && !salesMode ? (
+                <div className="panel-modal-panel" role="tabpanel">
                   {data?.communications ? (
                     <LeadCommunications
                       workspaceId={workspaceId}
@@ -929,7 +949,7 @@ export function CrmLeadModal({
               ) : null}
 
               {panelTab === "notas" ? (
-                <div className="mt-4 space-y-3" role="tabpanel">
+                <div className="panel-modal-panel space-y-3" role="tabpanel">
                   {salesMode ? (
                     <PillSelect
                       size="field"

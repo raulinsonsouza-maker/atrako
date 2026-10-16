@@ -4,9 +4,8 @@ import { useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import type { FormField } from "@atrako/forms";
 import { Button } from "@/components/ui/button";
-import { OptionChip } from "@/components/ui/option-chip";
-import { Switch } from "@/components/ui/switch";
 import { collectClientAttribution } from "@/lib/criar/lp-attribution";
+import { FormFieldControl, isFieldValueValid } from "@/components/forms/FormFieldControl";
 
 type Props = {
   /** Se houver form publicado, completa via slug */
@@ -23,23 +22,13 @@ type Props = {
   previewToken?: string | null;
 };
 
-const fieldClass =
-  "mt-1.5 h-11 w-full rounded-[var(--radius-xs)] border border-[rgba(0,0,0,0.08)] bg-[var(--canvas)] px-4 type-caption text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary-focus)]";
-
 const DEFAULT_FIELDS: FormField[] = [
   { id: "nome", type: "text", label: "Nome", required: true },
   { id: "email", type: "email", label: "E-mail", required: true },
   { id: "telefone", type: "phone", label: "WhatsApp", required: false },
 ];
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
-
-function maskDate(raw: string) {
-  const d = raw.replace(/\D/g, "").slice(0, 8);
-  return d.length <= 2 ? d : d.length <= 4 ? `${d.slice(0, 2)}/${d.slice(2)}` : `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
-}
-
-/** Form de captura Atrako (CRM) — usado na LP de leads. */
+/** Form de captura Atrako (CRM) — usado na LP de leads (layout em bloco). */
 export function LpLeadForm({
   formSlug,
   fields,
@@ -57,17 +46,20 @@ export function LpLeadForm({
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const set = (id: string, v: string) => setValues((cur) => ({ ...cur, [id]: v }));
+  function setField(field: FormField, v: string) {
+    setValues((cur) => {
+      const next = { ...cur, [field.id]: v };
+      if (field.type === "state") {
+        for (const f of list) {
+          if (f.type === "city" && (f.dependsOn || "state") === field.id) next[f.id] = "";
+        }
+      }
+      return next;
+    });
+  }
 
   const canSubmit = useMemo(
-    () =>
-      list.every((f) => {
-        const v = (values[f.id] ?? "").trim();
-        if (!v) return !f.required;
-        if (f.type === "email") return EMAIL_RE.test(v);
-        if (f.type === "consent") return v === "sim";
-        return true;
-      }),
+    () => list.every((f) => isFieldValueValid(f, values[f.id] ?? "", values)),
     [list, values],
   );
 
@@ -127,54 +119,23 @@ export function LpLeadForm({
     >
       {title ? <h3 className="type-caption-strong text-[var(--ink)]">{title}</h3> : null}
       <div className={title ? "mt-4 space-y-3" : "space-y-3"}>
-        {list.map((f) => {
-          const v = values[f.id] ?? "";
-          const label = (
-            <span className="type-micro-legal text-[var(--ink-muted-48)]">
-              {f.label}
-              {f.required ? "" : " (opcional)"}
-            </span>
-          );
-          if (f.type === "choice" && f.options?.length) {
-            return (
-              <div key={f.id}>
-                {label}
-                <div className="mt-1.5 flex flex-wrap gap-2">
-                  {f.options.map((opt) => (
-                    <OptionChip key={opt} selected={v === opt} onClick={() => set(f.id, opt)}>
-                      {opt}
-                    </OptionChip>
-                  ))}
-                </div>
-              </div>
-            );
-          }
-          if (f.type === "consent") {
-            return (
-              <div key={f.id} className="flex items-start gap-3 pt-1">
-                <Switch checked={v === "sim"} onChange={(on) => set(f.id, on ? "sim" : "")} aria-label={f.label} />
-                <span className="type-fine-print text-[var(--ink-muted-80)]">{f.label}</span>
-              </div>
-            );
-          }
-          return (
-            <label key={f.id} className="block">
-              {label}
-              <input
-                className={fieldClass}
-                type={f.type === "email" ? "email" : f.type === "phone" ? "tel" : "text"}
-                inputMode={f.type === "phone" ? "tel" : f.type === "number" || f.type === "date" ? "numeric" : undefined}
-                placeholder={f.type === "date" ? "DD/MM" : undefined}
-                value={v}
-                onChange={(e) => set(f.id, f.type === "date" ? maskDate(e.target.value) : e.target.value)}
-                required={Boolean(f.required)}
-                autoComplete={
-                  f.type === "email" ? "email" : f.type === "phone" ? "tel" : /nome|name/i.test(f.label) ? "name" : undefined
-                }
-              />
-            </label>
-          );
-        })}
+        {list.map((f) => (
+          <label key={f.id} className="block">
+            {f.type !== "consent" ? (
+              <span className="type-micro-legal text-[var(--ink-muted-48)]">
+                {f.label}
+                {f.required ? "" : " (opcional)"}
+              </span>
+            ) : null}
+            <FormFieldControl
+              field={f}
+              value={values[f.id] ?? ""}
+              answers={values}
+              onChange={(v) => setField(f, v)}
+              variant="block"
+            />
+          </label>
+        ))}
       </div>
       {error ? <p className="mt-3 type-caption text-[var(--danger)]">{error}</p> : null}
       <Button type="submit" variant="primary" className="mt-5 w-full" disabled={loading || !canSubmit}>

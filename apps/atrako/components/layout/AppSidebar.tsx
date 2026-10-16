@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Bot,
   ChevronLeft,
@@ -53,11 +54,13 @@ export function AppSidebar({
   const [collapsedPref, setCollapsedPref] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [tip, setTip] = useState<Tip | null>(null);
+  const [tipReady, setTipReady] = useState(false);
   /** A gaveta do celular é sempre aberta; recolher é só no desktop. */
   const collapsed = collapsedPref && !mobileOpen;
 
   useEffect(() => {
     setCollapsedPref(localStorage.getItem(COLLAPSED_KEY) === "1");
+    setTipReady(true);
   }, []);
 
   useEffect(() => {
@@ -318,18 +321,22 @@ export function AppSidebar({
         </button>
       </div>
 
-      {collapsed && tip ? (
-        <div role="tooltip" className="nav-tip" style={{ top: tip.top }}>
-          <span className="type-caption-strong block">{tip.label}</span>
-          {tip.desc ? <span className="type-fine-print block text-[var(--ink-muted-48)]">{tip.desc}</span> : null}
-        </div>
-      ) : null}
     </aside>
   );
 
+  const tipNode =
+    collapsed && tip ? (
+      <div role="tooltip" className="nav-tip" style={{ top: tip.top }}>
+        <span className="type-caption-strong block">{tip.label}</span>
+        {tip.desc ? (
+          <span className="type-fine-print block text-[var(--ink-muted-48)]">{tip.desc}</span>
+        ) : null}
+      </div>
+    ) : null;
+
   return (
     <>
-      <div className="hidden md:block">{sidebarBody}</div>
+      <div className="relative z-40 hidden md:block">{sidebarBody}</div>
 
       {mobileOpen ? (
         <div className="fixed inset-0 z-50 md:hidden">
@@ -342,6 +349,9 @@ export function AppSidebar({
           <div className="absolute inset-y-0 left-0 w-[300px]">{sidebarBody}</div>
         </div>
       ) : null}
+
+      {/* Fora do sticky da sidebar — senão o z-index perde para o conteúdo */}
+      {tipReady && tipNode ? createPortal(tipNode, document.body) : null}
     </>
   );
 }

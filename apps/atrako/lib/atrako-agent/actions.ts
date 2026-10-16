@@ -18,7 +18,7 @@ const strList = (v: unknown, maxItems: number, maxLen: number) =>
     : [];
 
 const PRODUCT_TYPES = ["FILE", "SERVICE", "COURSE", "PHYSICAL", "OTHER"] as const;
-const FIELD_TYPES: FormFieldType[] = ["text", "email", "phone", "choice", "number", "date", "consent"];
+const FIELD_TYPES: FormFieldType[] = ["text", "email", "phone", "choice", "number", "date", "consent", "state", "city"];
 
 type LpArgs = {
   nome: string;

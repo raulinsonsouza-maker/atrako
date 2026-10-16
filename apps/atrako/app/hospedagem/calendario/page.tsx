@@ -132,7 +132,7 @@ export default function StayCalendarPage() {
           const edge = date === start || date === end;
           const tone =
             day?.state === "occupied"
-              ? "bg-[var(--ink)] text-[var(--on-dark)]"
+              ? "bg-[var(--surface-black)] text-[var(--on-dark)]"
               : day?.state === "blocked"
                 ? "bg-[var(--canvas)] text-[var(--ink-muted-80)] line-through"
                 : day?.state === "past"

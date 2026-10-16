@@ -1,5 +1,6 @@
 /**
  * Encaminhamento A/B/C → stage CRM + notify + handoff.
+ * Soft = só etapa (cadência ainda roda). Hard = handoff quando o lead pediu conversa.
  */
 
 import { prisma } from "@/lib/db";
@@ -16,12 +17,10 @@ async function findStageByName(workspaceId: string, names: string[]) {
   return stages.find((s) => lower.some((n) => s.name.toLowerCase().includes(n))) ?? null;
 }
 
-export async function applyPriorityRouting(input: {
+export async function moveLeadToPriorityStage(input: {
   workspaceId: string;
   leadId: string;
-  conversationId: string;
   priority: Priority;
-  contactName?: string | null;
 }) {
   const stage =
     input.priority === "C"
@@ -34,6 +33,41 @@ export async function applyPriorityRouting(input: {
       data: { stageId: stage.id },
     });
   }
+}
+
+/** Após form/cadastro: move etapa e avisa a equipe sem fechar a cadência. */
+export async function applySoftPriorityRouting(input: {
+  workspaceId: string;
+  leadId: string;
+  priority: Priority;
+  contactName?: string | null;
+}) {
+  await moveLeadToPriorityStage(input);
+  await notify({
+    clienteId: input.workspaceId,
+    role: "ADMIN",
+    type: "wa.qualify_captured",
+    title:
+      input.priority === "C"
+        ? "Novo lead franquia (nutrição)"
+        : "Novo lead franquia — aguardando WhatsApp",
+    body: `${input.contactName || "Lead"} preencheu o formulário (${input.priority === "A" ? "quente" : input.priority === "B" ? "interessado" : "nutrição"}). A cadência no WhatsApp já começou.`,
+    href: "/crm",
+    severity: "info",
+    dedupeKey: `qualify-soft:${input.leadId}`,
+    email: false,
+  });
+}
+
+/** Lead pediu conversa / handoff humano — aí sim agenda. */
+export async function applyPriorityRouting(input: {
+  workspaceId: string;
+  leadId: string;
+  conversationId: string;
+  priority: Priority;
+  contactName?: string | null;
+}) {
+  await moveLeadToPriorityStage(input);
 
   if (input.priority === "A" || input.priority === "B") {
     await handoffConversation(input.conversationId, input.workspaceId);
@@ -43,10 +77,10 @@ export async function applyPriorityRouting(input: {
       type: input.priority === "A" ? "wa.qualified_a" : "wa.qualified_b",
       title:
         input.priority === "A"
-          ? "Lead franquia prioridade A — agendar reunião"
-          : "Lead franquia prioridade B — follow-up comercial",
-      body: `${input.contactName || "Lead"} qualificado (${input.priority}). Abrir CRM e agendar a primeira reunião.`,
-      href: "/crm",
+          ? "Lead franquia quente — pediu conversa"
+          : "Lead franquia interessado — pediu conversa",
+      body: `${input.contactName || "Lead"} pediu para falar com a equipe. Abra o WhatsApp e continue a conversa.`,
+      href: "/whatsapp",
       severity: input.priority === "A" ? "urgente" : "aviso",
       dedupeKey: `qualify-${input.priority}:${input.leadId}`,
       email: input.priority === "A",
@@ -56,8 +90,8 @@ export async function applyPriorityRouting(input: {
       clienteId: input.workspaceId,
       role: "ADMIN",
       type: "wa.qualified_c",
-      title: "Lead franquia em nutrição (C)",
-      body: `${input.contactName || "Lead"} ficou na prioridade C — cadência de nutrição.`,
+      title: "Lead franquia em nutrição",
+      body: `${input.contactName || "Lead"} segue na nutrição — manter contato leve.`,
       href: "/crm",
       severity: "info",
       dedupeKey: `qualify-C:${input.leadId}`,

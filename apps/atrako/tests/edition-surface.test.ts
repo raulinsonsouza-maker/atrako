@@ -17,6 +17,8 @@ describe("superfície por edição", () => {
     assert.equal(next.whatsapp, true);
     assert.equal(editionAllowsDashboardChannel("inside_sales", "marketplaces"), false);
     assert.equal(editionAllowsDashboardChannel("inside_sales", "ecommerce"), false);
+    assert.equal(editionAllowsDashboardChannel("inside_sales", "crm"), false);
+    assert.equal(editionAllowsDashboardChannel("custom", "crm"), false);
     assert.equal(editionAllowsDashboardChannel("inside_sales", "linkedin"), true);
     assert.equal(editionAllowsConnector("inside_sales", "SHOPIFY"), false);
     assert.equal(editionAllowsConnector("inside_sales", "WOOCOMMERCE"), false);

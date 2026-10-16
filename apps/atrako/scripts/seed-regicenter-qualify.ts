@@ -8,7 +8,8 @@
 import { prisma } from "../lib/db";
 import { ensureRegicenterQualifyForms } from "../lib/qualification/ensure-forms";
 import { franchiseRegicenterPatch, mergeMessagingPrefs } from "../lib/qualification/playbook";
-import { ensureDefaultPipeline, applyPipelinePreset } from "../lib/modules/crm";
+import { ensureDefaultPipeline } from "../lib/modules/crm";
+import { applyWorkspaceEdition } from "../lib/modules/apply-edition";
 import { Prisma } from "../lib/generated/prisma";
 
 async function main() {
@@ -38,7 +39,7 @@ async function main() {
   console.log("Forms:", forms);
 
   await ensureDefaultPipeline(cliente.id);
-  await applyPipelinePreset(cliente.id, "leads").catch(() => null);
+  await applyWorkspaceEdition(cliente.id, "inside_sales");
 
   const settings = await prisma.workspaceSettings.findUnique({ where: { clienteId: cliente.id } });
   const attendance = {

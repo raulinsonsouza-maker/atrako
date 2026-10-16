@@ -14,6 +14,15 @@ import { refreshMlBuyerIfThin } from "@/lib/integrations/mercadolivre/enrich-buy
 import { leadSourceLabel } from "@/lib/atrako/person";
 import { parseLeadQualification } from "@/lib/qualification/store";
 import { FIELD_DEFS } from "@/lib/qualification/fields";
+import {
+  CRM_ANSWER_ORDER,
+  CRM_HIDE_ANSWER_KEYS,
+  crmOriginDisplay,
+  nextActionHuman,
+  priorityHumanLabel,
+} from "@/lib/qualification/crm-labels";
+import { resolveChoice } from "@/lib/qualification/choices";
+import type { QualifyFieldKey } from "@/lib/qualification/fields";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -258,7 +267,12 @@ export async function GET(request: NextRequest, ctx: Ctx) {
       stageName: lead.stage?.name ?? null,
       stageColor: lead.stage?.color ?? null,
       sources: Array.isArray(sources) ? sources : [],
-      sourceLabel: lead.source ? leadSourceLabel(lead.source) : null,
+      sourceLabel: crmOriginDisplay({
+        source: lead.source,
+        formName: leadMeta.formName ?? null,
+        campaignName: leadMeta.campaignName ?? leadMeta.utm_campaign ?? null,
+        sourceLabel: lead.source ? leadSourceLabel(lead.source) : null,
+      }),
       location: formatLocation(location) ?? mlCard?.location ?? null,
       nickname,
       address: mlCard?.address ?? null,
@@ -276,23 +290,59 @@ export async function GET(request: NextRequest, ctx: Ctx) {
         const q = parseLeadQualification(lead.metadata);
         if (!q.answers || !Object.keys(q.answers).length) return null;
         const crmLabel = Object.fromEntries(FIELD_DEFS.map((f) => [f.key, f.crmLabel]));
-        return {
-          playbookId: q.playbookId,
-          priority: q.priority,
-          filledPercent: q.filledPercent,
-          currentState: q.currentState,
-          missing: q.missing,
-          answers: Object.entries(q.answers)
-            .filter(([, a]) => a && String(a.value || "").trim())
-            .map(([key, a]) => ({
+        const hide = new Set(CRM_HIDE_ANSWER_KEYS);
+        const stateVal = q.answers.state?.value?.trim() || "";
+        const order = new Map(CRM_ANSWER_ORDER.map((k, i) => [k, i]));
+        const answers = Object.entries(q.answers)
+          .filter(
+            ([key, a]) =>
+              a &&
+              String(a.value || "").trim() &&
+              !hide.has(key as QualifyFieldKey) &&
+              key !== "state",
+          )
+          .map(([key, a]) => {
+            const k = key as QualifyFieldKey;
+            const choiceKeys: QualifyFieldKey[] = [
+              "niche",
+              "start_timeline",
+              "business_objective",
+              "main_question",
+              "investment_status",
+              "best_contact_time",
+            ];
+            let label = a!.label || a!.value;
+            if (choiceKeys.includes(k)) {
+              label = resolveChoice(k, a!.code || a!.value).label;
+            } else if (k === "city" && stateVal) {
+              label = `${label} · ${stateVal}`;
+            }
+            return {
               key,
-              fieldLabel: crmLabel[key as keyof typeof crmLabel] || key,
-              label: a!.label,
+              fieldLabel: crmLabel[k] || key,
+              label,
               value: a!.value,
               code: a!.code ?? null,
               source: a!.source,
               at: a!.at,
-            })),
+            };
+          })
+          .sort((a, b) => (order.get(a.key as QualifyFieldKey) ?? 99) - (order.get(b.key as QualifyFieldKey) ?? 99));
+        return {
+          playbookId: q.playbookId,
+          priority: q.priority,
+          priorityLabel: priorityHumanLabel(q.priority),
+          filledPercent: q.filledPercent,
+          currentState: q.currentState,
+          cadenceStatus: q.cadenceStatus,
+          missing: q.missing,
+          nextAction: nextActionHuman({
+            priority: q.priority,
+            currentState: q.currentState,
+            cadenceStatus: q.cadenceStatus,
+            missingCount: q.missing.length,
+          }),
+          answers,
         };
       })(),
       createdAt: lead.createdAt.toISOString(),

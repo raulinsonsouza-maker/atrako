@@ -21,6 +21,8 @@ const FIELD_TYPES: { value: FormFieldType; label: string }[] = [
   { value: "text", label: "Texto" },
   { value: "email", label: "E-mail" },
   { value: "phone", label: "Telefone" },
+  { value: "state", label: "Estado (UF)" },
+  { value: "city", label: "Cidade (BR)" },
   { value: "choice", label: "Escolha" },
   { value: "date", label: "Aniversário" },
   { value: "consent", label: "Aceite de comunicações" },

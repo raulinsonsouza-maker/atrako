@@ -93,7 +93,7 @@ breakpoints:
 components:
   button-primary: { file: components/ui/button.tsx, variant: primary }
   button-secondary-pill: { file: components/ui/button.tsx, variant: secondary-pill }
-  button-dark-utility: { file: components/ui/button.tsx, variant: dark-utility }
+  button-dark-utility: { file: components/ui/button.tsx, variant: dark-utility, note: "Fundo --surface-black + texto --on-dark (nunca --ink: no dark theme --ink vira claro)" }
   button-pearl-capsule: { file: components/ui/button.tsx, variant: pearl }
   button-store-hero: { file: components/ui/button.tsx, variant: store-hero }
   button-icon-circular: { file: components/ui/icon-button.tsx, note: "size toolbar = 36px com borda, para utilitários (ex.: editar etapas) ao lado do CTA" }
@@ -117,7 +117,7 @@ components:
   caixa-panel: { css: ".caixa-*", note: "Finance/Caixa — saldo tile escuro + KPIs canvas + extrato lista" }
   criar-catalog: { css: ".criar-platform-* / .criar-recipe-* / .criar-filter-*", note: "Hub Criar — plataformas + receitas; badges DS" }
   lp-phone-preview: { file: components/criar/LpPhonePreview.tsx, css: ".lp-preview / .lp-phone-*", note: "Preview iPhone da LP no Criar oferta + sucesso" }
-  panel-modal: { css: ".panel-modal-*", note: "Sheet lateral de detalhe (CRM lead) — mantém contexto da tela" }
+  panel-modal: { css: ".panel-modal-*", note: "Sheet CRM — shell parchment; header/footer/qualify/tabs em canvas; stats pearl segmentados; respostas em lista 2 col" }
   relacionamento: { file: components/relacionamento/ui.tsx, css: ".rel-*", note: "Fluxos/campanhas/envios — RelSection (título curto + info-hint + ação), RelKpi (número + detalhe + variação), lista de pendências, status de canais, badges ok/warn/bad, editor + preview, sino de notificações" }
   store-utility-card: { file: components/ui/card.tsx }
   sub-nav-frosted: { file: components/ui/sub-nav-frosted.tsx }
@@ -126,9 +126,10 @@ components:
   pill-select: { file: components/ui/pill-select.tsx, note: "Único select do produto — nunca <select> nativo; size toolbar|field" }
   brand-logo: { file: components/ui/brand-logo.tsx, note: "Logo de parceiro (simple-icons CC0) em tile 10px — só integrações de terceiros, nunca accent" }
   text-field: { file: components/ui/text-field.tsx, note: "Campo de formulário canônico — label + input h-11 radius-xs + hint; type=password com olho" }
+  capture-form: { file: app/f/[slug]/page.tsx, css: ".capture-form-*", note: "Form público /f/{slug} — sempre claro (não herda dark do app). LP = card bloco; typeform = passo a passo. Todos os controles radius-xs (text-field, pill-select field, option-chip, menu, CTA) — sem pílula no meio do form" }
   app-page: { file: components/layout/AppPage.tsx, note: "Shell de página AppShell — padding/título densos" }
   thinking-orb: { file: components/ui/thinking-orb.tsx, css: ".thinking-orb / .thinking-label-*", note: "Esfera de pontos (canvas) do assistente — idle | thinking | resolved. Pontos em --ink, resolve para --primary; ThinkingLabel troca rótulos (Pensando…) e mostra 'Pronto'. Estático em reduced-motion" }
-  orb-composer: { file: components/ui/orb-composer.tsx, css: ".orb-composer-*", note: "Campo de pergunta do assistente — pílula 60px (como search), anel conic --primary girando no foco/digitando/enviando (é o indicador de foco, não decoração). Enviar circular dentro da pílula; Enter envia, Shift+Enter quebra linha; tremida quando vazio" }
+  orb-composer: { file: components/ui/orb-composer.tsx, css: ".orb-composer-*", note: "Campo de pergunta do assistente — pílula 60px (como search), cresce até 5 linhas (120px) no multiline; anel conic --primary girando no foco/digitando/enviando (é o indicador de foco, não decoração). Enviar circular dentro da pílula; Enter envia, Shift+Enter quebra linha; tremida quando vazio" }
   assistant-shell: { file: app/agent/AgentConsole.tsx, css: ".assistant-*", note: "Assistente — histórico (card canvas 280px, começa recolhido; grupos Hoje/Ontem/7 dias, item ativo com fio --primary) + palco (hero 'Olá, eu sou o Atrako' com orb → fio de mensagens + composer fixo embaixo). Abaixo de desktop-sm o histórico vira gaveta. Sem app-top-bar nesta rota: header único 56px (menu no celular + histórico | título | sino + nova conversa)" }
   assistant-reply: { file: app/agent/AssistantMarkdown.tsx, css: ".assistant-md-* / .assistant-caret / .assistant-msg-meta", note: "Resposta do Atrako em markdown mínimo (negrito, listas, tabela hairline) — chega em streaming com cursor --primary; rótulos do orb = passos reais das ferramentas; 'Pensou por Ns' em fine-print" }
   assistant-action-card: { css: ".assistant-action-card / .assistant-action-row", note: "Proposta de rascunho (LP/formulário) — card canvas hairline com resumo; 'Criar rascunho' (primary toolbar) + 'Agora não' (outline). Nada é publicado; depois mostra 'Abrir para revisar'" }

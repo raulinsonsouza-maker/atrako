@@ -154,6 +154,18 @@ function coverageFor(rt: ToolRuntime, keys: Array<keyof AtrakoCoverage>, hasRows
 const CARD_GUIDANCE =
   "Os primeiros já aparecem como cartão do cliente na conversa (contato, etapa, itens, valor, data). Responda em 2-4 frases sem bullets repetindo esses campos: destaque o que importa (há quanto tempo, se já recebeu mensagem, histórico de compra) e termine com uma sugestão concreta numa frase natural.";
 
+const PIPELINE_GUIDANCE =
+  "origens é a fonte do lead (loja, formulário, WhatsApp), com contagem inteira. canais é o canal da sessão do primeiro pedido (Meta Ads, Instagram orgânico, direto). Não some as duas listas nem junte numa tabela só. Não use aproximação. A etapa Ganho é para onde o pedido pago vai direto; a fatia em Ganho é a composição desta lista, não taxa de conversão dos leads novos nem dos pedidos. Não divida leads novos por pedidos. Na tela Leads o filtro se chama Carrinho aberto — não cite o nome do argumento.";
+
+const ESCOPO_FUNIL = nullableString(
+  "periodo (padrão, inclusive null) usa o intervalo resolvido. estoque = funil inteiro, sem data. Use estoque só quando pedirem a base toda, sem período.",
+  ["periodo", "estoque"],
+);
+
+function funilEstoque(args: Record<string, unknown>): boolean {
+  return args.escopo === "estoque";
+}
+
 const range = (p: AtrakoPeriod) => ({ gte: p.start, lte: p.end });
 const prevRange = (p: AtrakoPeriod) => ({ gte: p.previousStart, lte: p.previousEnd });
 const reais = (cents: number | null | undefined) => (cents == null ? null : money(cents));
@@ -579,6 +591,8 @@ export const READ_TOOLS: AtrakoTool[] = [
             ticketMedio: cur.ticketMedio,
             variacaoReceitaPct: delta(cur.receita, prev.receita),
             receitaPeriodoAnterior: prev.receita,
+            pedidosPeriodoAnterior: prev.pedidos,
+            ticketMedioPeriodoAnterior: prev.ticketMedio,
           },
           midia: {
             investimento: cur.investimentoMidia,
@@ -594,7 +608,7 @@ export const READ_TOOLS: AtrakoTool[] = [
             ? {
                 quantidade: carts.openCount,
                 valor: money(carts.openValueCents),
-                nota: "Saldo atual do funil, de qualquer data. Não é o período perguntado.",
+                nota: "Quantidade e valor de carrinhos com status aberto agora, de qualquer data. Não é etapa do CRM e não é o período perguntado.",
               }
             : null,
           agendamentos: bookings,
@@ -613,7 +627,7 @@ export const READ_TOOLS: AtrakoTool[] = [
       "Investimento, impressões, cliques, CTR, CPC e resultados de Meta Ads e Google Ads, com comparação ao período anterior. Meta (compras/receita atribuída) e Google (conversões/valor) nunca são somados.",
     parameters: periodSchema({
       canal: nullableString("Plataforma: geral (ambas), meta ou google.", ["geral", "meta", "google"]),
-      granularidade: nullableString("period = total; month = mês a mês; day = últimos 14 dias.", ["period", "month", "day"]),
+      granularidade: nullableString("period = total; month = mês a mês; day = gasto dos últimos 14 dias. Não há série diária de receita.", ["period", "month", "day"]),
     }),
     risk: "READ",
     run: (args, rt) =>
@@ -695,24 +709,28 @@ export const READ_TOOLS: AtrakoTool[] = [
     name: "crm_pipeline",
     step: "Olhando o funil de leads",
     description:
-      "Funil do CRM do Atrako: leads e valor por etapa, origens/canais de aquisição e os leads mais quentes de cada etapa (nome e valor; sem contato).",
+      "Funil do CRM do Atrako no período (null = últimos 30 dias, pela data de entrada). escopo estoque = funil inteiro, sem data, só quando pedirem a base toda. Etapas, origens (fonte do lead) e canais (sessão do primeiro pedido) vêm em listas separadas, mais os leads mais quentes de cada etapa (nome e valor; sem contato). Não misture com a contagem de leads novos.",
     parameters: periodSchema({
+      escopo: ESCOPO_FUNIL,
       busca: nullableString("Filtra por nome/e-mail/telefone de lead (opcional)."),
-      apenas_carrinho_aberto: { type: ["boolean", "null"], description: "Só leads com carrinho aberto." },
+      apenas_carrinho_aberto: { type: ["boolean", "null"], description: "Só leads com carrinho aberto. Na tela o filtro se chama Carrinho aberto." },
     }),
     risk: "READ",
     module: "crm",
     async run(args, rt) {
       const p = periodOf(args, rt);
-      const explicit = args.periodo != null || args.inicio != null;
+      const estoque = funilEstoque(args);
       const board = await getPipelineBoard(rt.ctx.clienteId, {
         q: typeof args.busca === "string" ? revealToken(args.busca, rt.vault) : undefined,
         openCart: args.apenas_carrinho_aberto === true,
-        ...(explicit ? { from: p.startLabel, to: p.endLabel } : {}),
+        ...(estoque ? {} : { from: p.startLabel, to: p.endLabel }),
       });
       return {
         data: {
-          filtroPeriodo: explicit ? `${p.startLabel} a ${p.endLabel} (entrada no funil)` : "todo o funil",
+          filtroPeriodo: estoque
+            ? "Estoque inteiro do funil, sem filtro de data. Não compare com leads novos de um período."
+            : `${p.startLabel} a ${p.endLabel} (entrada no funil: a data mais antiga entre criação, primeiro pedido e primeiro carrinho). Não é a contagem de leads novos, que usa a data de criação.`,
+          como_responder: PIPELINE_GUIDANCE,
           totalLeads: board.totalCount,
           valorTotal: round2(board.totalValue),
           etapas: board.stages.map((s) => ({
@@ -727,11 +745,17 @@ export const READ_TOOLS: AtrakoTool[] = [
               carrinhoAberto: l.openCartCents != null ? money(l.openCartCents) : null,
             })),
           })),
-          canais: board.channels.slice(0, 10),
-          origens: board.sources.slice(0, 10),
+          origens: {
+            oQueE: "Fonte do lead (loja, formulário, WhatsApp). Contagem inteira. Não é o canal do anúncio.",
+            itens: board.sources.slice(0, 10),
+          },
+          canais: {
+            oQueE: "Canal da sessão do primeiro pedido. Não somar com origens.",
+            itens: board.channels.slice(0, 10),
+          },
         },
         coverage: coverageFor(rt, ["crmNative"], board.totalCount > 0),
-        source: { tool: "crm_pipeline", label: "CRM do Atrako", period: explicit ? periodSource(p) : undefined },
+        source: { tool: "crm_pipeline", label: "CRM do Atrako", period: estoque ? undefined : periodSource(p) },
       };
     },
   },
@@ -739,8 +763,9 @@ export const READ_TOOLS: AtrakoTool[] = [
     name: "leads_lista",
     step: "Abrindo os leads",
     description:
-      "Leads individuais do CRM do Atrako (os mais recentes, os de maior valor, os parados há mais tempo, de uma etapa ou origem): nome, etapa, origem, valor e última movimentação. Os primeiros aparecem na conversa como cartão do cliente.",
+      "Leads individuais do CRM do Atrako (os mais recentes, os de maior valor, os parados há mais tempo, de uma etapa ou origem): nome, etapa, origem, valor e última movimentação. Por padrão filtra a data de criação no período resolvido (null = últimos 30 dias). escopo estoque lista sem filtro de data. Os primeiros aparecem na conversa como cartão do cliente.",
     parameters: periodSchema({
+      escopo: ESCOPO_FUNIL,
       etapa: nullableString("Nome (ou parte) da etapa do funil, ex.: 'Proposta'."),
       origem: nullableString("Origem do lead, ex.: 'whatsapp', 'form', 'shopify'."),
       ordem: { type: ["string", "null"], enum: ["recentes", "maior_valor", "parados", null], description: "Padrão: recentes." },
@@ -749,13 +774,13 @@ export const READ_TOOLS: AtrakoTool[] = [
     risk: "READ",
     module: "crm",
     async run(args, rt) {
-      const explicit = args.periodo != null || args.inicio != null;
       const p = periodOf(args, rt);
+      const estoque = funilEstoque(args);
       const { rows, data } = await listLeads(rt.ctx.clienteId, {
         stage: typeof args.etapa === "string" && args.etapa.trim() ? args.etapa.trim().slice(0, 60) : null,
         source: typeof args.origem === "string" && args.origem.trim() ? args.origem.trim().slice(0, 40) : null,
-        from: explicit ? p.start : null,
-        to: explicit ? p.end : null,
+        from: estoque ? null : p.start,
+        to: estoque ? null : p.end,
         order: args.ordem === "maior_valor" || args.ordem === "parados" ? args.ordem : "recentes",
         limit: Number(args.limite) > 0 ? Number(args.limite) : 5,
       });
@@ -766,11 +791,13 @@ export const READ_TOOLS: AtrakoTool[] = [
         data: {
           leads: data,
           total: data.length,
-          filtroPeriodo: explicit ? `${p.startLabel} a ${p.endLabel} (entrada)` : "todo o funil",
+          filtroPeriodo: estoque
+            ? "Estoque inteiro, sem filtro de data. A lista usa data de criação quando há período."
+            : `${p.startLabel} a ${p.endLabel} (data de criação do lead). Não é a entrada no funil.`,
           ...(rows.length ? { como_responder: CARD_GUIDANCE } : {}),
         },
         coverage: coverageFor(rt, ["crmNative"], rows.length > 0),
-        source: { tool: "leads_lista", label: "CRM do Atrako", period: explicit ? periodSource(p) : undefined },
+        source: { tool: "leads_lista", label: "CRM do Atrako", period: estoque ? undefined : periodSource(p) },
         artifacts: cards.filter((c): c is ContactCardArtifact => Boolean(c)),
       };
     },
@@ -779,7 +806,7 @@ export const READ_TOOLS: AtrakoTool[] = [
     name: "vendas_visao_geral",
     step: "Somando as vendas",
     description:
-      "Vendas consolidadas de lojas (Shopify, Nuvemshop, Tray, Woo), marketplaces (Mercado Livre, Shopee, TikTok Shop) e checkout Atrako: receita, pedidos, ticket médio, por loja e por origem de tráfego, investimento em mídia e ROAS geral. Não traz frete, estado nem líquido do marketplace — para isso use marketplaces_visao.",
+      "Vendas consolidadas de lojas (Shopify, Nuvemshop, Tray, Woo), marketplaces (Mercado Livre, Shopee, TikTok Shop) e checkout Atrako: receita, pedidos, ticket médio, por loja e por origem de tráfego, no período e no período anterior, investimento em mídia e ROAS geral. Queda de faturamento: compare porLoja e porOrigem de atual e anterior. Valor atribuído pela Meta não é essa quebra. Não traz frete, estado nem líquido do marketplace — para isso use marketplaces_visao.",
     parameters: periodSchema(),
     risk: "READ",
     anyModule: ["commerce", "food"],
@@ -789,7 +816,14 @@ export const READ_TOOLS: AtrakoTool[] = [
       return {
         data: {
           atual: cur,
-          anterior: { receita: prev.receita, pedidos: prev.pedidos, ticketMedio: prev.ticketMedio, investimentoMidia: prev.investimentoMidia },
+          anterior: {
+            receita: prev.receita,
+            pedidos: prev.pedidos,
+            ticketMedio: prev.ticketMedio,
+            investimentoMidia: prev.investimentoMidia,
+            porLoja: prev.porLoja,
+            porOrigem: prev.porOrigem,
+          },
           variacao: {
             receitaPct: delta(cur.receita, prev.receita),
             pedidosPct: delta(cur.pedidos, prev.pedidos),
@@ -800,7 +834,7 @@ export const READ_TOOLS: AtrakoTool[] = [
           tool: "vendas_visao_geral",
           label: "Vendas consolidadas",
           period: periodSource(p),
-          note: "Receita = pedidos pagos (cancelados fora). Compras reportadas pela Meta são referência, não somam à receita das lojas.",
+          note: "Receita = pedidos pagos (cancelados fora). Queda de faturamento: compare porLoja e porOrigem de atual e anterior. Valor atribuído pela Meta é eficiência da verba; se não caiu, não é a causa da queda do caixa. Compras reportadas pela Meta são referência, não somam à receita das lojas.",
         },
       };
     },
@@ -873,7 +907,7 @@ export const READ_TOOLS: AtrakoTool[] = [
     name: "comportamento_compra",
     step: "Lendo o comportamento de compra",
     description:
-      "Quem compra neste período: receita nova e de recompra, ticket do pedido e ticket por cliente, LTV, gênero estimado pelo nome, origem, produtos, o que compram depois, maiores compradores, estado e cidade, e os horários com mais pedidos. Use em pergunta sobre clientes, recompra, gênero, horário, lugar ou produto. Não use em saudação.",
+      "Quem compra neste período: receita nova e de recompra, ticket do pedido e ticket por cliente, LTV, gênero estimado pelo nome, origem, produtos, o que compram depois, maiores compradores, estado e cidade, e os horários com mais pedidos. Produtos vêm por nome, quantidade e receita (até 8) — isso responde qual produto mais vende. SKU fica na aba E-commerce do Dashboard, fora daqui. Use em pergunta sobre clientes, recompra, gênero, horário, lugar ou produto. Não use em saudação.",
     parameters: periodSchema(),
     risk: "READ",
     module: "commerce",
@@ -914,7 +948,7 @@ export const READ_TOOLS: AtrakoTool[] = [
       ]);
       return {
         data: {
-          como_responder: "Pergunta de período: cite só `periodo`. `estoqueAberto` é o funil inteiro, com carrinhos de meses anteriores.",
+          como_responder: "Pergunta de período: cite só periodo. estoqueAberto é a quantidade e o valor de carrinhos com status aberto agora, de qualquer data. Não é etapa do CRM e não é o período perguntado.",
           periodo: recovery
             ? {
                 abandonados: recovery.abandoned ? { quantidade: recovery.abandoned.count, valor: money(recovery.abandoned.cents) } : null,

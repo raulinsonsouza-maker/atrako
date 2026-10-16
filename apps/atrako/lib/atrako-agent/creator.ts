@@ -35,7 +35,7 @@ import { nullableString, objectSchema, type AtrakoTool, type ToolResult, type To
  * ferramenta separada, usada só quando o usuário pede.
  */
 
-const FIELD_TYPES = ["text", "email", "phone", "choice", "number", "date", "consent"] as const;
+const FIELD_TYPES = ["text", "email", "phone", "choice", "number", "date", "consent", "state", "city"] as const;
 const LP_EDIT_PATH = (id: string) => `/criar/paginas/${encodeURIComponent(id)}`;
 const FORM_EDIT_PATH = "/forms";
 

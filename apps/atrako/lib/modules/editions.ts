@@ -38,9 +38,10 @@ export const EDITION_BUNDLES: Record<Exclude<WorkspaceEdition, "custom">, Editio
   },
 };
 
-const INSIDE_SALES_CHANNELS = ["geral", "meta", "google", "linkedin", "crm", "relacionamento"] as const;
-const FOOD_CHANNELS = ["geral", "meta", "google", "crm", "relacionamento"] as const;
-const STAY_CHANNELS = ["geral", "crm", "relacionamento"] as const;
+/** CRM não entra no dashboard — módulo próprio em /crm (Leads). */
+const INSIDE_SALES_CHANNELS = ["geral", "meta", "google", "linkedin", "relacionamento"] as const;
+const FOOD_CHANNELS = ["geral", "meta", "google", "relacionamento"] as const;
+const STAY_CHANNELS = ["geral", "relacionamento"] as const;
 
 const INSIDE_SALES_CONNECTORS = ["META_ADS", "GOOGLE_ADS", "LINKEDIN_ADS", "WHATSAPP", "RESEND"] as const;
 const FOOD_CONNECTORS = ["WHATSAPP", "MERCADO_PAGO", "META_ADS", "GOOGLE_ADS", "RESEND"] as const;
@@ -50,8 +51,9 @@ const INSIDE_SALES_LEDGER = ["manual", "crm", "whatsapp", "forms"] as const;
 const FOOD_LEDGER = ["manual", "food", "crm", "whatsapp", "forms"] as const;
 const STAY_LEDGER = ["manual", "stay", "crm", "whatsapp"] as const;
 
-/** Abas do dashboard que a edição mostra. As outras edições mostram todas. */
+/** Abas do dashboard que a edição mostra. As outras edições mostram todas (exceto CRM). */
 export function editionAllowsDashboardChannel(edition: string | null | undefined, channel: string) {
+  if (channel === "crm") return false;
   if (edition === "inside_sales") return (INSIDE_SALES_CHANNELS as readonly string[]).includes(channel);
   if (edition === "food") return (FOOD_CHANNELS as readonly string[]).includes(channel);
   if (edition === "stay") return (STAY_CHANNELS as readonly string[]).includes(channel);

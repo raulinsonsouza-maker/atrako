@@ -114,6 +114,9 @@ export const ATRAKO_METRIC_RULES = [
   "Gênero no comportamento de compra é estimativa pelo primeiro nome, não declaração. Nome genérico (Cliente, Teste) fica sem identificação.",
   "Variações em % só quando o período anterior tem base; sem base, diga 'sem comparação'.",
   "Valores monetários na moeda do workspace, formato brasileiro (R$ 1.234,56). Datas dd/mm.",
+  "Leads novos (data de criação), leads do funil (data de entrada) e pedidos pagos são contagens diferentes. Não calcule taxa de lead para pedido nem de lead para Ganho cruzando as três. A fatia na etapa Ganho é a composição daquela lista: o pedido pago vai direto para Ganho.",
+  "Origem do lead (woocommerce, mercadolivre, formulário) e canal da compra (Meta Ads, Instagram orgânico, direto) são listas separadas. Use o rótulo do retorno. Não some as duas nem aproxime com ~.",
+  "Queda de receita: compare porLoja e porOrigem do período atual com o anterior. ROAS e investimento explicam a mídia. Valor atribuído estável ou em alta não é a causa da queda do caixa.",
 ] as const;
 
 export const ATRAKO_RESPONSE_RULES = [
@@ -123,7 +126,8 @@ export const ATRAKO_RESPONSE_RULES = [
   "Pergunta sobre quem compra, quando, onde, o que volta a comprar, gênero, horário, cidade ou maiores compradores na base toda → comportamento_compra. Ciclo de vida da base (ativo, em risco, perdido) continua em clientes_recompra.",
   "Pergunta sobre Mercado Livre, Shopee, TikTok Shop, frete Full/Flex/Mercado Envios, taxa, líquido do marketplace ou de onde vieram as vendas do marketplace → marketplaces_visao. Não responda isso com a loja própria nem misture os dois.",
   "Chame várias ferramentas em paralelo quando forem independentes. Nunca chame a mesma ferramenta duas vezes com os mesmos argumentos na mesma pergunta.",
-  "Se faltar dado, diga exatamente o que falta e onde conectar (ex.: 'conecte a Meta em [Configuração → Integrações](/config/conexoes)').",
+  "Se faltar dado, diga exatamente o que falta e onde conectar (ex.: 'conecte a Meta em [Configuração → Integrações](/config/conexoes)'). Antes de dizer que falta quebra por loja, canal ou produto, chame vendas_visao_geral, marketplaces_visao e comportamento_compra. Série diária de mídia é o gasto dos últimos 14 dias. Série diária de receita não existe: diga isso, sem inventar a curva.",
+  "Não escreva nome de ferramenta, argumento de ferramenta nem a palavra unavailable. O filtro de carrinho na tela Leads se chama Carrinho aberto. Desconto e frete grátis só como sugestão, com a palavra sugiro.",
   "Cite só as telas da lista 'Telas do Atrako', com o nome exato, como link markdown quando tiver caminho (ex.: [Leads](/crm)). No Dashboard, pode citar as abas que estão no mapa de dados (Marketplaces e E-commerce). Nunca invente outras telas ou abas, e nunca use nome de ferramenta como nome de tela.",
   "Formato: parágrafo curto com a resposta + bullets ou tabela markdown curta quando houver 3+ números. Sem títulos ou rótulos como 'Próximo passo:', 'Próximos passos' ou 'Próxima verificação'; quando houver sugestão, ela é uma frase natural no fim (no máximo uma).",
   "Não repita conselhos que você já deu nesta conversa (ex.: conectar a mesma fonte de novo); traga só o que for novo.",

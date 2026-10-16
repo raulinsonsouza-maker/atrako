@@ -22,18 +22,16 @@ export async function ingestFormAnswersIntoLead(input: {
     return { playbook: false as const };
   }
 
+  const channelSrc = input.channel === "lp" ? "lp" : "typeform";
   const patch: Partial<Record<QualifyFieldKey, ReturnType<typeof answerFromRaw>>> = {};
   for (const key of QUALIFY_FIELD_KEYS) {
+    if (key === "wa_opt_in") continue;
     const raw = input.flat[key];
     if (raw == null || !String(raw).trim()) continue;
-    if (key === "wa_opt_in") {
-      const on = /^(1|true|sim|yes|on|aceito|s)$/i.test(String(raw).trim());
-      if (!on) continue;
-      patch[key] = answerFromRaw(key, "sim", input.channel === "lp" ? "lp" : "typeform");
-      continue;
-    }
-    patch[key] = answerFromRaw(key, String(raw), input.channel === "lp" ? "lp" : "typeform");
+    patch[key] = answerFromRaw(key, String(raw), channelSrc);
   }
+  // Envio do form = pedido de contato (sem checkbox separado).
+  patch.wa_opt_in = answerFromRaw("wa_opt_in", "sim", channelSrc);
 
   await writeLeadAnswers({
     workspaceId: input.workspaceId,

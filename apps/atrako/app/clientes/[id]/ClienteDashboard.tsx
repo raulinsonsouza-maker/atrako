@@ -22,6 +22,7 @@ import { EcommercePanel } from "@/components/clientes/EcommercePanel";
 import { ChannelDisconnected } from "@/components/clientes/ChannelDisconnected";
 import { RelacionamentoPanel } from "@/components/clientes/RelacionamentoPanel";
 import { GeralConsolidado } from "@/components/clientes/GeralConsolidado";
+import { InsideSalesGeral } from "@/components/clientes/InsideSalesGeral";
 import { ComportamentoSection } from "@/components/clientes/ComportamentoSection";
 import { SocialMediaPanel } from "@/components/clientes/SocialMediaPanel";
 import { editionAllowsDashboardChannel } from "@/lib/modules/editions";
@@ -867,13 +868,20 @@ function formatPercentage(value: number) {
   };
   const edition = relConfig?.settings?.edition ?? null;
   const channelAllowed = (channel: string) => editionAllowsDashboardChannel(edition, channel);
+  /** Loja/marketplace só depois do config — evita flash e respeita inside_sales/food/stay. */
+  const showCommerceChannels = workspaceKnown && channelAllowed("marketplaces");
+  const showStoreChannels = workspaceKnown && channelAllowed("ecommerce");
   const showMeta = channelAllowed("meta") && showDefaultChannel(metaConnected, portalMode ? clienteKnown : metaKnown);
   const showGoogle = channelAllowed("google") && showDefaultChannel(googleConnected, portalMode ? clienteKnown : workspaceKnown);
-  const showMarketplaces = channelAllowed("marketplaces") && showDefaultChannel(marketplaceSubs.length > 0, workspaceKnown);
-  const showEcommerce = channelAllowed("ecommerce") && showDefaultChannel(ecommerceConnected, workspaceKnown);
+  const showMarketplaces =
+    showCommerceChannels && showDefaultChannel(marketplaceSubs.length > 0, workspaceKnown);
+  const showEcommerce =
+    showStoreChannels && showDefaultChannel(ecommerceConnected, workspaceKnown);
   const legacyCrm = hasCrm && isImobClient(cliente);
-  const showCrm = channelAllowed("crm") && (portalMode ? legacyCrm : true);
-  const showRelacionamento = showOptInChannel(hasRelacionamento, workspaceKnown);
+  /** Funil vive em /crm — não duplicar aba no dashboard. */
+  const showCrm = false;
+  const showRelacionamento =
+    channelAllowed("relacionamento") && showOptInChannel(hasRelacionamento, workspaceKnown);
 
   const conexoesHref = `/config/conexoes?workspaceId=${id}`;
   const modulosHref = `/config/modulos?workspaceId=${id}`;
@@ -1088,7 +1096,9 @@ function formatPercentage(value: number) {
               <AccountSwitcher id={id} nome={cliente?.nome} hideTitle />
             </div>
             <p className="mt-2 type-caption text-[var(--muted-foreground)]">
-              O que está acontecendo e onde agir agora.
+              {edition === "inside_sales"
+                ? "Leads, prioridade e o que precisa da sua ação."
+                : "O que está acontecendo e onde agir agora."}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -1348,9 +1358,13 @@ function formatPercentage(value: number) {
         />
       )}
 
-      {/* ── Geral: soma de todos os canais (vendas, leads, mídia) ── */}
+      {/* ── Geral: inside sales = funil/ação; demais = vendas + mídia ── */}
       {!analystOpen && id && canal === "geral" && !socialMediaOnly && !showComportamento && (
-        <GeralConsolidado clienteId={id} query={buildQueryParams(dateFilter)} />
+        edition === "inside_sales" ? (
+          <InsideSalesGeral workspaceId={id} query={buildQueryParams(dateFilter)} />
+        ) : (
+          <GeralConsolidado clienteId={id} query={buildQueryParams(dateFilter)} />
+        )
       )}
 
       {!analystOpen && id && showComportamento && (
@@ -1358,7 +1372,8 @@ function formatPercentage(value: number) {
       )}
 
       {/* ── Default panel (KPIs, chart, weekly table, financial) ── */}
-      {!analystOpen && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce" && (geralAnalise && (canal === "geral" || subView === "dados")) && !isSpecialPanel && resumo && !geralSemMidia && (
+      {/* Inside sales Geral já traz mídia no painel próprio — evita KPIs de loja/pedidos. */}
+      {!analystOpen && !(edition === "inside_sales" && canal === "geral") && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce" && (geralAnalise && (canal === "geral" || subView === "dados")) && !isSpecialPanel && resumo && !geralSemMidia && (
         <DefaultPanel
           resumo={
             isMiguelImoveisPanel

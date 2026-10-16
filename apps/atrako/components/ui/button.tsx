@@ -12,7 +12,8 @@ const buttonVariants = cva(
       variant: {
         primary: `${btnRadius} bg-[var(--primary)] px-[22px] py-[11px] type-body text-[var(--on-primary)]`,
         "secondary-pill": `${btnRadius} border border-[var(--primary)] bg-[var(--canvas)] px-[22px] py-[11px] type-body text-[var(--primary)]`,
-        "dark-utility": `${btnRadius} bg-[var(--ink)] px-[15px] py-2 type-button-utility text-[var(--on-dark)]`,
+        /* surface-black fica escuro nos dois temas — nunca usar --ink (vira claro no dark) */
+        "dark-utility": `${btnRadius} bg-[var(--surface-black)] px-[15px] py-2 type-button-utility text-[var(--on-dark)]`,
         pearl: `${btnRadius} border-[3px] border-[var(--divider-soft)] bg-[var(--surface-pearl)] px-[14px] py-2 type-caption text-[var(--ink-muted-80)]`,
         "store-hero": `${btnRadius} bg-[var(--primary)] px-7 py-[14px] type-button-large text-[var(--on-primary)]`,
         ghost: `${btnRadius} bg-transparent px-3 py-2 type-button-utility text-[var(--primary)]`,

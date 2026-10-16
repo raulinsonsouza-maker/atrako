@@ -1,7 +1,16 @@
 import { createEvent, publishEventBatch } from "@atrako/events";
 
-/** `date` = aniversário (dia/mês) · `consent` = aceite LGPD de comunicações */
-export type FormFieldType = "text" | "email" | "phone" | "choice" | "number" | "date" | "consent";
+/** `date` = aniversário (dia/mês) · `consent` = aceite LGPD · `state`/`city` = UF→município BR */
+export type FormFieldType =
+  | "text"
+  | "email"
+  | "phone"
+  | "choice"
+  | "number"
+  | "date"
+  | "consent"
+  | "state"
+  | "city";
 
 export interface FormField {
   id: string;
@@ -9,6 +18,8 @@ export interface FormField {
   label: string;
   required?: boolean;
   options?: string[];
+  /** Para `city`: id do campo UF (`state`) que filtra os municípios. Default: `state`. */
+  dependsOn?: string;
 }
 
 export interface FormBranch {

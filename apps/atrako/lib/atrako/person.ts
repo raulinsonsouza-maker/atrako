@@ -11,6 +11,7 @@ import { CHANNEL_LABELS, type OrderChannel } from "@/lib/commerce-attribution/st
 import { LOST_REASON_LABELS, readStageHistory, type LostReason } from "@/lib/crm/stage-history";
 import { formatLocation, orderDetails } from "@/lib/commerce/order-details";
 import { mlShippingLabel } from "@/lib/integrations/mercadolivre/buyer-facts";
+import { franchiseSourceLabel } from "@/lib/qualification/crm-labels";
 
 export function normalizePersonPhone(raw?: string | null): string | null {
   if (!raw) return null;
@@ -403,7 +404,10 @@ export function leadSourceLabel(source: string) {
   const raw = source.trim();
   const upper = raw.toUpperCase().replace(/[\s-]+/g, "_");
   if (raw.toLowerCase().startsWith("campaign:")) return LEAD_SOURCE_LABELS.campaign;
-  return STORE_PROVIDER_LABELS[upper] ?? LEAD_SOURCE_LABELS[raw.toLowerCase()] ?? raw;
+  const franchise = franchiseSourceLabel(raw);
+  if (franchise) return franchise;
+  if (raw.toLowerCase().startsWith("lp:")) return "Landing page";
+  return STORE_PROVIDER_LABELS[upper] ?? LEAD_SOURCE_LABELS[raw.toLowerCase()] ?? raw.replace(/^[^:]+:/, "").replace(/[-_]/g, " ");
 }
 
 export { orderStatusLabel };

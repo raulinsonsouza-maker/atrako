@@ -4,6 +4,9 @@ import type { QualifyFieldKey } from "./fields";
 
 export type ChoiceOpt = { code: string; label: string };
 
+/** Investimento inicial publicado pela Regicenter (regicenter.com/seja-um-franqueado). */
+export const REGICENTER_FRANCHISE_INVESTMENT = "R$ 27.999";
+
 export const CHOICE_MAP: Partial<Record<QualifyFieldKey, ChoiceOpt[]>> = {
   niche: [
     { code: "NICHE_LAW", label: "Advocacia" },
@@ -31,7 +34,7 @@ export const CHOICE_MAP: Partial<Record<QualifyFieldKey, ChoiceOpt[]>> = {
     { code: "FINANCIALS", label: "Retorno / números" },
   ],
   investment_status: [
-    { code: "CAPITAL_AVAILABLE", label: "Tenho o valor" },
+    { code: "CAPITAL_AVAILABLE", label: `Tenho os ${REGICENTER_FRANCHISE_INVESTMENT}` },
     { code: "CAPITAL_PARTIAL", label: "Tenho parte" },
     { code: "CAPITAL_EVALUATING", label: "Ainda estou avaliando" },
   ],
@@ -42,6 +45,13 @@ export const CHOICE_MAP: Partial<Record<QualifyFieldKey, ChoiceOpt[]>> = {
   ],
 };
 
+const LABEL_ALIASES: Partial<Record<QualifyFieldKey, Record<string, string>>> = {
+  investment_status: {
+    "tenho o valor": "CAPITAL_AVAILABLE",
+    [`tenho os ${REGICENTER_FRANCHISE_INVESTMENT}`.toLowerCase()]: "CAPITAL_AVAILABLE",
+  },
+};
+
 export function resolveChoice(fieldKey: QualifyFieldKey, raw: string): { code: string; label: string } {
   const opts = CHOICE_MAP[fieldKey];
   if (!opts) return { code: raw, label: raw };
@@ -49,6 +59,11 @@ export function resolveChoice(fieldKey: QualifyFieldKey, raw: string): { code: s
   if (byCode) return byCode;
   const byLabel = opts.find((o) => o.label.toLowerCase() === raw.trim().toLowerCase());
   if (byLabel) return byLabel;
+  const aliasCode = LABEL_ALIASES[fieldKey]?.[raw.trim().toLowerCase()];
+  if (aliasCode) {
+    const hit = opts.find((o) => o.code === aliasCode);
+    if (hit) return hit;
+  }
   return { code: raw, label: raw };
 }
 

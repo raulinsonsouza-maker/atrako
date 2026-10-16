@@ -72,7 +72,8 @@ test("missingFieldKeys e merge não sobrescreve com vazio", () => {
 
 test("resolveChoice por label e código", () => {
   assert.equal(resolveChoice("niche", "Advocacia").code, "NICHE_LAW");
-  assert.equal(resolveChoice("investment_status", "CAPITAL_AVAILABLE").label, "Tenho o valor");
+  assert.equal(resolveChoice("investment_status", "CAPITAL_AVAILABLE").label, "Tenho os R$ 27.999");
+  assert.equal(resolveChoice("investment_status", "Tenho o valor").code, "CAPITAL_AVAILABLE");
 });
 
 test("sourceMatchesPlaybook", () => {

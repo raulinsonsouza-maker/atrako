@@ -16,6 +16,7 @@ import { validateCommercialContext } from "@/lib/admin/clientContext";
 import { ensureWorkspaceSettings } from "@/lib/config/getWorkspaceConfig";
 import { prisma } from "@/lib/db";
 import { applyWorkspaceEdition, parseEdition } from "@/lib/modules/apply-edition";
+import { hashPassword, validatePassword } from "@/lib/authSecurity";
 import { createWorkspaceInvite } from "@/lib/tenancy/invites";
 
 export async function GET(request: NextRequest) {
@@ -71,6 +72,7 @@ export async function POST(request: NextRequest) {
     diferenciais?: string | null;
     observacoesAnaliticas?: string | null;
     ownerEmail?: string;
+    ownerPassword?: string;
   };
   try {
     body = await request.json();
@@ -90,6 +92,21 @@ export async function POST(request: NextRequest) {
     commercialContext = validateCommercialContext(body as Record<string, unknown>);
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Contexto comercial inválido" }, { status: 400 });
+  }
+
+  const ownerEmail = body.ownerEmail?.trim().toLowerCase() || "";
+  const ownerPassword = typeof body.ownerPassword === "string" ? body.ownerPassword : "";
+  if (ownerPassword && !ownerEmail) {
+    return NextResponse.json(
+      { error: "Informe o e-mail do OWNER para definir a senha." },
+      { status: 400 },
+    );
+  }
+  if (ownerPassword) {
+    const policyError = validatePassword(ownerPassword);
+    if (policyError) {
+      return NextResponse.json({ error: policyError }, { status: 400 });
+    }
   }
 
   try {
@@ -151,14 +168,44 @@ export async function POST(request: NextRequest) {
     await applyWorkspaceEdition(cliente.id, edition);
 
     let ownerInvite: { acceptPath: string; email: string } | null = null;
-    const ownerEmail = body.ownerEmail?.trim().toLowerCase();
+    let ownerAccess: { email: string; mode: "password" | "invite" } | null = null;
     if (ownerEmail) {
-      const invite = await createWorkspaceInvite({
-        clienteId: cliente.id,
-        email: ownerEmail,
-        role: "OWNER",
-      });
-      ownerInvite = { acceptPath: invite.acceptPath, email: ownerEmail };
+      if (ownerPassword) {
+        const passwordHash = await hashPassword(ownerPassword);
+        const now = new Date();
+        await prisma.$transaction([
+          prisma.workspaceMember.upsert({
+            where: { clienteId_email: { clienteId: cliente.id, email: ownerEmail } },
+            create: {
+              clienteId: cliente.id,
+              email: ownerEmail,
+              role: "OWNER",
+              passwordHash,
+              passwordUpdatedAt: now,
+              active: true,
+            },
+            update: {
+              role: "OWNER",
+              passwordHash,
+              passwordUpdatedAt: now,
+              active: true,
+            },
+          }),
+          prisma.workspaceMember.updateMany({
+            where: { email: ownerEmail, clienteId: { not: cliente.id }, active: true },
+            data: { passwordHash, passwordUpdatedAt: now },
+          }),
+        ]);
+        ownerAccess = { email: ownerEmail, mode: "password" };
+      } else {
+        const invite = await createWorkspaceInvite({
+          clienteId: cliente.id,
+          email: ownerEmail,
+          role: "OWNER",
+        });
+        ownerInvite = { acceptPath: invite.acceptPath, email: ownerEmail };
+        ownerAccess = { email: ownerEmail, mode: "invite" };
+      }
     }
 
     const syncAfterCreate = body.syncAfterCreate ?? true;
@@ -183,6 +230,7 @@ export async function POST(request: NextRequest) {
       sync: syncResult,
       dashboardReady: !!(syncResult && syncResult.ok),
       ownerInvite,
+      ownerAccess,
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);

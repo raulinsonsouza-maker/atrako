@@ -3,7 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AppPage } from "@/components/layout/AppPage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { TextField } from "@/components/ui/text-field";
 import {
   AlertTriangle,
   BarChart3,
@@ -22,7 +25,6 @@ import {
   ChevronRight,
   CircleCheck,
   CircleAlert,
-  LockKeyhole,
 } from "lucide-react";
 
 function getHeaders(token?: string, includeJson = false): HeadersInit {
@@ -104,19 +106,14 @@ function InputField({
   hint?: string;
 }) {
   return (
-    <div>
-      <label className="mb-1.5 block type-caption-strong uppercase text-[var(--muted-foreground)]">
-        {label}
-      </label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 type-caption transition-colors focus:border-[var(--primary)]/40 focus:outline-none"
-      />
-      {hint && <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">{hint}</p>}
-    </div>
+    <TextField
+      label={label}
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      hint={hint}
+    />
   );
 }
 
@@ -132,19 +129,22 @@ function Modal({
   wide?: boolean;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative z-10 w-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl ${wide ? "max-w-4xl" : "max-w-lg"}`}>
-        <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
-          <h3 className="type-body-strong text-[var(--foreground)]">{title}</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+      <div
+        className={`relative z-10 w-full overflow-hidden rounded-[var(--radius-lg)] border border-[var(--hairline)] bg-[var(--canvas)] ${wide ? "max-w-4xl" : "max-w-lg"}`}
+      >
+        <div className="flex items-center justify-between border-b border-[var(--hairline)] px-4 py-3">
+          <h3 className="type-body-strong text-[var(--ink)]">{title}</h3>
           <button
+            type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-xl text-[var(--muted-foreground)] hover:bg-white/5 hover:text-[var(--foreground)] transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-xs)] text-[var(--ink-muted-48)] transition hover:bg-[var(--muted)] hover:text-[var(--ink)]"
+            aria-label="Fechar"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="max-h-[80vh] overflow-y-auto p-6">{children}</div>
+        <div className="max-h-[80vh] space-y-4 overflow-y-auto p-4">{children}</div>
       </div>
     </div>
   );
@@ -489,69 +489,52 @@ export default function AdminIntegrationsConfigPage() {
 
   if (unauthorized) {
     return (
-      <main className="flex min-h-[60vh] items-center justify-center">
-        <p className="type-caption text-[var(--muted-foreground)]">Sua sessão não possui acesso administrativo.</p>
-      </main>
+      <AppPage title="Ops / alertas">
+        <p className="type-caption text-[var(--ink-muted-48)]">Sua sessão não possui acesso administrativo.</p>
+      </AppPage>
     );
   }
 
   return (
-    <main className="mx-auto max-w-[1320px] space-y-7 pb-16">
-      <section className="relative overflow-hidden rounded-[28px] border border-[var(--border)] bg-[linear-gradient(120deg,var(--card),rgba(255,106,0,0.07))] p-6 shadow-sm sm:p-8">
-        <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[var(--primary)]/10 blur-3xl" />
-        <div className="relative flex items-start justify-between gap-6 flex-wrap">
-          <div className="max-w-2xl space-y-3">
-            <div className="flex items-center gap-2 type-caption-strong uppercase text-[var(--primary)]">
-              <LockKeyhole className="h-4 w-4" />
-              Central de controle
-            </div>
-            <h1 className="type-lead font-extrabold text-[var(--foreground)] ">
-              Configurações
-            </h1>
-            <p className="max-w-xl type-caption leading-6 text-[var(--muted-foreground)]">
-              Veja rapidamente o que está conectado, resolva pendências e mantenha o InPilot pronto para operar.
-              Os detalhes técnicos aparecem apenas quando você precisar deles.
-            </p>
-          </div>
-        <button
-          onClick={() => { setLogsModalOpen(true); fetchLogs("ALL"); setLogsFilter("ALL"); }}
-          className="flex shrink-0 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)]/90 px-4 py-2.5 type-caption-strong text-[var(--foreground)] shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--primary)]/40"
+    <AppPage
+      title="Ops / alertas"
+      actions={
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            setLogsModalOpen(true);
+            fetchLogs("ALL");
+            setLogsFilter("ALL");
+          }}
         >
-          <ScrollText className="h-4 w-4 text-[var(--muted-foreground)]" />
-          Logs do sistema
-        </button>
-        </div>
-        <p className="relative mt-7 type-caption-strong uppercase text-[var(--muted-foreground)]">
-          Plataformas e canais
-        </p>
-      </section>
-
-      <section className="grid gap-3 md:grid-cols-2" aria-label="Outras configurações">
+          <ScrollText className="h-3.5 w-3.5" strokeWidth={1.75} />
+          Logs
+        </Button>
+      }
+    >
+      <section className="grid gap-2 sm:grid-cols-2" aria-label="Atalhos">
         <Link
           href="/admin/usuarios"
-          className="group flex items-start gap-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 transition-all hover:-translate-y-0.5 hover:border-[var(--primary)]/50 hover:bg-[var(--primary)]/5"
+          className="flex items-center gap-3 rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-4 py-3 transition active:scale-[0.99]"
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-400">
-            <UsersRound className="h-5 w-5" />
+          <UsersRound className="h-4 w-4 shrink-0 text-[var(--primary)]" strokeWidth={1.75} />
+          <span className="min-w-0 flex-1">
+            <span className="block type-caption-strong text-[var(--ink)]">Usuários</span>
+            <span className="type-fine-print text-[var(--ink-muted-48)]">Acessos internos</span>
           </span>
-          <span className="min-w-0">
-            <span className="block type-caption-strong text-[var(--foreground)]">Usuários internos</span>
-            <span className="mt-1 block type-fine-print leading-5 text-[var(--muted-foreground)]">Crie acessos, escolha permissões e desative contas sem apagar o histórico.</span>
-          </span>
-          <ChevronRight className="ml-auto mt-1 h-5 w-5 text-[var(--muted-foreground)] transition-transform group-hover:translate-x-0.5" />
+          <ChevronRight className="h-4 w-4 text-[var(--ink-muted-48)]" />
         </Link>
         <Link
           href="/admin/inpilot-usage"
-          className="group flex items-start gap-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 transition-all hover:-translate-y-0.5 hover:border-[var(--primary)]/50 hover:bg-[var(--primary)]/5"
+          className="flex items-center gap-3 rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-4 py-3 transition active:scale-[0.99]"
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-400">
-            <BarChart3 className="h-5 w-5" />
+          <BarChart3 className="h-4 w-4 shrink-0 text-[var(--primary)]" strokeWidth={1.75} />
+          <span className="min-w-0 flex-1">
+            <span className="block type-caption-strong text-[var(--ink)]">InPilot</span>
+            <span className="type-fine-print text-[var(--ink-muted-48)]">Uso e acesso</span>
           </span>
-          <span className="min-w-0">
-            <span className="block type-caption-strong text-[var(--foreground)]">Uso e acesso do InPilot</span>
-            <span className="mt-1 block type-fine-print leading-5 text-[var(--muted-foreground)]">Escolha usuários e clientes autorizados e acompanhe o consumo da ferramenta.</span>
-          </span>
-          <ChevronRight className="ml-auto mt-1 h-5 w-5 text-[var(--muted-foreground)] transition-transform group-hover:translate-x-0.5" />
+          <ChevronRight className="h-4 w-4 text-[var(--ink-muted-48)]" />
         </Link>
       </section>
 
@@ -1500,6 +1483,6 @@ export default function AdminIntegrationsConfigPage() {
           </div>
         </div>
       )}
-    </main>
+    </AppPage>
   );
 }

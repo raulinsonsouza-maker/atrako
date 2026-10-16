@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Eye, EyeOff, KeyRound, Shield, UserRound, UserRoundPlus } from "lucide-react";
+import { CheckCircle2, AlertTriangle, KeyRound, Shield, UserRound } from "lucide-react";
+import { AppPage } from "@/components/layout/AppPage";
+import { Button } from "@/components/ui/button";
 import { PillSelect } from "@/components/ui/pill-select";
+import { Switch } from "@/components/ui/switch";
+import { TextField } from "@/components/ui/text-field";
 
 type InternalUser = {
   id: string;
@@ -16,12 +19,16 @@ type InternalUser = {
   updatedAt: string;
 };
 
+const ROLE_OPTIONS = [
+  { value: "ANALYST", label: "Analista" },
+  { value: "ADMIN", label: "Administrador" },
+];
+
 export default function InternalUsersPage() {
   const [users, setUsers] = useState<InternalUser[]>([]);
   const [username, setUsername] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<"ADMIN" | "ANALYST">("ANALYST");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,7 +50,9 @@ export default function InternalUsersPage() {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   async function createUser() {
     setMessage("");
@@ -57,8 +66,10 @@ export default function InternalUsersPage() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Não foi possível criar o usuário.");
-      setUsername(""); setName(""); setPassword("");
-      setMessage("Usuário criado. A senha cadastrada já está válida.");
+      setUsername("");
+      setName("");
+      setPassword("");
+      setMessage("Usuário criado.");
       await load();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Não foi possível criar o usuário.");
@@ -67,7 +78,10 @@ export default function InternalUsersPage() {
     }
   }
 
-  async function updateUser(id: string, changes: { role?: "ADMIN" | "ANALYST"; active?: boolean; password?: string; username?: string }) {
+  async function updateUser(
+    id: string,
+    changes: { role?: "ADMIN" | "ANALYST"; active?: boolean; password?: string; username?: string },
+  ) {
     setError("");
     try {
       const response = await fetch(`/api/admin/users/${id}`, {
@@ -77,109 +91,138 @@ export default function InternalUsersPage() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Não foi possível atualizar o usuário.");
-      setUsers((current) => current.map((user) => user.id === id ? { ...user, ...data.user } : user));
-      if (changes.password) setMessage("Senha redefinida e válida a partir de agora.");
+      setUsers((current) =>
+        current.map((user) => (user.id === id ? { ...user, ...data.user } : user)),
+      );
+      if (changes.password) setMessage("Senha redefinida.");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Não foi possível atualizar o usuário.");
     }
   }
 
   async function resetPassword(user: InternalUser) {
-    const temporary = window.prompt(`Nova senha para ${user.username ?? "usuário"} (mínimo 12 caracteres):`);
-    if (temporary) {
-      const nextUsername = user.username ?? window.prompt("Defina também o username deste usuário:");
-      if (!nextUsername) return;
-      await updateUser(user.id, { password: temporary, username: nextUsername });
-    }
+    const temporary = window.prompt(`Nova senha para ${user.username ?? "usuário"} (mínimo 12):`);
+    if (!temporary) return;
+    const nextUsername = user.username ?? window.prompt("Defina o username deste usuário:");
+    if (!nextUsername) return;
+    await updateUser(user.id, { password: temporary, username: nextUsername });
   }
 
   return (
-    <main className="mx-auto max-w-5xl space-y-8 py-4">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div className="mt-1 h-8 w-1 rounded-full bg-[var(--primary)]" />
-          <div>
-            <p className="type-micro-legal uppercase text-[var(--primary)]">Administração</p>
-            <h1 className="type-lead-airy font-extrabold ">Usuários internos</h1>
-            <p className="mt-1 type-caption text-[var(--muted-foreground)]">Crie acessos locais e controle função e status.</p>
-          </div>
+    <AppPage title="Usuários">
+      {error ? (
+        <div
+          role="alert"
+          className="flex items-center gap-2 rounded-[var(--radius-xs)] bg-[var(--accent)]/10 px-3 py-2 type-caption text-[var(--accent)]"
+        >
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          {error}
         </div>
-        <Link href="/admin/configuracoes" className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] px-3 py-2 type-fine-print text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-          <ArrowLeft className="h-3.5 w-3.5" /> Configurações
-        </Link>
-      </header>
-
-      {error && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 type-caption text-red-300">{error}</div>}
-      {message && <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 type-caption text-emerald-300"><CheckCircle2 className="h-4 w-4" />{message}</div>}
-
-      <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <UserRoundPlus className="h-4 w-4 text-[var(--primary)]" />
-          <h2 className="font-semibold">Criar usuário</h2>
+      ) : null}
+      {message ? (
+        <div className="flex items-center gap-2 rounded-[var(--radius-xs)] bg-[var(--success)]/10 px-3 py-2 type-caption text-[var(--success)]">
+          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+          {message}
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="usuário (3–40 caracteres)" className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 type-caption" />
-          <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome de exibição (opcional)" className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 type-caption" />
-          <div className="relative">
-            <input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Senha (mínimo 12)" className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 pr-11 type-caption" />
-            <button type="button" onClick={() => setShowPassword((current) => !current)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"} className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-          <PillSelect
-            className="w-full"
-            size="field"
-            value={role}
-            onChange={(v) => setRole(v as "ADMIN" | "ANALYST")}
-            options={[
-              { value: "ANALYST", label: "Analista" },
-              { value: "ADMIN", label: "Administrador" },
-            ]}
-            aria-label="Função"
+      ) : null}
+
+      <section className="space-y-4 rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] p-4">
+        <p className="type-caption-strong text-[var(--ink)]">Novo usuário</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextField
+            label="Usuário"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="3–40 caracteres"
+            autoComplete="off"
           />
+          <TextField
+            label="Nome"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Opcional"
+          />
+          <TextField
+            label="Senha"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Mínimo 12"
+            autoComplete="new-password"
+          />
+          <div>
+            <p className="type-caption-strong text-[var(--ink)]">Função</p>
+            <div className="mt-2">
+              <PillSelect
+                size="field"
+                value={role}
+                onChange={(v) => setRole(v as "ADMIN" | "ANALYST")}
+                options={ROLE_OPTIONS}
+                aria-label="Função"
+              />
+            </div>
+          </div>
         </div>
-        <button onClick={() => void createUser()} disabled={saving} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[var(--primary)] px-5 py-2.5 type-caption-strong text-white disabled:opacity-50">
-          {saving ? "Criando…" : "Criar usuário"}
-        </button>
+        <Button type="button" disabled={saving || !username.trim() || !password} onClick={() => void createUser()}>
+          {saving ? "Criando…" : "Criar"}
+        </Button>
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)]">
-        <div className="border-b border-[var(--border)] px-5 py-4"><h2 className="font-semibold">Acessos cadastrados</h2></div>
-        {loading ? <p className="p-5 type-caption text-[var(--muted-foreground)]">Carregando…</p> : users.length === 0 ? (
-          <p className="p-5 type-caption text-[var(--muted-foreground)]">Nenhum usuário interno cadastrado.</p>
+      <ul className="divide-y divide-[var(--hairline)] rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)]">
+        {loading ? (
+          <li className="px-4 py-5 type-caption text-[var(--ink-muted-48)]">Carregando…</li>
+        ) : users.length === 0 ? (
+          <li className="px-4 py-5 type-caption text-[var(--ink-muted-48)]">Nenhum usuário interno.</li>
         ) : (
-          <div className="divide-y divide-[var(--border)]">
-            {users.map((user) => (
-              <div key={user.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${user.role === "ADMIN" ? "bg-amber-500/15 text-amber-400" : "bg-sky-500/15 text-sky-400"}`}>
-                    {user.role === "ADMIN" ? <Shield className="h-4 w-4" /> : <UserRound className="h-4 w-4" />}
-                  </div>
-                  <div>
-                    <p className="type-caption-strong ">{user.name || user.username}</p>
-                    <p className="type-fine-print text-[var(--muted-foreground)]">@{user.username} · senha definida</p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <PillSelect
-                    value={user.role}
-                    onChange={(v) => void updateUser(user.id, { role: v as "ADMIN" | "ANALYST" })}
-                    options={[
-                      { value: "ANALYST", label: "Analista" },
-                      { value: "ADMIN", label: "Administrador" },
-                    ]}
-                    aria-label={`Função de ${user.name || user.username}`}
-                  />
-                  <button onClick={() => void resetPassword(user)} className="inline-flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1.5 type-fine-print"><KeyRound className="h-3.5 w-3.5" /> Redefinir</button>
-                  <button onClick={() => void updateUser(user.id, { active: !user.active })} className={`rounded-lg border px-3 py-1.5 type-caption-strong ${user.active ?"border-emerald-500/30 text-emerald-400" :"border-red-500/30 text-red-400"}`}>
-                    {user.active ? "Ativo" : "Desativado"}
-                  </button>
+          users.map((user) => (
+            <li
+              key={user.id}
+              className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-xs)] bg-[var(--surface-pearl)] text-[var(--ink-muted-48)]">
+                  {user.role === "ADMIN" ? (
+                    <Shield className="h-4 w-4" strokeWidth={1.75} />
+                  ) : (
+                    <UserRound className="h-4 w-4" strokeWidth={1.75} />
+                  )}
+                </span>
+                <div className="min-w-0">
+                  <p className="type-nav-link truncate text-[var(--ink)]">{user.name || user.username}</p>
+                  <p className="type-fine-print text-[var(--ink-muted-48)]">@{user.username}</p>
                 </div>
               </div>
-            ))}
-          </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <PillSelect
+                  value={user.role}
+                  onChange={(v) => void updateUser(user.id, { role: v as "ADMIN" | "ANALYST" })}
+                  options={ROLE_OPTIONS}
+                  aria-label={`Função de ${user.name || user.username}`}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="!px-3 !py-1.5"
+                  onClick={() => void resetPassword(user)}
+                >
+                  <KeyRound className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  Senha
+                </Button>
+                <div className="flex items-center gap-2 pl-1">
+                  <span className="type-fine-print text-[var(--ink-muted-48)]">
+                    {user.active ? "Ativo" : "Off"}
+                  </span>
+                  <Switch
+                    checked={user.active}
+                    onChange={(active) => void updateUser(user.id, { active })}
+                    aria-label={`Ativar ${user.name || user.username}`}
+                  />
+                </div>
+              </div>
+            </li>
+          ))
         )}
-      </section>
-    </main>
+      </ul>
+    </AppPage>
   );
 }

@@ -78,7 +78,7 @@ function partnerKeyExpiryBanner(apps: AppRow[] | undefined): string | null {
 }
 
 const fieldClass =
-  "h-11 w-full rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-3 type-body text-[var(--ink)] outline-none placeholder:text-[var(--ink-muted-48)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-focus)]";
+  "h-11 w-full rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas-parchment)] px-5 type-body text-[var(--ink)] outline-none placeholder:text-[var(--ink-muted-48)] focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary-focus)]";
 
 function rowFlags(row: AppRow | undefined): PlatformAppReadinessFlags {
   return {
@@ -339,7 +339,7 @@ export default function AdminAppsPage() {
                       if (field.key === "label") {
                         return (
                           <label key={field.key} className="flex flex-col gap-1.5">
-                            <span className="type-fine-print text-[var(--ink-muted-48)]">
+                            <span className="type-caption-strong text-[var(--ink)]">
                               {field.label}
                             </span>
                             <input
@@ -392,7 +392,7 @@ export default function AdminAppsPage() {
 
                       return (
                         <label key={field.key} className="flex flex-col gap-1.5">
-                          <span className="type-fine-print text-[var(--ink-muted-48)]">
+                          <span className="type-caption-strong text-[var(--ink)]">
                             {field.label}
                             {field.requiredForReady ? " *" : ""}
                           </span>
@@ -424,7 +424,7 @@ export default function AdminAppsPage() {
                     })}
 
                     <div className="flex flex-col gap-1.5">
-                      <span className="type-fine-print text-[var(--ink-muted-48)]">Status</span>
+                      <span className="type-caption-strong text-[var(--ink)]">Status</span>
                       <PillSelect
                         size="field"
                         value={form.enabled !== "false" ? "true" : "false"}

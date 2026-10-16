@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { X, Plus, Pencil, Trash2, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { TextField } from "@/components/ui/text-field";
 
 export interface Segmento {
   id: string;
@@ -11,10 +15,22 @@ export interface Segmento {
 }
 
 const PRESET_COLORS = [
-  "#ef4444", "#f97316", "#f59e0b", "#eab308",
-  "#84cc16", "#22c55e", "#10b981", "#14b8a6",
-  "#06b6d4", "#3b82f6", "#6366f1", "#8b5cf6",
-  "#a855f7", "#ec4899", "#ff6a00", "#6b7280",
+  "#ef4444",
+  "#f97316",
+  "#f59e0b",
+  "#eab308",
+  "#84cc16",
+  "#22c55e",
+  "#10b981",
+  "#14b8a6",
+  "#06b6d4",
+  "#3b82f6",
+  "#6366f1",
+  "#8b5cf6",
+  "#a855f7",
+  "#ec4899",
+  "#ff6a00",
+  "#6b7280",
 ];
 
 async function fetchSegmentos(): Promise<Segmento[]> {
@@ -46,27 +62,25 @@ async function updateSegmento(id: string, data: { nome: string; cor: string }): 
 }
 
 async function deleteSegmento(id: string): Promise<void> {
-  const res = await fetch(`/api/admin/segmentos/${id}`, {
-    method: "DELETE",
-    headers: {},
-  });
+  const res = await fetch(`/api/admin/segmentos/${id}`, { method: "DELETE" });
   if (!res.ok) throw new Error("Erro ao excluir");
 }
 
 function ColorPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-1.5">
       {PRESET_COLORS.map((color) => (
         <button
           key={color}
           type="button"
           onClick={() => onChange(color)}
-          className="relative h-7 w-7 rounded-lg transition hover:scale-110"
+          aria-label={`Cor ${color}`}
+          className="relative h-7 w-7 rounded-[var(--radius-xs)] transition active:scale-95"
           style={{ backgroundColor: color }}
         >
-          {value === color && (
-            <Check className="absolute inset-0 m-auto h-3.5 w-3.5 text-white drop-shadow" />
-          )}
+          {value === color ? (
+            <Check className="absolute inset-0 m-auto h-3.5 w-3.5 text-white" strokeWidth={2.5} />
+          ) : null}
         </button>
       ))}
     </div>
@@ -91,51 +105,30 @@ function CreateTab({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="space-y-4">
+      <TextField
+        label="Nome"
+        value={nome}
+        onChange={(e) => setNome(e.target.value)}
+        placeholder="Ex.: Restaurante"
+        onKeyDown={(e) => e.key === "Enter" && nome.trim() && mutation.mutate()}
+      />
       <div>
-        <label className="mb-1.5 block type-caption-strong uppercase text-[var(--muted-foreground)]">
-          Nome do segmento
-        </label>
-        <div className="flex items-center gap-2">
-          <div
-            className="h-5 w-5 shrink-0 rounded-md"
-            style={{ backgroundColor: cor }}
-          />
-          <input
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            placeholder="Ex.: Imobiliário"
-            onKeyDown={(e) => e.key === "Enter" && nome.trim() && mutation.mutate()}
-            className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 type-caption transition-colors focus:border-[var(--primary)]/40 focus:outline-none"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="mb-1.5 block type-caption-strong uppercase text-[var(--muted-foreground)]">
-          Cor da tag
-        </label>
+        <p className="mb-2 type-caption-strong text-[var(--ink)]">Cor</p>
         <ColorPicker value={cor} onChange={setCor} />
       </div>
-
-      {err && <p className="type-fine-print text-red-500">{err}</p>}
-
+      {err ? <p className="type-fine-print text-[var(--danger)]">{err}</p> : null}
       <div className="flex justify-end gap-2 pt-1">
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-xl border border-[var(--border)] px-4 py-2 type-caption-strong text-[var(--muted-foreground)] transition hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-        >
+        <Button type="button" variant="outline" onClick={onClose}>
           Fechar
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          onClick={() => mutation.mutate()}
           disabled={!nome.trim() || mutation.isPending}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--primary)] px-4 py-2 type-caption-strong text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-50"
+          onClick={() => mutation.mutate()}
         >
-          <Plus className="h-3.5 w-3.5" />
-          {mutation.isPending ? "Criando..." : "Criar segmento"}
-        </button>
+          <Plus className="h-3.5 w-3.5" strokeWidth={1.75} />
+          {mutation.isPending ? "Criando…" : "Criar"}
+        </Button>
       </div>
     </div>
   );
@@ -173,90 +166,70 @@ function EditTab({ segmentos }: { segmentos: Segmento[] }) {
 
   if (segmentos.length === 0) {
     return (
-      <p className="py-6 text-center type-caption text-[var(--muted-foreground)]">
-        Nenhum segmento cadastrado ainda.
+      <p className="py-6 text-center type-caption text-[var(--ink-muted-48)]">
+        Nenhum segmento cadastrado.
       </p>
     );
   }
 
   return (
     <div className="space-y-2">
-      {err && <p className="type-fine-print text-red-500">{err}</p>}
+      {err ? <p className="type-fine-print text-[var(--danger)]">{err}</p> : null}
       {segmentos.map((s) =>
         editingId === s.id ? (
           <div
             key={s.id}
-            className="space-y-3 rounded-xl border border-[var(--primary)]/30 bg-[var(--primary)]/3 p-3"
+            className="space-y-3 rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas-parchment)] p-3"
           >
-            <div className="flex items-center gap-2">
-              <div className="h-5 w-5 shrink-0 rounded-md" style={{ backgroundColor: editCor }} />
-              <input
-                value={editNome}
-                onChange={(e) => setEditNome(e.target.value)}
-                className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-1.5 type-caption focus:border-[var(--primary)]/40 focus:outline-none"
-              />
+            <TextField label="Nome" value={editNome} onChange={(e) => setEditNome(e.target.value)} />
+            <div>
+              <p className="mb-2 type-caption-strong text-[var(--ink)]">Cor</p>
+              <ColorPicker value={editCor} onChange={setEditCor} />
             </div>
-            <ColorPicker value={editCor} onChange={setEditCor} />
-            <div className="flex justify-end gap-1.5">
-              <button
-                type="button"
-                onClick={() => setEditingId(null)}
-                className="rounded-lg border border-[var(--border)] px-3 py-1.5 type-caption-strong text-[var(--muted-foreground)] transition hover:bg-[var(--muted)]"
-              >
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setEditingId(null)}>
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                onClick={() => updateMutation.mutate()}
                 disabled={!editNome.trim() || updateMutation.isPending}
-                className="rounded-lg bg-[var(--primary)] px-3 py-1.5 type-caption-strong text-[var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-50"
+                onClick={() => updateMutation.mutate()}
               >
-                {updateMutation.isPending ? "Salvando..." : "Salvar"}
-              </button>
+                {updateMutation.isPending ? "Salvando…" : "Salvar"}
+              </Button>
             </div>
           </div>
         ) : (
           <div
             key={s.id}
-            className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2.5"
+            className="flex items-center gap-3 rounded-[var(--radius-xs)] border border-[var(--hairline)] px-3 py-2.5"
           >
-            <div className="h-4 w-4 shrink-0 rounded-md" style={{ backgroundColor: s.cor }} />
-            <span className="flex-1 type-caption-strong text-[var(--foreground)]">{s.nome}</span>
             <span
-              className="mr-1 rounded-full px-2 py-0.5 type-micro-legal uppercase text-white"
+              className="h-3.5 w-3.5 shrink-0 rounded-full"
               style={{ backgroundColor: s.cor }}
-            >
-              {s.nome}
-            </span>
-            <button
-              type="button"
-              onClick={() => startEdit(s)}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--muted-foreground)] transition hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
+              aria-hidden
+            />
+            <span className="min-w-0 flex-1 truncate type-caption text-[var(--ink)]">{s.nome}</span>
+            <IconButton size="toolbar" onClick={() => startEdit(s)} aria-label={`Editar ${s.nome}`}>
+              <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
+            </IconButton>
+            <IconButton
+              size="toolbar"
               onClick={() => deleteMutation.mutate(s.id)}
               disabled={deleteMutation.isPending}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--muted-foreground)] transition hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+              aria-label={`Excluir ${s.nome}`}
             >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
+              <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+            </IconButton>
           </div>
-        )
+        ),
       )}
     </div>
   );
 }
 
-interface SegmentoManagerModalProps {
-  onClose: () => void;
-}
-
-export function SegmentoManagerModal({ onClose }: SegmentoManagerModalProps) {
+export function SegmentoManagerModal({ onClose }: { onClose: () => void }) {
   const [tab, setTab] = useState<"criar" | "editar">("criar");
-
   const { data: segmentos = [] } = useQuery({
     queryKey: ["segmentos"],
     queryFn: fetchSegmentos,
@@ -264,41 +237,33 @@ export function SegmentoManagerModal({ onClose }: SegmentoManagerModalProps) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl">
-        <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
-          <h3 className="type-caption-strong text-[var(--foreground)]">Gerenciar Segmentos</h3>
+      <div className="w-full max-w-md overflow-hidden rounded-[var(--radius-lg)] border border-[var(--hairline)] bg-[var(--canvas)]">
+        <div className="flex items-center justify-between border-b border-[var(--hairline)] px-4 py-3">
+          <h3 className="type-body-strong text-[var(--ink)]">Segmentos</h3>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--muted-foreground)] transition hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
+            className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-xs)] text-[var(--ink-muted-48)] transition hover:bg-[var(--muted)] hover:text-[var(--ink)]"
+            aria-label="Fechar"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="flex gap-1 border-b border-[var(--border)] px-5 pt-3">
-          {(["criar", "editar"] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setTab(t)}
-              className={`rounded-t-lg px-4 py-2 type-caption-strong transition ${
-                tab === t
-                  ? "border-b-2 border-[var(--primary)] text-[var(--primary)]"
-                  : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-              }`}
-            >
-              {t === "criar" ? "Novo segmento" : `Editar (${segmentos.length})`}
-            </button>
-          ))}
+        <div className="px-4 pt-3">
+          <SegmentedControl
+            value={tab}
+            onChange={setTab}
+            options={[
+              { value: "criar", label: "Novo" },
+              { value: "editar", label: `Lista (${segmentos.length})` },
+            ]}
+            aria-label="Aba de segmentos"
+          />
         </div>
 
-        <div className="max-h-[60vh] overflow-y-auto p-5">
-          {tab === "criar" ? (
-            <CreateTab onClose={onClose} />
-          ) : (
-            <EditTab segmentos={segmentos} />
-          )}
+        <div className="max-h-[60vh] overflow-y-auto p-4">
+          {tab === "criar" ? <CreateTab onClose={onClose} /> : <EditTab segmentos={segmentos} />}
         </div>
       </div>
     </div>

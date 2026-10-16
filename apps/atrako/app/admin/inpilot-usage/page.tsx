@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
+import { AppPage } from "@/components/layout/AppPage";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 
 type UsageRow = {
   clienteId: string;
@@ -139,143 +141,196 @@ export default function InPilotUsagePage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl space-y-8 py-4">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div className="mt-1 h-8 w-1 rounded-full bg-[var(--primary)]" />
-          <div>
-            <p className="type-micro-legal uppercase text-[var(--primary)]">Administração</p>
-            <h1 className="type-lead-airy font-extrabold ">Uso e acesso do InPilot</h1>
-            <p className="mt-1 type-caption text-[var(--muted-foreground)]">Defina quem pode usar o InPilot e acompanhe volume, custos, latência e erros dos últimos {windowDays} dias.</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/admin/configuracoes" className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 type-caption-strong text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-            <ArrowLeft className="h-3.5 w-3.5" /> Configurações
-          </Link>
-          <button onClick={() => void load()} className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 type-caption-strong text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-            <RefreshCw className="h-3.5 w-3.5" /> Atualizar
-          </button>
-        </div>
-      </header>
+    <AppPage
+      title="InPilot"
+      actions={
+        <Button type="button" variant="outline" onClick={() => void load()}>
+          <RefreshCw className="h-3.5 w-3.5" strokeWidth={1.75} />
+          Atualizar
+        </Button>
+      }
+    >
+      <p className="type-fine-print text-[var(--ink-muted-48)]">
+        Últimos {windowDays} dias · quem pode usar e uso por workspace
+      </p>
 
-      {error && <p className="rounded-lg bg-red-500/10 px-4 py-3 type-caption text-red-400">{error}</p>}
-      <section className={`rounded-2xl border p-5 ${globalEnabled ? "border-emerald-500/30 bg-emerald-500/5" : "border-red-500/40 bg-red-500/10"}`}>
-        <div className="flex flex-wrap items-start justify-between gap-4">
+      {error ? (
+        <p className="rounded-[var(--radius-xs)] bg-[var(--accent)]/10 px-3 py-2 type-caption text-[var(--accent)]">
+          {error}
+        </p>
+      ) : null}
+
+      <section className="space-y-4 rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] p-4">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <p className={`type-micro-legal uppercase ${globalEnabled ?"text-emerald-400" :"text-red-300"}`}>
-              {globalStatePending
-                ? (globalEnabled ? "Ativação pendente" : "Desativação pendente")
-                : (globalEnabled ? "InPilot disponível" : "InPilot indisponível")}
+            <p className="type-caption-strong text-[var(--ink)]">
+              {globalEnabled ? "Disponível" : "Indisponível"}
+              {globalStatePending ? " · pendente" : ""}
             </p>
-            <h2 className="mt-1 type-tagline ">Disponibilidade do InPilot</h2>
-            <p className="mt-1 max-w-2xl type-caption text-[var(--muted-foreground)]">
+            <p className="type-fine-print text-[var(--ink-muted-48)]">
               {globalEnabled
-                ? "O InPilot está disponível. Para entrar, a pessoa precisa estar ativa e selecionada abaixo, e o cliente também precisa estar liberado."
-                : "O InPilot está indisponível para todos, independentemente das seleções abaixo."}
-              {globalEnabled && (allowAllClients ? " Todos os clientes atuais e futuros estão incluídos." : " Somente os clientes selecionados estão incluídos.")}
-              {globalStatePending
-                 ? " Esta mudança ainda não foi salva."
-                 : ""}
+                ? allowAllClients
+                  ? "Usuários selecionados · todos os workspaces"
+                  : "Usuários e workspaces selecionados"
+                : "Ninguém acessa o InPilot"}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={toggleGlobal}
+          <Switch
+            checked={globalEnabled}
+            onChange={() => toggleGlobal()}
             disabled={rolloutLoading || rolloutSaving}
-            className={`rounded-xl px-4 py-2.5 type-caption-strong ${globalEnabled ?"border border-red-400/40 text-red-300 hover:bg-red-500/10" :"bg-red-500 text-white hover:bg-red-400"}`}
+            aria-label="Disponibilidade do InPilot"
+          />
+        </div>
+
+        {rolloutError ? (
+          <p className="rounded-[var(--radius-xs)] bg-[var(--accent)]/10 px-3 py-2 type-caption text-[var(--accent)]">
+            {rolloutError}
+          </p>
+        ) : null}
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <p className="type-caption-strong text-[var(--ink)]">
+              Usuários ({allowedInternalUserIds.length})
+            </p>
+            <div className="max-h-52 space-y-1 overflow-y-auto">
+              {rolloutUsers.map((user) => {
+                const on = allowedInternalUserIds.includes(user.id);
+                return (
+                  <div
+                    key={user.id}
+                    className="flex items-center justify-between gap-2 rounded-[var(--radius-xs)] px-2 py-1.5"
+                  >
+                    <span className="min-w-0 truncate type-caption text-[var(--ink)]">
+                      {user.name || user.email}
+                    </span>
+                    <Switch
+                      checked={on}
+                      onChange={(checked) =>
+                        setAllowedInternalUserIds((current) =>
+                          checked ? [...current, user.id] : current.filter((id) => id !== user.id),
+                        )
+                      }
+                      aria-label={user.name || user.email}
+                    />
+                  </div>
+                );
+              })}
+              {!rolloutLoading && rolloutUsers.length === 0 ? (
+                <p className="type-fine-print text-[var(--ink-muted-48)]">Nenhum usuário ativo.</p>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <p className="type-caption-strong text-[var(--ink)]">Workspaces</p>
+              <div className="flex items-center gap-2">
+                <span className="type-fine-print text-[var(--ink-muted-48)]">Todos</span>
+                <Switch
+                  checked={allowAllClients}
+                  onChange={setAllowAllClients}
+                  aria-label="Todos os workspaces"
+                />
+              </div>
+            </div>
+            <div className="max-h-52 space-y-1 overflow-y-auto">
+              {rolloutClients.map((client) => {
+                const on = allowedClientIds.includes(client.id);
+                return (
+                  <div
+                    key={client.id}
+                    className="flex items-center justify-between gap-2 rounded-[var(--radius-xs)] px-2 py-1.5"
+                  >
+                    <span className="min-w-0 truncate type-caption text-[var(--ink)]">{client.nome}</span>
+                    <Switch
+                      checked={on}
+                      onChange={(checked) =>
+                        setAllowedClientIds((current) =>
+                          checked
+                            ? [...current, client.id]
+                            : current.filter((id) => id !== client.id),
+                        )
+                      }
+                      disabled={allowAllClients}
+                      aria-label={client.nome}
+                    />
+                  </div>
+                );
+              })}
+              {!rolloutLoading && rolloutClients.length === 0 ? (
+                <p className="type-fine-print text-[var(--ink-muted-48)]">Nenhum workspace ativo.</p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end border-t border-[var(--hairline)] pt-3">
+          <Button
+            type="button"
+            disabled={rolloutLoading || rolloutSaving}
+            onClick={() => void saveRollout()}
           >
-            {globalEnabled ? "Desativar para todos" : "Disponibilizar InPilot"}
-          </button>
-        </div>
-        {rolloutError && <p className="mt-4 rounded-lg bg-red-500/10 px-3 py-2 type-caption text-red-300">{rolloutError}</p>}
-        <div className="mt-5 grid gap-5 md:grid-cols-2">
-          <fieldset className="rounded-xl border border-[var(--border)] p-4">
-            <legend className="px-2 type-caption-strong uppercase text-[var(--muted-foreground)]">1. Quem pode usar</legend>
-            <p className="mb-3 type-fine-print text-[var(--muted-foreground)]">Selecione os usuários internos autorizados. Somente pessoas ativas aparecem aqui ({allowedInternalUserIds.length} selecionado(s)).</p>
-            <div className="max-h-52 space-y-2 overflow-y-auto">
-              {rolloutUsers.map((user) => (
-                <label key={user.id} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 type-caption hover:bg-[var(--muted)]">
-                  <input
-                    type="checkbox"
-                    checked={allowedInternalUserIds.includes(user.id)}
-                    onChange={(event) => setAllowedInternalUserIds((current) => event.target.checked ? [...current, user.id] : current.filter((id) => id !== user.id))}
-                  />
-                  <span>{user.name || user.email}<span className="ml-1 type-fine-print text-[var(--muted-foreground)]">({user.role})</span></span>
-                </label>
-              ))}
-              {!rolloutLoading && rolloutUsers.length === 0 && <p className="type-fine-print text-[var(--muted-foreground)]">Nenhum usuário interno ativo.</p>}
-            </div>
-          </fieldset>
-          <fieldset className="rounded-xl border border-[var(--border)] p-4">
-            <legend className="px-2 type-caption-strong uppercase text-[var(--muted-foreground)]">2. Em quais clientes</legend>
-            <label className="mb-3 flex cursor-pointer items-start gap-2 rounded-lg border border-[var(--border)] p-3 type-caption">
-              <input
-                type="checkbox"
-                checked={allowAllClients}
-                onChange={(event) => setAllowAllClients(event.target.checked)}
-              />
-              <span>
-                <strong>Todos os clientes atuais e futuros</strong>
-                <span className="mt-0.5 block type-fine-print text-[var(--muted-foreground)]">Inclui automaticamente novos clientes que tiverem o InPilot habilitado no cadastro.</span>
-              </span>
-            </label>
-            <p className="mb-3 type-fine-print text-[var(--muted-foreground)]">{allowAllClients ? "Desmarque a opção acima para escolher clientes individualmente." : `Selecione os clientes que poderão usar o InPilot (${allowedClientIds.length} selecionado(s)).`}</p>
-            <div className="max-h-52 space-y-2 overflow-y-auto">
-              {rolloutClients.map((client) => (
-                <label key={client.id} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 type-caption hover:bg-[var(--muted)]">
-                  <input
-                    type="checkbox"
-                    disabled={allowAllClients}
-                    checked={allowedClientIds.includes(client.id)}
-                    onChange={(event) => setAllowedClientIds((current) => event.target.checked ? [...current, client.id] : current.filter((id) => id !== client.id))}
-                  />
-                  <span>{client.nome}<span className={`ml-1 type-fine-print ${client.inPilotEnabled ?"text-emerald-400" :"text-red-300"}`}>{client.inPilotEnabled ?"habilitado no cadastro" :"desabilitado no cadastro"}</span></span>
-                </label>
-              ))}
-              {!rolloutLoading && rolloutClients.length === 0 && <p className="type-fine-print text-[var(--muted-foreground)]">Nenhum cliente ativo.</p>}
-            </div>
-          </fieldset>
-        </div>
-        <div className="mt-5 flex items-center justify-between gap-3">
-          <p className="type-fine-print text-[var(--muted-foreground)]">{globalStatePending ? "Há uma mudança de disponibilidade aguardando salvamento." : "Revise as seleções antes de salvar."}</p>
-          <button type="button" onClick={() => void saveRollout()} disabled={rolloutLoading || rolloutSaving} className="rounded-lg bg-[var(--primary)] px-4 py-2 type-caption-strong text-[var(--primary-foreground)] disabled:opacity-50">
-             {rolloutSaving ? "Salvando…" : "Salvar acesso do InPilot"}
-          </button>
+            {rolloutSaving ? "Salvando…" : "Salvar"}
+          </Button>
         </div>
       </section>
-      <div className="overflow-x-auto rounded-2xl border border-[var(--border)] bg-[var(--card)]">
+
+      <div className="overflow-x-auto rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)]">
         <table className="w-full min-w-[900px] text-left type-caption">
-          <thead className="border-b border-[var(--border)] type-fine-print uppercase text-[var(--muted-foreground)]">
+          <thead className="border-b border-[var(--hairline)] type-fine-print text-[var(--ink-muted-48)]">
             <tr>
-              <th className="px-4 py-3">Cliente</th>
-              <th className="px-4 py-3">Usuário</th>
-              <th className="px-4 py-3">Solicitações</th>
-              <th className="px-4 py-3">Sucessos / erros</th>
-              <th className="px-4 py-3">Tokens</th>
-              <th className="px-4 py-3">Custo estimado</th>
-              <th className="px-4 py-3">Latência média</th>
+              <th className="px-4 py-3 font-medium">Cliente</th>
+              <th className="px-4 py-3 font-medium">Usuário</th>
+              <th className="px-4 py-3 font-medium">Solicitações</th>
+              <th className="px-4 py-3 font-medium">Sucessos / erros</th>
+              <th className="px-4 py-3 font-medium">Tokens</th>
+              <th className="px-4 py-3 font-medium">Custo</th>
+              <th className="px-4 py-3 font-medium">Latência</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[var(--border)]">
+          <tbody className="divide-y divide-[var(--hairline)]">
             {loading ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-[var(--muted-foreground)]">Carregando…</td></tr>
-            ) : rows.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-[var(--muted-foreground)]">Nenhuma análise no período.</td></tr>
-            ) : rows.map((row) => (
-              <tr key={`${row.clienteId}:${row.userEmail ?? "unknown"}`}>
-                <td className="px-4 py-3 font-semibold">{row.clienteNome}</td>
-                <td className="px-4 py-3 text-[var(--muted-foreground)]">{row.userName || "Sem nome"}<br /><span className="type-fine-print">{row.userEmail || "—"}</span></td>
-                <td className="px-4 py-3">{row.requestVolume}</td>
-                <td className="px-4 py-3"><span className="text-emerald-400">{row.successCount}</span> / <span className="text-red-400">{row.errorCount}</span></td>
-                <td className="px-4 py-3">{row.tokenTotal.toLocaleString("pt-BR")}</td>
-                <td className="px-4 py-3">US$ {row.estimatedCost.toFixed(4)}</td>
-                <td className="px-4 py-3">{row.averageLatencyMs == null ? "—" : `${row.averageLatencyMs.toLocaleString("pt-BR")} ms`}</td>
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-[var(--ink-muted-48)]">
+                  Carregando…
+                </td>
               </tr>
-            ))}
+            ) : rows.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-[var(--ink-muted-48)]">
+                  Nenhuma análise no período.
+                </td>
+              </tr>
+            ) : (
+              rows.map((row) => (
+                <tr key={`${row.clienteId}:${row.userEmail ?? "unknown"}`}>
+                  <td className="px-4 py-3 type-caption-strong text-[var(--ink)]">{row.clienteNome}</td>
+                  <td className="px-4 py-3 text-[var(--ink-muted-48)]">
+                    {row.userName || "Sem nome"}
+                    <br />
+                    <span className="type-fine-print">{row.userEmail || "—"}</span>
+                  </td>
+                  <td className="px-4 py-3">{row.requestVolume}</td>
+                  <td className="px-4 py-3">
+                    <span className="text-[var(--success)]">{row.successCount}</span>
+                    {" / "}
+                    <span className="text-[var(--danger)]">{row.errorCount}</span>
+                  </td>
+                  <td className="px-4 py-3">{row.tokenTotal.toLocaleString("pt-BR")}</td>
+                  <td className="px-4 py-3">US$ {row.estimatedCost.toFixed(4)}</td>
+                  <td className="px-4 py-3">
+                    {row.averageLatencyMs == null
+                      ? "—"
+                      : `${row.averageLatencyMs.toLocaleString("pt-BR")} ms`}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
-    </main>
+    </AppPage>
   );
 }

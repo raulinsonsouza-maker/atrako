@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,7 +14,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PillSelect } from "@/components/ui/pill-select";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
+import { InfoHint } from "@/components/ui/info-hint";
 import { Switch } from "@/components/ui/switch";
+import { TextField } from "@/components/ui/text-field";
 import { AppPage } from "@/components/layout/AppPage";
 import { SegmentoManagerModal, fetchSegmentos, type Segmento } from "./SegmentoManagerModal";
 import { LogoUploadField } from "./LogoUploadField";
@@ -68,6 +70,7 @@ interface ClientePayload {
   syncAfterCreate?: boolean;
   syncNow?: boolean;
   ownerEmail?: string;
+  ownerPassword?: string;
   orcamentoMidiaGoogleMensal?: number | null;
   orcamentoMidiaMetaMensal?: number | null;
   googleAdsAccountId?: string | null;
@@ -130,31 +133,24 @@ async function updateCliente(id: string, body: ClientePayload, token?: string) {
   return data;
 }
 
-function FormField({
+function FieldLabel({
   label,
   hint,
-  required,
-  children,
+  htmlFor,
 }: {
   label: string;
-  hint?: string;
-  required?: boolean;
-  children: React.ReactNode;
+  hint?: ReactNode;
+  htmlFor?: string;
 }) {
   return (
-    <div>
-      <label className="mb-1.5 block type-caption-strong uppercase text-[var(--muted-foreground)]">
+    <div className="mb-2 flex items-center gap-1.5">
+      <label htmlFor={htmlFor} className="type-caption-strong text-[var(--ink)]">
         {label}
-        {required && <span className="ml-1 text-[var(--primary)]">*</span>}
       </label>
-      {children}
-      {hint && <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">{hint}</p>}
+      {hint ? <InfoHint>{hint}</InfoHint> : null}
     </div>
   );
 }
-
-const inputClass =
-  "w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 type-caption transition-colors focus:border-[var(--primary)]/40 focus:outline-none";
 
 function SegmentoField({
   value,
@@ -229,6 +225,7 @@ function ClienteForm({
 }) {
   const [nome, setNome] = useState(initialValues.nome ?? "");
   const [ownerEmail, setOwnerEmail] = useState(initialValues.ownerEmail ?? "");
+  const [ownerPassword, setOwnerPassword] = useState(initialValues.ownerPassword ?? "");
   const [logoUrl, setLogoUrl] = useState(initialValues.logoUrl ?? "");
   const [segmento, setSegmento] = useState(initialValues.segmento ?? "");
   const [ativo, setAtivo] = useState(initialValues.ativo ?? true);
@@ -238,47 +235,55 @@ function ClienteForm({
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-        <Card className="w-full max-w-2xl overflow-hidden rounded-2xl border-[var(--border)]">
-          <CardHeader className="flex flex-row items-center justify-between border-b border-[var(--border)] pb-5">
-            <div>
-              <CardTitle>{title}</CardTitle>
-              <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
-                A versão escolhe os módulos deste workspace. Contas e tokens ficam em Config → Conexões.
-              </p>
-            </div>
+        <Card className="w-full max-w-lg overflow-visible rounded-[var(--radius-lg)] border-[var(--hairline)]">
+          <CardHeader className="flex flex-row items-start justify-between gap-3 border-b border-[var(--hairline)] pb-4">
+            <CardTitle>{title}</CardTitle>
             <button
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--muted-foreground)] transition hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-xs)] text-[var(--ink-muted-48)] transition hover:bg-[var(--muted)] hover:text-[var(--ink)]"
               type="button"
               aria-label="Fechar"
             >
               <X className="h-4 w-4" />
             </button>
           </CardHeader>
-          <CardContent className="max-h-[75vh] space-y-5 overflow-y-auto pt-5">
-            <FormField label="Nome" required>
-              <input value={nome} onChange={(e) => setNome(e.target.value)} className={inputClass} />
-            </FormField>
+          <CardContent className="max-h-[75vh] space-y-4 overflow-y-auto pt-4">
+            <TextField
+              label="Nome"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              required
+              autoComplete="organization"
+            />
+
             {!clienteId ? (
-              <FormField
-                label="E-mail do OWNER"
-                hint="Gera um link de convite para o dono definir a senha e acessar só este workspace."
-              >
-                <input
+              <div className="grid gap-4 sm:grid-cols-2">
+                <TextField
+                  label="E-mail"
                   type="email"
                   value={ownerEmail}
                   onChange={(e) => setOwnerEmail(e.target.value)}
                   placeholder="dono@empresa.com"
-                  className={inputClass}
+                  autoComplete="email"
                 />
-              </FormField>
+                <TextField
+                  label="Senha"
+                  type="password"
+                  value={ownerPassword}
+                  onChange={(e) => setOwnerPassword(e.target.value)}
+                  placeholder="Opcional"
+                  autoComplete="new-password"
+                  hint="Maiúscula + especial · vazio = convite"
+                />
+              </div>
             ) : null}
 
-            <FormField
-              label="Versão"
-              hint="Food abre o cardápio. Aluguel por temporada abre a estadia. Personalizado mantém os módulos como estão."
-            >
-              <div className="max-w-xs">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <FieldLabel
+                  label="Versão"
+                  hint="Food abre o cardápio. Aluguel por temporada abre a estadia. Personalizado mantém os módulos."
+                />
                 <PillSelect
                   size="field"
                   value={edition}
@@ -287,48 +292,43 @@ function ClienteForm({
                   aria-label="Versão"
                 />
               </div>
-            </FormField>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField label="Logo">
-                <LogoUploadField value={logoUrl} onChange={setLogoUrl} />
-              </FormField>
-              <FormField label="Segmento">
+              <div>
+                <FieldLabel label="Segmento" />
                 <SegmentoField
                   value={segmento}
                   onChange={setSegmento}
                   segmentos={segmentos}
                   onOpenManager={() => setShowSegmentoManager(true)}
                 />
-              </FormField>
+              </div>
             </div>
 
-            <div className="flex items-center justify-between gap-4 rounded-[var(--radius-xs)] border border-[var(--hairline)] px-4 py-3">
-              <div>
-                <p className="type-caption-strong text-[var(--ink)]">{ativo ? "Ativo" : "Churn"}</p>
-                <p className="type-fine-print text-[var(--ink-muted-48)]">
-                  {ativo ? "A equipe e o cliente entram neste workspace." : "O workspace fica fora da operação."}
-                </p>
-              </div>
+            <div>
+              <FieldLabel label="Logo" />
+              <LogoUploadField value={logoUrl} onChange={setLogoUrl} />
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <p className="type-caption-strong text-[var(--ink)]">{ativo ? "Ativo" : "Churn"}</p>
               <Switch checked={ativo} onChange={setAtivo} aria-label="Workspace ativo" />
             </div>
 
             {clienteId ? <ClienteAcessoSection clienteId={clienteId} /> : null}
 
             {error ? (
-              <div className="flex items-center gap-2 rounded-lg bg-[var(--accent)]/10 px-3 py-2 type-caption text-[var(--accent)]">
+              <div className="flex items-center gap-2 rounded-[var(--radius-xs)] bg-[var(--accent)]/10 px-3 py-2 type-caption text-[var(--accent)]">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                 {error}
               </div>
             ) : null}
             {success ? (
-              <div className="flex items-center gap-2 rounded-lg bg-[var(--success)]/10 px-3 py-2 type-caption text-[var(--success)]">
+              <div className="flex items-center gap-2 rounded-[var(--radius-xs)] bg-[var(--success)]/10 px-3 py-2 type-caption text-[var(--success)]">
                 <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                 {success}
               </div>
             ) : null}
 
-            <div className="flex justify-end gap-2 border-t border-[var(--border)] pt-4">
+            <div className="flex justify-end gap-2 border-t border-[var(--hairline)] pt-4">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
@@ -339,6 +339,7 @@ function ClienteForm({
                   onSubmit({
                     nome: nome.trim(),
                     ownerEmail: ownerEmail.trim() || undefined,
+                    ownerPassword: ownerPassword || undefined,
                     logoUrl: logoUrl.trim(),
                     segmento: segmento.trim(),
                     ativo,
@@ -424,12 +425,16 @@ export default function AdminClientesPage() {
       queryClient.invalidateQueries({ queryKey: ["clientes"] });
       setFormError("");
       const invitePath = data.ownerInvite?.acceptPath as string | undefined;
+      const ownerMode = data.ownerAccess?.mode as string | undefined;
+      const ownerEmailOk = data.ownerAccess?.email as string | undefined;
       setFormSuccess(
-        invitePath
-          ? `Cliente criado. Link para o dono definir a senha (válido por 14 dias): ${window.location.origin}${invitePath}`
-          : data.sync
-            ? ""
-            : "Cliente criado.",
+        ownerMode === "password" && ownerEmailOk
+          ? `Workspace criado. Entre em /sign-in com ${ownerEmailOk} e a senha definida.`
+          : invitePath
+            ? `Workspace criado. Link de convite (14 dias): ${window.location.origin}${invitePath}`
+            : data.sync
+              ? ""
+              : "Workspace criado.",
       );
       setShowCreateForm(false);
     },
@@ -647,6 +652,10 @@ export default function AdminClientesPage() {
           onSubmit={(body) => {
             if (!body.nome?.trim()) {
               setFormError("Nome é obrigatório.");
+              return;
+            }
+            if (body.ownerPassword && !body.ownerEmail?.trim()) {
+              setFormError("Informe o e-mail do OWNER para definir a senha.");
               return;
             }
             setFormError("");

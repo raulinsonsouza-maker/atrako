@@ -1,8 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
-import { ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle } from "lucide-react";
+import { AppPage } from "@/components/layout/AppPage";
+import { BackLink } from "@/components/ui/back-link";
 
 type Conexao = {
   id: string;
@@ -10,9 +11,6 @@ type Conexao = {
   plataforma: string;
   ativo: boolean;
   contasCount: number;
-  hasMetaAccessToken: boolean;
-  hasGoogleRefreshToken: boolean;
-  hasLinkedinAccessToken: boolean;
 };
 
 export default function AdsConexoesPage() {
@@ -20,68 +18,60 @@ export default function AdsConexoesPage() {
     queryKey: ["admin-conexoes-ads"],
     queryFn: async () => {
       const r = await fetch("/api/admin/conexoes");
-      if (!r.ok) throw new Error("Falha ao carregar (admin)");
+      if (!r.ok) throw new Error("Falha ao carregar");
       return r.json();
     },
   });
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-6">
-      <div className="flex items-center gap-3">
-        <Link
-          href="/admin/conexoes"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#efefef]"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
+    <AppPage
+      title={
         <div>
-          <h1 className="type-tagline ">Conexões de mídia (Ads)</h1>
-          <p className="type-caption text-[#737373]">
-            BMs Meta / Google / LinkedIn compartilháveis. Instagram e Mercado Pago ficam no hub por
-            workspace.
-          </p>
+          <BackLink href="/admin/apps">Apps</BackLink>
+          <h1 className="type-tagline mt-2 text-[var(--ink)]">Conexões de mídia</h1>
         </div>
-      </div>
+      }
+    >
+      <p className="type-fine-print text-[var(--ink-muted-48)]">
+        BMs Meta / Google / LinkedIn. Instagram e Mercado Pago ficam em Config → Conexões do
+        workspace.
+      </p>
 
       {error ? (
-        <div className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 type-caption text-amber-900">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          Não foi possível listar conexões admin. Use o cadastro via API ou seed existente.
+        <div className="flex gap-2 rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-4 py-3 type-caption text-[var(--ink)]">
+          <AlertCircle className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+          Não foi possível listar conexões.
         </div>
       ) : null}
 
       {isLoading ? (
-        <p className="type-caption text-[#737373]">Carregando…</p>
+        <p className="type-caption text-[var(--ink-muted-48)]">Carregando…</p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="divide-y divide-[var(--hairline)] rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)]">
           {conexoes.map((c) => (
-            <li
-              key={c.id}
-              className="flex items-center justify-between rounded-xl border border-[#efefef] bg-white px-4 py-3"
-            >
-              <div>
-                <p className="type-caption-strong ">{c.nome}</p>
-                <p className="type-fine-print text-[#737373]">
+            <li key={c.id} className="flex items-center justify-between gap-3 px-4 py-3">
+              <div className="min-w-0">
+                <p className="type-nav-link truncate text-[var(--ink)]">{c.nome}</p>
+                <p className="type-fine-print text-[var(--ink-muted-48)]">
                   {c.plataforma} · {c.contasCount} contas
                 </p>
               </div>
               {c.ativo ? (
-                <span className="inline-flex items-center gap-1 type-fine-print text-emerald-700">
+                <span className="inline-flex items-center gap-1 type-fine-print text-[var(--success)]">
                   <CheckCircle2 className="h-3.5 w-3.5" /> Ativo
                 </span>
               ) : (
-                <span className="type-fine-print text-[#a3a3a3]">Inativo</span>
+                <span className="type-fine-print text-[var(--ink-muted-48)]">Inativo</span>
               )}
             </li>
           ))}
           {conexoes.length === 0 ? (
-            <li className="rounded-xl border border-dashed border-[#efefef] p-6 text-center type-caption text-[#737373]">
-              Nenhuma conexão de ads ainda. Cadastre em Admin → API conexões ou reutilize as existentes
-              vinculadas às contas do workspace.
+            <li className="px-4 py-8 text-center type-caption text-[var(--ink-muted-48)]">
+              Nenhuma conexão de ads.
             </li>
           ) : null}
         </ul>
       )}
-    </div>
+    </AppPage>
   );
 }

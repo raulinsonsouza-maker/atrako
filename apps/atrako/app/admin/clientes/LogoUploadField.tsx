@@ -2,7 +2,9 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { Upload, X, ImageIcon } from "lucide-react";
+import { Upload, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 
 interface LogoUploadFieldProps {
   value: string;
@@ -47,62 +49,48 @@ export function LogoUploadField({ value, onChange }: LogoUploadFieldProps) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       {value ? (
-        <div className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--muted)]">
-            <Image
-              src={value}
-              alt="Logo"
-              width={40}
-              height={40}
-              className="h-10 w-10 rounded-lg object-contain"
-              unoptimized
-            />
-          </div>
-          <p className="min-w-0 flex-1 truncate type-fine-print text-[var(--muted-foreground)]">{value}</p>
-          <div className="flex shrink-0 items-center gap-1">
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              disabled={uploading}
-              className="rounded-lg border border-[var(--border)] px-2.5 py-1.5 type-caption-strong text-[var(--muted-foreground)] transition hover:bg-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-50"
-            >
-              {uploading ? "Enviando..." : "Trocar"}
-            </button>
-            <button
-              type="button"
-              onClick={handleRemove}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--muted-foreground)] transition hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-500"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
+        <div className="flex h-11 items-center gap-3 rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas-parchment)] px-3">
+          <Image
+            src={value}
+            alt="Logo"
+            width={28}
+            height={28}
+            className="h-7 w-7 shrink-0 rounded-[var(--radius-xs)] object-contain"
+            unoptimized
+          />
+          <p className="min-w-0 flex-1 truncate type-fine-print text-[var(--ink-muted-48)]">{value}</p>
+          <Button
+            type="button"
+            variant="outline"
+            className="!px-2.5 !py-1"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+          >
+            {uploading ? "…" : "Trocar"}
+          </Button>
+          <IconButton
+            size="toolbar"
+            onClick={handleRemove}
+            aria-label="Remover logo"
+            className="!h-8 !w-8"
+          >
+            <X className="h-3.5 w-3.5" strokeWidth={1.75} />
+          </IconButton>
         </div>
       ) : (
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-dashed border-[var(--border)] bg-[var(--background)] py-4 type-caption text-[var(--muted-foreground)] transition hover:border-[var(--primary)]/40 hover:bg-[var(--primary)]/3 hover:text-[var(--primary)] disabled:opacity-50"
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-[var(--radius-xs)] border border-dashed border-[var(--hairline)] bg-[var(--canvas-parchment)] type-caption text-[var(--ink-muted-48)] transition active:scale-95 disabled:opacity-50"
         >
-          {uploading ? (
-            <>
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent" />
-              Enviando...
-            </>
-          ) : (
-            <>
-              <ImageIcon className="h-4 w-4" />
-              <Upload className="h-4 w-4" />
-              Fazer upload do logo
-            </>
-          )}
+          <Upload className="h-3.5 w-3.5" strokeWidth={1.75} />
+          {uploading ? "Enviando…" : "Enviar logo"}
         </button>
       )}
-      {uploadError && (
-        <p className="type-fine-print text-red-500">{uploadError}</p>
-      )}
+      {uploadError ? <p className="type-fine-print text-[var(--danger)]">{uploadError}</p> : null}
       <input
         ref={inputRef}
         type="file"

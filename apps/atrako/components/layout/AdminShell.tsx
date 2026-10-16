@@ -48,8 +48,6 @@ export function AdminShell({
   });
 
   const username = identity?.username ?? me?.username ?? "staff";
-  const role = identity?.role ?? me?.role ?? "ADMIN";
-  const openAccess = identity?.openAccess ?? me?.openAccess ?? false;
 
   async function handleLogout() {
     if (loggingOut) return;
@@ -62,7 +60,6 @@ export function AdminShell({
       <aside className="sticky top-0 flex h-screen w-[240px] shrink-0 flex-col border-r border-[var(--hairline)] bg-[var(--surface-black)]">
         <div className="border-b border-[var(--surface-tile-2)] px-5 py-5">
           <BrandLogo tone="on-dark" />
-          <p className="type-fine-print mt-1 text-[var(--body-muted)]">Admin</p>
         </div>
 
         <nav className="flex flex-1 flex-col gap-0.5 px-3 py-4">
@@ -90,12 +87,7 @@ export function AdminShell({
         </nav>
 
         <div className="border-t border-[var(--surface-tile-2)] px-5 py-4">
-          <p className="type-nav-link text-[var(--on-dark)]">
-            {openAccess ? "Admin" : username}
-          </p>
-          <p className="type-fine-print mt-0.5 text-[var(--body-muted)]">
-            {openAccess ? "Acesso local" : role}
-          </p>
+          <p className="type-fine-print text-[var(--body-muted)]">{username}</p>
           <button
             type="button"
             onClick={handleLogout}

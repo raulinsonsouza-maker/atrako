@@ -249,7 +249,12 @@ export async function completeCaptureForm(input: {
       workspaceId: form.clienteId,
       contactId: lead.contactId,
       leadId: lead.id,
-      payload: { ...flat, aniversario: byType.date ?? flat.aniversario, consent: byType.consent ?? flat.consent },
+      payload: {
+        ...flat,
+        aniversario: byType.date ?? flat.aniversario,
+        // Envio do form = opt-in (sem checkbox no /f)
+        consent: playbookSource ? "sim" : byType.consent ?? flat.consent,
+      },
       source: playbookSource ? source : pageSlug ? "lp" : "form",
     }).catch((err) => console.warn("[capture-form] flows", err instanceof Error ? err.message : err));
   }

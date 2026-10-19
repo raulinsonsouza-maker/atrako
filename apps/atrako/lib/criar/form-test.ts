@@ -12,6 +12,16 @@ export function flattenFields(steps: FormStep[] | null | undefined): FormField[]
   return (steps ?? []).flatMap((s) => s.fields ?? []);
 }
 
+/** Envio do form = opt-in; não exibir checkbox de consentimento no /f. */
+export function stripConsentFromSteps(steps: FormStep[] | null | undefined): FormStep[] {
+  return (steps ?? [])
+    .map((s) => ({
+      ...s,
+      fields: (s.fields ?? []).filter((f) => f.type !== "consent"),
+    }))
+    .filter((s) => (s.fields?.length ?? 0) > 0);
+}
+
 export function validateFormAnswers(
   fields: FormField[],
   answers: Array<{ fieldId: string; value: string }>,

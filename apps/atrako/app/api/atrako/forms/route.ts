@@ -18,7 +18,7 @@ import { pickAttributionFromBody } from "@/lib/criar/lp-attribution";
 import { createLeadEvent, publishAtrakoEvents } from "@/lib/atrako/events";
 import { prisma } from "@/lib/db";
 import { verifyPreviewToken, type PreviewPayload } from "@/lib/criar/preview-token";
-import { flattenFields, validateFormAnswers } from "@/lib/criar/form-test";
+import { flattenFields, stripConsentFromSteps, validateFormAnswers } from "@/lib/criar/form-test";
 import { isLpSalesPageV3 } from "@/lib/criar/lp-html";
 
 /** Formulário alvo de um token de prévia (o próprio form, ou o vinculado à LP). */
@@ -45,7 +45,14 @@ export async function GET(request: NextRequest) {
     if (!form) return NextResponse.json({ error: "Prévia expirada ou inválida" }, { status: 404 });
     return NextResponse.json({
       preview: true,
-      form: { id: form.id, name: form.name, slug: form.slug, status: form.status, steps: form.steps, source: form.source },
+      form: {
+        id: form.id,
+        name: form.name,
+        slug: form.slug,
+        status: form.status,
+        steps: stripConsentFromSteps(form.steps),
+        source: form.source,
+      },
     });
   }
 
@@ -60,7 +67,7 @@ export async function GET(request: NextRequest) {
         name: form.name,
         slug: form.slug,
         status: form.status,
-        steps: form.steps,
+        steps: stripConsentFromSteps(form.steps),
         source: form.source,
       },
     });
@@ -121,7 +128,7 @@ export async function POST(request: NextRequest) {
     const form = await formForPreview(token);
     if (!form) return NextResponse.json({ error: "Formulário não encontrado" }, { status: 404 });
     const check = validateFormAnswers(
-      flattenFields(form.steps),
+      flattenFields(stripConsentFromSteps(form.steps)),
       (Array.isArray(input.answers) ? input.answers : []) as Array<{ fieldId: string; value: string }>,
     );
     if (!check.ok) {

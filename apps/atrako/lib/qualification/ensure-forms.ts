@@ -3,13 +3,16 @@
  */
 
 import { prisma } from "@/lib/db";
+import { stripConsentFromSteps } from "@/lib/criar/form-test";
 import { createCaptureForm, getCaptureFormBySlug } from "@/lib/modules/capture-form";
 import { REGICENTER_LP_FORM, REGICENTER_QUALIFY_FORM } from "./forms";
+import type { FormStep } from "@atrako/forms";
 
 async function upsertForm(
   clienteId: string,
-  spec: { name: string; slug: string; source: string; steps: unknown },
+  spec: { name: string; slug: string; source: string; steps: FormStep[] },
 ) {
+  const steps = stripConsentFromSteps(spec.steps);
   const existing = await getCaptureFormBySlug(spec.slug);
   if (existing) {
     if (existing.clienteId !== clienteId) {
@@ -17,7 +20,7 @@ async function upsertForm(
     }
     await prisma.$executeRaw`
       UPDATE "CaptureForm"
-      SET name = ${spec.name}, steps = ${JSON.stringify(spec.steps)}::jsonb,
+      SET name = ${spec.name}, steps = ${JSON.stringify(steps)}::jsonb,
           source = ${spec.source}, status = 'PUBLISHED', active = true, "updatedAt" = NOW()
       WHERE id = ${existing.id}
     `;
@@ -27,7 +30,7 @@ async function upsertForm(
     clienteId,
     name: spec.name,
     slug: spec.slug,
-    steps: spec.steps as Parameters<typeof createCaptureForm>[0]["steps"],
+    steps,
     source: spec.source,
     status: "PUBLISHED",
   });

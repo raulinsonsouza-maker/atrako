@@ -4,13 +4,16 @@ import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { saveUpload } from "@/lib/uploads";
 
 const USE_BLOB = !!process.env.BLOB_READ_WRITE_TOKEN;
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 20 * 1024 * 1024;
 const ALLOWED = new Set([
   "image/png",
   "image/jpeg",
   "image/jpg",
   "image/webp",
   "image/gif",
+  "video/mp4",
+  "video/webm",
 ]);
 
 async function uploadToBlob(
@@ -55,19 +58,28 @@ export async function POST(request: NextRequest) {
   }
   if (!ALLOWED.has(file.type)) {
     return NextResponse.json(
-      { error: "Use PNG, JPG, WebP ou GIF." },
+      { error: "Use PNG, JPG, WebP, GIF, MP4 ou WebM." },
       { status: 400 },
     );
   }
-  if (file.size > MAX_BYTES) {
+  const video = file.type.startsWith("video/");
+  const maxBytes = video ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+  if (file.size > maxBytes) {
     return NextResponse.json(
-      { error: "Imagem até 5 MB." },
+      { error: video ? "Vídeo até 20 MB." : "Imagem até 5 MB." },
       { status: 400 },
     );
   }
 
   const bytes = Buffer.from(await file.arrayBuffer());
-  const ext = file.type === "image/jpeg" || file.type === "image/jpg" ? "jpg" : file.type.slice("image/".length);
+  const ext =
+    file.type === "image/jpeg" || file.type === "image/jpg"
+      ? "jpg"
+      : file.type === "video/mp4"
+        ? "mp4"
+        : file.type === "video/webm"
+          ? "webm"
+          : file.type.slice("image/".length);
   const filename = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
   const pathname = `lp/${workspaceId}/${filename}`;
 

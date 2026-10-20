@@ -77,6 +77,7 @@ model Cliente {
   agendaProducts             AgendaProduct[]
   agendaIntakeSubmissions    AgendaIntakeSubmission[]
   agendaBookingEventLogs     AgendaBookingEventLog[]
+  commerceStores             CommerceStore[]
   commerceProducts           CommerceProduct[]
   commerceOrders             CommerceOrder[]
   commerceOffers             CommerceOffer[]
@@ -1469,22 +1470,81 @@ model CaptureForm {
   @@index([slug])
 }
 
+/// Loja física/multi-SKU do workspace (1 por cliente). Digitais/LP podem existir sem store.
+model CommerceStore {
+  id              String   @id @default(cuid())
+  clienteId       String   @unique
+  slug            String   @unique @db.VarChar(80)
+  name            String   @db.VarChar(160)
+  published       Boolean  @default(true)
+  acceptingOrders Boolean  @default(true)
+  shipEnabled     Boolean  @default(true)
+  pickupEnabled   Boolean  @default(true)
+  minOrderCents   Int      @default(0)
+  /// Tabela de frete fixa por faixa de CEP. Ver lib/commerce/shipping.ts
+  shippingRules   Json     @default("{}")
+  /// Banners do hero da vitrine. Ver lib/commerce/banners.ts
+  banners         Json     @default("[]")
+  /// Logo, faixa, contato e rodapé. Ver lib/commerce/theme.ts
+  theme           Json     @default("{}")
+  pickupName      String?  @db.VarChar(160)
+  pickupAddress   String?  @db.VarChar(255)
+  pickupInstructions String? @db.VarChar(255)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  cliente         Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  categories      CommerceCategory[]
+  products        CommerceProduct[]
+  orders          CommerceOrder[]
+
+  @@index([published])
+}
+
+model CommerceCategory {
+  id        String   @id @default(cuid())
+  storeId   String
+  name      String   @db.VarChar(80)
+  slug      String   @db.VarChar(40)
+  /// Foto do círculo na vitrine. Sem imagem, a loja mostra as iniciais.
+  imageUrl  String?  @db.VarChar(500)
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  store     CommerceStore @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  products  CommerceProduct[]
+
+  @@unique([storeId, slug])
+  @@index([storeId, sortOrder])
+}
+
 model CommerceProduct {
   id              String   @id @default(cuid())
   clienteId       String
+  storeId         String?
+  categoryId      String?
   name            String   @db.VarChar(200)
   slug            String   @db.VarChar(120)
   description     String?  @db.Text
+  /// FILE | COURSE | … (legado digital). Preferir `kind` para loja.
   type            String   @default("FILE") @db.VarChar(20)
+  /// DIGITAL | PHYSICAL
+  kind            String   @default("DIGITAL") @db.VarChar(20)
   status          String   @default("PUBLISHED") @db.VarChar(20)
   priceCents      Int      @default(0)
   coverUrl        String?  @db.VarChar(500)
+  /// { src, alt }[]
+  images          Json     @default("[]")
   salesPage       Json?
   maxInstallments Int?
+  stockTracked    Boolean  @default(false)
+  /// { featured, launch, extra } — selos da vitrine
+  badges          Json     @default("{}")
   active          Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   cliente         Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  store           CommerceStore? @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  category        CommerceCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  variants        CommerceVariant[]
   orders          CommerceOrder[]
   orderItems      CommerceOrderItem[]
   entitlements    CommerceEntitlement[]
@@ -1495,6 +1555,29 @@ model CommerceProduct {
   @@unique([clienteId, slug])
   @@index([clienteId, active])
   @@index([clienteId, status])
+  @@index([storeId, active])
+  @@index([categoryId])
+  @@index([clienteId, kind])
+}
+
+model CommerceVariant {
+  id         String   @id @default(cuid())
+  productId  String
+  sku        String?  @db.VarChar(64)
+  /// { "Tamanho": "M", "Cor": "Azul" }
+  options    Json     @default("{}")
+  /// null = usa priceCents do produto
+  priceCents Int?
+  stockQty   Int      @default(0)
+  active     Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  product    CommerceProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems CommerceOrderItem[]
+
+  @@index([productId, active])
+  @@index([productId, sku])
 }
 
 model CommerceOffer {
@@ -1549,6 +1632,7 @@ model CommerceCouponProduct {
 model CommerceOrder {
   id              String   @id @default(cuid())
   clienteId       String
+  storeId         String?
   email           String   @db.VarChar(255)
   name            String?  @db.VarChar(200)
   cpf             String?  @db.VarChar(20)
@@ -1556,7 +1640,17 @@ model CommerceOrder {
   status          String   @default("PENDING") @db.VarChar(40)
   subtotalCents   Int      @default(0)
   discountCents   Int      @default(0)
+  shippingFeeCents Int     @default(0)
   totalCents      Int      @default(0)
+  /// SHIP | PICKUP | DIGITAL
+  fulfillment     String   @default("DIGITAL") @db.VarChar(16)
+  /// NEW | CONFIRMED | SHIPPED | DELIVERED | READY | COMPLETED | CANCELLED
+  fulfillmentStatus String @default("NEW") @db.VarChar(24)
+  shippingAddress Json?
+  /// Snapshot do frete no momento do pedido
+  shippingQuote   Json?
+  publicToken     String?  @unique @db.VarChar(64)
+  clientRequestId String?  @db.VarChar(80)
   couponId        String?
   mpOrderId       String?  @db.VarChar(120)
   mpPaymentId     String?  @db.VarChar(120)
@@ -1581,6 +1675,7 @@ model CommerceOrder {
   productId       String?
   contactId       String?
   cliente         Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  store           CommerceStore? @relation(fields: [storeId], references: [id], onDelete: SetNull)
   contact         NativeContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
   coupon          CommerceCoupon? @relation(fields: [couponId], references: [id], onDelete: SetNull)
   product         CommerceProduct? @relation(fields: [productId], references: [id], onDelete: SetNull)
@@ -1592,6 +1687,8 @@ model CommerceOrder {
   @@index([clienteId, status])
   @@index([clienteId, createdAt])
   @@index([clienteId, contactId])
+  @@index([storeId, createdAt])
+  @@index([storeId, clientRequestId])
   @@index([mpOrderId])
   @@index([email])
 }
@@ -1600,15 +1697,20 @@ model CommerceOrderItem {
   id           String          @id @default(cuid())
   orderId      String
   productId    String
+  variantId    String?
   name         String          @db.VarChar(200)
+  /// Snapshot das opções da variante
+  options      Json?
   priceCents   Int
   quantity     Int             @default(1)
   installments Int?
   order        CommerceOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product      CommerceProduct @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variant      CommerceVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
 
   @@index([orderId])
   @@index([productId])
+  @@index([variantId])
 }
 
 model CommerceEntitlement {

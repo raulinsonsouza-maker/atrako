@@ -58,7 +58,7 @@ Quem precisa de inteligência absurda de mercado para decidir:
 | WhatsApp | Automações, recuperação, handoff |
 | Social | Comment→DM, inbox, fluxos |
 | Agenda | Reserva e confirmação |
-| LP + Checkout | Páginas, ofertas, Mercado Pago |
+| Loja | Vitrine multi-produto (`/loja`), frete tabela fixa, carrinho + checkout MP; LPs digitais (`/p`) |
 | Formulários | Fluxos condicionais |
 | Agente | Interface principal: perguntar → agir |
 

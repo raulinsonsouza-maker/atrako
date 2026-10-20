@@ -166,16 +166,17 @@ export const MODULES: ModuleDef[] = [
   {
     key: "commerce",
     label: "Loja",
-    description: "Produtos e pedidos",
+    description: "Vitrine, produtos e pedidos",
     icon: ShoppingBag,
     defaultRelease: "BETA",
     nav: true,
-    // O editor de Páginas (/criar/oferta, /p/*) também serve LPs de captura: só checkout/vendas são da Loja.
-    routes: ["/commerce", "/checkout"],
-    apiPrefixes: ["/api/atrako/commerce/checkout"],
+    // Vitrine /loja + LPs /p + checkout digital. Editor /criar/oferta também serve captura.
+    routes: ["/commerce", "/checkout", "/loja"],
+    apiPrefixes: ["/api/atrako/commerce"],
     criarPlatforms: ["loja"],
     criarModules: ["upsell", "cupom"],
-    disableWarning: "Páginas de venda e checkouts publicados ficam indisponíveis. Landing pages de captura continuam no ar.",
+    disableWarning:
+      "Vitrine pública, páginas de venda e checkouts ficam indisponíveis. Landing pages de captura continuam no ar.",
   },
   {
     key: "food",

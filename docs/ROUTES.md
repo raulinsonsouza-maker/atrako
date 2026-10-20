@@ -7,8 +7,13 @@
 | `/sign-in`, `/sign-up` | Auth |
 | `/b/[workspaceSlug]` | Booking público |
 | `/b/[workspaceSlug]/[pageSlug]` | Página de agenda |
-| `/p/[pageSlug]` | Landing / oferta |
-| `/checkout/[productId]` | Checkout |
+| `/p/[pageSlug]` | Landing / oferta digital |
+| `/checkout/[productId]` | Checkout digital (1 produto) |
+| `/loja/[slug]` | Vitrine / PLP da loja nativa |
+| `/loja/[slug]/p/[productSlug]` | PDP |
+| `/loja/[slug]/carrinho` | Carrinho |
+| `/loja/[slug]/checkout` | Checkout multi-item + frete |
+| `/loja/[slug]/pedido/[token]` | Status / Pix |
 | `/m/[token]` | Magic link |
 
 ## App autenticado
@@ -19,7 +24,7 @@
 | `/onboarding` | Wizard (= Config guiado) |
 | `/crm`, `/crm/leads`, `/crm/leads/[id]` | CRM |
 | `/agenda`, `/agenda/calendario`, `/agenda/servicos` | Agenda |
-| `/commerce`, `/commerce/produtos`, `/commerce/pedidos` | Commerce |
+| `/commerce`, `/commerce/produtos`, `/commerce/categorias`, `/commerce/banners`, `/commerce/aparencia`, `/commerce/frete`, `/commerce/pedidos`, `/commerce/cupons`, `/commerce/paginas` | Loja (vitrine + LPs) |
 | `/social`, `/social/inbox`, `/social/flows` | Social |
 | `/forms` | Formulários |
 | `/finance` | Ledger |

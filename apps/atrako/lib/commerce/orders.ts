@@ -152,7 +152,20 @@ export async function approveOrder(orderId: string) {
     });
   }
 
+  // Entitlement só para digitais / LP. Físicos da vitrine usam fulfillment.
+  const digitalSet = new Set(
+    (
+      await prisma.commerceProduct.findMany({
+        where: { id: { in: updated.items.map((i) => i.productId) } },
+        select: { id: true, kind: true },
+      })
+    )
+      .filter((p) => p.kind !== "PHYSICAL")
+      .map((p) => p.id),
+  );
+
   for (const item of updated.items) {
+    if (!digitalSet.has(item.productId)) continue;
     await prisma.commerceEntitlement.upsert({
       where: {
         clienteId_email_productId: {

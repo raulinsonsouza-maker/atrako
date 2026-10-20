@@ -36,7 +36,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/criar/paginas") ||
     pathname.startsWith("/food") ||
     pathname.startsWith("/hospedagem") ||
-    pathname.startsWith("/estadia");
+    pathname.startsWith("/estadia") ||
+    pathname.startsWith("/commerce") ||
+    pathname.startsWith("/loja");
   const moduleEmbed = pathname.startsWith("/modules/");
   /** O assistente tem header próprio (histórico, título, sino, nova conversa). */
   const ownHeader = pathname.startsWith("/assistente");

@@ -194,14 +194,33 @@ export async function POST(request: NextRequest) {
 
     if (isPaid(status)) {
       if (order.status !== "APPROVED") await approveOrder(order.id);
+      if (order.storeId && order.fulfillmentStatus === "NEW") {
+        await prisma.commerceOrder.update({
+          where: { id: order.id },
+          data: { fulfillmentStatus: "CONFIRMED" },
+        });
+      }
     } else if (isCancelled(status)) {
+      const wasPending = order.status === "PENDING";
       await prisma.commerceOrder.update({
         where: { id: order.id },
         data: {
           status: status.toLowerCase().includes("refund") ? "REFUNDED" : "CANCELLED",
+          fulfillmentStatus: "CANCELLED",
         },
       });
       await revokeEntitlementsForOrder(order.id);
+      // Devolve estoque se ainda não havia sido pago (reserva na criação da loja).
+      if (order.storeId && wasPending) {
+        const items = await prisma.commerceOrderItem.findMany({ where: { orderId: order.id } });
+        for (const item of items) {
+          if (!item.variantId) continue;
+          await prisma.commerceVariant.updateMany({
+            where: { id: item.variantId },
+            data: { stockQty: { increment: item.quantity } },
+          });
+        }
+      }
     }
 
     return NextResponse.json({ ok: true });

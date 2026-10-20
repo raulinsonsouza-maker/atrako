@@ -6,7 +6,7 @@
 4. `/config/conexoes` → status MP/IG (conectar se env OK)
 5. `/crm` → criar lead nativo
 6. `/agenda/servicos` → criar serviço; `/b/[slug]` público
-7. `/commerce` → produto; `/p/[slug]` e `/checkout/[id]`
+7. `/commerce` → criar produto físico + zona de frete; vitrine `/loja/[slug]`; LP `/p/[slug]` e `/checkout/[id]`
 8. Pagamento teste → ledger em `/finance`
 9. `/onboarding` → wizard grava `onboardingStep` no Config
 10. `docker compose up` sobe Postgres + web na 5000

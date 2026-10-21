@@ -75,8 +75,17 @@ function norm(s: string) {
 }
 
 /** Resposta digitada no WhatsApp → opção: código, rótulo, número da lista ou trecho único do rótulo. */
-export function matchChoice(fieldKey: QualifyFieldKey, raw: string): ChoiceOpt | null {
-  const opts = CHOICE_MAP[fieldKey] ?? [];
+const TEXT_HINTS: [RegExp, string][] = [
+  [/^sim\b|tenho (o valor|os? |tudo)/, "CAPITAL_AVAILABLE"],
+  [/parte|metade|parcial/, "CAPITAL_PARTIAL"],
+  [/avalia|ainda n|nao tenho/, "CAPITAL_EVALUATING"],
+  [/manh/, "MORNING"],
+  [/tarde/, "AFTERNOON"],
+  [/noite/, "EVENING"],
+];
+
+export function matchChoice(fieldKey: QualifyFieldKey, raw: string, options?: ChoiceOpt[]): ChoiceOpt | null {
+  const opts = options ?? CHOICE_MAP[fieldKey] ?? [];
   if (!opts.length || !raw.trim()) return null;
   const byCode = opts.find((o) => o.code === raw.trim());
   if (byCode) return byCode;
@@ -85,15 +94,11 @@ export function matchChoice(fieldKey: QualifyFieldKey, raw: string): ChoiceOpt |
   if (Number.isInteger(n) && n >= 1 && n <= opts.length) return opts[n - 1]!;
   const exact = opts.find((o) => norm(o.label) === t);
   if (exact) return exact;
-  if (fieldKey === "investment_status") {
-    if (/^sim\b|tenho (o valor|os? |tudo)/.test(t)) return opts[0]!;
-    if (/parte|metade|parcial/.test(t)) return opts[1]!;
-    if (/avalia|ainda n|nao tenho/.test(t)) return opts[2]!;
-  }
-  if (fieldKey === "best_contact_time") {
-    if (/manh/.test(t)) return opts[0]!;
-    if (/tarde/.test(t)) return opts[1]!;
-    if (/noite/.test(t)) return opts[2]!;
+  if (fieldKey === "investment_status" || fieldKey === "best_contact_time") {
+    for (const [re, code] of TEXT_HINTS) {
+      const hit = re.test(t) ? opts.find((o) => o.code === code) : undefined;
+      if (hit) return hit;
+    }
   }
   if (t.length < 3) return null;
   const hits = opts.filter((o) => norm(o.label).includes(t) || t.includes(norm(o.label)));

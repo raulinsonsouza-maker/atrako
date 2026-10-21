@@ -119,6 +119,10 @@ export async function writeLeadAnswers(input: {
   currentState?: string;
   cadenceStatus?: LeadQualification["cadenceStatus"];
   forcePriority?: Priority | null;
+  /** Perguntas ativas do roteiro (padrão: todas). */
+  askKeys?: QualifyFieldKey[];
+  /** Regras do roteiro; padrão classifyLead. */
+  classify?: (answers: QualifyAnswers) => Priority;
 }) {
   const lead = await prisma.nativeLead.findFirst({
     where: { id: input.leadId, clienteId: input.workspaceId },
@@ -131,12 +135,12 @@ export async function writeLeadAnswers(input: {
     if (!ans) continue;
     answers = mergeAnswer(answers, key, ans);
   }
-  const missing = missingFieldKeys(answers, WA_ASK_ORDER);
+  const missing = missingFieldKeys(answers, input.askKeys ?? WA_ASK_ORDER);
   const priority =
     input.forcePriority !== undefined
       ? input.forcePriority
       : missing.length === 0
-        ? classifyLead(snapshotFromAnswers(answers))
+        ? (input.classify ?? ((a: QualifyAnswers) => classifyLead(snapshotFromAnswers(a))))(answers)
         : current.priority;
   const qualification = {
     playbookId: input.playbookId,
@@ -155,6 +159,10 @@ export async function writeLeadAnswers(input: {
     },
   });
   return qualification;
+}
+
+export function answerFromChoice(opt: { code: string; label: string }, source: QualifyAnswer["source"]): QualifyAnswer {
+  return { value: opt.label, label: opt.label, code: opt.code, source, at: new Date().toISOString() };
 }
 
 export function answerFromRaw(

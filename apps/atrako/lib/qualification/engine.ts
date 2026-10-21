@@ -1,6 +1,7 @@
 /**
  * Motor de qualificação WhatsApp — do cadastro até a equipe assumir.
- * Abertura por modelo aprovado (janela fechada) → perguntas faltantes → A/B: horário + equipe; C: nutrição.
+ * Abertura por modelo aprovado (janela fechada) → perguntas do roteiro → A/B: horário + equipe; C: nutrição.
+ * Textos, opções, ordem e regras vêm do roteiro (script.ts) do workspace.
  */
 
 import { prisma } from "@/lib/db";
@@ -12,33 +13,35 @@ import {
   isWithinCustomerWindow,
   upsertWaConversation,
 } from "@/lib/whatsapp/domain";
-import { missingFieldKeys, type QualifyAnswers, type QualifyFieldKey, WA_ASK_ORDER } from "./fields";
-import { loadQualificationPrefs } from "./playbook";
-import { matchChoice } from "./choices";
+import { CHOICE_MAP, matchChoice } from "./choices";
+import { missingFieldKeys, type QualifyAnswers, type QualifyFieldKey } from "./fields";
+import { loadQualificationPrefs, type QualificationPrefs } from "./playbook";
 import {
+  answerFromChoice,
   answerFromRaw,
   parseConversationQualify,
   parseLeadQualification,
   saveConversationQualify,
-  snapshotFromAnswers,
   writeLeadAnswers,
   type ConversationQualifyState,
 } from "./store";
+import { LATER_COPY, QUALIFY_REPLY, START_ANYWAY, invalidChoiceCopy, presentationCopy } from "./messages";
 import {
-  LATER_COPY,
-  QUALIFY_REPLY,
-  START_ANYWAY,
-  bestTimeCopy,
-  handoffCopy,
-  invalidChoiceCopy,
-  numberedPrompt,
-  nurtureCopy,
-  openCopy,
-  presentationCopy,
-  reaskCopy,
-} from "./messages";
+  bestTimeMessage,
+  classifyWithRules,
+  followUpOf,
+  handoffMessage,
+  nurtureMessage,
+  openingMessage,
+  questionMessage,
+  questionOf,
+  renderText,
+  type QualifyScript,
+  type ScriptMessage,
+  type ScriptVars,
+} from "./script";
 import { exitFranchiseNurture, moveLeadToPriorityStage, notifyHandoff, notifyNurture } from "./routing";
-import { classifyLead, type Priority } from "./classify";
+import type { Priority } from "./classify";
 import { leadBrief, type HandoffReason } from "./journey";
 
 const HUMAN_RE =
@@ -46,8 +49,6 @@ const HUMAN_RE =
 const MEETING_RE = /quero (conversar|falar|agendar)|marcar (uma )?conversa/i;
 const START_RE = /^(come[cç]ar|sim|ok|bora|pode|vamos|claro|s)\b/i;
 const LATER_RE = /^(depois|agora n[aã]o|mais tarde)\b/i;
-
-type MsgOut = { body: string; buttons?: { id: string; title: string }[]; list?: { buttonText: string; rows: { id: string; title: string }[] } };
 
 type Ctx = {
   workspaceId: string;
@@ -58,10 +59,12 @@ type Ctx = {
   contactName: string | null;
   playbookId: string;
   askKeys: QualifyFieldKey[];
+  script: QualifyScript;
+  brand: string;
   state: ConversationQualifyState;
 };
 
-async function send(ctx: Pick<Ctx, "workspaceId" | "phone" | "contactId" | "contactName">, msg: MsgOut | string) {
+async function send(ctx: Pick<Ctx, "workspaceId" | "phone" | "contactId" | "contactName">, msg: ScriptMessage | string) {
   const base = { workspaceId: ctx.workspaceId, to: ctx.phone, contactId: ctx.contactId, contactName: ctx.contactName };
   if (typeof msg === "string") return sendAndPersistText({ ...base, body: msg });
   if (msg.buttons?.length) return sendAndPersistReplyButtons({ ...base, body: msg.body, buttons: msg.buttons });
@@ -71,15 +74,36 @@ async function send(ctx: Pick<Ctx, "workspaceId" | "phone" | "contactId" | "cont
   return sendAndPersistText({ ...base, body: msg.body });
 }
 
-async function saveState(ctx: Ctx, patch: Partial<ConversationQualifyState>, lead?: Parameters<typeof writeLeadAnswers>[0]["patch"], leadOpts?: { cadenceStatus?: "running" | "done" | "paused"; forcePriority?: Priority | null }) {
+function classifier(ctx: Ctx) {
+  return (answers: QualifyAnswers) => classifyWithRules(answers, ctx.script.rules, ctx.askKeys);
+}
+
+async function writeAnswers(ctx: Ctx, patch: Parameters<typeof writeLeadAnswers>[0]["patch"]) {
+  return writeLeadAnswers({
+    workspaceId: ctx.workspaceId,
+    leadId: ctx.leadId,
+    playbookId: ctx.playbookId,
+    patch,
+    askKeys: ctx.askKeys,
+    classify: classifier(ctx),
+  });
+}
+
+async function saveState(
+  ctx: Ctx,
+  patch: Partial<ConversationQualifyState>,
+  leadOpts?: { cadenceStatus?: "running" | "done" | "paused"; forcePriority?: Priority | null },
+) {
   ctx.state = { ...ctx.state, ...patch };
   await saveConversationQualify(ctx.conversationId, ctx.workspaceId, ctx.state);
   return writeLeadAnswers({
     workspaceId: ctx.workspaceId,
     leadId: ctx.leadId,
     playbookId: ctx.playbookId,
-    patch: lead ?? {},
+    patch: {},
     currentState: ctx.state.currentState,
+    askKeys: ctx.askKeys,
+    classify: classifier(ctx),
     ...(leadOpts?.cadenceStatus ? { cadenceStatus: leadOpts.cadenceStatus } : {}),
     ...(leadOpts?.forcePriority !== undefined ? { forcePriority: leadOpts.forcePriority } : {}),
   });
@@ -88,6 +112,28 @@ async function saveState(ctx: Ctx, patch: Partial<ConversationQualifyState>, lea
 async function brandOf(workspaceId: string) {
   const c = await prisma.cliente.findUnique({ where: { id: workspaceId }, select: { nome: true } });
   return c?.nome || "nossa empresa";
+}
+
+function varsOf(ctx: Ctx, answers?: QualifyAnswers): ScriptVars {
+  return {
+    nome: ctx.contactName,
+    empresa: ctx.brand,
+    cidade: answers?.city?.label ?? null,
+    horario: answers?.best_contact_time?.code ?? null,
+  };
+}
+
+async function ctxFor(
+  prefs: QualificationPrefs,
+  base: Omit<Ctx, "playbookId" | "askKeys" | "script" | "brand">,
+): Promise<Ctx> {
+  return {
+    ...base,
+    playbookId: prefs.playbookId,
+    askKeys: prefs.askKeys,
+    script: prefs.script,
+    brand: await brandOf(base.workspaceId),
+  };
 }
 
 async function loadAnswers(ctx: Ctx): Promise<{ answers: QualifyAnswers; priority: Priority | null } | null> {
@@ -100,24 +146,38 @@ async function loadAnswers(ctx: Ctx): Promise<{ answers: QualifyAnswers; priorit
   return { answers: q.answers, priority: q.priority };
 }
 
-async function askNext(ctx: Ctx, answers: QualifyAnswers) {
+function progressOf(ctx: Ctx, answers: QualifyAnswers) {
   const missing = missingFieldKeys(answers, ctx.askKeys);
+  const total = Math.max(ctx.state.totalQuestions ?? missing.length, missing.length);
+  return { missing, total, index: total - missing.length + 1 };
+}
+
+async function askNext(ctx: Ctx, answers: QualifyAnswers) {
+  const { missing, total, index } = progressOf(ctx, answers);
   if (!missing.length) return finishQuestions(ctx, answers);
   const next = missing[0]!;
-  const total = Math.max(ctx.state.totalQuestions ?? missing.length, missing.length);
-  await send(ctx, numberedPrompt(next, total - missing.length + 1, total));
-  await saveState(ctx, { automationStatus: "active", currentState: `awaiting_${next}`, awaitingField: next, invalidCount: 0 }, undefined, {
+  await send(ctx, questionMessage(ctx.script, next, index, total, varsOf(ctx, answers)));
+  await saveState(ctx, { automationStatus: "active", currentState: `awaiting_${next}`, awaitingField: next, invalidCount: 0 }, {
     cadenceStatus: "running",
   });
   return true;
 }
 
+async function askBestTime(ctx: Ctx, answers: QualifyAnswers, patch: Partial<ConversationQualifyState>, priority?: Priority) {
+  await send(ctx, bestTimeMessage(ctx.script, varsOf(ctx, answers)));
+  await saveState(ctx, { ...patch, currentState: "awaiting_best_time", awaitingField: "best_contact_time" }, {
+    cadenceStatus: "running",
+    ...(priority ? { forcePriority: priority } : {}),
+  });
+  return true;
+}
+
 async function finishQuestions(ctx: Ctx, answers: QualifyAnswers) {
-  const priority = classifyLead(snapshotFromAnswers(answers));
+  const priority = classifier(ctx)(answers);
   const qualifiedAt = new Date().toISOString();
   if (priority === "C") {
-    await send(ctx, nurtureCopy(ctx.contactName));
-    await saveState(ctx, { currentState: "nurture", awaitingField: null, qualifiedAt }, undefined, {
+    await send(ctx, nurtureMessage(ctx.script, varsOf(ctx, answers)));
+    await saveState(ctx, { currentState: "nurture", awaitingField: null, qualifiedAt }, {
       cadenceStatus: "done",
       forcePriority: "C",
     });
@@ -125,12 +185,8 @@ async function finishQuestions(ctx: Ctx, answers: QualifyAnswers) {
     await notifyNurture({ workspaceId: ctx.workspaceId, leadId: ctx.leadId, contactName: ctx.contactName });
     return true;
   }
-  if (!answers.best_contact_time?.code) {
-    await send(ctx, bestTimeCopy(ctx.contactName, priority === "A"));
-    await saveState(ctx, { currentState: "awaiting_best_time", awaitingField: "best_contact_time", qualifiedAt, handoffReason: "qualified" }, undefined, {
-      cadenceStatus: "running",
-      forcePriority: priority,
-    });
+  if (ctx.script.bestTime.enabled && !answers.best_contact_time?.code) {
+    await askBestTime(ctx, answers, { qualifiedAt, handoffReason: "qualified" }, priority);
     await moveLeadToPriorityStage({ workspaceId: ctx.workspaceId, leadId: ctx.leadId, priority });
     return true;
   }
@@ -140,23 +196,19 @@ async function finishQuestions(ctx: Ctx, answers: QualifyAnswers) {
 
 /** Pedido de conversa: pergunta o horário (1 toque) se faltar, depois passa para a equipe. */
 async function requestMeeting(ctx: Ctx, answers: QualifyAnswers, priority: Priority | null, reason: HandoffReason) {
-  if (!answers.best_contact_time?.code) {
-    await send(ctx, bestTimeCopy(ctx.contactName, false));
-    await saveState(ctx, { currentState: "awaiting_best_time", awaitingField: "best_contact_time", handoffReason: reason }, undefined, {
-      cadenceStatus: "running",
-    });
-    return true;
+  if (ctx.script.bestTime.enabled && !answers.best_contact_time?.code) {
+    return askBestTime(ctx, answers, { handoffReason: reason });
   }
   return handoff(ctx, answers, priority, reason);
 }
 
 async function handoff(ctx: Ctx, answers: QualifyAnswers, priority: Priority | null, reason: HandoffReason) {
   // A equipe assume mesmo se a última mensagem ao lead falhar.
-  await send(ctx, handoffCopy(ctx.contactName, answers.best_contact_time?.code)).catch((err) =>
+  await send(ctx, handoffMessage(ctx.script, varsOf(ctx, answers))).catch((err) =>
     console.warn("[qualification] handoff copy", err instanceof Error ? err.message : err),
   );
   await handoffConversation(ctx.conversationId, ctx.workspaceId);
-  await saveState(ctx, { automationStatus: "done", currentState: "meeting_requested", awaitingField: null, handoffAt: new Date().toISOString(), handoffReason: reason }, undefined, {
+  await saveState(ctx, { automationStatus: "done", currentState: "meeting_requested", awaitingField: null, handoffAt: new Date().toISOString(), handoffReason: reason }, {
     cadenceStatus: "done",
     ...(priority ? { forcePriority: priority } : {}),
   });
@@ -191,16 +243,14 @@ export async function startQualificationFlow(input: {
   const { resolveWhatsApp } = await import("@/lib/config/resolveConnection");
   if (!(await resolveWhatsApp(input.workspaceId))) return { started: false as const, reason: "whatsapp_not_connected" };
 
-  const [lead, contact, cliente] = await Promise.all([
+  const [lead, contact] = await Promise.all([
     prisma.nativeLead.findFirst({ where: { id: input.leadId, clienteId: input.workspaceId }, select: { metadata: true } }),
     prisma.nativeContact.findFirst({ where: { id: input.contactId, clienteId: input.workspaceId } }),
-    prisma.cliente.findUnique({ where: { id: input.workspaceId }, select: { nome: true } }),
   ]);
   if (!lead || !contact) return { started: false as const, reason: "no_lead" };
 
-  const askKeys = prefs.askKeys.length ? prefs.askKeys : WA_ASK_ORDER;
   const q = parseLeadQualification(lead.metadata);
-  const missing = missingFieldKeys(q.answers, askKeys);
+  const missing = missingFieldKeys(q.answers, prefs.askKeys);
 
   const conversation = await upsertWaConversation({
     workspaceId: input.workspaceId,
@@ -214,15 +264,13 @@ export async function startQualificationFlow(input: {
   }
   if (input.retry && existing?.openedAt) return { started: false as const, reason: "already_open" };
 
-  const ctx: Ctx = {
+  const ctx = await ctxFor(prefs, {
     workspaceId: input.workspaceId,
     conversationId: conversation.id,
     leadId: input.leadId,
     phone: input.phone,
     contactId: input.contactId,
     contactName: input.contactName ?? contact.name,
-    playbookId: prefs.playbookId,
-    askKeys,
     state: existing ?? {
       playbookId: prefs.playbookId,
       automationStatus: "active",
@@ -231,16 +279,11 @@ export async function startQualificationFlow(input: {
       startedAt: new Date().toISOString(),
       followUpCount: 0,
     },
-  };
+  });
 
   let opened = false;
   if (isWithinCustomerWindow(conversation.windowExpiresAt)) {
-    const open = openCopy({
-      name: ctx.contactName,
-      brand: cliente?.nome || "nossa empresa",
-      city: q.answers.city?.label,
-      questions: missing.length,
-    });
+    const open = openingMessage(ctx.script, varsOf(ctx, q.answers), missing.length);
     opened = Boolean(await send(ctx, open).then(() => true).catch(() => false));
   } else {
     const { sendWhatsAppMessage } = await import("@/lib/flows/send");
@@ -263,8 +306,8 @@ export async function startQualificationFlow(input: {
         role: "ADMIN",
         type: "wa.template",
         title: "Qualificação no WhatsApp parada",
-        body: "O modelo de primeiro contato (qualify_open) ainda não está aprovado na Meta.",
-        href: "/crm",
+        body: "A mensagem de abertura ainda não foi aprovada pela Meta.",
+        href: "/crm/mensagens",
         severity: "aviso",
         dedupeKey: `wa-template:qualify_open:${input.workspaceId}`,
         email: false,
@@ -281,10 +324,14 @@ export async function startQualificationFlow(input: {
       totalQuestions: missing.length,
       openedAt: opened ? new Date().toISOString() : null,
     },
-    undefined,
     { cadenceStatus: "running" },
   );
   return { started: opened, conversationId: conversation.id, complete: false };
+}
+
+function choiceOptions(script: QualifyScript, field: QualifyFieldKey) {
+  if (field === "best_contact_time") return CHOICE_MAP.best_contact_time ?? [];
+  return questionOf(script, field)?.options ?? [];
 }
 
 export async function handleQualificationInbound(input: {
@@ -308,17 +355,15 @@ export async function handleQualificationInbound(input: {
   const state = parseConversationQualify(conversation.qualification);
   if (!state || state.automationStatus !== "active") return false;
 
-  const ctx: Ctx = {
+  const ctx = await ctxFor(prefs, {
     workspaceId: input.workspaceId,
     conversationId: input.conversationId,
     leadId: input.leadId,
     phone: input.phone,
     contactId: input.contactId,
     contactName: conversation.contactName,
-    playbookId: prefs.playbookId,
-    askKeys: prefs.askKeys.length ? prefs.askKeys : WA_ASK_ORDER,
     state,
-  };
+  });
   const loaded = await loadAnswers(ctx);
   if (!loaded) return false;
   const { answers, priority } = loaded;
@@ -334,13 +379,9 @@ export async function handleQualificationInbound(input: {
 
   if (current === "awaiting_best_time") {
     const choice = matchChoice("best_contact_time", replyId || text);
-    const raw = choice?.code ?? text;
-    if (!raw) return true;
-    const updated = await writeLeadAnswers({
-      workspaceId: ctx.workspaceId,
-      leadId: ctx.leadId,
-      playbookId: ctx.playbookId,
-      patch: { best_contact_time: answerFromRaw("best_contact_time", raw, "whatsapp") },
+    if (!choice && !text) return true;
+    const updated = await writeAnswers(ctx, {
+      best_contact_time: choice ? answerFromChoice(choice, "whatsapp") : answerFromRaw("best_contact_time", text, "whatsapp"),
     });
     return handoff(ctx, updated?.answers ?? answers, updated?.priority ?? priority, state.handoffReason ?? "qualified");
   }
@@ -356,7 +397,7 @@ export async function handleQualificationInbound(input: {
       return true;
     }
     if (replyId === QUALIFY_REPLY.presentation || /apresenta/i.test(text)) {
-      await send(ctx, presentationCopy(await brandOf(ctx.workspaceId)));
+      await send(ctx, presentationCopy(ctx.brand));
       await saveState(ctx, { presentationSentAt: new Date().toISOString() });
       return true;
     }
@@ -370,31 +411,26 @@ export async function handleQualificationInbound(input: {
   const field = state.awaitingField;
   if (!field) return true;
 
-  let value: string | null = null;
+  let patch: Parameters<typeof writeLeadAnswers>[0]["patch"] | null = null;
   if (field === "city") {
     const city = text.replace(/^\[|\]$/g, "").trim();
-    value = city.length >= 2 ? city : null;
+    if (city.length >= 2) patch = { city: answerFromRaw("city", city, "whatsapp") };
   } else {
-    value = matchChoice(field, replyId || text)?.code ?? null;
+    const choice = matchChoice(field, replyId || text, choiceOptions(ctx.script, field));
+    if (choice) patch = { [field]: answerFromChoice(choice, "whatsapp") };
   }
 
-  if (!value) {
+  if (!patch) {
     const misses = (state.invalidCount ?? 0) + 1;
     if (misses >= 2 && text) return handoff(ctx, answers, priority, "free_text");
     await send(ctx, invalidChoiceCopy(field));
-    const missing = missingFieldKeys(answers, ctx.askKeys);
-    const total = Math.max(state.totalQuestions ?? missing.length, missing.length);
-    await send(ctx, numberedPrompt(field, total - missing.length + 1, total));
+    const { total, index } = progressOf(ctx, answers);
+    await send(ctx, questionMessage(ctx.script, field, index, total, varsOf(ctx, answers)));
     await saveState(ctx, { invalidCount: misses });
     return true;
   }
 
-  const updated = await writeLeadAnswers({
-    workspaceId: ctx.workspaceId,
-    leadId: ctx.leadId,
-    playbookId: ctx.playbookId,
-    patch: { [field]: answerFromRaw(field, value, "whatsapp") },
-  });
+  const updated = await writeAnswers(ctx, patch);
   return askNext(ctx, updated?.answers ?? answers);
 }
 
@@ -406,9 +442,13 @@ export async function followUpQualification(input: {
   phone: string;
   contactId: string;
   contactName?: string | null;
+  /** Toque da cadência que dispara a retomada. */
+  touch?: "reask" | "nudge";
 }) {
   const prefs = await loadQualificationPrefs(input.workspaceId);
   if (!prefs.enabled) return false;
+  if (!followUpOf(prefs.script, input.touch ?? "reask").enabled) return false;
+  const reask = followUpOf(prefs.script, "reask");
   const conversation = await prisma.waConversation.findFirst({
     where: { id: input.conversationId, clienteId: input.workspaceId },
     select: { status: true, qualification: true, windowExpiresAt: true },
@@ -419,36 +459,35 @@ export async function followUpQualification(input: {
   if (!state || state.automationStatus !== "active") return false;
   if ((state.followUpCount ?? 0) >= 2) return false;
 
-  const ctx: Ctx = {
+  const ctx = await ctxFor(prefs, {
     workspaceId: input.workspaceId,
     conversationId: input.conversationId,
     leadId: input.leadId,
     phone: input.phone,
     contactId: input.contactId,
     contactName: input.contactName ?? null,
-    playbookId: prefs.playbookId,
-    askKeys: prefs.askKeys.length ? prefs.askKeys : WA_ASK_ORDER,
     state,
-  };
+  });
   const loaded = await loadAnswers(ctx);
   if (!loaded) return false;
   const followUpCount = (state.followUpCount ?? 0) + 1;
+  const vars = varsOf(ctx, loaded.answers);
 
   if (state.currentState === "awaiting_best_time") {
-    await send(ctx, bestTimeCopy(ctx.contactName, false));
+    const msg = bestTimeMessage(ctx.script, vars);
+    await send(ctx, { ...msg, body: `${renderText(reask.text, vars)} ${msg.body}` });
     await saveState(ctx, { followUpCount });
     return true;
   }
-  const missing = missingFieldKeys(loaded.answers, ctx.askKeys);
+  const { missing, total, index } = progressOf(ctx, loaded.answers);
   if (!missing.length) return false;
   if (state.currentState === "awaiting_start_choice") {
-    await send(ctx, openCopy({ name: ctx.contactName, brand: await brandOf(ctx.workspaceId), questions: missing.length }));
+    await send(ctx, openingMessage(ctx.script, vars, missing.length));
     await saveState(ctx, { followUpCount });
     return true;
   }
   const next = missing[0]!;
-  const total = Math.max(state.totalQuestions ?? missing.length, missing.length);
-  await send(ctx, reaskCopy(next, total - missing.length + 1, total));
+  await send(ctx, questionMessage(ctx.script, next, index, total, vars, reask.text));
   await saveState(ctx, { awaitingField: next, currentState: `awaiting_${next}`, followUpCount });
   return true;
 }

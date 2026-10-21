@@ -1,15 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { matchChoice } from "../lib/qualification/choices";
-import { WA_ASK_ORDER } from "../lib/qualification/fields";
 import { answerFromRaw } from "../lib/qualification/store";
-import {
-  QUALIFY_REPLY_IDS,
-  handoffCopy,
-  numberedPrompt,
-  openCopy,
-} from "../lib/qualification/messages";
-import { journeyConversation, journeyStageOf, leadBrief } from "../lib/qualification/journey";
+import { isQualifyReplyId } from "../lib/qualification/messages";
+import { journeyStageOf, leadBrief } from "../lib/qualification/journey";
 import { WA_TEMPLATE_LIBRARY, quickReplyPayload } from "../lib/flows/wa-templates";
 
 test("matchChoice entende número, rótulo e texto livre", () => {
@@ -23,23 +17,11 @@ test("matchChoice entende número, rótulo e texto livre", () => {
   assert.equal(matchChoice("niche", "9"), null);
 });
 
-test("perguntas numeradas e abertura com a marca", () => {
-  assert.match(numberedPrompt("niche", 1, 5).body, /^1 de 5 · /);
-  assert.equal(numberedPrompt("niche", 1, 1).body.startsWith("1 de"), false);
-  const open = openCopy({ name: "Maria Souza", brand: "Regicenter", city: "Curitiba", questions: 5 });
-  assert.match(open.body, /Maria/);
-  assert.match(open.body, /Regicenter/);
-  assert.deepEqual(open.buttons.map((b) => b.id), ["START_QUALIFICATION", "WANT_MEETING"]);
-  assert.ok(open.buttons.every((b) => b.title.length <= 20));
-  assert.match(handoffCopy("Maria", "MORNING"), /pela manhã/);
-  assert.doesNotMatch(handoffCopy("Maria", "depois das 18h"), /de preferência/);
-});
-
 test("ids da qualificação não caem no handoff genérico", () => {
-  for (const id of ["START_QUALIFICATION", "WANT_MEETING", "NICHE_LAW", "MORNING", "CAPITAL_PARTIAL"]) {
-    assert.ok(QUALIFY_REPLY_IDS.has(id), id);
+  for (const id of ["START_QUALIFICATION", "WANT_MEETING", "NICHE_LAW", "MORNING", "CAPITAL_PARTIAL", "OPT_FRANQUEADO"]) {
+    assert.ok(isQualifyReplyId(id), id);
   }
-  assert.equal(QUALIFY_REPLY_IDS.has("atk_help"), false);
+  assert.equal(isQualifyReplyId("atk_help"), false);
 });
 
 test("ficha da equipe traz prioridade, local e respostas", () => {
@@ -70,14 +52,6 @@ test("estado do lead vira etapa da jornada", () => {
   assert.equal(journeyStageOf("meeting_requested"), "equipe");
   assert.equal(journeyStageOf("nurture"), "nutricao");
   assert.equal(journeyStageOf("pending"), null);
-});
-
-test("conversa de exemplo pula o que veio da LP", () => {
-  const items = journeyConversation({ brand: "Regicenter", askKeys: WA_ASK_ORDER, lpKeys: ["city", "state"] });
-  const questions = items.filter((i) => i.kind === "received" && i.stage === "perguntas");
-  assert.equal(questions.length, 5);
-  assert.ok(questions.every((q) => q.kind === "received" && /^\d de 5 · /.test(q.text)));
-  assert.equal(items.at(-1)?.stage, "equipe");
 });
 
 test("modelos da qualificação: sob demanda e payload pelos botões", () => {

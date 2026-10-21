@@ -13,7 +13,7 @@ import { exitEnrollments, handleAsyncWaFailure, pauseContactFlows } from "@/lib/
 import { promoteApprovedVersion } from "@/lib/flows/wa-templates";
 import { parseBirthdayReply, upsertContactBirthday } from "@/lib/flows/important-dates";
 import { notify } from "@/lib/notifications";
-import { QUALIFY_REPLY_IDS } from "@/lib/qualification/messages";
+import { isQualifyReplyId } from "@/lib/qualification/messages";
 
 export const OPTOUT_PAYLOAD = "atk_optout";
 export const HELP_PAYLOAD = "atk_help";
@@ -114,7 +114,7 @@ export async function handleFlowInbound(workspaceId: string, contactId: string, 
     await exitEnrollments({ clienteId: workspaceId, contactId, reason: "wa_stop", channel: "WHATSAPP" });
     return { action: "optout_all" as const };
   }
-  const qualifyReply = QUALIFY_REPLY_IDS.has(payload);
+  const qualifyReply = isQualifyReplyId(payload);
   if (
     payload === HELP_PAYLOAD ||
     (!qualifyReply && Boolean(msg.button || msg.interactive) && /d[uú]vida|ajuda|falar com/i.test(text))

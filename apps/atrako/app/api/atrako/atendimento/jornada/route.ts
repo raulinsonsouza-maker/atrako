@@ -7,15 +7,32 @@ import { resolveResend } from "@/lib/integrations/resend/connection";
 import { ensureDefaultWaTemplates } from "@/lib/flows/wa-templates";
 import { franchiseRegicenterPatch, loadQualificationPrefs } from "@/lib/qualification/playbook";
 import { parseLeadQualification } from "@/lib/qualification/store";
-import { journeyStageOf, type JourneyStageKey } from "@/lib/qualification/journey";
+import { journeyStageOf } from "@/lib/qualification/journey";
 import { REGICENTER_LP_FORM } from "@/lib/qualification/forms";
 import type { QualifyFieldKey } from "@/lib/qualification/fields";
-
-const QUALIFY_TEMPLATES = ["qualify_open", "qualify_nudge"];
+import {
+  DEFAULT_SCRIPT,
+  applyBlock,
+  customizedBlocks,
+  resetBlock,
+  resolveScript,
+  templateTextProblem,
+  type ScriptBlockId,
+} from "@/lib/qualification/script";
+import {
+  QUALIFY_TEMPLATES,
+  isTemplateBlock,
+  scriptTemplateBodies,
+  scriptTemplateStates,
+  syncScriptTemplate,
+  templateTextOf,
+} from "@/lib/qualification/templates";
 
 function asRecord(raw: unknown): Record<string, unknown> {
   return raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
 }
+
+const BLOCK_RE = /^(opening|questions|bestTime|handoff|nurture|rules|question:[a-z_]+|followUp:(reask|nudge|team))$/;
 
 export async function GET(request: NextRequest) {
   const g = await gate(request, "operate");
@@ -27,11 +44,7 @@ export async function GET(request: NextRequest) {
     resolveWhatsApp(ws),
     resolveResend(ws),
     prisma.cliente.findUnique({ where: { id: ws }, select: { nome: true } }),
-    prisma.waTemplateRef.findMany({
-      where: { clienteId: ws, purpose: { in: QUALIFY_TEMPLATES }, status: { notIn: ["DELETED", "PENDING_DELETION"] } },
-      select: { purpose: true, status: true, version: true },
-      orderBy: { version: "desc" },
-    }),
+    scriptTemplateStates(ws),
     prisma.nativeLead.findMany({
       where: { clienteId: ws, status: "OPEN", metadata: { path: ["qualification", "playbookId"], not: Prisma.AnyNull } },
       select: { metadata: true },
@@ -40,40 +53,58 @@ export async function GET(request: NextRequest) {
     }),
   ]);
 
-  const stages: Record<JourneyStageKey, number> = { entrada: 0, abertura: 0, perguntas: 0, horario: 0, equipe: 0, nutricao: 0 };
+  const live = { qualifying: 0, withTeam: 0, noReply: 0, nurture: 0 };
   const priorities = { A: 0, B: 0, C: 0 };
-  let stalled = 0;
+  const answerCounts: Partial<Record<QualifyFieldKey, Record<string, number>>> = {};
   for (const lead of leads) {
     const q = parseLeadQualification(lead.metadata);
     const stage = journeyStageOf(q.currentState);
-    if (stage) stages[stage] += 1;
-    if (q.priority) priorities[q.priority] += 1;
-    const waiting = stage === "abertura" || stage === "perguntas" || stage === "horario";
     const cadence = asRecord(asRecord(asRecord(lead.metadata).qualification).cadence);
-    if (waiting && q.cadenceStatus === "done" && !cadence.nextAt) stalled += 1;
+    const waiting = stage === "entrada" || stage === "abertura" || stage === "perguntas" || stage === "horario";
+    if (waiting) {
+      const stepsLeft = q.cadenceStatus === "running" && Number(cadence.step ?? 0) === 0;
+      if (stepsLeft) live.qualifying += 1;
+      else live.noReply += 1;
+    }
+    if (stage === "equipe") live.withTeam += 1;
+    if (stage === "nutricao") live.nurture += 1;
+    if (q.priority) priorities[q.priority] += 1;
+    for (const [key, ans] of Object.entries(q.answers) as [QualifyFieldKey, { code?: string } | undefined][]) {
+      if (!ans?.code) continue;
+      const bucket = (answerCounts[key] ??= {});
+      bucket[ans.code] = (bucket[ans.code] ?? 0) + 1;
+    }
   }
-
-  const templateStatus = Object.fromEntries(
-    QUALIFY_TEMPLATES.map((purpose) => {
-      const rows = templates.filter((t) => t.purpose === purpose);
-      const live = rows.find((t) => t.status === "APPROVED") ?? rows[0];
-      return [purpose, live?.status ?? null];
-    }),
-  ) as Record<string, string | null>;
 
   const lpKeys = REGICENTER_LP_FORM.steps.flatMap((s) => s.fields.map((f) => f.id)) as QualifyFieldKey[];
 
   return NextResponse.json({
     brand: cliente?.nome ?? "",
-    qualification: { enabled: prefs.enabled, askKeys: prefs.askKeys, lpKeys },
+    enabled: prefs.enabled,
+    lpKeys,
+    script: prefs.script,
+    defaults: DEFAULT_SCRIPT,
+    customized: customizedBlocks(prefs.scriptOverrides),
     channels: {
       whatsapp: { connected: Boolean(wa), phone: wa?.displayPhoneNumber ?? null },
       email: { connected: Boolean(resend?.fromEmail), from: resend?.fromEmail ?? null },
     },
-    templates: templateStatus,
-    stages,
+    templates,
+    live,
     priorities,
-    stalled,
+    answerCounts,
+  });
+}
+
+async function loadPrefs(ws: string) {
+  const settings = await prisma.workspaceSettings.findUnique({ where: { clienteId: ws }, select: { messagingPrefs: true } });
+  return settings ? asRecord(settings.messagingPrefs) : null;
+}
+
+async function saveQualification(ws: string, prefs: Record<string, unknown>, qualification: Record<string, unknown>) {
+  await prisma.workspaceSettings.update({
+    where: { clienteId: ws },
+    data: { messagingPrefs: { ...prefs, qualification } as Prisma.InputJsonValue },
   });
 }
 
@@ -86,23 +117,53 @@ export async function POST(request: NextRequest) {
 
   if (action === "toggle") {
     const enabled = body?.enabled === true;
-    const settings = await prisma.workspaceSettings.findUnique({ where: { clienteId: ws }, select: { messagingPrefs: true } });
-    if (!settings) return bad("Configurações do workspace não encontradas", 404);
-    const prefs = asRecord(settings.messagingPrefs);
+    const prefs = await loadPrefs(ws);
+    if (!prefs) return bad("Configurações do workspace não encontradas", 404);
     const defaults = asRecord(franchiseRegicenterPatch(enabled).qualification);
-    const qualification = { ...defaults, ...asRecord(prefs.qualification), enabled };
-    await prisma.workspaceSettings.update({
-      where: { clienteId: ws },
-      data: { messagingPrefs: { ...prefs, qualification } as Prisma.InputJsonValue },
-    });
-    const created = enabled ? await ensureDefaultWaTemplates(ws, undefined, QUALIFY_TEMPLATES).catch(() => null) : null;
+    const qualification: Record<string, unknown> = { ...defaults, ...asRecord(prefs.qualification), enabled };
+    await saveQualification(ws, prefs, qualification);
+    const script = resolveScript(qualification.script);
+    const created = enabled
+      ? await ensureDefaultWaTemplates(ws, undefined, QUALIFY_TEMPLATES, scriptTemplateBodies(script)).catch(() => null)
+      : null;
     return NextResponse.json({ ok: true, enabled, templates: created });
   }
 
   if (action === "templates") {
-    const result = await ensureDefaultWaTemplates(ws, undefined, QUALIFY_TEMPLATES);
+    const { script } = await loadQualificationPrefs(ws);
+    const result = await ensureDefaultWaTemplates(ws, undefined, QUALIFY_TEMPLATES, scriptTemplateBodies(script));
     if ("skipped" in result && result.skipped) return bad("Conecte o WhatsApp primeiro", 409);
     return NextResponse.json({ ok: true, ...result });
+  }
+
+  if (action === "save_block" || action === "reset_block" || action === "save_rules") {
+    const block = (action === "save_rules" ? "rules" : String(body?.block ?? "")) as ScriptBlockId;
+    if (!BLOCK_RE.test(block)) return bad("Bloco inválido");
+    const prefs = await loadPrefs(ws);
+    if (!prefs) return bad("Configurações do workspace não encontradas", 404);
+    const current = asRecord(prefs.qualification);
+    const patch = action === "save_rules" ? body?.rules : body?.patch;
+    const overrides = action === "reset_block" ? resetBlock(current.script, block) : applyBlock(current.script, block, patch);
+    const script = resolveScript(overrides);
+
+    if (isTemplateBlock(block)) {
+      const problem = templateTextProblem(templateTextOf(script, block));
+      if (problem) return bad(problem);
+    }
+    if (block === "rules" && !Object.values(script.rules.A).some((codes) => codes?.length)) {
+      return bad("Defina ao menos uma condição para A");
+    }
+
+    await saveQualification(ws, prefs, { ...current, script: overrides });
+
+    let template: { synced: boolean; reason?: string; error?: string } | null = null;
+    if (isTemplateBlock(block)) {
+      template = await syncScriptTemplate(ws, block, script).catch((err) => ({
+        synced: false,
+        error: err instanceof Error ? err.message : "Falha ao enviar o modelo para a Meta",
+      }));
+    }
+    return NextResponse.json({ ok: true, script, customized: customizedBlocks(overrides), template });
   }
 
   return bad("Ação inválida");

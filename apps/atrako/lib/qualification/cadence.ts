@@ -1,7 +1,7 @@
 /**
- * Cadência de quem para de responder no WhatsApp.
- * +2h repete a pergunta (janela aberta) · +1 dia lembrete (modelo se a janela fechou) · +3 dias avisa a equipe.
- * Estado em NativeLead.metadata.qualification.cadence.
+ * Cadência de quem para de responder no WhatsApp — toques e prazos do roteiro (script.followUps).
+ * reask: repete a pergunta (janela aberta) · nudge: lembrete (modelo se a janela fechou) + e-mail · team: avisa a equipe.
+ * Estado em NativeLead.metadata.qualification.cadence (step = índice do próximo toque).
  */
 
 import { prisma } from "@/lib/db";
@@ -9,15 +9,21 @@ import { Prisma } from "@/lib/generated/prisma";
 import { loadQualificationPrefs } from "./playbook";
 import { parseConversationQualify, parseLeadQualification, writeLeadAnswers } from "./store";
 import { followUpQualification, startQualificationFlow } from "./engine";
+import type { QualifyScript } from "./script";
 import { notify } from "@/lib/notifications";
 import { isWithinCustomerWindow } from "@/lib/whatsapp/domain";
 
 type CadenceMeta = { step: number; nextAt: string | null };
 
-/** Atraso até o próximo passo, a partir do passo atual. */
-const STEP_DELAY_H = [2, 22, 48];
-
 const CLOSED_STATES = new Set(["meeting_requested", "human_handoff", "nurture"]);
+
+/** Horas entre o toque anterior e o toque `step`. */
+export function cadenceDelayHours(script: QualifyScript, step: number): number | null {
+  const touch = script.followUps[step];
+  if (!touch) return null;
+  const prev = step > 0 ? script.followUps[step - 1]!.afterHours : 0;
+  return Math.max(1, touch.afterHours - prev);
+}
 
 function asRecord(raw: unknown): Record<string, unknown> {
   return raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
@@ -40,11 +46,13 @@ export async function enrollQualifyCadence(input: { workspaceId: string; contact
   if (q.cadenceStatus === "done" || q.cadenceStatus === "paused") return;
   if (CLOSED_STATES.has(q.currentState)) return;
 
+  const { script } = await loadQualificationPrefs(input.workspaceId);
+  const delay = cadenceDelayHours(script, 0) ?? 2;
   const meta = asRecord(lead.metadata);
   const qualification = {
     ...asRecord(meta.qualification),
     cadenceStatus: "running",
-    cadence: { step: 0, nextAt: new Date(Date.now() + STEP_DELAY_H[0]! * 3_600_000).toISOString() } satisfies CadenceMeta,
+    cadence: { step: 0, nextAt: new Date(Date.now() + delay * 3_600_000).toISOString() } satisfies CadenceMeta,
   };
   await prisma.nativeLead.update({
     where: { id: input.leadId },
@@ -80,6 +88,7 @@ export async function processDueQualifyCadence(limit = 50) {
       prefsByWs.set(lead.clienteId, prefs);
     }
     if (!prefs.enabled) continue;
+    const script = prefs.script;
 
     const parsed = parseLeadQualification(lead.metadata);
     const contact = lead.contact;
@@ -96,6 +105,7 @@ export async function processDueQualifyCadence(limit = 50) {
     }
 
     const step = Number(cadence.step) || 0;
+    const touch = script.followUps[step];
     const phone = contact.phoneE164 || contact.phone || "";
     const conv = phone
       ? await prisma.waConversation.findFirst({
@@ -112,19 +122,24 @@ export async function processDueQualifyCadence(limit = 50) {
       ? { workspaceId: lead.clienteId, conversationId: conv.id, leadId: lead.id, phone, contactId: contact.id, contactName: contact.name }
       : null;
 
-    if (step < 2 && phone) {
-      if (!convState?.openedAt) {
-        await startQualificationFlow({
-          workspaceId: lead.clienteId,
-          leadId: lead.id,
-          contactId: contact.id,
-          phone,
-          contactName: contact.name,
-          retry: true,
-        }).catch(() => null);
-      } else if (followInput && isWithinCustomerWindow(conv?.windowExpiresAt)) {
-        await followUpQualification(followInput).catch(() => false);
-      } else if (step === 1) {
+    if (touch?.id !== "team" && phone && !convState?.openedAt) {
+      // Abertura ficou retida (modelo ainda não aprovado, limite de envio): tenta de novo.
+      await startQualificationFlow({
+        workspaceId: lead.clienteId,
+        leadId: lead.id,
+        contactId: contact.id,
+        phone,
+        contactName: contact.name,
+        retry: true,
+      }).catch(() => null);
+    } else if (touch?.enabled && touch.id === "reask") {
+      if (followInput && isWithinCustomerWindow(conv?.windowExpiresAt)) {
+        await followUpQualification({ ...followInput, touch: "reask" }).catch(() => false);
+      }
+    } else if (touch?.enabled && touch.id === "nudge") {
+      if (followInput && isWithinCustomerWindow(conv?.windowExpiresAt)) {
+        await followUpQualification({ ...followInput, touch: "nudge" }).catch(() => false);
+      } else if (phone) {
         const { sendWhatsAppMessage } = await import("@/lib/flows/send");
         const { loadMessagingPrefs } = await import("@/lib/flows/prefs");
         const { prefs: msgPrefs } = await loadMessagingPrefs(lead.clienteId);
@@ -138,38 +153,36 @@ export async function processDueQualifyCadence(limit = 50) {
           reservePercent: msgPrefs.waAutoReservePercent,
         }).catch(() => null);
       }
-    }
-
-    if (step === 1 && contact.email && !(await inFranchiseNurture(lead.clienteId, contact.id))) {
-      const cliente = await prisma.cliente.findUnique({ where: { id: lead.clienteId }, select: { nome: true } });
-      const first = contact.name?.trim().split(/\s+/)[0] || "";
-      const { sendEmailMessage } = await import("@/lib/flows/send");
-      await sendEmailMessage({
-        clienteId: lead.clienteId,
-        contact: { id: contact.id, email: contact.email, name: contact.name, phone: contact.phone, phoneE164: contact.phoneE164 },
-        content: {
-          subject: "Seu consultor está te esperando",
-          preheader: `Cadastro recebido na ${cliente?.nome ?? "nossa empresa"}`,
-          blocks: [
-            {
-              type: "text",
-              text: `Olá${first ? `, ${first}` : ""}!\n\nRecebemos seu cadastro. Responda a mensagem no WhatsApp para falar com um consultor.`,
-            },
-          ],
-        },
-        data: {},
-        origin: { flowKey: "qualify_cadence_post" },
-        idempotencyKey: `qualify-email-post:${lead.id}:${step}`,
-      }).catch(() => null);
-    }
-
-    if (step >= 2) {
+      if (contact.email && !(await inFranchiseNurture(lead.clienteId, contact.id))) {
+        const cliente = await prisma.cliente.findUnique({ where: { id: lead.clienteId }, select: { nome: true } });
+        const first = contact.name?.trim().split(/\s+/)[0] || "";
+        const { sendEmailMessage } = await import("@/lib/flows/send");
+        await sendEmailMessage({
+          clienteId: lead.clienteId,
+          contact: { id: contact.id, email: contact.email, name: contact.name, phone: contact.phone, phoneE164: contact.phoneE164 },
+          content: {
+            subject: "Seu consultor está te esperando",
+            preheader: `Cadastro recebido na ${cliente?.nome ?? "nossa empresa"}`,
+            blocks: [
+              {
+                type: "text",
+                text: `Olá${first ? `, ${first}` : ""}!\n\nRecebemos seu cadastro. Responda a mensagem no WhatsApp para falar com um consultor.`,
+              },
+            ],
+          },
+          data: {},
+          origin: { flowKey: "qualify_cadence_post" },
+          idempotencyKey: `qualify-email-post:${lead.id}:${step}`,
+        }).catch(() => null);
+      }
+    } else if (touch?.enabled && touch.id === "team") {
+      const days = Math.round(touch.afterHours / 24);
       await notify({
         clienteId: lead.clienteId,
         role: "ADMIN",
         type: "wa.qualify_no_reply",
         title: `${contact.name || "Lead"} não respondeu no WhatsApp`,
-        body: "3 dias sem resposta à qualificação. Vale um toque manual.",
+        body: `${days} dia${days > 1 ? "s" : ""} sem resposta à qualificação. Vale um toque manual.`,
         href: `/crm/leads/${lead.id}`,
         severity: "aviso",
         dedupeKey: `qualify-noreply:${lead.id}`,
@@ -178,7 +191,7 @@ export async function processDueQualifyCadence(limit = 50) {
     }
 
     const nextStep = step + 1;
-    const delay = STEP_DELAY_H[nextStep];
+    const delay = cadenceDelayHours(script, nextStep);
     const nextAt = delay ? new Date(Date.now() + delay * 3_600_000).toISOString() : null;
     const fresh = await prisma.nativeLead.findUnique({ where: { id: lead.id }, select: { metadata: true } });
     const freshMeta = asRecord(fresh?.metadata);

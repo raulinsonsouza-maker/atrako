@@ -198,11 +198,11 @@ export const WA_TEMPLATE_LIBRARY: WaTemplateDef[] = [
     onDemand: true,
     body: {
       proximo:
-        "Oi {{first_name}}, recebemos seu cadastro na {{store_name}}. São 5 perguntas rápidas para te conectar ao consultor certo. Podemos começar?",
+        "Oi {{first_name}}, recebemos seu cadastro na {{store_name}}. São perguntas rápidas para te conectar ao consultor certo. Podemos começar?",
       neutro:
-        "Olá {{first_name}}, recebemos seu cadastro na {{store_name}}. Responda 5 perguntas rápidas para falar com o consultor certo.",
+        "Olá {{first_name}}, recebemos seu cadastro na {{store_name}}. Responda algumas perguntas rápidas para falar com o consultor certo.",
       formal:
-        "Olá {{first_name}}. Confirmamos seu cadastro na {{store_name}}. Para direcioná-lo ao consultor adequado, responda 5 perguntas rápidas.",
+        "Olá {{first_name}}. Confirmamos seu cadastro na {{store_name}}. Para direcioná-lo ao consultor adequado, responda algumas perguntas rápidas.",
     },
     buttons: [
       { type: "QUICK_REPLY", text: "Começar", payload: "START_QUALIFICATION" },
@@ -667,7 +667,13 @@ export async function createWaTemplateFromDef(
 }
 
 /** Ao conectar o WA: cria os templates padrão no tom da loja (até 100 criações/h — aqui ~13). */
-export async function ensureDefaultWaTemplates(workspaceId: string, tone?: EmailTone, purposes?: string[]) {
+export async function ensureDefaultWaTemplates(
+  workspaceId: string,
+  tone?: EmailTone,
+  purposes?: string[],
+  /** Texto próprio por finalidade (vale para todos os tons). */
+  bodyOverrides?: Record<string, string>,
+) {
   const wa = await resolveWhatsApp(workspaceId);
   if (!wa?.wabaId) return { created: 0, skipped: true };
   const theme = await prisma.emailTheme.findUnique({ where: { clienteId: workspaceId } });
@@ -687,8 +693,10 @@ export async function ensureDefaultWaTemplates(workspaceId: string, tone?: Email
     : WA_TEMPLATE_LIBRARY.filter((def) => !def.onDemand);
   for (const def of library) {
     if (have.has(def.purpose)) continue;
+    const override = bodyOverrides?.[def.purpose];
+    const finalDef = override ? { ...def, body: { proximo: override, neutro: override, formal: override } } : def;
     try {
-      await createWaTemplateFromDef(workspaceId, def, t);
+      await createWaTemplateFromDef(workspaceId, finalDef, t);
       created++;
     } catch (err) {
       errors.push(`${def.purpose}: ${err instanceof Error ? err.message : err}`);

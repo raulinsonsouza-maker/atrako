@@ -5,6 +5,12 @@ import {
   AUTH_COOKIE_NAME_PRODUCTION,
   MEMBER_SESSION_COOKIE,
 } from "@/lib/authCookieNames";
+import {
+  LP_AREA_PATH,
+  LP_AREA_TARGET,
+  LP_DOMAIN_ALLOWED_PREFIXES,
+  LP_DOMAINS,
+} from "@/lib/lp-domains";
 
 const PUBLIC_PREFIXES = [
   "/sign-in",
@@ -62,6 +68,26 @@ export default function middleware(request: NextRequest) {
   }
 
   const { pathname } = request.nextUrl;
+  const host = (request.headers.get("host") ?? "").split(":")[0].toLowerCase();
+  if (LP_DOMAINS[host]) {
+    // Atrás do Traefik o request chega em http; o domínio público é sempre https.
+    const origin = production ? `https://${host}` : `http://${request.headers.get("host")}`;
+    if (pathname === "/" || LP_DOMAIN_ALLOWED_PREFIXES.some((p) => pathname.startsWith(p))) {
+      return NextResponse.next();
+    }
+    if (pathname === LP_AREA_PATH || pathname.startsWith(`${LP_AREA_PATH}/`)) {
+      if (!hasSessionCookie(request)) {
+        const signIn = new URL("/sign-in", origin);
+        signIn.searchParams.set("next", pathname + request.nextUrl.search);
+        return NextResponse.redirect(signIn);
+      }
+      const target = request.nextUrl.clone();
+      target.pathname = LP_AREA_TARGET + pathname.slice(LP_AREA_PATH.length);
+      return NextResponse.rewrite(target);
+    }
+    return NextResponse.redirect(new URL("/", origin));
+  }
+
   if (process.env.ATRAKO_DEV_OPEN_ACCESS === "1") {
     return NextResponse.next();
   }

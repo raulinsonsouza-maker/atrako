@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { MetricTile } from "@/components/ui";
 import type { InsideSalesOverview } from "@/lib/qualification/overview";
 import { buttonClass } from "@/components/ui/button";
+import { useCrmLinks } from "@/components/crm/CrmLinksContext";
 
 function fmt(n: number) {
   return n.toLocaleString("pt-BR");
@@ -23,6 +24,7 @@ export function InsideSalesGeral({
   /** Mesmos params do consolidado (periodo, dataInicio, dataFim). */
   query: string;
 }) {
+  const links = useCrmLinks();
   const { data, isLoading, isError, isPlaceholderData } = useQuery({
     queryKey: ["inside-sales-overview", workspaceId, query],
     queryFn: async () => {
@@ -106,7 +108,7 @@ export function InsideSalesGeral({
               Leads abertos por etapa
             </p>
           </div>
-          <Link href="/crm" className={buttonClass({ variant: "ghost", size: "toolbar" })}>
+          <Link href={links.leadsHref} className={buttonClass({ variant: "ghost", size: "toolbar" })}>
             Abrir Leads
           </Link>
         </div>
@@ -159,7 +161,7 @@ export function InsideSalesGeral({
                     {[row.priorityLabel, row.stageName].filter(Boolean).join(" · ")}
                   </p>
                 </div>
-                <Link href="/crm" className="shrink-0 type-fine-print text-[var(--primary)] active:scale-95">
+                <Link href={links.leadHref(row.id)} className="shrink-0 type-fine-print text-[var(--primary)] active:scale-95">
                   Ver no funil
                 </Link>
               </li>

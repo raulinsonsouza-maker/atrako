@@ -30,6 +30,7 @@ import { Button, buttonClass } from "@/components/ui/button";
 import { PillSelect } from "@/components/ui/pill-select";
 import { cn } from "@/lib/utils";
 import { formatPhone } from "@/components/crm/CrmLeadCard";
+import { useCrmLinks } from "@/components/crm/CrmLinksContext";
 import { LeadCommunications, type LeadCommunicationsData } from "@/components/crm/LeadCommunications";
 
 type JourneyItem = {
@@ -623,6 +624,7 @@ export function CrmLeadModal({
   const lead = data?.lead;
   const stageColor = lead?.stageColor || "var(--primary)";
   const selfHref = `/crm/leads/${leadId}`;
+  const links = useCrmLinks();
 
   const openCarts = (data?.carts ?? []).filter(isOpenCart).slice(0, 3);
   const allOrders = (data?.orders ?? []).filter((o) => !o.fromCart);
@@ -798,7 +800,7 @@ export function CrmLeadModal({
                     ) : null}
                     {lead.phone ? (
                       <a
-                        href={`/whatsapp?phone=${encodeURIComponent(lead.phone)}`}
+                        href={links.conversationHref(lead.phone)}
                         className="panel-modal-qualify-wa type-fine-print"
                       >
                         <MessageCircle className="h-3.5 w-3.5" strokeWidth={1.75} />
@@ -872,7 +874,7 @@ export function CrmLeadModal({
                             {item.detail ? (
                               <p className="mt-0.5 type-fine-print text-[var(--ink-muted-48)]">{item.detail}</p>
                             ) : null}
-                            {item.href && item.href !== selfHref ? (
+                            {links.journeyLinks && item.href && item.href !== selfHref ? (
                               <Link href={item.href} className="mt-0.5 inline-block type-fine-print text-[var(--primary)]">
                                 ver
                               </Link>
@@ -1057,7 +1059,7 @@ export function CrmLeadModal({
           </Button>
           {lead?.phone ? (
             <Link
-              href={`/whatsapp?phone=${encodeURIComponent(lead.phone)}`}
+              href={links.conversationHref(lead.phone)}
               className={buttonClass({ variant: "dark-utility", size: "toolbar" })}
             >
               Conversar no WhatsApp

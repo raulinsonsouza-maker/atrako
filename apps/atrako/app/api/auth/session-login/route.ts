@@ -52,10 +52,16 @@ export async function POST(request: NextRequest) {
       if (ok) {
         const token = await createMemberSession(member.id);
         const workspaces = await listMemberWorkspaceIds(member.email);
+        const settings = workspaces[0]
+          ? await prisma.workspaceSettings.findUnique({
+              where: { clienteId: workspaces[0] },
+              select: { edition: true },
+            })
+          : null;
         const res = NextResponse.json({
           ok: true,
           kind: "member" as const,
-          redirect: "/assistente",
+          redirect: settings?.edition === "inside_sales" ? "/atendimento" : "/assistente",
           email: member.email,
           workspaces,
         });

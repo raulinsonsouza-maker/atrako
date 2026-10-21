@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { LP_DOMAINS } from "./lib/lp-domains";
 
 const nextConfig: NextConfig = {
   transpilePackages: [
@@ -15,7 +16,12 @@ const nextConfig: NextConfig = {
     // Build na VPS (RAM limitada); CI local deve validar tipos.
     ignoreBuildErrors: true,
   },
-  allowedDevOrigins: ["*.replit.dev", "*.repl.co", "*.riker.replit.dev"],
+  allowedDevOrigins: [
+    "*.replit.dev",
+    "*.repl.co",
+    "*.riker.replit.dev",
+    ...Object.keys(LP_DOMAINS).filter((host) => host.endsWith(".localhost")),
+  ],
   async rewrites() {
     return {
       beforeFiles: [
@@ -24,6 +30,11 @@ const nextConfig: NextConfig = {
           missing: [{ type: "query", key: "preview" }],
           destination: "/lp/regicenter-franquia/index.html",
         },
+        ...Object.entries(LP_DOMAINS).map(([host, { dir }]) => ({
+          source: "/",
+          has: [{ type: "host" as const, value: host }],
+          destination: `${dir}/index.html`,
+        })),
       ],
     };
   },

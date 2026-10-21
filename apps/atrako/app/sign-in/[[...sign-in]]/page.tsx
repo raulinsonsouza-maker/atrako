@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLpBrand } from "@/components/layout/LpHostContext";
 import "@/app/food/food-shell.css";
+import "@/app/atendimento/atendimento-shell.css";
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return <span className="type-caption text-[var(--ink-muted-80)]">{children}</span>;
@@ -15,6 +17,15 @@ function SignInForm() {
   const router = useRouter();
   const params = useSearchParams();
   const nextParam = params.get("next");
+  const lpBrand = useLpBrand();
+  const lpHost = lpBrand !== null;
+  const areaBase = lpHost ? "/crm" : "/atendimento";
+  const nextInArea =
+    nextParam === areaBase ||
+    nextParam?.startsWith(`${areaBase}/`) === true ||
+    nextParam?.startsWith(`${areaBase}?`) === true;
+  const areaEntry = lpHost || nextInArea;
+  const areaDest = nextInArea ? nextParam! : areaBase;
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -46,6 +57,8 @@ function SignInForm() {
       let dest = data.redirect || "/assistente";
       if (data.mustChangePassword) {
         dest = "/change-password";
+      } else if (areaEntry) {
+        dest = areaDest;
       } else if (nextParam?.startsWith("/") && !nextParam.startsWith("//")) {
         const nextIsAdmin = nextParam.startsWith("/admin");
         if (data.kind === "platform" && nextIsAdmin) {
@@ -70,34 +83,52 @@ function SignInForm() {
   }
 
   const foodEntry = nextParam === "/food" || nextParam?.startsWith("/food/") === true;
+  const brandedEntry = foodEntry || areaEntry;
+  const branded = areaEntry
+    ? {
+        className: "food-sign atd-sign",
+        brand: lpBrand ?? "Atendimento",
+        kicker: "Área de atendimento",
+        title: "Leads, conversas e o funil da equipe.",
+        copy: "Cada cadastro chega aqui com a prioridade e o próximo passo.",
+        lead: "Use o e-mail da equipe de atendimento.",
+      }
+    : {
+        className: "food-sign",
+        brand: "Food",
+        kicker: "Restaurante",
+        title: "A fila, o cardápio e o caixa.",
+        copy: "Loja, WhatsApp e balcão no mesmo lugar.",
+        lead: "Use o e-mail da equipe do restaurante.",
+      };
 
   useEffect(() => {
-    if (!foodEntry) return;
+    if (!brandedEntry) return;
     const previous = document.title;
     document.title = "Entrar";
     return () => {
       document.title = previous;
     };
-  }, [foodEntry]);
+  }, [brandedEntry]);
   const fieldClass =
     "h-11 w-full rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-3 type-body text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-muted-48)] hover:border-[var(--ink-muted-48)] focus-visible:border-[var(--primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-focus)]";
 
-  if (foodEntry) {
+  if (brandedEntry) {
     return (
-      <div className="food-sign">
+      <div className={branded.className}>
         <aside className="food-sign-aside">
-          <p className="food-sign-brand">Food</p>
+          <p className="food-sign-brand">{branded.brand}</p>
           <div>
-            <p className="food-sign-kicker">Restaurante</p>
-            <p className="food-sign-title">A fila, o cardápio e o caixa.</p>
-            <p className="food-sign-copy">Loja, WhatsApp e balcão no mesmo lugar.</p>
+            <p className="food-sign-kicker">{branded.kicker}</p>
+            <p className="food-sign-title">{branded.title}</p>
+            <p className="food-sign-copy">{branded.copy}</p>
           </div>
           <p className="food-sign-kicker">© {new Date().getFullYear()}</p>
         </aside>
         <main className="food-sign-main">
           <div className="food-sign-card">
             <h1>Entrar</h1>
-            <p className="food-sign-lead">Use o e-mail da equipe do restaurante.</p>
+            <p className="food-sign-lead">{branded.lead}</p>
             <form onSubmit={submit}>
               <label>
                 E-mail ou usuário
@@ -141,13 +172,15 @@ function SignInForm() {
                 {saving ? "Entrando…" : "Continuar"}
               </button>
             </form>
-            <p className="food-sign-links">
-              <Link href="/politica-de-privacidade">Privacidade</Link>
-              {" · "}
-              <Link href="/termos-de-uso">Termos</Link>
-              {" · "}
-              <Link href="/exclusao-de-dados">Exclusão de dados</Link>
-            </p>
+            {lpHost ? null : (
+              <p className="food-sign-links">
+                <Link href="/politica-de-privacidade">Privacidade</Link>
+                {" · "}
+                <Link href="/termos-de-uso">Termos</Link>
+                {" · "}
+                <Link href="/exclusao-de-dados">Exclusão de dados</Link>
+              </p>
+            )}
           </div>
         </main>
       </div>

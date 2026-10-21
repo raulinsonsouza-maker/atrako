@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import type { CSSProperties, ReactNode } from "react";
 import localFont from "next/font/local";
 import Script from "next/script";
+import { headers } from "next/headers";
 import "./globals.css";
 import { Providers } from "./providers";
 import { AppShell } from "@/components/layout/AppShell";
+import { LP_DOMAINS } from "@/lib/lp-domains";
 
 const geist = localFont({
   src: "../public/fonts/geist-latin.woff2",
@@ -30,7 +32,8 @@ const fontVars = {
     "var(--font-geist), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
 } as CSSProperties;
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const host = ((await headers()).get("host") ?? "").split(":")[0].toLowerCase();
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body
@@ -41,7 +44,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {themeBoot}
         </Script>
         <Providers>
-          <AppShell>{children}</AppShell>
+          <AppShell lpBrand={LP_DOMAINS[host]?.name ?? null}>{children}</AppShell>
         </Providers>
       </body>
     </html>

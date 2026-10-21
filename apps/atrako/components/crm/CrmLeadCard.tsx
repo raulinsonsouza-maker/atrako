@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { MessageCircle } from "lucide-react";
 import { channelColor } from "@/lib/commerce-attribution/channel-color";
 import { PillSelect, type PillSelectOption } from "@/components/ui/pill-select";
+import { useCrmLinks } from "@/components/crm/CrmLinksContext";
 
 export type CrmBoardLead = {
   id: string;
@@ -132,6 +133,7 @@ export function CrmLeadCard({
   const hasValue = lead.dealValue != null && lead.dealValue > 0;
   const cartAge = lead.openCartAt ? leadAge(lead.openCartAt) : null;
   const activityAge = leadAge(lead.activityAt ?? lead.updatedAt ?? lead.createdAt);
+  const links = useCrmLinks();
 
   return (
     <div
@@ -198,7 +200,7 @@ export function CrmLeadCard({
         </div>
         {lead.phone ? (
           <a
-            href={`/whatsapp?phone=${encodeURIComponent(lead.phone)}`}
+            href={links.conversationHref(lead.phone)}
             onClick={(e) => e.stopPropagation()}
             className="pipeline-lead-wa"
             title="WhatsApp"

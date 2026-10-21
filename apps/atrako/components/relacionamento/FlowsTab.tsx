@@ -128,7 +128,13 @@ export function FlowsTab({ workspaceId, pack }: { workspaceId: string; pack?: "s
     return (
       <section className="rel-card">
         <RelEmpty
-          text={pack === "stay" ? "Pix pendente, confirmação, véspera, saída e um obrigado. Começam ligados." : "Carrinho, pós-compra, recompra, aniversário e mais — prontos com o visual da sua loja. Começam pausados."}
+          text={
+            pack === "stay"
+              ? "Pix pendente, confirmação, véspera, saída e um obrigado. Começam ligados."
+              : pack === "inside_sales"
+                ? "Boas-vindas ao lead e retomada de quem esfriou, prontos para editar."
+                : "Carrinho, pós-compra, recompra, aniversário e mais — prontos com o visual da sua loja. Começam pausados."
+          }
           action={
             <Button disabled={post.isPending} onClick={() => post.mutate({ action: "ensure_defaults", ...(pack ? { pack } : {}) })}>
               {post.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}

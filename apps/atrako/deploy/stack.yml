@@ -118,6 +118,15 @@ services:
         - traefik.http.routers.atrako-http.entrypoints=web
         - traefik.http.routers.atrako-http.middlewares=atrako-https
         - traefik.http.services.atrako-web.loadbalancer.server.port=5000
+        # Domínios de clientes (LPs): router próprio para o certificado não depender do DNS do atrako.com.br
+        - traefik.http.routers.lp-regicenter.rule=Host(`lp.regicenter.com`)
+        - traefik.http.routers.lp-regicenter.entrypoints=websecure
+        - traefik.http.routers.lp-regicenter.tls=true
+        - traefik.http.routers.lp-regicenter.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.lp-regicenter.service=atrako-web
+        - traefik.http.routers.lp-regicenter-http.rule=Host(`lp.regicenter.com`)
+        - traefik.http.routers.lp-regicenter-http.entrypoints=web
+        - traefik.http.routers.lp-regicenter-http.middlewares=atrako-https
 
 networks:
   internal:

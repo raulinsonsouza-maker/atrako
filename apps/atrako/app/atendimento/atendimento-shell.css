@@ -1,0 +1,111 @@
+.food-sign.atd-sign {
+  --food-red: var(--primary);
+}
+
+.atd-shell {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--canvas-parchment);
+  color: var(--ink);
+}
+
+.atd-bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 60px;
+  padding: 0 24px;
+  background: var(--canvas);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.atd-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.atd-brand strong,
+.atd-brand small {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.atd-brand small {
+  color: var(--ink-muted-48);
+}
+
+.atd-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.atd-tabs {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.atd-tabs a {
+  flex: none;
+  padding: 8px 12px;
+  border-radius: var(--radius-xs);
+  color: var(--ink-muted-80);
+  text-decoration: none;
+}
+
+.atd-tabs a.is-active {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.atd-leave {
+  margin-left: auto;
+  flex: none;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xs);
+  background: var(--canvas);
+  color: var(--ink);
+  padding: 7px 14px;
+  cursor: pointer;
+}
+
+.atd-leave:active { transform: scale(0.95); }
+.atd-leave:disabled { opacity: 0.55; cursor: default; }
+
+.atd-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+@media (max-width: 833px) {
+  .atd-bar {
+    flex-wrap: wrap;
+    height: auto;
+    gap: 10px 12px;
+    padding: 10px 16px;
+  }
+  .atd-tabs {
+    order: 3;
+    width: 100%;
+  }
+}

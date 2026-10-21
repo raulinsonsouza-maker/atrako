@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppTopBar } from "@/components/layout/AppTopBar";
+import { LpHostProvider } from "@/components/layout/LpHostContext";
 
 const OpenAppMenuContext = createContext<() => void>(() => {});
 
@@ -12,12 +13,14 @@ export function useOpenAppMenu() {
   return useContext(OpenAppMenuContext);
 }
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({ children, lpBrand = null }: { children: React.ReactNode; lpBrand?: string | null }) {
+  const lpHost = lpBrand !== null;
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const openMenu = useCallback(() => setMobileOpen(true), []);
   /** Páginas públicas / autenticação — sem sidebar do app. */
   const bare =
+    lpHost ||
     pathname === "/" ||
     pathname.startsWith("/portal") ||
     pathname.startsWith("/sign-in") ||
@@ -36,6 +39,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/criar/paginas") ||
     pathname.startsWith("/food") ||
     pathname.startsWith("/hospedagem") ||
+    pathname.startsWith("/atendimento") ||
     pathname.startsWith("/estadia") ||
     pathname.startsWith("/commerce") ||
     pathname.startsWith("/loja");
@@ -51,15 +55,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (bare) {
     return (
-      <div
-        className={
-          fillViewport
-            ? "flex h-dvh min-h-0 flex-col overflow-hidden bg-[var(--canvas-parchment)]"
-            : undefined
-        }
-      >
-        {children}
-      </div>
+      <LpHostProvider value={lpBrand}>
+        <div
+          className={
+            fillViewport
+              ? "flex h-dvh min-h-0 flex-col overflow-hidden bg-[var(--canvas-parchment)]"
+              : undefined
+          }
+        >
+          {children}
+        </div>
+      </LpHostProvider>
     );
   }
 

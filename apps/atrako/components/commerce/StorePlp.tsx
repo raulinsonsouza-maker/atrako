@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import Link from "next/link";
 import {
   CreditCard,
   Percent,
@@ -26,27 +27,16 @@ function initials(name: string) {
 }
 
 export function StorePlp({ catalog }: { catalog: PublicStoreCatalog }) {
-  const [categoryId, setCategoryId] = useState("");
   const [q, setQ] = useState("");
-
-  useEffect(() => {
-    function onCat(e: Event) {
-      const detail = (e as CustomEvent<{ categoryId: string }>).detail;
-      if (detail?.categoryId) setCategoryId(detail.categoryId);
-    }
-    window.addEventListener("store-category", onCat);
-    return () => window.removeEventListener("store-category", onCat);
-  }, []);
 
   const products = useMemo(() => {
     let list = catalog.products;
-    if (categoryId) list = list.filter((p) => p.categoryId === categoryId);
     const query = q.trim().toLowerCase();
     if (query) list = list.filter((p) => p.name.toLowerCase().includes(query));
     return list;
-  }, [catalog.products, categoryId, q]);
+  }, [catalog.products, q]);
 
-  const filtering = Boolean(categoryId || q.trim());
+  const filtering = Boolean(q.trim());
   const flagged = products.filter((p) => p.badges?.featured);
   const featured = filtering ? [] : (flagged.length > 0 ? flagged.slice(0, 8) : products.slice(0, 4));
   const featuredIds = new Set(featured.map((p) => p.id));
@@ -60,7 +50,6 @@ export function StorePlp({ catalog }: { catalog: PublicStoreCatalog }) {
       storeName={catalog.store.name}
       primaryColor={catalog.brand?.primaryColor || "#cc0000"}
       categories={catalog.categories}
-      activeCategoryId={categoryId}
       searchValue={q}
       onSearch={setQ}
       freeShippingMinCents={freeMin}
@@ -118,15 +107,7 @@ export function StorePlp({ catalog }: { catalog: PublicStoreCatalog }) {
           <h2 className="store-section-title">Qual deles tem o seu coração?</h2>
           <div className="store-cats">
             {catalog.categories.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                className="store-cat"
-                onClick={() => {
-                  setCategoryId(c.id);
-                  document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
+              <Link key={c.id} href={`/loja/${catalog.store.slug}/c/${c.slug}`} className="store-cat">
                 <div className="store-cat__circle">
                   {c.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -136,7 +117,7 @@ export function StorePlp({ catalog }: { catalog: PublicStoreCatalog }) {
                   )}
                 </div>
                 <span>{c.name}</span>
-              </button>
+              </Link>
             ))}
           </div>
         </section>
@@ -163,22 +144,7 @@ export function StorePlp({ catalog }: { catalog: PublicStoreCatalog }) {
 
       <section id="catalogo" aria-label="Catálogo">
         {filtering || rest.length > 0 ? (
-          <h2 className="store-section-title">
-            {categoryId
-              ? catalog.categories.find((c) => c.id === categoryId)?.name ?? "Catálogo"
-              : "Destaques"}
-          </h2>
-        ) : null}
-        {categoryId ? (
-          <p className="type-caption text-center text-[var(--ink-muted-48)]" style={{ marginTop: "-0.75rem", marginBottom: "1rem" }}>
-            <button
-              type="button"
-              className="text-[var(--primary)]"
-              onClick={() => setCategoryId("")}
-            >
-              Ver todos os produtos
-            </button>
-          </p>
+          <h2 className="store-section-title">{filtering ? "Busca" : "Destaques"}</h2>
         ) : null}
         {filtering && rest.length === 0 ? (
           <p className="type-caption text-center text-[var(--ink-muted-48)]">

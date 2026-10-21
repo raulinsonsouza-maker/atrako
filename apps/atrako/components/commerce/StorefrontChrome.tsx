@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Headphones,
@@ -28,7 +29,6 @@ export function StorefrontChrome({
   storeName,
   primaryColor,
   categories = [],
-  activeCategoryId,
   onSearch,
   searchValue,
   freeShippingMinCents,
@@ -41,7 +41,6 @@ export function StorefrontChrome({
   storeName: string;
   primaryColor?: string | null;
   categories?: { id: string; name: string; slug: string }[];
-  activeCategoryId?: string;
   onSearch?: (value: string) => void;
   searchValue?: string;
   freeShippingMinCents?: number | null;
@@ -72,6 +71,9 @@ export function StorefrontChrome({
   }, [searchValue]);
 
   const count = cartCount(lines);
+  const pathname = usePathname();
+  const homeHref = `/loja/${storeSlug}`;
+  const todosActive = pathname === homeHref;
   const look = asStoreTheme(theme);
   const freeLabel =
     freeShippingMinCents != null && freeShippingMinCents > 0
@@ -141,25 +143,17 @@ export function StorefrontChrome({
         {categories.length > 0 ? (
           <nav className="store-nav" aria-label="Categorias">
             <div className="store-nav__inner">
-              <Link href={`/loja/${storeSlug}`} className={!activeCategoryId ? "is-active" : undefined}>
+              <Link href={homeHref} className={todosActive ? "is-active" : undefined}>
                 Todos
               </Link>
-              {categories.map((c) => (
-                <a
-                  key={c.id}
-                  href={`#cat-${c.slug}`}
-                  className={activeCategoryId === c.id ? "is-active" : undefined}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" });
-                    window.dispatchEvent(
-                      new CustomEvent("store-category", { detail: { categoryId: c.id } }),
-                    );
-                  }}
-                >
-                  {c.name}
-                </a>
-              ))}
+              {categories.map((c) => {
+                const href = `${homeHref}/c/${c.slug}`;
+                return (
+                  <Link key={c.id} href={href} className={pathname === href ? "is-active" : undefined}>
+                    {c.name}
+                  </Link>
+                );
+              })}
             </div>
           </nav>
         ) : null}

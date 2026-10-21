@@ -50,6 +50,7 @@ export function StoreProductCard({
       : 99
     : 99;
   const inStock = stockQty > 0;
+  const consult = priceCents <= 0;
   const href = `/loja/${storeSlug}/p/${product.slug}`;
 
   function buy() {
@@ -92,13 +93,15 @@ export function StoreProductCard({
           <Star key={i} className="h-3 w-3" strokeWidth={1.5} />
         ))}
       </div>
-      <p className="store-card__price">{brl(priceCents)}</p>
-      <p className="store-card__pix">
-        {brl(pixCents)} à vista com desconto Pix
-        <br />
-        ou 3x de {brl(Math.round(priceCents / 3))} sem juros
-      </p>
-      {inStock ? (
+      <p className="store-card__price">{consult ? "Sob consulta" : brl(priceCents)}</p>
+      {consult ? null : (
+        <p className="store-card__pix">
+          {brl(pixCents)} à vista com desconto Pix
+          <br />
+          ou 3x de {brl(Math.round(priceCents / 3))} sem juros
+        </p>
+      )}
+      {consult ? null : inStock ? (
         <div className="store-card__actions">
           <div className="store-qty">
             <button type="button" aria-label="Diminuir" onClick={() => setQty((q) => Math.max(1, q - 1))}>

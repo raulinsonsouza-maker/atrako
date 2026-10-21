@@ -182,7 +182,7 @@ export default function StorePdpPage({
         <span>›</span>
         {data.product.category ? (
           <>
-            <Link href={`/loja/${slug}#catalogo`}>{data.product.category.name}</Link>
+            <Link href={`/loja/${slug}/c/${data.product.category.slug}`}>{data.product.category.name}</Link>
             <span>›</span>
           </>
         ) : null}
@@ -205,13 +205,19 @@ export default function StorePdpPage({
           ) : null}
           <div className="store-pdp__meta">
             {sku ? <span>REF: {sku}</span> : null}
-            <span>{inStock ? "Disponibilidade: Imediata" : "Indisponível"}</span>
+            <span>{priceCents <= 0 ? "Sob consulta" : inStock ? "Disponibilidade: Imediata" : "Indisponível"}</span>
           </div>
 
-          <p className="store-pdp__price">{brl(priceCents)}</p>
-          <p className="store-pdp__pay">
-            {brl(pixCents)} à vista com desconto Pix ou 3x de {brl(Math.round(priceCents / 3))} sem juros
-          </p>
+          {priceCents <= 0 ? (
+            <p className="store-pdp__price">Sob consulta</p>
+          ) : (
+            <>
+              <p className="store-pdp__price">{brl(priceCents)}</p>
+              <p className="store-pdp__pay">
+                {brl(pixCents)} à vista com desconto Pix ou 3x de {brl(Math.round(priceCents / 3))} sem juros
+              </p>
+            </>
+          )}
 
           {data.product.variants.length > 0 ? (
             <div className="store-pdp__variant">
@@ -230,6 +236,7 @@ export default function StorePdpPage({
             </div>
           ) : null}
 
+          {priceCents > 0 ? (
           <div className="store-pdp__actions">
             <div className="store-qty">
               <button
@@ -268,6 +275,7 @@ export default function StorePdpPage({
               {!inStock ? "Sem estoque" : added ? "Adicionado" : "Comprar"}
             </button>
           </div>
+          ) : null}
           {added ? (
             <Link href={`/loja/${slug}/carrinho`} className="store-pdp__cart">
               Ver carrinho

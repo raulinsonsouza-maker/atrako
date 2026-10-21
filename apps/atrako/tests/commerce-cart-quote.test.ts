@@ -62,3 +62,17 @@ test("rejeita estoque insuficiente", () => {
   });
   assert.equal(result.ok, false);
 });
+
+test("rejeita produto sem preço", () => {
+  const result = quoteStoreCart({
+    acceptingOrders: true,
+    shipEnabled: true,
+    pickupEnabled: true,
+    minOrderCents: 0,
+    shippingRules: asShippingRules({ defaultFeeCents: 0 }),
+    fulfillment: "PICKUP",
+    lines: [{ ...baseLine, priceCents: 0 }],
+    coupon: null,
+  });
+  assert.equal(result.ok, false);
+});

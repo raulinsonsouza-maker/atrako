@@ -9,7 +9,8 @@
 | `/b/[workspaceSlug]/[pageSlug]` | Página de agenda |
 | `/p/[pageSlug]` | Landing / oferta digital |
 | `/checkout/[productId]` | Checkout digital (1 produto) |
-| `/loja/[slug]` | Vitrine / PLP da loja nativa |
+| `/loja/[slug]` | Vitrine da loja nativa |
+| `/loja/[slug]/c/[categorySlug]` | Página da categoria |
 | `/loja/[slug]/p/[productSlug]` | PDP |
 | `/loja/[slug]/carrinho` | Carrinho |
 | `/loja/[slug]/checkout` | Checkout multi-item + frete |

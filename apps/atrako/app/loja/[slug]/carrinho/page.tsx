@@ -35,6 +35,7 @@ export default function StoreCartPage({ params }: { params: Promise<{ slug: stri
           theme?: StoreTheme;
         };
         brand: { primaryColor?: string | null } | null;
+        categories: { id: string; name: string; slug: string }[];
       }>;
     },
   });
@@ -54,6 +55,7 @@ export default function StoreCartPage({ params }: { params: Promise<{ slug: stri
       storeSlug={data.store.slug}
       storeName={data.store.name}
       primaryColor={data.brand?.primaryColor || "#cc0000"}
+      categories={data.categories}
       freeShippingMinCents={data.store.freeShippingMinCents}
       theme={data.store.theme}
     >

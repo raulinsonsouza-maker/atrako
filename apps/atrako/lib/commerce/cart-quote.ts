@@ -55,6 +55,7 @@ export function quoteStoreCart(input: StoreQuoteInput): StoreQuoteResult {
 
   for (const line of input.lines) {
     if (!line.active) return { ok: false, error: `${line.name} está indisponível.` };
+    if (line.priceCents <= 0) return { ok: false, error: `${line.name} está sob consulta.` };
     if (!Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > 99) {
       return { ok: false, error: "Quantidade inválida." };
     }

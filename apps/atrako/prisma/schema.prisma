@@ -853,6 +853,8 @@ model WorkspaceOAuthPending {
   clienteId    String
   codeVerifier String?
   redirectUri  String?
+  /// Página que fecha o popup quando o OAuth começou no domínio do cliente (ex.: lp.regicenter.com/crm/oauth-complete).
+  returnTo     String?
   expiresAt    DateTime
   createdAt    DateTime @default(now())
 

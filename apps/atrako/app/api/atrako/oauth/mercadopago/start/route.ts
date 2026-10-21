@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { getPublicOrigin } from "@/lib/http/public-origin";
+import { lpOAuthReturnTo } from "@/lib/lp-domains";
 
 function createPkce() {
   const codeVerifier = randomBytes(32).toString("base64url");
@@ -51,6 +52,7 @@ export async function GET(request: NextRequest) {
       clienteId: workspaceId,
       codeVerifier,
       redirectUri,
+      returnTo: lpOAuthReturnTo(getPublicOrigin(request)),
       expiresAt: new Date(Date.now() + 15 * 60 * 1000),
     },
   });

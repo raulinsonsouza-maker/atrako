@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { AppPage } from "@/components/layout/AppPage";
 import { DateRangeFilter } from "@/components/ui";
 import { FinanceiroPanel } from "@/components/atendimento/FinanceiroPanel";
+import { RecebimentosConfig } from "@/components/atendimento/RecebimentosConfig";
 import { useAtendimentoInfo } from "@/components/atendimento/useAtendimentoInfo";
 import { useAtendimentoPeriod } from "@/components/atendimento/useAtendimentoPeriod";
 
@@ -14,7 +15,12 @@ function Financeiro() {
     <AppPage
       title="Financeiro"
       className="md:pt-5"
-      actions={<DateRangeFilter value={period.value} onChange={period.change} />}
+      actions={
+        <div className="flex items-center gap-2">
+          <DateRangeFilter value={period.value} onChange={period.change} />
+          <RecebimentosConfig workspaceId={workspaceId} />
+        </div>
+      }
     >
       {workspaceId ? (
         <FinanceiroPanel workspaceId={workspaceId} query={period.query} periodLabel={period.resolved.label} />

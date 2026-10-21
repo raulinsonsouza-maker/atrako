@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { upsertWorkspaceConnection } from "@/lib/atrako/workspace-connections";
 import { getPublicOrigin } from "@/lib/http/public-origin";
+import { lpOAuthReturnTo } from "@/lib/lp-domains";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
-  const hub = new URL("/config/conexoes/oauth-complete", getPublicOrigin(request));
+  let hub = new URL("/config/conexoes/oauth-complete", getPublicOrigin(request));
 
   if (!code || !state) {
     hub.searchParams.set("error", "oauth_missing");
@@ -14,6 +15,8 @@ export async function GET(request: NextRequest) {
   }
 
   const pending = await prisma.workspaceOAuthPending.findUnique({ where: { state } });
+  const returnTo = pending?.returnTo ? lpOAuthReturnTo(new URL(pending.returnTo).origin) : null;
+  if (returnTo) hub = new URL(returnTo);
   if (!pending || pending.expiresAt < new Date() || pending.provider !== "MERCADO_PAGO") {
     hub.searchParams.set("error", "oauth_expired");
     return NextResponse.redirect(hub);

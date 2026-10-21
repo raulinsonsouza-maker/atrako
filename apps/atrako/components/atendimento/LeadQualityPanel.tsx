@@ -17,7 +17,7 @@ function BarCard({
   limit,
 }: {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   buckets: QualityBucket[];
   total: number;
   limit?: number;
@@ -30,7 +30,7 @@ function BarCard({
   return (
     <div className="rel-card p-5">
       <p className="type-caption-strong text-[var(--ink)]">{title}</p>
-      <p className="mt-0.5 type-fine-print text-[var(--ink-muted-48)]">{subtitle}</p>
+      {subtitle ? <p className="mt-0.5 type-fine-print text-[var(--ink-muted-48)]">{subtitle}</p> : null}
       {total === 0 ? (
         <p className="mt-4 type-fine-print text-[var(--ink-muted-48)]">Sem respostas no período</p>
       ) : (
@@ -118,14 +118,13 @@ export function LeadQualityPanel({
           <BarCard
             key={field.key}
             title={field.label}
-            subtitle={`${fmt(field.answered)} ${field.answered === 1 ? "resposta" : "respostas"} · ${pct(field.answered, totals.leads)}% dos leads`}
             buckets={field.buckets}
             total={field.answered}
             limit={5}
           />
         ))}
-        {states.length ? <BarCard title="Estado" subtitle="De onde vêm os leads" buckets={states} total={sum(states)} limit={5} /> : null}
-        {cities.length ? <BarCard title="Cidade" subtitle="Cidades com mais leads" buckets={cities} total={sum(cities)} limit={5} /> : null}
+        {states.length ? <BarCard title="Estado" buckets={states} total={sum(states)} limit={5} /> : null}
+        {cities.length ? <BarCard title="Cidade" buckets={cities} total={sum(cities)} limit={5} /> : null}
       </div>
     );
   }

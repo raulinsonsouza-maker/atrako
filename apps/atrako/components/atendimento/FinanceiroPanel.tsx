@@ -91,10 +91,7 @@ function ManualEntry({ workspaceId, onSaved }: { workspaceId: string; onSaved: (
         void save();
       }}
     >
-      <div>
-        <p className="type-caption-strong text-[var(--ink)]">Lançar no caixa</p>
-        <p className="mt-0.5 type-fine-print text-[var(--ink-muted-48)]">Outros custos (comissão, ferramenta, evento) ou uma entrada fora do link</p>
-      </div>
+      <p className="type-caption-strong text-[var(--ink)]">Lançar no caixa</p>
       <SegmentedControl
         value={kind}
         onChange={setKind}
@@ -157,44 +154,35 @@ export function FinanceiroPanel({
 
   return (
     <div className={`caixa-shell transition-opacity ${isPlaceholderData ? "opacity-60" : ""}`}>
-      <div className="caixa-kpi-grid">
-        <div className="caixa-saldo-card">
-          <p className="type-fine-print text-[var(--body-muted)]">Resultado · {periodLabel}</p>
-          <p className="type-tagline tabular-nums text-[var(--on-dark)]">{brl(totals.net)}</p>
-          <p className="type-fine-print text-[var(--body-muted)]">Entradas menos custos de mídia e saídas</p>
-        </div>
+      <div className="rel-kpi-grid">
+        <MetricTile
+          label="Resultado"
+          value={brl(totals.net)}
+          tone={totals.net > 0 ? "positive" : totals.net < 0 ? "negative" : undefined}
+          detail={periodLabel}
+        />
         <MetricTile
           label="Entradas"
           value={brl(totals.income - totals.refund)}
-          tone={totals.income > 0 ? "positive" : undefined}
           delta={<Delta value={change.income} />}
-          detail={pending.count ? `${brl(pending.amount)} a receber em ${pending.count} ${pending.count === 1 ? "link" : "links"}` : undefined}
+          detail={pending.count ? `${brl(pending.amount)} a receber` : undefined}
         />
         <MetricTile
           label="Custos"
           value={brl(totals.costs)}
-          tone={totals.costs > 0 ? "negative" : undefined}
           delta={<Delta value={change.adSpend} invert />}
-          detail={`${brl(totals.adSpend)} em mídia${totals.expense ? ` · ${brl(totals.expense)} outras` : ""}`}
+          detail={totals.costs ? `${brl(totals.adSpend)} em mídia` : undefined}
         />
         <MetricTile
           label="Vendas"
           value={totals.sales.toLocaleString("pt-BR")}
           delta={<Delta value={change.sales} />}
-          detail={
-            [
-              totals.roas != null ? `retorno ${totals.roas.toLocaleString("pt-BR")}x a mídia` : null,
-              totals.costPerSale != null ? `${brl(totals.costPerSale)} de mídia por venda` : null,
-            ]
-              .filter(Boolean)
-              .join(" · ") || "Negócios ganhos no período"
-          }
+          detail={totals.roas != null ? `ROAS ${totals.roas.toLocaleString("pt-BR")}x` : undefined}
         />
       </div>
 
       <section className="rel-card p-5">
         <p className="type-caption-strong text-[var(--ink)]">Entradas e custos por dia</p>
-        <p className="mt-0.5 type-fine-print text-[var(--ink-muted-48)]">Pagamentos e negócios ganhos contra o investimento em anúncios e as saídas lançadas</p>
         {hasMovement ? (
           <div className="mt-4 h-60">
             <ResponsiveContainer width="100%" height="100%">
@@ -217,7 +205,6 @@ export function FinanceiroPanel({
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rel-card p-5">
           <p className="type-caption-strong text-[var(--ink)]">Investimento por campanha</p>
-          <p className="mt-0.5 type-fine-print text-[var(--ink-muted-48)]">Custo de mídia do período e leads gerados</p>
           {data.campaigns.length ? (
             <ul className="mt-4 divide-y divide-[var(--divider-soft)]">
               {data.campaigns.map((c) => (

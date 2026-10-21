@@ -72,7 +72,7 @@ function AtendimentoHome() {
       ) : aba === "instagram" ? (
         <SocialMediaPanel clienteId={workspaceId} dateFilter={{ periodo: period.periodo, dataInicio, dataFim }} />
       ) : (
-        <InicioGeral workspaceId={workspaceId} query={period.query} periodLabel={period.resolved.label} />
+        <InicioGeral workspaceId={workspaceId} query={period.query} />
       )}
     </AppPage>
   );

@@ -174,7 +174,7 @@ export function LeadPaymentLinks({ workspaceId, leadId }: { workspaceId: string;
         <div className="utility-card p-4">
           <p className="type-caption-strong text-[var(--ink)]">Mercado Pago não conectado</p>
           <p className="mt-1 type-fine-print text-[var(--ink-muted-80)]">
-            Para cobrar pelo link, a conta do Mercado Pago da empresa precisa ser conectada em Configurações → Conexões.
+            Para cobrar pelo link, conecte a conta do Mercado Pago da empresa em Financeiro, no ícone de engrenagem.
           </p>
         </div>
       ) : (

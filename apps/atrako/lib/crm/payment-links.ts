@@ -78,7 +78,7 @@ export async function createPaymentLink(input: PaymentLinkInput & {
   if (!(await isMercadoPagoReady(input.workspaceId))) {
     return {
       ok: false as const,
-      error: "Conecte o Mercado Pago em Configurações → Conexões para cobrar pelo link.",
+      error: "Conecte o Mercado Pago em Financeiro → Recebimentos (engrenagem) para cobrar pelo link.",
       status: 409,
     };
   }

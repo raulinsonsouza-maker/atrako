@@ -50,5 +50,15 @@ export const LP_DOMAINS: Record<string, LpDomain> =
 export const LP_AREA_PATH = "/crm";
 export const LP_AREA_TARGET = "/atendimento";
 
+/** OAuth iniciado na área do cliente volta para fechar o popup no mesmo domínio (sessão e postMessage). */
+export function lpOAuthReturnTo(origin: string): string | null {
+  try {
+    const host = new URL(origin).hostname.toLowerCase();
+    return LP_DOMAINS[host] ? `${origin}${LP_AREA_PATH}/oauth-complete` : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Prefixos do Atrako expostos no domínio do cliente; o resto volta para a LP. */
 export const LP_DOMAIN_ALLOWED_PREFIXES = ["/api/", "/sign-in", "/change-password", "/pagar/"];

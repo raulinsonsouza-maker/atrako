@@ -18,7 +18,7 @@ import {
 import { logoutEverywhere } from "@/lib/auth/logoutClient";
 import { useAtendimentoBase } from "@/components/layout/LpHostContext";
 import { CrmLinksProvider, type CrmLinks } from "@/components/crm/CrmLinksContext";
-import { useAtendimentoInfo, type AtendimentoRole } from "@/components/atendimento/useAtendimentoInfo";
+import { useAtendimentoInfo } from "@/components/atendimento/useAtendimentoInfo";
 import "@/app/atendimento/atendimento-shell.css";
 
 type Tab = {
@@ -38,13 +38,6 @@ const TABS: Tab[] = [
 ];
 
 const MANAGE_PATHS = TABS.filter((tab) => tab.manage).map((tab) => tab.path);
-
-const ROLE_LABEL: Record<AtendimentoRole, string> = {
-  OWNER: "Responsável",
-  ADMIN: "Gestão",
-  OPERATOR: "Atendimento",
-  ANALYST: "Análise",
-};
 
 const COLLAPSED_KEY = "atrako-atendimento-collapsed";
 
@@ -185,7 +178,7 @@ export function AtendimentoShell({ children }: { children: React.ReactNode }) {
   const sidebar = (
     <aside className={`atd-side${collapsed ? " is-collapsed" : ""}`}>
       {collapsed ? (
-        <div className="flex justify-center px-2 py-4" {...tipProps(data?.name ?? "Atendimento", ROLE_LABEL[role])}>
+        <div className="flex justify-center px-2 py-4" {...tipProps(data?.name ?? "Atendimento")}>
           {mark}
         </div>
       ) : (
@@ -193,7 +186,6 @@ export function AtendimentoShell({ children }: { children: React.ReactNode }) {
           {wordmark ? null : mark}
           <div className="min-w-0 flex-1">
             {wordmark ?? <strong className="type-body-strong">{data?.name ?? "\u00a0"}</strong>}
-            <small className="type-fine-print">{data ? ROLE_LABEL[role] : "\u00a0"}</small>
           </div>
           <button
             type="button"

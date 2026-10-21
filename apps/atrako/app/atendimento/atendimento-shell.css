@@ -5,38 +5,42 @@
 .atd-shell {
   height: 100dvh;
   display: flex;
-  flex-direction: column;
   background: var(--canvas-parchment);
   color: var(--ink);
 }
 
-.atd-bar {
-  flex: none;
+.atd-side {
   display: flex;
-  align-items: center;
-  gap: 24px;
-  height: 60px;
-  padding: 0 24px;
-  background: var(--canvas);
-  border-bottom: 1px solid var(--hairline);
+  flex-direction: column;
+  width: 280px;
+  height: 100dvh;
+  border-right: 1px solid var(--surface-tile-2);
+  background: var(--surface-black);
+  color: var(--on-dark);
+  transition: width 0.15s ease;
 }
 
-.atd-brand {
+.atd-side.is-collapsed {
+  width: 72px;
+}
+
+.atd-side-brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-width: 0;
+  height: 68px;
+  padding: 0 8px 0 16px;
 }
 
-.atd-brand strong,
-.atd-brand small {
+.atd-side-brand strong,
+.atd-side-brand small {
   display: block;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.atd-brand small {
+.atd-side-brand small {
   color: var(--ink-muted-48);
 }
 
@@ -54,58 +58,141 @@
   font-weight: 500;
 }
 
-.atd-tabs {
+.atd-side-btn {
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  color: var(--ink-muted-48);
+}
+
+.atd-side .atd-side-btn:hover {
+  background: var(--surface-tile-2);
+  color: var(--on-dark);
+}
+
+.atd-side-btn:active,
+.atd-nav-item:active,
+.atd-foot-icon:active,
+.atd-foot-leave:active {
+  transform: scale(0.95);
+}
+
+.atd-nav-item {
   display: flex;
-  gap: 4px;
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.atd-tabs a {
-  flex: none;
+  align-items: center;
+  gap: 12px;
   padding: 8px 12px;
-  border-radius: var(--radius-xs);
-  color: var(--ink-muted-80);
+  border-radius: var(--radius-sm);
+  color: var(--body-muted);
   text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.atd-tabs a.is-active {
-  background: var(--primary);
-  color: var(--on-primary);
+.atd-nav-item.is-collapsed {
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto;
+  padding: 0;
 }
 
-.atd-leave {
-  margin-left: auto;
-  flex: none;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-xs);
-  background: var(--canvas);
-  color: var(--ink);
-  padding: 7px 14px;
+.atd-nav-item:hover {
+  background: var(--surface-tile-2);
+  color: var(--on-dark);
+}
+
+.atd-nav-item.is-active {
+  background: var(--surface-tile-1);
+  color: var(--on-dark);
+}
+
+.atd-nav-item.is-active .atd-nav-icon {
+  color: var(--primary-on-dark);
+}
+
+.atd-side-foot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border-top: 1px solid var(--surface-tile-2);
+}
+
+.atd-side-foot.is-collapsed {
+  flex-direction: column;
+}
+
+.atd-foot-icon,
+.atd-foot-leave {
+  align-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--body-muted);
   cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.atd-leave:active { transform: scale(0.95); }
-.atd-leave:disabled { opacity: 0.55; cursor: default; }
+.atd-foot-icon {
+  display: flex;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+.atd-foot-leave {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 12px;
+}
+
+.atd-foot-icon:hover,
+.atd-foot-leave:hover {
+  background: var(--surface-tile-2);
+  color: var(--on-dark);
+}
+
+.atd-foot-icon:disabled,
+.atd-foot-leave:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.atd-mobile-bar {
+  display: none;
+}
 
 .atd-main {
   flex: 1;
+  min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
 }
 
-@media (max-width: 833px) {
-  .atd-bar {
-    flex-wrap: wrap;
-    height: auto;
-    gap: 10px 12px;
-    padding: 10px 16px;
+@media (max-width: 767px) {
+  .atd-shell {
+    flex-direction: column;
   }
-  .atd-tabs {
-    order: 3;
-    width: 100%;
+  .atd-mobile-bar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 56px;
+    padding: 0 12px;
+    background: var(--canvas);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .atd-mobile-bar .atd-side-btn {
+    display: inline-flex;
+    color: var(--ink);
+  }
+  .atd-mobile-bar .atd-mark {
+    width: 30px;
+    height: 30px;
   }
 }

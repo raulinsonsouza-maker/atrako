@@ -1178,9 +1178,10 @@ interface Props {
   mqlByAdId?: Map<string, number>;
   comparePrevious?: boolean;
   comparisonPreset?: string;
+  allowCreate?: boolean;
 }
 
-export function CampanhasPanel({ clienteId, dateFilter, canal = "geral", mqlByCampaignName, mqlByAdsetId, mqlByAdId, comparePrevious = false, comparisonPreset }: Props) {
+export function CampanhasPanel({ clienteId, dateFilter, canal = "geral", mqlByCampaignName, mqlByAdsetId, mqlByAdId, comparePrevious = false, comparisonPreset, allowCreate = true }: Props) {
   const [selectedCampanha, setSelectedCampanha] = React.useState<string | null>(null);
   const [selectedConjunto, setSelectedConjunto] = React.useState<string | null>(null);
   const selectedCampanhaObjRef = React.useRef<Campanha | null>(null);
@@ -1282,7 +1283,7 @@ export function CampanhasPanel({ clienteId, dateFilter, canal = "geral", mqlByCa
             {isRoot ? (
               <>
                 Campanhas
-                {canal === "meta" || canal === "geral" ? (
+                {allowCreate && (canal === "meta" || canal === "geral") ? (
                   <a
                     href={`/criar/campanha-meta?workspaceId=${clienteId}`}
                     className="ml-auto type-caption-strong normal-case rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 text-[var(--primary-foreground)] active:scale-95"

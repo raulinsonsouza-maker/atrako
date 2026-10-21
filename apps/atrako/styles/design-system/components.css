@@ -6728,6 +6728,98 @@ html[data-theme="dark"] .assistant-stage-head button {
   border: 1px dashed currentColor;
 }
 
+/* Mensagens: status dos canais + jornada do lead no WhatsApp */
+.journey-status {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--hairline);
+  background: var(--hairline);
+}
+
+@media (min-width: 1068px) {
+  .journey-status {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.journey-status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 14px 16px;
+  background: var(--canvas);
+}
+
+.journey-grid {
+  display: grid;
+  gap: 24px;
+  margin-top: 12px;
+}
+
+@media (min-width: 1068px) {
+  .journey-grid {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+}
+
+.journey-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: var(--radius-pill);
+  background: var(--ink-muted-48);
+}
+
+.journey-dot[data-tone="ok"] {
+  background: var(--success);
+}
+
+.journey-dot[data-tone="warn"] {
+  background: var(--primary);
+}
+
+.journey-dot[data-tone="bad"] {
+  background: var(--danger);
+}
+
+.journey-count {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 44px;
+}
+
+.journey-count[data-zero="true"] {
+  opacity: 0.4;
+}
+
+.journey-fork {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.journey-brief {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 16px;
+}
+
+.journey-brief dt {
+  color: var(--ink-muted-48);
+}
+
+.journey-brief dd {
+  min-width: 0;
+  color: var(--ink);
+}
+
 .rel-channel-summary {
   display: flex;
   flex-wrap: wrap;

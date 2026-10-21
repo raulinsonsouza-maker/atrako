@@ -28,6 +28,8 @@ export type WaTemplateDef = {
   buttons: WaButtonDef[];
   /** Carrossel: N cards com imagem + botão URL */
   carouselCards?: number;
+  /** Só criado quando pedido (ex.: robô de qualificação ligado), não ao conectar o WA. */
+  onDemand?: boolean;
 };
 
 const OPTOUT: WaButtonDef = { type: "QUICK_REPLY", text: "Não quero receber", payload: "atk_optout" };
@@ -189,6 +191,41 @@ export const WA_TEMPLATE_LIBRARY: WaTemplateDef[] = [
       formal: "Olá {{first_name}}. Confirmamos o recebimento do seu contato na {{store_name}}. Nossa equipe retornará em breve.",
     },
     buttons: [],
+  },
+  {
+    purpose: "qualify_open",
+    category: "UTILITY",
+    onDemand: true,
+    body: {
+      proximo:
+        "Oi {{first_name}}, recebemos seu cadastro na {{store_name}}. São 5 perguntas rápidas para te conectar ao consultor certo. Podemos começar?",
+      neutro:
+        "Olá {{first_name}}, recebemos seu cadastro na {{store_name}}. Responda 5 perguntas rápidas para falar com o consultor certo.",
+      formal:
+        "Olá {{first_name}}. Confirmamos seu cadastro na {{store_name}}. Para direcioná-lo ao consultor adequado, responda 5 perguntas rápidas.",
+    },
+    buttons: [
+      { type: "QUICK_REPLY", text: "Começar", payload: "START_QUALIFICATION" },
+      { type: "QUICK_REPLY", text: "Falar com consultor", payload: "WANT_MEETING" },
+    ],
+  },
+  {
+    purpose: "qualify_nudge",
+    category: "MARKETING",
+    onDemand: true,
+    body: {
+      proximo:
+        "Oi {{first_name}}, seu cadastro na {{store_name}} ficou pela metade. Leva menos de 1 minuto para terminar e falar com um consultor.",
+      neutro:
+        "Olá {{first_name}}, seu cadastro na {{store_name}} ainda não foi concluído. Termine em menos de 1 minuto para falar com um consultor.",
+      formal:
+        "Olá {{first_name}}. Seu cadastro na {{store_name}} ainda não foi concluído. A conclusão leva menos de 1 minuto.",
+    },
+    buttons: [
+      { type: "QUICK_REPLY", text: "Continuar", payload: "START_QUALIFICATION" },
+      { type: "QUICK_REPLY", text: "Falar com consultor", payload: "WANT_MEETING" },
+      OPTOUT,
+    ],
   },
   {
     purpose: "sales_followup",
@@ -647,7 +684,7 @@ export async function ensureDefaultWaTemplates(workspaceId: string, tone?: Email
   const errors: string[] = [];
   const library = purposes?.length
     ? WA_TEMPLATE_LIBRARY.filter((def) => purposes.includes(def.purpose))
-    : WA_TEMPLATE_LIBRARY;
+    : WA_TEMPLATE_LIBRARY.filter((def) => !def.onDemand);
   for (const def of library) {
     if (have.has(def.purpose)) continue;
     try {
@@ -774,6 +811,17 @@ export type TemplateSendValues = {
   cards?: Array<{ imageUrl: string; urlSuffix: string }>;
 };
 
+/** Payload do botão de resposta: o da biblioteca pelo texto; senão saída / ajuda. */
+export function quickReplyPayload(text: string | undefined): string {
+  const t = (text ?? "").trim().toLowerCase();
+  for (const def of WA_TEMPLATE_LIBRARY) {
+    for (const b of def.buttons) {
+      if (b.type === "QUICK_REPLY" && b.text.toLowerCase() === t) return b.payload;
+    }
+  }
+  return /n[aã]o quero|parar|sair/i.test(t) ? "atk_optout" : "atk_help";
+}
+
 /** Converte a definição do template (components da Meta) nos parâmetros de envio. */
 export function buildSendComponents(
   templateComponents: unknown,
@@ -844,7 +892,7 @@ export function buildSendComponents(
             parameters: [{ type: "coupon_code", coupon_code: values.couponCode ?? "" }],
           });
         } else if (bt === "QUICK_REPLY") {
-          const payload = /n[aã]o quero|parar|sair/i.test(btn.text ?? "") ? "atk_optout" : "atk_help";
+          const payload = quickReplyPayload(btn.text);
           out.push({
             type: "button",
             sub_type: "quick_reply",

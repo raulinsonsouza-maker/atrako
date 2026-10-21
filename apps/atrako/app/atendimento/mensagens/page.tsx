@@ -2,6 +2,7 @@
 
 import { FlowsTab } from "@/components/relacionamento/FlowsTab";
 import { LeadEmailsCard } from "@/components/notifications/LeadEmailsCard";
+import { JornadaWhatsApp } from "@/components/atendimento/JornadaWhatsApp";
 import { AppPage } from "@/components/layout/AppPage";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 
@@ -10,11 +11,10 @@ export default function AtendimentoMensagensPage() {
 
   return (
     <AppPage title="Mensagens" className="md:pt-5">
-      <p className="type-body -mt-2 text-[var(--ink-muted-80)]">
-        O que o lead recebe por WhatsApp e e-mail depois do cadastro, até a conversa com a equipe.
-      </p>
       {workspaceId ? (
         <>
+          <JornadaWhatsApp workspaceId={workspaceId} />
+          <h2 className="type-body-strong mt-4 text-[var(--ink)]">E-mails automáticos</h2>
           <FlowsTab workspaceId={workspaceId} pack="inside_sales" />
           <LeadEmailsCard workspaceId={workspaceId} />
         </>

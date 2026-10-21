@@ -67,6 +67,10 @@ export async function onLeadCaptured(input: {
     prisma.nativeContact.findUnique({ where: { id: input.contactId }, select: { email: true, phone: true, phoneE164: true } }),
   ]);
   if ((profile?.ordersCount ?? 0) > 0 || (!contact?.email && !contact?.phone && !contact?.phoneE164)) return;
+  // Lead do playbook de qualificação: o primeiro contato é a abertura da qualificação.
+  const { loadQualificationPrefs, sourceMatchesPlaybook } = await import("@/lib/qualification/playbook");
+  const qualification = await loadQualificationPrefs(input.workspaceId);
+  if (qualification.enabled && sourceMatchesPlaybook(input.source, qualification)) return;
   const { loadAttendance, sendAgentWelcome, welcomeBlockedByAgent } = await import("@/lib/attendance/welcome");
   const { profile: attendance } = await loadAttendance(input.workspaceId);
   if (welcomeBlockedByAgent(attendance)) {

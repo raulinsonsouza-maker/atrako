@@ -1,11 +1,9 @@
 /**
- * Encaminhamento A/B/C → stage CRM + notify + handoff.
- * Soft = só etapa (cadência ainda roda). Hard = handoff quando o lead pediu conversa.
+ * Encaminhamento A/B/C → etapa do CRM + aviso para a equipe.
  */
 
 import { prisma } from "@/lib/db";
 import { notify } from "@/lib/notifications";
-import { handoffConversation } from "@/lib/whatsapp/domain";
 import { exitEnrollments } from "@/lib/flows/engine";
 import { fireAndForget, sendCrmStageConversion } from "@/lib/integrations/meta/capi";
 import type { Priority } from "./classify";
@@ -50,30 +48,6 @@ export async function moveLeadToPriorityStage(input: {
   );
 }
 
-/** Após form/cadastro: move etapa e avisa a equipe sem fechar a cadência. */
-export async function applySoftPriorityRouting(input: {
-  workspaceId: string;
-  leadId: string;
-  priority: Priority;
-  contactName?: string | null;
-}) {
-  await moveLeadToPriorityStage(input);
-  await notify({
-    clienteId: input.workspaceId,
-    role: "ADMIN",
-    type: "wa.qualify_captured",
-    title:
-      input.priority === "C"
-        ? "Novo lead franquia (nutrição)"
-        : "Novo lead franquia — aguardando WhatsApp",
-    body: `${input.contactName || "Lead"} preencheu o formulário (${input.priority === "A" ? "quente" : input.priority === "B" ? "interessado" : "nutrição"}). A cadência no WhatsApp já começou.`,
-    href: "/crm",
-    severity: "info",
-    dedupeKey: `qualify-soft:${input.leadId}`,
-    email: false,
-  });
-}
-
 /** Lead pediu conversa ou humano: a nutrição por e-mail da franquia para. */
 export async function exitFranchiseNurture(workspaceId: string, leadId: string, reason: string) {
   const lead = await prisma.nativeLead.findFirst({
@@ -89,44 +63,39 @@ export async function exitFranchiseNurture(workspaceId: string, leadId: string, 
   }).catch((err) => console.warn("[qualification] nurture exit", err instanceof Error ? err.message : err));
 }
 
-/** Lead pediu conversa / handoff humano — aí sim agenda. */
-export async function applyPriorityRouting(input: {
+/** Conversa passou para a equipe — aviso com a ficha. */
+export async function notifyHandoff(input: {
   workspaceId: string;
   leadId: string;
-  conversationId: string;
-  priority: Priority;
+  priority: Priority | null;
   contactName?: string | null;
+  brief: string;
 }) {
-  await moveLeadToPriorityStage(input);
-  await exitFranchiseNurture(input.workspaceId, input.leadId, "meeting_requested");
+  const name = input.contactName || "Lead";
+  const hot = input.priority === "A";
+  await notify({
+    clienteId: input.workspaceId,
+    role: "ADMIN",
+    type: hot ? "wa.qualified_a" : input.priority === "B" ? "wa.qualified_b" : "wa.handoff",
+    title: hot ? `${name} · lead quente quer conversar` : `${name} quer falar com um consultor`,
+    body: input.brief.split("\n").slice(1).join(" · "),
+    href: `/crm/leads/${input.leadId}`,
+    severity: hot ? "urgente" : "aviso",
+    dedupeKey: `qualify-handoff:${input.leadId}`,
+    email: hot,
+  });
+}
 
-  if (input.priority === "A" || input.priority === "B") {
-    await handoffConversation(input.conversationId, input.workspaceId);
-    await notify({
-      clienteId: input.workspaceId,
-      role: "ADMIN",
-      type: input.priority === "A" ? "wa.qualified_a" : "wa.qualified_b",
-      title:
-        input.priority === "A"
-          ? "Lead franquia quente — pediu conversa"
-          : "Lead franquia interessado — pediu conversa",
-      body: `${input.contactName || "Lead"} pediu para falar com a equipe. Abra o WhatsApp e continue a conversa.`,
-      href: "/whatsapp",
-      severity: input.priority === "A" ? "urgente" : "aviso",
-      dedupeKey: `qualify-${input.priority}:${input.leadId}`,
-      email: input.priority === "A",
-    });
-  } else {
-    await notify({
-      clienteId: input.workspaceId,
-      role: "ADMIN",
-      type: "wa.qualified_c",
-      title: "Lead franquia em nutrição",
-      body: `${input.contactName || "Lead"} segue na nutrição — manter contato leve.`,
-      href: "/crm",
-      severity: "info",
-      dedupeKey: `qualify-C:${input.leadId}`,
-      email: false,
-    });
-  }
+export async function notifyNurture(input: { workspaceId: string; leadId: string; contactName?: string | null }) {
+  await notify({
+    clienteId: input.workspaceId,
+    role: "ADMIN",
+    type: "wa.qualified_c",
+    title: `${input.contactName || "Lead"} foi para a nutrição`,
+    body: "Ainda avaliando. Segue nos e-mails e volta para a equipe se pedir conversa.",
+    href: `/crm/leads/${input.leadId}`,
+    severity: "info",
+    dedupeKey: `qualify-C:${input.leadId}`,
+    email: false,
+  });
 }

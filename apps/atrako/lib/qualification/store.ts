@@ -14,6 +14,7 @@ import {
   WA_ASK_ORDER,
 } from "./fields";
 import { resolveChoice } from "./choices";
+import { HANDOFF_REASON_LABEL, type HandoffReason } from "./journey";
 import {
   classifyLead,
   mapInvestmentCode,
@@ -32,6 +33,14 @@ export type ConversationQualifyState = {
   presentationSentAt?: string | null;
   followUpCount?: number;
   city_missing?: boolean;
+  /** Perguntas que faltavam quando o lead começou (para "2 de 5"). */
+  totalQuestions?: number;
+  /** Respostas seguidas fora das opções na pergunta atual. */
+  invalidCount?: number;
+  /** Abertura entregue (modelo ou interativa); null = retida, a cadência tenta de novo. */
+  openedAt?: string | null;
+  handoffAt?: string | null;
+  handoffReason?: HandoffReason;
 };
 
 export type LeadQualification = {
@@ -81,6 +90,14 @@ export function parseConversationQualify(raw: unknown): ConversationQualifyState
     presentationSentAt: typeof q.presentationSentAt === "string" ? q.presentationSentAt : null,
     followUpCount: typeof q.followUpCount === "number" ? q.followUpCount : 0,
     city_missing: q.city_missing === true,
+    totalQuestions: typeof q.totalQuestions === "number" ? q.totalQuestions : undefined,
+    invalidCount: typeof q.invalidCount === "number" ? q.invalidCount : 0,
+    openedAt: typeof q.openedAt === "string" ? q.openedAt : null,
+    handoffAt: typeof q.handoffAt === "string" ? q.handoffAt : null,
+    handoffReason:
+      typeof q.handoffReason === "string" && q.handoffReason in HANDOFF_REASON_LABEL
+        ? (q.handoffReason as HandoffReason)
+        : undefined,
   };
 }
 

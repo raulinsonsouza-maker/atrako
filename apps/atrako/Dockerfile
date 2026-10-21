@@ -43,6 +43,8 @@ COPY --from=builder /app/apps/atrako/.next ./.next
 COPY --from=builder /app/apps/atrako/public ./public
 COPY --from=builder /app/apps/atrako/package.json ./
 COPY --from=builder /app/apps/atrako/next.config.* ./
+# next start recompila o next.config.ts e importa este arquivo em runtime.
+COPY --from=builder /app/apps/atrako/lib/lp-domains.ts ./lib/lp-domains.ts
 COPY --from=builder /app/apps/atrako/lib/generated ./lib/generated
 COPY --from=builder /app/apps/atrako/prisma ./prisma
 COPY --from=builder /app/node_modules ./node_modules

@@ -24,6 +24,14 @@ function asRecord(raw: unknown): Record<string, unknown> {
   return raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
 }
 
+/** Com a nutrição da franquia ativa, os e-mails são dela (limite de 1 por dia). */
+async function inFranchiseNurture(clienteId: string, contactId: string) {
+  const n = await prisma.messageFlowEnrollment.count({
+    where: { clienteId, contactId, status: { in: ["ACTIVE", "PAUSED"] }, flow: { trigger: "franchise_nurture" } },
+  });
+  return n > 0;
+}
+
 export async function enrollQualifyCadence(input: {
   workspaceId: string;
   contactId: string;
@@ -150,7 +158,7 @@ export async function processDueQualifyCadence(limit = 50) {
           }).catch(() => null);
         }
       }
-      if (step === 1 && contact.email) {
+      if (step === 1 && contact.email && !(await inFranchiseNurture(lead.clienteId, contact.id))) {
         try {
           const { sendEmailMessage } = await import("@/lib/flows/send");
           const first = contact.name?.trim().split(/\s+/)[0] || "";
@@ -195,7 +203,7 @@ export async function processDueQualifyCadence(limit = 50) {
         });
       }
     } else {
-      if (step === 0 && contact.email && missing.length) {
+      if (step === 0 && contact.email && missing.length && !(await inFranchiseNurture(lead.clienteId, contact.id))) {
         try {
           const { sendEmailMessage } = await import("@/lib/flows/send");
           const first = contact.name?.trim().split(/\s+/)[0] || "";

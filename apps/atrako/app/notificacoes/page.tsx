@@ -9,6 +9,7 @@ import { Button, OptionChip } from "@/components/ui";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 import { markNotificationsRead, useNotifications } from "@/components/relacionamento/NotificationBell";
 import { api, timeAgo } from "@/components/relacionamento/format";
+import { LeadEmailsCard } from "@/components/notifications/LeadEmailsCard";
 
 const SEVERITY_LABEL = { info: "Info", aviso: "Aviso", urgente: "Urgente" } as const;
 
@@ -120,6 +121,8 @@ export default function NotificacoesPage() {
               </div>
             </section>
           ) : null}
+
+          {workspaceId ? <LeadEmailsCard workspaceId={workspaceId} /> : null}
         </>
       )}
     </AppPage>

@@ -30,7 +30,7 @@ import {
   postFormPresentationCopy,
   presentationCopy,
 } from "./messages";
-import { applyPriorityRouting, applySoftPriorityRouting } from "./routing";
+import { applyPriorityRouting, applySoftPriorityRouting, exitFranchiseNurture } from "./routing";
 import { classifyLead } from "./classify";
 
 const HUMAN_RE =
@@ -284,6 +284,7 @@ export async function handleQualificationInbound(input: {
       currentState: "human_handoff",
       awaitingField: null,
     });
+    await exitFranchiseNurture(input.workspaceId, input.leadId, "human_handoff");
     await sendAndPersistText({
       workspaceId: input.workspaceId,
       to: input.phone,

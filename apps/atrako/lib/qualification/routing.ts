@@ -6,6 +6,7 @@
 import { prisma } from "@/lib/db";
 import { notify } from "@/lib/notifications";
 import { handoffConversation } from "@/lib/whatsapp/domain";
+import { exitEnrollments } from "@/lib/flows/engine";
 import { fireAndForget, sendCrmStageConversion } from "@/lib/integrations/meta/capi";
 import type { Priority } from "./classify";
 
@@ -73,6 +74,21 @@ export async function applySoftPriorityRouting(input: {
   });
 }
 
+/** Lead pediu conversa ou humano: a nutrição por e-mail da franquia para. */
+export async function exitFranchiseNurture(workspaceId: string, leadId: string, reason: string) {
+  const lead = await prisma.nativeLead.findFirst({
+    where: { id: leadId, clienteId: workspaceId },
+    select: { contactId: true },
+  });
+  if (!lead?.contactId) return;
+  await exitEnrollments({
+    clienteId: workspaceId,
+    contactId: lead.contactId,
+    reason,
+    triggers: ["franchise_nurture"],
+  }).catch((err) => console.warn("[qualification] nurture exit", err instanceof Error ? err.message : err));
+}
+
 /** Lead pediu conversa / handoff humano — aí sim agenda. */
 export async function applyPriorityRouting(input: {
   workspaceId: string;
@@ -82,6 +98,7 @@ export async function applyPriorityRouting(input: {
   contactName?: string | null;
 }) {
   await moveLeadToPriorityStage(input);
+  await exitFranchiseNurture(input.workspaceId, input.leadId, "meeting_requested");
 
   if (input.priority === "A" || input.priority === "B") {
     await handoffConversation(input.conversationId, input.workspaceId);

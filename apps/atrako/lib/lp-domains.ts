@@ -29,6 +29,12 @@ export function lpDomainForWorkspace(slug: string | null | undefined): LpDomain 
   return Object.values(DOMAINS).find((domain) => domain.workspaceSlug === slug) ?? null;
 }
 
+/** Host público (produção) do domínio do workspace, para links em e-mail. */
+export function lpHostForWorkspace(slug: string | null | undefined): string | null {
+  if (!slug) return null;
+  return Object.entries(DOMAINS).find(([, domain]) => domain.workspaceSlug === slug)?.[0] ?? null;
+}
+
 /** Em dev, `lp.regicenter.localhost:5000` simula o domínio (o navegador resolve *.localhost para 127.0.0.1). */
 export const LP_DOMAINS: Record<string, LpDomain> =
   process.env.NODE_ENV === "production"

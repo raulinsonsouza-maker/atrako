@@ -15,6 +15,7 @@ export const TRIGGER_LABEL: Record<string, string> = {
   winback: "Cliente inativo",
   lead_lost: "Lead marcado como perdido",
   lead_welcome: "Novo cadastro",
+  franchise_nurture: "Lead da franquia",
   date_based: "Data importante",
   stay_unpaid: "Reserva sem pagamento",
   stay_confirmed: "Reserva confirmada",

@@ -1,6 +1,7 @@
 "use client";
 
 import { FlowsTab } from "@/components/relacionamento/FlowsTab";
+import { LeadEmailsCard } from "@/components/notifications/LeadEmailsCard";
 import { AppPage } from "@/components/layout/AppPage";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 
@@ -13,7 +14,10 @@ export default function AtendimentoMensagensPage() {
         O que o lead recebe por WhatsApp e e-mail depois do cadastro, até a conversa com a equipe.
       </p>
       {workspaceId ? (
-        <FlowsTab workspaceId={workspaceId} pack="inside_sales" />
+        <>
+          <FlowsTab workspaceId={workspaceId} pack="inside_sales" />
+          <LeadEmailsCard workspaceId={workspaceId} />
+        </>
       ) : (
         <p className="type-caption text-[var(--ink-muted-48)]">Carregando…</p>
       )}

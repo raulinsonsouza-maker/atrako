@@ -2,11 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { isRead, memberNotifyPrefs, visibleWhere } from "@/lib/notifications";
 import { flowActor, gate, readBody, bad } from "@/lib/flows/api";
+import { parseLeadEmails } from "@/lib/notifications/lead-team-email";
 
-/** Lista + contagem de não lidas (sino e /notificacoes). */
+const EMAIL_RE = /^[^\s@<>]+@[^\s@<>]+\.[a-z]{2,}$/i;
+
+/** Lista + contagem de não lidas (sino e /notificacoes). `?leadEmails=1` → destinatários do aviso de lead novo. */
 export async function GET(request: NextRequest) {
   const g = await gate(request);
   if (!g.ok) return g.response;
+  if (request.nextUrl.searchParams.get("leadEmails") === "1") {
+    const s = await prisma.workspaceSettings.findUnique({ where: { clienteId: g.workspaceId }, select: { notifyPrefs: true } });
+    return NextResponse.json({ leadEmails: parseLeadEmails(s?.notifyPrefs) });
+  }
   const actor = await flowActor(g.workspaceId);
   const where = visibleWhere(g.workspaceId, { memberId: actor.memberId, role: actor.role });
   const sp = request.nextUrl.searchParams;
@@ -63,6 +70,23 @@ export async function POST(request: NextRequest) {
       data: { notifyPrefs: JSON.parse(JSON.stringify({ ...np, members })) },
     });
     return NextResponse.json({ ok: true });
+  }
+
+  if (body.action === "leadEmails") {
+    const m = await gate(request, "manage", body);
+    if (!m.ok) return m.response;
+    const raw = Array.isArray(body.emails) ? body.emails : [];
+    const emails = [...new Set(raw.map((e) => (typeof e === "string" ? e.trim().toLowerCase() : "")).filter(Boolean))];
+    const invalid = emails.filter((e) => !EMAIL_RE.test(e));
+    if (invalid.length) return bad(`E-mail inválido: ${invalid[0]}`);
+    if (emails.length > 10) return bad("Máximo de 10 destinatários");
+    const s = await prisma.workspaceSettings.findUnique({ where: { clienteId: g.workspaceId }, select: { notifyPrefs: true } });
+    const np = (s?.notifyPrefs ?? {}) as Record<string, unknown>;
+    await prisma.workspaceSettings.update({
+      where: { clienteId: g.workspaceId },
+      data: { notifyPrefs: JSON.parse(JSON.stringify({ ...np, leadEmails: emails })) },
+    });
+    return NextResponse.json({ ok: true, leadEmails: emails });
   }
 
   const where = visibleWhere(g.workspaceId, { memberId: actor.memberId, role: actor.role });

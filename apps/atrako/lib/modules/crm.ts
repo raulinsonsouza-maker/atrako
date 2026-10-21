@@ -836,6 +836,16 @@ export async function updateLeadStage(input: {
     );
   }
 
+  if (status !== "OPEN" && lead.status === "OPEN" && updated.contactId) {
+    const { exitEnrollments } = await import("@/lib/flows/engine");
+    await exitEnrollments({
+      clienteId: input.workspaceId,
+      contactId: updated.contactId,
+      reason: status === "WON" ? "lead_won" : "lead_lost",
+      triggers: ["franchise_nurture"],
+    }).catch((err) => console.warn("[crm] nurture exit", err instanceof Error ? err.message : err));
+  }
+
   if (reason && updated.contactId) {
     const { enrollContact } = await import("@/lib/flows/engine");
     await enrollContact({

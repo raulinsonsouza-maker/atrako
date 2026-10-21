@@ -18,6 +18,10 @@ function getFieldValue(
   return null;
 }
 
+/** Sync puxa histórico: só leads recentes geram aviso de lead novo para a equipe. */
+const TEAM_NOTIFY_WINDOW_MS = 48 * 3_600_000;
+const isRecentLead = (createdTime: Date) => Date.now() - createdTime.getTime() < TEAM_NOTIFY_WINDOW_MS;
+
 export interface MetaLeadsSyncResult {
   leadsProcessed: number;
   leadsCreated: number;
@@ -200,6 +204,7 @@ export async function syncMetaLeadsCliente(
               phone: telefone,
               source: "meta_lead",
               welcome: true,
+              notifyTeam: isRecentLead(createdTime),
               metadata: {
                 channel: "meta",
                 campaignId: lead.campaign_id ?? null,
@@ -336,6 +341,7 @@ export async function syncMetaLeadsCliente(
                   phone: telefone,
                   source: "meta_lead",
                   welcome: true,
+                  notifyTeam: isRecentLead(createdTime),
                   metadata: {
                     channel: "meta",
                     campaignId: lead.campaign_id ?? null,

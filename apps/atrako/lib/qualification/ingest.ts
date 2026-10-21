@@ -8,6 +8,29 @@ import { answerFromRaw, writeLeadAnswers } from "./store";
 import { loadQualificationPrefs, sourceMatchesPlaybook } from "./playbook";
 import { startQualificationFlow } from "./engine";
 import { enrollQualifyCadence } from "./cadence";
+import { getServerPublicOrigin } from "@/lib/http/public-origin";
+import { enrollContact } from "@/lib/flows/engine";
+import { ensureFranchiseFlows } from "@/lib/flows/playbooks-franchise";
+
+/** Matricula o lead na nutrição por e-mail da franquia (cria o fluxo na 1ª vez). */
+async function enrollFranchiseNurture(input: {
+  workspaceId: string;
+  contactId: string;
+  leadId: string;
+  destination: string;
+}) {
+  await ensureFranchiseFlows(input.workspaceId);
+  return enrollContact({
+    clienteId: input.workspaceId,
+    trigger: "franchise_nurture",
+    contactId: input.contactId,
+    leadId: input.leadId,
+    refType: "lead",
+    refId: input.leadId,
+    dedupeKey: `lead:${input.leadId}`,
+    context: { destination: input.destination },
+  });
+}
 
 export async function ingestFormAnswersIntoLead(input: {
   workspaceId: string;
@@ -48,8 +71,17 @@ export async function ingestFormAnswersIntoLead(input: {
 
   const contact = await prisma.nativeContact.findFirst({
     where: { id: input.contactId, clienteId: input.workspaceId },
-    select: { phoneE164: true, phone: true, name: true },
+    select: { phoneE164: true, phone: true, name: true, email: true },
   });
+
+  if (contact?.email && prefs.playbookId === "franchise_regicenter") {
+    await enrollFranchiseNurture({
+      workspaceId: input.workspaceId,
+      contactId: input.contactId,
+      leadId: input.leadId,
+      destination: `${getServerPublicOrigin()}/f/${prefs.qualifyFormSlug}`,
+    }).catch((err) => console.warn("[qualification] nurture", err instanceof Error ? err.message : err));
+  }
   const phone = contact?.phoneE164 || contact?.phone;
   if (!phone) {
     await enrollQualifyCadence({

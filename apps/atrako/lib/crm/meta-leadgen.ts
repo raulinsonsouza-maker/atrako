@@ -134,6 +134,7 @@ export async function ingestMetaLeadgenWebhook(payload: unknown) {
         phone,
         source: "meta_lead",
         welcome: true,
+        notifyTeam: true,
         metadata: {
           channel: "meta",
           campaignId: lead.campaign_id ?? null,

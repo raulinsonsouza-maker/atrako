@@ -18,13 +18,13 @@ function esc(s: string) {
     .replace(/"/g, "&quot;");
 }
 
-/** Texto do bloco: escapa, **negrito**, quebras de linha e parágrafos. */
-function richText(text: string) {
+/** Texto do bloco: escapa, **negrito**, quebras de linha e parágrafos (cada `<p>` repete o estilo — clientes de e-mail não herdam). */
+function richText(text: string, pStyle: string) {
   return esc(text)
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .split(/\n{2,}/)
     .map((p) => p.replace(/\n/g, "<br>"))
-    .join("</p><p style=\"margin:0 0 14px 0\">");
+    .join(`</p><p style="${pStyle}">`);
 }
 
 function plain(text: string) {
@@ -148,7 +148,8 @@ export function renderEmail({ theme, content, ctx }: RenderInput) {
       case "text": {
         const v = tx(b.text);
         if (!v.trim()) break;
-        html.push(`<p style="margin:0 0 14px 0;font-family:${font};font-size:16px;line-height:1.55;color:${c.text}">${richText(v)}</p>`);
+        const pStyle = `margin:0 0 14px 0;font-family:${font};font-size:16px;line-height:1.55;color:${c.text}`;
+        html.push(`<p style="${pStyle}">${richText(v, pStyle)}</p>`);
         text.push(plain(v), "");
         break;
       }

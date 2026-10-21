@@ -273,5 +273,10 @@ export async function completeCaptureForm(input: {
     console.warn("[capture-form] qualification ingest", err instanceof Error ? err.message : err);
   }
 
+  const { sendLeadTeamEmail } = await import("@/lib/notifications/lead-team-email");
+  await sendLeadTeamEmail(form.clienteId, lead.id).catch((err) =>
+    console.warn("[capture-form] team email", err instanceof Error ? err.message : err),
+  );
+
   return { leadId: lead.id, formId: form.id };
 }

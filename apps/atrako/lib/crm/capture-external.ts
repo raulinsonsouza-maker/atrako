@@ -15,6 +15,8 @@ export async function captureExternalLead(input: {
   payload?: Record<string, unknown>;
   /** Matricula a régua de boas-vindas só quando o card acaba de nascer. */
   welcome?: boolean;
+  /** Avisa a equipe por e-mail (notifyPrefs.leadEmails) quando o card nasce. Importações em lote não avisam. */
+  notifyTeam?: boolean;
 }): Promise<{ leadId: string; contactId: string | null; created: boolean } | null> {
   const name = input.name?.trim() || "";
   const email = input.email?.trim() || "";
@@ -40,6 +42,12 @@ export async function captureExternalLead(input: {
       payload: input.payload ?? {},
       source: input.source,
     }).catch((err) => console.warn("[capture-external] welcome", err instanceof Error ? err.message : err));
+  }
+  if (created && input.notifyTeam) {
+    const { sendLeadTeamEmail } = await import("@/lib/notifications/lead-team-email");
+    await sendLeadTeamEmail(input.workspaceId, lead.id).catch((err) =>
+      console.warn("[capture-external] team email", err instanceof Error ? err.message : err),
+    );
   }
 
   return { leadId: lead.id, contactId: lead.contactId, created };

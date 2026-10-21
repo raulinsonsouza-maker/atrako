@@ -2,12 +2,14 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { QualifyFieldKey } from "@/lib/qualification/fields";
-import type { QualifyScript, ScriptBlockId } from "@/lib/qualification/script";
+import type { FormField, QualifyScript, ScriptBlockId } from "@/lib/qualification/script";
 import type { TemplateBlock, TemplateState } from "@/lib/qualification/templates";
 
 export type Jornada = {
   brand: string;
   enabled: boolean;
+  form: { name: string; fields: FormField[] };
+  /** Obrigatórios no cadastro — nunca perguntados no WhatsApp. */
   lpKeys: QualifyFieldKey[];
   script: QualifyScript;
   defaults: QualifyScript;
@@ -18,8 +20,6 @@ export type Jornada = {
   };
   templates: Record<TemplateBlock, TemplateState>;
   live: { qualifying: number; withTeam: number; noReply: number; nurture: number };
-  priorities: { A: number; B: number; C: number };
-  answerCounts: Partial<Record<QualifyFieldKey, Record<string, number>>>;
 };
 
 export type SaveResult = {

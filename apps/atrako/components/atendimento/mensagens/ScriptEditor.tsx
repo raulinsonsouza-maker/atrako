@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useMemo } from "react";
-import { ArrowDown, ArrowUp, CalendarClock, ListChecks, MessageCircle, Sprout, UserRoundCheck } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarClock, ClipboardList, ListChecks, MessageCircle, Sprout, UserRoundCheck } from "lucide-react";
 import { Button, Switch } from "@/components/ui";
 import { leadBrief } from "@/lib/qualification/journey";
 import type { QualifyAnswers, QualifyFieldKey } from "@/lib/qualification/fields";
@@ -75,12 +75,16 @@ export function ScriptEditor({ data, s, canManage }: { data: Jornada; s: ScriptD
     message: s.messageFor(block),
   });
 
+  const visible = draft.questions.filter((q) => !data.lpKeys.includes(q.key));
+  const optionalInForm = new Set(data.form.fields.filter((f) => !f.required).map((f) => f.key));
+
   function move(key: QualifyFieldKey, dir: -1 | 1) {
-    const order = draft.questions.map((q) => q.key);
-    const i = order.indexOf(key);
+    const keys = visible.map((q) => q.key);
+    const i = keys.indexOf(key);
     const j = i + dir;
-    if (j < 0 || j >= order.length) return;
-    [order[i], order[j]] = [order[j]!, order[i]!];
+    if (j < 0 || j >= keys.length) return;
+    [keys[i], keys[j]] = [keys[j]!, keys[i]!];
+    const order = [...keys, ...data.lpKeys.filter((k) => draft.questions.some((q) => q.key === k))];
     const next = { ...draft, questions: order.map((k) => draft.questions.find((q) => q.key === k)!) };
     s.saveNow("questions", next, { questionOrder: order });
   }
@@ -90,6 +94,26 @@ export function ScriptEditor({ data, s, canManage }: { data: Jornada; s: ScriptD
   return (
     <div className="script-grid">
       <div className="script-list">
+        <section className="script-signup">
+          <span className="script-block-icon">
+            <ClipboardList className="h-3.5 w-3.5" strokeWidth={1.75} />
+          </span>
+          <span className="min-w-0">
+            <span className="type-caption-strong block text-[var(--ink)]">Cadastro na LP</span>
+            <span className="type-fine-print block text-[var(--ink-muted-48)]">
+              O que o lead já respondeu aqui não é perguntado de novo no WhatsApp.
+            </span>
+            <span className="mt-1.5 flex flex-wrap gap-1">
+              {data.form.fields.map((f) => (
+                <span key={f.key} className="script-chip type-micro-legal" data-optional={!f.required || undefined}>
+                  {f.label}
+                  {f.required ? "" : " · opcional"}
+                </span>
+              ))}
+            </span>
+          </span>
+        </section>
+
         <GroupHead title="Primeiro contato" />
         <ScriptBlock
           icon={MessageCircle}
@@ -124,15 +148,14 @@ export function ScriptEditor({ data, s, canManage }: { data: Jornada; s: ScriptD
             />
           </label>
         </GroupHead>
-        {draft.questions.map((q, i) => {
+        {visible.map((q, i) => {
           const block = `question:${q.key}` as const;
-          const fromLp = data.lpKeys.includes(q.key);
           return (
             <Fragment key={q.key}>
               <ScriptBlock
                 icon={ListChecks}
                 title={q.label}
-                summary={fromLp ? `Só se não veio no formulário · ${q.text}` : q.text}
+                summary={optionalInForm.has(q.key) ? `Só se não veio no cadastro · ${q.text}` : q.text}
                 chips={q.options.map((o) => o.label)}
                 off={!q.enabled}
                 aside={
@@ -162,7 +185,7 @@ export function ScriptEditor({ data, s, canManage }: { data: Jornada; s: ScriptD
                     <Button
                       size="toolbar"
                       variant="ghost"
-                      disabled={i === draft.questions.length - 1 || s.saving}
+                      disabled={i === visible.length - 1 || s.saving}
                       onClick={() => move(q.key, 1)}
                       aria-label="Descer"
                     >
@@ -179,7 +202,7 @@ export function ScriptEditor({ data, s, canManage }: { data: Jornada; s: ScriptD
         <ScriptBlock
           icon={CalendarClock}
           title="Melhor horário"
-          summary={firstLine(draft.bestTime.text, brand)}
+          summary={`${optionalInForm.has("best_contact_time") ? "Só se não veio no cadastro · " : ""}${firstLine(draft.bestTime.text, brand)}`}
           chips={["Manhã", "Tarde", "Noite"]}
           off={!draft.bestTime.enabled}
           aside={
@@ -196,7 +219,7 @@ export function ScriptEditor({ data, s, canManage }: { data: Jornada; s: ScriptD
             value={draft.bestTime.text}
             onChange={(text) => s.setDraft({ ...draft, bestTime: { ...draft.bestTime, text } })}
             vars={["nome", "empresa"]}
-            hint="Só para leads A e B, e só se o horário não veio no formulário."
+            hint="Só para quem tem perfil para a equipe, e só se o horário não veio no cadastro."
           />
         </ScriptBlock>
 

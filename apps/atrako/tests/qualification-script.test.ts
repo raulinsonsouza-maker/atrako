@@ -5,12 +5,14 @@ import { matchChoice } from "../lib/qualification/choices";
 import type { QualifyAnswers, QualifyFieldKey } from "../lib/qualification/fields";
 import { answerFromRaw, snapshotFromAnswers } from "../lib/qualification/store";
 import { parseQualificationPrefs } from "../lib/qualification/playbook";
+import { REGICENTER_LP_FORM } from "../lib/qualification/forms";
 import {
   DEFAULT_SCRIPT,
   applyBlock,
   askKeysOf,
   classifyWithRules,
   customizedBlocks,
+  formFieldsFromSteps,
   openingMessage,
   questionMessage,
   renderText,
@@ -135,6 +137,20 @@ test("condição de pergunta desligada não conta na regra", () => {
   assert.equal(classifyWithRules(a, DEFAULT_SCRIPT.rules), "C");
   const active = askKeysOf(DEFAULT_SCRIPT).filter((k) => k !== "business_objective");
   assert.equal(classifyWithRules(a, DEFAULT_SCRIPT.rules, active), "A");
+});
+
+test("cadastro da LP: campos obrigatórios não voltam no WhatsApp", () => {
+  const fields = formFieldsFromSteps(REGICENTER_LP_FORM.steps);
+  assert.deepEqual(
+    fields.map((f) => f.key),
+    ["name", "phone", "email", "state", "city", "best_contact_time"],
+  );
+  assert.equal(fields.find((f) => f.key === "best_contact_time")?.required, false);
+  const lpKeys = fields.filter((f) => f.required).map((f) => f.key);
+  const asked = scriptConversation(DEFAULT_SCRIPT, { brand: "Regicenter", lpKeys }).filter((i) => i.kind === "received" && i.block.startsWith("question:"));
+  assert.equal(asked.some((i) => i.block === "question:city"), false);
+  assert.equal(asked.length, 5);
+  assert.deepEqual(formFieldsFromSteps(null), []);
 });
 
 test("prazos dos toques ficam em ordem crescente", () => {

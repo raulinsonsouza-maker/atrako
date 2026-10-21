@@ -152,11 +152,12 @@ function progressOf(ctx: Ctx, answers: QualifyAnswers) {
   return { missing, total, index: total - missing.length + 1 };
 }
 
-async function askNext(ctx: Ctx, answers: QualifyAnswers) {
+/** Próxima pergunta que falta; `prefix` vai no mesmo balão (uma mensagem por vez mantém o ritmo). */
+async function askNext(ctx: Ctx, answers: QualifyAnswers, prefix?: string) {
   const { missing, total, index } = progressOf(ctx, answers);
   if (!missing.length) return finishQuestions(ctx, answers);
   const next = missing[0]!;
-  await send(ctx, questionMessage(ctx.script, next, index, total, varsOf(ctx, answers)));
+  await send(ctx, questionMessage(ctx.script, next, index, total, varsOf(ctx, answers), prefix));
   await saveState(ctx, { automationStatus: "active", currentState: `awaiting_${next}`, awaitingField: next, invalidCount: 0 }, {
     cadenceStatus: "running",
   });
@@ -281,8 +282,16 @@ export async function startQualificationFlow(input: {
     },
   });
 
+  const windowOpen = isWithinCustomerWindow(conversation.windowExpiresAt);
+  if (windowOpen && !missing.length) {
+    // O cadastro já trouxe tudo: classifica e segue sem pedir "Começar".
+    ctx.state = { ...ctx.state, openedAt: new Date().toISOString(), totalQuestions: 0 };
+    await finishQuestions(ctx, q.answers);
+    return { started: true, conversationId: conversation.id, complete: true };
+  }
+
   let opened = false;
-  if (isWithinCustomerWindow(conversation.windowExpiresAt)) {
+  if (windowOpen) {
     const open = openingMessage(ctx.script, varsOf(ctx, q.answers), missing.length);
     opened = Boolean(await send(ctx, open).then(() => true).catch(() => false));
   } else {
@@ -403,9 +412,8 @@ export async function handleQualificationInbound(input: {
     }
     const missing = missingFieldKeys(answers, ctx.askKeys);
     if (!missing.length) return finishQuestions(ctx, answers);
-    if (replyId !== QUALIFY_REPLY.start && !START_RE.test(text)) await send(ctx, START_ANYWAY);
     ctx.state = { ...ctx.state, totalQuestions: missing.length };
-    return askNext(ctx, answers);
+    return askNext(ctx, answers, replyId !== QUALIFY_REPLY.start && !START_RE.test(text) ? START_ANYWAY : undefined);
   }
 
   const field = state.awaitingField;
@@ -423,9 +431,12 @@ export async function handleQualificationInbound(input: {
   if (!patch) {
     const misses = (state.invalidCount ?? 0) + 1;
     if (misses >= 2 && text) return handoff(ctx, answers, priority, "free_text");
-    await send(ctx, invalidChoiceCopy(field));
-    const { total, index } = progressOf(ctx, answers);
-    await send(ctx, questionMessage(ctx.script, field, index, total, varsOf(ctx, answers)));
+    if (field === "city") {
+      await send(ctx, invalidChoiceCopy(field));
+    } else {
+      const { total, index } = progressOf(ctx, answers);
+      await send(ctx, questionMessage(ctx.script, field, index, total, varsOf(ctx, answers), invalidChoiceCopy(field)));
+    }
     await saveState(ctx, { invalidCount: misses });
     return true;
   }

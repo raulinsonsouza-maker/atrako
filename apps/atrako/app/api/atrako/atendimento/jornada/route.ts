@@ -9,11 +9,11 @@ import { franchiseRegicenterPatch, loadQualificationPrefs } from "@/lib/qualific
 import { parseLeadQualification } from "@/lib/qualification/store";
 import { journeyStageOf } from "@/lib/qualification/journey";
 import { REGICENTER_LP_FORM } from "@/lib/qualification/forms";
-import type { QualifyFieldKey } from "@/lib/qualification/fields";
 import {
   DEFAULT_SCRIPT,
   applyBlock,
   customizedBlocks,
+  formFieldsFromSteps,
   resetBlock,
   resolveScript,
   templateTextProblem,
@@ -39,12 +39,16 @@ export async function GET(request: NextRequest) {
   if (!g.ok) return g.response;
   const ws = g.workspaceId;
 
-  const [prefs, wa, resend, cliente, templates, leads] = await Promise.all([
-    loadQualificationPrefs(ws),
+  const prefs = await loadQualificationPrefs(ws);
+  const [wa, resend, cliente, templates, lpForm, leads] = await Promise.all([
     resolveWhatsApp(ws),
     resolveResend(ws),
     prisma.cliente.findUnique({ where: { id: ws }, select: { nome: true } }),
     scriptTemplateStates(ws),
+    prisma.captureForm.findFirst({
+      where: { clienteId: ws, slug: prefs.lpFormSlug, active: true },
+      select: { name: true, steps: true },
+    }),
     prisma.nativeLead.findMany({
       where: { clienteId: ws, status: "OPEN", metadata: { path: ["qualification", "playbookId"], not: Prisma.AnyNull } },
       select: { metadata: true },
@@ -54,8 +58,6 @@ export async function GET(request: NextRequest) {
   ]);
 
   const live = { qualifying: 0, withTeam: 0, noReply: 0, nurture: 0 };
-  const priorities = { A: 0, B: 0, C: 0 };
-  const answerCounts: Partial<Record<QualifyFieldKey, Record<string, number>>> = {};
   for (const lead of leads) {
     const q = parseLeadQualification(lead.metadata);
     const stage = journeyStageOf(q.currentState);
@@ -68,19 +70,16 @@ export async function GET(request: NextRequest) {
     }
     if (stage === "equipe") live.withTeam += 1;
     if (stage === "nutricao") live.nurture += 1;
-    if (q.priority) priorities[q.priority] += 1;
-    for (const [key, ans] of Object.entries(q.answers) as [QualifyFieldKey, { code?: string } | undefined][]) {
-      if (!ans?.code) continue;
-      const bucket = (answerCounts[key] ??= {});
-      bucket[ans.code] = (bucket[ans.code] ?? 0) + 1;
-    }
   }
 
-  const lpKeys = REGICENTER_LP_FORM.steps.flatMap((s) => s.fields.map((f) => f.id)) as QualifyFieldKey[];
+  const formFields = formFieldsFromSteps(lpForm?.steps ?? REGICENTER_LP_FORM.steps);
+  /** Obrigatórios no cadastro: nunca são perguntados no WhatsApp. */
+  const lpKeys = formFields.filter((f) => f.required).map((f) => f.key);
 
   return NextResponse.json({
     brand: cliente?.nome ?? "",
     enabled: prefs.enabled,
+    form: { name: lpForm?.name ?? REGICENTER_LP_FORM.name, fields: formFields },
     lpKeys,
     script: prefs.script,
     defaults: DEFAULT_SCRIPT,
@@ -91,8 +90,6 @@ export async function GET(request: NextRequest) {
     },
     templates,
     live,
-    priorities,
-    answerCounts,
   });
 }
 

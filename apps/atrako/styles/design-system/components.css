@@ -6756,7 +6756,8 @@ html[data-theme="dark"] .assistant-stage-head button {
   gap: 10px 14px;
   padding: 12px 16px;
   border-radius: var(--radius-lg);
-  background: var(--canvas-parchment);
+  border: 1px solid var(--hairline);
+  background: var(--canvas);
   color: var(--ink);
 }
 
@@ -7001,27 +7002,18 @@ html[data-theme="dark"] .assistant-stage-head button {
   color: var(--ink);
 }
 
-.script-rules {
+.script-signup {
   display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
   gap: 12px;
-}
-
-@media (min-width: 1068px) {
-  .script-rules {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.7fr);
-    align-items: start;
-  }
-}
-
-.script-rule-col {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-width: 0;
-  padding: 16px;
+  padding: 12px 14px;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--hairline);
-  background: var(--canvas);
+  border: 1px dashed var(--hairline);
+}
+
+.script-chip[data-optional="true"] {
+  border-style: dashed;
 }
 
 .rel-channel-summary {

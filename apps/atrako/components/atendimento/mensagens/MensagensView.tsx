@@ -9,18 +9,16 @@ import { LeadEmailsCard } from "@/components/notifications/LeadEmailsCard";
 import { useAtendimentoInfo } from "@/components/atendimento/useAtendimentoInfo";
 import { FollowUpEditor } from "./FollowUpEditor";
 import { LiveStrip } from "./LiveStrip";
-import { RulesEditor } from "./RulesEditor";
 import { ScriptEditor } from "./ScriptEditor";
 import { RobotSwitch, SetupChecklist } from "./SetupChecklist";
 import { useJornada, type Jornada } from "./useJornada";
 import { useScriptDraft } from "./useScriptDraft";
 
-type Aba = "conversa" | "sem-resposta" | "classificacao" | "emails";
+type Aba = "conversa" | "sem-resposta" | "emails";
 
 const ABAS: ReadonlyArray<{ value: Aba; label: string }> = [
   { value: "conversa", label: "Conversa" },
   { value: "sem-resposta", label: "Sem resposta" },
-  { value: "classificacao", label: "Classificação" },
   { value: "emails", label: "E-mails" },
 ];
 
@@ -41,10 +39,14 @@ function Tabs({ workspaceId, data, post, canManage }: { workspaceId: string; dat
       <SegmentedControl value={aba} onChange={select} options={ABAS} aria-label="Partes da configuração" className="self-start" />
       {aba === "conversa" ? <ScriptEditor data={data} s={s} canManage={canManage} /> : null}
       {aba === "sem-resposta" ? <FollowUpEditor data={data} s={s} canManage={canManage} /> : null}
-      {aba === "classificacao" ? <RulesEditor data={data} s={s} canManage={canManage} /> : null}
       {aba === "emails" ? (
         <div className="flex flex-col gap-4">
-          <FlowsTab workspaceId={workspaceId} pack="inside_sales" />
+          <FlowsTab
+            workspaceId={workspaceId}
+            pack="inside_sales"
+            hideTriggers={data.enabled ? ["lead_welcome"] : undefined}
+            note={data.enabled ? "As boas-vindas de quem se cadastra na LP ficam com o robô do WhatsApp (aba Conversa)." : undefined}
+          />
           <LeadEmailsCard workspaceId={workspaceId} />
         </div>
       ) : null}

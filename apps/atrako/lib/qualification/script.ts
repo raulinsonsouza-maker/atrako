@@ -5,7 +5,7 @@
  */
 
 import { CHOICE_MAP, REGICENTER_FRANCHISE_INVESTMENT, type ChoiceOpt } from "./choices";
-import { FIELD_DEFS, WA_ASK_ORDER, type QualifyAnswers, type QualifyFieldKey } from "./fields";
+import { FIELD_DEFS, QUALIFY_FIELD_KEYS, WA_ASK_ORDER, type QualifyAnswers, type QualifyFieldKey } from "./fields";
 import type { Priority } from "./classify";
 import { QUALIFY_REPLY, firstName } from "./messages";
 
@@ -537,6 +537,32 @@ export function classifyWithRules(answers: QualifyAnswers, rules: QualifyRules, 
   return "C";
 }
 
+// --------------------------------------------------------------------------- cadastro
+
+export type FormField = { key: QualifyFieldKey; label: string; required: boolean };
+
+/** Campos do formulário da LP (CaptureForm.steps) que viram resposta no lead. */
+export function formFieldsFromSteps(steps: unknown): FormField[] {
+  if (!Array.isArray(steps)) return [];
+  const out: FormField[] = [];
+  for (const step of steps) {
+    const fields = rec(step).fields;
+    if (!Array.isArray(fields)) continue;
+    for (const f of fields) {
+      const r = rec(f);
+      const key = r.id;
+      if (typeof key !== "string" || !(QUALIFY_FIELD_KEYS as readonly string[]).includes(key) || key === "wa_opt_in") continue;
+      if (out.some((x) => x.key === key)) continue;
+      out.push({
+        key: key as QualifyFieldKey,
+        label: FIELD_DEFS.find((d) => d.key === key)?.crmLabel ?? (typeof r.label === "string" ? r.label : key),
+        required: r.required === true,
+      });
+    }
+  }
+  return out;
+}
+
 // --------------------------------------------------------------------------- prévia
 
 export type ScriptPreviewItem =
@@ -562,15 +588,15 @@ function received(id: string, block: ScriptBlockId, m: ScriptMessage, template?:
 export function scriptConversation(script: QualifyScript, input: { brand: string; lpKeys: QualifyFieldKey[] }) {
   const vars = { ...SAMPLE_VARS, empresa: input.brand };
   const questions = enabledQuestions(script).filter((q) => !input.lpKeys.includes(q.key));
-  const items: ScriptPreviewItem[] = [];
+  const items: ScriptPreviewItem[] = [{ kind: "system", id: "signup", block: "opening", text: "Maria se cadastrou na LP · Curitiba/PR" }];
   items.push(received("opening", "opening", openingMessage(script, vars, questions.length), true));
-  items.push({ kind: "sent", id: "opening-r", block: "opening", text: "Começar" });
+  items.push({ kind: "sent", id: "opening-r", block: "opening", text: questions.length ? "Começar" : "Falar com consultor" });
   questions.forEach((q, i) => {
     const block = `question:${q.key}` as const;
     items.push(received(block, block, questionMessage(script, q.key, i + 1, questions.length, vars)));
     items.push({ kind: "sent", id: `${block}-r`, block, text: q.options[0]?.label ?? "Curitiba" });
   });
-  items.push({ kind: "system", id: "classified", block: "rules", text: "Classificada como A · quente" });
+  items.push({ kind: "system", id: "classified", block: "rules", text: "Perfil quente · segue para a equipe" });
   if (script.bestTime.enabled) {
     items.push(received("bestTime", "bestTime", bestTimeMessage(script, vars)));
     items.push({ kind: "sent", id: "bestTime-r", block: "bestTime", text: "Manhã" });
@@ -583,7 +609,7 @@ export function scriptConversation(script: QualifyScript, input: { brand: string
 /** Desvio de quem fica em C. */
 export function nurturePreview(script: QualifyScript, brand: string): ScriptPreviewItem[] {
   return [
-    { kind: "system", id: "nurture-s", block: "nurture", text: "Classificada como C · em avaliação" },
+    { kind: "system", id: "nurture-s", block: "nurture", text: "Ainda avaliando · vai para a nutrição" },
     received("nurture", "nurture", nurtureMessage(script, { ...SAMPLE_VARS, empresa: brand })),
   ];
 }

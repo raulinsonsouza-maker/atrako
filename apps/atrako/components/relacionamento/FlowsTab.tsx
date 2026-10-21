@@ -50,8 +50,28 @@ function ChannelIcon({ channel, className = "h-3.5 w-3.5" }: { channel: FlowStep
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
+/** Acima disso a linha vira resumo ("13 e-mails em 21 d") em vez de um ponto por envio. */
+const MINI_LANE_MAX = 5;
+
 function MiniLane({ label, channel, steps }: { label: string; channel: PhoneChannel; steps: FlowStep[] }) {
   let prev = 0;
+  if (steps.length > MINI_LANE_MAX) {
+    const on = steps.filter((s) => s.enabled).length;
+    const span = steps[steps.length - 1]!.delayMinutes;
+    return (
+      <span className="rel-mini-timeline">
+        <span className="rel-mini-lane-label">{label}</span>
+        <span className="rel-mini-dot" data-channel={channel}>
+          <ChannelIcon channel={channel} />
+        </span>
+        <span className="text-[var(--ink-muted-80)]">
+          {plural(on, channel === "EMAIL" ? "e-mail" : "mensagem", channel === "EMAIL" ? "e-mails" : "mensagens")}
+          {span > 0 ? ` em ${shortGap(span)}` : ""}
+          {steps[0]!.delayMinutes > 0 ? ` · primeiro após ${shortGap(steps[0]!.delayMinutes)}` : ""}
+        </span>
+      </span>
+    );
+  }
   return (
     <span className="rel-mini-timeline">
       <span className="rel-mini-lane-label">{label}</span>
@@ -81,7 +101,18 @@ function stepTitle(s: FlowStep, storeName: string) {
   return body ? body.replace(/[*_~]/g, "").slice(0, 90) : s.label;
 }
 
-export function FlowsTab({ workspaceId, pack }: { workspaceId: string; pack?: "stay" | "food" | "inside_sales" }) {
+export function FlowsTab({
+  workspaceId,
+  pack,
+  hideTriggers,
+  note,
+}: {
+  workspaceId: string;
+  pack?: "stay" | "food" | "inside_sales";
+  /** Gatilhos que outro recurso já cobre (ex.: boas-vindas feitas pelo robô do WhatsApp). */
+  hideTriggers?: string[];
+  note?: string;
+}) {
   const qc = useQueryClient();
   const [period] = useState(() => lastDaysPeriod(30));
   const [open, setOpen] = useState<string | null>(null);
@@ -147,14 +178,15 @@ export function FlowsTab({ workspaceId, pack }: { workspaceId: string; pack?: "s
     );
   }
 
-  const activeCount = data.flows.filter((f) => f.status === "ACTIVE").length;
+  const flows = hideTriggers?.length ? data.flows.filter((f) => !hideTriggers.includes(f.trigger)) : data.flows;
+  const activeCount = flows.filter((f) => f.status === "ACTIVE").length;
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1">
           <span className="type-caption text-[var(--ink-muted-80)]">
-            {activeCount} de {data.flows.length} ligados
+            {activeCount} de {flows.length} ligados
           </span>
           <InfoHint>
             Cada fluxo é uma sequência automática de mensagens. Cada contato fica em um fluxo por vez; comprou, respondeu ou descadastrou, sai do fluxo.
@@ -165,8 +197,9 @@ export function FlowsTab({ workspaceId, pack }: { workspaceId: string; pack?: "s
         </Button>
       </div>
       {error ? <p className="rel-card type-caption text-[var(--ink)]">{error}</p> : null}
+      {note ? <p className="type-fine-print text-[var(--ink-muted-48)]">{note}</p> : null}
 
-      {data.flows.map((f) => {
+      {flows.map((f) => {
         const expanded = open === f.id;
         const drafts = f.steps.filter((s) => s.draftContent).length;
         const running = (f.enrollments.ACTIVE ?? 0) + (f.enrollments.PAUSED ?? 0);

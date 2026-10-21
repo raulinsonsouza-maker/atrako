@@ -69,10 +69,7 @@ export function useScriptDraft(data: Jornada, post: Post) {
     }
   }
 
-  const save = (block: ScriptBlockId) =>
-    block === "rules"
-      ? run(block, { action: "save_rules", rules: draft.rules })
-      : run(block, { action: "save_block", block, patch: patchOf(draft, block) });
+  const save = (block: ScriptBlockId) => run(block, { action: "save_block", block, patch: patchOf(draft, block) });
 
   const reset = (block: ScriptBlockId) => run(block, { action: "reset_block", block }, "Padrão restaurado");
 

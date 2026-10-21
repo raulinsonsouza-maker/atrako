@@ -16,6 +16,17 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   allowedDevOrigins: ["*.replit.dev", "*.repl.co", "*.riker.replit.dev"],
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: "/f/franquia-regicenter-lp",
+          missing: [{ type: "query", key: "preview" }],
+          destination: "/lp/regicenter-franquia/index.html",
+        },
+      ],
+    };
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**.fbcdn.net", pathname: "/**" },

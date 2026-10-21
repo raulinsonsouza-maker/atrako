@@ -6,6 +6,7 @@
 import { prisma } from "@/lib/db";
 import { notify } from "@/lib/notifications";
 import { handoffConversation } from "@/lib/whatsapp/domain";
+import { fireAndForget, sendCrmStageConversion } from "@/lib/integrations/meta/capi";
 import type { Priority } from "./classify";
 
 async function findStageByName(workspaceId: string, names: string[]) {
@@ -27,12 +28,25 @@ export async function moveLeadToPriorityStage(input: {
       ? await findStageByName(input.workspaceId, ["nutrição", "nutricao", "nurture"])
       : await findStageByName(input.workspaceId, ["qualificado", "qualificação", "qualificacao"]);
 
-  if (stage) {
-    await prisma.nativeLead.updateMany({
-      where: { id: input.leadId, clienteId: input.workspaceId },
-      data: { stageId: stage.id },
-    });
-  }
+  if (!stage) return;
+  const lead = await prisma.nativeLead.findFirst({
+    where: { id: input.leadId, clienteId: input.workspaceId },
+    select: { stageId: true },
+  });
+  if (!lead || lead.stageId === stage.id) return;
+  await prisma.nativeLead.updateMany({
+    where: { id: input.leadId, clienteId: input.workspaceId },
+    data: { stageId: stage.id },
+  });
+  fireAndForget(
+    sendCrmStageConversion({
+      workspaceId: input.workspaceId,
+      leadId: input.leadId,
+      stageId: stage.id,
+      stageName: stage.name,
+    }),
+    "qualify stage",
+  );
 }
 
 /** Após form/cadastro: move etapa e avisa a equipe sem fechar a cadência. */

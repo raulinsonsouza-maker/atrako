@@ -20,6 +20,7 @@ import { prisma } from "@/lib/db";
 import { verifyPreviewToken, type PreviewPayload } from "@/lib/criar/preview-token";
 import { flattenFields, stripConsentFromSteps, validateFormAnswers } from "@/lib/criar/form-test";
 import { isLpSalesPageV3 } from "@/lib/criar/lp-html";
+import { fireAndForget, sendFormLeadConversion } from "@/lib/integrations/meta/capi";
 
 /** Formulário alvo de um token de prévia (o próprio form, ou o vinculado à LP). */
 async function formForPreview(token: PreviewPayload) {
@@ -147,11 +148,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Formulário indisponível" }, { status: 404 });
     }
     try {
+      const attribution = pickAttributionFromBody(input);
       const result = await completeCaptureForm({
         slug,
         answers: answers as Array<{ fieldId: string; value: string }>,
-        attribution: pickAttributionFromBody(input),
+        attribution,
       });
+      const metaEventId = typeof input.metaEventId === "string" ? input.metaEventId.trim() : "";
+      if (metaEventId && target) {
+        fireAndForget(
+          sendFormLeadConversion({
+            workspaceId: target.clienteId,
+            leadId: result.leadId,
+            eventId: metaEventId,
+            eventSourceUrl: typeof attribution.pageUrl === "string" ? attribution.pageUrl : null,
+            clientIp: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip"),
+            userAgent: request.headers.get("user-agent"),
+          }),
+          "form lead",
+        );
+      }
       return NextResponse.json({ ok: true, ...result }, { status: 201 });
     } catch (e) {
       return NextResponse.json(

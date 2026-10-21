@@ -16,10 +16,52 @@ phone.addEventListener('input', () => {
   phone.value = value;
   phone.setCustomValidity('');
 });
+const stateSelect = document.querySelector('#state');
+const cityInput = document.querySelector('#city');
+const cityOptions = document.querySelector('#city-options');
+let cityList = [];
+const fold = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+stateSelect.addEventListener('change', async () => {
+  const uf = stateSelect.value;
+  cityList = [];
+  cityOptions.replaceChildren();
+  cityInput.value = '';
+  cityInput.setCustomValidity('');
+  if (!uf) {
+    cityInput.disabled = true;
+    cityInput.placeholder = 'Escolha o estado primeiro';
+    return;
+  }
+  cityInput.disabled = true;
+  cityInput.placeholder = 'Carregando cidades...';
+  try {
+    const response = await fetch('/api/atrako/geo/cidades?uf=' + encodeURIComponent(uf));
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const payload = await response.json();
+    if (stateSelect.value !== uf) return;
+    cityList = payload.cidades || [];
+    cityOptions.replaceChildren(...cityList.map(name => { const option = document.createElement('option'); option.value = name; return option; }));
+    cityInput.placeholder = 'Digite ou escolha sua cidade';
+  } catch (error) {
+    cityInput.placeholder = 'Digite sua cidade';
+  }
+  cityInput.disabled = false;
+  cityInput.focus();
+});
+cityInput.addEventListener('input', () => cityInput.setCustomValidity(''));
+function matchCity(value) {
+  if (!cityList.length) return value.trim();
+  const key = fold(value);
+  return cityList.find(name => fold(name) === key) || '';
+}
 function showStatus(text) {
   const status = document.querySelector('#form-status');
   status.hidden = false;
   status.textContent = text;
+}
+function cookie(name) {
+  const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+  return match ? decodeURIComponent(match[1]) : '';
 }
 function attribution() {
   const out = { formSlug: FORM_SLUG, pageUrl: window.location.href };
@@ -29,7 +71,14 @@ function attribution() {
     if (value) out[key] = value.slice(0, 200);
   });
   if (document.referrer) out.referrer = document.referrer.slice(0, 500);
+  const fbp = cookie('_fbp');
+  const fbc = cookie('_fbc') || (out.fbclid ? 'fb.1.' + Date.now() + '.' + out.fbclid : '');
+  if (fbp) out.fbp = fbp;
+  if (fbc) out.fbc = fbc;
   return out;
+}
+function newEventId() {
+  return window.crypto && crypto.randomUUID ? crypto.randomUUID() : 'lead-' + Date.now() + '-' + Math.random().toString(36).slice(2);
 }
 form.addEventListener('submit', async event => {
   event.preventDefault();
@@ -40,31 +89,43 @@ form.addEventListener('submit', async event => {
     phone.reportValidity();
     return;
   }
+  const city = matchCity(cityInput.value);
+  if (!cityInput.disabled && cityInput.value.trim() && !city) {
+    cityInput.setCustomValidity('Escolha uma cidade da lista.');
+    cityInput.reportValidity();
+    return;
+  }
   if (!form.reportValidity()) return;
   const data = new FormData(form);
   const name = String(data.get('name')).trim();
-  const city = String(data.get('city')).trim();
+  const email = String(data.get('email')).trim().toLowerCase();
   if (name.length < 3 || city.length < 2) {
     showStatus('Confira seu nome completo e sua cidade antes de continuar.');
     return;
   }
+  cityInput.value = city;
   const answers = [
     { fieldId: 'name', value: name },
     { fieldId: 'phone', value: digits },
+    { fieldId: 'email', value: email },
     { fieldId: 'city', value: city },
     { fieldId: 'state', value: String(data.get('state')) },
     { fieldId: 'investment_status', value: String(data.get('capital')) }
   ];
   sending = true;
   submitButton.disabled = true;
+  const metaEventId = newEventId();
   try {
     const response = await fetch('/api/atrako/forms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'complete', slug: FORM_SLUG, answers, ...attribution() })
+      body: JSON.stringify({ action: 'complete', slug: FORM_SLUG, answers, metaEventId, ...attribution() })
     });
     if (!response.ok) throw new Error('HTTP ' + response.status);
-    form.querySelectorAll('.field, .field-row, .consent, .form-submit, .form-note').forEach(el => { el.style.display = 'none'; });
+    if (typeof window.fbq === 'function') {
+      window.fbq('track', 'Lead', { content_name: 'Franquia Regicenter', content_category: String(data.get('capital')) }, { eventID: metaEventId });
+    }
+    form.querySelectorAll('.field, .field-row, .form-submit, .form-note').forEach(el => { el.style.display = 'none'; });
     const first = name.split(/\s+/)[0];
     showStatus('Pronto, ' + first + '! Recebemos seus dados. A equipe de expansão da Regicenter vai te chamar no WhatsApp ' + phone.value + ' em breve.');
   } catch (error) {

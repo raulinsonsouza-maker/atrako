@@ -74,6 +74,8 @@ export function pickAttributionFromBody(
     "utm_term",
     "gclid",
     "fbclid",
+    "fbp",
+    "fbc",
     "referrer",
   ] as const;
   const out: Record<string, unknown> = {};

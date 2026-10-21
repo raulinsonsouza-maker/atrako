@@ -39,6 +39,12 @@ for (const estado of estados) {
   }
 }
 
+/** Municípios da UF (catálogo IBGE), em ordem alfabética. UF desconhecida → []. */
+export function citiesOfState(uf: string): string[] {
+  const cities = citiesByUf.get(uf.trim().toUpperCase());
+  return cities ? [...cities.values()].sort((a, b) => a.localeCompare(b, "pt-BR")) : [];
+}
+
 export function stateName(uf: string | null | undefined): string {
   if (!uf) return "Sem local";
   return nameByUf.get(uf.toUpperCase()) ?? uf;

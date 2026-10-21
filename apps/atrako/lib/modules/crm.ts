@@ -822,6 +822,20 @@ export async function updateLeadStage(input: {
     }).catch((err) => console.warn("[crm] caixa", err instanceof Error ? err.message : err));
   }
 
+  if (stage && nextStageId !== lead.stageId) {
+    const { fireAndForget, sendCrmStageConversion } = await import("@/lib/integrations/meta/capi");
+    fireAndForget(
+      sendCrmStageConversion({
+        workspaceId: input.workspaceId,
+        leadId: updated.id,
+        stageId: stage.id,
+        stageName: stage.name,
+        dealValue: deal,
+      }),
+      "crm stage",
+    );
+  }
+
   if (reason && updated.contactId) {
     const { enrollContact } = await import("@/lib/flows/engine");
     await enrollContact({

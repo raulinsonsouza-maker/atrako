@@ -2,7 +2,16 @@
  * Domínios de clientes que servem uma LP estática de `public/` na raiz e a área de atendimento em `/crm`.
  * Cada host também precisa de um router no Traefik (deploy/stack.yml) e do registro DNS apontando para a VPS.
  */
-export type LpDomain = { dir: string; name: string; icon: string; appleIcon: string };
+export type LpDomain = {
+  dir: string;
+  name: string;
+  icon: string;
+  appleIcon: string;
+  /** Slug do workspace dono do domínio. */
+  workspaceSlug: string;
+  /** Logo claro para o menu escuro da área (o `Cliente.logoUrl` vai em e-mails e fundos claros). */
+  logoOnDark?: string;
+};
 
 const DOMAINS: Record<string, LpDomain> = {
   "lp.regicenter.com": {
@@ -10,8 +19,15 @@ const DOMAINS: Record<string, LpDomain> = {
     name: "Regicenter",
     icon: "/lp/regicenter-franquia/assets/favicon.png",
     appleIcon: "/lp/regicenter-franquia/assets/apple-touch-icon.png",
+    workspaceSlug: "regicenter",
+    logoOnDark: "/lp/regicenter-franquia/assets/regicenter-logo-branco.png",
   },
 };
+
+export function lpDomainForWorkspace(slug: string | null | undefined): LpDomain | null {
+  if (!slug) return null;
+  return Object.values(DOMAINS).find((domain) => domain.workspaceSlug === slug) ?? null;
+}
 
 /** Em dev, `lp.regicenter.localhost:5000` simula o domínio (o navegador resolve *.localhost para 127.0.0.1). */
 export const LP_DOMAINS: Record<string, LpDomain> =

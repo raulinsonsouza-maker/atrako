@@ -4,27 +4,21 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { useQuery } from "@tanstack/react-query";
 import {
   ChevronLeft,
-  Instagram,
   LayoutDashboard,
   LogOut,
-  Megaphone,
   Menu,
   MessagesSquare,
   PanelLeftOpen,
   Send,
   SquareKanban,
 } from "lucide-react";
-import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 import { logoutEverywhere } from "@/lib/auth/logoutClient";
 import { useAtendimentoBase } from "@/components/layout/LpHostContext";
 import { CrmLinksProvider, type CrmLinks } from "@/components/crm/CrmLinksContext";
+import { useAtendimentoInfo, type AtendimentoRole } from "@/components/atendimento/useAtendimentoInfo";
 import "@/app/atendimento/atendimento-shell.css";
-
-type Role = "OWNER" | "ADMIN" | "OPERATOR" | "ANALYST";
-type Channel = "meta" | "instagram";
 
 type Tab = {
   path: string;
@@ -32,24 +26,18 @@ type Tab = {
   description: string;
   icon: typeof LayoutDashboard;
   manage: boolean;
-  channel?: Channel;
 };
 
-const ATENDIMENTO_TABS: Tab[] = [
-  { path: "", label: "Início", description: "Funil e ações do dia", icon: LayoutDashboard, manage: true },
+const TABS: Tab[] = [
+  { path: "", label: "Início", description: "Funil, qualificação e mídia", icon: LayoutDashboard, manage: true },
   { path: "/leads", label: "Leads", description: "Pipeline da equipe", icon: SquareKanban, manage: false },
   { path: "/conversas", label: "Conversas", description: "WhatsApp dos leads", icon: MessagesSquare, manage: false },
   { path: "/mensagens", label: "Mensagens", description: "Fluxos automáticos", icon: Send, manage: true },
 ];
 
-const MARKETING_TABS: Tab[] = [
-  { path: "/anuncios", label: "Anúncios", description: "Campanhas no Meta", icon: Megaphone, manage: true, channel: "meta" },
-  { path: "/instagram", label: "Instagram", description: "Perfil, alcance e posts", icon: Instagram, manage: true, channel: "instagram" },
-];
+const MANAGE_PATHS = TABS.filter((tab) => tab.manage).map((tab) => tab.path);
 
-const MANAGE_PATHS = [...ATENDIMENTO_TABS, ...MARKETING_TABS].filter((tab) => tab.manage).map((tab) => tab.path);
-
-const ROLE_LABEL: Record<Role, string> = {
+const ROLE_LABEL: Record<AtendimentoRole, string> = {
   OWNER: "Responsável",
   ADMIN: "Gestão",
   OPERATOR: "Atendimento",
@@ -81,21 +69,7 @@ export function AtendimentoShell({ children }: { children: React.ReactNode }) {
   /** A gaveta do celular é sempre aberta; recolher é só no desktop. */
   const collapsed = collapsedPref && !mobileOpen;
 
-  const { workspaceId, isError } = useActiveWorkspace();
-  const { data } = useQuery({
-    queryKey: ["atendimento-shell", workspaceId],
-    enabled: Boolean(workspaceId),
-    queryFn: async () => {
-      const res = await fetch(`/api/atrako/atendimento?workspaceId=${workspaceId}`);
-      if (!res.ok) throw new Error("Falha ao carregar a área");
-      return res.json() as Promise<{
-        name: string;
-        logoUrl: string | null;
-        role: Role;
-        channels: Record<Channel, boolean>;
-      }>;
-    },
-  });
+  const { workspaceError: isError, info: data } = useAtendimentoInfo();
   const role = data?.role ?? "ADMIN";
   const manage = role !== "OPERATOR";
   const section = pathname.replace(/^\/(crm|atendimento)/, "");
@@ -159,18 +133,18 @@ export function AtendimentoShell({ children }: { children: React.ReactNode }) {
     };
   };
 
-  const visible = (tab: Tab) =>
-    (manage || !tab.manage) && (!tab.channel || Boolean(data?.channels?.[tab.channel]));
-  const atendimentoTabs = ATENDIMENTO_TABS.filter(visible);
-  const marketingTabs = MARKETING_TABS.filter(visible);
+  const tabs = TABS.filter((tab) => manage || !tab.manage);
 
-  const mark = data?.logoUrl ? (
+  const mark = !data ? (
+    <span className="atd-mark is-loading" aria-hidden />
+  ) : data.logoUrl ? (
     <img className="atd-mark" src={data.logoUrl} alt="" />
   ) : (
     <span className="atd-mark" aria-hidden>
-      {data ? initials(data.name) : ""}
+      {initials(data.name)}
     </span>
   );
+  const wordmark = data?.logoOnDark ? <img className="atd-logo" src={data.logoOnDark} alt={data.name} /> : null;
 
   const navBlock = (title: string, tabs: Tab[]) =>
     tabs.length ? (
@@ -214,9 +188,9 @@ export function AtendimentoShell({ children }: { children: React.ReactNode }) {
         </div>
       ) : (
         <div className="atd-side-brand">
-          {mark}
+          {wordmark ? null : mark}
           <div className="min-w-0 flex-1">
-            <strong className="type-body-strong">{data?.name ?? "\u00a0"}</strong>
+            {wordmark ?? <strong className="type-body-strong">{data?.name ?? "\u00a0"}</strong>}
             <small className="type-fine-print">{data ? ROLE_LABEL[role] : "\u00a0"}</small>
           </div>
           <button
@@ -236,8 +210,7 @@ export function AtendimentoShell({ children }: { children: React.ReactNode }) {
         aria-label="Área de atendimento"
         onScroll={() => setTip(null)}
       >
-        {navBlock("Atendimento", atendimentoTabs)}
-        {navBlock("Marketing", marketingTabs)}
+        {navBlock("Atendimento", tabs)}
       </nav>
 
       <div className={`atd-side-foot${collapsed ? " is-collapsed" : ""}`}>
@@ -287,8 +260,12 @@ export function AtendimentoShell({ children }: { children: React.ReactNode }) {
         >
           <Menu className="h-5 w-5" />
         </button>
-        {mark}
-        <strong className="type-body-strong truncate">{data?.name ?? ""}</strong>
+        {wordmark ?? (
+          <>
+            {mark}
+            <strong className="type-body-strong truncate">{data?.name ?? ""}</strong>
+          </>
+        )}
       </header>
 
       {mobileOpen ? (

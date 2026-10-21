@@ -90,6 +90,7 @@ model Cliente {
   foodOrders                 FoodOrder[]
   stayProperties             StayProperty[]
   stayReservations           StayReservation[]
+  leadPaymentLinks           LeadPaymentLink[]
   metaAdPurchases            MetaAdPurchaseDaily[]
   marketplaceSellerSnapshots MarketplaceSellerSnapshot[]
   marketplaceCatalogItems    MarketplaceCatalogItem[]
@@ -1082,6 +1083,40 @@ model NativeLead {
 
   @@index([clienteId, status])
   @@index([clienteId, createdAt])
+}
+
+/// Cobrança do valor negociado com o lead (Mercado Pago do workspace, checkout no domínio do cliente).
+model LeadPaymentLink {
+  id              String    @id @default(cuid())
+  clienteId       String
+  leadId          String
+  token           String    @unique @db.VarChar(64)
+  amountCents     Int
+  maxInstallments Int       @default(1)
+  description     String    @db.VarChar(200)
+  /// PENDING | PAID | CANCELED | EXPIRED | REFUNDED
+  status          String    @default("PENDING") @db.VarChar(16)
+  /// pix | card
+  method          String?   @db.VarChar(16)
+  installments    Int?
+  mpOrderId       String?   @db.VarChar(120)
+  pixQrCode       String?   @db.Text
+  pixQrCodeBase64 String?   @db.Text
+  payerName       String?   @db.VarChar(200)
+  payerEmail      String?   @db.VarChar(255)
+  sentVia         String[]  @default([])
+  createdById     String?   @db.VarChar(64)
+  createdByName   String?   @db.VarChar(160)
+  expiresAt       DateTime?
+  paidAt          DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  cliente         Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@index([clienteId, status])
+  @@index([clienteId, createdAt])
+  @@index([leadId])
+  @@index([mpOrderId])
 }
 
 model AgendaService {

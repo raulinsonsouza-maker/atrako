@@ -1,20 +1,14 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { InsideSalesGeral } from "@/components/clientes/InsideSalesGeral";
 import { SocialMediaPanel } from "@/components/clientes/SocialMediaPanel";
 import { AnunciosPanel } from "@/components/atendimento/AnunciosPanel";
-import { LeadQualityPanel } from "@/components/atendimento/LeadQualityPanel";
+import { InicioGeral } from "@/components/atendimento/InicioGeral";
 import { useAtendimentoInfo } from "@/components/atendimento/useAtendimentoInfo";
+import { useAtendimentoPeriod } from "@/components/atendimento/useAtendimentoPeriod";
 import { AppPage } from "@/components/layout/AppPage";
-import { PillSelect } from "@/components/ui";
-
-const PERIODS = [
-  { value: "7", label: "Últimos 7 dias" },
-  { value: "30", label: "Últimos 30 dias" },
-  { value: "90", label: "Últimos 90 dias" },
-];
+import { DateRangeFilter } from "@/components/ui";
 
 type Aba = "geral" | "anuncios" | "instagram";
 
@@ -34,12 +28,12 @@ function AtendimentoHome() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { workspaceId, info } = useAtendimentoInfo();
-  const [periodo, setPeriodo] = useState("30");
+  const period = useAtendimentoPeriod();
 
   const abas = ABAS.filter((aba) => !aba.channel || info?.channels?.[aba.channel]);
   const requested = searchParams.get("aba") as Aba | null;
   const aba: Aba = abas.some((a) => a.value === requested) ? (requested as Aba) : "geral";
-  const query = `periodo=${periodo}`;
+  const { dataInicio, dataFim } = period.resolved;
 
   function selectAba(next: Aba) {
     router.replace(next === "geral" ? pathname : `${pathname}?aba=${next}`, { scroll: false });
@@ -49,7 +43,7 @@ function AtendimentoHome() {
     <AppPage
       title="Início"
       className="md:pt-5"
-      actions={<PillSelect value={periodo} onChange={setPeriodo} options={PERIODS} aria-label="Período" />}
+      actions={<DateRangeFilter value={period.value} onChange={period.change} />}
     >
       {abas.length > 1 ? (
         <nav
@@ -74,14 +68,11 @@ function AtendimentoHome() {
       {!workspaceId ? (
         <p className="type-caption text-[var(--ink-muted-48)]">Carregando…</p>
       ) : aba === "anuncios" ? (
-        <AnunciosPanel workspaceId={workspaceId} periodo={periodo} />
+        <AnunciosPanel workspaceId={workspaceId} periodo={period.periodo} dataInicio={dataInicio} dataFim={dataFim} />
       ) : aba === "instagram" ? (
-        <SocialMediaPanel clienteId={workspaceId} dateFilter={{ periodo }} />
+        <SocialMediaPanel clienteId={workspaceId} dateFilter={{ periodo: period.periodo, dataInicio, dataFim }} />
       ) : (
-        <div className="space-y-8">
-          <InsideSalesGeral workspaceId={workspaceId} query={query} />
-          <LeadQualityPanel workspaceId={workspaceId} query={query} />
-        </div>
+        <InicioGeral workspaceId={workspaceId} query={period.query} periodLabel={period.resolved.label} />
       )}
     </AppPage>
   );

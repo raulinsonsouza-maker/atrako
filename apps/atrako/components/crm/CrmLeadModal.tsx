@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { formatPhone } from "@/components/crm/CrmLeadCard";
 import { useCrmLinks } from "@/components/crm/CrmLinksContext";
 import { LeadCommunications, type LeadCommunicationsData } from "@/components/crm/LeadCommunications";
+import { LeadPaymentLinks } from "@/components/crm/LeadPaymentLinks";
 
 type JourneyItem = {
   at: string;
@@ -576,7 +577,7 @@ export function CrmLeadModal({
 }) {
   const qc = useQueryClient();
   const [showAllOrders, setShowAllOrders] = useState(false);
-  const [panelTab, setPanelTab] = useState<"jornada" | "pedidos" | "conversas" | "notas">("jornada");
+  const [panelTab, setPanelTab] = useState<"jornada" | "pedidos" | "conversas" | "notas" | "cobranca">("jornada");
   const [noteText, setNoteText] = useState("");
   const [savingNote, setSavingNote] = useState(false);
   const { data, isLoading, isError } = useQuery({
@@ -836,7 +837,8 @@ export function CrmLeadModal({
                           ] as const)
                         : []),
                       ["notas", "Notas"],
-                    ] as Array<["jornada" | "pedidos" | "conversas" | "notas", string]>
+                      ["cobranca", "Cobrança"],
+                    ] as Array<["jornada" | "pedidos" | "conversas" | "notas" | "cobranca", string]>
                   ).map(([id, label]) => {
                     const active = panelTab === id;
                     return (
@@ -950,6 +952,12 @@ export function CrmLeadModal({
                 </div>
               ) : null}
 
+              {panelTab === "cobranca" ? (
+                <div className="panel-modal-panel" role="tabpanel">
+                  <LeadPaymentLinks workspaceId={workspaceId} leadId={leadId} />
+                </div>
+              ) : null}
+
               {panelTab === "notas" ? (
                 <div className="panel-modal-panel space-y-3" role="tabpanel">
                   {salesMode ? (
@@ -1057,6 +1065,11 @@ export function CrmLeadModal({
           <Button type="button" variant="outline" size="toolbar" onClick={() => setPanelTab("notas")}>
             Adicionar nota
           </Button>
+          {lead && lead.status !== "WON" ? (
+            <Button type="button" variant="outline" size="toolbar" onClick={() => setPanelTab("cobranca")}>
+              Cobrar
+            </Button>
+          ) : null}
           {lead?.phone ? (
             <Link
               href={links.conversationHref(lead.phone)}

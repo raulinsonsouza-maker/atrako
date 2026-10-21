@@ -41,6 +41,7 @@ export function AppShell({ children, lpBrand = null }: { children: React.ReactNo
     pathname.startsWith("/hospedagem") ||
     pathname.startsWith("/atendimento") ||
     pathname.startsWith("/estadia") ||
+    pathname.startsWith("/pagar/") ||
     pathname.startsWith("/commerce") ||
     pathname.startsWith("/loja");
   const moduleEmbed = pathname.startsWith("/modules/");

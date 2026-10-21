@@ -68,6 +68,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, food: true });
     }
 
+    if (externalRef.startsWith("paylink:")) {
+      const { applyPaymentLinkWebhook } = await import("@/lib/crm/payment-links");
+      await applyPaymentLinkWebhook({
+        linkId: externalRef.slice("paylink:".length),
+        mpOrderId: dataId || null,
+      });
+      return NextResponse.json({ ok: true, paylink: true });
+    }
+
     if (externalRef.startsWith("stay:")) {
       const { applyStayPaymentWebhook } = await import("@/lib/stay/reservations");
       await applyStayPaymentWebhook({
@@ -122,6 +131,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (!order && dataId) {
+      const paylink = await prisma.leadPaymentLink.findFirst({ where: { mpOrderId: dataId }, select: { id: true } });
+      if (paylink) {
+        const { applyPaymentLinkWebhook } = await import("@/lib/crm/payment-links");
+        await applyPaymentLinkWebhook({ linkId: paylink.id });
+        return NextResponse.json({ ok: true, paylink: true });
+      }
       const stay = await prisma.stayReservation.findFirst({ where: { mpOrderId: dataId }, select: { id: true } });
       if (stay) {
         const { applyStayPaymentWebhook } = await import("@/lib/stay/reservations");

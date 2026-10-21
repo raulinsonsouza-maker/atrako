@@ -51,4 +51,4 @@ export const LP_AREA_PATH = "/crm";
 export const LP_AREA_TARGET = "/atendimento";
 
 /** Prefixos do Atrako expostos no domínio do cliente; o resto volta para a LP. */
-export const LP_DOMAIN_ALLOWED_PREFIXES = ["/api/", "/sign-in", "/change-password"];
+export const LP_DOMAIN_ALLOWED_PREFIXES = ["/api/", "/sign-in", "/change-password", "/pagar/"];

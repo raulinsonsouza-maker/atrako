@@ -27,6 +27,7 @@ const PUBLIC_PREFIXES = [
   "/p/",
   "/cardapio/",
   "/estadia/",
+  "/pagar/",
   "/loja/",
   "/checkout",
   "/obrigado",

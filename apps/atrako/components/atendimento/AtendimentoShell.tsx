@@ -13,6 +13,7 @@ import {
   PanelLeftOpen,
   Send,
   SquareKanban,
+  Wallet,
 } from "lucide-react";
 import { logoutEverywhere } from "@/lib/auth/logoutClient";
 import { useAtendimentoBase } from "@/components/layout/LpHostContext";
@@ -32,6 +33,7 @@ const TABS: Tab[] = [
   { path: "", label: "Início", description: "Funil, qualificação e mídia", icon: LayoutDashboard, manage: true },
   { path: "/leads", label: "Leads", description: "Pipeline da equipe", icon: SquareKanban, manage: false },
   { path: "/conversas", label: "Conversas", description: "WhatsApp dos leads", icon: MessagesSquare, manage: false },
+  { path: "/financeiro", label: "Financeiro", description: "Entradas e custos", icon: Wallet, manage: false },
   { path: "/mensagens", label: "Mensagens", description: "Fluxos automáticos", icon: Send, manage: true },
 ];
 

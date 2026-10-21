@@ -15,10 +15,21 @@ const geist = localFont({
   weight: "100 900",
 });
 
-export const metadata: Metadata = {
-  title: "Atrako",
-  description: "Inteligência comercial para vender mais",
-};
+async function requestHost() {
+  return ((await headers()).get("host") ?? "").split(":")[0].toLowerCase();
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const lp = LP_DOMAINS[await requestHost()];
+  if (lp) {
+    return { title: lp.name, icons: { icon: lp.icon, apple: lp.appleIcon } };
+  }
+  return {
+    title: "Atrako",
+    description: "Inteligência comercial para vender mais",
+    icons: { icon: "/icon.svg" },
+  };
+}
 
 /** App inteiro depende de DB/auth — sem static prerender no `next build`. */
 export const dynamic = "force-dynamic";
@@ -33,7 +44,7 @@ const fontVars = {
 } as CSSProperties;
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const host = ((await headers()).get("host") ?? "").split(":")[0].toLowerCase();
+  const host = await requestHost();
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body

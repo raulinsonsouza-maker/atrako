@@ -103,13 +103,13 @@ function SignInForm() {
       };
 
   useEffect(() => {
-    if (!brandedEntry) return;
+    if (!brandedEntry || lpHost) return;
     const previous = document.title;
     document.title = "Entrar";
     return () => {
       document.title = previous;
     };
-  }, [brandedEntry]);
+  }, [brandedEntry, lpHost]);
   const fieldClass =
     "h-11 w-full rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-3 type-body text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-muted-48)] hover:border-[var(--ink-muted-48)] focus-visible:border-[var(--primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-focus)]";
 

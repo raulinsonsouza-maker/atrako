@@ -5,7 +5,7 @@ import type { QualifyFieldKey } from "./fields";
 export type ChoiceOpt = { code: string; label: string };
 
 /** Investimento inicial publicado pela Regicenter (regicenter.com/seja-um-franqueado). */
-export const REGICENTER_FRANCHISE_INVESTMENT = "R$ 27.999";
+export const REGICENTER_FRANCHISE_INVESTMENT = "R$ 27.900,00";
 
 export const CHOICE_MAP: Partial<Record<QualifyFieldKey, ChoiceOpt[]>> = {
   niche: [
@@ -49,6 +49,9 @@ const LABEL_ALIASES: Partial<Record<QualifyFieldKey, Record<string, string>>> = 
   investment_status: {
     "tenho o valor": "CAPITAL_AVAILABLE",
     [`tenho os ${REGICENTER_FRANCHISE_INVESTMENT}`.toLowerCase()]: "CAPITAL_AVAILABLE",
+    // Rótulos antigos que ainda podem chegar de respostas e botões já enviados.
+    "tenho os r$ 27.999": "CAPITAL_AVAILABLE",
+    "tenho os r$ 27.900": "CAPITAL_AVAILABLE",
   },
 };
 

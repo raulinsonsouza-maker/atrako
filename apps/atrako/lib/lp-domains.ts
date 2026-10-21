@@ -2,10 +2,15 @@
  * Domínios de clientes que servem uma LP estática de `public/` na raiz e a área de atendimento em `/crm`.
  * Cada host também precisa de um router no Traefik (deploy/stack.yml) e do registro DNS apontando para a VPS.
  */
-export type LpDomain = { dir: string; name: string };
+export type LpDomain = { dir: string; name: string; icon: string; appleIcon: string };
 
 const DOMAINS: Record<string, LpDomain> = {
-  "lp.regicenter.com": { dir: "/lp/regicenter-franquia", name: "Regicenter" },
+  "lp.regicenter.com": {
+    dir: "/lp/regicenter-franquia",
+    name: "Regicenter",
+    icon: "/lp/regicenter-franquia/assets/favicon.png",
+    appleIcon: "/lp/regicenter-franquia/assets/apple-touch-icon.png",
+  },
 };
 
 /** Em dev, `lp.regicenter.localhost:5000` simula o domínio (o navegador resolve *.localhost para 127.0.0.1). */

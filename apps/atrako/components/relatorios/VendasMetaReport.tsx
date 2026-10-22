@@ -3,18 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Download, FileText, Loader2 } from "lucide-react";
-import { Button, InfoHint, MetricGrid, MetricTile, PillSelect, SectionCard, buttonClass } from "@/components/ui";
+import { Button, MetricGrid, MetricTile, PillSelect, SectionCard, buttonClass } from "@/components/ui";
 import { CICLO_STATUS_LABELS, formatCicloLabel, formatDayBR, type CicloStatus } from "@/lib/relatorios/ciclos";
-import {
-  JANELA_LABELS,
-  NIVEL_DESCRICOES,
-  NIVEL_LABELS,
-  formatBRL,
-  formatDateTimeBR,
-  formatPercent,
-  type NivelAtribuicao,
-  type VendasMetaReport,
-} from "@/lib/relatorios/vendas-meta-core";
+import { formatBRL, formatDateTimeBR, formatPercent, type VendasMetaReport } from "@/lib/relatorios/vendas-meta-core";
 
 export type CicloResumoView = {
   id: string;
@@ -35,12 +26,6 @@ const STATUS_HINT: Record<CicloStatus, string> = {
   EM_ANDAMENTO: "Ciclo aberto: os números são atualizados todos os dias.",
   EM_APURACAO: "Ciclo encerrado, em apuração por 7 dias para cancelamentos e reembolsos entrarem. Depois disso o valor fica fechado.",
   FECHADO: "Ciclo fechado: valores congelados para cobrança.",
-};
-
-const NIVEL_TONE: Record<NivelAtribuicao, "ok" | "warn" | undefined> = {
-  confirmada: "ok",
-  utm: undefined,
-  provavel: "warn",
 };
 
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
@@ -199,56 +184,10 @@ export function VendasMetaReportView({
         <MetricTile
           label={`Comissão (${pct})`}
           value={formatBRL(r.comissaoCents)}
-          detail={`Sem frete: ${formatBRL(r.comissaoSemFreteCents)}`}
-          info={<InfoHint>{`${pct} sobre o total dos pedidos pagos atribuídos ao Meta. O valor sem frete é exibido só para referência.`}</InfoHint>}
+          detail={`Sobre o total dos pedidos pagos`}
         />
         <MetricTile label="Ticket médio" value={formatBRL(r.ticketMedioCents)} detail={plural(r.unidades, "unidade", "unidades")} />
-        <MetricTile
-          label="Frete cobrado"
-          value={formatBRL(r.freteCents)}
-          detail={`Descontos: ${formatBRL(r.descontoCents)}`}
-        />
       </MetricGrid>
-
-      <SectionCard
-        title="Por nível de atribuição"
-        subtitle="Como cada venda foi ligada a um anúncio do Meta"
-      >
-        <div className="overflow-x-auto">
-          <table className="rel-table min-w-[640px] type-caption">
-            <thead>
-              <tr className="type-fine-print">
-                <th>Nível</th>
-                <th>Critério</th>
-                <th className="text-right">Vendas</th>
-                <th className="text-right">Faturado</th>
-                <th className="text-right">Comissão</th>
-              </tr>
-            </thead>
-            <tbody>
-              {report.porNivel.map((n) => (
-                <tr key={n.nivel}>
-                  <td>
-                    <span className="rel-badge type-micro-legal" data-tone={NIVEL_TONE[n.nivel]}>
-                      {n.label}
-                    </span>
-                  </td>
-                  <td className="text-[var(--ink-muted-48)]">{NIVEL_DESCRICOES[n.nivel]}</td>
-                  <td className="text-right tabular-nums">{n.pedidos}</td>
-                  <td className="text-right tabular-nums">{formatBRL(n.faturamentoCents)}</td>
-                  <td className="text-right tabular-nums">{formatBRL(n.comissaoCents)}</td>
-                </tr>
-              ))}
-              <tr className="type-caption-strong">
-                <td colSpan={2}>Total</td>
-                <td className="text-right tabular-nums">{r.pedidos}</td>
-                <td className="text-right tabular-nums">{formatBRL(r.faturamentoCents)}</td>
-                <td className="text-right tabular-nums text-[var(--primary)]">{formatBRL(r.comissaoCents)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </SectionCard>
 
       {report.porCampanha.length ? (
         <SectionCard title="Por campanha">
@@ -346,7 +285,6 @@ export function VendasMetaReportView({
                   <th>Comprador</th>
                   <th>Itens</th>
                   <th>Origem no Meta</th>
-                  <th>Atribuição</th>
                   <th className="text-right">Total</th>
                   <th className="text-right">Comissão</th>
                 </tr>
@@ -372,9 +310,6 @@ export function VendasMetaReportView({
                             </span>
                           ))
                         : "—"}
-                      {p.freteCents ? (
-                        <span className="block type-fine-print text-[var(--ink-muted-48)]">Frete {formatBRL(p.freteCents)}</span>
-                      ) : null}
                     </td>
                     <td>
                       {p.campanha ?? "Campanha não identificada"}
@@ -384,15 +319,7 @@ export function VendasMetaReportView({
                         </span>
                       ) : null}
                     </td>
-                    <td>
-                      <span className="rel-badge type-micro-legal" data-tone={NIVEL_TONE[p.nivel]}>
-                        {NIVEL_LABELS[p.nivel]}
-                      </span>
-                      {p.janela ? (
-                        <span className="block type-fine-print text-[var(--ink-muted-48)]">{JANELA_LABELS[p.janela]}</span>
-                      ) : null}
-                    </td>
-                    <td className="text-right tabular-nums">{formatBRL(p.totalCents)}</td>
+   350|                    <td className="text-right tabular-nums">{formatBRL(p.totalCents)}</td>
                     <td className="text-right tabular-nums">{formatBRL(p.comissaoCents)}</td>
                   </tr>
                 ))}

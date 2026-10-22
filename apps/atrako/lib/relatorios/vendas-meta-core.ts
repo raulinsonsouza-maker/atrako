@@ -2,29 +2,6 @@
 
 import { isPaidOrderStatus, orderStatusLabel } from "../commerce-attribution/order-status";
 
-export type NivelAtribuicao = "confirmada" | "utm" | "provavel";
-
-export const NIVEL_LABELS: Record<NivelAtribuicao, string> = {
-  confirmada: "Confirmada",
-  utm: "Link do anúncio",
-  provavel: "Provável",
-};
-
-export const NIVEL_DESCRICOES: Record<NivelAtribuicao, string> = {
-  confirmada: "A loja gravou o clique no anúncio e o Meta também contou a compra.",
-  utm: "A loja gravou o clique no anúncio (UTM / fbclid).",
-  provavel: "Sem UTM; valor e dia batem com uma compra reportada pelo Pixel do Meta.",
-};
-
-export const NIVEIS: NivelAtribuicao[] = ["confirmada", "utm", "provavel"];
-
-export function nivelFromAdMethod(adMethod: string | null | undefined): NivelAtribuicao | null {
-  if (adMethod === "both") return "confirmada";
-  if (adMethod === "utm") return "utm";
-  if (adMethod === "meta_match") return "provavel";
-  return null;
-}
-
 export type OrderInput = {
   id: string;
   externalId: string;
@@ -71,8 +48,6 @@ export type PedidoRelatorio = {
   campanha: string | null;
   conjunto: string | null;
   anuncio: string | null;
-  nivel: NivelAtribuicao;
-  janela: "click" | "view" | null;
 };
 
 type Totais = { pedidos: number; faturamentoCents: number; comissaoCents: number };
@@ -89,7 +64,6 @@ export type VendasMetaReport = {
     unidades: number;
     comissaoSemFreteCents: number;
   };
-  porNivel: Array<Totais & { nivel: NivelAtribuicao; label: string }>;
   porCampanha: Array<Totais & { campanhaId: string | null; campanha: string }>;
   porAnuncio: Array<Totais & { campanha: string; conjunto: string; anuncio: string }>;
   porProduto: Array<{ titulo: string; sku: string | null; quantidade: number; pedidos: number; receitaCents: number }>;
@@ -133,8 +107,6 @@ export function aggregateVendasMetaReport(input: {
   const naoConcretizados = { pedidos: 0, valorCents: 0 };
 
   for (const o of input.orders) {
-    const nivel = nivelFromAdMethod(o.source?.adMethod);
-    if (!nivel) continue;
     const total = o.totalCents ?? 0;
     if (!isPaidOrderStatus(o.status)) {
       naoConcretizados.pedidos += 1;
@@ -142,7 +114,6 @@ export function aggregateVendasMetaReport(input: {
       continue;
     }
     const extras = o.provider === "WOOCOMMERCE" ? wooExtras(o.rawPayload) : { freteCents: 0, descontoCents: 0, numero: null };
-    const janela = o.source?.adWindow === "view" ? "view" : o.source?.adWindow === "click" ? "click" : null;
     pedidos.push({
       id: o.id,
       numero: extras.numero ?? o.externalId,
@@ -167,8 +138,6 @@ export function aggregateVendasMetaReport(input: {
       campanha: o.source?.metaCampaignName ?? null,
       conjunto: o.source?.metaAdsetName ?? null,
       anuncio: o.source?.metaAdName ?? null,
-      nivel,
-      janela,
     });
   }
   pedidos.sort((a, b) => a.data.localeCompare(b.data));
@@ -194,12 +163,6 @@ export function aggregateVendasMetaReport(input: {
     return map;
   };
   const byFaturamento = (a: Totais, b: Totais) => b.faturamentoCents - a.faturamentoCents || b.pedidos - a.pedidos;
-
-  const porNivel = NIVEIS.map((nivel) => ({
-    nivel,
-    label: NIVEL_LABELS[nivel],
-    ...totais(pedidos.filter((p) => p.nivel === nivel)),
-  }));
 
   const porCampanha = [...groupBy((p) => p.campanhaId ?? p.campanha ?? "").values()]
     .map((list) => ({
@@ -248,7 +211,6 @@ export function aggregateVendasMetaReport(input: {
       unidades,
       comissaoSemFreteCents: comissaoDe(Math.max(0, faturamento - frete), pct),
     },
-    porNivel,
     porCampanha,
     porAnuncio,
     porProduto,
@@ -283,8 +245,6 @@ export function formatDateTimeBR(iso: string): string {
   }).format(new Date(iso));
 }
 
-export const JANELA_LABELS = { click: "Clique", view: "Visualização" } as const;
-
 /* ───────────── CSV ───────────── */
 
 function csvCell(v: string | number | null | undefined): string {
@@ -308,22 +268,16 @@ export function vendasMetaCsv(report: VendasMetaReport, tipo: "pedidos" | "itens
     p.uf,
     p.statusLabel,
   ];
-  const origem = (p: PedidoRelatorio) => [
-    p.campanha,
-    p.conjunto,
-    p.anuncio,
-    NIVEL_LABELS[p.nivel],
-    p.janela ? JANELA_LABELS[p.janela] : null,
-  ];
+  const origem = (p: PedidoRelatorio) => [p.campanha, p.conjunto, p.anuncio];
   if (tipo === "itens") {
-    rows.push(["Pedido", "Data", "Comprador", "Cidade", "UF", "Status", "Produto", "SKU", "Quantidade", "Valor unitário (R$)", "Total do item (R$)", "Campanha", "Conjunto", "Anúncio", "Atribuição", "Janela"]);
+    rows.push(["Pedido", "Data", "Comprador", "Cidade", "UF", "Status", "Produto", "SKU", "Quantidade", "Valor unitário (R$)", "Total do item (R$)", "Campanha", "Conjunto", "Anúncio"]);
     for (const p of report.pedidos) {
       for (const i of p.itens) {
         rows.push([...base(p), i.titulo, i.sku, i.quantidade, decimalBR(i.unitarioCents), decimalBR(i.totalCents), ...origem(p)]);
       }
     }
   } else {
-    rows.push(["Pedido", "Data", "Comprador", "Cidade", "UF", "Status", "Itens", "Frete (R$)", "Desconto (R$)", "Total (R$)", `Comissão ${formatPercent(report.comissaoPercent)} (R$)`, "Campanha", "Conjunto", "Anúncio", "Atribuição", "Janela"]);
+    rows.push(["Pedido", "Data", "Comprador", "Cidade", "UF", "Status", "Itens", "Frete (R$)", "Desconto (R$)", "Total (R$)", `Comissão ${formatPercent(report.comissaoPercent)} (R$)`, "Campanha", "Conjunto", "Anúncio"]);
     for (const p of report.pedidos) {
       rows.push([
         ...base(p),

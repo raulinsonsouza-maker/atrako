@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PillSelect } from "@/components/ui/pill-select";
 import { IconButton } from "@/components/ui/icon-button";
 import { DateRangeFilter, resolveDateRange, type DatePreset } from "@/components/ui/date-range-filter";
-import { MetricGrid, MetricTile, SectionCard, SegmentedControl } from "@/components/ui";
+import { MetricGrid, MetricTile, SectionCard, SegmentedControl, buttonClass } from "@/components/ui";
 import { DefaultPanel } from "@/components/clientes/DefaultPanel";
 import { GoogleKeywordsPanel } from "@/components/clientes/GoogleKeywordsPanel";
 import { AnalyticsGA4Section } from "@/components/clientes/AnalyticsGA4Section";
@@ -1453,6 +1453,18 @@ function formatPercentage(value: number) {
 
       {!analystOpen && canal === "meta" && subView === "dados" && isEcommerceMode && (
         <MetaVendasIdentificadas clienteId={id} query={buildQueryParams(dateFilter)} />
+      )}
+
+      {!analystOpen && !portalMode && canal === "meta" && subView === "dados" && isEcommerceMode && (
+        <SectionCard
+          title="Relatório de comissão"
+          subtitle="Vendas pagas vindas do Meta, mês a mês, com link para o cliente e download em PDF/CSV"
+          action={
+            <Link href={`/clientes/${id}/relatorios/vendas-meta`} className={buttonClass({ variant: "outline", size: "toolbar" })}>
+              Abrir relatório
+            </Link>
+          }
+        />
       )}
 
       {/* ── Painel de Campanhas Meta (só na aba Meta > Análise) ── */}

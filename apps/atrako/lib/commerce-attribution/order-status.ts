@@ -6,6 +6,13 @@ export function isRevenueOrder(status: string | null | undefined): boolean {
   return !NOT_REVENUE.test((status ?? "").toLowerCase());
 }
 
+export const PAID_STATUSES = new Set(["processing", "completed", "paid", "approved", "authorized", "pago", "aprovado"]);
+
+/** Venda concretizada (pagamento confirmado). Mais restrito que `isRevenueOrder`: `on-hold` não conta. */
+export function isPaidOrderStatus(status: string | null | undefined): boolean {
+  return PAID_STATUSES.has((status ?? "").toLowerCase());
+}
+
 /** Pedido encerrado sem pagamento possível (link de pagamento não funciona mais). */
 const CLOSED = /cancel|refund|reembols|estorn|devolv|fail|falh|trash|expired|expirad|voided/;
 

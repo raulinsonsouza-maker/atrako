@@ -6,10 +6,10 @@
 import { prisma } from "@/lib/db";
 import { matchPurchasesToOrders, type MatchOrder, type MatchUnit } from "./match";
 import { parseWooOrderSource, type StoreOrderSource } from "./store-source";
+import { PAID_STATUSES } from "./order-status";
 
 /** Pedidos feitos no site (onde o Pixel dispara). Marketplaces não passam pelo Pixel do anunciante. */
 const SITE_PROVIDERS = ["WOOCOMMERCE", "SHOPIFY", "NUVEMSHOP", "TRAY"];
-const PAID_STATUSES = new Set(["processing", "completed", "paid", "approved", "authorized", "pago", "aprovado"]);
 const IGNORED_STATUSES = new Set(["checkout-draft", "trash"]);
 const STORE_TZ = "America/Sao_Paulo";
 

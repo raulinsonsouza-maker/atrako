@@ -118,6 +118,7 @@ components:
   criar-catalog: { css: ".criar-platform-* / .criar-recipe-* / .criar-filter-*", note: "Hub Criar — plataformas + receitas; badges DS" }
   lp-phone-preview: { file: components/criar/LpPhonePreview.tsx, css: ".lp-preview / .lp-phone-*", note: "Preview iPhone da LP no Criar oferta + sucesso" }
   panel-modal: { css: ".panel-modal-*", note: "Sheet CRM — shell parchment; header/footer/qualify/tabs em canvas; stats pearl segmentados; respostas em lista 2 col" }
+  report-print: { file: components/relatorios/VendasMetaReport.tsx, css: ".report-print-area / .report-print-hide", note: "Relatório compartilhável (/relatorio/[token]) — PDF via 'Salvar como PDF' do navegador: A4 paisagem, só a área do relatório, botões e seletores somem. Reusa rel-kpi / rel-card / rel-table / rel-badge" }
   relacionamento: { file: components/relacionamento/ui.tsx, css: ".rel-*", note: "Fluxos/campanhas/envios — RelSection (título curto + info-hint + ação), RelKpi (número + detalhe + variação), lista de pendências, status de canais, badges ok/warn/bad, editor + preview, sino de notificações" }
   store-utility-card: { file: components/ui/card.tsx }
   sub-nav-frosted: { file: components/ui/sub-nav-frosted.tsx }

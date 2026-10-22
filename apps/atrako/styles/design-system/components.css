@@ -6273,6 +6273,51 @@ button.rel-list-row:active {
   color: var(--danger);
 }
 
+/* report-print: relatório que vira PDF via "Salvar como PDF" do navegador.
+   Só `.report-print-area` aparece na impressão; `.report-print-hide` some. */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+
+  body:has(.report-print-area) * {
+    visibility: hidden;
+  }
+
+  body:has(.report-print-area) .report-print-area,
+  body:has(.report-print-area) .report-print-area * {
+    visibility: visible;
+  }
+
+  .report-print-area {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    padding: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .report-print-area .report-print-hide {
+    display: none !important;
+  }
+
+  .report-print-area .rel-card,
+  .report-print-area .rel-kpi,
+  .report-print-area tr {
+    break-inside: avoid;
+  }
+
+  .report-print-area .overflow-x-auto {
+    overflow: visible;
+  }
+
+  .report-print-area .rel-table {
+    min-width: 0 !important;
+  }
+}
+
 .rel-input,
 .rel-textarea {
   width: 100%;

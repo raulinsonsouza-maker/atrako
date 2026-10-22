@@ -33,6 +33,8 @@ const PUBLIC_PREFIXES = [
   "/obrigado",
   "/r/",
   "/u/",
+  "/relatorio/",
+  "/api/relatorio/",
   "/api/auth/login",
   "/api/auth/session-login",
   "/api/auth/member",

@@ -1,7 +1,7 @@
 import { PrismaClient } from "@/lib/generated/prisma";
 
 /** Bump ao adicionar campos/models — força recriar o singleton HMR em dev. */
-const PRISMA_SCHEMA_REV = 7;
+const PRISMA_SCHEMA_REV = 8;
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;

@@ -38,6 +38,15 @@ model Cliente {
   observacoesAnaliticas       String?                  @db.VarChar(2000)
   perfilPanel                String?
   ultimoSyncAt               DateTime?
+  /// % de comissão sobre vendas atribuídas ao Meta. Preenchido = relatório mensal ativo.
+  comissaoMetaPercent        Decimal?                 @db.Decimal(5, 2)
+  /// Primeiro dia do primeiro ciclo de comissão (data, BRT).
+  comissaoMetaInicio         DateTime?                @db.Date
+  /// Dia do mês em que cada ciclo começa (o ciclo termina na véspera do mesmo dia no mês seguinte).
+  comissaoMetaDiaCorte       Int?
+  /// Link público fixo do relatório de comissão (/relatorio/[token]).
+  comissaoMetaShareToken     String?                  @unique @db.VarChar(64)
+  comissaoVendasMetaCiclos   ComissaoVendasMetaCiclo[]
   agregadosMensal            AgregadoMidiaMensal[]
   agregadosSemanal           AgregadoMidiaSemanal[]
   contas                     Conta[]
@@ -1874,6 +1883,27 @@ model MetaAdPurchaseDaily {
 
   @@unique([clienteId, adId, date])
   @@index([clienteId, date])
+}
+
+/// Ciclo mensal do relatório de comissão sobre vendas atribuídas ao Meta.
+/// Aberto/em apuração = calculado ao vivo; FECHADO = lê só o snapshot (valor de cobrança).
+model ComissaoVendasMetaCiclo {
+  id              String    @id @default(cuid())
+  clienteId       String
+  /// Datas-calendário em BRT (inclusive nos dois lados).
+  dataInicio      DateTime  @db.Date
+  dataFim         DateTime  @db.Date
+  comissaoPercent Decimal   @db.Decimal(5, 2)
+  /// EM_ANDAMENTO | EM_APURACAO | FECHADO
+  status          String    @default("EM_ANDAMENTO") @db.VarChar(16)
+  snapshot        Json?
+  fechadoEm       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  cliente         Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, dataInicio])
+  @@index([clienteId, status])
 }
 
 /// Carrinho abandonado: checkout abandonado da loja (API) ou pedido não pago vencido.

@@ -78,4 +78,4 @@ export const LP_DOMAIN_ALLOWED_PREFIXES = ["/api/", "/sign-in", "/change-passwor
 export const LP_DOMAIN_NOINDEX_PREFIXES = ["/api/", "/sign-in", "/change-password", "/pagar/", LP_AREA_PATH];
 
 /** Páginas públicas do domínio do cliente servidas pela rota do guia (fora do basePath). */
-export const LP_DOMAIN_SITE_PAGES = ["/privacidade"];
+export const LP_DOMAIN_SITE_PAGES = ["/privacidade", "/cof"];

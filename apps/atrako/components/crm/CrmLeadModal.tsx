@@ -1074,7 +1074,12 @@ export function CrmLeadModal({
               onClick={async () => {
                 setSendingCof(true);
                 try {
-                  await api(`/api/atrako/crm/leads/${lead.id}/send-cof`, { body: { workspaceId } });
+                  const r = await fetch(`/api/atrako/crm/leads/${lead.id}/send-cof`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ workspaceId }),
+                  });
+                  if (!r.ok) throw new Error("Falha ao enviar COF");
                   await qc.invalidateQueries({ queryKey: ["crm-lead", workspaceId, lead.id] });
                 } catch (e) {
                   setSendError(e instanceof Error ? e.message : "Falha ao enviar COF");

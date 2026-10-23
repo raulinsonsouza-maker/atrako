@@ -1092,6 +1092,7 @@ export function CrmLeadModal({
               Enviar COF
             </Button>
           ) : null}
+          {sendError ? <p className="type-fine-print text-[var(--danger)]">{sendError}</p> : null}
           <Button type="button" variant="outline" size="toolbar" onClick={() => setPanelTab("notas")}>
             Adicionar nota
           </Button>

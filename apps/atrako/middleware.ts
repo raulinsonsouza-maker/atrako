@@ -89,6 +89,7 @@ export default function middleware(request: NextRequest) {
       return rewriteTo(`${site}/g${pathname.slice(lp.geoBasePath.length)}`);
     }
     if (LP_DOMAIN_SITE_PAGES.includes(pathname)) return rewriteTo(`${site}${pathname}`);
+    if (["/robots.txt", "/sitemap.xml", "/llms.txt", "/llms-full.txt", "/indexnow.txt"].includes(pathname)) return NextResponse.next();
     if (LP_DOMAIN_ALLOWED_PREFIXES.some((p) => pathname.startsWith(p))) {
       return pathname.startsWith("/api/") ? NextResponse.next() : noindex(NextResponse.next());
     }

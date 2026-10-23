@@ -1,6 +1,96 @@
 'use strict';
 const FORM_SLUG = 'franquia-regicenter-lp'; // CaptureForm do workspace Regicenter no Atrako.
 const ATTRIBUTION_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'gclid', 'fbclid'];
+const FIRST_TOUCH_COOKIE = 'atk_ft'; // Mesmo formato de lib/geo-hub/first-touch.ts.
+const CONSENT_KEY = 'atk_consent';
+const startedAt = Date.now();
+const pageParams = new URLSearchParams(window.location.search);
+
+function readFirstTouch() {
+  try { const raw = cookie(FIRST_TOUCH_COOKIE); return raw ? JSON.parse(raw) : null; } catch (error) { return null; }
+}
+function captureFirstTouch() {
+  if (readFirstTouch()) return;
+  let ref = document.referrer || '';
+  try { if (ref && new URL(ref).host === window.location.host) ref = ''; } catch (error) { ref = ''; }
+  const ft = { lp: window.location.pathname.slice(0, 200), at: new Date().toISOString() };
+  if (ref) ft.ref = ref.slice(0, 300);
+  if (pageParams.get('utm_source')) ft.src = pageParams.get('utm_source').slice(0, 120);
+  if (pageParams.get('utm_medium')) ft.med = pageParams.get('utm_medium').slice(0, 120);
+  if (pageParams.get('utm_campaign')) ft.cmp = pageParams.get('utm_campaign').slice(0, 120);
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = FIRST_TOUCH_COOKIE + '=' + encodeURIComponent(JSON.stringify(ft)) + '; Max-Age=' + (60 * 60 * 24 * 90) + '; Path=/; SameSite=Lax' + secure;
+}
+function firstTouchPayload() {
+  const ft = readFirstTouch();
+  if (!ft) return {};
+  const out = {};
+  if (ft.ref) out.first_referrer = ft.ref;
+  if (ft.src) out.first_utm_source = ft.src;
+  if (ft.med) out.first_utm_medium = ft.med;
+  if (ft.cmp) out.first_utm_campaign = ft.cmp;
+  if (ft.lp) out.first_landing = ft.lp;
+  if (ft.at) out.first_seen_at = ft.at;
+  return out;
+}
+function sessionId() {
+  try {
+    let sid = sessionStorage.getItem('atk_sid');
+    if (!sid) { sid = newEventId(); sessionStorage.setItem('atk_sid', sid); }
+    return sid;
+  } catch (error) { return ''; }
+}
+// Visita vinda de IA/busca/outro site vira GeoHit no Atrako (o servidor ignora navegação direta).
+function sendVisitBeacon() {
+  const payload = JSON.stringify({ path: window.location.pathname, referrer: document.referrer || '', utm_source: pageParams.get('utm_source') || '', sid: sessionId() });
+  if (navigator.sendBeacon) navigator.sendBeacon('/api/geo/hit', payload);
+  else fetch('/api/geo/hit', { method: 'POST', body: payload, keepalive: true }).catch(() => {});
+}
+captureFirstTouch();
+sendVisitBeacon();
+
+// Pixel e GA4 só depois do consentimento; os IDs vêm de Config → Rastreamento do workspace.
+function loadPixel(id) {
+  if (window.fbq) return;
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  window.fbq('init', id);
+  window.fbq('track', 'PageView');
+}
+function loadGa4(id) {
+  if (window.gtag) return;
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(id);
+  document.head.appendChild(script);
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () { window.dataLayer.push(arguments); };
+  window.gtag('js', new Date());
+  window.gtag('config', id);
+}
+function loadTracking() {
+  fetch('/api/geo/public-config').then(response => response.ok ? response.json() : null).then(config => {
+    if (!config) return;
+    if (config.pixelId) loadPixel(config.pixelId);
+    if (config.ga4MeasurementId) loadGa4(config.ga4MeasurementId);
+  }).catch(() => {});
+}
+function consentChoice() {
+  try { return localStorage.getItem(CONSENT_KEY); } catch (error) { return null; }
+}
+function setConsent(value) {
+  try { localStorage.setItem(CONSENT_KEY, value); } catch (error) { /* modo privado */ }
+  document.querySelector('#consent').hidden = true;
+  if (value === 'granted') loadTracking();
+}
+(function initConsent() {
+  const banner = document.querySelector('#consent');
+  const choice = consentChoice();
+  if (choice === 'granted') loadTracking();
+  if (!banner || choice) return;
+  banner.hidden = false;
+  document.querySelector('#consent-accept').addEventListener('click', () => setConsent('granted'));
+  document.querySelector('#consent-decline').addEventListener('click', () => setConsent('denied'));
+})();
 const form = document.querySelector('#lead-form');
 const submitButton = form.querySelector('.form-submit');
 let sending = false;
@@ -75,7 +165,7 @@ function attribution() {
   const fbc = cookie('_fbc') || (out.fbclid ? 'fb.1.' + Date.now() + '.' + out.fbclid : '');
   if (fbp) out.fbp = fbp;
   if (fbc) out.fbc = fbc;
-  return out;
+  return Object.assign(out, firstTouchPayload());
 }
 function newEventId() {
   return window.crypto && crypto.randomUUID ? crypto.randomUUID() : 'lead-' + Date.now() + '-' + Math.random().toString(36).slice(2);
@@ -112,6 +202,8 @@ form.addEventListener('submit', async event => {
     { fieldId: 'state', value: String(data.get('state')) },
     { fieldId: 'investment_status', value: String(data.get('capital')) }
   ];
+  const howFound = String(data.get('how_found') || '');
+  if (howFound) answers.push({ fieldId: 'how_found', value: howFound });
   sending = true;
   submitButton.disabled = true;
   const metaEventId = newEventId();
@@ -119,11 +211,14 @@ form.addEventListener('submit', async event => {
     const response = await fetch('/api/atrako/forms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'complete', slug: FORM_SLUG, answers, metaEventId, ...attribution() })
+      body: JSON.stringify({ action: 'complete', slug: FORM_SLUG, answers, metaEventId, website: String(data.get('website') || ''), startedAt, ...attribution() })
     });
     if (!response.ok) throw new Error('HTTP ' + response.status);
     if (typeof window.fbq === 'function') {
       window.fbq('track', 'Lead', { content_name: 'Franquia Regicenter', content_category: String(data.get('capital')) }, { eventID: metaEventId });
+    }
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', 'generate_lead', { form_slug: FORM_SLUG, lead_source: howFound || 'nao_informado' });
     }
     form.querySelectorAll('.field, .field-row, .form-submit, .form-note').forEach(el => { el.style.display = 'none'; });
     const first = name.split(/\s+/)[0];

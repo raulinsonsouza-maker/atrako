@@ -10,6 +10,7 @@ import { assertCanManageConfig, requireWorkspaceAccess } from "@/lib/tenancy/wor
 import { resolveModules, sanitizeModulesPatch } from "@/lib/modules/resolve";
 
 import { normalizePrimaryHex } from "@/lib/brand/primaryColor";
+import { parseLogoUrlPatch } from "@/lib/brand/logo";
 import { parseAttendance } from "@/lib/attendance/profile";
 
 function sanitizeMessagingPrefs(raw: unknown) {
@@ -80,6 +81,12 @@ export async function PATCH(request: NextRequest) {
     primaryColor = undefined;
   }
 
+  const logoUrl = parseLogoUrlPatch(b.logoUrl);
+  const logoOnDarkUrl = parseLogoUrlPatch(b.logoOnDarkUrl);
+  if (!logoUrl.ok || !logoOnDarkUrl.ok) {
+    return NextResponse.json({ error: "Logo inválido — envie a imagem de novo." }, { status: 400 });
+  }
+
   let modulesEnabled: Awaited<ReturnType<typeof sanitizeModulesPatch>> | null = null;
   if (b.modulesEnabled !== undefined) {
     modulesEnabled = await sanitizeModulesPatch(b.modulesEnabled);
@@ -101,8 +108,8 @@ export async function PATCH(request: NextRequest) {
           : undefined,
     onboardingStep: typeof b.onboardingStep === "string" ? b.onboardingStep : undefined,
     nome: typeof b.nome === "string" ? b.nome : undefined,
-    logoUrl:
-      typeof b.logoUrl === "string" ? b.logoUrl : b.logoUrl === null ? null : undefined,
+    logoUrl: logoUrl.value,
+    logoOnDarkUrl: logoOnDarkUrl.value,
     modulesEnabled: modulesEnabled?.ok ? modulesEnabled.patch : undefined,
     tracking:
       b.tracking && typeof b.tracking === "object"

@@ -11,6 +11,7 @@ import {
   useWorkspaceConfig,
 } from "../_components";
 import { BrandColorPicker } from "@/components/ui/brand-color-picker";
+import { LogoUpload } from "@/components/ui/logo-upload";
 import { PillSelect } from "@/components/ui/pill-select";
 import { TextField } from "@/components/ui/text-field";
 import { DEFAULT_PRIMARY, normalizePrimaryHex } from "@/lib/brand/primaryColor";
@@ -51,6 +52,8 @@ export default function ConfigEmpresaPage() {
   const [timezone, setTimezone] = useState("America/Sao_Paulo");
   const [currency, setCurrency] = useState("BRL");
   const [primaryColor, setPrimaryColor] = useState(DEFAULT_PRIMARY);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoOnDarkUrl, setLogoOnDarkUrl] = useState<string | null>(null);
   const [senderName, setSenderName] = useState("");
   const [storeUrl, setStoreUrl] = useState("");
   const [footerAddress, setFooterAddress] = useState("");
@@ -63,6 +66,8 @@ export default function ConfigEmpresaPage() {
     setTimezone(config.settings?.timezone ?? "America/Sao_Paulo");
     setCurrency(config.settings?.currency ?? "BRL");
     setPrimaryColor(normalizePrimaryHex(config.settings?.primaryColor) ?? DEFAULT_PRIMARY);
+    setLogoUrl(config.workspace?.logoUrl ?? null);
+    setLogoOnDarkUrl(config.settings?.logoOnDarkUrl ?? null);
     const mp = (config.settings?.messagingPrefs ?? {}) as Record<string, unknown>;
     setSenderName(typeof mp.senderName === "string" ? mp.senderName : "");
     setStoreUrl(typeof mp.storeUrl === "string" ? mp.storeUrl : "");
@@ -92,6 +97,8 @@ export default function ConfigEmpresaPage() {
       timezone,
       currency,
       primaryColor: hex,
+      logoUrl,
+      logoOnDarkUrl,
       messagingPrefs: {
         senderName: senderName.trim() || null,
         storeUrl: storeUrl.trim() || null,
@@ -101,7 +108,12 @@ export default function ConfigEmpresaPage() {
         ),
       },
     });
-    if (ok) await qc.invalidateQueries({ queryKey: ["brand-clientes"] });
+    if (ok) {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["brand-clientes"] }),
+        qc.invalidateQueries({ queryKey: ["atendimento-shell"] }),
+      ]);
+    }
   }
 
   const message = localError || error;
@@ -121,6 +133,25 @@ export default function ConfigEmpresaPage() {
             placeholder="Nome da empresa"
             required
           />
+          {config?.workspace?.id ? (
+            <div className="grid gap-5 sm:grid-cols-2">
+              <LogoUpload
+                workspaceId={config.workspace.id}
+                label="Logo"
+                value={logoUrl}
+                onChange={edit(setLogoUrl)}
+                hint="Fundos claros: e-mails, páginas e links de pagamento."
+              />
+              <LogoUpload
+                workspaceId={config.workspace.id}
+                surface="dark"
+                label="Logo para fundo escuro"
+                value={logoOnDarkUrl}
+                onChange={edit(setLogoOnDarkUrl)}
+                hint="Versão clara (branca) para o menu do painel e a tela de login da equipe."
+              />
+            </div>
+          ) : null}
           <div>
             <p className="mb-3 type-caption-strong text-[var(--ink)]">Cor da marca</p>
             <BrandColorPicker

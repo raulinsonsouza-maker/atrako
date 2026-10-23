@@ -7,6 +7,7 @@
 import { prisma } from "@/lib/db";
 import { listWorkspaceConnections } from "@/lib/atrako/workspace-connections";
 import { readExplicitModules, type ModuleKey } from "@/lib/modules/registry";
+import { resolveLogoOnDark } from "@/lib/brand/logo";
 
 /** Escolhas explícitas do workspace; estado efetivo via `resolveModules` (lib/modules/resolve). */
 export type ModulesEnabled = Partial<Record<ModuleKey, boolean>>;
@@ -42,6 +43,7 @@ export async function getWorkspaceConfig(workspaceId: string) {
       currency: settings.currency,
       locale: settings.locale,
       primaryColor: settings.primaryColor,
+      logoOnDarkUrl: resolveLogoOnDark(settings.logoOnDarkUrl, cliente.slug),
       customDomain: settings.customDomain,
       modulesEnabled,
       tracking: (settings.tracking as Record<string, unknown>) ?? {},
@@ -63,6 +65,7 @@ export async function patchWorkspaceSettings(
     currency?: string;
     locale?: string;
     primaryColor?: string | null;
+    logoOnDarkUrl?: string | null;
     customDomain?: string | null;
     /** Já validado por `sanitizeModulesPatch`. */
     modulesEnabled?: ModulesEnabled;
@@ -99,6 +102,7 @@ export async function patchWorkspaceSettings(
       currency: patch.currency ?? undefined,
       locale: patch.locale ?? undefined,
       primaryColor: patch.primaryColor === undefined ? undefined : patch.primaryColor,
+      logoOnDarkUrl: patch.logoOnDarkUrl === undefined ? undefined : patch.logoOnDarkUrl,
       customDomain: patch.customDomain === undefined ? undefined : patch.customDomain,
       onboardingStep: patch.onboardingStep ?? undefined,
       modulesEnabled: patch.modulesEnabled

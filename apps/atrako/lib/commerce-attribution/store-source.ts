@@ -3,12 +3,20 @@
  * A URL de entrada da sessão é a fonte mais completa: o Woo não guarda `utm_id`/`utm_term` em campo próprio.
  */
 
+import { aiSourceOf, type AiSource } from "@/lib/geo-hub/ai-sources";
+
 export type OrderChannel =
   | "meta_ads"
   | "google_ads"
   | "instagram"
   | "facebook"
   | "google_organic"
+  | "ai_chatgpt"
+  | "ai_perplexity"
+  | "ai_claude"
+  | "ai_gemini"
+  | "ai_copilot"
+  | "ai_other"
   | "email"
   | "whatsapp"
   | "direct"
@@ -41,6 +49,14 @@ export type StoreOrderSource = {
 };
 
 type MetaRow = { key?: string; value?: unknown };
+
+const AI_CHANNEL: Partial<Record<AiSource, OrderChannel>> = {
+  chatgpt: "ai_chatgpt",
+  perplexity: "ai_perplexity",
+  claude: "ai_claude",
+  gemini: "ai_gemini",
+  copilot: "ai_copilot",
+};
 
 const META_ID = /^\d{10,20}$/;
 const PAID_MEDIUMS = new Set(["paid", "cpc", "ppc", "paid_social", "paidsocial", "paid-social", "ads", "ad", "cpm", "display"]);
@@ -95,6 +111,8 @@ export function classifyChannel(input: {
   if (input.sourceType === "admin") return "admin";
   if (input.hasGclid || (paid && source.includes("google"))) return "google_ads";
   if (paid && (META_SOURCES.test(source) || META_REFERRERS.test(referrer) || META_ID.test(source))) return "meta_ads";
+  const ai = aiSourceOf(referrer, source);
+  if (ai) return AI_CHANNEL[ai] ?? "ai_other";
   if (medium === "email" || source.includes("email") || source.includes("newsletter")) return "email";
   if (medium === "whatsapp" || source.includes("whatsapp") || source === "wa") return "whatsapp";
   if (/(^|\.)instagram\.com$|^ig$|^instagram$|igshopping/.test(source) || referrer.includes("instagram.com")) return "instagram";
@@ -172,6 +190,12 @@ export const CHANNEL_LABELS: Record<OrderChannel, string> = {
   instagram: "Instagram orgânico",
   facebook: "Facebook orgânico",
   google_organic: "Google orgânico",
+  ai_chatgpt: "ChatGPT",
+  ai_perplexity: "Perplexity",
+  ai_claude: "Claude",
+  ai_gemini: "Gemini",
+  ai_copilot: "Copilot",
+  ai_other: "Outra IA",
   email: "E-mail",
   whatsapp: "WhatsApp",
   direct: "Direto",

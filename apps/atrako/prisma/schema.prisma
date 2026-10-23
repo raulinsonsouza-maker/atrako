@@ -123,6 +123,7 @@ model Cliente {
   emailTheme                 EmailTheme?
   calendarDates              WorkspaceCalendarDate[]
   notifications              Notification[]
+  geoSites                   GeoSite[]
 }
 
 model AnalystConversation {
@@ -924,6 +925,8 @@ model WorkspaceSettings {
   currency        String   @default("BRL") @db.VarChar(8)
   locale          String   @default("pt-BR") @db.VarChar(16)
   primaryColor    String?  @db.VarChar(32)
+  /// Logo claro para fundos escuros/de cor (menu do painel, tela de login). O logo padrão fica em Cliente.logoUrl.
+  logoOnDarkUrl   String?  @db.VarChar(1024)
   customDomain    String?  @db.VarChar(255)
   /// SOLO = um profissional implícito; SALON = múltiplos profissionais
   businessMode    String   @default("SOLO") @db.VarChar(16)
@@ -2954,4 +2957,139 @@ model StayReservation {
   @@index([mpOrderId])
   @@index([contactId])
   @@index([propertyId, status])
+}
+
+/// Guia público (GEO/SEO) servido em `{host}{basePath}` — páginas para IAs e buscadores recomendarem o workspace.
+model GeoSite {
+  id            String      @id @default(cuid())
+  clienteId     String
+  host          String      @unique @db.VarChar(255)
+  basePath      String      @default("/guia") @db.VarChar(64)
+  name          String      @db.VarChar(160)
+  defaultLocale String      @default("pt-BR") @db.VarChar(16)
+  locales       String[]    @default(["pt-BR"])
+  /// Fatos publicáveis (fonte única para páginas, JSON-LD e llms.txt). Ver lib/geo/facts.ts
+  facts         Json        @default("{}")
+  /// Chave IndexNow (servida em /{indexNowKey}.txt).
+  indexNowKey   String?     @db.VarChar(64)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  cliente       Cliente     @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  hubs          GeoHub[]
+  pages         GeoPage[]
+  prompts       GeoPrompt[]
+
+  @@index([clienteId])
+}
+
+model GeoHub {
+  id          String      @id @default(cuid())
+  siteId      String
+  slug        String      @db.VarChar(80)
+  title       String      @db.VarChar(160)
+  description String?     @db.VarChar(500)
+  audience    String?     @db.VarChar(200)
+  /// CaptureForm (slug) do CTA. Sem form, usa ctaUrl.
+  ctaFormSlug String?     @db.VarChar(120)
+  ctaUrl      String?     @db.VarChar(500)
+  ctaLabel    String?     @db.VarChar(120)
+  position    Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  site        GeoSite     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  pages       GeoPage[]
+  prompts     GeoPrompt[]
+
+  @@unique([siteId, slug])
+}
+
+model GeoPage {
+  id                 String    @id @default(cuid())
+  siteId             String
+  hubId              String
+  locale             String    @default("pt-BR") @db.VarChar(16)
+  slug               String    @db.VarChar(120)
+  /// pillar | guide | faq | comparison | profile | glossary | local | entity
+  type               String    @default("guide") @db.VarChar(24)
+  primaryQuestion    String    @db.VarChar(300)
+  title              String    @db.VarChar(200)
+  description        String    @db.VarChar(320)
+  /// Resposta direta (2-3 linhas) exibida no topo e usada no llms.txt.
+  answer             String    @db.Text
+  /// Markdown restrito (## / ### / listas / **negrito** / [links]). Sanitizado no render.
+  body               String    @db.Text
+  /// [{ q, a }]
+  faq                Json      @default("[]")
+  /// [{ label, url }]
+  sources            Json      @default("[]")
+  /// Slugs (hub/slug) de páginas relacionadas para links internos.
+  related            String[]  @default([])
+  /// DRAFT | REVIEW | PUBLISHED | ARCHIVED
+  status             String    @default("DRAFT") @db.VarChar(16)
+  translationGroupId String?   @db.VarChar(64)
+  previousSlugs      String[]  @default([])
+  position           Int       @default(0)
+  publishedAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  site               GeoSite   @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  hub                GeoHub    @relation(fields: [hubId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, locale, hubId, slug])
+  @@index([siteId, status])
+  @@index([hubId, status])
+}
+
+/// Pergunta-alvo que queremos que as IAs respondam citando o workspace.
+model GeoPrompt {
+  id        String         @id @default(cuid())
+  siteId    String
+  hubId     String?
+  text      String         @db.VarChar(300)
+  active    Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  site      GeoSite        @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  hub       GeoHub?        @relation(fields: [hubId], references: [id], onDelete: SetNull)
+  runs      GeoPromptRun[]
+
+  @@unique([siteId, text])
+}
+
+/// Execução do monitor: a IA mencionou/citou a marca para essa pergunta?
+model GeoPromptRun {
+  id        String    @id @default(cuid())
+  promptId  String
+  engine    String    @db.VarChar(32)
+  mentioned Boolean   @default(false)
+  cited     Boolean   @default(false)
+  citedUrls String[]  @default([])
+  answer    String    @db.Text
+  createdAt DateTime  @default(now())
+  prompt    GeoPrompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@index([promptId, createdAt])
+}
+
+/// Tráfego do guia: crawlers de IA/busca e visitas vindas de IA.
+model GeoHit {
+  id        String   @id @default(cuid())
+  clienteId String?
+  host      String   @db.VarChar(255)
+  /// crawler | ai_referral | search | other
+  kind      String   @db.VarChar(16)
+  /// chatgpt | perplexity | claude | gemini | copilot | gptbot | claudebot | bingbot | google | …
+  source    String   @db.VarChar(40)
+  /// training | search | user (só crawlers)
+  botType   String?  @db.VarChar(16)
+  path      String   @db.VarChar(500)
+  country   String?  @db.VarChar(8)
+  referrer  String?  @db.VarChar(500)
+  utmSource String?  @db.VarChar(120)
+  sessionId String?  @db.VarChar(64)
+  userAgent String?  @db.VarChar(300)
+  createdAt DateTime @default(now())
+
+  @@index([host, createdAt])
+  @@index([clienteId, createdAt])
+  @@index([kind, createdAt])
 }

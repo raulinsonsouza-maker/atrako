@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useLpBrand } from "@/components/layout/LpHostContext";
+import { useLpBrand, useLpLogoOnDark } from "@/components/layout/LpHostContext";
 import "@/app/food/food-shell.css";
 import "@/app/atendimento/atendimento-shell.css";
 
@@ -18,6 +18,7 @@ function SignInForm() {
   const params = useSearchParams();
   const nextParam = params.get("next");
   const lpBrand = useLpBrand();
+  const lpLogo = useLpLogoOnDark();
   const lpHost = lpBrand !== null;
   const areaBase = lpHost ? "/crm" : "/atendimento";
   const nextInArea =
@@ -117,7 +118,11 @@ function SignInForm() {
     return (
       <div className={branded.className}>
         <aside className="food-sign-aside">
-          <p className="food-sign-brand">{branded.brand}</p>
+          {areaEntry && lpLogo ? (
+            <img className="food-sign-logo" src={lpLogo} alt={branded.brand} />
+          ) : (
+            <p className="food-sign-brand">{branded.brand}</p>
+          )}
           <div>
             <p className="food-sign-kicker">{branded.kicker}</p>
             <p className="food-sign-title">{branded.title}</p>

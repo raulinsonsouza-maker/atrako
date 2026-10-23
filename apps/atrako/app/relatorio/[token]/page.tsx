@@ -50,10 +50,6 @@ function RelatorioPublicoPage() {
     <div className="min-h-screen bg-[var(--canvas-parchment)]">
       <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-4 px-4 py-6 md:px-8">
         <header className="report-print-hide flex items-center gap-3">
-          {data.cliente.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={data.cliente.logoUrl} alt={data.cliente.nome} className="h-9 w-auto max-w-[160px] object-contain" />
-          ) : null}
           <div className="min-w-0">
             <h1 className="type-tagline text-[var(--ink)]">{data.cliente.nome}</h1>
             <p className="type-fine-print text-[var(--ink-muted-48)]">Vendas vindas de campanhas do Meta · relatório mensal</p>

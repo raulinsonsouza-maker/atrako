@@ -1,0 +1,1 @@
+ALTER TABLE "WorkspaceSettings" ADD COLUMN IF NOT EXISTS "logoOnDarkUrl" VARCHAR(1024);

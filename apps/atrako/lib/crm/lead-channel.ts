@@ -43,16 +43,18 @@ function pick(meta: Record<string, unknown>, keys: string[]): string | null {
 function channelFromLead(row: Row): string {
   if (row.provider) return orderOriginKey(row.provider, row.channel);
   const meta = row.metadata && typeof row.metadata === "object" ? (row.metadata as Record<string, unknown>) : {};
-  const utmSource = pick(meta, ["utmSource", "utm_source"]);
-  const utmMedium = pick(meta, ["utmMedium", "utm_medium"]);
-  const referrer = pick(meta, ["referrer", "referer"]);
+  // Primeira visita vence: quem achou a marca no ChatGPT e voltou pelo Google conta como ChatGPT.
+  const firstTouch = Boolean(pick(meta, ["first_utm_source", "first_utm_medium", "first_referrer"]));
+  const utmSource = firstTouch ? pick(meta, ["first_utm_source"]) : pick(meta, ["utmSource", "utm_source"]);
+  const utmMedium = firstTouch ? pick(meta, ["first_utm_medium"]) : pick(meta, ["utmMedium", "utm_medium"]);
+  const referrer = firstTouch ? pick(meta, ["first_referrer"]) : pick(meta, ["referrer", "referer"]);
   if (utmSource || utmMedium || referrer) {
     return classifyChannel({
       source: utmSource,
       medium: utmMedium,
       referrer,
       sourceType: null,
-      hasGclid: Boolean(pick(meta, ["gclid", "gbraid", "wbraid"])),
+      hasGclid: !firstTouch && Boolean(pick(meta, ["gclid", "gbraid", "wbraid"])),
       metaIdInUtm: false,
     });
   }

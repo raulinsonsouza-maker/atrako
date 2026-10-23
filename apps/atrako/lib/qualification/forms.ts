@@ -28,6 +28,13 @@ export const REGICENTER_LP_FORM = {
           required: false,
           options: labelsFor("best_contact_time"),
         },
+        {
+          id: "how_found",
+          type: "choice" as const,
+          label: "Como conheceu a Regicenter?",
+          required: false,
+          options: labelsFor("how_found"),
+        },
       ],
     },
   ] satisfies FormStep[],

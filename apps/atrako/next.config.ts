@@ -22,6 +22,32 @@ const nextConfig: NextConfig = {
     "*.riker.replit.dev",
     ...Object.keys(LP_DOMAINS).filter((host) => host.endsWith(".localhost")),
   ],
+  async headers() {
+    const production = process.env.NODE_ENV === "production";
+    const lpHosts = Object.keys(LP_DOMAINS);
+    const security = [
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      { key: "X-Frame-Options", value: "SAMEORIGIN" },
+      { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+      ...(production ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }] : []),
+    ];
+    return [
+      ...lpHosts.map((host) => ({
+        source: "/:path*",
+        has: [{ type: "host" as const, value: host }],
+        headers: security,
+      })),
+      {
+        source: "/lp/:dir/assets/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=86400" }],
+      },
+      {
+        source: "/lp/:dir/:file(styles\\.css|app\\.js)",
+        headers: [{ key: "Cache-Control", value: "public, max-age=3600, stale-while-revalidate=86400" }],
+      },
+    ];
+  },
   async rewrites() {
     return {
       beforeFiles: [

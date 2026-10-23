@@ -21,6 +21,7 @@ import { verifyPreviewToken, type PreviewPayload } from "@/lib/criar/preview-tok
 import { flattenFields, stripConsentFromSteps, validateFormAnswers } from "@/lib/criar/form-test";
 import { isLpSalesPageV3 } from "@/lib/criar/lp-html";
 import { fireAndForget, sendFormLeadConversion } from "@/lib/integrations/meta/capi";
+import { clientIp, looksLikeBot, rateLimit } from "@/lib/http/rate-limit";
 
 /** Formulário alvo de um token de prévia (o próprio form, ou o vinculado à LP). */
 async function formForPreview(token: PreviewPayload) {
@@ -137,6 +138,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `${first.label}: ${first.message}`, errors: check.errors }, { status: 400 });
     }
     return NextResponse.json({ ok: true, test: true });
+  }
+
+  if (action === "complete" || action === "lp_lead") {
+    // Robô recebe "sucesso" para não aprender a contornar; nada é gravado.
+    if (looksLikeBot(input)) return NextResponse.json({ ok: true }, { status: 201 });
+    if (!rateLimit(`form:${clientIp(request.headers)}`, 8, 10 * 60_000)) {
+      return NextResponse.json({ error: "Muitos envios seguidos. Tente de novo em alguns minutos." }, { status: 429 });
+    }
   }
 
   if (action === "complete") {

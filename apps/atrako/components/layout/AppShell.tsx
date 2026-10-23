@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppTopBar } from "@/components/layout/AppTopBar";
-import { LpHostProvider } from "@/components/layout/LpHostContext";
+import { LpHostProvider, type LpHostBrand } from "@/components/layout/LpHostContext";
 
 const OpenAppMenuContext = createContext<() => void>(() => {});
 
@@ -13,7 +13,7 @@ export function useOpenAppMenu() {
   return useContext(OpenAppMenuContext);
 }
 
-export function AppShell({ children, lpBrand = null }: { children: React.ReactNode; lpBrand?: string | null }) {
+export function AppShell({ children, lpBrand = null }: { children: React.ReactNode; lpBrand?: LpHostBrand | null }) {
   const lpHost = lpBrand !== null;
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -31,6 +31,7 @@ export function AppShell({ children, lpBrand = null }: { children: React.ReactNo
     pathname.startsWith("/termos-de-uso") ||
     pathname.startsWith("/exclusao-de-dados") ||
     pathname.startsWith("/p/") ||
+    pathname.startsWith("/site/") ||
     pathname.startsWith("/checkout/") ||
     pathname.startsWith("/f/") ||
     pathname.startsWith("/u/") ||

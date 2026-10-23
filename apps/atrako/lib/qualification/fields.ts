@@ -16,6 +16,7 @@ export const QUALIFY_FIELD_KEYS = [
   "investment_status",
   "wa_opt_in",
   "best_contact_time",
+  "how_found",
 ] as const;
 
 export type QualifyFieldKey = (typeof QUALIFY_FIELD_KEYS)[number];
@@ -49,6 +50,9 @@ export const WA_ASK_ORDER: QualifyFieldKey[] = [
   "investment_status",
 ];
 
+/** Perguntas do roteiro do WhatsApp: as de score + origem declarada (não entra no score nem no % preenchido). */
+export const SCRIPT_ASK_ORDER: QualifyFieldKey[] = [...WA_ASK_ORDER, "how_found"];
+
 export const FIELD_DEFS: FieldDef[] = [
   { key: "name", crmLabel: "Nome", waOrder: 0, askOnWhatsApp: false, requiredForScore: false },
   { key: "email", crmLabel: "E-mail", waOrder: 0, askOnWhatsApp: false, requiredForScore: false },
@@ -62,6 +66,7 @@ export const FIELD_DEFS: FieldDef[] = [
   { key: "investment_status", crmLabel: "Investimento", waOrder: 6, askOnWhatsApp: true, requiredForScore: true },
   { key: "wa_opt_in", crmLabel: "Opt-in WhatsApp", waOrder: 0, askOnWhatsApp: false, requiredForScore: false },
   { key: "best_contact_time", crmLabel: "Melhor horário", waOrder: 0, askOnWhatsApp: false, requiredForScore: false },
+  { key: "how_found", crmLabel: "Como conheceu", waOrder: 7, askOnWhatsApp: true, requiredForScore: false },
 ];
 
 export function missingFieldKeys(answers: QualifyAnswers, keys: QualifyFieldKey[] = WA_ASK_ORDER): QualifyFieldKey[] {

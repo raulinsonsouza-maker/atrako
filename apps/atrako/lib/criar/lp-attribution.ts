@@ -77,6 +77,16 @@ export function pickAttributionFromBody(
     "fbp",
     "fbc",
     "referrer",
+    // Primeira visita (cookie `atk_ft`): a origem real quando o lead volta depois por outro canal.
+    "first_referrer",
+    "first_utm_source",
+    "first_utm_medium",
+    "first_utm_campaign",
+    "first_landing",
+    "first_seen_at",
+    // Página do guia (GeoPage) onde o lead se cadastrou.
+    "geoPage",
+    "geoPageTitle",
   ] as const;
   const out: Record<string, unknown> = {};
   for (const key of keys) {

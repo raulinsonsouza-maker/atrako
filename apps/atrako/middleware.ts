@@ -6,9 +6,11 @@ import {
   MEMBER_SESSION_COOKIE,
 } from "@/lib/authCookieNames";
 import {
+  GEO_INTERNAL_PREFIX,
   LP_AREA_PATH,
   LP_AREA_TARGET,
   LP_DOMAIN_ALLOWED_PREFIXES,
+  LP_DOMAIN_SITE_PAGES,
   LP_DOMAINS,
 } from "@/lib/lp-domains";
 
@@ -72,24 +74,54 @@ export default function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const host = (request.headers.get("host") ?? "").split(":")[0].toLowerCase();
-  if (LP_DOMAINS[host]) {
+  const lp = LP_DOMAINS[host];
+  if (lp) {
     // Atrás do Traefik o request chega em http; o domínio público é sempre https.
     const origin = production ? `https://${host}` : `http://${request.headers.get("host")}`;
-    if (pathname === "/" || LP_DOMAIN_ALLOWED_PREFIXES.some((p) => pathname.startsWith(p))) {
-      return NextResponse.next();
+    const site = `${GEO_INTERNAL_PREFIX}/${lp.canonicalHost}`;
+    const rewriteTo = (internal: string) => {
+      const target = request.nextUrl.clone();
+      target.pathname = internal;
+      return NextResponse.rewrite(target);
+    };
+    if (pathname === "/") return NextResponse.next();
+    if (lp.geoBasePath && (pathname === lp.geoBasePath || pathname.startsWith(`${lp.geoBasePath}/`))) {
+      return rewriteTo(`${site}/g${pathname.slice(lp.geoBasePath.length)}`);
+    }
+    if (LP_DOMAIN_SITE_PAGES.includes(pathname)) return rewriteTo(`${site}${pathname}`);
+    if (LP_DOMAIN_ALLOWED_PREFIXES.some((p) => pathname.startsWith(p))) {
+      return pathname.startsWith("/api/") ? NextResponse.next() : noindex(NextResponse.next());
     }
     if (pathname === LP_AREA_PATH || pathname.startsWith(`${LP_AREA_PATH}/`)) {
       if (!hasSessionCookie(request)) {
         const signIn = new URL("/sign-in", origin);
         signIn.searchParams.set("next", pathname + request.nextUrl.search);
-        return NextResponse.redirect(signIn);
+        return noindex(NextResponse.redirect(signIn));
       }
-      const target = request.nextUrl.clone();
-      target.pathname = LP_AREA_TARGET + pathname.slice(LP_AREA_PATH.length);
-      return NextResponse.rewrite(target);
+      return noindex(rewriteTo(LP_AREA_TARGET + pathname.slice(LP_AREA_PATH.length)));
     }
-    return NextResponse.redirect(new URL("/", origin));
+    // Endereço inexistente: 404 de verdade (redirecionar para a home vira "soft 404" no Google).
+    return rewriteTo(`${site}/404`);
   }
+
+  if (pathname.startsWith(`${GEO_INTERNAL_PREFIX}/`) || APP_NOINDEX_PREFIXES.some((p) => pathname.startsWith(p))) {
+    const res = authGate(request);
+    return noindex(res);
+  }
+
+  return authGate(request);
+}
+
+/** Páginas do host do app que nunca devem aparecer em buscadores. */
+const APP_NOINDEX_PREFIXES = ["/sign-in", "/sign-up", "/change-password", "/invite", "/pagar/", "/relatorio/", "/portal", "/checkout", "/obrigado", "/u/", "/r/"];
+
+function noindex(res: NextResponse) {
+  res.headers.set("X-Robots-Tag", "noindex, nofollow");
+  return res;
+}
+
+function authGate(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
   if (process.env.ATRAKO_DEV_OPEN_ACCESS === "1") {
     return NextResponse.next();

@@ -590,6 +590,15 @@
   letter-spacing: -0.03em;
 }
 
+.food-sign-logo {
+  display: block;
+  height: 36px;
+  width: auto;
+  max-width: 220px;
+  object-fit: contain;
+  object-position: left center;
+}
+
 .food-sign-kicker {
   font-size: 12px;
   font-weight: 500;

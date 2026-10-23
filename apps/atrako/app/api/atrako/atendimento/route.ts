@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { getWorkspaceMember } from "@/lib/tenancy/memberAuth";
-import { lpDomainForWorkspace } from "@/lib/lp-domains";
+import { resolveLogoOnDark } from "@/lib/brand/logo";
 
 export async function GET(request: NextRequest) {
   const workspaceId = request.nextUrl.searchParams.get("workspaceId")?.trim();
@@ -12,7 +12,13 @@ export async function GET(request: NextRequest) {
 
   const cliente = await prisma.cliente.findUnique({
     where: { id: workspaceId },
-    select: { nome: true, slug: true, logoUrl: true, contas: { select: { plataforma: true } } },
+    select: {
+      nome: true,
+      slug: true,
+      logoUrl: true,
+      workspaceSettings: { select: { logoOnDarkUrl: true } },
+      contas: { select: { plataforma: true } },
+    },
   });
   if (!cliente) return NextResponse.json({ error: "not found" }, { status: 404 });
 
@@ -22,7 +28,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     name: cliente.nome,
     logoUrl: cliente.logoUrl,
-    logoOnDark: lpDomainForWorkspace(cliente.slug)?.logoOnDark ?? null,
+    logoOnDark: resolveLogoOnDark(cliente.workspaceSettings?.logoOnDarkUrl, cliente.slug),
     role,
     channels: { meta: plataformas.has("META"), instagram: plataformas.has("INSTAGRAM") },
   });

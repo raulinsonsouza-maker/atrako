@@ -143,9 +143,10 @@ test("cadastro da LP: campos obrigatórios não voltam no WhatsApp", () => {
   const fields = formFieldsFromSteps(REGICENTER_LP_FORM.steps);
   assert.deepEqual(
     fields.map((f) => f.key),
-    ["name", "phone", "email", "state", "city", "best_contact_time"],
+    ["name", "phone", "email", "state", "city", "best_contact_time", "how_found"],
   );
   assert.equal(fields.find((f) => f.key === "best_contact_time")?.required, false);
+  assert.equal(fields.find((f) => f.key === "how_found")?.required, false);
   const lpKeys = fields.filter((f) => f.required).map((f) => f.key);
   const asked = scriptConversation(DEFAULT_SCRIPT, { brand: "Regicenter", lpKeys }).filter((i) => i.kind === "received" && i.block.startsWith("question:"));
   assert.equal(asked.some((i) => i.block === "question:city"), false);

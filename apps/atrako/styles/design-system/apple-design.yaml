@@ -126,6 +126,7 @@ components:
   configurator-option-chip: { file: components/ui/option-chip.tsx }
   pill-select: { file: components/ui/pill-select.tsx, note: "Único select do produto — nunca <select> nativo; size toolbar|field" }
   brand-logo: { file: components/ui/brand-logo.tsx, note: "Logo de parceiro (simple-icons CC0) em tile 10px — só integrações de terceiros, nunca accent" }
+  logo-upload: { file: components/ui/logo-upload.tsx, css: ".logo-upload / .logo-upload-preview", note: "Logo do workspace (Config → Empresa) — prévia 80px no fundo de uso (light = canvas hairline; dark = surface-black), Enviar/Trocar outline toolbar + Remover ghost. PNG/JPG/WebP até 5 MB" }
   text-field: { file: components/ui/text-field.tsx, note: "Campo de formulário canônico — label + input h-11 radius-xs + hint; type=password com olho" }
   capture-form: { file: app/f/[slug]/page.tsx, css: ".capture-form-*", note: "Form público /f/{slug} — sempre claro (não herda dark do app). LP = card bloco; typeform = passo a passo. Todos os controles radius-xs (text-field, pill-select field, option-chip, menu, CTA) — sem pílula no meio do form" }
   app-page: { file: components/layout/AppPage.tsx, note: "Shell de página AppShell — padding/título densos" }

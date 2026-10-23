@@ -15,6 +15,7 @@ export type WorkspaceConfig = {
     timezone: string;
     currency: string;
     primaryColor: string | null;
+    logoOnDarkUrl: string | null;
     tracking: {
       pixelId?: string | null;
       ga4MeasurementId?: string | null;

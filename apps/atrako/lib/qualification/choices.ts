@@ -43,6 +43,14 @@ export const CHOICE_MAP: Partial<Record<QualifyFieldKey, ChoiceOpt[]>> = {
     { code: "AFTERNOON", label: "Tarde" },
     { code: "EVENING", label: "Noite" },
   ],
+  how_found: [
+    { code: "HOW_AI", label: "ChatGPT / outra IA" },
+    { code: "HOW_GOOGLE", label: "Google" },
+    { code: "HOW_SOCIAL", label: "Instagram / Facebook" },
+    { code: "HOW_YOUTUBE", label: "YouTube" },
+    { code: "HOW_REFERRAL", label: "Indicação" },
+    { code: "HOW_OTHER", label: "Outro" },
+  ],
 };
 
 const LABEL_ALIASES: Partial<Record<QualifyFieldKey, Record<string, string>>> = {
@@ -82,6 +90,11 @@ const TEXT_HINTS: [RegExp, string][] = [
   [/manh/, "MORNING"],
   [/tarde/, "AFTERNOON"],
   [/noite/, "EVENING"],
+  [/chat|gpt|\bia\b|intelig|gemini|claude|perplex|copilot/, "HOW_AI"],
+  [/google/, "HOW_GOOGLE"],
+  [/insta|face|meta\b/, "HOW_SOCIAL"],
+  [/youtube|video/, "HOW_YOUTUBE"],
+  [/indica|amig/, "HOW_REFERRAL"],
 ];
 
 export function matchChoice(fieldKey: QualifyFieldKey, raw: string, options?: ChoiceOpt[]): ChoiceOpt | null {
@@ -94,7 +107,7 @@ export function matchChoice(fieldKey: QualifyFieldKey, raw: string, options?: Ch
   if (Number.isInteger(n) && n >= 1 && n <= opts.length) return opts[n - 1]!;
   const exact = opts.find((o) => norm(o.label) === t);
   if (exact) return exact;
-  if (fieldKey === "investment_status" || fieldKey === "best_contact_time") {
+  if (fieldKey === "investment_status" || fieldKey === "best_contact_time" || fieldKey === "how_found") {
     for (const [re, code] of TEXT_HINTS) {
       const hit = re.test(t) ? opts.find((o) => o.code === code) : undefined;
       if (hit) return hit;

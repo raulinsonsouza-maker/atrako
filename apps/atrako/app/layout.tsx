@@ -7,6 +7,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { AppShell } from "@/components/layout/AppShell";
 import { LP_DOMAINS } from "@/lib/lp-domains";
+import { lpHostBrand } from "@/lib/brand/lp-host-brand";
 
 const geist = localFont({
   src: "../public/fonts/geist-latin.woff2",
@@ -44,7 +45,7 @@ const fontVars = {
 } as CSSProperties;
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const host = await requestHost();
+  const lpBrand = await lpHostBrand(await requestHost());
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body
@@ -55,7 +56,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           {themeBoot}
         </Script>
         <Providers>
-          <AppShell lpBrand={LP_DOMAINS[host]?.name ?? null}>{children}</AppShell>
+          <AppShell lpBrand={lpBrand}>{children}</AppShell>
         </Providers>
       </body>
     </html>

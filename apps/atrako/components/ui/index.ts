@@ -32,6 +32,8 @@ export type { DatePreset, DateRangeValue, ResolvedDateRange } from "./date-range
 export type { PillSelectOption, PillSelectSize } from "./pill-select";
 export { BrandLogo } from "./brand-logo";
 export { TextField } from "./text-field";
+export { LogoUpload } from "./logo-upload";
+export type { LogoUploadProps } from "./logo-upload";
 export type { TextFieldProps } from "./text-field";
 export { ThinkingOrb, ThinkingLabel, useThinkingStep } from "./thinking-orb";
 export type { ThinkingOrbProps, ThinkingOrbState, ThinkingLabelProps } from "./thinking-orb";

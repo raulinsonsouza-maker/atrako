@@ -28,12 +28,9 @@ const STATUS_HINT: Record<CicloStatus, string> = {
   FECHADO: "Ciclo fechado: valores congelados para cobrança.",
 };
 
+
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
 
-/**
- * Relatório mensal de comissão sobre vendas Meta — mesma tela na área interna e no link público.
- * `apiBase`: `/api/clientes/{id}/relatorios/vendas-meta` ou `/api/relatorio/{token}`.
- */
 export function VendasMetaReportPanel({
   apiBase,
   ciclos,
@@ -46,7 +43,6 @@ export function VendasMetaReportPanel({
   ciclos: CicloResumoView[];
   clienteNome: string;
   initialCicloId?: string | null;
-  /** Abre a versão pública para imprimir (área interna). Sem isso, o botão imprime a própria página. */
   pdfHref?: (cicloId: string) => string;
   autoPrint?: boolean;
 }) {
@@ -276,60 +272,34 @@ export function VendasMetaReportView({
 
       <SectionCard title="Vendas do ciclo" subtitle={plural(report.pedidos.length, "pedido pago", "pedidos pagos")}>
         {report.pedidos.length ? (
-          <div className="overflow-x-auto">
-            <table className="rel-table min-w-[980px] type-caption">
-              <thead>
-                <tr className="type-fine-print">
-                  <th>Pedido</th>
-                  <th>Data</th>
-                  <th>Comprador</th>
-                  <th>Itens</th>
-                  <th>Origem no Meta</th>
-                  <th className="text-right">Total</th>
-                  <th className="text-right">Comissão</th>
-                </tr>
-              </thead>
-              <tbody>
-                {report.pedidos.map((p) => (
-                  <tr key={p.id} className="align-top">
-                    <td className="tabular-nums">#{p.numero}</td>
-                    <td className="whitespace-nowrap tabular-nums">{formatDateTimeBR(p.data)}</td>
-                    <td>
-                      {p.comprador ?? "—"}
-                      {p.cidade || p.uf ? (
-                        <span className="block type-fine-print text-[var(--ink-muted-48)]">
-                          {[p.cidade, p.uf].filter(Boolean).join(" / ")}
-                        </span>
-                      ) : null}
-                    </td>
-                    <td>
-                      {p.itens.length
-                        ? p.itens.map((i, idx) => (
-                            <span key={idx} className="block">
-                              {i.quantidade}× {i.titulo}
-                            </span>
-                          ))
-                        : "—"}
-                    </td>
-                    <td>
-                      {p.campanha ?? "Campanha não identificada"}
-                      {p.anuncio || p.conjunto ? (
-                        <span className="block type-fine-print text-[var(--ink-muted-48)]">
-                          {[p.conjunto, p.anuncio].filter(Boolean).join(" · ")}
-                        </span>
-                      ) : null}
-                    </td>
-   350|                    <td className="text-right tabular-nums">{formatBRL(p.totalCents)}</td>
-                    <td className="text-right tabular-nums">{formatBRL(p.comissaoCents)}</td>
-                  </tr>
-                ))}
-                <tr className="type-caption-strong">
-                  <td colSpan={6}>Total do ciclo</td>
-                  <td className="text-right tabular-nums">{formatBRL(r.faturamentoCents)}</td>
-                  <td className="text-right tabular-nums text-[var(--primary)]">{formatBRL(r.comissaoCents)}</td>
-                </tr>
-              </tbody>
-            </table>
+          <div className="flex flex-col gap-3">
+            {report.pedidos.map((p) => (
+              <div key={p.id} className="rounded-[var(--radius-xs)] border border-[var(--line-soft)] bg-[var(--surface)] p-3">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="type-caption-strong text-[var(--ink)]">#{p.numero} · {p.comprador ?? "—"}</p>
+                    <p className="type-fine-print text-[var(--ink-muted-48)]">{formatDateTimeBR(p.data)}{p.cidade || p.uf ? " · " + [p.cidade, p.uf].filter(Boolean).join(" / ") : ""}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="type-caption-strong tabular-nums text-[var(--ink)]">{formatBRL(p.totalCents)}</p>
+                    <p className="type-fine-print tabular-nums text-[var(--primary)]">Comissão {formatBRL(p.comissaoCents)}</p>
+                  </div>
+                </div>
+                <div className="mt-2 flex flex-col gap-1">
+                  {p.itens.length ? p.itens.map((i, idx) => (
+                    <p key={idx} className="type-fine-print text-[var(--ink)] break-words">{i.quantidade}× {i.titulo}</p>
+                  )) : <p className="type-fine-print text-[var(--ink-muted-48)]">—</p>}
+                </div>
+                <p className="mt-2 type-micro-legal text-[var(--ink-muted-48)] break-words">
+                  {p.campanha ?? "Campanha não identificada"}
+                  {p.anuncio || p.conjunto ? " · " + [p.conjunto, p.anuncio].filter(Boolean).join(" · ") : ""}
+                </p>
+              </div>
+            ))}
+            <div className="flex items-center justify-between rounded-[var(--radius-xs)] bg-[var(--surface-2)] px-3 py-2">
+              <span className="type-caption-strong text-[var(--ink)]">Total do ciclo</span>
+              <span className="type-caption-strong tabular-nums text-[var(--primary)]">{formatBRL(r.faturamentoCents)} · Comissão {formatBRL(r.comissaoCents)}</span>
+            </div>
           </div>
         ) : (
           <p className="type-caption text-[var(--ink-muted-48)]">Nenhuma venda paga atribuída ao Meta neste ciclo.</p>

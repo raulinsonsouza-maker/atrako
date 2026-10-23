@@ -5,7 +5,7 @@
  */
 
 import { CHOICE_MAP, REGICENTER_FRANCHISE_INVESTMENT, type ChoiceOpt } from "./choices";
-import { FIELD_DEFS, QUALIFY_FIELD_KEYS, WA_ASK_ORDER, type QualifyAnswers, type QualifyFieldKey } from "./fields";
+import { FIELD_DEFS, QUALIFY_FIELD_KEYS, SCRIPT_ASK_ORDER, type QualifyAnswers, type QualifyFieldKey } from "./fields";
 import type { Priority } from "./classify";
 import { QUALIFY_REPLY, firstName } from "./messages";
 
@@ -88,6 +88,7 @@ const QUESTION_TEXT: Partial<Record<QualifyFieldKey, string>> = {
   business_objective: "Qual o seu principal objetivo com a franquia?",
   main_question: "O que você mais quer entender na conversa com o consultor?",
   investment_status: `O investimento inicial é ${REGICENTER_FRANCHISE_INVESTMENT}. Qual é o seu momento?`,
+  how_found: "E como você conheceu a {empresa}?",
 };
 
 const QUESTION_OPTIONS: Partial<Record<QualifyFieldKey, ChoiceOpt[]>> = {
@@ -102,11 +103,12 @@ export const DEFAULT_SCRIPT: QualifyScript = {
   opening: {
     text: "Oi {nome}, recebemos seu cadastro na {empresa}. São perguntas rápidas para te conectar ao consultor certo. Podemos começar?",
   },
-  questions: WA_ASK_ORDER.map((key) => ({
+  questions: SCRIPT_ASK_ORDER.map((key) => ({
     key,
     label: FIELD_DEFS.find((d) => d.key === key)?.crmLabel ?? key,
     text: QUESTION_TEXT[key] ?? "Pode me contar um pouco mais?",
-    enabled: true,
+    // Origem declarada já vem do formulário; no WhatsApp é opcional (liga no editor do roteiro).
+    enabled: key !== "how_found",
     options: QUESTION_OPTIONS[key] ?? (key === "city" ? [] : [...(CHOICE_MAP[key] ?? [])]),
   })),
   showProgress: false,
@@ -200,7 +202,7 @@ export function sanitizeOptions(raw: unknown): ChoiceOpt[] | undefined {
 function sanitizeRule(raw: unknown): PriorityRule {
   const r = rec(raw);
   const out: PriorityRule = {};
-  for (const key of WA_ASK_ORDER) {
+  for (const key of SCRIPT_ASK_ORDER) {
     const codes = r[key];
     if (!Array.isArray(codes)) continue;
     const list = codes.filter((c): c is string => typeof c === "string" && /^[A-Z0-9_]{2,40}$/.test(c));
@@ -209,7 +211,7 @@ function sanitizeRule(raw: unknown): PriorityRule {
   return out;
 }
 
-const isKey = (k: unknown): k is QualifyFieldKey => typeof k === "string" && (WA_ASK_ORDER as string[]).includes(k);
+const isKey = (k: unknown): k is QualifyFieldKey => typeof k === "string" && (SCRIPT_ASK_ORDER as string[]).includes(k);
 
 export function sanitizeOverrides(raw: unknown): ScriptOverrides {
   const r = rec(raw);
@@ -223,7 +225,7 @@ export function sanitizeOverrides(raw: unknown): ScriptOverrides {
   if (typeof r.showProgress === "boolean") out.showProgress = r.showProgress;
   const qs = rec(r.questions);
   const questions: NonNullable<ScriptOverrides["questions"]> = {};
-  for (const key of WA_ASK_ORDER) {
+  for (const key of SCRIPT_ASK_ORDER) {
     const q = rec(qs[key]);
     const item: { text?: string; enabled?: boolean; options?: ChoiceOpt[] } = {};
     const text = cleanText(q.text);
@@ -271,8 +273,8 @@ export function resolveScript(raw: unknown): QualifyScript {
   const o = sanitizeOverrides(raw);
   const base = DEFAULT_SCRIPT;
   const order = o.questionOrder
-    ? [...o.questionOrder, ...WA_ASK_ORDER.filter((k) => !o.questionOrder!.includes(k))]
-    : WA_ASK_ORDER;
+    ? [...o.questionOrder, ...SCRIPT_ASK_ORDER.filter((k) => !o.questionOrder!.includes(k))]
+    : SCRIPT_ASK_ORDER;
   const questions = order.map((key) => {
     const def = base.questions.find((q) => q.key === key)!;
     const ov = o.questions?.[key] ?? {};
@@ -361,7 +363,7 @@ function pruneDefaults(o: ScriptOverrides): ScriptOverrides {
   const out: ScriptOverrides = { ...o };
   if (out.opening?.text === d.opening.text) delete out.opening;
   if (out.showProgress === d.showProgress) delete out.showProgress;
-  if (out.questionOrder && same(out.questionOrder, WA_ASK_ORDER)) delete out.questionOrder;
+  if (out.questionOrder && same(out.questionOrder, SCRIPT_ASK_ORDER)) delete out.questionOrder;
   if (out.questions) {
     const qs = { ...out.questions };
     for (const key of Object.keys(qs) as QualifyFieldKey[]) {

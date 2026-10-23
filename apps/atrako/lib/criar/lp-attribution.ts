@@ -5,6 +5,7 @@ export type LpClientAttribution = {
   pageSlug?: string;
   pageUrl?: string;
   formSlug?: string;
+  aiSource?: string;
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;
@@ -87,6 +88,7 @@ export function pickAttributionFromBody(
     // Página do guia (GeoPage) onde o lead se cadastrou.
     "geoPage",
     "geoPageTitle",
+    "aiSource",
   ] as const;
   const out: Record<string, unknown> = {};
   for (const key of keys) {

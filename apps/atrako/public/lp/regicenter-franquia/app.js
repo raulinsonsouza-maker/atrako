@@ -165,7 +165,22 @@ function attribution() {
   const fbc = cookie('_fbc') || (out.fbclid ? 'fb.1.' + Date.now() + '.' + out.fbclid : '');
   if (fbp) out.fbp = fbp;
   if (fbc) out.fbc = fbc;
-  return Object.assign(out, firstTouchPayload());
+  const ft = firstTouchPayload();
+  // Detect AI source from first-touch referrer or UTM
+  const aiHosts = ['chatgpt.com', 'chat.openai.com', 'perplexity.ai', 'claude.ai', 'anthropic.com', 'gemini.google.com', 'bard.google.com', 'copilot.microsoft.com'];
+  const ref = (ft.first_referrer || document.referrer || '').toLowerCase();
+  const utm = (ft.first_utm_source || params.get('utm_source') || '').toLowerCase();
+  for (const h of aiHosts) {
+    if (ref.includes(h) || utm.includes(h)) {
+      out.aiSource = h.includes('chatgpt') || h.includes('openai') ? 'chatgpt'
+        : h.includes('perplexity') ? 'perplexity'
+        : h.includes('claude') || h.includes('anthropic') ? 'claude'
+        : h.includes('gemini') || h.includes('bard') ? 'gemini'
+        : h.includes('copilot') ? 'copilot' : 'other';
+      break;
+    }
+  }
+  return Object.assign(out, ft);
 }
 function newEventId() {
   return window.crypto && crypto.randomUUID ? crypto.randomUUID() : 'lead-' + Date.now() + '-' + Math.random().toString(36).slice(2);

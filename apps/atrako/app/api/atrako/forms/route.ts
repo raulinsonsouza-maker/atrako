@@ -210,6 +210,34 @@ export async function POST(request: NextRequest) {
           ? `lp:${productId}`
           : "lp";
 
+      // Classify acquisition channel from attribution (AI, search, ads, etc.)
+      const firstTouch = Boolean(
+        attribution.first_utm_source || attribution.first_utm_medium || attribution.first_referrer,
+      );
+      const utmSource = firstTouch
+        ? (attribution.first_utm_source as string) ?? null
+        : (attribution.utm_source as string) ?? null;
+      const utmMedium = firstTouch
+        ? (attribution.first_utm_medium as string) ?? null
+        : (attribution.utm_medium as string) ?? null;
+      const referrer = firstTouch
+        ? (attribution.first_referrer as string) ?? null
+        : (attribution.referrer as string) ?? null;
+
+      const { classifyChannel } = await import("@/lib/commerce-attribution/store-source");
+      const channel = classifyChannel({
+        source: utmSource,
+        medium: utmMedium,
+        referrer,
+        sourceType: null,
+        hasGclid: !firstTouch && Boolean(attribution.gclid),
+        metaIdInUtm: false,
+      });
+
+      // Detect AI source specifically
+      const { aiSourceOf } = await import("@/lib/geo-hub/ai-sources");
+      const aiSource = aiSourceOf(referrer, utmSource);
+
       const lead = await createNativeLead({
         clienteId: workspaceId,
         name: nome,
@@ -217,7 +245,12 @@ export async function POST(request: NextRequest) {
         phone: telefone || undefined,
         source,
         metadata: {
-          channel: "lp",
+          channel,
+          aiSource: aiSource ?? null,
+          geoPage: attribution.geoPage ?? null,
+          firstReferrer: referrer,
+          firstUtmSource: utmSource,
+          firstUtmMedium: utmMedium,
           convertedAt: new Date().toISOString(),
           ...attribution,
         },
@@ -235,10 +268,36 @@ export async function POST(request: NextRequest) {
             email,
             telefone,
             fonte: source,
+            channel,
+            aiSource: aiSource ?? null,
+            geoPage: attribution.geoPage ?? null,
             ...attribution,
           },
         }),
       ]);
+
+      // Record conversion in GeoHit if lead came from AI
+      if (aiSource) {
+        try {
+          const { prisma } = await import("@/lib/db");
+          await prisma.geoHit.create({
+            data: {
+              clienteId: workspaceId,
+              host: "lp.regicenter.com",
+              kind: "conversion",
+              source: `ai_${aiSource}`,
+              botType: null,
+              path: attribution.geoPage ? `/guia/${attribution.geoPage}` : "/",
+              referrer: referrer?.slice(0, 500) ?? null,
+              utmSource: utmSource?.slice(0, 120) ?? null,
+              sessionId: null,
+              userAgent: null,
+            },
+          });
+        } catch (e) {
+          console.warn("[geo] conversion hit", e instanceof Error ? e.message : e);
+        }
+      }
 
       return NextResponse.json({ ok: true, leadId: lead.id }, { status: 201 });
     } catch (e) {

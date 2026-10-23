@@ -12,7 +12,6 @@ export function lpRobots(origin: string, hasGuide: boolean) {
   const disallow = LP_DOMAIN_NOINDEX_PREFIXES.map((p) => `Disallow: ${p}`);
   return [
     "# Robôs de IA e buscadores são bem-vindos ao conteúdo público.",
-    ...ALLOWED_AI_BOTS.map((bot) => `User-agent: ${bot}`),
     "User-agent: *",
     "Allow: /",
     ...disallow,

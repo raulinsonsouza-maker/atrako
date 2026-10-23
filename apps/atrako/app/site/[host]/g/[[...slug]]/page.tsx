@@ -193,7 +193,6 @@ export default async function GeoGuidePage(props: Props) {
         </header>
         <div className="geo-article-grid">
           <div className="geo-prose type-body" dangerouslySetInnerHTML={{ __html: html }} />
-          <FactsBox facts={facts} />
         </div>
         {faq.length ? (
           <section className="geo-section" aria-labelledby="faq-title">

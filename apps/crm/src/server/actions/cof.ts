@@ -6,7 +6,7 @@ import { getSession } from "@/lib/auth-server";
 import { getConversationByLeadId, sendWhatsAppMessage } from "./conversation";
 import nodemailer from "nodemailer";
 
-const COF_URL = "https://lp.regicenter.com/cof";
+const COF_URL = "https://lp.regicenter.com/lp/regicenter-franquia/assets/COF-2025.pdf";
 const COF_PDF_URL = "https://lp.regicenter.com/lp/regicenter-franquia/assets/COF-2025.pdf";
 
 const COF_WA_MESSAGE = (name: string) =>

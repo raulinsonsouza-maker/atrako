@@ -102,7 +102,22 @@ export async function POST(request: NextRequest, ctx: Ctx) {
       try {
         const apiKey = resendReady(conn) ? conn.apiKey : platform!.apiKey;
         const from = resendReady(conn) ? formatFrom(conn, brand.storeName) : platform!.from;
-        await sendResendEmail(apiKey, { from, to: [to], subject, html, text: `Olá ${who}. Segue a COF: ${COF_URL}`, tags: [{ name: "kind", value: "cof" }] }, `cof-${lead.id}-${Date.now().toString(36)}`);
+        const resendRes = await sendResendEmail(apiKey, { from, to: [to], subject, html, text: `Olá ${who}. Segue a COF: ${COF_URL}`, tags: [{ name: "kind", value: "cof" }] }, `cof-${lead.id}-${Date.now().toString(36)}`);
+        if (contact?.id) {
+          await prisma.messageDelivery.create({
+            data: {
+              clienteId: g.workspaceId,
+              channel: "EMAIL",
+              contactId: contact.id,
+              toAddress: to,
+              subject: subject.slice(0, 300),
+              status: "SENT",
+              sentAt: new Date(),
+              providerMessageId: resendRes.id,
+              isTest: false,
+            },
+          }).catch(() => {});
+        }
         results.email = { ok: true, detail: `Enviado para ${to}.` };
       } catch (err) {
         results.email = { ok: false, detail: err instanceof Error ? err.message : "Falha no e-mail." };

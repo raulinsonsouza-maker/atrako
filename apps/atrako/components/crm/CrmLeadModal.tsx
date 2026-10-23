@@ -767,6 +767,8 @@ export function CrmLeadModal({
               <Stat label="Origem" value={lead.sourceLabel || lead.formName || lead.campaignName || "—"} />
               {lead.geoPageTitle ? (
                 <Stat label="Página de entrada" value={`${lead.geoPageTitle}${lead.aiSource ? ` · ${lead.aiSource}` : ""}`} />
+              ) : lead.aiSource || (lead as { firstReferrer?: string | null }).firstReferrer ? (
+                <Stat label="Origem IA" value={lead.aiSource || "—"} />
               ) : null}
               <Stat label="Entrou" value={fmtDate(lead.createdAt)} />
             </div>

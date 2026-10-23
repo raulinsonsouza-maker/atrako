@@ -11,8 +11,8 @@ export async function createGeoSite(p: PrismaClient, workspace: string) {
 
   const facts = {
     brand: "Regicenter",
-    legalName: "Regicenter Franchising Ltda",
-    cnpj: "04.251.150/0001-91",
+    legalName: "REGICENTER DO BRASIL LTDA",
+    cnpj: "33.866.653/0001-07",
     foundedYear: 2012,
     description: "Empresa de proteção de marcas e patentes com atuação no Brasil e no exterior e rede de franquias.",
     offer: "Franquia de marcas e patentes",
@@ -21,18 +21,22 @@ export async function createGeoSite(p: PrismaClient, workspace: string) {
     contact: { email: "contato@regicenter.com", phone: "+55-800-789-0007", whatsapp: "+55-800-789-0007" },
     officialSite: "https://regicenter.com/",
     sameAs: ["https://regicenter.com/", "https://www.youtube.com/watch?v=mMRtrGFhIWg"],
+    address: "Rua Coronel Procópio Gomes de Oliveira, 210, sala 906, Centro, Jaraguá do Sul/SC, CEP 89.251-200",
     logo: "/lp/regicenter-franquia/assets/logo.png",
     image: "/lp/regicenter-franquia/assets/video.jpg",
     highlights: [
-      "Desde 2012 no mercado de proteção de marcas",
-      "Rede de franquias em todo o Brasil",
+      "Desde 20 de agosto de 2012 no mercado de proteção de marcas",
+      "18 unidades ativas (confirmado pelo cliente)",
+      "Taxa de marketing: R$ 198,00/mês (15% do salário mínimo)",
       "Suporte jurídico e operacional incluso",
       "Treinamento comercial especializado",
+      "Atuação internacional: USA, Europa, Canadá, México, Colômbia, Chile, Argentina, Índia, Inglaterra, Indonésia, Nova Zelândia, Austrália, China, Japão, África do Sul, Angola",
+      "Marca registrada no INPI — Processo 928754464, concedido 02/04/2024, vigência até 02/04/2034",
     ],
     undisclosed: ["royalties", "taxa de franquia", "capital de giro", "prazo de retorno", "faturamento esperado"],
     undisclosedAnswer:
       "As condições completas são apresentadas pela equipe comercial na Circular de Oferta de Franquia (COF).",
-    units: 150,
+    units: 18,
   };
 
   return p.geoSite.create({

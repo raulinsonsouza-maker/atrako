@@ -15,6 +15,7 @@ export function organizationLd(facts: GeoFacts, origin: string): Json {
     url: facts.officialSite || origin,
     ...(facts.logo ? { logo: absolute(facts.logo, origin) } : {}),
     ...(facts.areaServed ? { areaServed: facts.areaServed } : {}),
+    ...(facts.address ? { address: { "@type": "PostalAddress", streetAddress: facts.address } } : {}),
     ...(facts.sameAs?.length ? { sameAs: facts.sameAs } : {}),
     ...(facts.contact.email || facts.contact.phone
       ? {

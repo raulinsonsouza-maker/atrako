@@ -14,6 +14,7 @@ export type GeoFacts = {
   offer: string;
   investment?: { amount: number; currency: string; label: string; note?: string };
   areaServed?: string;
+  address?: string;
   contact: { email?: string; phone?: string; whatsapp?: string };
   officialSite?: string;
   /** Perfis oficiais (YouTube, Instagram, LinkedIn…) para `sameAs`. */
@@ -60,6 +61,7 @@ export function parseFacts(raw: unknown, fallbackBrand = ""): GeoFacts {
           }
         : undefined,
     areaServed: str(r.areaServed, 120),
+    address: str(r.address, 300),
     contact: { email: str(contact.email, 160), phone: str(contact.phone, 40), whatsapp: str(contact.whatsapp, 40) },
     officialSite: str(r.officialSite, 300),
     sameAs: strList(r.sameAs, 12),

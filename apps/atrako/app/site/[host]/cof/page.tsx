@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Circular de Oferta de Franquia (COF) — Regicenter",
   description:
-    "Circular de Oferta de Franquia (COF) da Regicenter, conforme a Lei 13.966/2019. Documento oficial com informações sobre investimento, royalties, obrigações e suporte.",
+    "Circular de Oferta de Franquia (COF) da Regicenter, conforme a Lei 13.966/2019.",
 };
 
 export default function CofPage() {

@@ -283,9 +283,12 @@ export async function GET(request: NextRequest, ctx: Ctx) {
       notes,
       ownerMemberId: leadMeta.ownerMemberId ?? null,
       ownerName: leadMeta.ownerName ?? null,
-      campaignName: leadMeta.campaignName ?? leadMeta.utm_campaign ?? null,
-      adName: leadMeta.adName ?? null,
-      formName: leadMeta.formName ?? null,
+    campaignName: leadMeta.campaignName ?? leadMeta.utm_campaign ?? null,
+    adName: leadMeta.adName ?? null,
+    formName: leadMeta.formName ?? null,
+    geoPage: (leadMeta as { geoPage?: string }).geoPage ?? null,
+    geoPageTitle: (leadMeta as { geoPageTitle?: string }).geoPageTitle ?? null,
+    aiSource: (leadMeta as { aiSource?: string }).aiSource ?? null,
       qualification: (() => {
         const q = parseLeadQualification(lead.metadata);
         if (!q.answers || !Object.keys(q.answers).length) return null;

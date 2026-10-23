@@ -121,6 +121,9 @@ type LeadDetail = {
     campaignName?: string | null;
     adName?: string | null;
     formName?: string | null;
+  geoPage?: string | null;
+  geoPageTitle?: string | null;
+  aiSource?: string | null;
     qualification?: {
       playbookId: string;
       priority: "A" | "B" | "C" | null;
@@ -762,6 +765,9 @@ export function CrmLeadModal({
                 />
               )}
               <Stat label="Origem" value={lead.sourceLabel || lead.formName || lead.campaignName || "—"} />
+              {lead.geoPageTitle ? (
+                <Stat label="Página de entrada" value={`${lead.geoPageTitle}${lead.aiSource ? ` · ${lead.aiSource}` : ""}`} />
+              ) : null}
               <Stat label="Entrou" value={fmtDate(lead.createdAt)} />
             </div>
           ) : lead ? (

@@ -8,6 +8,7 @@ import {
   Clock,
   Copy,
   ExternalLink,
+  FileText,
   Loader2,
   Mail,
   MapPin,
@@ -1062,6 +1063,17 @@ export function CrmLeadModal({
         </div>
 
         <div className="panel-modal-footer">
+          {lead?.phone ? (
+            <a
+              href={`https://wa.me/${lead.phone.replace(/\D/g, "")}?text=${encodeURIComponent("Olá! Segue a Circular de Oferta de Franquia (COF) da Regicenter: https://lp.regicenter.com/lp/regicenter-franquia/assets/COF-2025.pdf")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonClass({ variant: "outline", size: "toolbar" })}
+            >
+              <FileText className="h-3.5 w-3.5" strokeWidth={1.75} />
+              Enviar COF
+            </a>
+          ) : null}
           <Button type="button" variant="outline" size="toolbar" onClick={() => setPanelTab("notas")}>
             Adicionar nota
           </Button>

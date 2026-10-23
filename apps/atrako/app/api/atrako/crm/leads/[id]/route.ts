@@ -289,6 +289,11 @@ export async function GET(request: NextRequest, ctx: Ctx) {
     geoPage: (leadMeta as { geoPage?: string }).geoPage ?? null,
     geoPageTitle: (leadMeta as { geoPageTitle?: string }).geoPageTitle ?? null,
     aiSource: (leadMeta as { aiSource?: string }).aiSource ?? null,
+    firstReferrer: (leadMeta as { firstReferrer?: string; referrer?: string }).firstReferrer ?? (leadMeta as { referrer?: string }).referrer ?? null,
+    firstUtmSource: (leadMeta as { firstUtmSource?: string; utm_source?: string }).firstUtmSource ?? (leadMeta as { utm_source?: string }).utm_source ?? null,
+    firstUtmMedium: (leadMeta as { firstUtmMedium?: string; utm_medium?: string }).firstUtmMedium ?? (leadMeta as { utm_medium?: string }).utm_medium ?? null,
+    utmCampaign: (leadMeta as { utm_campaign?: string }).utm_campaign ?? null,
+    utmContent: (leadMeta as { utm_content?: string }).utm_content ?? null,
       qualification: (() => {
         const q = parseLeadQualification(lead.metadata);
         if (!q.answers || !Object.keys(q.answers).length) return null;

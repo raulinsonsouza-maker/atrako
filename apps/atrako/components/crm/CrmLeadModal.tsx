@@ -124,6 +124,11 @@ type LeadDetail = {
   geoPage?: string | null;
   geoPageTitle?: string | null;
   aiSource?: string | null;
+  firstReferrer?: string | null;
+  firstUtmSource?: string | null;
+  firstUtmMedium?: string | null;
+  utmCampaign?: string | null;
+  utmContent?: string | null;
     qualification?: {
       playbookId: string;
       priority: "A" | "B" | "C" | null;
@@ -767,8 +772,17 @@ export function CrmLeadModal({
               <Stat label="Origem" value={lead.sourceLabel || lead.formName || lead.campaignName || "—"} />
               {lead.geoPageTitle ? (
                 <Stat label="Página de entrada" value={`${lead.geoPageTitle}${lead.aiSource ? ` · ${lead.aiSource}` : ""}`} />
-              ) : lead.aiSource || (lead as { firstReferrer?: string | null }).firstReferrer ? (
+              ) : lead.aiSource || lead.firstReferrer ? (
                 <Stat label="Origem IA" value={lead.aiSource || "—"} />
+              ) : null}
+              {lead.firstUtmSource || lead.firstUtmMedium || lead.utmCampaign || lead.utmContent ? (
+                <Stat
+                  label="UTM"
+                  value={[lead.firstUtmSource || lead.utmCampaign, lead.firstUtmMedium, lead.utmContent].filter(Boolean).join(" / ")}
+                />
+              ) : null}
+              {lead.firstReferrer ? (
+                <Stat label="Referrer" value={lead.firstReferrer} />
               ) : null}
               <Stat label="Entrou" value={fmtDate(lead.createdAt)} />
             </div>

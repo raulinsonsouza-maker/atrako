@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ArrowLeft, Calendar } from "lucide-react";
+import { ArrowLeft, Calendar, FileText } from "lucide-react";
 import { Badge, Button } from "@/design/components";
 import { ScheduleMeetingModal } from "./ScheduleMeetingModal";
+import { sendCofToLead } from "@/server/actions/cof";
 
 interface LeadDetailHeaderProps {
   lead: {
@@ -21,6 +22,7 @@ interface LeadDetailHeaderProps {
   statusLabel: string;
   dealValueFormatted?: string | null;
   isCalendarConnected: boolean;
+  tenantId: string;
 }
 
 export function LeadDetailHeader({
@@ -28,10 +30,26 @@ export function LeadDetailHeader({
   statusLabel,
   dealValueFormatted,
   isCalendarConnected,
+  tenantId,
 }: LeadDetailHeaderProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [isSendingCof, setIsSendingCof] = useState(false);
+  const [cofResult, setCofResult] = useState<string | null>(null);
+
+  async function handleSendCof() {
+    setIsSendingCof(true);
+    setCofResult(null);
+    try {
+      const res = await sendCofToLead(lead.id, tenantId);
+      setCofResult(`COF enviada — WhatsApp: ${res.whatsapp}, E-mail: ${res.email}`);
+    } catch (err) {
+      setCofResult(`Erro: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setIsSendingCof(false);
+    }
+  }
 
   // Abre o modal automaticamente se o query param 'schedule' está presente
   useEffect(() => {
@@ -74,6 +92,19 @@ export function LeadDetailHeader({
             <Calendar className="h-4 w-4" />
             Agendar Reunião
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSendCof}
+            disabled={isSendingCof}
+            className="gap-2"
+          >
+            <FileText className="h-4 w-4" />
+            {isSendingCof ? "Enviando…" : "Enviar COF"}
+          </Button>
+          {cofResult && (
+            <p className="w-full text-xs text-neutral-500 dark:text-neutral-400">{cofResult}</p>
+          )}
           <Badge variant="outline">Etapa: {lead.stage?.name ?? "Sem etapa"}</Badge>
           <Badge
             variant={

@@ -1,0 +1,1 @@
+SELECT host, facts->>'units' as units, facts->>'legalName' as legalName, facts->>'cnpj' as cnpj FROM "GeoSite" WHERE host = 'lp.regicenter.com';

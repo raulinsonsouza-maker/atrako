@@ -79,6 +79,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         statusLabel={statusLabel}
         dealValueFormatted={dealValue}
         isCalendarConnected={isCalendarConnected}
+        tenantId={tenantId}
       />
 
       <div className="grid gap-6 lg:grid-cols-3">

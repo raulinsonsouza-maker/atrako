@@ -838,8 +838,7 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
       items.push({
         at: typeof n.at === "string" ? n.at : lead.createdAt.toISOString(),
         type: "lead.note",
-        title: "Nota",
-        detail: String(n.text).slice(0, 240),
+        title: String(n.text).slice(0, 120),
         meta: { leadId: lead.id, noteId: typeof n.id === "string" ? n.id : undefined },
       });
     }

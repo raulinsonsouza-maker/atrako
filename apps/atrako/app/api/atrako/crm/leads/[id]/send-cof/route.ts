@@ -32,12 +32,11 @@ export async function POST(request: NextRequest, ctx: Ctx) {
   if (!lead) return bad("Lead não encontrado", 404);
   let contact = lead.contact;
   if (!contact?.id) {
-    // Garante que o lead tenha um contato vinculado para registrar na jornada
     try {
       const newContact = await prisma.nativeContact.create({
         data: {
           clienteId: g.workspaceId,
-          name: lead.id ? "Lead" : "Lead",
+          name: "Lead",
           email: null,
           phone: null,
         },
@@ -117,8 +116,11 @@ export async function POST(request: NextRequest, ctx: Ctx) {
       const logo = theme.logoUrl
         ? `<img src="${esc(theme.logoUrl)}" width="${theme.logoWidth}" alt="${esc(brand.storeName)}" style="display:inline-block;width:${theme.logoWidth}px;max-width:100%;height:auto;border:0">`
         : `<span style="font-family:${font};font-size:20px;font-weight:600;color:${c.text}">${esc(brand.storeName)}</span>`;
+      const trackingToken = `cof-${lead.id}-${Date.now().toString(36)}`;
+      const originUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://atrako.app";
+      const trackedUrl = `${originUrl}/r/${trackingToken}`;
       const subject = `${brand.storeName}: Circular de Oferta de Franquia (COF)`.slice(0, 200);
-      const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(subject)}</title></head><body style="margin:0;padding:0;background:${c.background}"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${c.background}"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px"><tr><td align="${theme.headerAlign}" style="background:${theme.headerBg};padding:22px 28px;border-radius:10px 10px 0 0">${logo}</td></tr><tr><td style="background:${c.card};padding:30px 28px 26px 28px"><p style="margin:0 0 14px 0;font-family:${font};font-size:16px;line-height:1.6;color:${c.text}">${who ? `Olá, ${esc(who)}.` : "Olá."}</p><p style="margin:0 0 14px 0;font-family:${font};font-size:16px;line-height:1.6;color:${c.text}">Obrigado pelo interesse na franquia Regicenter. Como combinado, segue a <strong>Circular de Oferta de Franquia (COF)</strong> — o documento oficial que detalha o modelo de negócio, os investimentos e as condições da parceria.</p><p style="margin:0 0 22px 0;font-family:${font};font-size:16px;line-height:1.6;color:${c.text}">Recomendamos que você leia com atenção e anote suas dúvidas. Nossa equipe de expansão está à disposição para esclarecer cada ponto e caminhar com você no processo.</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 22px 0;border:1px solid #e5e9f0;border-radius:8px"><tr><td style="padding:16px 18px"><p style="margin:0 0 4px 0;font-family:${font};font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:${c.muted}">Documento</p><p style="margin:0 0 2px 0;font-family:${font};font-size:18px;font-weight:600;color:${c.text}">Circular de Oferta de Franquia — COF Regicenter</p><p style="margin:0;font-family:${font};font-size:14px;color:${c.muted}">Investimento inicial a partir de R$ 27.900,00</p></td></tr></table><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-radius:${theme.buttonRadius}px;background:${c.accent}"><a href="${esc(COF_URL)}" style="display:inline-block;padding:14px 30px;font-family:${font};font-size:16px;font-weight:600;color:${c.buttonText};text-decoration:none;border-radius:${theme.buttonRadius}px">Acessar a COF</a></td></tr></table><p style="margin:18px 0 0 0;font-family:${font};font-size:13px;line-height:1.6;color:${c.muted}">Se o botão não abrir, copie este endereço: <a href="${esc(COF_URL)}" style="color:${c.muted}">${esc(COF_URL)}</a></p><p style="margin:22px 0 0 0;font-family:${font};font-size:15px;line-height:1.6;color:${c.text}">Qualquer dúvida, responda este e-mail ou fale diretamente com nossa equipe de expansão. Estamos prontos para ajudar você a dar o próximo passo.</p>${theme.signature.name ? `<p style="margin:22px 0 0 0;font-family:${font};font-size:15px;line-height:1.6;color:${c.text}">${esc(theme.signature.name)}</p>` : ""}</td></tr><tr><td align="center" style="padding:18px 28px;font-family:${font};font-size:12px;line-height:1.5;color:${c.muted}">${[theme.footer.address, theme.footer.legal].filter(Boolean).map((l) => esc(String(l))).join("<br>") || esc(brand.storeName)}</td></tr></table></td></tr></table></body></html>`;
+      const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(subject)}</title></head><body style="margin:0;padding:0;background:${c.background}"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${c.background}"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px"><tr><td align="${theme.headerAlign}" style="background:${theme.headerBg};padding:22px 28px;border-radius:10px 10px 0 0">${logo}</td></tr><tr><td style="background:${c.card};padding:30px 28px 26px 28px"><p style="margin:0 0 14px 0;font-family:${font};font-size:16px;line-height:1.6;color:${c.text}">${who ? `Olá, ${esc(who)}.` : "Olá."}</p><p style="margin:0 0 14px 0;font-family:${font};font-size:16px;line-height:1.6;color:${c.text}">Obrigado pelo interesse na franquia Regicenter. Como combinado, segue a <strong>Circular de Oferta de Franquia (COF)</strong> — o documento oficial que detalha o modelo de negócio, os investimentos e as condições da parceria.</p><p style="margin:0 0 22px 0;font-family:${font};font-size:16px;line-height:1.6;color:${c.text}">Recomendamos que você leia com atenção e anote suas dúvidas. Nossa equipe de expansão está à disposição para esclarecer cada ponto e caminhar com você no processo.</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 22px 0;border:1px solid #e5e9f0;border-radius:8px"><tr><td style="padding:16px 18px"><p style="margin:0 0 4px 0;font-family:${font};font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:${c.muted}">Documento</p><p style="margin:0 0 2px 0;font-family:${font};font-size:18px;font-weight:600;color:${c.text}">Circular de Oferta de Franquia — COF Regicenter</p><p style="margin:0;font-family:${font};font-size:14px;color:${c.muted}">Investimento inicial a partir de R$ 27.900,00</p></td></tr></table><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-radius:${theme.buttonRadius}px;background:${c.accent}"><a href="${esc(trackedUrl)}" style="display:inline-block;padding:14px 30px;font-family:${font};font-size:16px;font-weight:600;color:${c.buttonText};text-decoration:none;border-radius:${theme.buttonRadius}px">Acessar a COF</a></td></tr></table><p style="margin:18px 0 0 0;font-family:${font};font-size:13px;line-height:1.6;color:${c.muted}">Se o botão não abrir, copie este endereço: <a href="${esc(COF_URL)}" style="color:${c.muted}">${esc(COF_URL)}</a></p><p style="margin:22px 0 0 0;font-family:${font};font-size:15px;line-height:1.6;color:${c.text}">Qualquer dúvida, responda este e-mail ou fale diretamente com nossa equipe de expansão. Estamos prontos para ajudar você a dar o próximo passo.</p>${theme.signature.name ? `<p style="margin:22px 0 0 0;font-family:${font};font-size:15px;line-height:1.6;color:${c.text}">${esc(theme.signature.name)}</p>` : ""}</td></tr><tr><td align="center" style="padding:18px 28px;font-family:${font};font-size:12px;line-height:1.5;color:${c.muted}">${[theme.footer.address, theme.footer.legal].filter(Boolean).map((l) => esc(String(l))).join("<br>") || esc(brand.storeName)}</td></tr></table></td></tr></table></body></html>`;
       const text = [
         who ? `Olá, ${who}.` : "Olá.",
         "",
@@ -127,11 +129,15 @@ export async function POST(request: NextRequest, ctx: Ctx) {
         "",
         "Recomendamos que você leia com atenção e anote suas dúvidas. Nossa equipe de expansão está à disposição para esclarecer cada ponto.",
         "",
-        `Acesse a COF: ${COF_URL}`,
+        `Acesse a COF: ${trackedUrl}`,
         "",
         "Qualquer dúvida, responda este e-mail ou fale diretamente com nossa equipe de expansão.",
         theme.signature.name ?? "",
       ].join("\n");
+      try {
+        const apiKey = resendReady(conn) ? conn.apiKey : platform!.apiKey;
+        const from = resendReady(conn) ? formatFrom(conn, brand.storeName) : platform!.from;
+        const resendRes = await sendResendEmail(apiKey, { from, to: [to], subject, html, text, tags: [{ name: "kind", value: "cof" }] }, `cof-${lead.id}-${Date.now().toString(36)}`);
         if (contact?.id) {
           const delivery = await prisma.messageDelivery.create({
             data: {
@@ -144,7 +150,8 @@ export async function POST(request: NextRequest, ctx: Ctx) {
               sentAt: new Date(),
               providerMessageId: resendRes.id,
               isTest: false,
-              trackingToken: `cof-${lead.id}-${Date.now().toString(36)}`,
+              trackingToken: trackingToken,
+              contentSnapshot: { destination: COF_URL, medium: "email", utmCampaign: "cof", utmContent: null },
             },
           }).catch((err) => {
             console.error("[send-cof] failed to create MessageDelivery", err instanceof Error ? err.message : err);

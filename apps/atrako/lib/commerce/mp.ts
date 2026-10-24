@@ -68,7 +68,15 @@ export async function createMercadoPagoOrder(input: CreateMpOrderInput) {
   });
   const data = (await res.json()) as Record<string, unknown>;
   if (!res.ok) {
-    throw new Error(String(data?.message || data?.error || "Falha ao criar pedido MP"));
+    console.error("[mp] createMercadoPagoOrder failed", JSON.stringify({ status: res.status, data }));
+    const detail =
+      (Array.isArray(data?.cause) && data.cause.length
+        ? data.cause.map((c: unknown) => (typeof c === "object" && c ? (c as Record<string, unknown>).description || (c as Record<string, unknown>).code : c)).join("; ")
+        : null) ||
+      data?.message ||
+      data?.error ||
+      "Falha ao criar pedido MP";
+    throw new Error(String(detail));
   }
   return data as {
     id: string;

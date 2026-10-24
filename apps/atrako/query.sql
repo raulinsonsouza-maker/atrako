@@ -1,0 +1,1 @@
+SELECT credentialsEnc FROM "WorkspaceConnection" WHERE provider='MERCADO_PAGO' LIMIT 1;

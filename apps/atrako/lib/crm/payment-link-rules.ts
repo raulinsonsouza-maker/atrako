@@ -1,6 +1,6 @@
 /** Regras puras do link de pagamento do lead (sem banco), testáveis isoladamente. */
 
-export const PAYLINK_REF_PREFIX = "paylink:";
+export const PAYLINK_REF_PREFIX = "paylink-";
 export const PAYLINK_MAX_INSTALLMENTS = 12;
 export const PAYLINK_TTL_DAYS = 7;
 const MIN_CENTS = 100;

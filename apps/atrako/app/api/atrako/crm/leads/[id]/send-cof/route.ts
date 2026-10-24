@@ -104,7 +104,7 @@ export async function POST(request: NextRequest, ctx: Ctx) {
         const from = resendReady(conn) ? formatFrom(conn, brand.storeName) : platform!.from;
         const resendRes = await sendResendEmail(apiKey, { from, to: [to], subject, html, text: `Olá ${who}. Segue a COF: ${COF_URL}`, tags: [{ name: "kind", value: "cof" }] }, `cof-${lead.id}-${Date.now().toString(36)}`);
         if (contact?.id) {
-          await prisma.messageDelivery.create({
+          const delivery = await prisma.messageDelivery.create({
             data: {
               clienteId: g.workspaceId,
               channel: "EMAIL",
@@ -116,7 +116,15 @@ export async function POST(request: NextRequest, ctx: Ctx) {
               providerMessageId: resendRes.id,
               isTest: false,
             },
-          }).catch(() => {});
+          }).catch((err) => {
+            console.error("[send-cof] failed to create MessageDelivery", err instanceof Error ? err.message : err);
+            return null;
+          });
+          if (!delivery) {
+            console.warn("[send-cof] MessageDelivery not created for lead", lead.id);
+          }
+        } else {
+          console.warn("[send-cof] no contact.id for lead", lead.id);
         }
         results.email = { ok: true, detail: `Enviado para ${to}.` };
       } catch (err) {

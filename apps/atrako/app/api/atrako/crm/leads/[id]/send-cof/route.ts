@@ -115,6 +115,7 @@ export async function POST(request: NextRequest, ctx: Ctx) {
               sentAt: new Date(),
               providerMessageId: resendRes.id,
               isTest: false,
+              trackingToken: `cof-${lead.id}-${Date.now().toString(36)}`,
             },
           }).catch((err) => {
             console.error("[send-cof] failed to create MessageDelivery", err instanceof Error ? err.message : err);

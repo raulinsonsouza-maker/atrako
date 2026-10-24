@@ -30,7 +30,27 @@ export async function POST(request: NextRequest, ctx: Ctx) {
     },
   });
   if (!lead) return bad("Lead não encontrado", 404);
-  const contact = lead.contact;
+  let contact = lead.contact;
+  if (!contact?.id) {
+    // Garante que o lead tenha um contato vinculado para registrar na jornada
+    try {
+      const newContact = await prisma.nativeContact.create({
+        data: {
+          clienteId: g.workspaceId,
+          name: lead.id ? "Lead" : "Lead",
+          email: null,
+          phone: null,
+        },
+      });
+      await prisma.nativeLead.update({
+        where: { id: lead.id },
+        data: { contactId: newContact.id },
+      });
+      contact = { id: newContact.id, name: newContact.name, email: newContact.email, phone: newContact.phone, phoneE164: null, waOptOutAt: null };
+    } catch (err) {
+      console.error("[send-cof] failed to create contact", err instanceof Error ? err.message : err);
+    }
+  }
   const who = contact?.name?.trim().split(/\s+/)[0] || "";
 
   const results: { whatsapp?: { ok: boolean; detail: string }; email?: { ok: boolean; detail: string } } = {};

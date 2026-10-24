@@ -254,6 +254,17 @@ export async function sendPaymentLink(input: {
       where: { id: link.id },
       data: { sentVia: [...new Set([...link.sentVia, ...delivered])] },
     });
+    const { addLeadNote } = await import("@/lib/modules/crm");
+    const brlAmount = (link.amountCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    const ref = shortLinkRef(link.id);
+    for (const ch of delivered) {
+      const label = ch === "whatsapp" ? "WhatsApp" : "e-mail";
+      void addLeadNote({
+        workspaceId: input.workspaceId,
+        leadId: link.leadId,
+        text: `Link de cobrança enviado por ${label} · Ref. ${ref} · ${brlAmount}.`,
+      }).catch(() => null);
+    }
   }
   return { ok: true as const, url, results };
 }

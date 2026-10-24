@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { bad, gate, readBody, str } from "@/lib/flows/api";
 import { sendWhatsAppMessage } from "@/lib/flows/send";
+import { addLeadNote } from "@/lib/modules/crm";
 import { loadEmailTheme } from "@/lib/flows/theme";
 import { sendResendEmail } from "@/lib/integrations/resend/client";
 import { formatFrom, resendReady, resolvePlatformResend, resolveResend } from "@/lib/integrations/resend/connection";
@@ -79,6 +80,7 @@ export async function POST(request: NextRequest, ctx: Ctx) {
             contactName: contact.name,
           });
           results.whatsapp = { ok: true, detail: "Enviado na conversa do WhatsApp." };
+          void addLeadNote({ workspaceId: g.workspaceId, leadId: lead.id, text: "COF enviada por WhatsApp (conversa)." }).catch(() => null);
         } catch (err) {
           results.whatsapp = { ok: false, detail: err instanceof Error ? err.message : "Falha no WhatsApp." };
         }
@@ -92,8 +94,12 @@ export async function POST(request: NextRequest, ctx: Ctx) {
           automatic: true,
           reservePercent: 0,
         }).catch((err) => ({ status: "FAILED" as const, reason: err instanceof Error ? err.message : "falha" }));
-        if (sent.status === "SENT") results.whatsapp = { ok: true, detail: "Enviado pelo modelo." };
-        else results.whatsapp = { ok: false, detail: ("reason" in sent && typeof sent.reason === "string" ? sent.reason : "") || "WhatsApp não enviado." };
+        if (sent.status === "SENT") {
+          results.whatsapp = { ok: true, detail: "Enviado pelo modelo." };
+          void addLeadNote({ workspaceId: g.workspaceId, leadId: lead.id, text: "COF enviada por WhatsApp (modelo)." }).catch(() => null);
+        } else {
+          results.whatsapp = { ok: false, detail: ("reason" in sent && typeof sent.reason === "string" ? sent.reason : "") || "WhatsApp não enviado." };
+        }
       }
     }
   } else {
@@ -164,6 +170,7 @@ export async function POST(request: NextRequest, ctx: Ctx) {
           console.warn("[send-cof] no contact.id for lead", lead.id);
         }
         results.email = { ok: true, detail: `Enviado para ${to}.` };
+        void addLeadNote({ workspaceId: g.workspaceId, leadId: lead.id, text: `COF enviada por e-mail para ${to}.` }).catch(() => null);
       } catch (err) {
         results.email = { ok: false, detail: err instanceof Error ? err.message : "Falha no e-mail." };
       }

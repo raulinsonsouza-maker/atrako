@@ -831,6 +831,18 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
         meta: { leadId: lead.id },
       });
     }
+
+    const notes = Array.isArray(meta.notes) ? (meta.notes as Array<Record<string, unknown>>) : [];
+    for (const n of notes) {
+      if (typeof n.text !== "string" || !n.text.trim()) continue;
+      items.push({
+        at: typeof n.at === "string" ? n.at : lead.createdAt.toISOString(),
+        type: "lead.note",
+        title: "Nota",
+        detail: String(n.text).slice(0, 240),
+        meta: { leadId: lead.id, noteId: typeof n.id === "string" ? n.id : undefined },
+      });
+    }
   }
 
   // Atribuição do lead mais recente com form/LP (para anexar em compra/finance)

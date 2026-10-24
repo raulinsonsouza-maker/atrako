@@ -473,6 +473,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
 
 
   const params = new URLSearchParams();
+  if (dateFilter.periodo) params.set("periodo", dateFilter.periodo);
   if (dateFilter.dataInicio) params.set("dataInicio", dateFilter.dataInicio);
   if (dateFilter.dataFim) params.set("dataFim", dateFilter.dataFim);
   params.set("granularity", effectiveGranularity);
@@ -487,7 +488,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
       if (!r.ok) throw new Error("Erro ao carregar dados de Social Media");
       return r.json();
     },
-    staleTime: 60 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Query 2: Posts — slow (N per-post insights calls), loads after KPI is visible
@@ -502,7 +503,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
       if (!r.ok) return {} as SocialMediaData;
       return r.json();
     },
-    staleTime: 60 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
     enabled: !!data?.configured,
   });
 

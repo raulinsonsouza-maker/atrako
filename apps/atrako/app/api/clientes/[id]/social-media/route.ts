@@ -11,13 +11,13 @@ interface CacheEntry {
   ts: number;
 }
 const postCache = new Map<string, CacheEntry>();
-const POST_CACHE_TTL = 60 * 60 * 1000; // 1h
+const POST_CACHE_TTL = 5 * 60 * 1000; // 5min
 
 const demoCache = new Map<string, CacheEntry>();
 const DEMO_CACHE_TTL = 24 * 60 * 60 * 1000; // 24h — demographics change slowly
 
 const weeklyCache = new Map<string, CacheEntry>();
-const WEEKLY_CACHE_TTL = 60 * 60 * 1000; // 1h
+const WEEKLY_CACHE_TTL = 5 * 60 * 1000; // 5min
 
 
 function toUnix(date: Date): number {
@@ -146,9 +146,23 @@ export async function GET(
   if (access.response) return access.response;
   const canUseLiveProvider = Boolean(access.internalUser);
   const sp = new URL(req.url).searchParams;
+  const periodo = sp.get("periodo");
   const dataInicio = sp.get("dataInicio");
   const dataFim = sp.get("dataFim");
   const granularity = sp.get("granularity") ?? "semanal"; // "mensal" | "semanal" | "diario"
+
+  // Mapear periodo preset para dataInicio/dataFim quando ausentes
+  let resolvedInicio = dataInicio;
+  let resolvedFim = dataFim;
+  if (!resolvedInicio && !resolvedFim && periodo) {
+    const now = new Date();
+    const days = periodo === "7d" ? 7 : periodo === "30d" ? 30 : periodo === "90d" ? 90 : periodo === "ytd" ? 365 : 30;
+    const start = new Date(now);
+    start.setDate(start.getDate() - days);
+    start.setHours(0, 0, 0, 0);
+    resolvedInicio = start.toISOString().slice(0, 10);
+    resolvedFim = now.toISOString().slice(0, 10);
+  }
 
   // Discovery itself can call Meta. Anonymous requests may only use an
   // already-persisted account id and persisted insight snapshots.
@@ -195,10 +209,10 @@ export async function GET(
 
   // --- Date range ---
   const now = new Date();
-  const rangeStart = dataInicio
-    ? new Date(dataInicio + "T00:00:00")
+  const rangeStart = resolvedInicio
+    ? new Date(resolvedInicio + "T00:00:00")
     : (() => { const d = new Date(now); d.setMonth(d.getMonth() - 12); d.setDate(1); d.setHours(0, 0, 0, 0); return d; })();
-  const rangeEnd = dataFim ? new Date(dataFim + "T23:59:59") : now;
+  const rangeEnd = resolvedFim ? new Date(resolvedFim + "T23:59:59") : now;
 
   const startKey = `${rangeStart.getFullYear()}-${String(rangeStart.getMonth() + 1).padStart(2, "0")}`;
   const endKey   = `${rangeEnd.getFullYear()}-${String(rangeEnd.getMonth() + 1).padStart(2, "0")}`;
@@ -223,7 +237,7 @@ export async function GET(
   let monthly: MonthRow[] = [];
   let followersTotal = 0;
 
-  const dbThreshold = dataInicio || dataFim ? 1 : 3;
+  const dbThreshold = resolvedInicio || resolvedFim ? 999 : 3;
   if (dbInsights.length >= dbThreshold) {
     monthly = dbInsights.map((row) => ({
       mes: monthKey(row.ano, row.mes),
@@ -565,10 +579,9 @@ export async function GET(
       if (!kpiCreds?.token) return noData;
       try {
         const rangeDuration = rangeEnd.getTime() - rangeStart.getTime();
-        const canFetchUniqueTotals = rangeDuration <= INSIGHTS_WINDOW_MS;
-        const [visitasPerfil, visualizacoes, curtidas, comentarios, compartilhamentos, alcance, engajamento] = await Promise.all([
+        const canFetchUniqueTotals = rangeDuration <= 90 * 24 * 60 * 60 * 1000;
+        const [visitasPerfil, visualizacoes, curtidas, comentarios, compartilhamentos, alcance, engajamento, followerRaw] = await Promise.all([
           getTotalValueMetric(igId, kpiCreds.token, "profile_views", rangeStart, rangeEnd),
-          // `impressions` was deprecated for account insights in Graph API v22.
           getTotalValueMetric(igId, kpiCreds.token, "views", rangeStart, rangeEnd),
           getTotalValueMetric(igId, kpiCreds.token, "likes", rangeStart, rangeEnd),
           getTotalValueMetric(igId, kpiCreds.token, "comments", rangeStart, rangeEnd),
@@ -579,18 +592,20 @@ export async function GET(
           canFetchUniqueTotals
             ? getTotalValueMetric(igId, kpiCreds.token, "accounts_engaged", rangeStart, rangeEnd)
             : Promise.resolve(null),
+          igGet(`${igId}/insights`, kpiCreds.token, { metric: "follower_count", period: "day", since: String(toUnix(rangeStart)), until: String(toUnix(rangeEnd)) }).catch(() => ({ data: [] })),
         ]);
+        const novosSeguidoresLive = ((followerRaw?.data as Array<{ values?: Array<{ value: number }> }>)?.[0]?.values ?? []).reduce((s: number, v: { value: number }) => s + (v.value ?? 0), 0);
         const fetched = [
           visitasPerfil, visualizacoes, curtidas, comentarios,
           compartilhamentos, alcance, engajamento,
         ].some((value) => value !== null);
         return {
-          visitasPerfil, perdaSeguidores: perdaSeguidoresTotal, novosSeguidores: null,
+          visitasPerfil, perdaSeguidores: perdaSeguidoresTotal, novosSeguidores: novosSeguidoresLive,
           alcance, engajamento,
           impressoes: visualizacoes, curtidas,
           comentarios, compartilhamentos,
           salvos: null, websiteClicks: null,
-          fetched,
+          fetched: fetched || novosSeguidoresLive !== 0,
         };
       } catch (error) {
         console.error("[social-media] Falha ao complementar KPIs do Instagram", {

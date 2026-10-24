@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { upsertWorkspaceConnection } from "@/lib/atrako/workspace-connections";
-import { getPublicOrigin } from "@/lib/http/public-origin";
+import { getPublicOrigin, getServerPublicOrigin } from "@/lib/http/public-origin";
 import { lpOAuthReturnTo } from "@/lib/lp-domains";
 
 export async function GET(request: NextRequest) {
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
   const redirectUri =
     pending.redirectUri ||
-    `${getPublicOrigin(request)}/api/atrako/oauth/mercadopago/callback`;
+    `${getServerPublicOrigin()}/api/atrako/oauth/mercadopago/callback`;
 
   const res = await fetch("https://api.mercadopago.com/oauth/token", {
     method: "POST",

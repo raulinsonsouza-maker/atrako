@@ -3,7 +3,7 @@ import { createHash, randomBytes } from "crypto";
 import { prisma } from "@/lib/db";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
-import { getPublicOrigin } from "@/lib/http/public-origin";
+import { getPublicOrigin, getServerPublicOrigin } from "@/lib/http/public-origin";
 import { lpOAuthReturnTo } from "@/lib/lp-domains";
 
 function createPkce() {
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
   const redirectUri =
     app?.credentials.redirectUri?.trim() ||
     process.env.MP_REDIRECT_URI?.trim() ||
-    `${getPublicOrigin(request)}/api/atrako/oauth/mercadopago/callback`;
+    `${getServerPublicOrigin()}/api/atrako/oauth/mercadopago/callback`;
 
   if (!clientId) {
     return NextResponse.json(

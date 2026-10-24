@@ -256,6 +256,27 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // Enroll in franchise nurture flow if applicable
+      try {
+        const { ingestFormAnswersIntoLead } = await import("@/lib/qualification/ingest");
+        const flat: Record<string, string> = {};
+        // Map common form fields
+        if (typeof input.state === "string") flat.state = input.state;
+        if (typeof input.city === "string") flat.city = input.city;
+        if (typeof input.capital === "string") flat.capital = input.capital;
+        if (typeof input.niche === "string") flat.niche = input.niche;
+        await ingestFormAnswersIntoLead({
+          workspaceId,
+          leadId: lead.id,
+          contactId: lead.contactId,
+          source: source,
+          flat,
+          channel: "lp",
+        });
+      } catch (e) {
+        console.warn("[lp_lead] nurture enrollment failed", e instanceof Error ? e.message : e);
+      }
+
       await publishAtrakoEvents([
         createLeadEvent({
           name: "lead.created",

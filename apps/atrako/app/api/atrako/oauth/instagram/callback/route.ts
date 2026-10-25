@@ -101,6 +101,63 @@ export async function GET(request: NextRequest) {
     metadata: { connectedAt: new Date().toISOString() },
   });
 
+  // Resolve IG account via /me/accounts to populate igAccount in db-social
+  try {
+    const pagesRes = await fetch(
+      `https://graph.facebook.com/v21.0/me/accounts?fields=id,name,instagram_business_account{id,username}&access_token=${encodeURIComponent(accessToken)}`,
+    );
+    if (pagesRes.ok) {
+      const pagesJson = (await pagesRes.json()) as {
+        data?: Array<{ id: string; name?: string; instagram_business_account?: { id: string; username?: string } }>;
+      };
+      for (const page of pagesJson.data ?? []) {
+        const ig = page.instagram_business_account;
+        if (!ig?.id) continue;
+        const { prisma: socialPrisma } = await import("@/lib/db-social");
+        let org = await socialPrisma.organization.findFirst({
+          where: { centralClienteId: pending.clienteId },
+        });
+        if (!org) {
+          const slug = `ws-${pending.clienteId}`.slice(0, 60);
+          org = await socialPrisma.organization.create({
+            data: {
+              nome: "Workspace",
+              slug: `${slug}-${Date.now().toString(36)}`,
+              centralClienteId: pending.clienteId,
+              onboardingDone: true,
+            },
+          });
+        }
+          await socialPrisma.igAccount.upsert({
+            where: { organizationId_igUserId: { organizationId: org.id, igUserId: ig.id } },
+            create: {
+              organizationId: org.id,
+              pageName: page.name ?? null,
+              accessToken,
+              igUserId: ig.id,
+              igUsername: ig.username ?? null,
+              status: "CONNECTED",
+              messagesEnabled: true,
+              tokenExpiresAt: expiresIn ? new Date(Date.now() + expiresIn * 1000) : null,
+              webhookSubscribedAt: new Date(),
+            },
+            update: {
+              pageName: page.name ?? null,
+              accessToken,
+              igUsername: ig.username ?? null,
+              status: "CONNECTED",
+              messagesEnabled: true,
+              tokenExpiresAt: expiresIn ? new Date(Date.now() + expiresIn * 1000) : null,
+              webhookSubscribedAt: new Date(),
+            },
+          });
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[instagram-oauth] failed to upsert igAccount", e instanceof Error ? e.message : e);
+  }
+
   hub.searchParams.set("workspaceId", pending.clienteId);
   hub.searchParams.set("connected", "INSTAGRAM");
   return NextResponse.redirect(hub);

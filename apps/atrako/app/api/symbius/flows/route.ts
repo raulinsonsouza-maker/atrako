@@ -189,7 +189,22 @@ function templateTrigger(template: string) {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await getSession();
+  let session = await getSession();
+
+  // Fallback: resolve via Atrako workspaceId when no symbius session
+  if (!session) {
+    const wsId = request.nextUrl.searchParams.get("workspaceId");
+    if (wsId) {
+      const org = await prisma.organization.findFirst({
+        where: { centralClienteId: wsId },
+      });
+      if (org) {
+        // Create a synthetic session-like object
+        session = { organizationId: org.id, userId: "" } as any;
+      }
+    }
+  }
+
   if (!session) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
@@ -216,7 +231,21 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getSession();
+  let session = await getSession();
+
+  // Fallback: resolve org via workspaceId when no symbius session
+  if (!session) {
+    const wsId = request.nextUrl.searchParams.get("workspaceId");
+    if (wsId) {
+      const org = await prisma.organization.findFirst({
+        where: { centralClienteId: wsId },
+      });
+      if (org) {
+        session = { organizationId: org.id, userId: "" } as any;
+      }
+    }
+  }
+
   if (!session) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }

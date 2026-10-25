@@ -14,17 +14,17 @@ const TRIGGER_LABELS: Record<string, string> = {
 };
 
 export function InstagramMensagensView({ workspaceId }: { workspaceId: string }) {
-  const { flows, igAccount, isLoading, error, refetch } = useIgAutomations();
+  const { flows, igAccount, isLoading, error, refetch } = useIgAutomations(workspaceId);
 
   return (
     <AppPage
       title="Automações Instagram"
       className="md:pt-5"
       actions={
-        <a
-          href="/social/flows/new"
-          className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-caption-strong text-white"
-        >
+          <a
+            href={`/social/flows/new?workspaceId=${encodeURIComponent(workspaceId)}`}
+            className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-caption-strong text-white"
+          >
           <Plus className="h-3.5 w-3.5" />
           Nova automação
         </a>

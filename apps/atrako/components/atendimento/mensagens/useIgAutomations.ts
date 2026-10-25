@@ -15,20 +15,22 @@ export type IgFluxo = {
 
 export type IgMetrics = Record<string, unknown> | null;
 
-export function useIgAutomations() {
+export function useIgAutomations(workspaceId?: string) {
   const [flows, setFlows] = useState<IgFluxo[]>([]);
   const [metrics, setMetrics] = useState<IgMetrics>(null);
   const [igAccount, setIgAccount] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const qs = workspaceId ? `?workspaceId=${encodeURIComponent(workspaceId)}` : "";
+
   async function load() {
     setIsLoading(true);
     setError(null);
     try {
       const [flowsRes, metricsRes] = await Promise.all([
-        fetch("/api/symbius/flows", { cache: "no-store" }),
-        fetch("/api/symbius/analytics", { cache: "no-store" }),
+        fetch(`/api/symbius/flows${qs}`, { cache: "no-store" }),
+        fetch(`/api/symbius/analytics${qs}`, { cache: "no-store" }),
       ]);
       if (!flowsRes.ok) throw new Error("Falha ao carregar fluxos");
       const flowsData = await flowsRes.json();
@@ -37,7 +39,6 @@ export function useIgAutomations() {
         const metricsData = await metricsRes.json();
         setMetrics(metricsData);
       }
-      // Derivar handle a partir do primeiro fluxo que tenha igAccountId, se existir.
       const firstWithIg = (flowsData.fluxos ?? []).find((f: IgFluxo) => f.igAccountId);
       if (firstWithIg?.igAccountId) setIgAccount(firstWithIg.igAccountId);
     } catch (e) {

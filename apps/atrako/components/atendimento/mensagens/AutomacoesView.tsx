@@ -23,14 +23,14 @@ export function AutomacoesView() {
 
   if (!workspaceId) {
     return (
-      <AppPage title="Automações" className="md:pt-5">
+      <div className="flex justify-center py-16">
         <p className="type-caption text-[var(--ink-muted-48)]">Carregando…</p>
-      </AppPage>
+      </div>
     );
   }
 
   return (
-    <AppPage title="Automações" className="md:pt-5">
+    <div className="flex flex-col gap-4">
       <SegmentedControl value={canal} onChange={setCanal} options={CANAIS} aria-label="Canal de automação" className="self-start" />
       {canal === "whatsapp" ? <MensagensView workspaceId={workspaceId} /> : null}
       {canal === "email" ? (
@@ -40,6 +40,6 @@ export function AutomacoesView() {
         </div>
       ) : null}
       {canal === "instagram" ? <InstagramMensagensView workspaceId={workspaceId} /> : null}
-    </AppPage>
+    </div>
   );
 }

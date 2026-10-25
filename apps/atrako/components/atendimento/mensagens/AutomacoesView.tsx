@@ -18,7 +18,6 @@ const CANAIS: ReadonlyArray<{ value: Canal; label: string }> = [
 
 export function AutomacoesView() {
   const { workspaceId } = useActiveWorkspace();
-  const { info } = useAtendimentoInfo();
   const [canal, setCanal] = useState<Canal>("whatsapp");
 
   if (!workspaceId) {

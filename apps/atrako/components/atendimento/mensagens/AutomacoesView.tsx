@@ -7,7 +7,6 @@ import { InstagramMensagensView } from "./InstagramMensagensView";
 import { FlowsTab } from "@/components/relacionamento/FlowsTab";
 import { LeadEmailsCard } from "@/components/notifications/LeadEmailsCard";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
-import { useAtendimentoInfo } from "../useAtendimentoInfo";
 
 type Canal = "whatsapp" | "email" | "instagram";
 
@@ -30,19 +29,8 @@ export function AutomacoesView() {
     );
   }
 
-  const waOk = info?.channels?.meta ?? false;
-  const igOk = info?.channels?.instagram ?? false;
-
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap gap-2">
-        <span className={`type-caption ${waOk ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
-          WhatsApp: {waOk ? "conectado" : "desconectado"}
-        </span>
-        <span className={`type-caption ${igOk ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
-          Instagram: {igOk ? "conectado" : "desconectado"}
-        </span>
-      </div>
       <SegmentedControl value={canal} onChange={setCanal} options={CANAIS} aria-label="Canal de automação" className="self-start" />
       {canal === "whatsapp" ? <MensagensView workspaceId={workspaceId} /> : null}
       {canal === "email" ? (

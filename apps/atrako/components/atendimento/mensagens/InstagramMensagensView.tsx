@@ -30,12 +30,6 @@ export function InstagramMensagensView({ workspaceId }: { workspaceId: string })
         </a>
       }
     >
-      {igAccount ? (
-        <div className="flex items-center gap-2 type-caption text-[var(--ink-muted)]">
-          <Instagram className="h-3.5 w-3.5" />
-          Conta conectada: <span className="type-caption-strong text-[var(--ink)]">@{igAccount}</span>
-        </div>
-      ) : null}
 
       {isLoading ? (
         <div className="flex justify-center py-16">
@@ -99,7 +93,7 @@ export function InstagramMensagensView({ workspaceId }: { workspaceId: string })
                 >
                   {f.status === "PUBLISHED" ? "Ativo" : "Rascunho"}
                 </span>
-                <a
+                  <a
                   href={`/social/flows/${f.id}`}
                   className="inline-flex items-center gap-1 type-caption text-[var(--primary)] underline"
                 >

@@ -334,10 +334,20 @@ export async function subscribeIgWebhooks(
 }
 
 export async function verifyMessagingAccess(
-  _igUserId: string,
-  _accessToken: string,
+  igUserId: string,
+  accessToken: string,
 ): Promise<boolean> {
-  return true;
+  try {
+    const res = await fetch(
+      `https://graph.instagram.com/v21.0/me?fields=id&access_token=${encodeURIComponent(accessToken)}`,
+      { cache: "no-store" },
+    );
+    if (!res.ok) return false;
+    const json = (await res.json()) as { id?: string; error?: { message: string } };
+    return Boolean(json.id && !json.error);
+  } catch {
+    return false;
+  }
 }
 
 export type IgMediaItem = {

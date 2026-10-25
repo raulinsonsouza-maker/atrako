@@ -1333,13 +1333,17 @@ export function verifyWebhookSignature(
   rawBody: string,
   signatureHeader: string | null,
 ): boolean {
+  const { resolvePlatformApp } = require("@/lib/config/platformApps");
+  // Resolve secret via hub-first (async not possible here, use sync env fallback)
   const appSecret =
     process.env.SYMBIUS_IG_APP_SECRET ??
     process.env.SYMBIUS_META_APP_SECRET ??
     process.env.META_APP_SECRET ??
     "";
   if (!appSecret || !signatureHeader?.startsWith("sha256=")) {
-    return process.env.NODE_ENV !== "production";
+    // In production, reject if no secret/configured signature
+    if (process.env.NODE_ENV === "production") return false;
+    return true;
   }
   const expected = crypto
     .createHmac("sha256", appSecret)

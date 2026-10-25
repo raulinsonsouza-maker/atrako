@@ -316,7 +316,7 @@ export async function startQualificationFlow(input: {
         type: "wa.template",
         title: "Qualificação no WhatsApp parada",
         body: "A mensagem de abertura ainda não foi aprovada pela Meta.",
-        href: "/crm/mensagens",
+        href: "/atendimento/mensagens",
         severity: "aviso",
         dedupeKey: `wa-template:qualify_open:${input.workspaceId}`,
         email: false,

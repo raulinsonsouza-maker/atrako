@@ -4,8 +4,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { SegmentedControl } from "@/components/ui";
 import { AppPage } from "@/components/layout/AppPage";
-import { FlowsTab } from "@/components/relacionamento/FlowsTab";
-import { LeadEmailsCard } from "@/components/notifications/LeadEmailsCard";
 import { useAtendimentoInfo } from "@/components/atendimento/useAtendimentoInfo";
 import { FollowUpEditor } from "./FollowUpEditor";
 import { LiveStrip } from "./LiveStrip";
@@ -14,12 +12,11 @@ import { RobotSwitch, SetupChecklist } from "./SetupChecklist";
 import { useJornada, type Jornada } from "./useJornada";
 import { useScriptDraft } from "./useScriptDraft";
 
-type Aba = "conversa" | "sem-resposta" | "emails";
+type Aba = "conversa" | "sem-resposta";
 
 const ABAS: ReadonlyArray<{ value: Aba; label: string }> = [
   { value: "conversa", label: "Conversa" },
   { value: "sem-resposta", label: "Sem resposta" },
-  { value: "emails", label: "E-mails" },
 ];
 
 function Tabs({ workspaceId, data, post, canManage }: { workspaceId: string; data: Jornada; post: ReturnType<typeof useJornada>["post"]; canManage: boolean }) {
@@ -39,17 +36,6 @@ function Tabs({ workspaceId, data, post, canManage }: { workspaceId: string; dat
       <SegmentedControl value={aba} onChange={select} options={ABAS} aria-label="Partes da configuração" className="self-start" />
       {aba === "conversa" ? <ScriptEditor data={data} s={s} canManage={canManage} /> : null}
       {aba === "sem-resposta" ? <FollowUpEditor data={data} s={s} canManage={canManage} /> : null}
-      {aba === "emails" ? (
-        <div className="flex flex-col gap-4">
-          <FlowsTab
-            workspaceId={workspaceId}
-            pack="inside_sales"
-            hideTriggers={data.enabled ? ["lead_welcome"] : undefined}
-            note={data.enabled ? "As boas-vindas de quem se cadastra na LP ficam com o robô do WhatsApp (aba Conversa)." : undefined}
-          />
-          <LeadEmailsCard workspaceId={workspaceId} />
-        </div>
-      ) : null}
     </>
   );
 }

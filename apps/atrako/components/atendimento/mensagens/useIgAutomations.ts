@@ -7,6 +7,7 @@ export type IgFluxo = {
   triggerType: string | null;
   triggerConfig: Record<string, unknown> | null;
   fluxoKind: string | null;
+  igAccountId?: string | null;
   pasta?: { id: string; nome: string } | null;
   updatedAt: string;
   _count?: { nos: number; execucoes: number };
@@ -17,6 +18,7 @@ export type IgMetrics = Record<string, unknown> | null;
 export function useIgAutomations() {
   const [flows, setFlows] = useState<IgFluxo[]>([]);
   const [metrics, setMetrics] = useState<IgMetrics>(null);
+  const [igAccount, setIgAccount] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,6 +37,9 @@ export function useIgAutomations() {
         const metricsData = await metricsRes.json();
         setMetrics(metricsData);
       }
+      // Derivar handle a partir do primeiro fluxo que tenha igAccountId, se existir.
+      const firstWithIg = (flowsData.fluxos ?? []).find((f: IgFluxo) => f.igAccountId);
+      if (firstWithIg?.igAccountId) setIgAccount(firstWithIg.igAccountId);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro desconhecido");
     } finally {
@@ -46,5 +51,5 @@ export function useIgAutomations() {
     load();
   }, []);
 
-  return { flows, metrics, isLoading, error, refetch: load };
+  return { flows, metrics, igAccount, isLoading, error, refetch: load };
 }

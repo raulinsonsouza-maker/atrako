@@ -94,9 +94,9 @@ export function InstagramMensagensView({ workspaceId }: { workspaceId: string })
                   {f.status === "PUBLISHED" ? "Ativo" : "Rascunho"}
                 </span>
                   <a
-                  href={`/social/flows/${f.id}`}
-                  className="inline-flex items-center gap-1 type-caption text-[var(--primary)] underline"
-                >
+                    href={`https://atrako.com.br/social/flows/${f.id}`}
+                    className="inline-flex items-center gap-1 type-caption text-[var(--primary)] underline"
+                  >
                   <Pencil className="h-3 w-3" />
                   Editar
                 </a>

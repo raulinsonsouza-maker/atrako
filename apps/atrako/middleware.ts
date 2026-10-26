@@ -90,6 +90,10 @@ export default function middleware(request: NextRequest) {
     }
     if (LP_DOMAIN_SITE_PAGES.includes(pathname)) return rewriteTo(`${site}${pathname}`);
     if (["/robots.txt", "/sitemap.xml", "/llms.txt", "/llms-full.txt", "/indexnow.txt"].includes(pathname)) return NextResponse.next();
+    if (pathname.startsWith("/social/flows")) {
+      // Reescreve /social/flows/* para a rota interna do app
+      return noindex(rewriteTo(pathname));
+    }
     if (LP_DOMAIN_ALLOWED_PREFIXES.some((p) => pathname.startsWith(p))) {
       return pathname.startsWith("/api/") ? NextResponse.next() : noindex(NextResponse.next());
     }

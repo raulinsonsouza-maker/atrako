@@ -63,6 +63,7 @@ type CommentDmWizardProps = {
   onCancel: () => void;
   onSaved: (fluxoId: string) => void;
   username?: string;
+  workspaceId?: string;
 };
 
 export function CommentDmWizard({
@@ -71,6 +72,7 @@ export function CommentDmWizard({
   onCancel,
   onSaved,
   username = "seu_perfil",
+  workspaceId,
 }: CommentDmWizardProps) {
   const editingId = initial?.fluxoId;
   const [nome, setNome] = useState(initial?.nome ?? defaultName);
@@ -141,7 +143,8 @@ export function CommentDmWizard({
   function reloadMedia() {
     setLoadingMedia(true);
     setMediaWarning(null);
-    fetch("/api/symbius/instagram/media")
+    const url = workspaceId ? `/api/symbius/instagram/media?workspaceId=${encodeURIComponent(workspaceId)}` : `/api/symbius/instagram/media`;
+    fetch(url)
       .then((r) => r.json())
       .then((d) => {
         const items = (d.media ?? []) as MediaItem[];
@@ -242,8 +245,9 @@ export function CommentDmWizard({
 
     setLoading(true);
     try {
+      const baseUrl = workspaceId ? `/api/symbius/flows?workspaceId=${encodeURIComponent(workspaceId)}` : `/api/symbius/flows`;
       if (editingId) {
-        const res = await fetch("/api/symbius/flows", {
+        const res = await fetch(baseUrl, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -258,7 +262,7 @@ export function CommentDmWizard({
         if (!res.ok) throw new Error(data.error ?? "Erro ao salvar");
         onSaved(editingId);
       } else {
-        const res = await fetch("/api/symbius/flows", {
+        const res = await fetch(baseUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

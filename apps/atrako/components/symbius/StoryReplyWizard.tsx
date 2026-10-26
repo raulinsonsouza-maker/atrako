@@ -23,6 +23,7 @@ type StoryReplyWizardProps = {
   onCancel: () => void;
   onSaved: (fluxoId: string) => void;
   username?: string;
+  workspaceId?: string;
 };
 
 export function StoryReplyWizard({
@@ -30,6 +31,7 @@ export function StoryReplyWizard({
   onCancel,
   onSaved,
   username = "seu_perfil",
+  workspaceId,
 }: StoryReplyWizardProps) {
   const [nome, setNome] = useState(defaultName);
   const [storyFilter, setStoryFilter] = useState<"any" | "specific">("any");
@@ -57,7 +59,8 @@ export function StoryReplyWizard({
 
     setLoading(true);
     try {
-      const res = await fetch("/api/symbius/flows", {
+      const baseUrl = workspaceId ? `/api/symbius/flows?workspaceId=${encodeURIComponent(workspaceId)}` : `/api/symbius/flows`;
+      const res = await fetch(baseUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

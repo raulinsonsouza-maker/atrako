@@ -17,16 +17,20 @@ type FluxoData = {
 export function FlowEditClient({ fluxoId }: { fluxoId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const workspaceId = searchParams.get("workspaceId");
   const forceBuilder = searchParams.get("builder") === "1";
   const [fluxo, setFluxo] = useState<FluxoData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/symbius/flows/${fluxoId}`)
+    const url = workspaceId
+      ? `/api/symbius/flows/${fluxoId}?workspaceId=${encodeURIComponent(workspaceId)}`
+      : `/api/symbius/flows/${fluxoId}`;
+    fetch(url)
       .then((r) => r.json())
       .then((d) => setFluxo(d.fluxo ?? null))
       .finally(() => setLoading(false));
-  }, [fluxoId]);
+  }, [fluxoId, workspaceId]);
 
   if (loading) {
     return (
@@ -53,7 +57,7 @@ export function FlowEditClient({ fluxoId }: { fluxoId: string }) {
       <div className="relative">
         <div className="absolute right-4 top-4 z-20 hidden md:block">
           <Link
-            href={`/social/flows/${fluxoId}?builder=1`}
+            href={`/social/flows/${fluxoId}?builder=1${workspaceId ? `&workspaceId=${encodeURIComponent(workspaceId)}` : ""}`}
             className="rounded-lg bg-black/40 px-2 py-1 type-fine-print text-white/70 underline hover:text-white"
           >
             Builder avançado
@@ -100,10 +104,10 @@ export function FlowEditClient({ fluxoId }: { fluxoId: string }) {
     <div className="relative">
       {fluxo.triggerType === "comment_keyword" && (
         <div className="absolute right-4 top-16 z-20">
-          <BackLink href={`/social/flows/${fluxoId}`}>Wizard</BackLink>
+          <BackLink href={`/social/flows/${fluxoId}${workspaceId ? `?workspaceId=${encodeURIComponent(workspaceId)}` : ""}`}>Wizard</BackLink>
         </div>
       )}
-      <FlowEditor fluxoId={fluxoId} />
+      <FlowEditor fluxoId={fluxoId} workspaceId={workspaceId ?? undefined} />
     </div>
   );
 }

@@ -2,11 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db-social";
 import { getSession } from "@/lib/symbius/auth";
 
+async function getSessionWithWorkspaceFallback(request: NextRequest) {
+  let session = await getSession();
+
+  // Fallback: resolve via Atrako workspaceId when no symbius session
+  if (!session) {
+    const wsId = request.nextUrl.searchParams.get("workspaceId");
+    if (wsId) {
+      const org = await prisma.organization.findFirst({
+        where: { centralClienteId: wsId },
+      });
+      if (org) {
+        session = { organizationId: org.id, userId: "" } as any;
+      }
+    }
+  }
+
+  return session;
+}
+
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await getSession();
+  const session = await getSessionWithWorkspaceFallback(request);
   if (!session) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
@@ -25,10 +44,10 @@ export async function GET(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await getSession();
+  const session = await getSessionWithWorkspaceFallback(request);
   if (!session) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }

@@ -62,6 +62,7 @@ export default function NewFlowPage() {
 function NewFlowPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const workspaceId = searchParams.get("workspaceId");
   const [q, setQ] = useState("");
   const [objective, setObjective] = useState<string>("all");
   const [trigger, setTrigger] = useState<string | null>(null);
@@ -75,14 +76,15 @@ function NewFlowPageInner() {
     title: string,
   ) {
     setLoading(true);
-    const res = await fetch("/api/symbius/flows", {
+    const url = workspaceId ? `/api/symbius/flows?workspaceId=${encodeURIComponent(workspaceId)}` : `/api/symbius/flows`;
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nome: title, template: action }),
     });
     const data = await res.json();
     setLoading(false);
-    if (res.ok) router.push(`/social/flows/${data.fluxo.id}`);
+    if (res.ok) router.push(`/social/flows/${data.fluxo.id}${workspaceId ? `?workspaceId=${encodeURIComponent(workspaceId)}` : ""}`);
     else alert(data.error ?? "Erro");
   }
 
@@ -154,6 +156,7 @@ function NewFlowPageInner() {
       <CommentDmWizard
         defaultName="Comentário → DM"
         initial={wizardPreset}
+        workspaceId={workspaceId ?? undefined}
         onCancel={() => {
           setWizard(null);
           setWizardPreset(undefined);
@@ -161,7 +164,7 @@ function NewFlowPageInner() {
             router.push("/criar/p/instagram");
           }
         }}
-        onSaved={() => router.push("/social/flows")}
+        onSaved={() => router.push(`/social/flows${workspaceId ? `?workspaceId=${encodeURIComponent(workspaceId)}` : ""}`)}
       />
     );
   }
@@ -170,13 +173,14 @@ function NewFlowPageInner() {
     return (
       <StoryReplyWizard
         defaultName="Resposta ao Story → DM"
+        workspaceId={workspaceId ?? undefined}
         onCancel={() => {
           setWizard(null);
           if (searchParams.get("recipe")) {
             router.push("/criar/p/instagram");
           }
         }}
-        onSaved={() => router.push("/social/flows")}
+        onSaved={() => router.push(`/social/flows${workspaceId ? `?workspaceId=${encodeURIComponent(workspaceId)}` : ""}`)}
       />
     );
   }

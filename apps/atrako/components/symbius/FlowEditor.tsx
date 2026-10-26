@@ -292,7 +292,7 @@ function Toolbar({ onAddStep }: { onAddStep: () => void }) {
   );
 }
 
-function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
+function FlowEditorInner({ fluxoId, workspaceId }: { fluxoId: string; workspaceId?: string }) {
   const [nome, setNome] = useState("Sem título");
   const [status, setStatus] = useState("DRAFT");
   const [triggerType, setTriggerType] = useState("unset");
@@ -375,7 +375,10 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
   }, [syncTriggerOntoNodes, setNodes]);
 
   useEffect(() => {
-    fetch(`/api/symbius/flows/${fluxoId}`)
+    const url = workspaceId
+      ? `/api/symbius/flows/${fluxoId}?workspaceId=${encodeURIComponent(workspaceId)}`
+      : `/api/symbius/flows/${fluxoId}`;
+    fetch(url)
       .then((r) => r.json())
       .then((d) => {
         const f = d.fluxo;
@@ -590,18 +593,21 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
       }
     }
 
-    const res = await fetch("/api/symbius/flows", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: fluxoId,
-        nome,
-        status: publish ? "PUBLISHED" : status,
-        triggerType,
-        triggerConfig,
-        nodes: nodePayload,
-      }),
-    });
+    const res = await fetch(
+      workspaceId ? `/api/symbius/flows?workspaceId=${encodeURIComponent(workspaceId)}` : `/api/symbius/flows`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: fluxoId,
+          nome,
+          status: publish ? "PUBLISHED" : status,
+          triggerType,
+          triggerConfig,
+          nodes: nodePayload,
+        }),
+      }
+    );
     setSaving(false);
     if (res.ok) {
       setSavedAt(new Date());
@@ -1203,10 +1209,10 @@ function FlowEditorInner({ fluxoId }: { fluxoId: string }) {
   );
 }
 
-export function FlowEditor({ fluxoId }: { fluxoId: string }) {
+export function FlowEditor({ fluxoId, workspaceId }: { fluxoId: string; workspaceId?: string }) {
   return (
     <ReactFlowProvider>
-      <FlowEditorInner fluxoId={fluxoId} />
+      <FlowEditorInner fluxoId={fluxoId} workspaceId={workspaceId} />
     </ReactFlowProvider>
   );
 }

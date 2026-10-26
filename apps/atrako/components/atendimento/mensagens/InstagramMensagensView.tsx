@@ -20,11 +20,11 @@ export function InstagramMensagensView({ workspaceId }: { workspaceId: string })
     <AppPage
       title="Automações Instagram"
       className="md:pt-5"
-      actions={
-          <a
-            href={`/social/flows/new?workspaceId=${encodeURIComponent(workspaceId)}`}
-            className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-caption-strong text-white"
-          >
+actions={
+        <a
+          href={`https://atrako.com.br/social/flows/new?workspaceId=${encodeURIComponent(workspaceId)}`}
+          className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-caption-strong text-white"
+        >
           <Plus className="h-3.5 w-3.5" />
           Nova automação
         </a>
@@ -57,7 +57,7 @@ export function InstagramMensagensView({ workspaceId }: { workspaceId: string })
           </p>
           <div className="flex gap-3">
             <a
-              href="/social/flows/new"
+              href={`https://atrako.com.br/social/flows/new?workspaceId=${encodeURIComponent(workspaceId)}`}
               className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-4 py-2 type-caption-strong text-white"
             >
               <Plus className="h-3.5 w-3.5" />

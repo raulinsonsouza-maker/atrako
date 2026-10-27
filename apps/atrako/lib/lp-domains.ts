@@ -72,7 +72,7 @@ export function lpOAuthReturnTo(origin: string): string | null {
 }
 
 /** Prefixos do Atrako expostos no domínio do cliente. */
-export const LP_DOMAIN_ALLOWED_PREFIXES = ["/api/", "/sign-in", "/change-password", "/pagar/", "/social/flows"];
+export const LP_DOMAIN_ALLOWED_PREFIXES = ["/api/", "/sign-in", "/change-password", "/pagar/", "/social", "/config/conexoes"];
 
 /** Caminhos do domínio do cliente que não devem ser indexados. */
 export const LP_DOMAIN_NOINDEX_PREFIXES = ["/api/", "/sign-in", "/change-password", "/pagar/", LP_AREA_PATH];

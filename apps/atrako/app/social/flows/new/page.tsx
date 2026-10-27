@@ -161,7 +161,7 @@ function NewFlowPageInner() {
           setWizard(null);
           setWizardPreset(undefined);
           if (searchParams.get("recipe")) {
-            router.push("/criar/p/instagram");
+            router.push("/social/flows");
           }
         }}
         onSaved={() => router.push(`/social/flows${workspaceId ? `?workspaceId=${encodeURIComponent(workspaceId)}` : ""}`)}
@@ -177,7 +177,7 @@ function NewFlowPageInner() {
         onCancel={() => {
           setWizard(null);
           if (searchParams.get("recipe")) {
-            router.push("/criar/p/instagram");
+            router.push("/social/flows");
           }
         }}
         onSaved={() => router.push(`/social/flows${workspaceId ? `?workspaceId=${encodeURIComponent(workspaceId)}` : ""}`)}

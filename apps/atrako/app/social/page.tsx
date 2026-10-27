@@ -45,7 +45,7 @@ export default async function SymbiusDashboardPage() {
     {
       done: fluxosCount > 0,
       label: "Criar primeira automação",
-      href: "/criar/p/instagram",
+      href: "/social/flows/new",
     },
     {
       done: inboxCount > 0,
@@ -56,13 +56,13 @@ export default async function SymbiusDashboardPage() {
 
   const quick = [
     {
-      href: "/criar/p/instagram",
+      href: "/social/flows/new",
       title: "Nova automação",
       desc: "Comentário, story ou keyword → DM",
       icon: MessageSquare,
     },
     {
-      href: "/criar/p/instagram",
+      href: "/social/flows/new",
       title: "Keyword em DM",
       desc: "Resposta automática por palavra-chave",
       icon: Workflow,

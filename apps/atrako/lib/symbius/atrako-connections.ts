@@ -81,29 +81,15 @@ export async function syncInstagramFromAtrakoHub(organizationId: string) {
       ? new Date(Date.now() + hub.expiresIn * 1000)
       : null;
 
-  if (existing) {
-    return prisma.igAccount.update({
-      where: { id: existing.id },
-      data: {
-        accessToken: hub.accessToken,
-        status: "CONNECTED",
-        tokenExpiresAt,
-        igUsername: existing.igUsername || hub.label || "instagram",
-      },
-    });
-  }
+  if (!existing || existing.igUserId.startsWith("hub-")) return null;
 
-  return prisma.igAccount.create({
+  return prisma.igAccount.update({
+    where: { id: existing.id },
     data: {
-      organizationId,
-      pageId: `atrako-hub-${organizationId.slice(-8)}`,
-      pageName: hub.label || "Instagram (Atrako)",
       accessToken: hub.accessToken,
-      igUserId: `hub-${organizationId.slice(-10)}`,
-      igUsername: hub.label || "instagram",
       status: "CONNECTED",
       tokenExpiresAt,
-      messagesEnabled: true,
+      igUsername: existing.igUsername || hub.label || "instagram",
     },
   });
 }

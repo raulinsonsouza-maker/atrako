@@ -112,7 +112,7 @@ async function persistOutbound(
 type FlowStepParams = {
   fluxoId: string;
   organizationId: string;
-  igAccount: { id: string; igUserId: string; accessToken: string };
+  igAccount: { id: string; igUserId: string; accessToken: string; scopes?: string | null };
   contatoId: string;
   igsid: string;
   cfg: CommentDmTriggerConfig;
@@ -187,6 +187,7 @@ async function userFollowsBusiness(params: FlowStepParams): Promise<boolean | nu
   const status = await fetchIgScopedUserFollowStatus({
     igsid: params.igsid,
     accessToken: params.igAccount.accessToken,
+    scopes: params.igAccount.scopes,
   });
   if (!status) return null;
   if (status.username) {
@@ -262,6 +263,7 @@ export async function sendFollowStep(params: FlowStepParams): Promise<void> {
   const sent = await sendInstagramMessage({
     igUserId: params.igAccount.igUserId,
     accessToken: params.igAccount.accessToken,
+    scopes: params.igAccount.scopes,
     recipientIgsid: params.igsid,
     text,
     buttons: [
@@ -291,6 +293,7 @@ export async function sendFollowNotYetStep(params: FlowStepParams): Promise<void
   const sent = await sendInstagramMessage({
     igUserId: params.igAccount.igUserId,
     accessToken: params.igAccount.accessToken,
+    scopes: params.igAccount.scopes,
     recipientIgsid: params.igsid,
     text,
     buttons: [
@@ -318,6 +321,7 @@ export async function sendEmailRequestStep(params: FlowStepParams): Promise<void
   const sent = await sendInstagramMessage({
     igUserId: params.igAccount.igUserId,
     accessToken: params.igAccount.accessToken,
+    scopes: params.igAccount.scopes,
     recipientIgsid: params.igsid,
     text,
   });
@@ -339,6 +343,7 @@ export async function sendEmailInvalidStep(params: FlowStepParams): Promise<void
   const sent = await sendInstagramMessage({
     igUserId: params.igAccount.igUserId,
     accessToken: params.igAccount.accessToken,
+    scopes: params.igAccount.scopes,
     recipientIgsid: params.igsid,
     text,
   });
@@ -377,6 +382,13 @@ async function ensureAwaitingEmailExec(params: FlowStepParams) {
 }
 
 export async function sendRewardStep(params: FlowStepParams): Promise<void> {
+  void import("./workspaceLead").then(({ openInstagramWorkspaceLead }) =>
+    openInstagramWorkspaceLead({
+      organizationId: params.organizationId,
+      igContatoId: params.contatoId,
+      rewardUrl: String(params.cfg.rewardUrl ?? ""),
+    }),
+  );
   const rewardText = String(params.cfg.rewardText ?? "Aqui está o seu acesso");
   const rewardButton = String(params.cfg.rewardButton ?? "Acessar");
 
@@ -401,6 +413,7 @@ export async function sendRewardStep(params: FlowStepParams): Promise<void> {
   const sent = await sendInstagramMessage({
     igUserId: params.igAccount.igUserId,
     accessToken: params.igAccount.accessToken,
+    scopes: params.igAccount.scopes,
     recipientIgsid: params.igsid,
     text,
     buttons: buttons.length ? buttons : undefined,
@@ -430,6 +443,7 @@ export async function sendReminderStep(params: FlowStepParams): Promise<void> {
   const sent = await sendInstagramMessage({
     igUserId: params.igAccount.igUserId,
     accessToken: params.igAccount.accessToken,
+    scopes: params.igAccount.scopes,
     recipientIgsid: params.igsid,
     text,
     buttons: buttons.length ? buttons : undefined,
@@ -479,7 +493,7 @@ export async function advanceCommentDmAfterFollowConfirm(
 /** Detecta follow espontâneo enquanto aguarda (ex.: seguiu e mandou mensagem). */
 export async function tryAdvanceAwaitingFollow(params: {
   organizationId: string;
-  igAccount: { id: string; igUserId: string; accessToken: string };
+  igAccount: { id: string; igUserId: string; accessToken: string; scopes?: string | null };
   contatoId: string;
   igsid: string;
 }): Promise<boolean> {
@@ -549,16 +563,16 @@ export async function saveContactEmail(
     metadata: { email: normalized },
   });
 
-  const { syncLeadToCentralCrm, appendGoogleSheetRow } = await import(
-    "@/lib/symbius/integrations"
+  const { appendGoogleSheetRow } = await import("@/lib/symbius/integrations");
+  void import("./workspaceLead").then(({ openInstagramWorkspaceLead }) =>
+    openInstagramWorkspaceLead({
+      organizationId: contato.organizationId,
+      igContatoId: contato.id,
+      email: normalized,
+      username: contato.username,
+      nome: contato.nome,
+    }),
   );
-  void syncLeadToCentralCrm({
-    organizationId: contato.organizationId,
-    email: normalized,
-    username: contato.username ?? undefined,
-    nome: contato.nome ?? undefined,
-    tags,
-  });
   void appendGoogleSheetRow(contato.organizationId, {
     email: normalized,
     nome: contato.nome ?? "",
@@ -577,7 +591,7 @@ export function extractContactEmail(tags: string[]): string | null {
 /** Processa resposta na etapa de coleta de e-mail (válido ou inválido). */
 export async function tryHandleAwaitingEmailResponse(params: {
   organizationId: string;
-  igAccount: { id: string; igUserId: string; accessToken: string };
+  igAccount: { id: string; igUserId: string; accessToken: string; scopes?: string | null };
   contatoId: string;
   igsid: string;
   text: string;

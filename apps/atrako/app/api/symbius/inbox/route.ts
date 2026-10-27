@@ -189,6 +189,7 @@ export async function POST(request: NextRequest) {
     const sent = await sendInstagramMediaMessage({
       igUserId: conversa.contato.igAccount.igUserId,
       accessToken: conversa.contato.igAccount.accessToken,
+      scopes: conversa.contato.igAccount.scopes,
       recipientIgsid: conversa.contato.igsid,
       mediaType: attachment.type,
       mediaUrl: attachment.url,
@@ -208,6 +209,7 @@ export async function POST(request: NextRequest) {
     const sent = await sendInstagramMessage({
       igUserId: conversa.contato.igAccount.igUserId,
       accessToken: conversa.contato.igAccount.accessToken,
+      scopes: conversa.contato.igAccount.scopes,
       recipientIgsid: conversa.contato.igsid,
       text,
       tag,

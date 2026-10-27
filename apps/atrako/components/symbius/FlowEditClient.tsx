@@ -64,6 +64,7 @@ export function FlowEditClient({ fluxoId }: { fluxoId: string }) {
           </Link>
         </div>
         <CommentDmWizard
+          workspaceId={workspaceId ?? undefined}
           defaultName={fluxo.nome}
           initial={{
             fluxoId: fluxo.id,
@@ -93,8 +94,12 @@ export function FlowEditClient({ fluxoId }: { fluxoId: string }) {
             reminderText: String(cfg.reminderText ?? ""),
             reminderMinutes: Number(cfg.reminderMinutes ?? 30),
           }}
-          onCancel={() => router.push("/social/flows")}
-          onSaved={() => router.push("/social/flows")}
+          onCancel={() =>
+            router.push(`/social/flows${workspaceId ? `?workspaceId=${encodeURIComponent(workspaceId)}` : ""}`)
+          }
+          onSaved={() =>
+            router.push(`/social/flows${workspaceId ? `?workspaceId=${encodeURIComponent(workspaceId)}` : ""}`)
+          }
         />
       </div>
     );

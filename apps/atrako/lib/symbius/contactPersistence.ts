@@ -5,9 +5,10 @@ export async function enrichContatoProfile(
   contatoId: string,
   igsid: string,
   accessToken: string,
+  scopes?: string | null,
 ): Promise<void> {
   try {
-    const profile = await fetchIgScopedUserFollowStatus({ igsid, accessToken });
+    const profile = await fetchIgScopedUserFollowStatus({ igsid, accessToken, scopes });
     if (!profile) return;
     await prisma.igContato.update({
       where: { id: contatoId },

@@ -88,73 +88,40 @@ export async function GET(request: NextRequest) {
     /* keep short-lived */
   }
 
-  await upsertWorkspaceConnection({
-    clienteId: pending.clienteId,
-    provider: "INSTAGRAM",
-    label: "Instagram",
-    credentials: {
-      accessToken,
-      expiresIn,
-      tokenType: token.token_type ?? "bearer",
-    },
-    metadata: { connectedAt: new Date().toISOString() },
-  });
-
+  const expiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000) : null;
   try {
-    const pagesRes = await fetch(
-      "https://graph.facebook.com/v21.0/me/accounts?fields=id,name,instagram_business_account{id,username}&access_token=" + encodeURIComponent(accessToken),
-    );
-    if (pagesRes.ok) {
-      const pagesJson = (await pagesRes.json()) as {
-        data?: Array<{ id: string; name?: string; instagram_business_account?: { id: string; username?: string } }>;
-      };
-      const { prisma: socialPrisma } = await import("@/lib/db-social");
-      for (const page of pagesJson.data ?? []) {
-        const ig = page.instagram_business_account;
-        if (!ig || !ig.id) continue;
-        let org = await socialPrisma.organization.findFirst({
-          where: { centralClienteId: pending.clienteId },
-        });
-        if (!org) {
-          const slug = "ws-" + pending.clienteId;
-          org = await socialPrisma.organization.create({
-            data: {
-              nome: "Workspace",
-              slug: slug.slice(0, 60) + "-" + Date.now().toString(36),
-              centralClienteId: pending.clienteId,
-              onboardingDone: true,
-            },
-          });
-        }
-        await socialPrisma.igAccount.upsert({
-          where: { organizationId_igUserId: { organizationId: org.id, igUserId: ig.id } },
-          create: {
-            organizationId: org.id,
-            pageId: page.id,
-            pageName: page.name ?? null,
-            accessToken: accessToken,
-            igUserId: ig.id,
-            igUsername: ig.username ?? null,
-            status: "CONNECTED",
-            messagesEnabled: true,
-            tokenExpiresAt: expiresIn ? new Date(Date.now() + expiresIn * 1000) : null,
-            webhookSubscribedAt: new Date(),
-          },
-          update: {
-            pageId: page.id,
-            pageName: page.name ?? null,
-            accessToken: accessToken,
-            igUsername: ig.username ?? null,
-            status: "CONNECTED",
-            messagesEnabled: true,
-            tokenExpiresAt: expiresIn ? new Date(Date.now() + expiresIn * 1000) : null,
-            webhookSubscribedAt: new Date(),
-          },
-        });
-      }
+    const { connectInstagramPages } = await import("@/lib/instagram/provisionFromMeta");
+    const ig = await connectInstagramPages({
+      workspaceId: pending.clienteId,
+      userAccessToken: accessToken,
+      expiresAt,
+    });
+    if (ig.connected === 0) {
+      await upsertWorkspaceConnection({
+        clienteId: pending.clienteId,
+        provider: "INSTAGRAM",
+        label: "Instagram",
+        credentials: {
+          accessToken,
+          expiresIn,
+          tokenType: token.token_type ?? "bearer",
+        },
+        metadata: { connectedAt: new Date().toISOString() },
+      });
     }
   } catch (e) {
     console.warn("[instagram-oauth] failed to upsert igAccount", e instanceof Error ? e.message : e);
+    await upsertWorkspaceConnection({
+      clienteId: pending.clienteId,
+      provider: "INSTAGRAM",
+      label: "Instagram",
+      credentials: {
+        accessToken,
+        expiresIn,
+        tokenType: token.token_type ?? "bearer",
+      },
+      metadata: { connectedAt: new Date().toISOString() },
+    });
   }
 
   hub.searchParams.set("workspaceId", pending.clienteId);

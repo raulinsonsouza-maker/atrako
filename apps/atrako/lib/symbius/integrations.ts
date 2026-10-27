@@ -103,39 +103,22 @@ export async function syncLeadToCentralCrm(params: {
   });
   if (settings && !settings.syncCentralCrm) return;
 
-  const base =
-    process.env.NEXTAUTH_URL ??
-    process.env.SYMBIUS_APP_URL ??
-    "http://localhost:3000";
-
   try {
-    const res = await fetch(`${base}/api/clientes/${org.centralClienteId}/crm/leads`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(process.env.SYMBIUS_INTERNAL_API_KEY
-          ? { "x-internal-key": process.env.SYMBIUS_INTERNAL_API_KEY }
-          : {}),
-      },
-      body: JSON.stringify({
-        source: "symbius_flow",
+    const { upsertLeadFromEvent } = await import("@/lib/atrako/lead-pipeline");
+    await upsertLeadFromEvent({
+      workspaceId: org.centralClienteId,
+      eventName: "lead.created",
+      source: "instagram",
+      idempotencyKey: `symbius-${params.email ?? params.phone ?? params.username ?? params.nome ?? "lead"}`,
+      context: {},
+      payload: {
+        nome: params.nome ?? params.username,
         email: params.email,
-        phone: params.phone,
-        name: params.nome ?? params.username,
-        tags: params.tags,
-        stId: params.stId,
-        valor: params.valor,
-        transactionId: params.transactionId,
-        dadosMarketing: params.dadosMarketing,
-      }),
+        telefone: params.phone,
+        fonte: "instagram",
+        ...(params.dadosMarketing ?? {}),
+      },
     });
-    if (!res.ok) {
-      console.warn(
-        "[symbius/central-crm] HTTP",
-        res.status,
-        await res.text().catch(() => ""),
-      );
-    }
   } catch (e) {
     console.warn("[symbius/central-crm]", e);
   }

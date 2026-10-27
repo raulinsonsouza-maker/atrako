@@ -73,6 +73,15 @@ export function getMetaAppSecret(): string | null {
   );
 }
 
+export function getMetaWebhookVerifyToken(): string | null {
+  return (
+    hubMetaCreds?.webhookVerifyToken ||
+    process.env.META_WEBHOOK_VERIFY_TOKEN?.trim() ||
+    process.env.SYMBIUS_META_WEBHOOK_VERIFY_TOKEN?.trim() ||
+    null
+  );
+}
+
 export function getMetaAppId(): string | null {
   return (
     hubMetaCreds?.clientId ||

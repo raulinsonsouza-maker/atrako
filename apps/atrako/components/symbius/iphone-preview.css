@@ -307,8 +307,17 @@
 }
 
 .symbius-iphone-scale button.msg-group,
-.symbius-iphone-scale button.email-card {
+.symbius-iphone-scale button.email-card,
+.symbius-iphone-scale button.bubble-sent {
   cursor: pointer;
+  border: 0;
+  font: inherit;
+  text-align: left;
+}
+
+.symbius-iphone-scale button.bubble-sent {
+  color: var(--ph-out-fg);
+  background-color: var(--ph-out-bg);
 }
 
 .symbius-iphone-scale .bubble-received {

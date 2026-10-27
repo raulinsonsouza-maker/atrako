@@ -25,7 +25,7 @@ export type ChatItem =
       onClick?: () => void;
     }
   /** Resposta do cliente (balão à direita). */
-  | { kind: "sent"; id?: string; text: string; time?: string }
+  | { kind: "sent"; id?: string; text: string; time?: string; dim?: boolean; highlight?: boolean; onClick?: () => void }
   /** Botão solto do Instagram (abaixo do balão). */
   | { kind: "action"; id?: string; label: string; variant?: "action" | "link"; dim?: boolean }
   /** E-mail na caixa de entrada; toque abre o conteúdo. */
@@ -206,11 +206,19 @@ export function ChatPhone({ theme = "instagram", header, items, overlay, focusId
                   );
                 }
                 if (it.kind === "sent") {
+                  const Tag = it.onClick ? "button" : "div";
                   return (
-                    <div key={key} {...dataId} className="msg bubble-sent">
+                    <Tag
+                      key={key}
+                      {...dataId}
+                      type={it.onClick ? "button" : undefined}
+                      className={`msg bubble-sent${it.dim ? " opacity-80" : ""}`}
+                      data-highlight={it.highlight || undefined}
+                      onClick={it.onClick}
+                    >
                       {it.text}
                       {it.time ? <span className="msg-time">{it.time} ✓✓</span> : null}
-                    </div>
+                    </Tag>
                   );
                 }
                 if (it.kind === "action") {

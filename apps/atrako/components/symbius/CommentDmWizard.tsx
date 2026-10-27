@@ -1,19 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { PhonePreview } from "./PhonePreview";
+import { Clock, Hash, Image as ImageIcon, Link2, Mail, MessageCircle, UserPlus } from "lucide-react";
+import { Button, Switch } from "@/components/ui";
+import { BackLink } from "@/components/ui/back-link";
+import { ScriptBlock } from "@/components/atendimento/mensagens/ScriptBlock";
+import { PhonePreview, type IgPreviewSection } from "./PhonePreview";
 import { IgMediaPicker, type IgMediaItem } from "./IgMediaPicker";
 import {
-  ActivateButton,
   RadioOption,
   TagChip,
-  ToggleRow,
-  WizardBackButton,
   WizardFieldLabel,
-  WizardLayout,
   WizardLinkButtonEditor,
-  WizardSectionTitle,
-  WizardTitle,
+  useWorkspaceSaleLinks,
   wizardInputCls,
   wizardTextareaCls,
 } from "./wizard-ui";
@@ -74,6 +73,7 @@ export function CommentDmWizard({
   username = "seu_perfil",
   workspaceId,
 }: CommentDmWizardProps) {
+  const saleLinks = useWorkspaceSaleLinks(workspaceId);
   const editingId = initial?.fluxoId;
   const [nome, setNome] = useState(initial?.nome ?? defaultName);
   const [mediaFilter, setMediaFilter] = useState<"any" | "specific" | "next">(
@@ -134,9 +134,10 @@ export function CommentDmWizard({
   const [reminderMinutes, setReminderMinutes] = useState(
     initial?.reminderMinutes ?? 30,
   );
-  const [previewTab, setPreviewTab] = useState<"post" | "comment" | "dm">(
-    "comment",
-  );
+  const [open, setOpen] = useState<IgPreviewSection | null>("welcome");
+  function select(section: IgPreviewSection) {
+    setOpen((current) => (current === section ? null : section));
+  }
   const [loading, setLoading] = useState(false);
   const [loadingMedia, setLoadingMedia] = useState(true);
 
@@ -183,7 +184,7 @@ export function CommentDmWizard({
     setKeywordInput(next.join(", "));
     setKeywords(next);
     setAnyKeyword(false);
-    setPreviewTab("comment");
+    setOpen("keyword");
   }
 
   async function activate() {
@@ -284,340 +285,246 @@ export function CommentDmWizard({
     }
   }
 
+  const postSummary =
+    mediaFilter === "specific"
+      ? "Uma publicação"
+      : mediaFilter === "next"
+        ? "A próxima publicação"
+        : "Qualquer publicação";
+  const keywordSummary = anyKeyword ? "Qualquer palavra" : commentPreview;
+
   return (
-    <WizardLayout
-      form={
-        <>
-          <WizardBackButton onClick={onCancel} />
+    <div className="script-grid px-4 py-5 md:px-6">
+      <div className="script-list">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <BackLink onClick={onCancel}>Automações</BackLink>
+          <Button type="button" size="toolbar" disabled={loading} onClick={() => void activate()}>
+            {loading ? "Ativando…" : "Ativar"}
+          </Button>
+        </div>
+        <h1 className="type-tagline text-[var(--ink)]">Quando alguém comenta</h1>
+        <p className="type-caption text-[var(--ink-muted-48)]">
+          Toque num bloco ou num balão do celular para editar aquele passo.
+        </p>
 
-          <WizardTitle>Quando alguém faz um comentário</WizardTitle>
+        <div className="mt-2">
+          <WizardFieldLabel>Nome interno</WizardFieldLabel>
+          <input value={nome} onChange={(e) => setNome(e.target.value)} className={wizardInputCls} />
+        </div>
 
-          <div className="mt-5">
-            <WizardFieldLabel>Nome interno</WizardFieldLabel>
-            <input
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              className={wizardInputCls}
-            />
-          </div>
-
-          <section className="mt-7 space-y-2">
+        <ScriptBlock
+          icon={ImageIcon}
+          title="Publicação"
+          summary={postSummary}
+          open={open === "post"}
+          onToggle={() => select("post")}
+        >
+          <div className="space-y-2">
             <RadioOption
               selected={mediaFilter === "specific"}
-              title="Uma publicação ou Reel específico"
-              onClick={() => {
-                setMediaFilter("specific");
-                setPreviewTab("comment");
-              }}
+              title="Uma publicação ou Reel"
+              onClick={() => setMediaFilter("specific")}
             >
               {mediaFilter === "specific" ? (
                 <IgMediaPicker
                   media={media}
                   selectedId={mediaId}
-                  onSelect={(id) => {
-                    setMediaId(id);
-                    setPreviewTab("comment");
-                  }}
+                  onSelect={setMediaId}
                   loading={loadingMedia}
                   warning={mediaWarning}
                   onRetry={reloadMedia}
                   fallbackIdInput
-                  onFallbackIdChange={(id) => {
-                    setMediaId(id);
-                    setPreviewTab("comment");
-                  }}
+                  onFallbackIdChange={setMediaId}
                 />
               ) : null}
             </RadioOption>
-
             <RadioOption
               selected={mediaFilter === "any"}
               title="Qualquer publicação ou Reel"
               onClick={() => {
                 setMediaFilter("any");
                 setMediaId(null);
-                setPreviewTab("post");
               }}
             />
-
             <RadioOption
               selected={mediaFilter === "next"}
-              title="Próxima publicação ou Reel"
+              title="A próxima publicação ou Reel"
               onClick={() => {
                 setMediaFilter("next");
                 setMediaId(null);
-                setPreviewTab("post");
               }}
             >
               {mediaFilter === "next" ? (
-                <p className="type-fine-print leading-snug text-zinc-500">
-                  A automação passa a valer para a próxima publicação ou Reel
-                  que você fizer depois de ativar.
+                <p className="type-fine-print leading-snug text-[var(--ink-muted-48)]">
+                  Vale para a próxima publicação feita depois de ativar.
                 </p>
               ) : null}
             </RadioOption>
-          </section>
+          </div>
+        </ScriptBlock>
 
-          <section className="mt-7">
-            <WizardSectionTitle>E esse comentário possui</WizardSectionTitle>
-            <div className="mt-2.5 space-y-2">
-              <RadioOption
-                selected={!anyKeyword}
-                title="Uma palavra ou expressão específica"
-                onClick={() => {
-                  setAnyKeyword(false);
-                  setPreviewTab("comment");
-                }}
-              >
-                {!anyKeyword ? (
-                  <div
-                    className="mt-2 space-y-2"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <input
-                      value={keywordInput}
-                      onChange={(e) => {
-                        setKeywordInput(e.target.value);
-                        setKeywords(parseKeywords(e.target.value));
-                        setPreviewTab("comment");
-                      }}
-                      className={wizardInputCls}
-                      placeholder="Eu quero"
-                    />
-                    <p className="type-fine-print text-zinc-500">
-                      Use vírgulas para separar as palavras
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {SUGGESTED.map((s) => (
-                        <TagChip key={s} onClick={() => addSuggested(s)}>
-                          {s}
-                        </TagChip>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-              </RadioOption>
-
-              <RadioOption
-                selected={anyKeyword}
-                title="Qualquer palavra"
-                onClick={() => {
-                  setAnyKeyword(true);
-                  setPreviewTab("comment");
-                }}
-              />
-            </div>
-
-            <div className="mt-2.5">
-              <ToggleRow
-                label="Interagir com os comentários na publicação"
-                checked={replyToComment}
-                onChange={setReplyToComment}
-              />
-            </div>
-          </section>
-
-          <section className="mt-7">
-            <WizardSectionTitle>Eles receberão</WizardSectionTitle>
-            <div className="mt-2.5 space-y-2">
-              <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
-                <div className="px-3.5 py-3">
-                  <ToggleRow
-                    bare
-                    label="Uma mensagem de boas-vindas"
-                    checked={welcomeEnabled}
-                    onChange={setWelcomeEnabled}
-                  />
-                </div>
-                {welcomeEnabled && (
-                  <div className="space-y-2 border-t border-zinc-100 px-3.5 pb-3.5 pt-2.5">
-                    <textarea
-                      value={welcomeText}
-                      onChange={(e) => {
-                        setWelcomeText(e.target.value);
-                        setPreviewTab("dm");
-                      }}
-                      className={wizardTextareaCls}
-                    />
-                    <input
-                      value={welcomeButton}
-                      onChange={(e) => {
-                        setWelcomeButton(e.target.value);
-                        setPreviewTab("dm");
-                      }}
-                      className={wizardInputCls}
-                      placeholder="Texto do botão"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
-                <div className="px-3.5 py-3">
-                  <ToggleRow
-                    bare
-                    label="Uma DM solicitando que sigam seu perfil antes de receber o link"
-                    checked={followEnabled}
-                    onChange={(v) => {
-                      setFollowEnabled(v);
-                      setPreviewTab("dm");
-                    }}
-                  />
-                </div>
-                {followEnabled && (
-                  <div className="space-y-2 border-t border-zinc-100 px-3.5 pb-3.5 pt-2.5">
-                    <textarea
-                      value={followText}
-                      onChange={(e) => {
-                        setFollowText(e.target.value);
-                        setPreviewTab("dm");
-                      }}
-                      className={wizardTextareaCls}
-                    />
-                    <input
-                      value={followButton}
-                      onChange={(e) => {
-                        setFollowButton(e.target.value);
-                        setPreviewTab("dm");
-                      }}
-                      className={wizardInputCls}
-                      placeholder="Texto do botão"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
-                <div className="px-3.5 py-3">
-                  <ToggleRow
-                    bare
-                    label="Uma DM solicitando o endereço de e-mail"
-                    checked={emailEnabled}
-                    onChange={(v) => {
-                      setEmailEnabled(v);
-                      setPreviewTab("dm");
-                    }}
-                  />
-                </div>
-                {emailEnabled && (
-                  <div className="border-t border-zinc-100 px-3.5 pb-3.5 pt-2.5">
-                    <textarea
-                      value={emailText}
-                      onChange={(e) => {
-                        setEmailText(e.target.value);
-                        setPreviewTab("dm");
-                      }}
-                      className={wizardTextareaCls}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-
-          <section className="mt-7 pb-4">
-            <WizardSectionTitle>E então, eles vão receber</WizardSectionTitle>
-            <div className="mt-2.5 space-y-2">
-              <div className="rounded-xl border border-zinc-200 bg-white p-3.5">
-                <p className="mb-2.5 type-caption-strong text-zinc-800">
-                  Uma DM contendo um link
-                </p>
-                <div className="space-y-2">
-                  <textarea
-                    value={rewardText}
+        <ScriptBlock
+          icon={Hash}
+          title="Palavra do comentário"
+          summary={keywordSummary}
+          chips={anyKeyword ? undefined : keywords}
+          open={open === "keyword"}
+          onToggle={() => select("keyword")}
+        >
+          <div className="space-y-2">
+            <RadioOption selected={!anyKeyword} title="Uma palavra ou expressão" onClick={() => setAnyKeyword(false)}>
+              {!anyKeyword ? (
+                <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    value={keywordInput}
                     onChange={(e) => {
-                      setRewardText(e.target.value);
-                      setPreviewTab("dm");
+                      setKeywordInput(e.target.value);
+                      setKeywords(parseKeywords(e.target.value));
                     }}
-                    className={`${wizardTextareaCls} min-h-[72px]`}
+                    className={wizardInputCls}
+                    placeholder="Eu quero"
                   />
-                  <WizardLinkButtonEditor
-                    buttonLabel={rewardButton}
-                    url={rewardUrl}
-                    onChange={(button, url) => {
-                      setRewardButton(button);
-                      setRewardUrl(url);
-                      setPreviewTab("dm");
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
-                <div className="px-3.5 py-3">
-                  <ToggleRow
-                    bare
-                    label="Uma DM de lembrete, caso o link não tenha sido acessado"
-                    checked={reminderEnabled}
-                    onChange={(v) => {
-                      setReminderEnabled(v);
-                      setPreviewTab("dm");
-                    }}
-                  />
-                </div>
-                {reminderEnabled && (
-                  <div className="space-y-2 border-t border-zinc-100 px-3.5 pb-3.5 pt-2.5">
-                    <textarea
-                      value={reminderText}
-                      onChange={(e) => {
-                        setReminderText(e.target.value);
-                        setPreviewTab("dm");
-                      }}
-                      className={wizardTextareaCls}
-                    />
-                    <div className="flex items-center gap-2">
-                      <span className="shrink-0 type-fine-print text-zinc-500">
-                        Enviar após
-                      </span>
-                      <input
-                        type="number"
-                        min={5}
-                        max={1440}
-                        value={reminderMinutes}
-                        onChange={(e) =>
-                          setReminderMinutes(Number(e.target.value) || 60)
-                        }
-                        className={`${wizardInputCls} w-20`}
-                      />
-                      <span className="type-fine-print text-zinc-500">minutos</span>
-                    </div>
+                  <p className="type-fine-print text-[var(--ink-muted-48)]">Separe as palavras com vírgula.</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {SUGGESTED.map((word) => (
+                      <TagChip key={word} onClick={() => addSuggested(word)}>
+                        {word}
+                      </TagChip>
+                    ))}
                   </div>
-                )}
-              </div>
-            </div>
-          </section>
-        </>
-      }
-      previewHeader={
-        <>
-          <p className="type-caption-strong text-zinc-600">
-            Visualização
-          </p>
-          <ActivateButton loading={loading} onClick={activate} />
-        </>
-      }
-      preview={
-        <PhonePreview
-          tab={previewTab}
-          onTabChange={setPreviewTab}
-          mediaUrl={thumb}
-          caption={selected?.caption?.slice(0, 90) || "Sua publicação"}
-          commentText={commentPreview}
-          username={username}
-          welcomeText={welcomeEnabled ? welcomeText : ""}
-          welcomeButton={welcomeEnabled ? welcomeButton : ""}
-          followText={followEnabled ? followText : ""}
-          followButton={followEnabled ? followButton : ""}
-          showFollowConfirmed={followEnabled}
-          followerHandle="seguidor"
-          emailText={emailEnabled ? emailText : ""}
-          rewardText={rewardText}
-          rewardButton={rewardButton}
-          reminderText={reminderEnabled ? reminderText : ""}
-          reminderMinutes={reminderEnabled ? reminderMinutes : undefined}
-          showReward
-        />
-      }
-    />
+                </div>
+              ) : null}
+            </RadioOption>
+            <RadioOption selected={anyKeyword} title="Qualquer palavra" onClick={() => setAnyKeyword(true)} />
+            <label className="flex items-center justify-between gap-3 pt-1">
+              <span className="type-caption text-[var(--ink)]">Responder o comentário em público</span>
+              <Switch checked={replyToComment} onChange={setReplyToComment} aria-label="Responder o comentário em público" />
+            </label>
+          </div>
+        </ScriptBlock>
+
+        <ScriptBlock
+          icon={MessageCircle}
+          title="Boas-vindas"
+          summary={welcomeEnabled ? welcomeText.split("\n")[0] : "Desligada"}
+          chips={welcomeEnabled && welcomeButton ? [welcomeButton] : undefined}
+          off={!welcomeEnabled}
+          open={open === "welcome"}
+          onToggle={() => select("welcome")}
+          aside={
+            <Switch
+              checked={welcomeEnabled}
+              onChange={setWelcomeEnabled}
+              aria-label="Enviar boas-vindas"
+            />
+          }
+        >
+          <textarea value={welcomeText} onChange={(e) => setWelcomeText(e.target.value)} className={wizardTextareaCls} />
+          <input
+            value={welcomeButton}
+            onChange={(e) => setWelcomeButton(e.target.value)}
+            className={wizardInputCls}
+            placeholder="Texto do botão"
+          />
+        </ScriptBlock>
+
+        <ScriptBlock
+          icon={UserPlus}
+          title="Pedir para seguir"
+          summary={followEnabled ? followText.split("\n")[0] : "Desligado"}
+          off={!followEnabled}
+          open={open === "follow"}
+          onToggle={() => select("follow")}
+          aside={<Switch checked={followEnabled} onChange={setFollowEnabled} aria-label="Pedir para seguir" />}
+        >
+          <textarea value={followText} onChange={(e) => setFollowText(e.target.value)} className={wizardTextareaCls} />
+          <input
+            value={followButton}
+            onChange={(e) => setFollowButton(e.target.value)}
+            className={wizardInputCls}
+            placeholder="Texto do botão"
+          />
+        </ScriptBlock>
+
+        <ScriptBlock
+          icon={Mail}
+          title="Pedir e-mail"
+          summary={emailEnabled ? emailText.split("\n")[0] : "Desligado"}
+          off={!emailEnabled}
+          open={open === "email"}
+          onToggle={() => select("email")}
+          aside={<Switch checked={emailEnabled} onChange={setEmailEnabled} aria-label="Pedir e-mail" />}
+        >
+          <textarea value={emailText} onChange={(e) => setEmailText(e.target.value)} className={wizardTextareaCls} />
+        </ScriptBlock>
+
+        <ScriptBlock
+          icon={Link2}
+          title="Link"
+          summary={rewardText.split("\n")[0]}
+          chips={rewardButton ? [rewardButton] : undefined}
+          open={open === "reward"}
+          onToggle={() => select("reward")}
+        >
+          <textarea
+            value={rewardText}
+            onChange={(e) => setRewardText(e.target.value)}
+            className={`${wizardTextareaCls} min-h-[72px]`}
+          />
+          <WizardLinkButtonEditor
+            buttonLabel={rewardButton}
+            url={rewardUrl}
+            saleLinks={saleLinks}
+            onChange={(button, url) => {
+              setRewardButton(button);
+              setRewardUrl(url);
+            }}
+          />
+        </ScriptBlock>
+
+        <ScriptBlock
+          icon={Clock}
+          title="Lembrete"
+          summary={reminderEnabled ? `${reminderMinutes} min depois` : "Desligado"}
+          off={!reminderEnabled}
+          open={open === "reminder"}
+          onToggle={() => select("reminder")}
+          aside={<Switch checked={reminderEnabled} onChange={setReminderEnabled} aria-label="Enviar lembrete" />}
+        >
+          <textarea value={reminderText} onChange={(e) => setReminderText(e.target.value)} className={wizardTextareaCls} />
+          <div className="flex items-center gap-2">
+            <span className="type-fine-print text-[var(--ink-muted-48)]">Enviar após</span>
+            <input
+              type="number"
+              min={5}
+              max={1440}
+              value={reminderMinutes}
+              onChange={(e) => setReminderMinutes(Number(e.target.value) || 60)}
+              className={`${wizardInputCls} w-20`}
+            />
+            <span className="type-fine-print text-[var(--ink-muted-48)]">minutos</span>
+          </div>
+        </ScriptBlock>
+      </div>
+
+      <PhonePreview
+        section={open}
+        onSection={setOpen}
+        mediaUrl={thumb}
+        caption={selected?.caption?.slice(0, 90) || "Sua publicação"}
+        commentText={commentPreview}
+        username={username}
+        welcomeText={welcomeEnabled ? welcomeText : ""}
+        welcomeButton={welcomeEnabled ? welcomeButton : ""}
+        followText={followEnabled ? followText : ""}
+        followButton={followEnabled ? followButton : ""}
+        emailText={emailEnabled ? emailText : ""}
+        rewardText={rewardText}
+        rewardButton={rewardButton}
+        reminderText={reminderEnabled ? reminderText : ""}
+        reminderMinutes={reminderEnabled ? reminderMinutes : undefined}
+        showReward
+      />
+    </div>
   );
 }

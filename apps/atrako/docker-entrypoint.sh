@@ -12,16 +12,11 @@ until echo "SELECT 1;" | npx prisma db execute --stdin --schema prisma/schema.pr
   sleep 2
 done
 
-# Migrations antes do db push: se o push criar as tabelas primeiro, o SQL da migration falha com
-# "já existe" e o histórico trava (seeds das migrations também deixam de rodar).
-if npx prisma migrate deploy; then
-  echo "[entrypoint] prisma migrate deploy OK"
-else
-  echo "[entrypoint] WARNING: prisma migrate deploy FAILED — corrija com prisma migrate resolve"
-fi
-
-npx prisma db push --skip-generate
-echo "[entrypoint] prisma db push OK"
+# Nunca use db push --accept-data-loss no boot de produção.
+# As migrações precisam ser revisadas e aplicadas de forma explícita e auditável.
+echo "[entrypoint] prisma migrate deploy (schema principal)…"
+npx prisma migrate deploy
+echo "[entrypoint] prisma migrate deploy OK"
 
 if [ -f /app/prisma/social.schema.prisma ]; then
   echo "[entrypoint] prisma db push (social / symbius schema)…"

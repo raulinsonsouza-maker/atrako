@@ -88,12 +88,25 @@ export async function upsertLeadFromEvent(input: {
         ? Number(valorRaw)
         : null;
 
+  const keyword = pickString(payload, ["keyword"]);
+  const mediaId = pickString(payload, ["mediaId"]);
+  const postUrl = pickString(payload, ["postUrl", "permalink"]);
+  const rewardUrl = pickString(payload, ["rewardUrl"]);
+  const username = pickString(payload, ["username"]);
+  const sourceDetail = pickString(payload, ["sourceDetail"]);
+
   const leadMetadata = {
     eventName: input.eventName,
     lastEvent: input.eventName,
     utmSource: pickString(payload, ["utmSource", "utm_source"]),
     utmMedium: pickString(payload, ["utmMedium", "utm_medium"]),
     utmCampaign: pickString(payload, ["utmCampaign", "utm_campaign"]),
+    ...(keyword ? { keyword } : {}),
+    ...(mediaId ? { mediaId } : {}),
+    ...(postUrl ? { postUrl } : {}),
+    ...(rewardUrl ? { rewardUrl } : {}),
+    ...(username ? { username } : {}),
+    ...(sourceDetail ? { sourceDetail } : {}),
   };
 
   const known = await resolveEventPerson(input.workspaceId, input.context);

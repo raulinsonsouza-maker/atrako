@@ -1,4 +1,14 @@
 const IG_GRAPH = "https://graph.instagram.com/v21.0";
+const FB_GRAPH = "https://graph.facebook.com/v21.0";
+
+export function graphModeFromScopes(scopes?: string | null): "facebook" | "instagram" {
+  return (scopes ?? "").includes("facebook_page") ? "facebook" : "instagram";
+}
+
+function graphBase(scopes?: string | null, graph?: "facebook" | "instagram") {
+  const mode = graph ?? graphModeFromScopes(scopes);
+  return mode === "facebook" ? FB_GRAPH : IG_GRAPH;
+}
 
 export interface MessageButton {
   type: "postback" | "web_url";
@@ -11,6 +21,10 @@ export interface SendMessageParams {
   igUserId: string;
   accessToken: string;
   recipientIgsid: string;
+  /** Primeira DM de um comentário (private reply). Sem isso a Meta recusa o envio. */
+  commentId?: string;
+  scopes?: string | null;
+  graph?: "facebook" | "instagram";
   text?: string;
   buttons?: MessageButton[];
   tag?: "HUMAN_AGENT";
@@ -47,7 +61,9 @@ export async function sendInstagramMessage(
   }
 
   const body: Record<string, unknown> = {
-    recipient: { id: params.recipientIgsid },
+    recipient: params.commentId
+      ? { comment_id: params.commentId }
+      : { id: params.recipientIgsid },
     message,
   };
   if (params.tag) {
@@ -55,7 +71,7 @@ export async function sendInstagramMessage(
     body.tag = params.tag;
   }
 
-  const res = await fetch(`${IG_GRAPH}/${params.igUserId}/messages`, {
+  const res = await fetch(`${graphBase(params.scopes, params.graph)}/${params.igUserId}/messages`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${params.accessToken}`,
@@ -79,6 +95,8 @@ export async function sendInstagramImageMessage(params: {
   recipientIgsid: string;
   imageUrl: string;
   text?: string;
+  scopes?: string | null;
+  graph?: "facebook" | "instagram";
 }): Promise<{ message_id?: string }> {
   return sendInstagramMediaMessage({
     ...params,
@@ -95,6 +113,8 @@ export async function sendInstagramMediaMessage(params: {
   mediaUrl: string;
   text?: string;
   tag?: "HUMAN_AGENT";
+  scopes?: string | null;
+  graph?: "facebook" | "instagram";
 }): Promise<{ message_id?: string }> {
   const message: Record<string, unknown> = {
     attachment: {
@@ -112,7 +132,7 @@ export async function sendInstagramMediaMessage(params: {
     body.tag = params.tag;
   }
 
-  const res = await fetch(`${IG_GRAPH}/${params.igUserId}/messages`, {
+  const res = await fetch(`${graphBase(params.scopes, params.graph)}/${params.igUserId}/messages`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${params.accessToken}`,
@@ -137,6 +157,8 @@ export async function sendInstagramMediaMessage(params: {
       recipientIgsid: params.recipientIgsid,
       text: params.text,
       tag: params.tag,
+      scopes: params.scopes,
+      graph: params.graph,
     });
   }
 
@@ -148,8 +170,10 @@ export async function replyToInstagramComment(params: {
   commentId: string;
   accessToken: string;
   message: string;
+  scopes?: string | null;
+  graph?: "facebook" | "instagram";
 }): Promise<void> {
-  const res = await fetch(`${IG_GRAPH}/${params.commentId}/replies`, {
+  const res = await fetch(`${graphBase(params.scopes, params.graph)}/${params.commentId}/replies`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${params.accessToken}`,
@@ -205,14 +229,16 @@ export type IgScopedUserProfile = {
 export async function fetchIgScopedUserFollowStatus(params: {
   igsid: string;
   accessToken: string;
+  scopes?: string | null;
 }): Promise<IgScopedUserProfile | null> {
+  const base = graphBase(params.scopes);
   const sp = new URLSearchParams({
     fields:
       "is_user_follow_business,username,name,profile_pic",
     access_token: params.accessToken,
   });
   const res = await fetch(
-    `${IG_GRAPH}/${params.igsid}?${sp.toString()}`,
+    `${base}/${params.igsid}?${sp.toString()}`,
     { method: "GET" },
   );
   const json = (await res.json()) as {
@@ -229,7 +255,7 @@ export async function fetchIgScopedUserFollowStatus(params: {
       access_token: params.accessToken,
     });
     const res2 = await fetch(
-      `${IG_GRAPH}/${params.igsid}?${sp2.toString()}`,
+      `${base}/${params.igsid}?${sp2.toString()}`,
       { method: "GET" },
     );
     const json2 = (await res2.json()) as {

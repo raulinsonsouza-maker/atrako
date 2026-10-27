@@ -19,6 +19,7 @@ export function useIgAutomations(workspaceId?: string) {
   const [flows, setFlows] = useState<IgFluxo[]>([]);
   const [metrics, setMetrics] = useState<IgMetrics>(null);
   const [igAccount, setIgAccount] = useState<string | null>(null);
+  const [instagramConnected, setInstagramConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,6 +36,7 @@ export function useIgAutomations(workspaceId?: string) {
       if (!flowsRes.ok) throw new Error("Falha ao carregar fluxos");
       const flowsData = await flowsRes.json();
       setFlows(flowsData.fluxos ?? []);
+      setInstagramConnected(Boolean(flowsData.instagramConnected));
       if (metricsRes.ok) {
         const metricsData = await metricsRes.json();
         setMetrics(metricsData);
@@ -49,8 +51,10 @@ export function useIgAutomations(workspaceId?: string) {
   }
 
   useEffect(() => {
-    load();
-  }, []);
+    void load();
+    // load lê o workspaceId deste render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspaceId]);
 
-  return { flows, metrics, igAccount, isLoading, error, refetch: load };
+  return { flows, metrics, igAccount, instagramConnected, isLoading, error, refetch: load };
 }

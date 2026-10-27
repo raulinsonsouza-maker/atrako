@@ -1,9 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link2, X } from "lucide-react";
 import { BackLink } from "@/components/ui/back-link";
+import { PillSelect } from "@/components/ui/pill-select";
 
 /**
  * Formulário à esquerda + aparelho à direita (Social e Relacionamento).
@@ -247,14 +248,43 @@ export function ActivateButton({
   );
 }
 
+export function useWorkspaceSaleLinks(workspaceId?: string) {
+  const [saleLinks, setSaleLinks] = useState<Array<{ label: string; url: string }>>([]);
+  useEffect(() => {
+    if (!workspaceId) return;
+    let cancelled = false;
+    fetch(`/api/symbius/sale-links?workspaceId=${encodeURIComponent(workspaceId)}`, {
+      cache: "no-store",
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { links?: Array<{ label: string; path: string }> } | null) => {
+        if (cancelled || !data?.links) return;
+        const origin = window.location.origin;
+        setSaleLinks(
+          data.links.map((item) => ({
+            label: item.label,
+            url: `${origin}${item.path}`,
+          })),
+        );
+      })
+      .catch(() => null);
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceId]);
+  return saleLinks;
+}
+
 export function WizardLinkButtonEditor({
   buttonLabel,
   url,
   onChange,
+  saleLinks = [],
 }: {
   buttonLabel: string;
   url: string;
   onChange: (button: string, url: string) => void;
+  saleLinks?: Array<{ label: string; url: string }>;
 }) {
   const [open, setOpen] = useState(false);
   const [draftButton, setDraftButton] = useState(buttonLabel);
@@ -342,6 +372,22 @@ export function WizardLinkButtonEditor({
               </div>
               <div>
                 <WizardFieldLabel>Link</WizardFieldLabel>
+                {saleLinks.length > 0 ? (
+                  <div className="mb-2">
+                    <PillSelect
+                      size="field"
+                      aria-label="Link de venda do workspace"
+                      value={saleLinks.some((item) => item.url === draftUrl) ? draftUrl : ""}
+                      onChange={(value) => {
+                        if (value) setDraftUrl(value);
+                      }}
+                      options={[
+                        { value: "", label: "Escolher checkout ou loja" },
+                        ...saleLinks.map((item) => ({ value: item.url, label: item.label })),
+                      ]}
+                    />
+                  </div>
+                ) : null}
                 <input
                   value={draftUrl}
                   onChange={(e) => setDraftUrl(e.target.value)}

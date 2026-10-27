@@ -36,6 +36,7 @@ export async function processScheduledInboxMessages(): Promise<number> {
       const sent = await sendInstagramMessage({
         igUserId: conversa.contato.igAccount.igUserId,
         accessToken: conversa.contato.igAccount.accessToken,
+        scopes: conversa.contato.igAccount.scopes,
         recipientIgsid: conversa.contato.igsid,
         text: item.texto,
         tag,

@@ -4,7 +4,6 @@ import { recordConversion } from "@/lib/symbius/conversions";
 import {
   appendGoogleSheetRow,
   fireOutboundWebhook,
-  syncLeadToCentralCrm,
 } from "@/lib/symbius/integrations";
 import { assignConversaRoundRobin } from "@/lib/symbius/inboxAssign";
 import {
@@ -26,6 +25,7 @@ import {
   isWithin24hWindow,
   parseFollowPayload,
   parseRewardPayload,
+  graphModeFromScopes,
   replyToInstagramComment,
   rewardPayload,
   sendInstagramMessage,
@@ -141,6 +141,7 @@ async function getOrCreateContato(
   nome?: string,
   username?: string,
   accessToken?: string,
+  scopes?: string | null,
 ) {
   const existing = await prisma.igContato.findUnique({
     where: { igAccountId_igsid: { igAccountId, igsid } },
@@ -158,7 +159,7 @@ async function getOrCreateContato(
       accessToken &&
       (!updated.username || !updated.profilePictureUrl || !updated.nome)
     ) {
-      void enrichContatoProfile(updated.id, igsid, accessToken);
+      void enrichContatoProfile(updated.id, igsid, accessToken, scopes);
     }
     if (!updated.trackingIdentityId) {
       void import("@/lib/symbius/attribution/identify").then(({ ensureIgContatoIdentity }) =>
@@ -184,7 +185,7 @@ async function getOrCreateContato(
     },
   });
   if (accessToken) {
-    void enrichContatoProfile(created.id, igsid, accessToken);
+    void enrichContatoProfile(created.id, igsid, accessToken, scopes);
   }
   void import("@/lib/symbius/atrako-bridge")
     .then(({ publishSocialLeadEvent }) =>
@@ -310,6 +311,7 @@ async function runFluxoFromNode(
           sent = await sendInstagramImageMessage({
             igUserId: exec.contato.igAccount.igUserId,
             accessToken: exec.contato.igAccount.accessToken,
+            scopes: exec.contato.igAccount.scopes,
             recipientIgsid: exec.contato.igsid,
             imageUrl,
             text,
@@ -317,6 +319,7 @@ async function runFluxoFromNode(
         } else {
           sent = await sendInstagramMessage({
             igUserId: exec.contato.igAccount.igUserId,
+            scopes: exec.contato.igAccount.scopes,
             accessToken: exec.contato.igAccount.accessToken,
             recipientIgsid: exec.contato.igsid,
             text,
@@ -410,6 +413,7 @@ async function runFluxoFromNode(
         await sendInstagramMessage({
           igUserId: exec.contato.igAccount.igUserId,
           accessToken: exec.contato.igAccount.accessToken,
+          scopes: exec.contato.igAccount.scopes,
           recipientIgsid: exec.contato.igsid,
           text: prompt,
         });
@@ -441,6 +445,7 @@ async function runFluxoFromNode(
         await sendInstagramMessage({
           igUserId: exec.contato.igAccount.igUserId,
           accessToken: exec.contato.igAccount.accessToken,
+          scopes: exec.contato.igAccount.scopes,
           recipientIgsid: exec.contato.igsid,
           text: question,
           buttons,
@@ -460,6 +465,7 @@ async function runFluxoFromNode(
         await sendInstagramMessage({
           igUserId: exec.contato.igAccount.igUserId,
           accessToken: exec.contato.igAccount.accessToken,
+          scopes: exec.contato.igAccount.scopes,
           recipientIgsid: exec.contato.igsid,
           text: menuText,
           buttons,
@@ -714,6 +720,7 @@ async function sendCommentDmWelcome(params: {
     id: string;
     igUserId: string;
     accessToken: string;
+    scopes?: string | null;
   };
   contatoId: string;
   igsid: string;
@@ -733,6 +740,7 @@ async function sendCommentDmWelcome(params: {
       await replyToInstagramComment({
         commentId: String(params.context.commentId),
         accessToken: params.igAccount.accessToken,
+        scopes: params.igAccount.scopes,
         message: "✓",
       });
     } catch (e) {
@@ -768,20 +776,38 @@ async function sendCommentDmWelcome(params: {
     // Comment usually opens the window; try send anyway after touching lastInteraction
   }
 
+  const commentId = params.context.commentId
+    ? String(params.context.commentId)
+    : undefined;
+  let sent: { message_id?: string };
   try {
-    const sent = await sendInstagramMessage({
-      igUserId: params.igAccount.igUserId,
-      accessToken: params.igAccount.accessToken,
-      recipientIgsid: params.igsid,
-      text: welcomeText,
-      buttons: [
-        {
-          type: "postback",
-          title: welcomeButton,
-          payload: rewardPayload(params.fluxoId),
-        },
-      ],
-    });
+    try {
+      sent = await sendInstagramMessage({
+        igUserId: params.igAccount.igUserId,
+        accessToken: params.igAccount.accessToken,
+        scopes: params.igAccount.scopes,
+        recipientIgsid: params.igsid,
+        commentId,
+        text: welcomeText,
+        buttons: [
+          {
+            type: "postback",
+            title: welcomeButton,
+            payload: rewardPayload(params.fluxoId),
+          },
+        ],
+      });
+    } catch (first) {
+      if (!commentId) throw first;
+      sent = await sendInstagramMessage({
+        igUserId: params.igAccount.igUserId,
+        accessToken: params.igAccount.accessToken,
+        scopes: params.igAccount.scopes,
+        recipientIgsid: params.igsid,
+        commentId,
+        text: welcomeText,
+      });
+    }
     const conversa = await getOrCreateConversa(
       params.organizationId,
       params.igAccount.id,
@@ -818,6 +844,7 @@ async function sendCommentDmReward(params: {
     id: string;
     igUserId: string;
     accessToken: string;
+    scopes?: string | null;
   };
   contatoId: string;
   igsid: string;
@@ -887,6 +914,7 @@ export async function processAutomationForContato(
       await sendInstagramMessage({
         igUserId: contato.igAccount.igUserId,
         accessToken: contato.igAccount.accessToken,
+        scopes: contato.igAccount.scopes,
         recipientIgsid: contato.igsid,
         text: "Pronto! Você não receberá mais mensagens automáticas. Para reativar, fale com um atendente.",
       });
@@ -931,12 +959,15 @@ export async function processAutomationForContato(
             contatoId,
             fluxoId: waitingExec.fluxoId,
           });
-          void syncLeadToCentralCrm({
-            organizationId,
-            phone: text,
-            username: contato.username ?? undefined,
-            nome: contato.nome ?? undefined,
-          });
+          void import("./workspaceLead").then(({ openInstagramWorkspaceLead }) =>
+            openInstagramWorkspaceLead({
+              organizationId,
+              igContatoId: contatoId,
+              phone: text.replace(/\D/g, ""),
+              username: contato.username,
+              nome: contato.nome,
+            }),
+          );
           const { appendGoogleSheetRow } = await import(
             "@/lib/symbius/integrations"
           );
@@ -1099,6 +1130,7 @@ export async function processAutomationForContato(
       await sendInstagramMessage({
         igUserId: contato.igAccount.igUserId,
         accessToken: contato.igAccount.accessToken,
+        scopes: contato.igAccount.scopes,
         recipientIgsid: contato.igsid,
         text: contato.igAccount.defaultReplyText,
       });
@@ -1106,16 +1138,50 @@ export async function processAutomationForContato(
   }
 }
 
+async function mediaPermalink(
+  account: { accessToken: string; scopes?: string | null },
+  mediaId?: string,
+): Promise<string | null> {
+  if (!mediaId) return null;
+  const base =
+    graphModeFromScopes(account.scopes) === "facebook"
+      ? "https://graph.facebook.com/v21.0"
+      : "https://graph.instagram.com/v21.0";
+  try {
+    const url = new URL(`${base}/${mediaId}`);
+    url.searchParams.set("fields", "permalink");
+    url.searchParams.set("access_token", account.accessToken);
+    const res = await fetch(url.toString(), { cache: "no-store" });
+    if (!res.ok) return null;
+    const json = (await res.json()) as { permalink?: string };
+    return typeof json.permalink === "string" ? json.permalink : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function findConnectedIgAccount(entryId: string) {
+  if (!entryId || entryId.startsWith("hub-")) return null;
+  const rows = await prisma.igAccount.findMany({
+    where: {
+      status: "CONNECTED",
+      OR: [{ igUserId: entryId }, { pageId: entryId }],
+    },
+    orderBy: { updatedAt: "desc" },
+    take: 5,
+  });
+  return rows.find((row) => !row.igUserId.startsWith("hub-")) ?? null;
+}
+
 export async function processWebhookPayload(payload: unknown): Promise<void> {
   const body = payload as { object?: string; entry?: WebhookEntry[] };
   if (body.object !== "instagram" && body.object !== "page") return;
 
   for (const entry of body.entry ?? []) {
-    const igUserId = entry.id;
-    const igAccount = await prisma.igAccount.findFirst({
-      where: { igUserId, status: "CONNECTED" },
-    });
+    const entryId = entry.id;
+    const igAccount = await findConnectedIgAccount(entryId);
     if (!igAccount) continue;
+    const igUserId = igAccount.igUserId;
 
     for (const msg of entry.messaging ?? []) {
       // Receipts (read/delivery) não são mensagens — geravam bolhas só com data/hora
@@ -1133,6 +1199,7 @@ export async function processWebhookPayload(payload: unknown): Promise<void> {
         undefined,
         undefined,
         igAccount.accessToken,
+        igAccount.scopes,
       );
       const conversa = await getOrCreateConversa(
         igAccount.organizationId,
@@ -1185,6 +1252,18 @@ export async function processWebhookPayload(payload: unknown): Promise<void> {
         isStoryReply || isStoryMention ? "story" : "dm",
       );
 
+      if (isStoryReply || isStoryMention) {
+        void import("./workspaceLead").then(({ openInstagramWorkspaceLead }) =>
+          openInstagramWorkspaceLead({
+            organizationId: igAccount.organizationId,
+            igContatoId: contato.id,
+            nome: contato.nome,
+            username: contato.username,
+            sourceDetail: "story",
+          }),
+        );
+      }
+
       await prisma.igConversa.update({
         where: { id: conversa.id },
         data: { lastMessageAt: new Date() },
@@ -1235,6 +1314,7 @@ export async function processWebhookPayload(payload: unknown): Promise<void> {
         undefined,
         change.value.from?.username,
         igAccount.accessToken,
+        igAccount.scopes,
       );
 
       await persistCommentAsMessage({
@@ -1246,6 +1326,24 @@ export async function processWebhookPayload(payload: unknown): Promise<void> {
         mediaId: change.value.media?.id ?? change.value.live_media?.id,
         field: change.field === "live_comments" ? "live_comments" : "comments",
       });
+
+      const mediaId = change.value.media?.id ?? change.value.live_media?.id;
+      const postUrl = await Promise.race([
+        mediaPermalink(igAccount, mediaId),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500)),
+      ]);
+      void import("./workspaceLead").then(({ openInstagramWorkspaceLead }) =>
+        openInstagramWorkspaceLead({
+          organizationId: igAccount.organizationId,
+          igContatoId: contato.id,
+          nome: contato.nome,
+          username: change.value.from?.username ?? contato.username,
+          keyword: commentText,
+          mediaId,
+          postUrl,
+          sourceDetail: "comment",
+        }),
+      );
 
       await processAutomationForContato(
         igAccount.organizationId,
@@ -1329,17 +1427,15 @@ export async function processScheduledExecutions(): Promise<number> {
   return due.length;
 }
 
-export function verifyWebhookSignature(
+export async function verifyWebhookSignature(
   rawBody: string,
   signatureHeader: string | null,
-): boolean {
-  const { resolvePlatformApp } = require("@/lib/config/platformApps");
-  // Resolve secret via hub-first (async not possible here, use sync env fallback)
-  const appSecret =
-    process.env.SYMBIUS_IG_APP_SECRET ??
-    process.env.SYMBIUS_META_APP_SECRET ??
-    process.env.META_APP_SECRET ??
-    "";
+): Promise<boolean> {
+  const { loadMetaPlatformAppCredentials, getMetaAppSecret } = await import(
+    "@/lib/integrations/meta/graph"
+  );
+  await loadMetaPlatformAppCredentials();
+  const appSecret = getMetaAppSecret() ?? "";
   if (!appSecret || !signatureHeader?.startsWith("sha256=")) {
     // In production, reject if no secret/configured signature
     if (process.env.NODE_ENV === "production") return false;

@@ -385,8 +385,9 @@ async function igMediaGet(
   path: string,
   accessToken: string,
   params: Record<string, string> = {},
+  graphBase = IG_GRAPH,
 ): Promise<{ data?: IgMediaItem[]; error?: string }> {
-  const url = new URL(`${IG_GRAPH}/${path.replace(/^\//, "")}`);
+  const url = new URL(`${graphBase}/${path.replace(/^\//, "")}`);
   for (const [k, v] of Object.entries(params)) {
     url.searchParams.set(k, v);
   }
@@ -423,7 +424,20 @@ export async function fetchIgUserMedia(params: {
   rawError?: string;
 }> {
   const limit = String(params.limit ?? 24);
-  let resolvedId = (params.storedIgUserId ?? "").trim() || null;
+  const storedId = (params.storedIgUserId ?? "").trim();
+  if (storedId) {
+    const pageMedia = await igMediaGet(
+      `${storedId}/media`,
+      params.accessToken,
+      { fields: MEDIA_FIELDS, limit },
+      "https://graph.facebook.com/v21.0",
+    );
+    if (!pageMedia.error) {
+      return { media: pageMedia.data ?? [], igUserId: storedId };
+    }
+  }
+
+  let resolvedId = storedId || null;
 
   try {
     const meUrl = new URL(`${IG_GRAPH}/me`);

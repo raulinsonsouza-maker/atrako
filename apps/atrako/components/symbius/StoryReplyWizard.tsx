@@ -1,22 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { PhonePreview } from "./PhonePreview";
+import { Hash, Link2, MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui";
+import { BackLink } from "@/components/ui/back-link";
+import { ScriptBlock } from "@/components/atendimento/mensagens/ScriptBlock";
+import { PhonePreview, type IgPreviewSection } from "./PhonePreview";
 import {
-  ActivateButton,
   RadioOption,
-  WizardBackButton,
   WizardFieldLabel,
-  WizardLayout,
   WizardLinkButtonEditor,
-  WizardSectionTitle,
-  WizardTitle,
+  useWorkspaceSaleLinks,
   wizardInputCls,
   wizardTextareaCls,
 } from "./wizard-ui";
 
 const DEFAULT_DM =
-  "🔥 Quer receber mais informações? Clique no link abaixo e veja todos os detalhes 👇";
+  "Quer receber mais informações? Toque no link e veja os detalhes.";
 
 type StoryReplyWizardProps = {
   defaultName?: string;
@@ -33,6 +33,7 @@ export function StoryReplyWizard({
   username = "seu_perfil",
   workspaceId,
 }: StoryReplyWizardProps) {
+  const saleLinks = useWorkspaceSaleLinks(workspaceId);
   const [nome, setNome] = useState(defaultName);
   const [storyFilter, setStoryFilter] = useState<"any" | "specific">("any");
   const [anyKeyword, setAnyKeyword] = useState(true);
@@ -40,8 +41,16 @@ export function StoryReplyWizard({
   const [dmText, setDmText] = useState(DEFAULT_DM);
   const [buttonLabel, setButtonLabel] = useState("Acessar");
   const [linkUrl, setLinkUrl] = useState("");
-  const [previewTab, setPreviewTab] = useState<"post" | "comment" | "dm">("dm");
+  const [open, setOpen] = useState<IgPreviewSection | null>("reward");
   const [loading, setLoading] = useState(false);
+
+  function select(section: IgPreviewSection) {
+    setOpen((current) => (current === section ? null : section));
+  }
+
+  const keywordPreview = anyKeyword
+    ? "qualquer resposta"
+    : keywords.split(",")[0]?.trim() || "…";
 
   async function activate() {
     if (!nome.trim()) {
@@ -49,7 +58,7 @@ export function StoryReplyWizard({
       return;
     }
     if (!dmText.trim()) {
-      alert("Escreva a DM");
+      alert("Escreva a mensagem");
       return;
     }
     if (!anyKeyword && !keywords.trim()) {
@@ -59,7 +68,9 @@ export function StoryReplyWizard({
 
     setLoading(true);
     try {
-      const baseUrl = workspaceId ? `/api/symbius/flows?workspaceId=${encodeURIComponent(workspaceId)}` : `/api/symbius/flows`;
+      const baseUrl = workspaceId
+        ? `/api/symbius/flows?workspaceId=${encodeURIComponent(workspaceId)}`
+        : `/api/symbius/flows`;
       const res = await fetch(baseUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -95,109 +106,90 @@ export function StoryReplyWizard({
   }
 
   return (
-    <WizardLayout
-      form={
-        <>
-          <WizardBackButton onClick={onCancel}>Modelos</WizardBackButton>
+    <div className="script-grid px-4 py-5 md:px-6">
+      <div className="script-list">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <BackLink onClick={onCancel}>Automações</BackLink>
+          <Button type="button" size="toolbar" disabled={loading} onClick={() => void activate()}>
+            {loading ? "Ativando…" : "Ativar"}
+          </Button>
+        </div>
+        <h1 className="type-tagline text-[var(--ink)]">Quando respondem o story</h1>
+        <p className="type-caption text-[var(--ink-muted-48)]">
+          A mensagem aparece no celular enquanto você escreve.
+        </p>
 
-          <WizardTitle>Quando alguém responder</WizardTitle>
+        <div className="mt-2">
+          <WizardFieldLabel>Nome interno</WizardFieldLabel>
+          <input value={nome} onChange={(e) => setNome(e.target.value)} className={wizardInputCls} />
+        </div>
 
-          <div className="mt-5">
-            <WizardFieldLabel>Nome interno</WizardFieldLabel>
-            <input
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              className={wizardInputCls}
-            />
+        <ScriptBlock
+          icon={MessageCircle}
+          title="Story"
+          summary={storyFilter === "any" ? "Qualquer story" : "Um story"}
+          open={open === "post"}
+          onToggle={() => select("post")}
+        >
+          <div className="space-y-2">
+            <RadioOption selected={storyFilter === "any"} title="Qualquer story" onClick={() => setStoryFilter("any")} />
+            <RadioOption selected={storyFilter === "specific"} disabled title="Um story específico, em breve" />
           </div>
+        </ScriptBlock>
 
-          <section className="mt-7 space-y-2">
-            <RadioOption
-              selected={storyFilter === "any"}
-              title="Qualquer story"
-              onClick={() => setStoryFilter("any")}
-            />
-            <RadioOption
-              selected={storyFilter === "specific"}
-              disabled
-              title="Um story específico (em breve)"
-            />
-          </section>
-
-          <section className="mt-7">
-            <WizardSectionTitle>E essa resposta contém</WizardSectionTitle>
-            <div className="mt-2.5 space-y-2">
-              <RadioOption
-                selected={!anyKeyword}
-                title="Palavras ou reações específicas"
-                onClick={() => {
-                  setAnyKeyword(false);
-                  setPreviewTab("dm");
-                }}
-              />
-              {!anyKeyword && (
+        <ScriptBlock
+          icon={Hash}
+          title="Resposta"
+          summary={anyKeyword ? "Qualquer resposta" : keywords || "Palavras específicas"}
+          open={open === "keyword"}
+          onToggle={() => select("keyword")}
+        >
+          <div className="space-y-2">
+            <RadioOption selected={anyKeyword} title="Qualquer resposta" onClick={() => setAnyKeyword(true)} />
+            <RadioOption selected={!anyKeyword} title="Palavras específicas" onClick={() => setAnyKeyword(false)}>
+              {!anyKeyword ? (
                 <input
                   value={keywords}
                   onChange={(e) => setKeywords(e.target.value)}
-                  className={`${wizardInputCls} ml-[30px] w-[calc(100%-30px)]`}
+                  className={wizardInputCls}
                   placeholder="Preço, link, quero"
                 />
-              )}
-              <RadioOption
-                selected={anyKeyword}
-                title="Qualquer palavra-chave ou reação"
-                onClick={() => setAnyKeyword(true)}
-              />
-            </div>
-          </section>
+              ) : null}
+            </RadioOption>
+          </div>
+        </ScriptBlock>
 
-          <section className="mt-7 pb-4">
-            <WizardSectionTitle>A DM com o link será enviada</WizardSectionTitle>
-            <div className="mt-2.5 space-y-2 rounded-xl border border-zinc-200 bg-white p-3.5">
-              <textarea
-                value={dmText}
-                onChange={(e) => {
-                  setDmText(e.target.value);
-                  setPreviewTab("dm");
-                }}
-                className={wizardTextareaCls}
-              />
-              <WizardLinkButtonEditor
-                buttonLabel={buttonLabel}
-                url={linkUrl}
-                onChange={(button, url) => {
-                  setButtonLabel(button);
-                  setLinkUrl(url);
-                  setPreviewTab("dm");
-                }}
-              />
-            </div>
-          </section>
-        </>
-      }
-      previewHeader={
-        <>
-          <p className="type-caption-strong text-zinc-600">
-            Visualização
-          </p>
-          <ActivateButton loading={loading} onClick={activate} />
-        </>
-      }
-      preview={
-        <PhonePreview
-          tab={previewTab === "post" ? "comment" : previewTab}
-          onTabChange={(t) => setPreviewTab(t === "comment" ? "dm" : t)}
-          username={username}
-          commentText="resposta ao story"
-          caption="Qualquer story"
-          mediaUrl={null}
-          welcomeText=""
-          welcomeButton=""
-          rewardText={dmText}
-          rewardButton={buttonLabel}
-          showReward
-        />
-      }
-    />
+        <ScriptBlock
+          icon={Link2}
+          title="Mensagem com o link"
+          summary={dmText.split("\n")[0]}
+          chips={[buttonLabel || "Acessar"]}
+          open={open === "reward"}
+          onToggle={() => select("reward")}
+        >
+          <textarea value={dmText} onChange={(e) => setDmText(e.target.value)} className={wizardTextareaCls} />
+          <WizardLinkButtonEditor
+            buttonLabel={buttonLabel}
+            url={linkUrl}
+            saleLinks={saleLinks}
+            onChange={(button, url) => {
+              setButtonLabel(button);
+              setLinkUrl(url);
+            }}
+          />
+        </ScriptBlock>
+      </div>
+
+      <PhonePreview
+        scene="story"
+        section={open}
+        onSection={setOpen}
+        username={username}
+        commentText={keywordPreview}
+        rewardText={dmText}
+        rewardButton={buttonLabel}
+        showReward
+      />
+    </div>
   );
 }

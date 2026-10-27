@@ -188,24 +188,38 @@ function templateTrigger(template: string) {
   };
 }
 
-export async function GET(request: NextRequest) {
-  let session = await getSession();
-
-  // Fallback: resolve via Atrako workspaceId when no symbius session
-  if (!session) {
-    const wsId = request.nextUrl.searchParams.get("workspaceId");
-    if (wsId) {
-      const org = await prisma.organization.findFirst({
-        where: { centralClienteId: wsId },
-      });
-      if (org) {
-        // Create a synthetic session-like object
-        session = { organizationId: org.id, userId: "" } as any;
-      }
-    }
+async function organizationIdForRequest(request: NextRequest) {
+  const wsId = request.nextUrl.searchParams.get("workspaceId")?.trim();
+  if (wsId) {
+    const org = await prisma.organization.findFirst({
+      where: { centralClienteId: wsId },
+      select: { id: true },
+    });
+    return org?.id ?? null;
   }
+  const session = await getSession();
+  return session?.organizationId ?? null;
+}
 
-  if (!session) {
+async function workspaceInstagramConnected(organizationId: string) {
+  const account = await prisma.igAccount.findFirst({
+    where: {
+      organizationId,
+      status: "CONNECTED",
+      NOT: { igUserId: { startsWith: "hub-" } },
+    },
+    select: { id: true },
+  });
+  return Boolean(account);
+}
+
+export async function GET(request: NextRequest) {
+  const organizationId = await organizationIdForRequest(request);
+  const wsId = request.nextUrl.searchParams.get("workspaceId")?.trim();
+  if (!organizationId) {
+    if (wsId) {
+      return NextResponse.json({ fluxos: [], instagramConnected: false });
+    }
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
@@ -213,7 +227,7 @@ export async function GET(request: NextRequest) {
 
   const fluxos = await prisma.igFluxo.findMany({
     where: {
-      organizationId: session.organizationId,
+      organizationId,
       ...(kind === "sequence"
         ? { fluxoKind: "sequence" }
         : kind === "automation"
@@ -227,28 +241,25 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  return NextResponse.json({ fluxos });
+  return NextResponse.json({
+    fluxos,
+    instagramConnected: await workspaceInstagramConnected(organizationId),
+  });
 }
 
 export async function POST(request: NextRequest) {
-  let session = await getSession();
-
-  // Fallback: resolve org via workspaceId when no symbius session
-  if (!session) {
-    const wsId = request.nextUrl.searchParams.get("workspaceId");
+  const organizationId = await organizationIdForRequest(request);
+  const wsId = request.nextUrl.searchParams.get("workspaceId")?.trim();
+  if (!organizationId) {
     if (wsId) {
-      const org = await prisma.organization.findFirst({
-        where: { centralClienteId: wsId },
-      });
-      if (org) {
-        session = { organizationId: org.id, userId: "" } as any;
-      }
+      return NextResponse.json(
+        { error: "Conecte o Instagram em Configurações antes de publicar a automação." },
+        { status: 409 },
+      );
     }
-  }
-
-  if (!session) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
+  const session = { organizationId, userId: "" };
 
   const parsed = createSchema.safeParse(await request.json());
   if (!parsed.success) {

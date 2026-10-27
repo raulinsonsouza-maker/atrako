@@ -108,6 +108,29 @@ export async function GET(request: NextRequest) {
       status: "ACTIVE",
     });
 
+    try {
+      const { connectInstagramPages } = await import("@/lib/instagram/provisionFromMeta");
+      const ig = await connectInstagramPages({
+        workspaceId,
+        userAccessToken: token.accessToken,
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
+        pages: metadata.pages,
+        workspaceName: metadata.businessName,
+      });
+      console.info(
+        JSON.stringify({
+          event: "meta_instagram_provisioned",
+          workspaceId,
+          connected: ig.connected,
+        }),
+      );
+    } catch (e) {
+      console.warn(
+        "[meta-oauth] instagram provision failed",
+        e instanceof Error ? e.message : e,
+      );
+    }
+
     console.info(
       JSON.stringify({
         event: "meta_connection_created",

@@ -210,3 +210,125 @@ export async function connectInstagramPages(input: {
 
   return { connected };
 }
+
+async function instagramProfile(igUserId: string, token: string) {
+  const url = new URL(`${FB_GRAPH}/${igUserId}`);
+  url.searchParams.set("fields", "username,name");
+  url.searchParams.set("access_token", token);
+  const res = await fetch(url.toString(), { cache: "no-store" });
+  if (!res.ok) return null;
+  return (await res.json()) as { username?: string; name?: string; error?: { message?: string } };
+}
+
+/**
+ * A tela de seguidores já tem token e id do Instagram. As automações usam essa
+ * mesma conta, sem um segundo login.
+ */
+export async function ensureInstagramFromWorkspace(workspaceId: string) {
+  const org = await socialPrisma.organization.findFirst({
+    where: { centralClienteId: workspaceId },
+    select: { id: true },
+  });
+  if (org) {
+    const ready = await socialPrisma.igAccount.findFirst({
+      where: {
+        organizationId: org.id,
+        status: "CONNECTED",
+        NOT: { igUserId: { startsWith: "hub-" } },
+      },
+      select: { id: true },
+    });
+    if (ready) return { connected: 1 };
+  }
+
+  const { resolveMetaCredentials } = await import("@/lib/config/resolveIntegracao");
+  const creds = await resolveMetaCredentials(workspaceId);
+  if (!creds?.token) return { connected: 0 };
+
+  const { getWorkspaceConnection } = await import("@/lib/atrako/workspace-connections");
+  const { parseMetaAdsMetadata } = await import("@/lib/integrations/meta/types");
+  const hub = await getWorkspaceConnection(workspaceId, "META_ADS");
+  const metadata = parseMetaAdsMetadata(hub?.metadata);
+  const workspaceName = metadata.businessName ?? hub?.label ?? undefined;
+
+  const viaPages = await connectInstagramPages({
+    workspaceId,
+    userAccessToken: creds.token,
+    pages: metadata.pages,
+    workspaceName,
+  });
+  if (viaPages.connected > 0) return viaPages;
+
+  const { prisma } = await import("@/lib/db");
+  const igConta = await prisma.conta.findFirst({
+    where: { clienteId: workspaceId, plataforma: "INSTAGRAM" },
+    select: { accountIdPlataforma: true },
+  });
+  let igUserId = igConta?.accountIdPlataforma?.trim() ?? "";
+  if (!igUserId) {
+    igUserId = metadata.pages?.find((page) => page.instagramId)?.instagramId ?? "";
+  }
+  if (!igUserId) {
+    const { discoverInstagramId } = await import("@/lib/sync/discoverInstagramId");
+    igUserId = (await discoverInstagramId(workspaceId)) ?? "";
+  }
+  if (!igUserId || igUserId.startsWith("hub-")) return { connected: 0 };
+
+  const page = metadata.pages?.find((item) => item.instagramId === igUserId);
+  const profile = await instagramProfile(igUserId, creds.token);
+  const igUsername = profile?.username ?? page?.instagramUsername ?? null;
+  const socialOrg = await ensureWorkspaceSocialOrg(workspaceId, workspaceName);
+  const pageOk = page?.id ? await subscribeEdge(page.id, creds.token) : false;
+  const igOk = await subscribeEdge(igUserId, creds.token);
+
+  await upsertWorkspaceConnection({
+    clienteId: workspaceId,
+    provider: "INSTAGRAM",
+    label: igUsername ? `@${igUsername}` : "Instagram",
+    credentials: {
+      accessToken: creds.token,
+      pageId: page?.id ?? null,
+      igUserId,
+      tokenType: "PAGE",
+      expiresAt: null,
+    },
+    metadata: {
+      connectedAt: new Date().toISOString(),
+      source: "META_ADS",
+      pageId: page?.id ?? null,
+      igUserId,
+      igUsername,
+    },
+    status: "ACTIVE",
+  });
+
+  await socialPrisma.igAccount.upsert({
+    where: {
+      organizationId_igUserId: { organizationId: socialOrg.id, igUserId },
+    },
+    create: {
+      organizationId: socialOrg.id,
+      pageId: page?.id ?? null,
+      pageName: page?.name ?? null,
+      accessToken: creds.token,
+      igUserId,
+      igUsername,
+      status: "CONNECTED",
+      messagesEnabled: true,
+      scopes: PAGE_SCOPES,
+      webhookSubscribedAt: pageOk || igOk ? new Date() : null,
+    },
+    update: {
+      pageId: page?.id ?? null,
+      pageName: page?.name ?? null,
+      accessToken: creds.token,
+      igUsername,
+      status: "CONNECTED",
+      messagesEnabled: true,
+      scopes: PAGE_SCOPES,
+      webhookSubscribedAt: pageOk || igOk ? new Date() : undefined,
+    },
+  });
+
+  return { connected: 1 };
+}

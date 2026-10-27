@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Plus, Pencil, Instagram } from "lucide-react";
+import { Loader2, Plus, Pencil } from "lucide-react";
 import { AppPage } from "@/components/layout/AppPage";
 import { useIgAutomations } from "./useIgAutomations";
 
@@ -14,7 +14,7 @@ const TRIGGER_LABELS: Record<string, string> = {
 };
 
 export function InstagramMensagensView({ workspaceId }: { workspaceId: string }) {
-  const { flows, instagramConnected, isLoading, error, refetch } = useIgAutomations(workspaceId);
+  const { flows, isLoading, error, refetch } = useIgAutomations(workspaceId);
   const newFlowHref = `/social/flows/new?workspaceId=${encodeURIComponent(workspaceId)}`;
 
   return (
@@ -22,15 +22,13 @@ export function InstagramMensagensView({ workspaceId }: { workspaceId: string })
       title="Automações Instagram"
       className="md:pt-5"
       actions={
-        instagramConnected ? (
-          <a
-            href={newFlowHref}
-            className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-caption-strong text-white"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Nova automação
-          </a>
-        ) : null
+        <a
+          href={newFlowHref}
+          className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-3 py-1.5 type-caption-strong text-white"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Nova automação
+        </a>
       }
     >
 
@@ -48,23 +46,6 @@ export function InstagramMensagensView({ workspaceId }: { workspaceId: string })
           >
             Tentar novamente
           </button>
-        </div>
-      ) : !instagramConnected ? (
-        <div className="flex flex-col items-center gap-4 py-16 text-center">
-          <Instagram className="h-6 w-6 text-[var(--ink-muted-48)]" />
-          <p className="type-body text-[var(--ink)]">
-            Conecte o Instagram da Meta para as automações responderem comentários e stories.
-          </p>
-          <p className="type-caption text-[var(--ink-muted-48)] max-w-md">
-            Use a mesma conexão do dashboard. Em Configurações, abra Conexões e conecte a Meta
-            com permissão de comentários e mensagens.
-          </p>
-          <a
-            href="/config/conexoes"
-            className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] bg-[var(--primary)] px-4 py-2 type-caption-strong text-white"
-          >
-            Abrir conexões
-          </a>
         </div>
       ) : flows.length === 0 ? (
         <div className="flex flex-col items-center gap-4 py-16 text-center">

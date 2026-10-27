@@ -214,8 +214,14 @@ async function workspaceInstagramConnected(organizationId: string) {
 }
 
 export async function GET(request: NextRequest) {
-  const organizationId = await organizationIdForRequest(request);
   const wsId = request.nextUrl.searchParams.get("workspaceId")?.trim();
+  if (wsId) {
+    const { ensureInstagramFromWorkspace } = await import("@/lib/instagram/provisionFromMeta");
+    await ensureInstagramFromWorkspace(wsId).catch((error) => {
+      console.warn("[flows] instagram da conta", error instanceof Error ? error.message : error);
+    });
+  }
+  const organizationId = await organizationIdForRequest(request);
   if (!organizationId) {
     if (wsId) {
       return NextResponse.json({ fluxos: [], instagramConnected: false });
@@ -248,12 +254,18 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const organizationId = await organizationIdForRequest(request);
   const wsId = request.nextUrl.searchParams.get("workspaceId")?.trim();
+  if (wsId) {
+    const { ensureInstagramFromWorkspace } = await import("@/lib/instagram/provisionFromMeta");
+    await ensureInstagramFromWorkspace(wsId).catch((error) => {
+      console.warn("[flows] instagram da conta", error instanceof Error ? error.message : error);
+    });
+  }
+  const organizationId = await organizationIdForRequest(request);
   if (!organizationId) {
     if (wsId) {
       return NextResponse.json(
-        { error: "Conecte o Instagram em Configurações antes de publicar a automação." },
+        { error: "O Instagram do dashboard ainda não ficou disponível para esta automação." },
         { status: 409 },
       );
     }

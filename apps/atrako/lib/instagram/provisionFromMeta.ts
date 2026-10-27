@@ -138,10 +138,16 @@ export async function connectInstagramPages(input: {
   pages?: MetaPageMeta[];
   workspaceName?: string;
 }): Promise<{ connected: number }> {
-  const pages = await discoverPageInstagramAccounts(
+  const discovered = await discoverPageInstagramAccounts(
     input.userAccessToken,
     input.pages ?? [],
   );
+  const ownedId = await workspaceInstagramId(input.workspaceId);
+  const pages = ownedId
+    ? discovered.filter((page) => page.igUserId === ownedId)
+    : discovered.length === 1
+      ? discovered
+      : [];
   if (pages.length === 0) return { connected: 0 };
 
   const org = await ensureWorkspaceSocialOrg(input.workspaceId, input.workspaceName);
@@ -211,6 +217,16 @@ export async function connectInstagramPages(input: {
   return { connected };
 }
 
+async function workspaceInstagramId(workspaceId: string): Promise<string | null> {
+  const { prisma } = await import("@/lib/db");
+  const igConta = await prisma.conta.findFirst({
+    where: { clienteId: workspaceId, plataforma: "INSTAGRAM" },
+    select: { accountIdPlataforma: true },
+  });
+  const id = igConta?.accountIdPlataforma?.trim();
+  return id || null;
+}
+
 async function instagramProfile(igUserId: string, token: string) {
   const url = new URL(`${FB_GRAPH}/${igUserId}`);
   url.searchParams.set("fields", "username,name");
@@ -225,11 +241,47 @@ async function instagramProfile(igUserId: string, token: string) {
  * mesma conta, sem um segundo login.
  */
 export async function ensureInstagramFromWorkspace(workspaceId: string) {
+  const ownedId = await workspaceInstagramId(workspaceId);
   const org = await socialPrisma.organization.findFirst({
     where: { centralClienteId: workspaceId },
     select: { id: true },
   });
-  if (org) {
+  if (org && ownedId) {
+    await socialPrisma.igAccount.updateMany({
+      where: {
+        organizationId: org.id,
+        status: "CONNECTED",
+        NOT: { igUserId: ownedId },
+      },
+      data: { status: "DISCONNECTED", messagesEnabled: false },
+    });
+    const owned = await socialPrisma.igAccount.findFirst({
+      where: { organizationId: org.id, igUserId: ownedId, status: "CONNECTED" },
+    });
+    if (owned?.accessToken) {
+      await upsertWorkspaceConnection({
+        clienteId: workspaceId,
+        provider: "INSTAGRAM",
+        label: owned.igUsername ? `@${owned.igUsername}` : "Instagram",
+        credentials: {
+          accessToken: owned.accessToken,
+          pageId: owned.pageId,
+          igUserId: owned.igUserId,
+          tokenType: "PAGE",
+          expiresAt: owned.tokenExpiresAt?.toISOString() ?? null,
+        },
+        metadata: {
+          connectedAt: new Date().toISOString(),
+          source: "META_ADS",
+          pageId: owned.pageId,
+          igUserId: owned.igUserId,
+          igUsername: owned.igUsername,
+        },
+        status: "ACTIVE",
+      });
+      return { connected: 1 };
+    }
+  } else if (org) {
     const ready = await socialPrisma.igAccount.findFirst({
       where: {
         organizationId: org.id,
@@ -259,12 +311,7 @@ export async function ensureInstagramFromWorkspace(workspaceId: string) {
   });
   if (viaPages.connected > 0) return viaPages;
 
-  const { prisma } = await import("@/lib/db");
-  const igConta = await prisma.conta.findFirst({
-    where: { clienteId: workspaceId, plataforma: "INSTAGRAM" },
-    select: { accountIdPlataforma: true },
-  });
-  let igUserId = igConta?.accountIdPlataforma?.trim() ?? "";
+  let igUserId = ownedId ?? "";
   if (!igUserId) {
     igUserId = metadata.pages?.find((page) => page.instagramId)?.instagramId ?? "";
   }

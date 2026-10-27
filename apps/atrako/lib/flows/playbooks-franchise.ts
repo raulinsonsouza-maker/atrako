@@ -179,7 +179,7 @@ const NURTURE: Mail[] = [
 export const FRANCHISE_NURTURE: PlaybookDef = {
   key: "franchise_nurture",
   name: "Nutrição franquia",
-  description: "15 e-mails em 30 dias: diário na 1ª semana, depois a cada 3 dias. Sai em reunião, handoff, ganho ou perda.",
+  description: "15 e-mails ao longo de 30 dias. Um por dia na primeira semana e, depois, a cada 3 dias. A série para quando a pessoa marca reunião, passa para a equipe, fecha ou desiste.",
   trigger: "franchise_nurture",
   priority: 35,
   steps: NURTURE.map((m) => ({

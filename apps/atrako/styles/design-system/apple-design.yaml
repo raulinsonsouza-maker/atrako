@@ -97,7 +97,7 @@ components:
   button-pearl-capsule: { file: components/ui/button.tsx, variant: pearl }
   button-store-hero: { file: components/ui/button.tsx, variant: store-hero }
   button-icon-circular: { file: components/ui/icon-button.tsx, note: "size toolbar = 36px com borda, para utilitários (ex.: editar etapas) ao lado do CTA" }
-  segmented-control: { file: components/ui/segmented-control.tsx, css: ".segmented", note: "Alternar visualização (Funil/Lista) — pill 36px, mesma borda/tipo do pill-select" }
+  segmented-control: { file: components/ui/segmented-control.tsx, css: ".segmented / .segmented-fill", note: "Alternar visualização (Funil/Lista ou canal) — pill 36px, mesma borda/tipo do pill-select. option.icon opcional, 14px, currentColor. fill reparte a largura entre as opções (Pix/cartão)" }
   toggle-switch: { file: components/ui/switch.tsx, css: ".toggle-switch", note: "Liga/desliga de configuração (Config → Módulos) — 44x26, ligado = --primary; nunca checkbox nativo" }
   info-hint: { file: components/ui/info-hint.tsx, css: ".info-hint / .info-hint-pop", note: "Ícone 'i' ao lado do título abre balão curto (máx. 280px, hairline, sem sombra). Explicação longa vai aqui — nunca parágrafo fixo na tela" }
   filter-toolbar: { css: ".crm-toolbar", note: "Esquerda = como ver os dados (search-input, date-range-filter, pill-select, segmented-control, pill). Direita = ações (icon-button toolbar + Button toolbar primary, radius-xs)" }

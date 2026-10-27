@@ -432,7 +432,7 @@ export async function fetchIgUserMedia(params: {
       { fields: MEDIA_FIELDS, limit },
       "https://graph.facebook.com/v21.0",
     );
-    if (!pageMedia.error) {
+    if (!pageMedia.error && (pageMedia.data?.length ?? 0) > 0) {
       return { media: pageMedia.data ?? [], igUserId: storedId };
     }
   }
@@ -502,6 +502,33 @@ export async function fetchIgUserMedia(params: {
     igUserId: resolvedId,
     warning: friendlyMediaError(lastError || "unknown"),
     rawError: lastError || undefined,
+  };
+}
+
+/** Stories ativos (somem em 24h). Lista vazia é um sucesso. */
+export async function fetchIgUserStories(params: {
+  accessToken: string;
+  storedIgUserId?: string | null;
+}): Promise<{ media: IgMediaItem[]; warning?: string }> {
+  const fields = "id,media_type,media_url,thumbnail_url,timestamp";
+  const storedId = (params.storedIgUserId ?? "").trim();
+  const attempts: Array<{ path: string; graphBase?: string }> = [];
+  if (storedId) {
+    attempts.push({ path: `${storedId}/stories`, graphBase: "https://graph.facebook.com/v21.0" });
+    attempts.push({ path: `${storedId}/stories` });
+  }
+  attempts.push({ path: "me/stories" });
+
+  let lastError = "";
+  for (const attempt of attempts) {
+    const result = await igMediaGet(attempt.path, params.accessToken, { fields }, attempt.graphBase);
+    if (!result.error) return { media: result.data ?? [] };
+    lastError = result.error;
+    console.warn("[instagram] stories failed:", attempt.path, result.error);
+  }
+  return {
+    media: [],
+    warning: "Não foi possível listar os stories agora. Use “qualquer story”.",
   };
 }
 

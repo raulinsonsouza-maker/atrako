@@ -23,6 +23,8 @@ import {
 } from "./commentDmFlow";
 import {
   isWithin24hWindow,
+  directButtonPayload,
+  parseDirectButtonPayload,
   parseFollowPayload,
   parseRewardPayload,
   graphModeFromScopes,
@@ -666,6 +668,7 @@ function matchesTrigger(
     return Boolean(context.isFirstMessage);
   }
   if (triggerType === "keyword") {
+    if (context.isStoryReply || context.isStoryMention || context.commentText) return false;
     return matchesKeywords(text, triggerConfig);
   }
   if (triggerType === "comment_keyword") {
@@ -736,12 +739,18 @@ async function sendCommentDmWelcome(params: {
   const welcomeButton = String(cfg.welcomeButton ?? "Me envie o link");
 
   if (cfg.replyToComment && params.context.commentId) {
+    const replies = Array.isArray(cfg.publicReplies)
+      ? cfg.publicReplies.map((item) => String(item).trim()).filter(Boolean).slice(0, 3)
+      : [];
+    const message = replies.length
+      ? replies[Math.floor(Math.random() * replies.length)]
+      : "✓";
     try {
       await replyToInstagramComment({
         commentId: String(params.context.commentId),
         accessToken: params.igAccount.accessToken,
         scopes: params.igAccount.scopes,
-        message: "✓",
+        message,
       });
     } catch (e) {
       console.warn(
@@ -752,7 +761,8 @@ async function sendCommentDmWelcome(params: {
   }
 
   if (!welcomeEnabled) {
-    await advanceCommentDmAfterWelcomeClick({
+    const { sendRewardStep } = await import("./commentDmFlow");
+    await sendRewardStep({
       fluxoId: params.fluxoId,
       organizationId: params.organizationId,
       igAccount: params.igAccount,
@@ -879,6 +889,173 @@ async function sendCommentDmReward(params: {
       e instanceof Error ? e.message : e,
     );
   }
+}
+
+type DirectButton = {
+  label?: string;
+  action?: string;
+  text?: string;
+  url?: string;
+};
+
+function directButtons(cfg: Record<string, unknown>): DirectButton[] {
+  if (!Array.isArray(cfg.buttons)) return [];
+  return (cfg.buttons as DirectButton[]).slice(0, 3);
+}
+
+function toDirectMessageButtons(fluxoId: string, buttons: DirectButton[]): MessageButton[] {
+  return buttons.flatMap((button, index) => {
+    const title = String(button.label ?? "").trim().slice(0, 20);
+    if (!title) return [];
+    if (button.action === "link" && String(button.url ?? "").trim()) {
+      return [{ type: "web_url" as const, title, url: String(button.url).trim() }];
+    }
+    return [{ type: "postback" as const, title, payload: directButtonPayload(fluxoId, index) }];
+  });
+}
+
+async function sendDirectText(params: {
+  organizationId: string;
+  igAccount: { id: string; igUserId: string; accessToken: string; scopes?: string | null };
+  contatoId: string;
+  igsid: string;
+  text: string;
+  buttons?: MessageButton[];
+}) {
+  if (!params.text.trim() && !(params.buttons?.length)) return;
+  const sent = await sendInstagramMessage({
+    igUserId: params.igAccount.igUserId,
+    accessToken: params.igAccount.accessToken,
+    scopes: params.igAccount.scopes,
+    recipientIgsid: params.igsid,
+    text: params.text,
+    buttons: params.buttons,
+  });
+  const conversa = await getOrCreateConversa(params.organizationId, params.igAccount.id, params.contatoId);
+  await persistInboundMessage(params.organizationId, conversa.id, sent.message_id, params.text || "[botão]", true);
+  await prisma.igConversa.update({
+    where: { id: conversa.id },
+    data: { lastMessageAt: new Date() },
+  });
+}
+
+async function handoffDirectContact(params: {
+  organizationId: string;
+  igAccountId: string;
+  contatoId: string;
+  fluxoId: string;
+}) {
+  await prisma.igContato.update({
+    where: { id: params.contatoId },
+    data: { botPaused: true },
+  });
+  const conversa = await getOrCreateConversa(params.organizationId, params.igAccountId, params.contatoId);
+  await prisma.igConversa.update({
+    where: { id: conversa.id },
+    data: { handoffHuman: true },
+  });
+  await assignConversaRoundRobin(params.organizationId, conversa.id);
+  await recordConversion({
+    organizationId: params.organizationId,
+    tipo: "handoff",
+    contatoId: params.contatoId,
+    fluxoId: params.fluxoId,
+  });
+  await notifyAdmins(params.organizationId, "Handoff humano", `Conversa ${conversa.id} aguardando atendimento`);
+}
+
+async function openDirectAutomation(params: {
+  fluxoId: string;
+  organizationId: string;
+  igAccount: { id: string; igUserId: string; accessToken: string; scopes?: string | null };
+  contatoId: string;
+  igsid: string;
+  lastInteractionAt: Date | null;
+  cfg: Record<string, unknown>;
+}) {
+  const open = await prisma.igFluxoExecucao.findFirst({
+    where: {
+      fluxoId: params.fluxoId,
+      contatoId: params.contatoId,
+      organizationId: params.organizationId,
+      status: { in: ["RUNNING", "WAITING"] },
+    },
+  });
+  if (open) return;
+  if (!isWithin24hWindow(params.lastInteractionAt)) return;
+
+  const text = String(params.cfg.replyText ?? "").trim();
+  const buttons = toDirectMessageButtons(params.fluxoId, directButtons(params.cfg));
+  await sendDirectText({
+    organizationId: params.organizationId,
+    igAccount: params.igAccount,
+    contatoId: params.contatoId,
+    igsid: params.igsid,
+    text,
+    buttons,
+  });
+  await prisma.igFluxoExecucao.create({
+    data: {
+      organizationId: params.organizationId,
+      fluxoId: params.fluxoId,
+      contatoId: params.contatoId,
+      status: buttons.length ? "WAITING" : "COMPLETED",
+      context: { step: "dm_open", fluxoId: params.fluxoId } as object,
+    },
+  });
+  await recordConversion({
+    organizationId: params.organizationId,
+    tipo: "fluxo_started",
+    contatoId: params.contatoId,
+    fluxoId: params.fluxoId,
+  });
+}
+
+async function continueDirectButton(params: {
+  organizationId: string;
+  igAccount: { id: string; igUserId: string; accessToken: string; scopes?: string | null };
+  contatoId: string;
+  igsid: string;
+  fluxoId: string;
+  index: number;
+}) {
+  const fluxo = await prisma.igFluxo.findFirst({
+    where: { id: params.fluxoId, organizationId: params.organizationId, status: "PUBLISHED" },
+  });
+  if (!fluxo) return;
+  const cfg = fluxo.triggerConfig as Record<string, unknown>;
+  const button = directButtons(cfg)[params.index];
+  if (!button) return;
+
+  if (button.action === "handoff") {
+    await handoffDirectContact({
+      organizationId: params.organizationId,
+      igAccountId: params.igAccount.id,
+      contatoId: params.contatoId,
+      fluxoId: fluxo.id,
+    });
+  } else if (button.action === "reply") {
+    const text = String(button.text ?? "").trim();
+    if (text && isWithin24hWindow(new Date())) {
+      await sendDirectText({
+        organizationId: params.organizationId,
+        igAccount: params.igAccount,
+        contatoId: params.contatoId,
+        igsid: params.igsid,
+        text,
+      });
+    }
+  }
+
+  await prisma.igFluxoExecucao.updateMany({
+    where: {
+      fluxoId: fluxo.id,
+      contatoId: params.contatoId,
+      organizationId: params.organizationId,
+      status: { in: ["RUNNING", "WAITING"] },
+    },
+    data: { status: "COMPLETED" },
+  });
 }
 
 export async function processAutomationForContato(
@@ -1051,6 +1228,19 @@ export async function processAutomationForContato(
     return;
   }
 
+  const directButton = parseDirectButtonPayload(String(context.postbackPayload ?? ""));
+  if (directButton) {
+    await continueDirectButton({
+      organizationId,
+      igAccount: contato.igAccount,
+      contatoId: contato.id,
+      igsid: contato.igsid,
+      fluxoId: directButton.fluxoId,
+      index: directButton.index,
+    });
+    return;
+  }
+
   const rewardFluxoId = parseRewardPayload(
     String(context.postbackPayload ?? ""),
   );
@@ -1108,15 +1298,58 @@ export async function processAutomationForContato(
       }
     } else if (
       fluxo.triggerType === "story_reply" &&
-      (cfg.rewardText || cfg.rewardUrl)
+      (cfg.rewardText || cfg.rewardUrl || (Array.isArray(cfg.rewardLinks) && cfg.rewardLinks.length > 0))
     ) {
-      await sendCommentDmReward({
+      const step = {
         fluxoId: fluxo.id,
         organizationId,
         igAccount: contato.igAccount,
         contatoId: contato.id,
         igsid: contato.igsid,
-        triggerConfig: cfg,
+        cfg,
+      };
+      if (cfg.reactLove === true) {
+        const messageId = String(context.messageId ?? "");
+        if (messageId) {
+          try {
+            const { reactToInstagramMessage } = await import("./messagingClient");
+            await reactToInstagramMessage({
+              igUserId: contato.igAccount.igUserId,
+              accessToken: contato.igAccount.accessToken,
+              scopes: contato.igAccount.scopes,
+              recipientIgsid: contato.igsid,
+              messageId,
+            });
+          } catch (e) {
+            console.warn("[instagram] reação no story falhou:", e instanceof Error ? e.message : e);
+          }
+        }
+      }
+      if (cfg.emailEnabled === true) {
+        const { sendEmailRequestStep } = await import("./commentDmFlow");
+        await sendEmailRequestStep(step);
+      } else if (cfg.followEnabled === true) {
+        const { sendFollowStep } = await import("./commentDmFlow");
+        await sendFollowStep(step);
+      } else {
+        await sendCommentDmReward({
+          fluxoId: fluxo.id,
+          organizationId,
+          igAccount: contato.igAccount,
+          contatoId: contato.id,
+          igsid: contato.igsid,
+          triggerConfig: cfg,
+        });
+      }
+    } else if (fluxo.triggerType === "keyword" && String(cfg.replyText ?? "").trim()) {
+      await openDirectAutomation({
+        fluxoId: fluxo.id,
+        organizationId,
+        igAccount: contato.igAccount,
+        contatoId: contato.id,
+        igsid: contato.igsid,
+        lastInteractionAt: contato.lastInteractionAt,
+        cfg,
       });
     } else {
       await startFluxo(fluxo.id, contatoId, organizationId, context);
@@ -1294,6 +1527,7 @@ export async function processWebhookPayload(payload: unknown): Promise<void> {
           isStoryReply,
           isStoryMention,
           storyId,
+          messageId: msg.message?.mid ?? "",
           referralRef: msg.referral?.ref ?? "",
         },
       );

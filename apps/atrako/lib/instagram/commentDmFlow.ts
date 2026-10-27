@@ -70,7 +70,12 @@ export async function markNextPostConsumed(
   await prisma.igFluxo.update({
     where: { id: fluxoId },
     data: {
-      triggerConfig: { ...cfg, consumedNextMediaId: mediaId } as object,
+      triggerConfig: {
+        ...cfg,
+        mediaFilter: "specific",
+        mediaId,
+        consumedNextMediaId: mediaId,
+      } as object,
     },
   });
 }
@@ -122,11 +127,12 @@ type FlowStepParams = {
 async function scheduleReminderExec(
   params: FlowStepParams,
 ): Promise<string | null> {
+  if (params.cfg.welcomeEnabled === false) return null;
   if (params.cfg.reminderEnabled !== true) return null;
   const minutes = Number(params.cfg.reminderMinutes ?? 30);
   if (minutes <= 0) return null;
 
-  const rewardUrl = String(params.cfg.rewardUrl ?? "").trim();
+  const rewardUrl = rewardLinksFromConfig(params.cfg)[0]?.url ?? "";
   if (!rewardUrl) return null;
 
   const exec = await prisma.igFluxoExecucao.create({
@@ -150,8 +156,8 @@ async function scheduleReminderExec(
 function resolveTrackedRewardUrl(
   params: FlowStepParams,
   reminderExecId: string | null,
+  rewardUrl: string,
 ): string {
-  const rewardUrl = String(params.cfg.rewardUrl ?? "").trim();
   if (!rewardUrl) return "";
   if (!reminderExecId) return rewardUrl;
   return buildLinkTrackingUrl({
@@ -181,6 +187,45 @@ export async function shouldSkipReminderExec(params: {
   if (!contato) return false;
 
   return contactClickedRewardLink(contato.tags, params.fluxoId);
+}
+
+export function rewardLinksFromConfig(cfg: CommentDmTriggerConfig): Array<{ label: string; url: string }> {
+  const raw = cfg.rewardLinks;
+  if (Array.isArray(raw)) {
+    const links = raw
+      .map((item) => {
+        const row = item as { label?: string; url?: string };
+        const url = String(row?.url ?? "").trim();
+        const label = String(row?.label ?? "").trim() || "Acessar";
+        return url ? { label, url } : null;
+      })
+      .filter((item): item is { label: string; url: string } => Boolean(item))
+      .slice(0, 3);
+    if (links.length) return links;
+  }
+  const url = String(cfg.rewardUrl ?? "").trim();
+  if (!url) return [];
+  return [{ label: String(cfg.rewardButton ?? "Acessar").trim() || "Acessar", url }];
+}
+
+export async function retireOtherNextPostFlows(organizationId: string, keepId: string) {
+  const others = await prisma.igFluxo.findMany({
+    where: {
+      organizationId,
+      status: "PUBLISHED",
+      triggerType: "comment_keyword",
+      NOT: { id: keepId },
+    },
+    select: { id: true, triggerConfig: true },
+  });
+  for (const fluxo of others) {
+    const cfg = fluxo.triggerConfig as Record<string, unknown>;
+    if (String(cfg.mediaFilter) !== "next") continue;
+    await prisma.igFluxo.update({
+      where: { id: fluxo.id },
+      data: { status: "DRAFT" },
+    });
+  }
 }
 
 async function userFollowsBusiness(params: FlowStepParams): Promise<boolean | null> {
@@ -247,10 +292,6 @@ async function completeAwaitingFollowExec(contatoId: string, fluxoId: string) {
 }
 
 async function advanceAfterFollowGate(params: FlowStepParams) {
-  if (params.cfg.emailEnabled === true) {
-    await sendEmailRequestStep(params);
-    return;
-  }
   await sendRewardStep(params);
 }
 
@@ -382,33 +423,25 @@ async function ensureAwaitingEmailExec(params: FlowStepParams) {
 }
 
 export async function sendRewardStep(params: FlowStepParams): Promise<void> {
+  const links = rewardLinksFromConfig(params.cfg);
   void import("./workspaceLead").then(({ openInstagramWorkspaceLead }) =>
     openInstagramWorkspaceLead({
       organizationId: params.organizationId,
       igContatoId: params.contatoId,
-      rewardUrl: String(params.cfg.rewardUrl ?? ""),
+      rewardUrl: links[0]?.url ?? "",
     }),
   );
-  const rewardText = String(params.cfg.rewardText ?? "Aqui está o seu acesso");
-  const rewardButton = String(params.cfg.rewardButton ?? "Acessar");
+  const rewardText = String(params.cfg.rewardText ?? "Aqui está o seu acesso").trim() || "Aqui está o seu acesso";
 
   const reminderExecId =
     params.reminderExecId ?? (await scheduleReminderExec(params));
-  const trackedUrl = resolveTrackedRewardUrl(params, reminderExecId);
+  const buttons: MessageButton[] = links.map((link) => ({
+    type: "web_url" as const,
+    title: link.label,
+    url: resolveTrackedRewardUrl(params, reminderExecId, link.url),
+  }));
 
-  const buttons: MessageButton[] = [];
-  if (trackedUrl) {
-    buttons.push({
-      type: "web_url",
-      title: rewardButton,
-      url: trackedUrl,
-    });
-  }
-
-  const text =
-    trackedUrl && buttons.length === 0
-      ? `${rewardText}\n${trackedUrl}`
-      : rewardText;
+  const text = buttons.length === 0 ? rewardText : rewardText;
 
   const sent = await sendInstagramMessage({
     igUserId: params.igAccount.igUserId,
@@ -457,21 +490,21 @@ export async function sendReminderStep(params: FlowStepParams): Promise<void> {
   );
 }
 
-/** Após clicar no botão de boas-vindas. */
+/** Após clicar no botão de boas-vindas: e-mail, depois seguir, depois o link. */
 export async function advanceCommentDmAfterWelcomeClick(
   params: FlowStepParams,
 ): Promise<void> {
+  if (params.cfg.emailEnabled === true) {
+    await sendEmailRequestStep(params);
+    return;
+  }
   if (params.cfg.followEnabled === true) {
     const follows = await userFollowsBusiness(params);
     if (follows === true) {
-      await advanceAfterFollowGate(params);
+      await sendRewardStep(params);
       return;
     }
     await sendFollowStep(params);
-    return;
-  }
-  if (params.cfg.emailEnabled === true) {
-    await sendEmailRequestStep(params);
     return;
   }
   await sendRewardStep(params);
@@ -544,6 +577,7 @@ export async function findAwaitingEmailExec(contatoId: string) {
 export async function saveContactEmail(
   contatoId: string,
   email: string,
+  fluxoId?: string,
 ): Promise<void> {
   const contato = await prisma.igContato.findUnique({ where: { id: contatoId } });
   if (!contato) return;
@@ -560,6 +594,7 @@ export async function saveContactEmail(
     organizationId: contato.organizationId,
     tipo: "email_captured",
     contatoId,
+    fluxoId,
     metadata: { email: normalized },
   });
 
@@ -624,11 +659,20 @@ export async function tryHandleAwaitingEmailResponse(params: {
   if (!trimmed) return false;
 
   if (looksLikeEmail(trimmed)) {
-    await saveContactEmail(params.contatoId, trimmed);
+    await saveContactEmail(params.contatoId, trimmed, fluxo.id);
     await prisma.igFluxoExecucao.update({
       where: { id: pending.id },
       data: { status: "COMPLETED" },
     });
+    if (cfg.followEnabled === true) {
+      const follows = await userFollowsBusiness(stepParams);
+      if (follows === true) {
+        await sendRewardStep(stepParams);
+        return true;
+      }
+      await sendFollowStep(stepParams);
+      return true;
+    }
     await sendRewardStep(stepParams);
     return true;
   }

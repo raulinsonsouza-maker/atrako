@@ -32,7 +32,7 @@ export function publicPath(kind: CriarKind, slug: string, pageSlug?: string): st
   }
   if (kind === "cupom" || kind === "upsell") return "/commerce";
   if (kind === "campanha_meta") return "/criar/campanha-meta";
-  return `/social/flows`;
+  return "/mensagens?canal=instagram";
 }
 
 export function absolutePublicUrl(origin: string, path: string): string {

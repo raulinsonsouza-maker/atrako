@@ -89,6 +89,36 @@ export async function sendInstagramMessage(
   return json;
 }
 
+/** Coração na mensagem recebida (resposta ao story). */
+export async function reactToInstagramMessage(params: {
+  igUserId: string;
+  accessToken: string;
+  recipientIgsid: string;
+  messageId: string;
+  scopes?: string | null;
+  reaction?: "love";
+}): Promise<void> {
+  const res = await fetch(`${graphBase(params.scopes)}/${params.igUserId}/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${params.accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      recipient: { id: params.recipientIgsid },
+      sender_action: "react",
+      payload: {
+        message_id: params.messageId,
+        reaction: params.reaction ?? "love",
+      },
+    }),
+  });
+  const json = (await res.json()) as { error?: { message: string } };
+  if (!res.ok || json.error) {
+    throw new Error(json.error?.message ?? `React failed ${res.status}`);
+  }
+}
+
 export async function sendInstagramImageMessage(params: {
   igUserId: string;
   accessToken: string;
@@ -212,6 +242,21 @@ export function parseFollowPayload(payload: string): string | null {
   if (!payload.startsWith("symbius_follow:")) return null;
   const id = payload.slice("symbius_follow:".length).trim();
   return id || null;
+}
+
+export function directButtonPayload(fluxoId: string, index: number): string {
+  return `symbius_dm:${fluxoId}:${index}`;
+}
+
+export function parseDirectButtonPayload(payload: string): { fluxoId: string; index: number } | null {
+  if (!payload.startsWith("symbius_dm:")) return null;
+  const rest = payload.slice("symbius_dm:".length);
+  const split = rest.lastIndexOf(":");
+  if (split <= 0) return null;
+  const fluxoId = rest.slice(0, split).trim();
+  const index = Number(rest.slice(split + 1));
+  if (!fluxoId || !Number.isInteger(index) || index < 0) return null;
+  return { fluxoId, index };
 }
 
 export function looksLikeEmail(text: string): boolean {

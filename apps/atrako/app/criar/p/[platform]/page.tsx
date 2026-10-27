@@ -17,6 +17,7 @@ import {
 import type { CriarMode } from "@/lib/criar/modules";
 import { useModules } from "@/hooks/useModules";
 import { moduleForCriarPlatform } from "@/lib/modules/registry";
+import { useAtendimentoBase } from "@/components/layout/LpHostContext";
 
 function recipeRank(r: CriarRecipe) {
   if (r.recommended) return 0;
@@ -35,7 +36,13 @@ function sortByUse(recipes: CriarRecipe[]) {
 }
 
 function RecipeCard({ recipe }: { recipe: CriarRecipe }) {
-  const soon = !recipe.href;
+  const base = useAtendimentoBase();
+  const href = recipe.href
+    ? recipe.href.startsWith("/mensagens") || recipe.href.startsWith("/social/flows")
+      ? `${base}${recipe.href.startsWith("/mensagens") ? recipe.href : "/mensagens?canal=instagram"}`
+      : recipe.href
+    : null;
+  const soon = !href;
   const inner = (
     <>
       <div className="flex items-start justify-between gap-3">
@@ -61,7 +68,7 @@ function RecipeCard({ recipe }: { recipe: CriarRecipe }) {
   }
 
   return (
-    <Link href={recipe.href!} className="criar-module-card">
+    <Link href={href} className="criar-module-card">
       {inner}
     </Link>
   );

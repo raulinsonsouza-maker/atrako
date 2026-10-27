@@ -4,6 +4,8 @@ import { Fragment, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight, Loader2, Mail, MessageCircle, Zap } from "lucide-react";
 import { Button, InfoHint, PillSelect, SegmentedControl, Switch } from "@/components/ui";
+import { BackLink } from "@/components/ui/back-link";
+import { AutomationRow } from "@/components/atendimento/mensagens/AutomationRow";
 import { api, num, pct } from "@/components/relacionamento/format";
 import { lastDaysPeriod } from "@/components/relacionamento/period";
 import { StepEditor, type FlowStep } from "@/components/relacionamento/StepEditor";
@@ -106,12 +108,21 @@ export function FlowsTab({
   pack,
   hideTriggers,
   note,
+  density = "cards",
+  focusId,
+  onOpen,
+  onBack,
 }: {
   workspaceId: string;
   pack?: "stay" | "food" | "inside_sales";
   /** Gatilhos que outro recurso já cobre (ex.: boas-vindas feitas pelo robô do WhatsApp). */
   hideTriggers?: string[];
   note?: string;
+  /** `rows` é a lista do atendimento. Relacionamento e hospedagem ficam em `cards`. */
+  density?: "cards" | "rows";
+  focusId?: string | null;
+  onOpen?: (id: string) => void;
+  onBack?: () => void;
 }) {
   const qc = useQueryClient();
   const [period] = useState(() => lastDaysPeriod(30));
@@ -179,10 +190,46 @@ export function FlowsTab({
   }
 
   const flows = hideTriggers?.length ? data.flows.filter((f) => !hideTriggers.includes(f.trigger)) : data.flows;
+  const focused = Boolean(focusId);
+  const visible = focusId ? flows.filter((f) => f.id === focusId) : flows;
   const activeCount = flows.filter((f) => f.status === "ACTIVE").length;
+
+  if (focused && visible.length === 0) {
+    return (
+      <div className="flex flex-col gap-4">
+        <BackLink onClick={onBack}>Mensagens</BackLink>
+        <p className="type-caption text-[var(--ink-muted-48)]">Essa automação não está mais na lista.</p>
+      </div>
+    );
+  }
+
+  if (density === "rows" && !focused) {
+    return (
+      <div className="flex flex-col gap-3">
+        {error ? <p className="type-caption text-[var(--danger)]">{error}</p> : null}
+        {visible.map((f) => (
+          <AutomationRow
+            key={f.id}
+            name={f.name}
+            detail={TRIGGER_LABEL[f.trigger] ?? f.trigger}
+            onOpen={() => onOpen?.(f.id)}
+            checked={f.status === "ACTIVE"}
+            onChecked={
+              post.isPending
+                ? undefined
+                : (on) => post.mutate({ action: "flow_update", flowId: f.id, status: on ? "ACTIVE" : "PAUSED" })
+            }
+            switchLabel={f.name}
+          />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3">
+      {focused ? <BackLink onClick={onBack}>Mensagens</BackLink> : null}
+      {focused ? null : (
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1">
           <span className="type-caption text-[var(--ink-muted-80)]">
@@ -196,11 +243,12 @@ export function FlowsTab({
           Completar fluxos
         </Button>
       </div>
+      )}
       {error ? <p className="rel-card type-caption text-[var(--ink)]">{error}</p> : null}
       {note ? <p className="type-fine-print text-[var(--ink-muted-48)]">{note}</p> : null}
 
-      {flows.map((f) => {
-        const expanded = open === f.id;
+      {visible.map((f) => {
+        const expanded = focused || open === f.id;
         const drafts = f.steps.filter((s) => s.draftContent).length;
         const running = (f.enrollments.ACTIVE ?? 0) + (f.enrollments.PAUSED ?? 0);
         const pausedByError = f.status === "PAUSED" && Boolean(f.pausedReason) && f.pausedReason !== "Pausado manualmente";
@@ -210,7 +258,15 @@ export function FlowsTab({
         const laneSteps = channelSteps(f.steps, channel);
         let prevDelay = 0;
         return (
-          <section key={f.id} className="rel-card">
+          <section key={f.id} className={focused ? "rel-flow-focus" : "rel-card"}>
+            {focused ? (
+              <header className="flex max-w-[68ch] flex-col gap-1">
+                <h2 className="type-tagline text-[var(--ink)]">{f.name}</h2>
+                <p className="type-caption text-[var(--ink-muted-48)]">{TRIGGER_LABEL[f.trigger] ?? f.trigger}</p>
+                {f.description ? <p className="type-body text-[var(--ink-muted-80)]">{f.description}</p> : null}
+              </header>
+            ) : null}
+            {focused ? null : (
             <div className="flex flex-wrap items-center justify-between gap-3">
               <button
                 type="button"
@@ -249,11 +305,12 @@ export function FlowsTab({
                 />
               </div>
             </div>
+            )}
 
             {expanded ? (
               <div className="rel-flow-open">
                 <div className="min-w-0">
-                  {f.description ? <p className="mb-3 type-caption text-[var(--ink-muted-80)]">{f.description}</p> : null}
+                  {f.description && !focused ? <p className="mb-3 type-caption text-[var(--ink-muted-80)]">{f.description}</p> : null}
                   {f.trigger === "cart_abandoned" ? (
                     <div className="mb-3">
                       <NativeRecoveryChecklistCard workspaceId={workspaceId} />
@@ -274,7 +331,7 @@ export function FlowsTab({
                       ]}
                     />
                   ) : null}
-                  {summary.wa ? (
+                  {summary.wa && !focused ? (
                     <p className="rel-channel-summary type-fine-print">
                       <span>
                         <MessageCircle className="h-3.5 w-3.5 text-[var(--success)]" />
@@ -290,6 +347,7 @@ export function FlowsTab({
                   ) : null}
 
                   <div className="rel-timeline mt-2">
+                    {focused ? null : (
                     <div className="rel-tl-trigger type-caption">
                       <span className="rel-tl-rail">
                         <span className="rel-mini-dot">
@@ -298,6 +356,7 @@ export function FlowsTab({
                       </span>
                       <span className="text-[var(--ink)]">Quando: {TRIGGER_LABEL[f.trigger] ?? f.trigger}</span>
                     </div>
+                    )}
                     {laneSteps.map((s) => {
                       const gap = s.delayMinutes - prevDelay;
                       prevDelay = s.delayMinutes;
@@ -310,11 +369,12 @@ export function FlowsTab({
                         : stepTitle(s, data.store.name);
                       return (
                         <Fragment key={rowId}>
-                          <div className="rel-tl-delay type-fine-print">
+                          <div className={focused ? "rel-tl-delay type-caption" : "rel-tl-delay type-fine-print"}>
                             <span className="rel-tl-rail" />
                             <span>
-                              {delayWords(gap)}
-                              {gap !== s.delayMinutes && s.delayMinutes > 0 ? ` · ${shortGap(s.delayMinutes)} após o gatilho` : ""}
+                              {focused
+                                ? delayWords(s.delayMinutes)
+                                : `${delayWords(gap)}${gap !== s.delayMinutes && s.delayMinutes > 0 ? ` · ${shortGap(s.delayMinutes)} após o gatilho` : ""}`}
                             </span>
                           </div>
                           <div
@@ -333,11 +393,13 @@ export function FlowsTab({
                               <ChannelIcon channel={channel} className="h-4 w-4" />
                             </span>
                             <span className="min-w-0">
+                              {focused && !reserve && !s.couponCode ? null : (
                               <span className="type-fine-print block text-[var(--ink-muted-48)]">
                                 {reserve ? "E-mail reserva do WhatsApp" : s.channel === "EMAIL" ? "E-mail" : "WhatsApp"}
                                 {s.couponCode ? ` · cupom ${s.couponCode}` : ""}
                               </span>
-                              <span className="type-caption-strong block truncate text-[var(--ink)]">{title}</span>
+                              )}
+                              <span className={focused ? "type-body-strong block truncate text-[var(--ink)]" : "type-caption-strong block truncate text-[var(--ink)]"}>{title}</span>
                               <span className="mt-1 flex flex-wrap gap-1.5">
                                 {reserve ? <span className="rel-badge type-micro-legal">{RESERVE_TAG}</span> : null}
                                 {s.draftContent ? <span className="rel-badge type-micro-legal" data-tone="warn">Não publicado</span> : null}
@@ -369,6 +431,7 @@ export function FlowsTab({
                     })}
                   </div>
 
+                  {focused ? null : (
                   <div className="mt-4 border-t border-[var(--divider-soft)] pt-3">
                     <button
                       type="button"
@@ -399,6 +462,7 @@ export function FlowsTab({
                       </div>
                     ) : null}
                   </div>
+                  )}
                 </div>
 
                 <div className="flex justify-center lg:sticky lg:top-4">

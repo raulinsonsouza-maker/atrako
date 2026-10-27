@@ -73,6 +73,7 @@ type IgMediaPickerProps = {
   onRetry?: () => void;
   fallbackIdInput?: boolean;
   onFallbackIdChange?: (id: string | null) => void;
+  emptyLabel?: string;
 };
 
 export function IgMediaPicker({
@@ -84,6 +85,7 @@ export function IgMediaPicker({
   onRetry,
   fallbackIdInput,
   onFallbackIdChange,
+  emptyLabel = "Nenhuma publicação encontrada. Publique no Instagram ou escolha “qualquer publicação”.",
 }: IgMediaPickerProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -129,10 +131,7 @@ export function IgMediaPicker({
       )}
 
       {!loading && !warning && media.length === 0 && (
-        <p className="type-fine-print leading-snug text-zinc-500">
-          Nenhuma publicação encontrada. Publique no Instagram ou escolha
-          “qualquer publicação”.
-        </p>
+        <p className="type-fine-print leading-snug text-zinc-500">{emptyLabel}</p>
       )}
 
       {recent.length > 0 && (

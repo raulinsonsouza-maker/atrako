@@ -1,39 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db-social";
 import { getSession } from "@/lib/symbius/auth";
-import { fetchIgUserMedia } from "@/lib/instagram/metaOAuth";
+import { fetchIgUserMedia, fetchIgUserStories } from "@/lib/instagram/metaOAuth";
 
 export type { IgMediaItem } from "@/lib/instagram/metaOAuth";
 
-async function getSessionWithWorkspaceFallback(request: NextRequest) {
-  let session = await getSession();
-
-  // Fallback: resolve via Atrako workspaceId when no symbius session
-  if (!session) {
-    const wsId = request.nextUrl.searchParams.get("workspaceId");
-    if (wsId) {
-      const org = await prisma.organization.findFirst({
-        where: { centralClienteId: wsId },
-      });
-      if (org) {
-        session = { organizationId: org.id, userId: "" } as any;
-      }
-    }
+async function organizationForMedia(request: NextRequest) {
+  const wsId = request.nextUrl.searchParams.get("workspaceId")?.trim();
+  if (wsId) {
+    const org = await prisma.organization.findFirst({
+      where: { centralClienteId: wsId },
+      select: { id: true },
+    });
+    return org?.id ?? null;
   }
-
-  return session;
+  const session = await getSession();
+  return session?.organizationId ?? null;
 }
 
 export async function GET(request: NextRequest) {
-  const session = await getSessionWithWorkspaceFallback(request);
-  if (!session) {
-    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+  const wsId = request.nextUrl.searchParams.get("workspaceId")?.trim();
+  const organizationId = await organizationForMedia(request);
+  if (!organizationId) {
+    return NextResponse.json(
+      {
+        error: wsId ? "Nenhuma conta Instagram conectada neste workspace." : "Não autenticado",
+        media: [],
+      },
+      { status: wsId ? 404 : 401 },
+    );
   }
 
   const account = await prisma.igAccount.findFirst({
     where: {
-      organizationId: session.organizationId,
+      organizationId,
       status: "CONNECTED",
+      NOT: { igUserId: { startsWith: "hub-" } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -46,22 +48,29 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const result = await fetchIgUserMedia({
-      accessToken: account.accessToken,
-      storedIgUserId: account.igUserId,
-      limit: 24,
-    });
+    const stories = request.nextUrl.searchParams.get("kind") === "stories";
+    const result = stories
+      ? await fetchIgUserStories({
+          accessToken: account.accessToken,
+          storedIgUserId: account.igUserId,
+        })
+      : await fetchIgUserMedia({
+          accessToken: account.accessToken,
+          storedIgUserId: account.igUserId,
+          limit: 24,
+        });
 
     // Corrige igUserId salvo se /me devolver o ID profissional correto
+    const resolvedId = "igUserId" in result ? result.igUserId : null;
     if (
-      result.igUserId &&
-      result.igUserId !== account.igUserId &&
+      resolvedId &&
+      resolvedId !== account.igUserId &&
       result.media.length > 0
     ) {
       try {
         await prisma.igAccount.update({
           where: { id: account.id },
-          data: { igUserId: result.igUserId },
+          data: { igUserId: resolvedId },
         });
       } catch (e) {
         console.warn(

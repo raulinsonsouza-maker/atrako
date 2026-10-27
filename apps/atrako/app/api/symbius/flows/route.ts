@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db-social";
 import { getSession } from "@/lib/symbius/auth";
 import { canPublishFluxo } from "@/lib/symbius/tenant";
-import { enrichCommentDmTriggerConfig } from "@/lib/instagram/commentDmFlow";
+import { enrichCommentDmTriggerConfig, retireOtherNextPostFlows } from "@/lib/instagram/commentDmFlow";
 
 const createSchema = z.object({
   nome: z.string().min(1),
@@ -396,12 +396,20 @@ export async function POST(request: NextRequest) {
     return f;
   });
 
+  if (
+    wantPublish &&
+    trig.triggerType === "comment_keyword" &&
+    String((trig.triggerConfig as Record<string, unknown>).mediaFilter) === "next"
+  ) {
+    await retireOtherNextPostFlows(session.organizationId, fluxo.id);
+  }
+
   return NextResponse.json({ fluxo });
 }
 
 export async function PATCH(request: NextRequest) {
-  const session = await getSession();
-  if (!session) {
+  const organizationId = await organizationIdForRequest(request);
+  if (!organizationId) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
@@ -423,13 +431,13 @@ export async function PATCH(request: NextRequest) {
   };
 
   const fluxo = await prisma.igFluxo.findFirst({
-    where: { id: body.id, organizationId: session.organizationId },
+    where: { id: body.id, organizationId },
   });
   if (!fluxo) {
     return NextResponse.json({ error: "Fluxo não encontrado" }, { status: 404 });
   }
 
-  if (body.status === "PUBLISHED" && !(await canPublishFluxo(session.organizationId))) {
+  if (body.status === "PUBLISHED" && !(await canPublishFluxo(organizationId))) {
     return NextResponse.json(
       { error: "Limite de fluxos publicados do plano atingido" },
       { status: 403 },
@@ -444,7 +452,7 @@ export async function PATCH(request: NextRequest) {
     triggerConfig
   ) {
     triggerConfig = await enrichCommentDmTriggerConfig(
-      session.organizationId,
+      organizationId,
       triggerConfig,
     );
   }
@@ -498,6 +506,14 @@ export async function PATCH(request: NextRequest) {
       }
     }
   });
+
+  const publishedNext =
+    body.status === "PUBLISHED" &&
+    (body.triggerType === "comment_keyword" || fluxo.triggerType === "comment_keyword") &&
+    String((triggerConfig as Record<string, unknown> | undefined)?.mediaFilter ?? "") === "next";
+  if (publishedNext) {
+    await retireOtherNextPostFlows(organizationId, body.id);
+  }
 
   return NextResponse.json({ ok: true });
 }

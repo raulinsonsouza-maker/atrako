@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   const intentParam = request.nextUrl.searchParams.get("intent");
   const popup = request.nextUrl.searchParams.get("popup") === "1";
   const returnTo =
-    request.nextUrl.searchParams.get("returnTo") ?? "/social/connect";
+    request.nextUrl.searchParams.get("returnTo") ?? "/config/conexoes";
 
   const session = await getSession();
 

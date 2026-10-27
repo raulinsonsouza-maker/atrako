@@ -217,8 +217,8 @@ export function EmailBlockEditor({
                     >
                       <ArrowDown className="h-4 w-4" />
                     </button>
-                    <button type="button" aria-label="Remover" className="p-1 text-[var(--ink-muted-48)]" onClick={() => remove(i)}>
-                      <Trash2 className="h-4 w-4" />
+                    <button type="button" aria-label="Remover" className="p-1 text-[var(--danger)]" onClick={() => remove(i)}>
+                      <Trash2 className="h-4 w-4" strokeWidth={1.75} />
                     </button>
                   </div>
                 ) : null}

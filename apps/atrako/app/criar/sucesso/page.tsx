@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { AppPage } from "@/components/layout/AppPage";
+import { useAtendimentoBase } from "@/components/layout/LpHostContext";
 import { CopyLinkButton, UrlPreview } from "@/components/criar/CopyLinkButton";
 import { LpPhonePreview } from "@/components/criar/LpPhonePreview";
 
 function SuccessInner() {
   const sp = useSearchParams();
+  const base = useAtendimentoBase();
   const kind = sp.get("kind") || "oferta";
   const slug = sp.get("slug") || "";
   const id = sp.get("id") || "";
@@ -37,9 +39,9 @@ function SuccessInner() {
               ? id
                 ? `/criar/campanha-meta/${id}`
                 : "/criar/campanha-meta"
-              : id
-                ? `/social/flows/${id}`
-                : "/social/flows";
+              : kind === "automacao"
+                ? `${base}/mensagens?canal=instagram${id ? `&fluxo=${encodeURIComponent(id)}` : ""}`
+                : `${base}/mensagens?canal=instagram`;
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const hasPublicUrl =
@@ -159,7 +161,7 @@ function SuccessInner() {
               </Link>
             ) : null}
             {kind === "automacao" ? (
-              <Link href="/social/flows" className="type-caption-strong text-[var(--primary)]">
+              <Link href={`${base}/mensagens?canal=instagram`} className="type-caption-strong text-[var(--primary)]">
                 Ver Instagram
               </Link>
             ) : null}

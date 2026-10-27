@@ -141,7 +141,7 @@ export const MODULES: ModuleDef[] = [
     description: "Conteúdo e automações",
     icon: Instagram,
     defaultRelease: "BETA",
-    nav: true,
+    nav: false,
     routes: ["/social"],
     apiPrefixes: ["/api/symbius"],
     criarPlatforms: ["instagram"],

@@ -1,11 +1,12 @@
 "use client";
 
 import { Fragment, useMemo } from "react";
-import { ArrowDown, ArrowUp, CalendarClock, ClipboardList, ListChecks, MessageCircle, Sprout, UserRoundCheck } from "lucide-react";
-import { Button, Switch } from "@/components/ui";
+import { ArrowDown, ArrowUp, CalendarClock, ClipboardList, ListChecks, MessageCircle, Plus, Sprout, Trash2, UserRoundCheck } from "lucide-react";
+import { Button, IconButton, Switch } from "@/components/ui";
 import { leadBrief } from "@/lib/qualification/journey";
-import type { QualifyAnswers, QualifyFieldKey } from "@/lib/qualification/fields";
+import { SCRIPT_ASK_ORDER, type QualifyAnswers, type QualifyFieldKey } from "@/lib/qualification/fields";
 import {
+  DEFAULT_SCRIPT,
   enabledQuestions,
   nurturePreview,
   renderText,
@@ -76,7 +77,16 @@ export function ScriptEditor({ data, s, canManage }: { data: Jornada; s: ScriptD
   });
 
   const visible = draft.questions.filter((q) => !data.lpKeys.includes(q.key));
+  const present = new Set(draft.questions.map((q) => q.key));
+  const removed = SCRIPT_ASK_ORDER.filter((key) => !present.has(key) && !data.lpKeys.includes(key));
   const optionalInForm = new Set(data.form.fields.filter((f) => !f.required).map((f) => f.key));
+
+  function persistQuestions(questions: QualifyScript["questions"], removedQuestions: QualifyFieldKey[]) {
+    const kept = new Set(questions.map((q) => q.key));
+    const lp = data.lpKeys.filter((key) => kept.has(key));
+    const order = [...questions.filter((q) => !data.lpKeys.includes(q.key)).map((q) => q.key), ...lp];
+    s.saveNow("questions", { ...draft, questions }, { questionOrder: order, removedQuestions });
+  }
 
   function move(key: QualifyFieldKey, dir: -1 | 1) {
     const keys = visible.map((q) => q.key);
@@ -84,9 +94,25 @@ export function ScriptEditor({ data, s, canManage }: { data: Jornada; s: ScriptD
     const j = i + dir;
     if (j < 0 || j >= keys.length) return;
     [keys[i], keys[j]] = [keys[j]!, keys[i]!];
-    const order = [...keys, ...data.lpKeys.filter((k) => draft.questions.some((q) => q.key === k))];
-    const next = { ...draft, questions: order.map((k) => draft.questions.find((q) => q.key === k)!) };
-    s.saveNow("questions", next, { questionOrder: order });
+    const byKey = new Map(draft.questions.map((q) => [q.key, q]));
+    const questions = [...keys, ...draft.questions.filter((q) => data.lpKeys.includes(q.key)).map((q) => q.key)]
+      .map((k) => byKey.get(k)!)
+      .filter(Boolean);
+    persistQuestions(questions, removed);
+  }
+
+  function removeQuestion(key: QualifyFieldKey) {
+    persistQuestions(
+      draft.questions.filter((q) => q.key !== key),
+      [...removed, key],
+    );
+  }
+
+  function restoreQuestion(key: QualifyFieldKey) {
+    const def = DEFAULT_SCRIPT.questions.find((q) => q.key === key);
+    if (!def) return;
+    const stored = draft.questions.find((q) => q.key === key);
+    persistQuestions([...draft.questions, stored ?? { ...def, enabled: true }], removed.filter((k) => k !== key));
   }
 
   const openingTpl = TEMPLATE_STATE_LABEL[data.templates.opening];
@@ -159,14 +185,34 @@ export function ScriptEditor({ data, s, canManage }: { data: Jornada; s: ScriptD
                 chips={q.options.map((o) => o.label)}
                 off={!q.enabled}
                 aside={
-                  <Switch
-                    checked={q.enabled}
-                    disabled={!canManage || s.saving}
-                    onChange={(on) =>
-                      s.saveNow(block, { ...draft, questions: draft.questions.map((x) => (x.key === q.key ? { ...x, enabled: on } : x)) }, { enabled: on })
-                    }
-                    aria-label={`Perguntar ${q.label}`}
-                  />
+                  <span className="flex items-center gap-1">
+                    {canManage ? (
+                      <>
+                        <IconButton size="toolbar" disabled={i === 0 || s.saving} onClick={() => move(q.key, -1)} aria-label={`Subir ${q.label}`}>
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </IconButton>
+                        <IconButton
+                          size="toolbar"
+                          disabled={i === visible.length - 1 || s.saving}
+                          onClick={() => move(q.key, 1)}
+                          aria-label={`Descer ${q.label}`}
+                        >
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </IconButton>
+                        <IconButton size="toolbar" className="text-[var(--danger)]" disabled={s.saving} onClick={() => removeQuestion(q.key)} aria-label={`Excluir ${q.label}`}>
+                          <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+                        </IconButton>
+                      </>
+                    ) : null}
+                    <Switch
+                      checked={q.enabled}
+                      disabled={!canManage || s.saving}
+                      onChange={(on) =>
+                        s.saveNow(block, { ...draft, questions: draft.questions.map((x) => (x.key === q.key ? { ...x, enabled: on } : x)) }, { enabled: on })
+                      }
+                      aria-label={`Perguntar ${q.label}`}
+                    />
+                  </span>
                 }
                 {...common(block)}
               >
@@ -176,27 +222,24 @@ export function ScriptEditor({ data, s, canManage }: { data: Jornada; s: ScriptD
                 ) : (
                   <span className="type-fine-print text-[var(--ink-muted-48)]">Resposta livre, digitada pelo lead.</span>
                 )}
-                {canManage ? (
-                  <div className="flex items-center gap-1">
-                    <span className="mr-1 type-fine-print text-[var(--ink-muted-48)]">Ordem</span>
-                    <Button size="toolbar" variant="ghost" disabled={i === 0 || s.saving} onClick={() => move(q.key, -1)} aria-label="Subir">
-                      <ArrowUp className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      size="toolbar"
-                      variant="ghost"
-                      disabled={i === visible.length - 1 || s.saving}
-                      onClick={() => move(q.key, 1)}
-                      aria-label="Descer"
-                    >
-                      <ArrowDown className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                ) : null}
               </ScriptBlock>
             </Fragment>
           );
         })}
+        {removed.length ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="type-fine-print text-[var(--ink-muted-48)]">Excluídas</span>
+            {removed.map((key) => {
+              const label = DEFAULT_SCRIPT.questions.find((q) => q.key === key)?.label ?? key;
+              return (
+                <Button key={key} size="toolbar" variant="ghost" disabled={!canManage || s.saving} onClick={() => restoreQuestion(key)}>
+                  <Plus className="h-3.5 w-3.5" />
+                  {label}
+                </Button>
+              );
+            })}
+          </div>
+        ) : null}
 
         <GroupHead title="Depois das perguntas" />
         <ScriptBlock

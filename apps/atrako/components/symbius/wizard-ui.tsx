@@ -150,17 +150,12 @@ export function RadioOption({
               </span>
               {pro ? <ProBadge /> : null}
             </span>
-            {selected && children ? (
-              <div
-                className="mt-2.5 space-y-2"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {children}
-              </div>
-            ) : null}
           </span>
         </span>
       </button>
+      {selected && children ? (
+        <div className="px-3.5 pb-3 pl-10">{children}</div>
+      ) : null}
     </div>
   );
 }
@@ -280,11 +275,14 @@ export function WizardLinkButtonEditor({
   url,
   onChange,
   saleLinks = [],
+  single = false,
 }: {
   buttonLabel: string;
   url: string;
   onChange: (button: string, url: string) => void;
   saleLinks?: Array<{ label: string; url: string }>;
+  /** Um único botão: depois de salvo, a linha abre a mesma janela. */
+  single?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [draftButton, setDraftButton] = useState(buttonLabel);
@@ -328,13 +326,15 @@ export function WizardLinkButtonEditor({
         </button>
       ) : null}
 
-      <button
-        type="button"
-        onClick={openModal}
-        className="flex w-full items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-white px-3 py-2.5 type-caption font-normal text-zinc-600 transition hover:border-[var(--primary)] hover:bg-[var(--canvas-parchment)] hover:text-[var(--primary)]"
-      >
-        + Adicionar um link
-      </button>
+      {single && hasLink ? null : (
+        <button
+          type="button"
+          onClick={openModal}
+          className="flex w-full items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-white px-3 py-2.5 type-caption font-normal text-zinc-600 transition hover:border-[var(--primary)] hover:bg-[var(--canvas-parchment)] hover:text-[var(--primary)]"
+        >
+          + Adicionar um link
+        </button>
+      )}
 
       {open ? (
         <div

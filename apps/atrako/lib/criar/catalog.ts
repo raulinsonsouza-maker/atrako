@@ -144,7 +144,7 @@ function igRecipeHref(t: FlowTemplate, mode: CriarMode): string | null {
   if (t.action === "soon" || t.kind === "soon") return null;
   const q = new URLSearchParams({ recipe: t.id });
   if (mode === "ai") q.set("mode", "ai");
-  return `/social/flows/new?${q.toString()}`;
+  return `/mensagens?canal=instagram&${q.toString()}`;
 }
 
 function buildInstagramRecipes(mode: CriarMode): CriarRecipe[] {

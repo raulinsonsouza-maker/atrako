@@ -477,6 +477,18 @@
   font-weight: 500;
 }
 
+.segmented-fill {
+  display: flex;
+  width: 100%;
+}
+
+.segmented-fill .segmented-option {
+  flex: 1 1 0;
+  justify-content: center;
+  min-width: 0;
+  text-align: center;
+}
+
 /* toggle-switch — liga/desliga de configuração (nunca checkbox nativo) */
 .toggle-switch {
   position: relative;
@@ -6712,6 +6724,77 @@ html[data-theme="dark"] .assistant-stage-head button {
   }
 }
 
+.rel-flow-focus {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.rel-flow-focus .rel-flow-open {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.rel-flow-focus .rel-tl-item {
+  position: relative;
+  z-index: 1;
+  border-color: var(--hairline);
+  background: var(--canvas);
+  padding: 12px 16px 12px 0;
+}
+
+.rel-flow-focus .rel-tl-item .rel-mini-dot {
+  box-shadow: 0 0 0 4px var(--canvas);
+}
+
+.rel-flow-focus .rel-tl-item .rel-mini-dot[data-channel="EMAIL"] {
+  background: color-mix(in srgb, var(--primary) 14%, var(--canvas));
+}
+
+.rel-flow-focus .rel-tl-item .rel-mini-dot[data-channel="WHATSAPP"] {
+  background: color-mix(in srgb, var(--success) 14%, var(--canvas));
+}
+
+.rel-flow-focus .rel-tl-item[data-active="true"] {
+  background: color-mix(in srgb, var(--primary) 6%, var(--canvas));
+}
+
+.rel-flow-focus .rel-timeline {
+  gap: 0;
+}
+
+.rel-flow-focus .rel-timeline::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 17px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--hairline);
+}
+
+.rel-flow-focus .rel-tl-delay .rel-tl-rail::before {
+  display: none;
+}
+
+.rel-flow-focus .rel-tl-delay {
+  position: relative;
+  z-index: 1;
+  padding: 8px 0;
+  color: var(--ink-muted-80);
+}
+
+.rel-flow-focus .rel-tl-delay > span:last-child {
+  display: inline-flex;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--hairline);
+  background: var(--canvas-parchment);
+}
+
 .rel-timeline {
   position: relative;
   display: flex;
@@ -6895,6 +6978,7 @@ html[data-theme="dark"] .assistant-stage-head button {
   flex-direction: column;
   gap: 8px;
   min-width: 0;
+  padding-bottom: 48px;
 }
 
 .script-group-head {
@@ -6924,7 +7008,8 @@ html[data-theme="dark"] .assistant-stage-head button {
 .script-block-head {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px 12px;
   padding-right: 14px;
 }
 

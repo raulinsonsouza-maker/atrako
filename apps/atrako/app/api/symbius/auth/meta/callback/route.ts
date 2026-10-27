@@ -127,7 +127,7 @@ function redirectAfterConnect(
     );
   }
 
-  const returnTo = decoded.returnTo ?? "/social/connect";
+  const returnTo = decoded.returnTo ?? "/config/conexoes";
   return clearOAuthStateCookie(
     NextResponse.redirect(`${base}${returnTo}?step=${params.step ?? "5"}`),
   );

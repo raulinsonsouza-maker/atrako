@@ -1,18 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Clock, Hash, Image as ImageIcon, Link2, Mail, MessageCircle, UserPlus } from "lucide-react";
 import { Button, Switch } from "@/components/ui";
 import { BackLink } from "@/components/ui/back-link";
-import { ScriptBlock } from "@/components/atendimento/mensagens/ScriptBlock";
-import { PhonePreview, type IgPreviewSection } from "./PhonePreview";
+import { IgCommentPreview, type IgPreviewScene } from "./IgCommentPreview";
 import { IgMediaPicker, type IgMediaItem } from "./IgMediaPicker";
 import {
   RadioOption,
   TagChip,
-  WizardFieldLabel,
-  WizardLinkButtonEditor,
-  useWorkspaceSaleLinks,
+  WizardLayout,
   wizardInputCls,
   wizardTextareaCls,
 } from "./wizard-ui";
@@ -26,6 +22,7 @@ export type CommentDmConfig = {
   anyKeyword: boolean;
   keywords: string[];
   replyToComment: boolean;
+  publicReplies: string[];
   welcomeEnabled: boolean;
   welcomeText: string;
   welcomeButton: string;
@@ -37,6 +34,7 @@ export type CommentDmConfig = {
   rewardText: string;
   rewardButton: string;
   rewardUrl: string;
+  rewardLinks: Array<{ label: string; url: string }>;
   reminderEnabled: boolean;
   reminderText: string;
   reminderMinutes: number;
@@ -73,9 +71,8 @@ export function CommentDmWizard({
   username = "seu_perfil",
   workspaceId,
 }: CommentDmWizardProps) {
-  const saleLinks = useWorkspaceSaleLinks(workspaceId);
-  const editingId = initial?.fluxoId;
-  const [nome, setNome] = useState(initial?.nome ?? defaultName);
+  const [savedId, setSavedId] = useState<string | null>(initial?.fluxoId ?? null);
+  const [nome] = useState(initial?.nome ?? defaultName);
   const [mediaFilter, setMediaFilter] = useState<"any" | "specific" | "next">(
     initial?.mediaFilter ?? "specific",
   );
@@ -84,16 +81,22 @@ export function CommentDmWizard({
   );
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [mediaWarning, setMediaWarning] = useState<string | null>(null);
+  const seedKeywords = initial?.keywords?.length ? initial.keywords : ["Eu quero"];
   const [anyKeyword, setAnyKeyword] = useState(initial?.anyKeyword ?? false);
-  const [keywords, setKeywords] = useState<string[]>(
-    initial?.keywords?.length ? initial.keywords : ["eu quero"],
-  );
-  const [keywordInput, setKeywordInput] = useState(
-    (initial?.keywords ?? ["eu quero"]).join(", "),
-  );
+  const [keywords, setKeywords] = useState<string[]>(seedKeywords);
+  const [keywordInput, setKeywordInput] = useState(seedKeywords.join(", "));
   const [replyToComment, setReplyToComment] = useState(
     initial?.replyToComment ?? false,
   );
+  const [publicReplies, setPublicReplies] = useState<string[]>(() => {
+    const saved = initial?.publicReplies?.filter((item) => item.trim()) ?? [];
+    return [saved[0] ?? "", saved[1] ?? "", saved[2] ?? ""];
+  });
+  const [step, setStep] = useState<"setup" | "message" | "live">("setup");
+  const [scene, setScene] = useState<IgPreviewScene>("dm");
+  const [whyWelcome, setWhyWelcome] = useState(false);
+  const [liveId, setLiveId] = useState<string | null>(initial?.fluxoId ?? null);
+  const [insights, setInsights] = useState<{ runs: number; sends: number; clicks: number; ctr: number; emails: number } | null>(null);
   const [welcomeEnabled, setWelcomeEnabled] = useState(
     initial?.welcomeEnabled ?? true,
   );
@@ -109,7 +112,7 @@ export function CommentDmWizard({
   const [followText, setFollowText] = useState(
     initial?.followText ?? DEFAULT_FOLLOW,
   );
-  const [followButton, setFollowButton] = useState(
+  const [followButton] = useState(
     initial?.followButton ?? "Já sigo",
   );
   const [emailEnabled, setEmailEnabled] = useState(
@@ -121,10 +124,14 @@ export function CommentDmWizard({
   const [rewardText, setRewardText] = useState(
     initial?.rewardText ?? "Aqui está o seu acesso",
   );
-  const [rewardButton, setRewardButton] = useState(
+  const [rewardButton] = useState(
     initial?.rewardButton ?? "Acessar",
   );
-  const [rewardUrl, setRewardUrl] = useState(initial?.rewardUrl ?? "");
+  const [rewardLinks, setRewardLinks] = useState<Array<{ label: string; url: string }>>(() => {
+    if (initial?.rewardLinks?.length) return initial.rewardLinks.slice(0, 3);
+    if (initial?.rewardUrl) return [{ label: initial.rewardButton ?? "Acessar", url: initial.rewardUrl }];
+    return [{ label: "Acessar", url: "" }];
+  });
   const [reminderEnabled, setReminderEnabled] = useState(
     initial?.reminderEnabled ?? false,
   );
@@ -134,10 +141,6 @@ export function CommentDmWizard({
   const [reminderMinutes, setReminderMinutes] = useState(
     initial?.reminderMinutes ?? 30,
   );
-  const [open, setOpen] = useState<IgPreviewSection | null>("welcome");
-  function select(section: IgPreviewSection) {
-    setOpen((current) => (current === section ? null : section));
-  }
   const [loading, setLoading] = useState(false);
   const [loadingMedia, setLoadingMedia] = useState(true);
 
@@ -150,11 +153,13 @@ export function CommentDmWizard({
       .then((d) => {
         const items = (d.media ?? []) as MediaItem[];
         setMedia(items);
-        if (d.warning) setMediaWarning(d.warning);
+        const warning = d.warning || d.error;
+        if (warning) setMediaWarning(String(warning));
         if (!mediaId && items[0] && mediaFilter === "specific") {
           setMediaId(items[0].id);
         }
       })
+      .catch(() => setMediaWarning("Não foi possível listar as publicações."))
       .finally(() => setLoadingMedia(false));
   }
 
@@ -179,12 +184,31 @@ export function CommentDmWizard({
       .filter(Boolean);
   }
 
+  async function loadInsights(id: string) {
+    const url = workspaceId
+      ? `/api/symbius/flows/${id}?workspaceId=${encodeURIComponent(workspaceId)}`
+      : `/api/symbius/flows/${id}`;
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.insights) setInsights(data.insights);
+  }
+
+  async function stopLive() {
+    if (!liveId) return;
+    await fetch(workspaceId ? `/api/symbius/flows?workspaceId=${encodeURIComponent(workspaceId)}` : "/api/symbius/flows", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: liveId, status: "DRAFT" }),
+    });
+    onSaved(liveId);
+  }
+
   function addSuggested(s: string) {
     const next = parseKeywords(`${keywordInput}, ${s}`);
     setKeywordInput(next.join(", "));
     setKeywords(next);
     setAnyKeyword(false);
-    setOpen("keyword");
   }
 
   async function activate() {
@@ -209,11 +233,16 @@ export function CommentDmWizard({
       alert("Escreva a mensagem pedindo o e-mail");
       return;
     }
-    if (!rewardText.trim()) {
-      alert("Escreva a DM com o link / acesso");
+    const replies = publicReplies.map((item) => item.trim()).filter(Boolean);
+    const links = rewardLinks
+      .map((item) => ({ label: item.label.trim() || "Acessar", url: item.url.trim() }))
+      .filter((item) => item.url)
+      .slice(0, 3);
+    if (!rewardText.trim() && links.length === 0) {
+      alert("Escreva a mensagem ou adicione um link");
       return;
     }
-    if (reminderEnabled && !rewardUrl.trim()) {
+    if (reminderEnabled && links.length === 0) {
       alert("Adicione um link para usar o lembrete automático");
       return;
     }
@@ -227,7 +256,8 @@ export function CommentDmWizard({
       anyKeyword,
       mediaFilter,
       mediaId: mediaFilter === "specific" ? mediaId : undefined,
-      replyToComment,
+      replyToComment: replies.length > 0,
+      publicReplies: replies,
       welcomeEnabled,
       welcomeText: welcomeText.trim(),
       welcomeButton: welcomeButton.trim() || "Me envie o link",
@@ -237,8 +267,9 @@ export function CommentDmWizard({
       emailEnabled,
       emailText: emailText.trim(),
       rewardText: rewardText.trim(),
-      rewardButton: rewardButton.trim() || "Acessar",
-      rewardUrl: rewardUrl.trim(),
+      rewardButton: links[0]?.label || rewardButton.trim() || "Acessar",
+      rewardUrl: links[0]?.url ?? "",
+      rewardLinks: links,
       reminderEnabled,
       reminderText: reminderText.trim(),
       reminderMinutes,
@@ -247,12 +278,12 @@ export function CommentDmWizard({
     setLoading(true);
     try {
       const baseUrl = workspaceId ? `/api/symbius/flows?workspaceId=${encodeURIComponent(workspaceId)}` : `/api/symbius/flows`;
-      if (editingId) {
+      if (savedId) {
         const res = await fetch(baseUrl, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            id: editingId,
+            id: savedId,
             nome: nome.trim(),
             status: "PUBLISHED",
             triggerType: "comment_keyword",
@@ -261,7 +292,9 @@ export function CommentDmWizard({
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Erro ao salvar");
-        onSaved(editingId);
+        setLiveId(savedId);
+        setStep("live");
+        void loadInsights(savedId);
       } else {
         const res = await fetch(baseUrl, {
           method: "POST",
@@ -276,7 +309,10 @@ export function CommentDmWizard({
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Erro ao criar");
-        onSaved(data.fluxo.id);
+        setSavedId(data.fluxo.id);
+        setLiveId(data.fluxo.id);
+        setStep("live");
+        void loadInsights(data.fluxo.id);
       }
     } catch (e) {
       alert(e instanceof Error ? e.message : "Erro");
@@ -285,246 +321,173 @@ export function CommentDmWizard({
     }
   }
 
-  const postSummary =
-    mediaFilter === "specific"
-      ? "Uma publicação"
-      : mediaFilter === "next"
-        ? "A próxima publicação"
-        : "Qualquer publicação";
-  const keywordSummary = anyKeyword ? "Qualquer palavra" : commentPreview;
+  const repliesFilled = publicReplies.map((item) => item.trim()).filter(Boolean);
 
-  return (
-    <div className="script-grid px-4 py-5 md:px-6">
-      <div className="script-list">
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <BackLink onClick={onCancel}>Automações</BackLink>
-          <Button type="button" size="toolbar" disabled={loading} onClick={() => void activate()}>
-            {loading ? "Ativando…" : "Ativar"}
-          </Button>
-        </div>
-        <h1 className="type-tagline text-[var(--ink)]">Quando alguém comenta</h1>
-        <p className="type-caption text-[var(--ink-muted-48)]">
-          Toque num bloco ou num balão do celular para editar aquele passo.
-        </p>
-
-        <div className="mt-2">
-          <WizardFieldLabel>Nome interno</WizardFieldLabel>
-          <input value={nome} onChange={(e) => setNome(e.target.value)} className={wizardInputCls} />
-        </div>
-
-        <ScriptBlock
-          icon={ImageIcon}
-          title="Publicação"
-          summary={postSummary}
-          open={open === "post"}
-          onToggle={() => select("post")}
-        >
-          <div className="space-y-2">
-            <RadioOption
-              selected={mediaFilter === "specific"}
-              title="Uma publicação ou Reel"
-              onClick={() => setMediaFilter("specific")}
-            >
-              {mediaFilter === "specific" ? (
-                <IgMediaPicker
-                  media={media}
-                  selectedId={mediaId}
-                  onSelect={setMediaId}
-                  loading={loadingMedia}
-                  warning={mediaWarning}
-                  onRetry={reloadMedia}
-                  fallbackIdInput
-                  onFallbackIdChange={setMediaId}
-                />
-              ) : null}
-            </RadioOption>
-            <RadioOption
-              selected={mediaFilter === "any"}
-              title="Qualquer publicação ou Reel"
-              onClick={() => {
-                setMediaFilter("any");
-                setMediaId(null);
-              }}
-            />
-            <RadioOption
-              selected={mediaFilter === "next"}
-              title="A próxima publicação ou Reel"
-              onClick={() => {
-                setMediaFilter("next");
-                setMediaId(null);
-              }}
-            >
-              {mediaFilter === "next" ? (
-                <p className="type-fine-print leading-snug text-[var(--ink-muted-48)]">
-                  Vale para a próxima publicação feita depois de ativar.
-                </p>
-              ) : null}
-            </RadioOption>
-          </div>
-        </ScriptBlock>
-
-        <ScriptBlock
-          icon={Hash}
-          title="Palavra do comentário"
-          summary={keywordSummary}
-          chips={anyKeyword ? undefined : keywords}
-          open={open === "keyword"}
-          onToggle={() => select("keyword")}
-        >
-          <div className="space-y-2">
-            <RadioOption selected={!anyKeyword} title="Uma palavra ou expressão" onClick={() => setAnyKeyword(false)}>
-              {!anyKeyword ? (
-                <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
-                  <input
-                    value={keywordInput}
-                    onChange={(e) => {
-                      setKeywordInput(e.target.value);
-                      setKeywords(parseKeywords(e.target.value));
-                    }}
-                    className={wizardInputCls}
-                    placeholder="Eu quero"
-                  />
-                  <p className="type-fine-print text-[var(--ink-muted-48)]">Separe as palavras com vírgula.</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {SUGGESTED.map((word) => (
-                      <TagChip key={word} onClick={() => addSuggested(word)}>
-                        {word}
-                      </TagChip>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </RadioOption>
-            <RadioOption selected={anyKeyword} title="Qualquer palavra" onClick={() => setAnyKeyword(true)} />
-            <label className="flex items-center justify-between gap-3 pt-1">
-              <span className="type-caption text-[var(--ink)]">Responder o comentário em público</span>
-              <Switch checked={replyToComment} onChange={setReplyToComment} aria-label="Responder o comentário em público" />
-            </label>
-          </div>
-        </ScriptBlock>
-
-        <ScriptBlock
-          icon={MessageCircle}
-          title="Boas-vindas"
-          summary={welcomeEnabled ? welcomeText.split("\n")[0] : "Desligada"}
-          chips={welcomeEnabled && welcomeButton ? [welcomeButton] : undefined}
-          off={!welcomeEnabled}
-          open={open === "welcome"}
-          onToggle={() => select("welcome")}
-          aside={
-            <Switch
-              checked={welcomeEnabled}
-              onChange={setWelcomeEnabled}
-              aria-label="Enviar boas-vindas"
-            />
-          }
-        >
-          <textarea value={welcomeText} onChange={(e) => setWelcomeText(e.target.value)} className={wizardTextareaCls} />
+  const form = step === "live" ? (
+    <div className="space-y-4">
+      <BackLink onClick={() => (liveId ? onSaved(liveId) : onCancel())}>Automações</BackLink>
+      <h1 className="type-tagline text-[var(--ink)]">Automação ativa</h1>
+      <div className="grid grid-cols-2 gap-3">
+        <p className="type-caption text-[var(--ink-muted-48)]">Execuções <span className="type-body-strong text-[var(--ink)]">{insights?.runs ?? 0}</span></p>
+        <p className="type-caption text-[var(--ink-muted-48)]">Envios <span className="type-body-strong text-[var(--ink)]">{insights?.sends ?? 0}</span></p>
+        <p className="type-caption text-[var(--ink-muted-48)]">Cliques <span className="type-body-strong text-[var(--ink)]">{insights?.clicks ?? 0}</span></p>
+        <p className="type-caption text-[var(--ink-muted-48)]">CTR <span className="type-body-strong text-[var(--ink)]">{insights?.ctr ?? 0}%</span></p>
+        <p className="type-caption text-[var(--ink-muted-48)]">E-mails <span className="type-body-strong text-[var(--ink)]">{insights?.emails ?? 0}</span></p>
+      </div>
+      <div className="flex gap-2">
+        <Button type="button" variant="outline" size="toolbar" onClick={() => setStep("setup")}>Editar</Button>
+        <Button type="button" variant="outline" size="toolbar" onClick={() => void stopLive()}>Parar</Button>
+      </div>
+    </div>
+  ) : step === "message" ? (
+    <div className="space-y-4">
+      <BackLink onClick={() => setStep("setup")}>Voltar</BackLink>
+      <h1 className="type-tagline text-[var(--ink)]">Eles receberão o link</h1>
+      <p className="type-caption text-[var(--ink-muted-48)]">Até três links, ou só o texto.</p>
+      <textarea value={rewardText} onChange={(e) => setRewardText(e.target.value)} className={wizardTextareaCls} />
+      {rewardLinks.map((link, index) => (
+        <div key={index} className="space-y-2">
           <input
-            value={welcomeButton}
-            onChange={(e) => setWelcomeButton(e.target.value)}
+            value={link.label}
+            onChange={(e) => setRewardLinks((prev) => prev.map((item, i) => i === index ? { ...item, label: e.target.value } : item))}
             className={wizardInputCls}
             placeholder="Texto do botão"
           />
-        </ScriptBlock>
-
-        <ScriptBlock
-          icon={UserPlus}
-          title="Pedir para seguir"
-          summary={followEnabled ? followText.split("\n")[0] : "Desligado"}
-          off={!followEnabled}
-          open={open === "follow"}
-          onToggle={() => select("follow")}
-          aside={<Switch checked={followEnabled} onChange={setFollowEnabled} aria-label="Pedir para seguir" />}
-        >
-          <textarea value={followText} onChange={(e) => setFollowText(e.target.value)} className={wizardTextareaCls} />
           <input
-            value={followButton}
-            onChange={(e) => setFollowButton(e.target.value)}
+            value={link.url}
+            onChange={(e) => setRewardLinks((prev) => prev.map((item, i) => i === index ? { ...item, url: e.target.value } : item))}
             className={wizardInputCls}
-            placeholder="Texto do botão"
+            placeholder="https://"
           />
-        </ScriptBlock>
-
-        <ScriptBlock
-          icon={Mail}
-          title="Pedir e-mail"
-          summary={emailEnabled ? emailText.split("\n")[0] : "Desligado"}
-          off={!emailEnabled}
-          open={open === "email"}
-          onToggle={() => select("email")}
-          aside={<Switch checked={emailEnabled} onChange={setEmailEnabled} aria-label="Pedir e-mail" />}
-        >
-          <textarea value={emailText} onChange={(e) => setEmailText(e.target.value)} className={wizardTextareaCls} />
-        </ScriptBlock>
-
-        <ScriptBlock
-          icon={Link2}
-          title="Link"
-          summary={rewardText.split("\n")[0]}
-          chips={rewardButton ? [rewardButton] : undefined}
-          open={open === "reward"}
-          onToggle={() => select("reward")}
-        >
-          <textarea
-            value={rewardText}
-            onChange={(e) => setRewardText(e.target.value)}
-            className={`${wizardTextareaCls} min-h-[72px]`}
-          />
-          <WizardLinkButtonEditor
-            buttonLabel={rewardButton}
-            url={rewardUrl}
-            saleLinks={saleLinks}
-            onChange={(button, url) => {
-              setRewardButton(button);
-              setRewardUrl(url);
-            }}
-          />
-        </ScriptBlock>
-
-        <ScriptBlock
-          icon={Clock}
-          title="Lembrete"
-          summary={reminderEnabled ? `${reminderMinutes} min depois` : "Desligado"}
-          off={!reminderEnabled}
-          open={open === "reminder"}
-          onToggle={() => select("reminder")}
-          aside={<Switch checked={reminderEnabled} onChange={setReminderEnabled} aria-label="Enviar lembrete" />}
-        >
+        </div>
+      ))}
+      {rewardLinks.length < 3 ? (
+        <button type="button" className="type-caption text-[var(--primary)]" onClick={() => setRewardLinks((prev) => [...prev, { label: "Acessar", url: "" }])}>
+          Adicionar link
+        </button>
+      ) : null}
+      <label className="flex items-center justify-between gap-3">
+        <span className="type-caption text-[var(--ink)]">Lembrete se o link não for clicado</span>
+        <Switch checked={reminderEnabled} onChange={setReminderEnabled} aria-label="Enviar lembrete" />
+      </label>
+      {reminderEnabled ? (
+        <>
           <textarea value={reminderText} onChange={(e) => setReminderText(e.target.value)} className={wizardTextareaCls} />
           <div className="flex items-center gap-2">
             <span className="type-fine-print text-[var(--ink-muted-48)]">Enviar após</span>
-            <input
-              type="number"
-              min={5}
-              max={1440}
-              value={reminderMinutes}
-              onChange={(e) => setReminderMinutes(Number(e.target.value) || 60)}
-              className={`${wizardInputCls} w-20`}
-            />
+            <input type="number" min={5} max={1440} value={reminderMinutes} onChange={(e) => setReminderMinutes(Number(e.target.value) || 30)} className={`${wizardInputCls} w-20`} />
             <span className="type-fine-print text-[var(--ink-muted-48)]">minutos</span>
           </div>
-        </ScriptBlock>
-      </div>
-
-      <PhonePreview
-        section={open}
-        onSection={setOpen}
-        mediaUrl={thumb}
-        caption={selected?.caption?.slice(0, 90) || "Sua publicação"}
-        commentText={commentPreview}
-        username={username}
-        welcomeText={welcomeEnabled ? welcomeText : ""}
-        welcomeButton={welcomeEnabled ? welcomeButton : ""}
-        followText={followEnabled ? followText : ""}
-        followButton={followEnabled ? followButton : ""}
-        emailText={emailEnabled ? emailText : ""}
-        rewardText={rewardText}
-        rewardButton={rewardButton}
-        reminderText={reminderEnabled ? reminderText : ""}
-        reminderMinutes={reminderEnabled ? reminderMinutes : undefined}
-        showReward
-      />
+        </>
+      ) : null}
+      <Button type="button" size="toolbar" onClick={() => setStep("setup")}>Voltar ao gatilho</Button>
     </div>
+  ) : (
+    <div className="space-y-5">
+      <BackLink onClick={onCancel}>Automações</BackLink>
+      <h1 className="type-tagline text-[var(--ink)]">Quando alguém faz um comentário</h1>
+      <div className="space-y-2">
+        <RadioOption selected={mediaFilter === "specific"} title="Uma publicação ou Reel" onClick={() => setMediaFilter("specific")}>
+          {mediaFilter === "specific" ? (
+            <IgMediaPicker media={media} selectedId={mediaId} onSelect={setMediaId} loading={loadingMedia} warning={mediaWarning} onRetry={reloadMedia} fallbackIdInput onFallbackIdChange={setMediaId} />
+          ) : null}
+        </RadioOption>
+        <RadioOption selected={mediaFilter === "any"} title="Qualquer publicação ou Reel" onClick={() => { setMediaFilter("any"); setMediaId(null); }} />
+        <RadioOption selected={mediaFilter === "next"} title="Próxima publicação ou Reel" onClick={() => { setMediaFilter("next"); setMediaId(null); }} />
+      </div>
+      <div className="space-y-2">
+        <p className="type-body-strong text-[var(--ink)]">E esse comentário possui</p>
+        <RadioOption selected={!anyKeyword} title="Uma palavra ou expressão específica" onClick={() => setAnyKeyword(false)}>
+          {!anyKeyword ? (
+            <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+              <input value={keywordInput} onChange={(e) => { setKeywordInput(e.target.value); setKeywords(parseKeywords(e.target.value)); }} className={wizardInputCls} placeholder="Eu quero" />
+              <p className="type-fine-print text-[var(--ink-muted-48)]">Use vírgulas para separar as palavras</p>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="type-fine-print text-[var(--ink-muted-48)]">Por exemplo:</span>
+                {SUGGESTED.slice(0, 3).map((word) => (
+                  <TagChip key={word} onClick={() => addSuggested(word)}>{word}</TagChip>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </RadioOption>
+        <RadioOption selected={anyKeyword} title="Qualquer palavra" onClick={() => setAnyKeyword(true)} />
+        <label className="flex items-center justify-between gap-3 pt-1">
+          <span className="type-caption text-[var(--ink)]">Interagir com os comentários deles na publicação</span>
+          <Switch checked={replyToComment || repliesFilled.length > 0} onChange={(on) => { setReplyToComment(on); if (!on) setPublicReplies(["", "", ""]); }} aria-label="Interagir com os comentários deles na publicação" />
+        </label>
+        {replyToComment || repliesFilled.length > 0 ? (
+          <div className="space-y-2">
+            {publicReplies.map((value, index) => (
+              <input key={index} value={value} onChange={(e) => setPublicReplies((prev) => prev.map((item, i) => i === index ? e.target.value : item))} className={wizardInputCls} placeholder={`Resposta pública ${index + 1}`} />
+            ))}
+          </div>
+        ) : null}
+      </div>
+      <div className="space-y-3">
+        <p className="type-body-strong text-[var(--ink)]">Eles receberão</p>
+        <label className="flex items-center justify-between gap-3">
+          <span className="type-caption text-[var(--ink)]">Uma mensagem de boas-vindas</span>
+          <Switch checked={welcomeEnabled} onChange={setWelcomeEnabled} aria-label="Uma mensagem de boas-vindas" />
+        </label>
+        {welcomeEnabled ? (
+          <div className="space-y-2">
+            <textarea value={welcomeText} onChange={(e) => setWelcomeText(e.target.value.slice(0, 1000))} className={wizardTextareaCls} />
+            <p className="text-right type-micro-legal text-[var(--ink-muted-48)]">{welcomeText.length}</p>
+            <input value={welcomeButton} onChange={(e) => setWelcomeButton(e.target.value)} className={wizardInputCls} placeholder="Me envie o link" />
+            <button type="button" className="type-fine-print text-[var(--primary)]" onClick={() => setWhyWelcome((v) => !v)}>
+              Qual a importância de uma mensagem de boas-vindas?
+            </button>
+            {whyWelcome ? (
+              <p className="type-fine-print text-[var(--ink-muted-48)]">
+                O botão abre a conversa. Sem essa mensagem, só saem a resposta pública e a DM do link.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+        <label className="flex items-center justify-between gap-3">
+          <span className="type-caption text-[var(--ink)]">Uma DM pedindo que sigam o perfil antes do link</span>
+          <Switch checked={followEnabled} onChange={setFollowEnabled} aria-label="Pedir para seguir" />
+        </label>
+        {followEnabled ? (
+          <textarea value={followText} onChange={(e) => setFollowText(e.target.value)} className={wizardTextareaCls} />
+        ) : null}
+        <label className="flex items-center justify-between gap-3">
+          <span className="type-caption text-[var(--ink)]">Uma DM solicitando o endereço de e-mail</span>
+          <Switch checked={emailEnabled} onChange={setEmailEnabled} aria-label="Pedir e-mail" />
+        </label>
+        {emailEnabled ? (
+          <textarea value={emailText} onChange={(e) => setEmailText(e.target.value)} className={wizardTextareaCls} />
+        ) : null}
+      </div>
+      <Button type="button" variant="outline" size="toolbar" onClick={() => setStep("message")}>Próximo</Button>
+    </div>
+  );
+
+  return (
+    <WizardLayout
+      previewHeader={
+        <>
+          <span className="type-caption text-[var(--ink-muted-48)]">Visualização</span>
+          <Button type="button" size="toolbar" disabled={loading || step === "live"} onClick={() => void activate()}>
+            {loading ? "Ativando…" : "Ativar"}
+          </Button>
+        </>
+      }
+      form={form}
+      preview={
+        <IgCommentPreview
+          scene={scene}
+          onScene={setScene}
+          username={username}
+          mediaUrl={thumb}
+          caption={selected?.caption?.slice(0, 140)}
+          commentText={commentPreview}
+          welcomeText={welcomeText}
+          welcomeButton={welcomeButton}
+          showWelcome={welcomeEnabled}
+        />
+      }
+    />
   );
 }

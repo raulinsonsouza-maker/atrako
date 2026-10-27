@@ -47,6 +47,8 @@ export type QualifyScript = {
 export type ScriptOverrides = {
   opening?: { text?: string };
   questionOrder?: QualifyFieldKey[];
+  /** Perguntas tiradas do roteiro. Sem isso, a ordem parcial recoloca as que faltam. */
+  removedQuestions?: QualifyFieldKey[];
   showProgress?: boolean;
   questions?: Partial<Record<QualifyFieldKey, { text?: string; enabled?: boolean; options?: ChoiceOpt[] }>>;
   bestTime?: { text?: string; enabled?: boolean };
@@ -222,6 +224,10 @@ export function sanitizeOverrides(raw: unknown): ScriptOverrides {
     const order = [...new Set(r.questionOrder.filter(isKey))];
     if (order.length) out.questionOrder = order;
   }
+  if (Array.isArray(r.removedQuestions)) {
+    const removed = [...new Set(r.removedQuestions.filter(isKey))];
+    if (removed.length) out.removedQuestions = removed;
+  }
   if (typeof r.showProgress === "boolean") out.showProgress = r.showProgress;
   const qs = rec(r.questions);
   const questions: NonNullable<ScriptOverrides["questions"]> = {};
@@ -272,9 +278,11 @@ export function sanitizeOverrides(raw: unknown): ScriptOverrides {
 export function resolveScript(raw: unknown): QualifyScript {
   const o = sanitizeOverrides(raw);
   const base = DEFAULT_SCRIPT;
-  const order = o.questionOrder
+  const removed = new Set(o.removedQuestions ?? []);
+  const order = (o.questionOrder
     ? [...o.questionOrder, ...SCRIPT_ASK_ORDER.filter((k) => !o.questionOrder!.includes(k))]
-    : SCRIPT_ASK_ORDER;
+    : SCRIPT_ASK_ORDER
+  ).filter((k) => !removed.has(k));
   const questions = order.map((key) => {
     const def = base.questions.find((q) => q.key === key)!;
     const ov = o.questions?.[key] ?? {};
@@ -304,7 +312,7 @@ export function customizedBlocks(raw: unknown): ScriptBlockId[] {
   const o = sanitizeOverrides(raw);
   const out: ScriptBlockId[] = [];
   if (o.opening) out.push("opening");
-  if (o.questionOrder || o.showProgress !== undefined) out.push("questions");
+  if (o.questionOrder || o.removedQuestions?.length || o.showProgress !== undefined) out.push("questions");
   for (const key of Object.keys(o.questions ?? {}) as QualifyFieldKey[]) out.push(`question:${key}`);
   if (o.bestTime) out.push("bestTime");
   if (o.handoff) out.push("handoff");
@@ -321,6 +329,7 @@ export function applyBlock(raw: unknown, block: ScriptBlockId, patch: unknown): 
   const next: Record<string, unknown> = { ...o };
   if (block === "questions") {
     if ("questionOrder" in p) next.questionOrder = p.questionOrder;
+    if ("removedQuestions" in p) next.removedQuestions = p.removedQuestions;
     if ("showProgress" in p) next.showProgress = p.showProgress;
   } else if (block.startsWith("question:")) {
     const key = block.slice("question:".length);
@@ -340,6 +349,7 @@ export function resetBlock(raw: unknown, block: ScriptBlockId): ScriptOverrides 
   const o = { ...sanitizeOverrides(raw) };
   if (block === "questions") {
     delete o.questionOrder;
+    delete o.removedQuestions;
     delete o.showProgress;
   } else if (block.startsWith("question:")) {
     const questions = { ...(o.questions ?? {}) };
@@ -364,6 +374,7 @@ function pruneDefaults(o: ScriptOverrides): ScriptOverrides {
   if (out.opening?.text === d.opening.text) delete out.opening;
   if (out.showProgress === d.showProgress) delete out.showProgress;
   if (out.questionOrder && same(out.questionOrder, SCRIPT_ASK_ORDER)) delete out.questionOrder;
+  if (out.removedQuestions && !out.removedQuestions.length) delete out.removedQuestions;
   if (out.questions) {
     const qs = { ...out.questions };
     for (const key of Object.keys(qs) as QualifyFieldKey[]) {

@@ -26,6 +26,10 @@ function maskCpf(v: string) {
     .replace(/\.(\d{3})(\d{1,2})$/, ".$1-$2");
 }
 
+function maskEmail(v: string) {
+  return v.replace(/\s/g, "").toLowerCase();
+}
+
 function maskCard(v: string) {
   return digits(v).slice(0, 19).replace(/(\d{4})(?=\d)/g, "$1 ");
 }
@@ -306,15 +310,26 @@ export function PaymentLinkCheckout({ initial }: { initial: PublicPaymentLink })
                     { value: "card", label: "Cartão de crédito" },
                   ]}
                   aria-label="Forma de pagamento"
-                  className="w-full"
+                  fill
                 />
                 <TextField label="Nome completo" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
-                <TextField label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+                <TextField
+                  label="E-mail"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(maskEmail(e.target.value))}
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  inputMode="email"
+                  placeholder="nome@email.com"
+                />
                 <TextField
                   label={method === "card" ? "CPF do titular do cartão" : "CPF"}
                   value={cpf}
                   onChange={(e) => setCpf(maskCpf(e.target.value))}
                   inputMode="numeric"
+                  autoComplete="off"
                   placeholder="000.000.000-00"
                 />
                 {method === "card" ? (

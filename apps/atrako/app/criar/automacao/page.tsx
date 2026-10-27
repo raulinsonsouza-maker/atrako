@@ -191,7 +191,7 @@ function AutomacaoInner() {
             <div className="rounded-lg border border-[var(--hairline)] bg-[var(--canvas-parchment)] p-4">
               <p className="type-caption text-[var(--ink)]">Conecte o Instagram para ativar.</p>
               <Link
-                href="/social/connect"
+                href="/config/conexoes"
                 className="mt-2 inline-block type-caption-strong text-[var(--primary)]"
               >
                 Conectar Instagram

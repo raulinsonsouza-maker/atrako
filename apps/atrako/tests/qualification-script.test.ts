@@ -77,6 +77,19 @@ test("ordem personalizada vale para as perguntas", () => {
   assert.equal(keys.length, DEFAULT_SCRIPT.questions.length);
 });
 
+test("pergunta excluída sai do roteiro e pode voltar", () => {
+  const removed = applyBlock(undefined, "questions", { removedQuestions: ["how_found", "main_question"] });
+  const keys = resolveScript(removed).questions.map((q) => q.key);
+  assert.equal(keys.includes("how_found"), false);
+  assert.equal(keys.includes("main_question"), false);
+  assert.equal(keys.length, DEFAULT_SCRIPT.questions.length - 2);
+  const items = scriptConversation(resolveScript(removed), { brand: "Regicenter", lpKeys: [] });
+  assert.equal(items.some((i) => i.block === "question:how_found"), false);
+  const back = applyBlock(removed, "questions", { removedQuestions: ["how_found"] });
+  assert.equal(resolveScript(back).questions.some((q) => q.key === "main_question"), true);
+  assert.equal(resolveScript(resetBlock(removed, "questions")).questions.length, DEFAULT_SCRIPT.questions.length);
+});
+
 test("variáveis viram nome, empresa, cidade e horário", () => {
   assert.equal(renderText("Oi {nome}, aqui é da {empresa} em {cidade}.", { nome: "Maria Souza", empresa: "Regicenter", cidade: "Curitiba" }), "Oi Maria, aqui é da Regicenter em Curitiba.");
   assert.equal(renderText("Oi, {nome}!", {}), "Oi!");

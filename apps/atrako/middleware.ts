@@ -90,6 +90,12 @@ export default function middleware(request: NextRequest) {
     }
     if (LP_DOMAIN_SITE_PAGES.includes(pathname)) return rewriteTo(`${site}${pathname}`);
     if (["/robots.txt", "/sitemap.xml", "/llms.txt", "/llms-full.txt", "/indexnow.txt"].includes(pathname)) return NextResponse.next();
+    if (pathname === "/social" || pathname.startsWith("/social/")) {
+      const inbox = pathname.startsWith("/social/inbox") || pathname.startsWith("/social/contacts");
+      const dest = new URL(inbox ? `${LP_AREA_PATH}/conversas` : `${LP_AREA_PATH}/mensagens`, origin);
+      dest.searchParams.set("canal", "instagram");
+      return noindex(NextResponse.redirect(dest));
+    }
     if (LP_DOMAIN_ALLOWED_PREFIXES.some((p) => pathname.startsWith(p))) {
       return pathname.startsWith("/api/") ? NextResponse.next() : noindex(NextResponse.next());
     }
@@ -123,6 +129,13 @@ function noindex(res: NextResponse) {
 
 function authGate(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (pathname === "/social" || pathname.startsWith("/social/")) {
+    const inbox = pathname.startsWith("/social/inbox") || pathname.startsWith("/social/contacts");
+    const dest = new URL(inbox ? "/atendimento/conversas" : "/atendimento/mensagens", request.url);
+    dest.searchParams.set("canal", "instagram");
+    return NextResponse.redirect(dest);
+  }
 
   if (process.env.ATRAKO_DEV_OPEN_ACCESS === "1") {
     return NextResponse.next();

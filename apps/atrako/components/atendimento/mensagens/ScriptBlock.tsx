@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, type ReactNode } from "react";
-import { ChevronDown, Loader2, Plus, X, type LucideIcon } from "lucide-react";
+import { ChevronDown, Loader2, Plus, Trash2, type LucideIcon } from "lucide-react";
 import { Button, IconButton } from "@/components/ui";
 import type { ChoiceOpt } from "@/lib/qualification/choices";
 
@@ -175,11 +175,12 @@ export function OptionsEditor({ value, onChange }: { value: ChoiceOpt[]; onChang
           />
           <IconButton
             size="toolbar"
+            className="text-[var(--danger)]"
             aria-label={`Remover opção ${i + 1}`}
             disabled={value.length <= 2}
             onClick={() => onChange(value.filter((_, j) => j !== i))}
           >
-            <X className="h-3.5 w-3.5" />
+            <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
           </IconButton>
         </div>
       ))}

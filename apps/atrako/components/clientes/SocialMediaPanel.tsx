@@ -20,9 +20,9 @@ import {
   ReferenceLine,
 } from "recharts";
 import {
-  Users, Heart, Eye, TrendingUp, Instagram, ImageIcon,
-  MessageCircle, ThumbsUp, X, ChevronRight, Film, Share2, Layers,
-  MousePointerClick, BarChart2, Zap,
+  Eye, Instagram, ImageIcon,
+  ThumbsUp, X, ChevronRight, Film, Share2, Layers,
+  BarChart2, Zap,
 } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -143,6 +143,13 @@ function SectionHeader({ sub, title }: { sub: string; title: string }) {
 
 function KpiCard({ label, value, sub }: { icon?: React.ReactNode; label: string; value: string; sub?: string }) {
   return <MetricTile label={label} value={value} detail={sub} />;
+}
+
+function kpiGridClass(count: number) {
+  if (count <= 2) return "grid grid-cols-2 gap-3";
+  if (count === 3 || count === 6) return "grid grid-cols-2 gap-3 sm:grid-cols-3";
+  if (count === 4 || count === 7 || count === 8) return "grid grid-cols-2 gap-3 sm:grid-cols-4";
+  return "grid grid-cols-2 gap-3 sm:grid-cols-5";
 }
 
 function SkeletonCard({ h = 24 }: { h?: number }) {
@@ -493,6 +500,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
 
   // Query 2: Posts — slow (N per-post insights calls), loads after KPI is visible
   const postsParams = new URLSearchParams();
+  if (dateFilter.periodo) postsParams.set("periodo", dateFilter.periodo);
   if (dateFilter.dataInicio) postsParams.set("dataInicio", dateFilter.dataInicio);
   if (dateFilter.dataFim) postsParams.set("dataFim", dateFilter.dataFim);
   postsParams.set("section", "posts");
@@ -590,7 +598,7 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
 
       <div className="space-y-10">
 
-        {/* ── KPI grid (10 cards, 2×5) ── */}
+        {/* KPI: só entra o card cujo número a API devolveu. */}
         {(() => {
           const novosSegs = period?.novosSeguidores ?? null;
           const followersStart = (profile?.followersTotal ?? 0) - (novosSegs ?? 0);
@@ -602,70 +610,56 @@ export function SocialMediaPanel({ clienteId, dateFilter }: Props) {
           const comentarios = period?.comentariosTotal ?? postsPeriod?.comentariosTotal ?? null;
           const compartilhamentos =
             period?.compartilhamentosTotal ?? postsPeriod?.compartilhamentosTotal ?? null;
+          const cards: Array<{ label: string; value: string; sub: string }> = [
+            {
+              label: "Seguidores",
+              value: fmtFull(profile?.followersTotal ?? 0),
+              sub: "Total atual",
+            },
+          ];
+          if (novosSegs !== null) {
+            cards.push({
+              label: "Novos seguidores",
+              value: fmtFull(novosSegs),
+              sub: taxaCrescimento !== null
+                ? `↑ ${taxaCrescimento.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}% de crescimento`
+                : "No período",
+            });
+          }
+          cards.push(
+            {
+              label: "Alcance",
+              value: fmtFull(period?.alcanceTotal ?? 0),
+              sub: "Contas alcançadas",
+            },
+            {
+              label: "Pessoas engajadas",
+              value: fmtFull(period?.engajamentoTotal ?? 0),
+              sub: "Contas únicas engajadas",
+            },
+            {
+              label: "Taxa de engajamento",
+              value: fmtPct(period?.taxaEngajamento ?? 0),
+              sub: "Contas engajadas / alcance",
+            },
+          );
+          const periodCards: Array<{ label: string; raw: number | null }> = [
+            { label: "Visitas no perfil", raw: period?.visitasPerfil ?? null },
+            { label: "Visualizações", raw: visualizacoes },
+            { label: "Curtidas", raw: curtidas },
+            { label: "Comentários", raw: comentarios },
+            { label: "Compartilhamentos", raw: compartilhamentos },
+          ];
+          for (const card of periodCards) {
+            if (card.raw == null) continue;
+            cards.push({ label: card.label, value: fmtFull(card.raw), sub: "No período" });
+          }
+          if (cards.length === 0) return null;
           return (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-              {/* Row 1 — audience & reach */}
-              <KpiCard
-                icon={<Users className="h-4 w-4" />}
-                label="Seguidores"
-                value={fmtFull(profile?.followersTotal ?? 0)}
-                sub="Total atual"
-              />
-              <KpiCard
-                icon={<TrendingUp className="h-4 w-4" />}
-                label="Novos seguidores"
-                value={novosSegs !== null ? fmtFull(novosSegs) : "—"}
-                sub={taxaCrescimento !== null ? `↑ ${taxaCrescimento.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}% de crescimento` : "No período"}
-              />
-              <KpiCard
-                icon={<Eye className="h-4 w-4" />}
-                label="Alcance"
-                value={fmtFull(period?.alcanceTotal ?? 0)}
-                sub="Contas alcançadas"
-              />
-              <KpiCard
-                icon={<TrendingUp className="h-4 w-4" />}
-                label="Pessoas engajadas"
-                value={fmtFull(period?.engajamentoTotal ?? 0)}
-                sub="Contas únicas engajadas"
-              />
-              <KpiCard
-                icon={<Heart className="h-4 w-4" />}
-                label="Taxa de engajamento"
-                value={fmtPct(period?.taxaEngajamento ?? 0)}
-                sub="Contas engajadas / alcance"
-              />
-              {/* Row 2 — content & interactions */}
-              <KpiCard
-                icon={<MousePointerClick className="h-4 w-4" />}
-                label="Visitas no perfil"
-                value={period?.visitasPerfil != null ? fmtFull(period.visitasPerfil) : "—"}
-                sub="No período"
-              />
-              <KpiCard
-                icon={<Eye className="h-4 w-4" />}
-                label="Visualizações"
-                value={visualizacoes != null ? fmtFull(visualizacoes) : "—"}
-                sub="No período"
-              />
-              <KpiCard
-                icon={<Heart className="h-4 w-4" />}
-                label="Curtidas"
-                value={curtidas != null ? fmtFull(curtidas) : "—"}
-                sub="No período"
-              />
-              <KpiCard
-                icon={<MessageCircle className="h-4 w-4" />}
-                label="Comentários"
-                value={comentarios != null ? fmtFull(comentarios) : "—"}
-                sub="No período"
-              />
-              <KpiCard
-                icon={<Share2 className="h-4 w-4" />}
-                label="Compartilhamentos"
-                value={compartilhamentos != null ? fmtFull(compartilhamentos) : "—"}
-                sub="No período"
-              />
+            <div className={kpiGridClass(cards.length)}>
+              {cards.map((card) => (
+                <KpiCard key={card.label} label={card.label} value={card.value} sub={card.sub} />
+              ))}
             </div>
           );
         })()}

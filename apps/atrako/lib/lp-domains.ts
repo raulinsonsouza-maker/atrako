@@ -71,8 +71,18 @@ export function lpOAuthReturnTo(origin: string): string | null {
   }
 }
 
+/** Formulário passo a passo da Regicenter, servido no domínio da LP. */
+export const REGICENTER_QUALIFY_FORM_PATH = "/f/franquia-regicenter-qualify";
+
 /** Prefixos do Atrako expostos no domínio do cliente. */
 export const LP_DOMAIN_ALLOWED_PREFIXES = ["/api/", "/sign-in", "/change-password", "/pagar/", "/social", "/config/conexoes"];
+
+/** URL pública do formulário no domínio da LP, quando o workspace tem um. */
+export function workspaceFormUrl(workspaceSlug: string, formSlug: string): string | null {
+  const host = lpHostForWorkspace(workspaceSlug);
+  if (!host) return null;
+  return `https://${host}/f/${formSlug}`;
+}
 
 /** Caminhos do domínio do cliente que não devem ser indexados. */
 export const LP_DOMAIN_NOINDEX_PREFIXES = ["/api/", "/sign-in", "/change-password", "/pagar/", LP_AREA_PATH];

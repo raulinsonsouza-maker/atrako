@@ -9,6 +9,7 @@ import { loadQualificationPrefs, sourceMatchesPlaybook } from "./playbook";
 import { startQualificationFlow } from "./engine";
 import { enrollQualifyCadence } from "./cadence";
 import { getServerPublicOrigin } from "@/lib/http/public-origin";
+import { workspaceFormUrl } from "@/lib/lp-domains";
 import { enrollContact } from "@/lib/flows/engine";
 import { ensureFranchiseFlows } from "@/lib/flows/playbooks-franchise";
 
@@ -75,11 +76,18 @@ export async function ingestFormAnswersIntoLead(input: {
   });
 
   if (contact?.email && prefs.playbookId === "franchise_regicenter") {
+    const cliente = await prisma.cliente.findFirst({
+      where: { id: input.workspaceId },
+      select: { slug: true },
+    });
+    const destination =
+      (cliente ? workspaceFormUrl(cliente.slug, prefs.qualifyFormSlug) : null) ??
+      `${getServerPublicOrigin()}/f/${prefs.qualifyFormSlug}`;
     await enrollFranchiseNurture({
       workspaceId: input.workspaceId,
       contactId: input.contactId,
       leadId: input.leadId,
-      destination: `${getServerPublicOrigin()}/f/${prefs.qualifyFormSlug}`,
+      destination,
     }).catch((err) => console.warn("[qualification] nurture", err instanceof Error ? err.message : err));
   }
   const phone = contact?.phoneE164 || contact?.phone;

@@ -33,6 +33,13 @@ function monthKey(ano: number, mes: number): string {
   return `${ano}-${String(mes).padStart(2, "0")}`;
 }
 
+/** Dia civil em Brasília. O timestamp do Instagram vem em UTC e cortava o post do fim do dia. */
+function instagramDay(timestamp: string): string {
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return timestamp.slice(0, 10);
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(date);
+}
+
 async function igGet(path: string, token: string, params: Record<string, string> = {}) {
   const sp = new URLSearchParams({ access_token: token, ...params });
   const res = await fetch(`${GRAPH}/${path}?${sp}`);
@@ -144,7 +151,8 @@ export async function GET(
   const { id: clienteId } = await params;
   const access = await requireClienteAccess(req, clienteId, "public-read");
   if (access.response) return access.response;
-  const canUseLiveProvider = Boolean(access.internalUser);
+  // Membro do workspace lê o próprio Instagram. Portal anônimo fica no agregado salvo.
+  const canUseLiveProvider = Boolean(access.internalUser || access.member);
   const sp = new URL(req.url).searchParams;
   const periodo = sp.get("periodo");
   const dataInicio = sp.get("dataInicio");
@@ -268,12 +276,19 @@ export async function GET(
       // Live fallback is restricted to authenticated internal/portal reads.
       const creds = await resolveMetaCredentials(clienteId);
       if (!creds?.token) {
-        return NextResponse.json(
-          { configured: true, error: "Sem credenciais Meta configuradas" },
-          { status: 401 },
-        );
+        monthly = dbInsights.map((row) => ({
+          mes: monthKey(row.ano, row.mes),
+          label: monthLabel(row.ano, row.mes),
+          alcance: row.alcance,
+          engajamento: row.engajamento,
+          novosSeguidores: row.novosSeguidores,
+          followersTotal: row.followersTotal,
+          impressoes: row.impressoes ?? 0,
+        }));
+        followersTotal = dbInsights.at(-1)?.followersTotal ?? 0;
       }
-      const token = creds.token;
+      const token = creds?.token;
+      if (token) {
       try {
       const profileRaw = await igGet(`${igId}`, token, { fields: "followers_count,name" });
       followersTotal = (profileRaw.followers_count as number) ?? 0;
@@ -316,6 +331,7 @@ export async function GET(
         const msg = e instanceof Error ? e.message : "Erro ao consultar Instagram API";
         return NextResponse.json({ configured: true, error: msg }, { status: 500 });
       }
+      }
     }
   }
 
@@ -340,8 +356,8 @@ export async function GET(
   const section = sp.get("section") ?? "kpi";
 
   // mediaStart/mediaEnd needed by both paths
-  const mediaStart = dataInicio ?? since12.toISOString().slice(0, 10);
-  const mediaEnd = dataFim ?? now.toISOString().slice(0, 10);
+  const mediaStart = resolvedInicio ?? since12.toISOString().slice(0, 10);
+  const mediaEnd = resolvedFim ?? now.toISOString().slice(0, 10);
 
   type PostRow = {
     id: string; caption: string; thumbnailUrl: string | null; mediaUrl: string | null;
@@ -427,13 +443,13 @@ export async function GET(
             });
             const pageRows = (mediaRaw.data ?? []) as MediaRow[];
             allMedia.push(...pageRows);
-            const oldestDate = pageRows.at(-1)?.timestamp?.slice(0, 10);
+            const oldestDate = pageRows.at(-1)?.timestamp ? instagramDay(pageRows.at(-1)!.timestamp) : undefined;
             after = (mediaRaw.paging as { cursors?: { after?: string } } | undefined)?.cursors?.after;
             if (!after || pageRows.length === 0 || (oldestDate && oldestDate < mediaStart)) break;
           }
 
           const filtered = allMedia.filter((m) => {
-            const t = m.timestamp.slice(0, 10);
+            const t = instagramDay(m.timestamp);
             return t >= mediaStart && t <= mediaEnd;
           });
           publicacoesTotal = filtered.length;

@@ -21,6 +21,7 @@ import {
   tryAdvanceAwaitingFollow,
   tryHandleAwaitingEmailResponse,
 } from "./commentDmFlow";
+import { queueInstagramWorkspaceLead } from "./workspaceLead";
 import {
   isWithin24hWindow,
   directButtonPayload,
@@ -618,6 +619,7 @@ async function startFluxo(
       context: context as object,
     },
   });
+  queueInstagramWorkspaceLead(organizationId, contatoId, "flow");
   await recordConversion({
     organizationId,
     tipo: "fluxo_started",
@@ -839,6 +841,7 @@ async function sendCommentDmWelcome(params: {
         context: { ...params.context, step: "welcome" } as object,
       },
     });
+    queueInstagramWorkspaceLead(params.organizationId, params.contatoId, "comment");
   } catch (e) {
     console.warn(
       "[instagram] welcome DM failed:",
@@ -883,6 +886,7 @@ async function sendCommentDmReward(params: {
         context: { step: "reward" } as object,
       },
     });
+    queueInstagramWorkspaceLead(params.organizationId, params.contatoId, "reward");
   } catch (e) {
     console.warn(
       "[instagram] reward DM failed:",
@@ -1003,6 +1007,7 @@ async function openDirectAutomation(params: {
       context: { step: "dm_open", fluxoId: params.fluxoId } as object,
     },
   });
+  queueInstagramWorkspaceLead(params.organizationId, params.contatoId, "dm");
   await recordConversion({
     organizationId: params.organizationId,
     tipo: "fluxo_started",

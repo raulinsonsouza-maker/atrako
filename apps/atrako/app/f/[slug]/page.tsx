@@ -6,6 +6,8 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { FormField, FormStep } from "@atrako/forms";
 import { collectClientAttribution } from "@/lib/criar/lp-attribution";
+import { loadWorkspaceTracking, newLeadEventId, rememberCampaignVisit, trackFormLead } from "@/lib/criar/form-tracking";
+import { firstTouchPayload } from "@/lib/geo-hub/first-touch";
 import { FormFieldControl, isFieldValueValid } from "@/components/forms/FormFieldControl";
 
 function formPresentation(name: string, layout: "block" | "wizard", slug: string) {
@@ -37,6 +39,12 @@ export default function PublicFormPage() {
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [previewToken, setPreviewToken] = useState<string | null>(null);
+  const [startedAt] = useState(() => Date.now());
+
+  useEffect(() => {
+    rememberCampaignVisit();
+    loadWorkspaceTracking();
+  }, []);
 
   useEffect(() => {
     if (!slug) return;
@@ -101,6 +109,7 @@ export default function PublicFormPage() {
         fieldId,
         value: val,
       }));
+      const metaEventId = newLeadEventId();
       const r = await fetch("/api/atrako/forms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -108,12 +117,17 @@ export default function PublicFormPage() {
           action: "complete",
           slug,
           answers: payload,
+          metaEventId,
+          website: "",
+          startedAt,
           ...collectClientAttribution({ formSlug: slug }),
+          ...firstTouchPayload(),
           ...(previewToken ? { preview: previewToken } : {}),
         }),
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || "Falha ao enviar");
+      if (!previewToken) trackFormLead(metaEventId, "Franquia Regicenter", slug);
       setDone(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha ao enviar");

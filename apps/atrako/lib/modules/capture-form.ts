@@ -177,6 +177,8 @@ export type LeadAttribution = {
   utm_campaign?: string;
   utm_content?: string;
   utm_term?: string;
+  utm_id?: string;
+  atk_ad?: string;
   gclid?: string;
   fbclid?: string;
   referrer?: string;

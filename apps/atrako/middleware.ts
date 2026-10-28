@@ -12,6 +12,7 @@ import {
   LP_DOMAIN_ALLOWED_PREFIXES,
   LP_DOMAIN_SITE_PAGES,
   LP_DOMAINS,
+  REGICENTER_QUALIFY_FORM_PATH,
 } from "@/lib/lp-domains";
 
 const PUBLIC_PREFIXES = [
@@ -75,6 +76,13 @@ export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = (request.headers.get("host") ?? "").split(":")[0].toLowerCase();
   const lp = LP_DOMAINS[host];
+  const qualifyForm =
+    pathname === REGICENTER_QUALIFY_FORM_PATH || pathname.startsWith(`${REGICENTER_QUALIFY_FORM_PATH}/`);
+  if (production && qualifyForm && !lp) {
+    const dest = new URL(`https://lp.regicenter.com${pathname}`);
+    dest.search = request.nextUrl.search;
+    return NextResponse.redirect(dest, 308);
+  }
   if (lp) {
     // Atrás do Traefik o request chega em http; o domínio público é sempre https.
     const origin = production ? `https://${host}` : `http://${request.headers.get("host")}`;
@@ -85,6 +93,7 @@ export default function middleware(request: NextRequest) {
       return NextResponse.rewrite(target);
     };
     if (pathname === "/") return NextResponse.next();
+    if (qualifyForm) return NextResponse.next();
     if (lp.geoBasePath && (pathname === lp.geoBasePath || pathname.startsWith(`${lp.geoBasePath}/`))) {
       return rewriteTo(`${site}/g${pathname.slice(lp.geoBasePath.length)}`);
     }

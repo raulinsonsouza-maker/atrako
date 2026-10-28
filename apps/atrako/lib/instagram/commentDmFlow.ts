@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db-social";
+import { queueInstagramWorkspaceLead } from "./workspaceLead";
 import {
   buildLinkTrackingUrl,
   contactClickedRewardLink,
@@ -150,6 +151,7 @@ async function scheduleReminderExec(
       } as object,
     },
   });
+  queueInstagramWorkspaceLead(params.organizationId, params.contatoId, "flow");
   return exec.id;
 }
 
@@ -270,7 +272,7 @@ async function ensureAwaitingFollowExec(params: FlowStepParams) {
     }
     return existing;
   }
-  return prisma.igFluxoExecucao.create({
+  const exec = await prisma.igFluxoExecucao.create({
     data: {
       organizationId: params.organizationId,
       fluxoId: params.fluxoId,
@@ -279,6 +281,8 @@ async function ensureAwaitingFollowExec(params: FlowStepParams) {
       context: { step: "awaiting_follow", fluxoId: params.fluxoId } as object,
     },
   });
+  queueInstagramWorkspaceLead(params.organizationId, params.contatoId, "flow");
+  return exec;
 }
 
 async function completeAwaitingFollowExec(contatoId: string, fluxoId: string) {
@@ -411,7 +415,7 @@ async function ensureAwaitingEmailExec(params: FlowStepParams) {
     }
     return existing;
   }
-  return prisma.igFluxoExecucao.create({
+  const exec = await prisma.igFluxoExecucao.create({
     data: {
       organizationId: params.organizationId,
       fluxoId: params.fluxoId,
@@ -420,6 +424,8 @@ async function ensureAwaitingEmailExec(params: FlowStepParams) {
       context: { step: "awaiting_email", fluxoId: params.fluxoId } as object,
     },
   });
+  queueInstagramWorkspaceLead(params.organizationId, params.contatoId, "flow");
+  return exec;
 }
 
 export async function sendRewardStep(params: FlowStepParams): Promise<void> {

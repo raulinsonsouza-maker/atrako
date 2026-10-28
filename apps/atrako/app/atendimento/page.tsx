@@ -68,7 +68,14 @@ function AtendimentoHome() {
       {!workspaceId ? (
         <p className="type-caption text-[var(--ink-muted-48)]">Carregando…</p>
       ) : aba === "anuncios" ? (
-        <AnunciosPanel workspaceId={workspaceId} periodo={period.periodo} dataInicio={dataInicio} dataFim={dataFim} />
+        <AnunciosPanel
+          workspaceId={workspaceId}
+          periodo={period.periodo}
+          dataInicio={dataInicio}
+          dataFim={dataFim}
+          periodLabel={period.resolved.label}
+          preset={period.value.preset}
+        />
       ) : aba === "instagram" ? (
         <SocialMediaPanel clienteId={workspaceId} dateFilter={{ periodo: period.periodo, dataInicio, dataFim }} />
       ) : (

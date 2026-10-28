@@ -11,8 +11,12 @@ export type LpClientAttribution = {
   utm_campaign?: string;
   utm_content?: string;
   utm_term?: string;
+  utm_id?: string;
+  atk_ad?: string;
   gclid?: string;
   fbclid?: string;
+  fbp?: string;
+  fbc?: string;
   referrer?: string;
 };
 
@@ -22,9 +26,17 @@ const UTM_KEYS = [
   "utm_campaign",
   "utm_content",
   "utm_term",
+  "utm_id",
+  "atk_ad",
   "gclid",
   "fbclid",
 ] as const;
+
+function readBrowserCookie(name: string): string {
+  if (typeof document === "undefined") return "";
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : "";
+}
 
 /** Lê UTMs / click IDs da URL atual (browser). */
 export function collectClientAttribution(opts?: {
@@ -46,6 +58,11 @@ export function collectClientAttribution(opts?: {
       const v = params.get(key)?.trim();
       if (v) out[key] = v.slice(0, 200);
     }
+    const fbp = readBrowserCookie("_fbp").trim();
+    const fbcCookie = readBrowserCookie("_fbc").trim();
+    if (fbp) out.fbp = fbp.slice(0, 200);
+    if (fbcCookie) out.fbc = fbcCookie.slice(0, 200);
+    else if (out.fbclid) out.fbc = `fb.1.${Date.now()}.${out.fbclid}`.slice(0, 200);
   } catch {
     /* ignore */
   }
@@ -73,6 +90,8 @@ export function pickAttributionFromBody(
     "utm_campaign",
     "utm_content",
     "utm_term",
+    "utm_id",
+    "atk_ad",
     "gclid",
     "fbclid",
     "fbp",

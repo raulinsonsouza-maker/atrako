@@ -179,6 +179,7 @@ export async function syncMetaCliente(
         dateFrom: creativeDateFrom,
         dateTo: creativeDateTo,
         includeInactive: true,
+        includeExistingPosts: true,
       });
     } catch (creativeErr) {
       const creativeMsg = creativeErr instanceof Error ? creativeErr.message : String(creativeErr);
@@ -210,11 +211,20 @@ export async function syncMetaCliente(
         const actions = insight.actions ?? [];
         const actionValues = insight.action_values ?? [];
 
-        const leads =
+        const actionLeads =
           getAction(actions, "lead") ||
+          getAction(actions, "omni_lead") ||
           getAction(actions, "onsite_conversion.lead_grouped") ||
           getAction(actions, "offsite_conversion.fb_pixel_lead") ||
           getAction(actions, "website_lead");
+        // A coluna Resultados do Gerenciador ("Lead no site") vem em `results`,
+        // não só em `actions`. Usa o maior indicador de lead daquele dia.
+        const resultLeads = (insight.results ?? []).reduce((best, row) => {
+          if (!/lead/i.test(row.indicator ?? "")) return best;
+          const value = parseFloat(row.values?.[0]?.value ?? "0") || 0;
+          return value > best ? value : best;
+        }, 0);
+        const leads = Math.max(actionLeads, Math.round(resultLeads));
 
         const purchases =
           getAction(actions, "purchase") ||

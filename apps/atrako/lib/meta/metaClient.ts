@@ -557,6 +557,7 @@ export interface MetaAdInsight {
   actions?: Array<{ action_type: string; value: string }>;
   action_values?: Array<{ action_type: string; value: string }>;
   video_p100_watched_actions?: Array<{ action_type: string; value: string }>;
+  results?: Array<{ indicator?: string; values?: Array<{ value?: string }> }>;
 }
 
 export interface MetaAd {
@@ -1359,7 +1360,7 @@ function resolveCreativePosterUrl(creative: MetaAdCreative): string | null {
 export async function fetchAdsWithCreatives(
   accountId: string,
   token: string,
-  options?: { maxPages?: number; dateFrom?: string; dateTo?: string; includeInactive?: boolean }
+  options?: { maxPages?: number; dateFrom?: string; dateTo?: string; includeInactive?: boolean; includeExistingPosts?: boolean }
 ): Promise<MetaAd[]> {
   const actId = ensureActPrefix(accountId);
   const maxPages = options?.maxPages ?? 50;
@@ -1369,11 +1370,21 @@ export async function fetchAdsWithCreatives(
   const acceptAd = (ad: MetaAd, requireDelivering: boolean) => {
     const status = ad.effective_status;
     if (requireDelivering && (!status || !(DELIVERY_ACTIVE_STATUSES as readonly string[]).includes(status))) return;
-    const creative = ad.adcreatives?.data?.[0];
-    if (!creative) return;
-    if (creative.object_story_id) return;
     if (isPageCoverOrLikeAd(ad)) return;
-    if (!hasDedicatedCreativePayload(creative)) return;
+    const creative = ad.adcreatives?.data?.[0];
+    const delivered = (ad.insights?.data ?? []).some(
+      (row) => Number(row.spend ?? 0) > 0 || Number(row.impressions ?? 0) > 0,
+    );
+    // Publicações impulsionadas (object_story_id) e criativos dinâmicos entram no
+    // sync de métricas. Sem isso o conjunto some no painel mesmo com gasto e leads na Meta.
+    const keepMetrics = Boolean(options?.includeExistingPosts) && (delivered || !requireDelivering);
+    if (!keepMetrics) {
+      if (!creative) return;
+      if (creative.object_story_id) return;
+      if (!hasDedicatedCreativePayload(creative)) return;
+    } else if (!creative && !delivered) {
+      return;
+    }
     const existing = adsById.get(ad.id);
     if (existing) {
       const existingRows = existing.insights?.data ?? [];
@@ -1398,8 +1409,8 @@ export async function fetchAdsWithCreatives(
       ? `insights.time_range(${JSON.stringify({
           since: chunk[0],
           until: chunk[1],
-        })}).time_increment(1).limit(500){date_start,date_stop,spend,impressions,clicks,inline_link_clicks,ctr,cpc,frequency,actions,action_values,video_p100_watched_actions}`
-      : "insights{date_start,date_stop,spend,impressions,clicks,inline_link_clicks,ctr,cpc,frequency,actions,action_values,video_p100_watched_actions}";
+        })}).time_increment(1).limit(500){date_start,date_stop,spend,impressions,clicks,inline_link_clicks,ctr,cpc,frequency,actions,action_values,results,video_p100_watched_actions}`
+      : "insights{date_start,date_stop,spend,impressions,clicks,inline_link_clicks,ctr,cpc,frequency,actions,action_values,results,video_p100_watched_actions}";
     const fields =
       `id,name,effective_status,adset{id,name,campaign{id,name,objective}},adcreatives{id,object_story_id,thumbnail_url,image_hash,video_id,body,title,object_story_spec,asset_feed_spec{videos{video_id,thumbnail_url},images{hash,url}}},${insightsField}`;
     const filtering = JSON.stringify([

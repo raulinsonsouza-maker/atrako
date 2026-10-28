@@ -77,6 +77,7 @@ function directInitial(flow: IgFluxo): DirectDmInitial {
           action,
           text: String(row.text ?? ""),
           url: String(row.url ?? ""),
+          thanks: String(row.thanks ?? ""),
         };
       })
     : [];

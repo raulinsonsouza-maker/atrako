@@ -10,8 +10,8 @@ import type { MetaPageMeta } from "@/lib/integrations/meta/types";
 const FB_GRAPH = "https://graph.facebook.com/v21.0";
 const PAGE_SCOPES =
   "facebook_page,instagram_manage_comments,instagram_manage_messages,pages_manage_metadata";
-const SUBSCRIBED_FIELDS =
-  "messages,messaging_postbacks,messaging_referral,comments";
+const PAGE_FIELDS = "messages,messaging_postbacks,messaging_referrals";
+const IG_FIELDS = "messages,messaging_postbacks,messaging_referral,comments";
 
 export type PageInstagramAccount = {
   pageId: string;
@@ -107,12 +107,12 @@ export async function discoverPageInstagramAccounts(
   return Array.from(found.values());
 }
 
-async function subscribeEdge(id: string, pageToken: string): Promise<boolean> {
+async function subscribeEdge(id: string, pageToken: string, fields: string): Promise<boolean> {
   const res = await fetch(`${FB_GRAPH}/${id}/subscribed_apps`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
-      subscribed_fields: SUBSCRIBED_FIELDS,
+      subscribed_fields: fields,
       access_token: pageToken,
     }),
   });
@@ -129,6 +129,62 @@ async function subscribeEdge(id: string, pageToken: string): Promise<boolean> {
     return false;
   }
   return true;
+}
+
+/** O Direct da conta profissional chega pela assinatura do Instagram.
+ *  A Página pede pages_messaging, que o token atual não tem, então essa falha não apaga a do Instagram. */
+function webhookSubscribedAt(_pageId: string | null | undefined, pageOk: boolean, igOk: boolean): Date | null {
+  return igOk || pageOk ? new Date() : null;
+}
+
+export async function ensureInstagramAppWebhook(): Promise<boolean> {
+  const { loadMetaPlatformAppCredentials, getMetaAppId, getMetaAppSecret, getMetaWebhookVerifyToken } = await import(
+    "@/lib/integrations/meta/graph"
+  );
+  const { getSymbiusMetaConfig } = await import("./metaOAuth");
+  const { getServerPublicOrigin } = await import("@/lib/http/public-origin");
+  await loadMetaPlatformAppCredentials();
+  const appId = getMetaAppId();
+  const secret = getMetaAppSecret();
+  if (!appId || !secret) return false;
+  const verify = getMetaWebhookVerifyToken() || getSymbiusMetaConfig().verifyToken;
+  const callback = `${getServerPublicOrigin()}/api/webhooks/meta`;
+  const res = await fetch(`https://graph.facebook.com/v21.0/${appId}/subscriptions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      object: "instagram",
+      callback_url: callback,
+      verify_token: verify,
+      fields: IG_FIELDS,
+      access_token: `${appId}|${secret}`,
+    }),
+  });
+  const json = (await res.json().catch(() => ({}))) as { success?: boolean; error?: { message?: string } };
+  if (!res.ok || json.error || json.success === false) {
+    console.warn("[instagram] webhook do app falhou", json.error?.message ?? res.status);
+    return false;
+  }
+  return true;
+}
+
+export async function resubscribeInstagramAccount(igUserId: string): Promise<{
+  pageOk: boolean;
+  igOk: boolean;
+  pageId: string | null;
+}> {
+  const account = await socialPrisma.igAccount.findFirst({
+    where: { igUserId, status: "CONNECTED" },
+  });
+  if (!account?.accessToken) return { pageOk: false, igOk: false, pageId: account?.pageId ?? null };
+  await ensureInstagramAppWebhook();
+  const pageOk = account.pageId ? await subscribeEdge(account.pageId, account.accessToken, PAGE_FIELDS) : false;
+  const igOk = await subscribeEdge(account.igUserId, account.accessToken, IG_FIELDS);
+  await socialPrisma.igAccount.update({
+    where: { id: account.id },
+    data: { webhookSubscribedAt: webhookSubscribedAt(account.pageId, pageOk, igOk) },
+  });
+  return { pageOk, igOk, pageId: account.pageId };
 }
 
 export async function connectInstagramPages(input: {
@@ -150,6 +206,7 @@ export async function connectInstagramPages(input: {
       : [];
   if (pages.length === 0) return { connected: 0 };
 
+  await ensureInstagramAppWebhook();
   const org = await ensureWorkspaceSocialOrg(input.workspaceId, input.workspaceName);
   const primary = pages[0];
 
@@ -176,9 +233,9 @@ export async function connectInstagramPages(input: {
 
   let connected = 0;
   for (const page of pages) {
-    const pageOk = await subscribeEdge(page.pageId, page.pageToken);
-    const igOk = await subscribeEdge(page.igUserId, page.pageToken);
-    const subscribed = pageOk || igOk;
+    const pageOk = await subscribeEdge(page.pageId, page.pageToken, PAGE_FIELDS);
+    const igOk = await subscribeEdge(page.igUserId, page.pageToken, IG_FIELDS);
+    const subscribedAt = webhookSubscribedAt(page.pageId, pageOk, igOk);
     await socialPrisma.igAccount.upsert({
       where: {
         organizationId_igUserId: {
@@ -197,7 +254,7 @@ export async function connectInstagramPages(input: {
         messagesEnabled: true,
         scopes: PAGE_SCOPES,
         tokenExpiresAt: input.expiresAt ?? null,
-        webhookSubscribedAt: subscribed ? new Date() : null,
+        webhookSubscribedAt: subscribedAt,
       },
       update: {
         pageId: page.pageId,
@@ -208,7 +265,7 @@ export async function connectInstagramPages(input: {
         messagesEnabled: true,
         scopes: PAGE_SCOPES,
         tokenExpiresAt: input.expiresAt ?? null,
-        webhookSubscribedAt: subscribed ? new Date() : undefined,
+        webhookSubscribedAt: subscribedAt,
       },
     });
     connected += 1;
@@ -325,8 +382,9 @@ export async function ensureInstagramFromWorkspace(workspaceId: string) {
   const profile = await instagramProfile(igUserId, creds.token);
   const igUsername = profile?.username ?? page?.instagramUsername ?? null;
   const socialOrg = await ensureWorkspaceSocialOrg(workspaceId, workspaceName);
-  const pageOk = page?.id ? await subscribeEdge(page.id, creds.token) : false;
-  const igOk = await subscribeEdge(igUserId, creds.token);
+  await ensureInstagramAppWebhook();
+  const pageOk = page?.id ? await subscribeEdge(page.id, creds.token, PAGE_FIELDS) : false;
+  const igOk = await subscribeEdge(igUserId, creds.token, IG_FIELDS);
 
   await upsertWorkspaceConnection({
     clienteId: workspaceId,
@@ -363,7 +421,7 @@ export async function ensureInstagramFromWorkspace(workspaceId: string) {
       status: "CONNECTED",
       messagesEnabled: true,
       scopes: PAGE_SCOPES,
-      webhookSubscribedAt: pageOk || igOk ? new Date() : null,
+      webhookSubscribedAt: webhookSubscribedAt(page?.id, pageOk, igOk),
     },
     update: {
       pageId: page?.id ?? null,
@@ -373,7 +431,7 @@ export async function ensureInstagramFromWorkspace(workspaceId: string) {
       status: "CONNECTED",
       messagesEnabled: true,
       scopes: PAGE_SCOPES,
-      webhookSubscribedAt: pageOk || igOk ? new Date() : undefined,
+      webhookSubscribedAt: webhookSubscribedAt(page?.id, pageOk, igOk),
     },
   });
 

@@ -22,6 +22,8 @@ import {
   tryHandleAwaitingEmailResponse,
 } from "./commentDmFlow";
 import { queueInstagramWorkspaceLead } from "./workspaceLead";
+import { DIRECT_LINK_THANKS } from "./directCopy";
+import { directLinkUrl, safeHttpUrl, type DmLinkPayload } from "./dmLinkToken";
 import {
   isWithin24hWindow,
   directButtonPayload,
@@ -900,6 +902,7 @@ type DirectButton = {
   action?: string;
   text?: string;
   url?: string;
+  thanks?: string;
 };
 
 function directButtons(cfg: Record<string, unknown>): DirectButton[] {
@@ -907,12 +910,19 @@ function directButtons(cfg: Record<string, unknown>): DirectButton[] {
   return (cfg.buttons as DirectButton[]).slice(0, 3);
 }
 
-function toDirectMessageButtons(fluxoId: string, buttons: DirectButton[]): MessageButton[] {
+function toDirectMessageButtons(fluxoId: string, contatoId: string, buttons: DirectButton[]): MessageButton[] {
   return buttons.flatMap((button, index) => {
     const title = String(button.label ?? "").trim().slice(0, 20);
     if (!title) return [];
-    if (button.action === "link" && String(button.url ?? "").trim()) {
-      return [{ type: "web_url" as const, title, url: String(button.url).trim() }];
+    const url = String(button.url ?? "").trim();
+    if (button.action === "link" && url) {
+      let tracked = url;
+      try {
+        tracked = directLinkUrl({ fluxoId, contatoId, index, url });
+      } catch (error) {
+        console.warn("[instagram] link rastreado indisponível:", error instanceof Error ? error.message : error);
+      }
+      return [{ type: "web_url" as const, title, url: tracked }];
     }
     return [{ type: "postback" as const, title, payload: directButtonPayload(fluxoId, index) }];
   });
@@ -941,6 +951,48 @@ async function sendDirectText(params: {
     where: { id: conversa.id },
     data: { lastMessageAt: new Date() },
   });
+}
+
+export async function acknowledgeDirectLinkClick(payload: DmLinkPayload): Promise<string> {
+  const fallback = safeHttpUrl(payload.u) ?? payload.u;
+  const fluxo = await prisma.igFluxo.findFirst({
+    where: { id: payload.f, status: "PUBLISHED" },
+  });
+  const cfg = (fluxo?.triggerConfig ?? {}) as Record<string, unknown>;
+  const button = fluxo ? directButtons(cfg)[payload.i] : undefined;
+  const saved = safeHttpUrl(String(button?.url ?? "").trim());
+  const target = saved ?? fallback;
+  if (!fluxo || button?.action !== "link") return target;
+
+  const contato = await prisma.igContato.findFirst({
+    where: { id: payload.c, organizationId: fluxo.organizationId },
+    include: { igAccount: true },
+  });
+  if (!contato || contato.botPaused || !isWithin24hWindow(contato.lastInteractionAt)) return target;
+
+  const exec = await prisma.igFluxoExecucao.findFirst({
+    where: { fluxoId: fluxo.id, contatoId: contato.id, organizationId: fluxo.organizationId },
+    orderBy: { updatedAt: "desc" },
+  });
+  const ctx = (exec?.context ?? {}) as Record<string, unknown>;
+  const sent = Array.isArray(ctx.linkThanksSent) ? ctx.linkThanksSent.map((item) => Number(item)) : [];
+  if (sent.includes(payload.i)) return target;
+
+  const thanks = String(button.thanks ?? "").trim() || DIRECT_LINK_THANKS;
+  await sendDirectText({
+    organizationId: fluxo.organizationId,
+    igAccount: contato.igAccount,
+    contatoId: contato.id,
+    igsid: contato.igsid,
+    text: thanks,
+  });
+  if (exec) {
+    await prisma.igFluxoExecucao.update({
+      where: { id: exec.id },
+      data: { context: { ...ctx, linkThanksSent: [...sent, payload.i] } as object },
+    });
+  }
+  return target;
 }
 
 async function handoffDirectContact(params: {
@@ -989,7 +1041,7 @@ async function openDirectAutomation(params: {
   if (!isWithin24hWindow(params.lastInteractionAt)) return;
 
   const text = String(params.cfg.replyText ?? "").trim();
-  const buttons = toDirectMessageButtons(params.fluxoId, directButtons(params.cfg));
+  const buttons = toDirectMessageButtons(params.fluxoId, params.contatoId, directButtons(params.cfg));
   await sendDirectText({
     organizationId: params.organizationId,
     igAccount: params.igAccount,

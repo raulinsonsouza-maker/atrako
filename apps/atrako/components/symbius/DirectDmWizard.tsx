@@ -6,6 +6,7 @@ import { Button, IconButton } from "@/components/ui";
 import { BackLink } from "@/components/ui/back-link";
 import { PillSelect } from "@/components/ui/pill-select";
 import { ChatPhone } from "./phone/ChatPhone";
+import { DIRECT_LINK_THANKS } from "@/lib/instagram/directCopy";
 import { RadioOption, TagChip, WizardLayout, wizardInputCls, wizardTextareaCls } from "./wizard-ui";
 
 const SUGGESTED = ["preço", "orçamento", "catálogo"];
@@ -23,6 +24,7 @@ export type DirectButton = {
   action: "reply" | "link" | "handoff";
   text: string;
   url: string;
+  thanks: string;
 };
 
 export type DirectDmInitial = {
@@ -35,7 +37,7 @@ export type DirectDmInitial = {
 };
 
 function emptyButton(): DirectButton {
-  return { label: "", action: "reply", text: "", url: "" };
+  return { label: "", action: "reply", text: "", url: "", thanks: "" };
 }
 
 export function DirectDmWizard({
@@ -101,6 +103,7 @@ export function DirectDmWizard({
         action: button.action,
         text: button.text.trim(),
         url: button.url.trim(),
+        thanks: button.action === "link" ? button.thanks.trim() || DIRECT_LINK_THANKS : "",
       }))
       .filter((button) => button.label);
     if (ready.some((button) => button.action === "link" && !button.url)) {
@@ -208,7 +211,13 @@ export function DirectDmWizard({
               size="field"
               aria-label={`Ação do botão ${index + 1}`}
               value={button.action}
-              onChange={(value) => patchButton(index, { action: value as DirectButton["action"] })}
+              onChange={(value) => {
+                const action = value as DirectButton["action"];
+                patchButton(index, {
+                  action,
+                  thanks: action === "link" && !button.thanks.trim() ? DIRECT_LINK_THANKS : button.thanks,
+                });
+              }}
               options={ACTIONS}
             />
             {button.action === "reply" ? (
@@ -220,13 +229,22 @@ export function DirectDmWizard({
               />
             ) : null}
             {button.action === "link" ? (
-              <input
-                value={button.url}
-                onChange={(e) => patchButton(index, { url: e.target.value })}
-                className={wizardInputCls}
-                placeholder="https://"
-                inputMode="url"
-              />
+              <>
+                <input
+                  value={button.url}
+                  onChange={(e) => patchButton(index, { url: e.target.value })}
+                  className={wizardInputCls}
+                  placeholder="https://"
+                  inputMode="url"
+                />
+                <textarea
+                  value={button.thanks}
+                  onChange={(e) => patchButton(index, { thanks: e.target.value.slice(0, 1000) })}
+                  className={wizardTextareaCls}
+                  placeholder={DIRECT_LINK_THANKS}
+                />
+                <p className="type-fine-print text-[var(--ink-muted-48)]">Essa mensagem chega no Direct depois que a pessoa abre o link.</p>
+              </>
             ) : null}
           </div>
         ))}
@@ -265,6 +283,13 @@ export function DirectDmWizard({
                 label: button.label.trim(),
                 variant: button.action === "link" ? ("link" as const) : ("action" as const),
               })),
+            ...Array.from(
+              new Set(
+                buttons
+                  .filter((button) => button.action === "link" && button.label.trim())
+                  .map((button) => button.thanks.trim() || DIRECT_LINK_THANKS),
+              ),
+            ).map((text) => ({ kind: "received" as const, text })),
           ]}
         />
       }

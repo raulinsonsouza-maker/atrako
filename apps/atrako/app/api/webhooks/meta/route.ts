@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get("x-hub-signature-256");
 
   if (!(await verifyWebhookSignature(rawBody, signature))) {
+    console.warn("[webhook/meta] assinatura recusada");
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 

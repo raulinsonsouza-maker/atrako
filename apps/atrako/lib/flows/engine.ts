@@ -27,6 +27,7 @@ export const FLOW_TRIGGERS = [
   "lead_lost",
   "lead_welcome",
   "franchise_nurture",
+  "lead_base",
   "date_based",
   "stay_unpaid",
   "stay_confirmed",
@@ -49,6 +50,7 @@ export const SALES_TRIGGERS: FlowTrigger[] = [
   "lead_lost",
   "lead_welcome",
   "franchise_nurture",
+  "lead_base",
 ];
 
 /**

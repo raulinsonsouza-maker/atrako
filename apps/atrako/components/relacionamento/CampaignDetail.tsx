@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -143,9 +143,50 @@ function hasAdvancedFilters(a: Audience | null) {
   return Boolean(a && (a.minSpentCents || a.inactiveDays || a.birthdayMonth || a.productTitles?.length || a.excludeRecentDays || a.excludeCustomers));
 }
 
+function PageFrame({
+  embedded,
+  title,
+  actions,
+  children,
+}: {
+  embedded?: boolean;
+  title?: ReactNode;
+  actions?: ReactNode;
+  children: ReactNode;
+}) {
+  if (!embedded) {
+    return (
+      <AppPage title={title} actions={actions}>
+        {children}
+      </AppPage>
+    );
+  }
+  return (
+    <div className="flex min-w-0 flex-col gap-4">
+      {title != null || actions ? (
+        <header className="flex shrink-0 flex-col items-stretch gap-3 md:flex-row md:items-center md:justify-between">
+          {title}
+          {actions ? <div className="flex min-w-0 items-center gap-2 md:shrink-0">{actions}</div> : null}
+        </header>
+      ) : null}
+      {children}
+    </div>
+  );
+}
+
 // --------------------------------------------------------------------------- página
 
-export function CampaignDetail({ workspaceId, id }: { workspaceId: string; id: string }) {
+export function CampaignDetail({
+  workspaceId,
+  id,
+  embedded = false,
+  onBack,
+}: {
+  workspaceId: string;
+  id: string;
+  embedded?: boolean;
+  onBack?: () => void;
+}) {
   const router = useRouter();
   const qc = useQueryClient();
   const key = ["rel-campaign", id];
@@ -229,17 +270,15 @@ export function CampaignDetail({ workspaceId, id }: { workspaceId: string; id: s
     });
 
   if (isLoading || !data || !step) {
-    return (
-      <AppPage title="Campanha">
-        {error ? (
-          <p className="type-caption text-[var(--ink)]">{(error as Error).message}</p>
-        ) : (
-          <div className="flex flex-1 items-center justify-center py-20">
-            <Loader2 className="h-5 w-5 animate-spin text-[var(--primary)]" />
-          </div>
-        )}
-      </AppPage>
+    const waiting = error ? (
+      <p className="type-caption text-[var(--ink)]">{(error as Error).message}</p>
+    ) : (
+      <div className="flex flex-1 items-center justify-center py-20">
+        <Loader2 className="h-5 w-5 animate-spin text-[var(--primary)]" />
+      </div>
     );
+    if (embedded) return waiting;
+    return <AppPage title="Campanha">{waiting}</AppPage>;
   }
 
   const c = data.campaign;
@@ -263,10 +302,15 @@ export function CampaignDetail({ workspaceId, id }: { workspaceId: string; id: s
   };
 
   return (
-    <AppPage
+    <PageFrame
+      embedded={embedded}
       title={
         <div className="min-w-0">
-          <BackLink href="/relacionamento?tab=campanhas">Campanhas</BackLink>
+          {onBack ? (
+            <BackLink onClick={onBack}>Mensagens</BackLink>
+          ) : (
+            <BackLink href="/relacionamento?tab=campanhas">Campanhas</BackLink>
+          )}
           <NameField value={c.name} disabled={readOnly} onCommit={(name) => autosave({ name }, 0)} />
           <p className="flex flex-wrap items-center gap-x-2 type-fine-print text-[var(--ink-muted-48)]">
             <span>{CHANNEL_LABEL[c.channel]}</span>
@@ -302,7 +346,8 @@ export function CampaignDetail({ workspaceId, id }: { workspaceId: string; id: s
                         if (!window.confirm("Excluir a campanha? Não dá para desfazer.")) return;
                         void run("delete", async () => {
                           await action({ action: "delete" });
-                          router.push("/relacionamento?tab=campanhas");
+                          if (onBack) onBack();
+                          else router.push("/relacionamento?tab=campanhas");
                         });
                       },
                     },
@@ -385,7 +430,7 @@ export function CampaignDetail({ workspaceId, id }: { workspaceId: string; id: s
           onSend={(body) => run("comment", async () => void (await action({ action: "comment", body })))}
         />
       ) : null}
-    </AppPage>
+    </PageFrame>
   );
 }
 

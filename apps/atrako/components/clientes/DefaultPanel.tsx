@@ -77,6 +77,9 @@ type DefaultPanelProps = {
     custoPorVisita?: number;
     conversasB2b?: number;
     custoPorConversaB2b?: number;
+    conversasWhatsApp?: number;
+    messagingConversationsStarted?: number;
+    custoPorConversa?: number;
   };
   chartData: Record<string, string | number>[];
   /** Nome da série de conversões/leads no gráfico (ex.: "Conversões" no Google). */
@@ -113,6 +116,8 @@ type DefaultPanelProps = {
   lpViewsMode?: boolean;
   /** Geral e-commerce: os números do topo vêm do consolidado; aqui fica só gráfico e tabela. */
   hideKpis?: boolean;
+  /** Inside sales: investimento, leads, CPL e conversas — sem compra, ROAS ou ticket. */
+  insideSalesMode?: boolean;
 };
 
 export function DefaultPanel({
@@ -138,6 +143,7 @@ export function DefaultPanel({
   kombuchaMode = false,
   lpViewsMode = false,
   hideKpis = false,
+  insideSalesMode = false,
 }: DefaultPanelProps) {
   const isMobile = useIsMobile();
   const isMensal = agrupamento === "mensal";
@@ -146,6 +152,7 @@ export function DefaultPanel({
   const cplLabel = visitasMode ? "Custo/Visita" : comprasMode ? "Custo/Compra" : miguelImoveisMode ? "Custo/Result." : conversasMode ? "Custo/Conv." : kombuchaMode ? "Custo/Carrinho" : lpViewsMode ? "Custo/View LP" : "CPL";
 
   const purchases = resumo.purchases ?? 0;
+  const conversasWhatsApp = resumo.conversasWhatsApp ?? resumo.messagingConversationsStarted ?? 0;
   const valorConversao = resumo.valorConversao ?? 0;
   const custoPorCompra = resumo.custoPorCompra ?? 0;
   const roas = resumo.roas ?? 0;
@@ -155,8 +162,43 @@ export function DefaultPanel({
     <>
       {!hideKpis && (
       <>
-      {/* KPI cards — modo e-commerce (Granarolo, D'or) */}
-      {ecommerceGoogleMode ? (
+      {insideSalesMode ? (
+        <>
+          <section className="rel-kpi-grid">
+            <KpiCard title="Investimento Meta" value={formatCurrency(resumo.investimento)} icon={DollarSign} />
+            <KpiCard title="Leads" value={resumo.leads.toLocaleString("pt-BR")} icon={Users} />
+            <KpiCard
+              title="CPL"
+              value={resumo.cpl > 0 ? formatCurrency(resumo.cpl) : "—"}
+              icon={Target}
+              accentValue
+            />
+            <KpiCard
+              title="Conversas no WhatsApp"
+              value={conversasWhatsApp.toLocaleString("pt-BR")}
+              icon={MessageCircle}
+            />
+          </section>
+          <section className="rel-kpi-grid">
+            <KpiCard title="Cliques" value={(resumo.cliques ?? 0).toLocaleString("pt-BR")} icon={MousePointerClick} />
+            <KpiCard title="Impressões" value={(resumo.impressoes ?? 0).toLocaleString("pt-BR")} icon={Eye} />
+            <KpiCard
+              title="Clique → lead"
+              value={
+                (resumo.cliques ?? 0) > 0
+                  ? `${((resumo.leads / (resumo.cliques ?? 1)) * 100).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`
+                  : "—"
+              }
+              icon={Target}
+            />
+            <KpiCard
+              title="Custo por conversa"
+              value={conversasWhatsApp > 0 ? formatCurrency(resumo.custoPorConversa ?? 0) : "—"}
+              icon={MessageCircle}
+            />
+          </section>
+        </>
+      ) : ecommerceGoogleMode ? (
         <>
           <section className="rel-kpi-grid">
             <KpiCard
@@ -231,7 +273,7 @@ export function DefaultPanel({
       )}
 
       {/* KPI row extra — modo Miguel Google (CTR + Taxa de Conversão) */}
-      {!ecommerceGoogleMode && miguelGoogleMode && (
+      {!insideSalesMode && !ecommerceGoogleMode && miguelGoogleMode && (
         <section className="rel-kpi-grid">
           <KpiCard
             title="CTR"
@@ -255,7 +297,7 @@ export function DefaultPanel({
       )}
 
       {/* KPI row extra — modo conversas + engajamento (Clínica e Spa) */}
-      {!ecommerceGoogleMode && conversasEngajamentoMode && (
+      {!insideSalesMode && !ecommerceGoogleMode && conversasEngajamentoMode && (
         <section className="rel-kpi-grid">
           <KpiCard
             title="Cliques (Engajamento)"
@@ -275,7 +317,7 @@ export function DefaultPanel({
       )}
 
       {/* KPI row extra — breakdown de resultados (Miguel Imóveis) */}
-      {!ecommerceGoogleMode && miguelImoveisMode && (
+      {!insideSalesMode && !ecommerceGoogleMode && miguelImoveisMode && (
         <section className="rel-kpi-grid">
           <KpiCard
             title="Conversas (Mensagem)"
@@ -291,7 +333,7 @@ export function DefaultPanel({
       )}
 
       {/* KPI row extra — engajamento Instagram (Academy Americana) */}
-      {!ecommerceGoogleMode && academyEngajamentoMode && (resumo.profileVisits ?? 0) > 0 && (
+      {!insideSalesMode && !ecommerceGoogleMode && academyEngajamentoMode && (resumo.profileVisits ?? 0) > 0 && (
         <section className="rel-kpi-grid">
           <KpiCard
             title="Visitas ao Perfil"
@@ -320,7 +362,7 @@ export function DefaultPanel({
       )}
 
       {/* KPI row extra — Conversas B2B (Kombucha da Cá) */}
-      {!ecommerceGoogleMode && kombuchaMode && (resumo.conversasB2b ?? 0) > 0 && (
+      {!insideSalesMode && !ecommerceGoogleMode && kombuchaMode && (resumo.conversasB2b ?? 0) > 0 && (
         <section className="rel-kpi-grid">
           <KpiCard
             title="Conversas B2B (Mensagem)"
@@ -344,9 +386,10 @@ export function DefaultPanel({
       {/* Performance chart */}
       {chartData.length > 0 && (
         <SectionCard
-          title={canal === "google" ? "Performance Google" : "Volume geral de performance"}
+          title={insideSalesMode ? "Performance Meta" : canal === "google" ? "Performance Google" : "Volume geral de performance"}
           subtitle={(() => {
             const periodoLabel = isMensal ? "mês" : isDiario ? "dia" : "semana";
+            if (insideSalesMode) return `Investimento e leads por ${periodoLabel}`;
             if (ecommerceGoogleMode) return `Investimento e compras por ${periodoLabel}`;
             if (canal === "google") return `Investimento e conversões por ${periodoLabel}`;
             if (visitasMode) return `Investimento e visitas ao perfil por ${periodoLabel}`;

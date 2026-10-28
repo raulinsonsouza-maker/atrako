@@ -12,10 +12,6 @@ function fmt(n: number) {
   return n.toLocaleString("pt-BR");
 }
 
-function brl(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
 export function InsideSalesGeral({
   workspaceId,
   query,
@@ -52,12 +48,8 @@ export function InsideSalesGeral({
     );
   }
 
-  const { kpis, stages, attention, midia } = data;
+  const { kpis, stages, attention } = data;
   const stageMax = Math.max(1, ...stages.map((s) => s.count));
-  const cpl =
-    midia.leadsMidia > 0 && midia.investimento > 0
-      ? midia.investimento / midia.leadsMidia
-      : null;
 
   return (
     <section className={`space-y-4 transition-opacity ${isPlaceholderData ? "opacity-60" : ""}`}>
@@ -88,16 +80,6 @@ export function InsideSalesGeral({
           }
           tone={kpis.scheduleMeeting > 0 ? "negative" : undefined}
         />
-        {midia.investimento > 0 ? (
-          <>
-            <MetricTile label="Investimento" value={brl(midia.investimento)} detail="Mídia no período" />
-            <MetricTile
-              label="CPL mídia"
-              value={cpl != null ? brl(cpl) : "—"}
-              detail={`${fmt(midia.leadsMidia)} leads pelos anúncios`}
-            />
-          </>
-        ) : null}
       </div>
 
       <div className="rel-card p-5">

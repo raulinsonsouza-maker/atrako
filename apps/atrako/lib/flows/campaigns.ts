@@ -185,6 +185,10 @@ async function recentlyCampaignedIds(workspaceId: string, days: number | null | 
 }
 
 export async function audienceCount(workspaceId: string, audience: CampaignAudience, channel: string) {
+  if (audience.lifecycles?.includes("LEAD")) {
+    const { ensureLeadContacts } = await import("@/lib/flows/lead-base");
+    await ensureLeadContacts(workspaceId);
+  }
   const exclude = await recentlyCampaignedIds(workspaceId, audience.excludeRecentDays);
   const base = audienceWhere(workspaceId, audience);
   const notExcluded = exclude.length ? { id: { notIn: exclude } } : {};

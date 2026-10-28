@@ -867,6 +867,35 @@ function formatPercentage(value: number) {
     return canConfigure;
   };
   const edition = relConfig?.settings?.edition ?? null;
+  const insideSalesHome = edition === "inside_sales" && canal === "geral";
+  const { data: resumoMeta } = useQuery({
+    queryKey: ["resumo", id, "meta", dateFilter.periodo, dateFilter.dataInicio, dateFilter.dataFim],
+    queryFn: () => fetchResumo(id, "meta", dateFilter),
+    enabled: !!id && !!cliente && insideSalesHome,
+  });
+  const { data: midiaMeta } = useQuery({
+    queryKey: ["midia", id, "meta", presetPeriodo, dateFilter.dataInicio, dateFilter.dataFim, chartAgrupamento, "inside-sales"],
+    queryFn: () => fetchMidia(id, "meta", dateFilter, presetPeriodo, isLongPeriod ? undefined : chartAgrupamento),
+    enabled: !!id && !!cliente && insideSalesHome,
+  });
+  useQuery({
+    queryKey: ["meta-ads", id, dateFilter.periodo, dateFilter.dataInicio, dateFilter.dataFim, canUseAnalyst ? "internal" : "public"],
+    queryFn: () => fetchMetaAds(id, dateFilter, canUseAnalyst),
+    enabled: !!id && insideSalesHome && internalSessionResolved,
+  });
+  const metaSeries = (midiaMeta?.series ?? []) as Array<{
+    periodo: string;
+    investimento: number;
+    leads: number;
+    impressoes: number;
+    cliques: number;
+  }>;
+  const metaChartData = metaSeries.map((s) => ({
+    periodo: s.periodo,
+    Investimento: Math.round(s.investimento * 100) / 100,
+    Leads: s.leads,
+    CPL: s.leads > 0 ? Math.round((s.investimento / s.leads) * 100) / 100 : 0,
+  }));
   const channelAllowed = (channel: string) => editionAllowsDashboardChannel(edition, channel);
   /** Loja/marketplace só depois do config — evita flash e respeita inside_sales/food/stay. */
   const showCommerceChannels = workspaceKnown && channelAllowed("marketplaces");
@@ -1213,14 +1242,14 @@ function formatPercentage(value: number) {
             ]}
           />
         )}
-        {(canal === "meta" || canal === "google") && !offlineCopy && (
+        {(canal === "meta" || canal === "google" || insideSalesHome) && !offlineCopy && (
           <SegmentedControl
             className="self-end"
             aria-label="Visão do canal"
             value={subView}
             onChange={setSubView}
             options={(
-              canal === "meta"
+              canal === "meta" && !insideSalesHome
                 ? (cliente?.socialMediaAtivo
                     ? (["dados", "criativos", "social-media"] as const)
                     : (["dados", "criativos"] as const))
@@ -1367,6 +1396,62 @@ function formatPercentage(value: number) {
         )
       )}
 
+      {!analystOpen && insideSalesHome && subView === "criativos" && (
+        <div className="space-y-6">
+          {metaAdsLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <p className="type-caption text-[var(--muted-foreground)]">Carregando anúncios META…</p>
+            </div>
+          ) : metaAdsError ? (
+            <div className="rounded-2xl border border-red-500/20 bg-red-500/6 px-6 py-8 text-center">
+              <p className="type-caption text-negative">
+                {metaAdsError instanceof Error ? metaAdsError.message : "Erro ao carregar anúncios META."}
+              </p>
+            </div>
+          ) : metaAdsData?.data?.length ? (
+            <MetaCriativosGrid
+              ads={metaAdsData.data}
+              formatCurrency={formatCurrency}
+              conversasMode={false}
+              isComprasPanel={false}
+              isVisitasPanel={false}
+              convLabels={convLabels}
+            />
+          ) : (
+            <div className="flex items-center justify-center py-16">
+              <p className="type-caption text-[var(--muted-foreground)]">Nenhum anúncio META ativo encontrado.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!analystOpen && insideSalesHome && subView === "dados" && resumoMeta && (
+        <DefaultPanel
+          resumo={resumoMeta}
+          chartData={metaChartData}
+          chartConversionKey="Leads"
+          latestFiveSeries={metaSeries.slice(-5)}
+          metricDefinitions={metricDefinitions}
+          dateFilter={dateFilter}
+          canal="meta"
+          canalLabels={canalLabels}
+          formatCurrency={formatCurrency}
+          insideSalesMode
+          agrupamento={chartAgrupamento}
+          onAgrupamentoChange={isLongPeriod ? undefined : (ag) => setChartAgrupamento(ag)}
+        />
+      )}
+
+      {!analystOpen && insideSalesHome && subView === "dados" && (
+        <CampanhasPanel
+          clienteId={id}
+          dateFilter={dateFilter}
+          canal="meta"
+          comparePrevious={hotelPilotEnabled}
+          comparisonPreset={presetPeriodo}
+        />
+      )}
+
       {!analystOpen && id && showComportamento && (
         <ComportamentoSection clienteId={id} query={buildQueryParams(dateFilter)} />
       )}
@@ -1417,6 +1502,7 @@ function formatPercentage(value: number) {
           comprasMode={isComprasPanel}
           visitasMode={isVisitasPanel}
           ecommerceGoogleMode={isEcommerceMode}
+          insideSalesMode={edition === "inside_sales" && canal === "meta"}
           agrupamento={chartAgrupamento}
           onAgrupamentoChange={isLongPeriod ? undefined : (ag) => setChartAgrupamento(ag)}
           conversasEngajamentoMode={isClinicaESpaPanel}
@@ -1489,7 +1575,7 @@ function formatPercentage(value: number) {
       )}
 
       {/* ── Financial tracking (Plano x Real) ── */}
-      {!analystOpen && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce" && canal !== "linkedin" && (geralAnalise && (canal === "geral" || subView === "dados")) && financeiro && financeiro.meses && (
+      {!analystOpen && !insideSalesHome && canal !== "imoveis" && canal !== "crm" && canal !== "relacionamento" && canal !== "marketplaces" && canal !== "ecommerce" && canal !== "linkedin" && (geralAnalise && (canal === "geral" || subView === "dados")) && financeiro && financeiro.meses && (
         <Card className="overflow-hidden rounded-2xl border-[var(--border)]">
           <CardHeader>
             <div className="flex flex-wrap items-start justify-between gap-4">

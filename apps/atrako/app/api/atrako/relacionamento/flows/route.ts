@@ -10,6 +10,7 @@ import { sampleContact } from "@/lib/flows/campaigns";
 import { sendEmailMessage, sendWhatsAppMessage } from "@/lib/flows/send";
 import { WA_TEMPLATE_LIBRARY } from "@/lib/flows/wa-templates";
 import { WA_EXAMPLE_PARAMS, waPreviewFromComponents, waPreviewFromDraft, type WaPreview } from "@/lib/flows/wa-preview";
+import { enrollLeadBase, ensureLeadContacts } from "@/lib/flows/lead-base";
 
 export async function GET(request: NextRequest) {
   const g = await gate(request);
@@ -21,10 +22,18 @@ export async function GET(request: NextRequest) {
   const settings = await prisma.workspaceSettings.findUnique({ where: { clienteId: ws }, select: { edition: true } });
   if (pack === "stay") await ensureDefaultFlows(ws, { playbooks: STAY_PLAYBOOKS });
   const keys = flowKeysForPack(pack) ?? flowKeysForPack(settings?.edition);
+  const leadBase = pack === "inside_sales";
 
   const [flows, stepStats, active, conv] = await Promise.all([
     prisma.messageFlow.findMany({
-      where: { clienteId: ws, ...(keys ? { key: { in: keys } } : {}) },
+      where: {
+        clienteId: ws,
+        ...(keys
+          ? leadBase
+            ? { OR: [{ key: { in: keys } }, { trigger: "lead_base" }] }
+            : { key: { in: keys } }
+          : {}),
+      },
       orderBy: { priority: "asc" },
       include: { steps: { orderBy: { position: "asc" } } },
     }),
@@ -170,12 +179,43 @@ export async function POST(request: NextRequest) {
   const body = await readBody(request);
   if (!body) return bad("Invalid JSON");
   const action = str(body.action);
-  const needsManage = ["flow_update", "step_publish", "refresh_copy", "ensure_defaults", "step_reset"].includes(action);
+  const needsManage = ["flow_update", "step_publish", "refresh_copy", "ensure_defaults", "step_reset", "create_email_flow"].includes(action);
   const g = await gate(request, needsManage ? "manage" : "operate", body);
   if (!g.ok) return g.response;
   const ws = g.workspaceId;
 
   switch (action) {
+    case "create_email_flow": {
+      await ensureLeadContacts(ws);
+      const email = {
+        subject: "",
+        preheader: "",
+        blocks: [
+          { type: "text", text: "Olá {{primeiro_nome}}," },
+          { type: "signature" },
+        ],
+      };
+      const flow = await prisma.messageFlow.create({
+        data: {
+          clienteId: ws,
+          name: "Nova automação",
+          trigger: "lead_base",
+          status: "DRAFT",
+          priority: 55,
+          steps: {
+            create: {
+              position: 0,
+              delayMinutes: 0,
+              channel: "EMAIL",
+              enabled: true,
+              content: email,
+            },
+          },
+        },
+      });
+      return NextResponse.json({ ok: true, id: flow.id });
+    }
+
     case "ensure_defaults": {
       const pack = str(body.pack);
       const settings = await prisma.workspaceSettings.findUnique({ where: { clienteId: ws }, select: { edition: true } });
@@ -223,6 +263,9 @@ export async function POST(request: NextRequest) {
       }
       if (typeof body.name === "string" && body.name.trim()) data.name = body.name.trim().slice(0, 160);
       await prisma.messageFlow.update({ where: { id: flowId }, data });
+      if (body.status === "ACTIVE" && flow.trigger === "lead_base") {
+        await enrollLeadBase(ws, flowId);
+      }
       return NextResponse.json({ ok: true });
     }
 

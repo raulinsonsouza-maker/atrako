@@ -16,7 +16,17 @@ import { parseLeadQualification } from "@/lib/qualification/store";
 import { crmOriginDisplay, priorityHumanLabel } from "@/lib/qualification/crm-labels";
 
 const EMAIL_RE = /^[^\s@<>]+@[^\s@<>]+\.[a-z]{2,}$/i;
-const CONTACT_KEYS = new Set(["name", "email", "phone", "wa_opt_in"]);
+const QUALIFY_KEYS = [
+  "state",
+  "city",
+  "niche",
+  "start_timeline",
+  "business_objective",
+  "main_question",
+  "investment_status",
+  "best_contact_time",
+  "how_found",
+] as const;
 
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -91,26 +101,13 @@ export async function sendLeadTeamEmail(workspaceId: string, leadId: string) {
   const when = lead.createdAt.toLocaleString("pt-BR", { timeZone: brand.timezone, dateStyle: "short", timeStyle: "short" });
 
   const answers: Array<[string, string]> = [];
-  for (const def of FIELD_DEFS) {
-    if (CONTACT_KEYS.has(def.key)) continue;
-    const a = q.answers[def.key];
+  for (const key of QUALIFY_KEYS) {
+    const def = FIELD_DEFS.find((d) => d.key === key);
+    const a = q.answers[key];
     const v = str(a?.label) || str(a?.value);
-    if (v) answers.push([def.crmLabel, v]);
+    if (def && v) answers.push([def.crmLabel, v]);
   }
-  const tracking: Array<[string, string]> = [["Origem", origin]];
-  for (const [label, key] of [
-    ["Campanha", "campaignName"],
-    ["Anúncio", "adName"],
-    ["utm_source", "utm_source"],
-    ["utm_medium", "utm_medium"],
-    ["utm_campaign", "utm_campaign"],
-    ["utm_content", "utm_content"],
-    ["Página", "pageUrl"],
-  ] as const) {
-    const v = str(meta[key]);
-    if (v) tracking.push([label, v]);
-  }
-  tracking.push(["Recebido em", when]);
+  const contextLine = [origin !== "—" ? origin : "", when].filter(Boolean).join(" · ");
 
   const row = ([label, value]: [string, string]) =>
     `<tr><td style="padding:9px 12px 9px 0;border-bottom:1px solid #e5e9f0;font-family:${font};font-size:13px;color:${c.muted};vertical-align:top;width:38%">${esc(label)}</td><td style="padding:9px 0;border-bottom:1px solid #e5e9f0;font-family:${font};font-size:15px;color:${c.text};vertical-align:top">${esc(value)}</td></tr>`;
@@ -118,14 +115,10 @@ export async function sendLeadTeamEmail(workspaceId: string, leadId: string) {
     rows.length
       ? `<p style="margin:22px 0 4px 0;font-family:${font};font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:${c.muted}">${esc(title)}</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${rows.map(row).join("")}</table>`
       : "";
-  const contactLine = [
-    waUrl ? `<a href="${esc(waUrl)}" style="color:${c.text};font-weight:600">WhatsApp ${esc(phone)}</a>` : phone ? esc(phone) : "",
-    email ? `<a href="mailto:${esc(email)}" style="color:${c.text};font-weight:600">${esc(email)}</a>` : "",
-  ]
-    .filter(Boolean)
-    .join(`<span style="color:${c.muted}"> &nbsp;·&nbsp; </span>`);
+  const cta = (href: string, label: string) =>
+    `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:18px 0 8px 0"><tr><td style="border-radius:${theme.buttonRadius}px;background:${c.accent}"><a href="${esc(href)}" style="display:inline-block;padding:13px 26px;font-family:${font};font-size:16px;font-weight:600;color:${c.buttonText};text-decoration:none;border-radius:${theme.buttonRadius}px">${esc(label)}</a></td></tr></table>`;
   const badge = priority
-    ? `<span style="display:inline-block;margin:0 0 12px 0;padding:4px 10px;border-radius:999px;background:${c.accent};color:${c.buttonText};font-family:${font};font-size:12px;font-weight:600">${esc(`Prioridade: ${priority}`)}</span><br>`
+    ? `<span style="display:inline-block;margin:0 0 12px 0;padding:4px 10px;border-radius:999px;background:${c.accent};color:${c.buttonText};font-family:${font};font-size:12px;font-weight:600">${esc(priority)}</span><br>`
     : "";
   const logo = theme.logoUrl
     ? `<img src="${esc(theme.logoUrl)}" width="${theme.logoWidth}" alt="${esc(brand.storeName)}" style="display:inline-block;width:${theme.logoWidth}px;max-width:100%;height:auto;border:0">`
@@ -139,12 +132,15 @@ export async function sendLeadTeamEmail(workspaceId: string, leadId: string) {
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px">
 <tr><td align="${theme.headerAlign}" style="background:${theme.headerBg};padding:22px 28px;border-radius:10px 10px 0 0">${logo}</td></tr>
 <tr><td style="background:${c.card};padding:28px 28px 24px 28px">
-<p style="margin:0 0 6px 0;font-family:${font};font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:${c.muted}">Novo lead · ${esc(origin)}</p>
-<h1 style="margin:0 0 12px 0;font-family:${font};font-size:24px;line-height:1.25;font-weight:600;color:${c.text}">${esc(name)}</h1>
-${badge}${contactLine ? `<p style="margin:0 0 4px 0;font-family:${font};font-size:15px;line-height:1.6;color:${c.text}">${contactLine}</p>` : ""}
+<p style="margin:0 0 6px 0;font-family:${font};font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:${c.muted}">Novo lead</p>
+<h1 style="margin:0 0 8px 0;font-family:${font};font-size:24px;line-height:1.25;font-weight:600;color:${c.text}">${esc(name)}</h1>
+${place ? `<p style="margin:0 0 12px 0;font-family:${font};font-size:15px;color:${c.muted}">${esc(place)}</p>` : ""}
+${badge}
+${waUrl ? `${cta(waUrl, "Chamar no WhatsApp")}<p style="margin:0 0 4px 0;font-family:${font};font-size:15px;color:${c.text}">${esc(phone)}</p>` : phone ? `<p style="margin:0 0 4px 0;font-family:${font};font-size:15px;color:${c.text}">${esc(phone)}</p>` : ""}
+${email ? `<p style="margin:0 0 4px 0;font-family:${font};font-size:15px;line-height:1.6"><a href="mailto:${esc(email)}" style="color:${c.text};font-weight:600">${esc(email)}</a></p>` : ""}
+<p style="margin:8px 0 0 0;font-family:${font};font-size:15px"><a href="${esc(leadUrl)}" style="color:${c.accent};font-weight:600;text-decoration:none">Abrir no funil</a></p>
 ${section("Qualificação", answers)}
-${section("Origem", tracking)}
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 4px 0"><tr><td style="border-radius:${theme.buttonRadius}px;background:${c.accent}"><a href="${esc(leadUrl)}" style="display:inline-block;padding:13px 26px;font-family:${font};font-size:16px;font-weight:600;color:${c.buttonText};text-decoration:none;border-radius:${theme.buttonRadius}px">Abrir no funil</a></td></tr></table>
+${contextLine ? `<p style="margin:22px 0 0 0;font-family:${font};font-size:13px;line-height:1.5;color:${c.muted}">${esc(contextLine)}</p>` : ""}
 </td></tr>
 <tr><td align="center" style="padding:18px 28px;font-family:${font};font-size:12px;line-height:1.5;color:${c.muted}">Aviso automático para a equipe de ${esc(brand.storeName)}.${email ? " Responda este e-mail para falar direto com o lead." : ""}</td></tr>
 </table></td></tr></table>
@@ -152,15 +148,15 @@ ${section("Origem", tracking)}
 
   const text = [
     `Novo lead: ${name}`,
+    place || "",
     priority ? `Prioridade: ${priority}` : "",
-    phone ? `WhatsApp: ${phone}` : "",
+    waUrl ? `Chamar no WhatsApp: ${waUrl}` : phone ? `WhatsApp: ${phone}` : "",
     email ? `E-mail: ${email}` : "",
+    `Abrir no funil: ${leadUrl}`,
     "",
     ...answers.map(([l, v]) => `${l}: ${v}`),
     "",
-    ...tracking.map(([l, v]) => `${l}: ${v}`),
-    "",
-    `Abrir no funil: ${leadUrl}`,
+    contextLine,
   ]
     .filter((l, i, arr) => l || arr[i - 1])
     .join("\n");

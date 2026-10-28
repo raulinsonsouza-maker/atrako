@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ensureLeadContacts } from "@/lib/flows/lead-base";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@/lib/generated/prisma";
 import { bad, flowActor, gate, readBody, str } from "@/lib/flows/api";
@@ -90,6 +91,13 @@ export async function POST(request: NextRequest) {
   const channel = ["EMAIL", "WHATSAPP", "BOTH"].includes(str(body.channel)) ? str(body.channel) : "EMAIL";
   const eventDate = str(body.eventDate) ? new Date(str(body.eventDate)) : null;
   const calendarKey = str(body.calendarKey) || null;
+  const audience =
+    body.audience && typeof body.audience === "object" && !Array.isArray(body.audience)
+      ? (body.audience as { lifecycles?: unknown })
+      : { lifecycles: ["NOVO", "RECORRENTE", "VIP", "EM_RISCO"] };
+  if (Array.isArray(audience.lifecycles) && audience.lifecycles.includes("LEAD")) {
+    await ensureLeadContacts(ws);
+  }
   try {
     const c = await prisma.messageCampaign.create({
       data: {
@@ -100,7 +108,7 @@ export async function POST(request: NextRequest) {
         eventDate: eventDate && !Number.isNaN(eventDate.getTime()) ? eventDate : null,
         calendarKey,
         ownerMemberId: actor.memberId,
-        audience: { lifecycles: ["NOVO", "RECORRENTE", "VIP", "EM_RISCO"] } as Prisma.InputJsonValue,
+        audience: audience as Prisma.InputJsonValue,
         content: {
           email: {
             subject: name,

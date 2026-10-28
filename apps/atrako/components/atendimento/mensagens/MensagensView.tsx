@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui";
 import { BackLink } from "@/components/ui/back-link";
 import { AppPage } from "@/components/layout/AppPage";
@@ -26,6 +26,7 @@ function WhatsAppBody({
 }) {
   const s = useScriptDraft(data, post);
   const [open, setOpen] = useState<Open>(null);
+  const [picking, setPicking] = useState(false);
   const status = robotStatus(data);
   const sendOpening =
     data.channels.whatsapp.connected && data.templates.opening === "missing" && canManage;
@@ -40,8 +41,38 @@ function WhatsAppBody({
     );
   }
 
+  if (picking) {
+    return (
+      <div className="flex flex-col gap-3">
+        <BackLink onClick={() => setPicking(false)}>Mensagens</BackLink>
+        <AutomationRow
+          name="Qualificação"
+          detail={status.tone === "ok" ? "Perguntas na conversa do WhatsApp." : status.text}
+          onOpen={() => {
+            setPicking(false);
+            setOpen("conversa");
+          }}
+        />
+        <AutomationRow
+          name="Sem resposta"
+          detail="Lembrete se a pessoa para de responder."
+          onOpen={() => {
+            setPicking(false);
+            setOpen("sem-resposta");
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-end">
+        <Button type="button" size="toolbar" onClick={() => setPicking(true)}>
+          <Plus className="h-3.5 w-3.5" />
+          Nova automação
+        </Button>
+      </div>
       {post.error && !post.isPending ? <p className="type-caption text-[var(--danger)]">{post.error.message}</p> : null}
       <AutomationRow
         name="Qualificação"

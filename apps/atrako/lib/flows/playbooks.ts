@@ -1016,6 +1016,29 @@ export async function refreshDefaultCopy(workspaceId: string, tone?: Tone) {
   return { updated };
 }
 
+/** Reescreve os passos padrão de um fluxo que ainda não foram editados à mão. */
+export async function refreshFlowCopy(workspaceId: string, flowKey: string) {
+  const tone = (await loadEmailTheme(workspaceId)).theme.tone;
+  const steps = await prisma.messageFlowStep.findMany({
+    where: { customized: false, copyKey: { not: null }, flow: { clienteId: workspaceId, key: flowKey } },
+    select: { id: true, copyKey: true, flow: { select: { key: true } } },
+  });
+  const kept = await prisma.messageFlowStep.count({
+    where: { customized: true, flow: { clienteId: workspaceId, key: flowKey } },
+  });
+  let updated = 0;
+  for (const s of steps) {
+    const def = playbookByKey(s.flow.key)?.steps.find((d) => d.copyKey === s.copyKey);
+    if (!def) continue;
+    await prisma.messageFlowStep.update({
+      where: { id: s.id },
+      data: { content: stepContent(def, tone) as Prisma.InputJsonValue },
+    });
+    updated++;
+  }
+  return { updated, kept };
+}
+
 /** Restaura um passo ao texto padrão. */
 export async function resetStepCopy(workspaceId: string, stepId: string) {
   const s = await prisma.messageFlowStep.findFirst({

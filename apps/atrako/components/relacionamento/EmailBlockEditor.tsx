@@ -16,6 +16,9 @@ const BLOCK_LABEL: Record<EmailBlockType, string> = {
   recommendations: "Recomendados",
   button: "Botão",
   image: "Imagem",
+  topics: "Tópicos",
+  stats: "Números",
+  quote: "Citação",
   divider: "Divisor",
   signature: "Assinatura",
 };
@@ -47,6 +50,12 @@ function emptyBlock(type: EmailBlockType): EmailBlock {
       return { type };
     case "recommendations":
       return { type, title: "Você também pode gostar", limit: 4 };
+    case "topics":
+      return { type, items: [{ label: "", title: "", text: "" }] };
+    case "stats":
+      return { type, items: [{ value: "", label: "" }] };
+    case "quote":
+      return { type, text: "", name: "" };
     default:
       return { type } as EmailBlock;
   }
@@ -100,7 +109,7 @@ export function EmailBlockEditor({
     };
   }, [serialized]);
 
-  const setBlock = (i: number, patch: Partial<EmailBlock>) => {
+  const setBlock = (i: number, patch: Partial<EmailBlock> & Record<string, unknown>) => {
     const blocks = value.blocks.slice();
     blocks[i] = { ...blocks[i], ...patch } as EmailBlock;
     onChange({ ...value, blocks });
@@ -333,6 +342,77 @@ export function EmailBlockEditor({
                   {b.src && !b.src.startsWith("https://") ? (
                     <span className="type-micro-legal text-[var(--ink-muted-48)]">Só imagens com https aparecem no e-mail.</span>
                   ) : null}
+                </div>
+              ) : b.type === "topics" ? (
+                <div className="space-y-3">
+                  <input
+                    className="rel-input type-caption"
+                    placeholder="Título da seção (opcional)"
+                    value={b.title ?? ""}
+                    disabled={readOnly}
+                    onChange={(e) => setBlock(i, { title: e.target.value })}
+                  />
+                  {b.items.map((item, n) => (
+                    <div key={n} className="space-y-2 rounded-[var(--radius-xs)] border border-[var(--hairline)] p-2">
+                      <div className="grid gap-2 sm:grid-cols-[8rem_1fr]">
+                        <input className="rel-input type-caption" placeholder="Rótulo" value={item.label} disabled={readOnly} onChange={(e) => {
+                          const items = b.items.slice();
+                          items[n] = { ...item, label: e.target.value };
+                          setBlock(i, { items });
+                        }} />
+                        <input className="rel-input type-caption" placeholder="Título" value={item.title} disabled={readOnly} onChange={(e) => {
+                          const items = b.items.slice();
+                          items[n] = { ...item, title: e.target.value };
+                          setBlock(i, { items });
+                        }} />
+                      </div>
+                      <textarea className="rel-textarea type-caption" rows={3} placeholder="Texto" value={item.text} disabled={readOnly} onChange={(e) => {
+                        const items = b.items.slice();
+                        items[n] = { ...item, text: e.target.value };
+                        setBlock(i, { items });
+                      }} />
+                      {!readOnly && b.items.length > 1 ? (
+                        <button type="button" className="type-fine-print text-[var(--danger)]" onClick={() => setBlock(i, { items: b.items.filter((_, k) => k !== n) })}>
+                          Remover tópico
+                        </button>
+                      ) : null}
+                    </div>
+                  ))}
+                  {!readOnly && b.items.length < 8 ? (
+                    <button type="button" className="type-fine-print text-[var(--primary)]" onClick={() => setBlock(i, { items: [...b.items, { label: "", title: "", text: "" }] })}>
+                      Adicionar tópico
+                    </button>
+                  ) : null}
+                </div>
+              ) : b.type === "stats" ? (
+                <div className="space-y-2">
+                  {b.items.map((item, n) => (
+                    <div key={n} className="grid gap-2 sm:grid-cols-2">
+                      <input className="rel-input type-caption" placeholder="Valor" value={item.value} disabled={readOnly} onChange={(e) => {
+                        const items = b.items.slice();
+                        items[n] = { ...item, value: e.target.value };
+                        setBlock(i, { items });
+                      }} />
+                      <input className="rel-input type-caption" placeholder="Legenda" value={item.label} disabled={readOnly} onChange={(e) => {
+                        const items = b.items.slice();
+                        items[n] = { ...item, label: e.target.value };
+                        setBlock(i, { items });
+                      }} />
+                    </div>
+                  ))}
+                  {!readOnly && b.items.length < 3 ? (
+                    <button type="button" className="type-fine-print text-[var(--primary)]" onClick={() => setBlock(i, { items: [...b.items, { value: "", label: "" }] })}>
+                      Adicionar número
+                    </button>
+                  ) : null}
+                </div>
+              ) : b.type === "quote" ? (
+                <div className="space-y-2">
+                  <textarea className="rel-textarea type-caption" rows={3} placeholder="Citação" value={b.text} disabled={readOnly} onChange={(e) => setBlock(i, { text: e.target.value })} />
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <input className="rel-input type-caption" placeholder="Nome" value={b.name} disabled={readOnly} onChange={(e) => setBlock(i, { name: e.target.value })} />
+                    <input className="rel-input type-caption" placeholder="Papel (opcional)" value={b.role ?? ""} disabled={readOnly} onChange={(e) => setBlock(i, { role: e.target.value })} />
+                  </div>
                 </div>
               ) : b.type === "signature" ? (
                 <span className="type-fine-print text-[var(--ink-muted-48)]">Assinatura e rodapé vêm do visual do e-mail (Ajustes › Visual do e-mail).</span>

@@ -17,6 +17,10 @@ test("nutrição da franquia: 7 dias seguidos e depois a cada 3 até o D30", () 
     const content = s.email!("proximo");
     assert.deepEqual(emailContentProblems(content), [], s.copyKey);
     assert.ok(content.blocks.some((b) => b.type === "button"), s.copyKey);
+    assert.ok(
+      content.blocks.some((b) => b.type === "topics" || b.type === "stats" || b.type === "quote"),
+      s.copyKey,
+    );
   }
   assert.equal(new Set(FRANCHISE_NURTURE.steps.map((s) => s.copyKey)).size, 15);
 });

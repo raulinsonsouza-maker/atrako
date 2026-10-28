@@ -6,6 +6,9 @@ export type EmailBlock =
   | { type: "recommendations"; title?: string; limit?: number }
   | { type: "button"; label: string; url?: string }
   | { type: "image"; src: string; alt?: string; href?: string }
+  | { type: "topics"; title?: string; items: { label: string; title: string; text: string }[] }
+  | { type: "stats"; items: { value: string; label: string }[] }
+  | { type: "quote"; text: string; name: string; role?: string }
   | { type: "divider" }
   | { type: "signature" };
 

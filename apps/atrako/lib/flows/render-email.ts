@@ -73,6 +73,34 @@ export function sanitizeEmailContent(raw: unknown): EmailContent {
         }
         break;
       }
+      case "topics": {
+        const itemsRaw = Array.isArray(x.items) ? x.items.slice(0, 8) : [];
+        const items = itemsRaw
+          .map((item) => {
+            const it = item && typeof item === "object" ? (item as Record<string, unknown>) : {};
+            return { label: t(it.label, 40), title: t(it.title, 160), text: t(it.text, 800) };
+          })
+          .filter((it) => it.title || it.text);
+        if (items.length) blocks.push({ type: "topics", title: t(x.title, 200) || undefined, items });
+        break;
+      }
+      case "stats": {
+        const itemsRaw = Array.isArray(x.items) ? x.items.slice(0, 3) : [];
+        const items = itemsRaw
+          .map((item) => {
+            const it = item && typeof item === "object" ? (item as Record<string, unknown>) : {};
+            return { value: t(it.value, 40), label: t(it.label, 80) };
+          })
+          .filter((it) => it.value);
+        if (items.length) blocks.push({ type: "stats", items });
+        break;
+      }
+      case "quote": {
+        const text = t(x.text, 800);
+        const name = t(x.name, 120);
+        if (text && name) blocks.push({ type: "quote", text, name, role: t(x.role, 120) || undefined });
+        break;
+      }
       case "divider":
         blocks.push({ type: "divider" });
         break;
@@ -88,9 +116,13 @@ export function sanitizeEmailContent(raw: unknown): EmailContent {
 export function emailContentProblems(content: EmailContent): string[] {
   const problems: string[] = [];
   if (!content.subject.trim()) problems.push("Sem assunto");
-  const hasBody = content.blocks.some(
-    (b) => (b.type === "text" || b.type === "heading") && b.text.trim(),
-  );
+  const hasBody = content.blocks.some((b) => {
+    if ((b.type === "text" || b.type === "heading") && b.text.trim()) return true;
+    if (b.type === "topics") return b.items.some((item) => item.title.trim() || item.text.trim());
+    if (b.type === "stats") return b.items.some((item) => item.value.trim());
+    if (b.type === "quote") return Boolean(b.text.trim());
+    return false;
+  });
   if (!hasBody) problems.push("Sem conteúdo");
   for (const b of content.blocks) {
     if (b.type === "button" && !b.label.trim()) problems.push("Botão sem texto");
@@ -212,6 +244,60 @@ export function renderEmail({ theme, content, ctx }: RenderInput) {
         html.push(
           `<div style="margin:0 0 16px 0">${b.href ? `<a href="${esc(ctx.trackUrl(tx(b.href)))}">${img}</a>` : img}</div>`,
         );
+        break;
+      }
+      case "topics": {
+        const title = b.title ? tx(b.title) : "";
+        const cards = b.items
+          .map((item) => {
+            const label = tx(item.label).trim();
+            const itemTitle = tx(item.title).trim();
+            const body = tx(item.text).trim();
+            if (!itemTitle && !body) return "";
+            return `<tr><td style="padding:0 0 10px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e5e5ea;border-radius:8px"><tr><td style="border-left:3px solid ${c.accent};padding:14px 16px;font-family:${font}">${label ? `<div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:${c.accent};margin:0 0 4px 0">${esc(label)}</div>` : ""}${itemTitle ? `<div style="font-size:16px;line-height:1.35;font-weight:600;color:${c.text};margin:0 0 6px 0">${esc(itemTitle)}</div>` : ""}<div style="font-size:15px;line-height:1.5;color:${c.muted}">${richText(body, `margin:0;font-family:${font};font-size:15px;line-height:1.5;color:${c.muted}`)}</div></td></tr></table></td></tr>`;
+          })
+          .filter(Boolean)
+          .join("");
+        if (!cards) break;
+        html.push(
+          `${title ? `<p style="margin:8px 0 10px 0;font-family:${font};font-size:16px;font-weight:600;color:${c.text}">${esc(title)}</p>` : ""}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 12px 0">${cards}</table>`,
+        );
+        if (title) text.push(title);
+        for (const item of b.items) {
+          const label = tx(item.label).trim();
+          const itemTitle = tx(item.title).trim();
+          const body = plain(tx(item.text)).trim();
+          text.push([label, itemTitle].filter(Boolean).join(" — "));
+          if (body) text.push(body);
+          text.push("");
+        }
+        break;
+      }
+      case "stats": {
+        const cells = b.items
+          .map((item) => {
+            const value = tx(item.value).trim();
+            const label = tx(item.label).trim();
+            if (!value) return "";
+            return `<td width="${Math.floor(100 / b.items.length)}%" style="padding:4px;vertical-align:top"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${c.background};border-radius:8px"><tr><td align="center" style="padding:14px 8px;font-family:${font}"><div style="font-size:20px;line-height:1.2;font-weight:600;color:${c.accent}">${esc(value)}</div>${label ? `<div style="font-size:12px;line-height:1.35;color:${c.muted};margin-top:4px">${esc(label)}</div>` : ""}</td></tr></table></td>`;
+          })
+          .filter(Boolean)
+          .join("");
+        if (!cells) break;
+        html.push(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 16px 0"><tr>${cells}</tr></table>`);
+        for (const item of b.items) text.push(`${tx(item.value)} — ${tx(item.label)}`);
+        text.push("");
+        break;
+      }
+      case "quote": {
+        const body = tx(b.text).trim();
+        const name = tx(b.name).trim();
+        const role = b.role ? tx(b.role).trim() : "";
+        if (!body || !name) break;
+        html.push(
+          `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px 0"><tr><td style="border-left:3px solid ${c.accent};padding:4px 0 4px 16px;font-family:${font}"><div style="font-size:16px;line-height:1.5;color:${c.text}">${esc(body)}</div><div style="font-size:13px;line-height:1.4;color:${c.muted};margin-top:8px">${esc(name)}${role ? ` · ${esc(role)}` : ""}</div></td></tr></table>`,
+        );
+        text.push(`“${plain(body)}” — ${name}${role ? `, ${role}` : ""}`, "");
         break;
       }
       case "divider":

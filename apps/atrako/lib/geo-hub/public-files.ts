@@ -94,6 +94,13 @@ function factsLines(site: GeoSiteData) {
   const contact = [f.contact.email, f.contact.phone].filter(Boolean).join(" · ");
   if (contact) lines.push(`- Contato: ${contact}`);
   if (f.officialSite) lines.push(`- Site oficial: ${f.officialSite}`);
+  if (f.logo) {
+    const origin = siteOrigin(site);
+    const logo = /^https?:\/\//.test(f.logo)
+      ? f.logo
+      : `${origin}${f.logo.startsWith("/") ? "" : "/"}${f.logo}`;
+    lines.push(`- Logo oficial: ${logo}`);
+  }
   return lines;
 }
 

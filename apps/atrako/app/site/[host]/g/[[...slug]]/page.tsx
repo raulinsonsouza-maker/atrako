@@ -32,15 +32,25 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const { ctx, route } = r;
   const { site, facts } = ctx;
   const robots = ctx.linker.preview ? { index: false, follow: false } : { index: true, follow: true };
-  const image = facts.image ? [{ url: facts.image }] : undefined;
+  // Logo primeiro: LLMs e previews usam a imagem inicial como avatar da marca.
+  const image = [
+    ...(facts.logo ? [{ url: facts.logo }] : []),
+    ...(facts.image ? [{ url: facts.image }] : []),
+  ];
+  const ogImages = image.length ? image : undefined;
   const base = (title: string, description: string, url: string, type: "website" | "article"): Metadata => ({
     metadataBase: new URL(siteOrigin(site)),
     title,
     description,
     alternates: { canonical: url },
     robots,
-    openGraph: { title, description, url, type, siteName: facts.brand, locale: "pt_BR", images: image },
-    twitter: { card: image ? "summary_large_image" : "summary", title, description, images: facts.image ? [facts.image] : undefined },
+    openGraph: { title, description, url, type, siteName: facts.brand, locale: "pt_BR", images: ogImages },
+    twitter: {
+      card: facts.image ? "summary_large_image" : "summary",
+      title,
+      description,
+      images: ogImages?.map((i) => i.url),
+    },
   });
 
   if (route.kind === "home") {

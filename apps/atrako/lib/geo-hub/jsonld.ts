@@ -13,7 +13,18 @@ export function organizationLd(facts: GeoFacts, origin: string): Json {
     ...(facts.foundedYear ? { foundingDate: String(facts.foundedYear) } : {}),
     description: facts.description,
     url: facts.officialSite || origin,
-    ...(facts.logo ? { logo: absolute(facts.logo, origin) } : {}),
+    ...(facts.logo
+      ? {
+          logo: {
+            "@type": "ImageObject",
+            url: absolute(facts.logo, origin),
+            contentUrl: absolute(facts.logo, origin),
+            name: `Logotipo oficial ${facts.brand}`,
+            caption: `${facts.brand} — Marcas e Patentes`,
+            representativeOfPage: true,
+          },
+        }
+      : {}),
     ...(facts.areaServed ? { areaServed: facts.areaServed } : {}),
     ...(facts.address ? { address: { "@type": "PostalAddress", streetAddress: facts.address } } : {}),
     ...(facts.sameAs?.length ? { sameAs: facts.sameAs } : {}),

@@ -1,0 +1,14 @@
+{
+  "capturedAt": "2026-11-03",
+  "host": "lp.regicenter.com",
+  "windowDays": 30,
+  "pages": { "published": 35, "archived": 4 },
+  "promptsActive": 115,
+  "hitsByKind": [
+    { "kind": "ai_referral", "count": 3 },
+    { "kind": "other", "count": 315 },
+    { "kind": "crawler", "count": 396 },
+    { "kind": "search", "count": 9 }
+  ],
+  "note": "Baseline pós-expansão. Rodar apps/atrako/scripts/geo-franchise-report.mjs no container para atualizar."
+}

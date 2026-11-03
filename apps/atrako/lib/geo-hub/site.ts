@@ -131,7 +131,13 @@ export function resolveGeoRoute(site: GeoSiteData, pages: GeoPageRow[], segments
       ? { kind: "redirect", segments: [page.slug] }
       : { kind: "page", hub, pageId: page.id };
   }
-  const moved = pages.find((p) => p.hubId === hub.id && p.previousSlugs.includes(second));
-  if (moved) return { kind: "redirect", segments: pageSegments(hub.slug, moved) };
+  // previousSlugs pode apontar para canônica em outro hub (merge entre temas).
+  const moved =
+    pages.find((p) => p.hubId === hub.id && p.previousSlugs.includes(second)) ??
+    pages.find((p) => p.previousSlugs.includes(second));
+  if (moved) {
+    const movedHub = hubOf(moved);
+    if (movedHub) return { kind: "redirect", segments: pageSegments(movedHub.slug, moved) };
+  }
   return { kind: "missing" };
 }

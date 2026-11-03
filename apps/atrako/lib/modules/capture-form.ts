@@ -8,6 +8,7 @@ import { createFormFromBrief, type FormStep } from "@atrako/forms";
 import { createNativeLead } from "@/lib/modules/crm";
 import { publishFormCompletion } from "@atrako/forms";
 import { slugify } from "@/lib/criar/slug";
+import { dispatchRegicenterCrmLead } from "@/lib/qualification/regicenter-crm-webhook";
 
 export type CaptureFormRow = {
   id: string;
@@ -274,6 +275,18 @@ export async function completeCaptureForm(input: {
   } catch (err) {
     console.warn("[capture-form] qualification ingest", err instanceof Error ? err.message : err);
   }
+
+  dispatchRegicenterCrmLead({
+    id: lead.id,
+    source,
+    createdAt: lead.createdAt,
+    updatedAt: lead.updatedAt,
+    name,
+    phone,
+    email,
+    flat,
+    attribution: attr,
+  });
 
   const { sendLeadTeamEmail } = await import("@/lib/notifications/lead-team-email");
   await sendLeadTeamEmail(form.clienteId, lead.id).catch((err) =>

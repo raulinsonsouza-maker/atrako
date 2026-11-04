@@ -19,8 +19,18 @@ import {
   setMemberSessionCookie,
 } from "@/lib/tenancy/memberAuth";
 import { listMemberWorkspaceIds, WORKSPACE_COOKIE } from "@/lib/tenancy/workspace";
+import { LP_PATH_AREAS } from "@/lib/lp-path-areas";
 
 const GENERIC = "Credenciais inválidas.";
+
+function insideSalesHome(clienteId: string | undefined, slug: string | null | undefined): string {
+  if (slug) {
+    const pathArea = LP_PATH_AREAS.find((a) => a.workspaceSlug === slug);
+    if (pathArea) return pathArea.prefix;
+  }
+  void clienteId;
+  return "/atendimento";
+}
 
 /**
  * Login único: e-mail → dealer; usuário → staff.
@@ -52,16 +62,23 @@ export async function POST(request: NextRequest) {
       if (ok) {
         const token = await createMemberSession(member.id);
         const workspaces = await listMemberWorkspaceIds(member.email);
-        const settings = workspaces[0]
-          ? await prisma.workspaceSettings.findUnique({
-              where: { clienteId: workspaces[0] },
-              select: { edition: true },
-            })
-          : null;
+        const homeWs = workspaces[0];
+        const [settings, cliente] = homeWs
+          ? await Promise.all([
+              prisma.workspaceSettings.findUnique({
+                where: { clienteId: homeWs },
+                select: { edition: true },
+              }),
+              prisma.cliente.findUnique({ where: { id: homeWs }, select: { slug: true } }),
+            ])
+          : [null, null];
         const res = NextResponse.json({
           ok: true,
           kind: "member" as const,
-          redirect: settings?.edition === "inside_sales" ? "/atendimento" : "/assistente",
+          redirect:
+            settings?.edition === "inside_sales"
+              ? insideSalesHome(homeWs, cliente?.slug)
+              : "/assistente",
           email: member.email,
           workspaces,
         });

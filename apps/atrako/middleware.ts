@@ -57,7 +57,10 @@ function isPublicPath(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p));
 }
 
-/** Painel do workspace Vilaris sob o path da LP: /vilaris/crm → /crm. */
+/**
+ * Painel Vilaris (padrão inside sales = Regicenter):
+ * /vilaris/crm → /atendimento (mesmo alvo de lp.regicenter.com/crm).
+ */
 function rewriteVilarisCrm(request: NextRequest): NextResponse | null {
   const { pathname } = request.nextUrl;
   if (pathname !== "/vilaris/crm" && !pathname.startsWith("/vilaris/crm/")) return null;
@@ -68,8 +71,10 @@ function rewriteVilarisCrm(request: NextRequest): NextResponse | null {
   }
   const rest = pathname.slice("/vilaris/crm".length);
   const target = request.nextUrl.clone();
-  target.pathname = `/crm${rest || ""}`;
-  return NextResponse.rewrite(target);
+  target.pathname = `${LP_AREA_TARGET}${rest || ""}`;
+  const res = NextResponse.rewrite(target);
+  res.headers.set("x-pathname", pathname);
+  return res;
 }
 
 function hasSessionCookie(request: NextRequest): boolean {

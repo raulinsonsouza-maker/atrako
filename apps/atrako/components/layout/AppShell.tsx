@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppTopBar } from "@/components/layout/AppTopBar";
-import { LpHostProvider, type LpHostBrand } from "@/components/layout/LpHostContext";
+import { LpHostProvider, resolveLpBrand, type LpHostBrand } from "@/components/layout/LpHostContext";
 
 const OpenAppMenuContext = createContext<() => void>(() => {});
 
@@ -14,13 +14,17 @@ export function useOpenAppMenu() {
 }
 
 export function AppShell({ children, lpBrand = null }: { children: React.ReactNode; lpBrand?: LpHostBrand | null }) {
-  const lpHost = lpBrand !== null;
   const pathname = usePathname();
+  const effectiveBrand = resolveLpBrand(lpBrand, pathname);
+  const lpHost = effectiveBrand !== null;
+  const pathArea =
+    pathname === "/vilaris/crm" || pathname.startsWith("/vilaris/crm/");
   const [mobileOpen, setMobileOpen] = useState(false);
   const openMenu = useCallback(() => setMobileOpen(true), []);
-  /** Páginas públicas / autenticação — sem sidebar do app. */
+  /** Páginas públicas / autenticação / área LP — sem sidebar do app. */
   const bare =
     lpHost ||
+    pathArea ||
     pathname === "/" ||
     pathname.startsWith("/portal") ||
     pathname.startsWith("/sign-in") ||
@@ -60,7 +64,7 @@ export function AppShell({ children, lpBrand = null }: { children: React.ReactNo
 
   if (bare) {
     return (
-      <LpHostProvider value={lpBrand}>
+      <LpHostProvider value={effectiveBrand}>
         <div
           className={
             fillViewport
@@ -76,17 +80,19 @@ export function AppShell({ children, lpBrand = null }: { children: React.ReactNo
 
   return (
     <OpenAppMenuContext.Provider value={openMenu}>
-      <div
-        className={`flex bg-[var(--canvas-parchment)] ${fillViewport ? "h-screen overflow-hidden" : "min-h-screen"}`}
-      >
-        <AppSidebar mobileOpen={mobileOpen} onMobileOpenChange={setMobileOpen} />
+      <LpHostProvider value={effectiveBrand}>
         <div
-          className={`flex min-w-0 flex-1 flex-col ${fillViewport ? "min-h-0 overflow-hidden" : ""}`}
+          className={`flex bg-[var(--canvas-parchment)] ${fillViewport ? "h-screen overflow-hidden" : "min-h-screen"}`}
         >
-          {ownHeader ? null : <AppTopBar onOpenMenu={openMenu} />}
-          {children}
+          <AppSidebar mobileOpen={mobileOpen} onMobileOpenChange={setMobileOpen} />
+          <div
+            className={`flex min-w-0 flex-1 flex-col ${fillViewport ? "min-h-0 overflow-hidden" : ""}`}
+          >
+            {ownHeader ? null : <AppTopBar onOpenMenu={openMenu} />}
+            {children}
+          </div>
         </div>
-      </div>
+      </LpHostProvider>
     </OpenAppMenuContext.Provider>
   );
 }

@@ -67,7 +67,10 @@ export function AtendimentoShell({ children }: { children: React.ReactNode }) {
   const { workspaceError: isError, info: data } = useAtendimentoInfo();
   const role = data?.role ?? "ADMIN";
   const manage = role !== "OPERATOR";
-  const section = pathname.replace(/^\/(crm|atendimento)/, "");
+  const section =
+    pathname === base || pathname.startsWith(`${base}/`)
+      ? pathname.slice(base.length)
+      : pathname.replace(/^\/(crm|atendimento)/, "");
 
   useEffect(() => {
     setCollapsedPref(localStorage.getItem(COLLAPSED_KEY) === "1");

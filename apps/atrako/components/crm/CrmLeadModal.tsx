@@ -34,6 +34,7 @@ import { formatPhone } from "@/components/crm/CrmLeadCard";
 import { useCrmLinks } from "@/components/crm/CrmLinksContext";
 import { LeadCommunications, type LeadCommunicationsData } from "@/components/crm/LeadCommunications";
 import { LeadPaymentLinks } from "@/components/crm/LeadPaymentLinks";
+import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 
 type JourneyItem = {
   at: string;
@@ -585,6 +586,10 @@ export function CrmLeadModal({
   onClose: () => void;
 }) {
   const qc = useQueryClient();
+  const { workspaces } = useActiveWorkspace();
+  const workspaceSlug = workspaces.find((w) => w.id === workspaceId)?.slug ?? "";
+  /** COF é playbook Regicenter/franquia — não aparece em inside sales genérico (ex. Vilaris). */
+  const canSendCof = workspaceSlug === "regicenter";
   const [showAllOrders, setShowAllOrders] = useState(false);
   const [panelTab, setPanelTab] = useState<"jornada" | "pedidos" | "conversas" | "notas" | "cobranca">("jornada");
   const [noteText, setNoteText] = useState("");
@@ -1087,7 +1092,7 @@ export function CrmLeadModal({
         </div>
 
         <div className="panel-modal-footer">
-          {lead?.phone ? (
+          {canSendCof && lead?.phone ? (
             <Button
               type="button"
               variant="outline"

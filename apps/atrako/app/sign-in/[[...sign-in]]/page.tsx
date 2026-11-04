@@ -5,7 +5,12 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useLpBrand, useLpLogoOnDark } from "@/components/layout/LpHostContext";
+import {
+  areaBaseFromNextParam,
+  brandFromNextParam,
+  useLpBrand,
+  useLpLogoOnDark,
+} from "@/components/layout/LpHostContext";
 import "@/app/food/food-shell.css";
 import "@/app/atendimento/atendimento-shell.css";
 
@@ -17,16 +22,21 @@ function SignInForm() {
   const router = useRouter();
   const params = useSearchParams();
   const nextParam = params.get("next");
-  const lpBrand = useLpBrand();
-  const lpLogo = useLpLogoOnDark();
-  const lpHost = lpBrand !== null;
-  const areaBase = lpHost ? "/crm" : "/atendimento";
+  const pathBrand = brandFromNextParam(nextParam);
+  const pathAreaBase = areaBaseFromNextParam(nextParam);
+  const hostBrand = useLpBrand();
+  const hostLogo = useLpLogoOnDark();
+  const lpBrand = hostBrand ?? pathBrand?.name ?? null;
+  const lpLogo = hostLogo ?? pathBrand?.logoOnDark ?? null;
+  const lpHost = hostBrand !== null;
+  const areaBase = pathAreaBase ?? (lpHost ? "/crm" : "/atendimento");
   const nextInArea =
     nextParam === areaBase ||
     nextParam?.startsWith(`${areaBase}/`) === true ||
-    nextParam?.startsWith(`${areaBase}?`) === true;
-  const areaEntry = lpHost || nextInArea;
-  const areaDest = nextInArea ? nextParam! : areaBase;
+    nextParam?.startsWith(`${areaBase}?`) === true ||
+    Boolean(pathAreaBase);
+  const areaEntry = lpHost || nextInArea || Boolean(pathAreaBase);
+  const areaDest = nextInArea && nextParam ? nextParam : areaBase;
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

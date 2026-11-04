@@ -24,6 +24,7 @@ const PUBLIC_PREFIXES = [
   "/politica-de-privacidade",
   "/termos-de-uso",
   "/exclusao-de-dados",
+  "/vilaris",
   "/b/",
   "/c/",
   "/f/",

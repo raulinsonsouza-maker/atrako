@@ -34,7 +34,8 @@ export function AppShell({ children, lpBrand = null }: { children: React.ReactNo
     pathname.startsWith("/site/") ||
     pathname.startsWith("/checkout/") ||
     pathname.startsWith("/f/") ||
-    pathname.startsWith("/vilaris") ||
+    pathname === "/vilaris" ||
+    pathname === "/vilaris/" ||
     pathname.startsWith("/u/") ||
     pathname.startsWith("/relatorio/") ||
     /** Studio LP full-bleed (estilo GreatPages) */

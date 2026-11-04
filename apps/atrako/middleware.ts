@@ -24,7 +24,6 @@ const PUBLIC_PREFIXES = [
   "/politica-de-privacidade",
   "/termos-de-uso",
   "/exclusao-de-dados",
-  "/vilaris",
   "/b/",
   "/c/",
   "/f/",
@@ -52,7 +51,25 @@ const PUBLIC_PREFIXES = [
 
 function isPublicPath(pathname: string): boolean {
   if (pathname === "/") return true;
+  // LP pública; painel /vilaris/crm exige sessão (igual Regicenter em /crm no host LP).
+  if (pathname === "/vilaris" || pathname === "/vilaris/") return true;
+  if (pathname === "/vilaris/crm" || pathname.startsWith("/vilaris/crm/")) return false;
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p));
+}
+
+/** Painel do workspace Vilaris sob o path da LP: /vilaris/crm → /crm. */
+function rewriteVilarisCrm(request: NextRequest): NextResponse | null {
+  const { pathname } = request.nextUrl;
+  if (pathname !== "/vilaris/crm" && !pathname.startsWith("/vilaris/crm/")) return null;
+  if (process.env.ATRAKO_DEV_OPEN_ACCESS !== "1" && !hasSessionCookie(request)) {
+    const signIn = new URL("/sign-in", request.url);
+    signIn.searchParams.set("next", pathname + request.nextUrl.search);
+    return NextResponse.redirect(signIn);
+  }
+  const rest = pathname.slice("/vilaris/crm".length);
+  const target = request.nextUrl.clone();
+  target.pathname = `/crm${rest || ""}`;
+  return NextResponse.rewrite(target);
 }
 
 function hasSessionCookie(request: NextRequest): boolean {
@@ -139,6 +156,9 @@ function noindex(res: NextResponse) {
 
 function authGate(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  const vilarisCrm = rewriteVilarisCrm(request);
+  if (vilarisCrm) return noindex(vilarisCrm);
 
   if (pathname === "/social" || pathname.startsWith("/social/")) {
     const inbox = pathname.startsWith("/social/inbox") || pathname.startsWith("/social/contacts");

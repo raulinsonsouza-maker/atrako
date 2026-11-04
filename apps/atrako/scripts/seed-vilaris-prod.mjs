@@ -12,7 +12,9 @@ const { PrismaClient } = require("/app/lib/generated/prisma/index.js");
 const prisma = new PrismaClient();
 const scryptAsync = promisify(nodeScrypt);
 
-const EMAIL = "vilaris@atrako.com.br";
+const EMAIL = "crm@vilaris.com.br";
+const LEGACY_EMAIL = "vilaris@atrako.com.br";
+const DEFAULT_PASSWORD = "Vilaris@2026";
 const SLUG = "vilaris";
 const LOGO = "/lp/vilaris/assets/vilaris-logo.png";
 const PRIMARY = "#354a5c";
@@ -78,7 +80,7 @@ async function hashPassword(password) {
 }
 
 async function main() {
-  const password = process.env.VILARIS_OWNER_PASSWORD?.trim() || `Vil${randomBytes(4).toString("hex")}!a`;
+  const password = process.env.VILARIS_OWNER_PASSWORD?.trim() || DEFAULT_PASSWORD;
 
   let cliente = await prisma.cliente.findFirst({
     where: { OR: [{ slug: SLUG }, { nome: { contains: "vilaris", mode: "insensitive" } }] },
@@ -103,12 +105,15 @@ async function main() {
   console.log("Cliente:", cliente.id, cliente.nome, cliente.slug);
 
   const passwordHash = await hashPassword(password);
-  const existingMember = await prisma.workspaceMember.findFirst({ where: { email: EMAIL } });
+  const existingMember = await prisma.workspaceMember.findFirst({
+    where: { OR: [{ email: EMAIL }, { email: LEGACY_EMAIL }] },
+  });
   const member = existingMember
     ? await prisma.workspaceMember.update({
         where: { id: existingMember.id },
         data: {
           clienteId: cliente.id,
+          email: EMAIL,
           passwordHash,
           passwordUpdatedAt: new Date(),
           role: "OWNER",
@@ -240,7 +245,7 @@ async function main() {
 
   console.log("OK — sem playbook de franquia/COF.");
   console.log("LP:  https://atrako.com.br/vilaris");
-  console.log("CRM: https://atrako.com.br/crm");
+  console.log("CRM: https://atrako.com.br/vilaris/crm");
   console.log(`Login: ${EMAIL} / ${password}`);
 }
 

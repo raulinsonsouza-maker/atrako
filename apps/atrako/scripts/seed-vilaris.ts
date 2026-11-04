@@ -3,10 +3,10 @@
  *
  *   npx tsx scripts/seed-vilaris.ts
  *
- * Login: vilaris@atrako.com.br / (senha impressa)
+ * Login: crm@vilaris.com.br / Vilaris@2026
+ * Painel: https://atrako.com.br/vilaris/crm
  */
 
-import { randomBytes } from "node:crypto";
 import { prisma } from "../lib/db";
 import { hashPassword } from "../lib/authSecurity";
 import { ensureVilarisLpForm } from "../lib/vilaris/ensure-forms";
@@ -14,10 +14,12 @@ import { ensureDefaultPipeline } from "../lib/modules/crm";
 import { applyWorkspaceEdition } from "../lib/modules/apply-edition";
 import { Prisma } from "../lib/generated/prisma";
 
-const EMAIL = "vilaris@atrako.com.br";
+const EMAIL = "crm@vilaris.com.br";
+const PASSWORD = process.env.VILARIS_OWNER_PASSWORD?.trim() || "Vilaris@2026";
 const SLUG = "vilaris";
 const LOGO = "/lp/vilaris/assets/vilaris-logo.png";
 const PRIMARY = "#354a5c";
+const LEGACY_EMAIL = "vilaris@atrako.com.br";
 
 async function upsertCliente() {
   const existing = await prisma.cliente.findFirst({
@@ -47,12 +49,15 @@ async function upsertCliente() {
 
 async function upsertOwner(clienteId: string, password: string) {
   const passwordHash = await hashPassword(password);
-  const existing = await prisma.workspaceMember.findFirst({ where: { email: EMAIL } });
+  const existing = await prisma.workspaceMember.findFirst({
+    where: { OR: [{ email: EMAIL }, { email: LEGACY_EMAIL }] },
+  });
   if (existing) {
     return prisma.workspaceMember.update({
       where: { id: existing.id },
       data: {
         clienteId,
+        email: EMAIL,
         passwordHash,
         passwordUpdatedAt: new Date(),
         role: "OWNER",
@@ -75,7 +80,7 @@ async function upsertOwner(clienteId: string, password: string) {
 }
 
 async function main() {
-  const password = process.env.VILARIS_OWNER_PASSWORD?.trim() || `Vil${randomBytes(4).toString("hex")}!a`;
+  const password = PASSWORD;
   const cliente = await upsertCliente();
   console.log("Cliente:", cliente.id, cliente.nome, cliente.slug);
 
@@ -125,7 +130,7 @@ async function main() {
 
   console.log("OK — sem playbook de franquia/COF.");
   console.log("LP:  https://atrako.com.br/vilaris");
-  console.log("CRM: https://atrako.com.br/crm");
+  console.log("CRM: https://atrako.com.br/vilaris/crm");
   console.log(`Login: ${EMAIL} / ${password}`);
 }
 

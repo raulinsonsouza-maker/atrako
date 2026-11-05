@@ -207,6 +207,14 @@ export function VendasMetaReportView({
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr className="type-caption-strong">
+                  <td>Total</td>
+                  <td className="text-right tabular-nums">{r.pedidos}</td>
+                  <td className="text-right tabular-nums">{formatBRL(r.faturamentoCents)}</td>
+                  <td className="text-right tabular-nums">{formatBRL(r.comissaoCents)}</td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </SectionCard>
@@ -265,6 +273,18 @@ export function VendasMetaReportView({
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                {r.freteCents > 0 ? (
+                  <tr>
+                    <td colSpan={4}>Frete</td>
+                    <td className="text-right tabular-nums">{formatBRL(r.freteCents)}</td>
+                  </tr>
+                ) : null}
+                <tr className="type-caption-strong">
+                  <td colSpan={4}>Total faturado</td>
+                  <td className="text-right tabular-nums">{formatBRL(r.faturamentoCents)}</td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </SectionCard>
@@ -306,22 +326,9 @@ export function VendasMetaReportView({
         )}
       </SectionCard>
 
-      <div className="rel-card flex flex-col gap-1 type-fine-print text-[var(--ink-muted-48)]">
-        <p>
-          Conferência: o Meta reportou {plural(report.meta.compras, "compra", "compras")} ({formatBRL(report.meta.valorCents)}) no
-          período, contando clique em até 7 dias e visualização em 1 dia.
-        </p>
-        {report.naoConcretizados.pedidos ? (
-          <p>
-            Fora da comissão: {plural(report.naoConcretizados.pedidos, "pedido atribuído ao Meta", "pedidos atribuídos ao Meta")} sem
-            pagamento confirmado, cancelados ou reembolsados ({formatBRL(report.naoConcretizados.valorCents)}).
-          </p>
-        ) : null}
-        <p>
-          Entram só pedidos pagos (status Pago ou Concluído na loja), pela data do pagamento, no horário de Brasília. Comissão de {pct}{" "}
-          sobre o total do pedido.
-        </p>
-      </div>
+      <p className="type-fine-print text-[var(--ink-muted-48)]">
+        Comissão de {pct} sobre {formatBRL(r.faturamentoCents)}, soma dos pedidos pagos neste ciclo.
+      </p>
     </div>
   );
 }

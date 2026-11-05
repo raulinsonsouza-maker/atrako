@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { cicloStatus, formatCicloLabel, listCiclos, todayBRT } from "../lib/relatorios/ciclos";
-import { aggregateVendasMetaReport, comissaoDe, vendasMetaCsv, type OrderInput } from "../lib/relatorios/vendas-meta-core";
+import { aggregateVendasMetaReport, apresentarRelatorioCobranca, comissaoDe, vendasMetaCsv, type OrderInput } from "../lib/relatorios/vendas-meta-core";
 
 test("ciclos de 24 a 23 desde 24/08/2026", () => {
   const ciclos = listCiclos({ inicio: "2026-08-24", diaCorte: 24, hoje: "2026-10-22" });
@@ -94,13 +94,36 @@ test("só pedidos pagos entram, com comissão", () => {
   assert.equal(report.resumo.pedidos, 4);
   assert.equal(report.resumo.faturamentoCents, 105049);
   assert.equal(report.resumo.comissaoCents, 10505);
-  assert.equal(report.resumo.freteCents, 6000);
-  assert.equal(report.resumo.comissaoSemFreteCents, comissaoDe(35049 - 6000, 10));
+  assert.equal(report.resumo.freteCents, 8000);
+  assert.equal(report.resumo.comissaoSemFreteCents, comissaoDe(105049 - 8000, 10));
   assert.deepEqual(report.naoConcretizados, { pedidos: 2, valorCents: 80000 });
   assert.deepEqual(report.meta, { compras: 4, valorCents: 40000 });
   assert.equal(report.porCampanha.length, 1);
   assert.equal(report.porProduto[0].quantidade, 4);
   assert.equal(report.pedidos[0].numero, "N1");
+});
+
+test("linhas de comissão e produtos fecham o total cobrado", () => {
+  const base = aggregateVendasMetaReport({
+    periodo: { dataInicio: "2026-09-24", dataFim: "2026-10-23" },
+    comissaoPercent: 10,
+    orders: [
+      order({ id: "1", totalCents: 5, status: "completed", rawPayload: { order: { shipping_total: "0", number: "1" } }, items: [{ title: "Kit", sku: "K", quantity: 1, unitPriceCents: 6, lineTotalCents: 6 }] }),
+      order({ id: "2", totalCents: 5, status: "completed", rawPayload: { order: { shipping_total: "0", number: "2" } }, items: [{ title: "Kit", sku: "K", quantity: 1, unitPriceCents: 5, lineTotalCents: 5 }] }),
+      order({ id: "3", totalCents: 5, status: "completed", rawPayload: { order: { shipping_total: "0", number: "3" } }, items: [{ title: "Kit", sku: "K", quantity: 1, unitPriceCents: 5, lineTotalCents: 5 }] }),
+    ],
+    metaPurchases: [{ clickPurchases: 9, clickValueCents: 99999, viewPurchases: 0, viewValueCents: 0 }],
+  });
+  const report = apresentarRelatorioCobranca(base);
+  const somaComissao = report.pedidos.reduce((s, p) => s + p.comissaoCents, 0);
+  const somaProdutos = report.porProduto.reduce((s, p) => s + p.receitaCents, 0);
+  assert.equal(somaComissao, report.resumo.comissaoCents);
+  assert.equal(somaProdutos + report.resumo.freteCents, report.resumo.faturamentoCents);
+  assert.equal(report.resumo.faturamentoCents, 15);
+  assert.equal(report.resumo.comissaoCents, comissaoDe(15, 10));
+  assert.equal(report.meta.compras, 9);
+  const deNovo = apresentarRelatorioCobranca(report);
+  assert.equal(deNovo.pedidos.reduce((s, p) => s + p.comissaoCents, 0), report.resumo.comissaoCents);
 });
 
 test("CSV: BOM, separador ; e decimal com vírgula", () => {

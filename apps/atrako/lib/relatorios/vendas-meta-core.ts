@@ -196,7 +196,7 @@ export function aggregateVendasMetaReport(input: {
     .map((r) => ({ titulo: r.titulo, sku: r.sku, quantidade: r.quantidade, pedidos: r.pedidos.size, receitaCents: r.receitaCents }))
     .sort((a, b) => b.receitaCents - a.receitaCents || b.quantidade - a.quantidade);
 
-  return {
+  return apresentarRelatorioCobranca({
     versao: 1,
     periodo: input.periodo,
     comissaoPercent: pct,
@@ -220,7 +220,50 @@ export function aggregateVendasMetaReport(input: {
       compras: input.metaPurchases.reduce((s, r) => s + r.clickPurchases + r.viewPurchases, 0),
       valorCents: input.metaPurchases.reduce((s, r) => s + r.clickValueCents + r.viewValueCents, 0),
     },
-  };
+  });
+}
+
+/**
+ * O total cobrado é a comissão sobre a soma dos pedidos. O arredondamento de cada
+ * linha e o centavo do item na loja são ajustados para essa soma, para o relatório
+ * de cobrança fechar em todos os quadros.
+ */
+export function apresentarRelatorioCobranca(report: VendasMetaReport): VendasMetaReport {
+  const pedidos = report.pedidos.map((p) => ({
+    ...p,
+    itens: p.itens.map((i) => ({ ...i })),
+  }));
+
+  for (const p of pedidos) {
+    if (!p.itens.length) continue;
+    const somaItens = p.itens.reduce((s, i) => s + i.totalCents, 0);
+    const esperado = p.totalCents - p.freteCents;
+    const folga = esperado - somaItens;
+    if (folga !== 0) p.itens[p.itens.length - 1].totalCents += folga;
+  }
+
+  const comissaoLinhas = pedidos.reduce((s, p) => s + p.comissaoCents, 0);
+  const folgaComissao = report.resumo.comissaoCents - comissaoLinhas;
+  if (folgaComissao !== 0 && pedidos.length) {
+    pedidos[pedidos.length - 1].comissaoCents += folgaComissao;
+  }
+
+  const produtos = new Map<string, { titulo: string; sku: string | null; quantidade: number; pedidos: Set<string>; receitaCents: number }>();
+  for (const p of pedidos) {
+    for (const i of p.itens) {
+      const key = i.sku || i.titulo;
+      const row = produtos.get(key) ?? { titulo: i.titulo, sku: i.sku, quantidade: 0, pedidos: new Set<string>(), receitaCents: 0 };
+      row.quantidade += i.quantidade;
+      row.receitaCents += i.totalCents;
+      row.pedidos.add(p.id);
+      produtos.set(key, row);
+    }
+  }
+  const porProduto = [...produtos.values()]
+    .map((r) => ({ titulo: r.titulo, sku: r.sku, quantidade: r.quantidade, pedidos: r.pedidos.size, receitaCents: r.receitaCents }))
+    .sort((a, b) => b.receitaCents - a.receitaCents || b.quantidade - a.quantidade);
+
+  return { ...report, pedidos, porProduto };
 }
 
 /* ───────────── Formatação (PT-BR) ───────────── */

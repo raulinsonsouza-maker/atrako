@@ -11,7 +11,7 @@ import {
   todayBRT,
   type CicloStatus,
 } from "./ciclos";
-import { aggregateVendasMetaReport, type VendasMetaReport } from "./vendas-meta-core";
+import { aggregateVendasMetaReport, apresentarRelatorioCobranca, type VendasMetaReport } from "./vendas-meta-core";
 
 export async function buildVendasMetaReport(opts: {
   clienteId: string;
@@ -235,7 +235,7 @@ export async function getCicloReport(clienteId: string, cicloId: string) {
     comissaoPercent: Number(row.comissaoPercent.toString()),
     fechadoEm: row.fechadoEm?.toISOString() ?? null,
   };
-  const report =
+  const bruto =
     row.status === "FECHADO" && row.snapshot
       ? (row.snapshot as unknown as VendasMetaReport)
       : await buildVendasMetaReport({
@@ -244,7 +244,7 @@ export async function getCicloReport(clienteId: string, cicloId: string) {
           dataFim: ciclo.dataFim,
           comissaoPercent: ciclo.comissaoPercent,
         });
-  return { ciclo, report };
+  return { ciclo, report: apresentarRelatorioCobranca(bruto) };
 }
 
 export function vendasMetaFileName(slug: string, ciclo: { dataInicio: string; dataFim: string }, ext: string, sufixo = "") {

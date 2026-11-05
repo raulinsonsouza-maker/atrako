@@ -3,21 +3,19 @@ import { prisma } from "@/lib/db";
 import { getWorkspaceConnection } from "@/lib/atrako/workspace-connections";
 import { requireClienteAccess } from "@/lib/portalSession";
 import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
+import { brtDay, brtRange, isYmd } from "@/lib/commerce-attribution/period";
 
 const ECOMMERCE_PROVIDERS = ["WOOCOMMERCE", "SHOPIFY", "TRAY", "NUVEMSHOP"] as const;
 type EcommerceProvider = (typeof ECOMMERCE_PROVIDERS)[number];
 
 function parseDate(value: string | null, endOfDay = false): Date | null {
   if (!value) return null;
-  const ymd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  const d = ymd ? new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3])) : new Date(value);
-  if (Number.isNaN(d.getTime())) return null;
-  if (endOfDay) {
-    d.setHours(23, 59, 59, 999);
-  } else {
-    d.setHours(0, 0, 0, 0);
+  if (isYmd(value)) {
+    const range = brtRange(value, value);
+    return endOfDay ? range.lte : range.gte;
   }
-  return d;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 function isEcommerceProvider(value: string): value is EcommerceProvider {
@@ -164,7 +162,7 @@ export async function GET(
     revenueOrders += 1;
     gmvCents += cents;
     if (!row.occurredAt) continue;
-    const date = row.occurredAt.toISOString().slice(0, 10);
+    const date = brtDay(row.occurredAt);
     const current = byDate.get(date) ?? { date, orders: 0, gmvCents: 0 };
     current.orders += 1;
     current.gmvCents += cents;

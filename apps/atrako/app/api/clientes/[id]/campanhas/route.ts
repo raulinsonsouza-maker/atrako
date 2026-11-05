@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findClienteById } from "@/lib/repositories/clientesRepository";
 import { prisma } from "@/lib/db";
-import { isContaHotelPilot } from "@/lib/clientProfiles";
+import { isContaHotelPilot, isEcommerceCliente } from "@/lib/clientProfiles";
+import { calendarRange, isYmd } from "@/lib/commerce-attribution/period";
+import { loadStoreSales, overlayCampaignSales, salesForCanal, salesGrouped, storeHasOrders } from "@/lib/commerce-attribution/store-sales";
 import { formatLocalDate, parseLocalDate, percentChange, previousPeriod } from "@/lib/hotelAnalysis";
 import { isInternalAdminAuthorized } from "@/lib/internalAccess";
 import { requireClienteAccess } from "@/lib/portalSession";
-
-function parseDateOnly(value: string) {
-  const [y, m, d] = value.split("-").map(Number);
-  if (!y || !m || !d) return null;
-  return parseLocalDate(value);
-}
 
 export async function GET(
   request: NextRequest,
@@ -37,14 +33,10 @@ export async function GET(
   const dataInicio = new Date();
   dataInicio.setDate(dataInicio.getDate() - diasFallback);
 
-  if (dataInicioParam && dataFimParam) {
-    const parsedInicio = parseDateOnly(dataInicioParam);
-    const parsedFim = parseDateOnly(dataFimParam);
-    if (parsedInicio && parsedFim && parsedInicio <= parsedFim) {
-      dataInicio.setTime(parsedInicio.getTime());
-      dataFim.setTime(parsedFim.getTime());
-      dataFim.setHours(23, 59, 59, 999);
-    }
+  if (isYmd(dataInicioParam) && isYmd(dataFimParam) && dataInicioParam <= dataFimParam) {
+    const span = calendarRange(dataInicioParam, dataFimParam);
+    dataInicio.setTime(span.gte.getTime());
+    dataFim.setTime(span.lte.getTime());
   }
 
   const cliente = await findClienteById(id);
@@ -59,6 +51,14 @@ export async function GET(
   }
 
   const canalFilter = canal === "geral" ? undefined : canal.toUpperCase();
+  const storeSales =
+    isEcommerceCliente(cliente) &&
+    (canalFilter === "META" || canalFilter === "GOOGLE") &&
+    isYmd(dataInicioParam) &&
+    isYmd(dataFimParam) &&
+    (await storeHasOrders(id))
+      ? salesForCanal(await loadStoreSales(id, dataInicioParam, dataFimParam), canalFilter)
+      : null;
 
   if (nivel === "campanhas") {
     // Group FatoMidiaDiario by campaignName with full metrics
@@ -218,8 +218,10 @@ export async function GET(
           })() : {}),
         };
       })
-      .filter(c => c.investimento > 1)
       .sort((a, b) => b.investimento - a.investimento);
+
+    const comLoja = storeSales ? overlayCampaignSales(campanhas, storeSales) : campanhas;
+    const visiveis = comLoja.filter((c) => c.investimento > 1 || c.purchases > 0);
 
     const stoppedCampaigns = comparePrevious
       ? Array.from(previousByCampaign.entries()).filter(([key]) => !byCampanha.has(key)).map(([, p]) => ({
@@ -229,7 +231,7 @@ export async function GET(
         comparison: { state: "stopped", investimento: -100, faturamento: -100, purchases: -100 },
       }))
       : [];
-    return NextResponse.json({ nivel: "campanhas", campanhas: [...campanhas, ...stoppedCampaigns], ...(comparePrevious ? { comparisonPeriod: { start: formatLocalDate(previousStart), end: formatLocalDate(comparison.end) } } : {}) });
+    return NextResponse.json({ nivel: "campanhas", campanhas: [...visiveis, ...stoppedCampaigns], ...(comparePrevious ? { comparisonPeriod: { start: formatLocalDate(previousStart), end: formatLocalDate(comparison.end) } } : {}) });
   }
 
   if (nivel === "conjuntos" && campanha) {
@@ -298,6 +300,18 @@ export async function GET(
     for (const [key, adIds] of adIdsByConjunto.entries()) {
       const v = byConjunto.get(key);
       if (v) v.adCount = adIds.size;
+    }
+
+    if (storeSales) {
+      const grouped = salesGrouped(
+        storeSales.filter((s) => (s.campaignName || "Campanha não identificada") === campanha),
+        (s) => s.adsetId ?? "sem-conjunto",
+      );
+      for (const v of byConjunto.values()) {
+        const hit = grouped.get(v.adsetId || "sem-conjunto") ?? { n: 0, cents: 0 };
+        v.purchases = hit.n;
+        v.faturamento = Math.round(hit.cents) / 100;
+      }
     }
 
     const conjuntos = Array.from(byConjunto.values())
@@ -390,6 +404,20 @@ export async function GET(
           daysActive: Number(r.spend) > 0 || r.impressions > 0 ? 1 : 0,
           _latestData: r.data,
         });
+      }
+    }
+
+    if (storeSales) {
+      const grouped = salesGrouped(
+        storeSales.filter(
+          (s) => (s.campaignName || "Campanha não identificada") === campanha && (s.adsetId ?? "") === conjunto,
+        ),
+        (s) => s.adId ?? "",
+      );
+      for (const v of byAd.values()) {
+        const hit = grouped.get(v.adId) ?? { n: 0, cents: 0 };
+        v.purchases = hit.n;
+        v.faturamento = Math.round(hit.cents) / 100;
       }
     }
 

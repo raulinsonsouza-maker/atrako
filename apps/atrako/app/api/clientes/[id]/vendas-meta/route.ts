@@ -49,7 +49,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const metaPurchases = metaRows.reduce((s, r) => s + r.clickPurchases + r.viewPurchases, 0);
   const metaValueCents = metaRows.reduce((s, r) => s + r.clickValueCents + r.viewValueCents, 0);
+  const paid = orders.filter((o) => isRevenueOrder(o.status));
   const counted = orders.filter((o) => o.source?.adMethod === "meta_match" || o.source?.adMethod === "both");
+  const countedPaid = paid.filter((o) => o.source?.adMethod === "meta_match" || o.source?.adMethod === "both");
 
   type CampaignAgg = {
     campaignId: string;
@@ -74,10 +76,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     row.metaPurchases += r.clickPurchases + r.viewPurchases;
     row.metaValueCents += r.clickValueCents + r.viewValueCents;
   }
-  for (const o of orders) {
+  for (const o of paid) {
     const row = agg(o.source?.metaCampaignId ?? "", o.source?.metaCampaignName ?? "");
     row.orders += 1;
-    if (isRevenueOrder(o.status)) row.valueCents += o.totalCents ?? 0;
+    row.valueCents += o.totalCents ?? 0;
   }
 
   return NextResponse.json({
@@ -89,11 +91,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       viewPurchases: metaRows.reduce((s, r) => s + r.viewPurchases, 0),
     },
     identified: {
-      orders: orders.length,
-      valueCents: orders.reduce((s, o) => s + (isRevenueOrder(o.status) ? o.totalCents ?? 0 : 0), 0),
-      countedByMeta: counted.length,
-      tracked: orders.filter((o) => o.source?.adConfidence === "confirmed").length,
-      matched: orders.filter((o) => o.source?.adConfidence === "probable").length,
+      orders: paid.length,
+      valueCents: paid.reduce((s, o) => s + (o.totalCents ?? 0), 0),
+      countedByMeta: countedPaid.length,
+      tracked: paid.filter((o) => o.source?.adConfidence === "confirmed").length,
+      matched: paid.filter((o) => o.source?.adConfidence === "probable").length,
+      unpaid: orders.length - paid.length,
     },
     semPar: Math.max(0, metaPurchases - counted.length),
     byCampaign: [...byCampaign.values()].sort((a, b) => b.valueCents - a.valueCents || b.metaValueCents - a.metaValueCents),

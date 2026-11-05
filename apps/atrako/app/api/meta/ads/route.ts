@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { findMetaAdsCriativosByClienteAndPeriod } from "@/lib/repositories/metaAdsCriativosRepository";
 import { requireClienteAccess } from "@/lib/portalSession";
 import { resolveMetaCredentials } from "@/lib/config/resolveIntegracao";
+import { applyStorePurchases, loadStoreSales, salesForCanal, storeHasOrders } from "@/lib/commerce-attribution/store-sales";
 
 function parseDateOnly(value?: string | null) {
   if (!value) return null;
@@ -21,6 +22,15 @@ function getDateRange(request: NextRequest) {
   const dataInicioParam = request.nextUrl.searchParams.get("dataInicio");
   const dataFimParam = request.nextUrl.searchParams.get("dataFim");
   const fallbackDays = Math.min(365, Math.max(1, parseInt(request.nextUrl.searchParams.get("periodo") ?? "90", 10) || 90));
+
+  if (dataInicioParam && dataFimParam && /^\d{4}-\d{2}-\d{2}$/.test(dataInicioParam) && /^\d{4}-\d{2}-\d{2}$/.test(dataFimParam)) {
+    return {
+      dataInicio: new Date(`${dataInicioParam}T00:00:00.000Z`),
+      dataFim: new Date(`${dataFimParam}T00:00:00.000Z`),
+      dataInicioStr: dataInicioParam,
+      dataFimStr: dataFimParam,
+    };
+  }
 
   const dataFim = parseDateOnly(dataFimParam) ?? new Date();
   dataFim.setHours(23, 59, 59, 999);
@@ -205,10 +215,11 @@ export async function GET(request: NextRequest) {
   if (!liveMode) {
     const persistedRows = await findMetaAdsCriativosByClienteAndPeriod(clienteId, dataInicio, dataFim);
     if (persistedRows.length > 0 || !access.internalUser) {
-      return NextResponse.json({
-        source: "db",
-        data: buildPersistedAdsResponse(persistedRows),
-      });
+      const data = buildPersistedAdsResponse(persistedRows);
+      if (await storeHasOrders(clienteId)) {
+        applyStorePurchases(data, salesForCanal(await loadStoreSales(clienteId, dataInicioStr, dataFimStr), "META"));
+      }
+      return NextResponse.json({ source: "db", data });
     }
   }
 
@@ -240,6 +251,9 @@ export async function GET(request: NextRequest) {
       dateFrom: dataInicioStr,
       dateTo: dataFimStr,
     });
+    if (await storeHasOrders(clienteId)) {
+      applyStorePurchases(ads, salesForCanal(await loadStoreSales(clienteId, dataInicioStr, dataFimStr), "META"));
+    }
     return NextResponse.json({ source: "live", data: ads });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);

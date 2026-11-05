@@ -195,7 +195,6 @@ export async function syncMetaCliente(
     let dailyRowsWritten = 0;
     for (const ad of ads) {
       const creative = ad.adcreatives?.data?.[0];
-      if (!creative) continue;
 
       const insightRows = ad.insights?.data ?? [];
       // Se a Meta não retornou nenhum dia (ad sem entrega no período),
@@ -207,7 +206,7 @@ export async function syncMetaCliente(
 
       for (const insight of rowsToPersist) {
         const dayStr = insight.date_start ?? insight.date_stop ?? creativeDateTo;
-        const rowDate = new Date(`${dayStr}T00:00:00`);
+        const rowDate = new Date(`${dayStr}T12:00:00.000Z`);
         const actions = insight.actions ?? [];
         const actionValues = insight.action_values ?? [];
 
@@ -245,7 +244,7 @@ export async function syncMetaCliente(
         await upsertMetaAdsCriativo(clienteId, {
           data: rowDate,
           adId: ad.id,
-          creativeId: creative.id,
+          creativeId: creative?.id ?? null,
           adName: ad.name,
           effectiveStatus: ad.effective_status ?? null,
           campaignId: ad.adset?.campaign?.id ?? null,
@@ -253,15 +252,15 @@ export async function syncMetaCliente(
           adsetId: ad.adset?.id ?? null,
           adsetName: ad.adset?.name ?? null,
           campaignObjective: ad.adset?.campaign?.objective ?? null,
-          mediaType: creative.video_source_url || creative.video_id ? "VIDEO" : "IMAGE",
-          imageUrl: creative.image_url_full ?? creative.thumbnail_url ?? creative.image_url ?? null,
-          imageUrlFull: creative.image_url_full ?? null,
-          videoId: creative.video_id ?? null,
-          videoSourceUrl: creative.video_source_url ?? null,
-          videoPictureUrl: creative.video_picture_url ?? null,
-          videoEmbedHtml: (creative as { video_embed_html?: string }).video_embed_html ?? null,
-          body: creative.body ?? null,
-          title: creative.title ?? null,
+          mediaType: creative?.video_source_url || creative?.video_id ? "VIDEO" : "IMAGE",
+          imageUrl: creative?.image_url_full ?? creative?.thumbnail_url ?? creative?.image_url ?? null,
+          imageUrlFull: creative?.image_url_full ?? null,
+          videoId: creative?.video_id ?? null,
+          videoSourceUrl: creative?.video_source_url ?? null,
+          videoPictureUrl: creative?.video_picture_url ?? null,
+          videoEmbedHtml: (creative as { video_embed_html?: string } | undefined)?.video_embed_html ?? null,
+          body: creative?.body ?? null,
+          title: creative?.title ?? null,
           spend: insight.spend ? parseFloat(insight.spend) : 0,
           impressions: insight.impressions ? parseInt(insight.impressions, 10) : 0,
           clicks: insight.clicks ? parseInt(insight.clicks, 10) : 0,

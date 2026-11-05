@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, ShoppingBag } from "lucide-react";
 import { describeOrderOrigin, type OrderSourceView } from "@/lib/commerce-attribution/describe";
+import { orderStatusLabel } from "@/lib/commerce-attribution/order-status";
 import { MetricTile } from "@/components/ui";
 
 type VendasMeta = {
   meta: { purchases: number; valueCents: number; clickPurchases: number; viewPurchases: number };
-  identified: { orders: number; valueCents: number; countedByMeta: number; tracked: number; matched: number };
+  identified: { orders: number; valueCents: number; countedByMeta: number; tracked: number; matched: number; unpaid?: number };
   semPar: number;
   byCampaign: Array<{
     campaignId: string;
@@ -55,9 +56,9 @@ export function MetaVendasIdentificadas({ clienteId, query }: { clienteId: strin
       </div>
     );
   }
-  if (!data.meta.purchases && !data.identified.orders) return null;
+  if (!data.meta.purchases && !data.identified.orders && !data.identified.unpaid) return null;
 
-  const coverage = data.meta.purchases ? Math.round((data.identified.countedByMeta / data.meta.purchases) * 100) : null;
+  const unpaid = data.identified.unpaid ?? 0;
 
   return (
     <section className="space-y-4 rounded-[2rem] border border-[var(--border)] bg-[var(--canvas)] p-5 sm:p-6">
@@ -69,15 +70,16 @@ export function MetaVendasIdentificadas({ clienteId, query }: { clienteId: strin
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <Kpi label="Compras no Meta" value={`${data.meta.purchases} · ${brl(data.meta.valueCents)}`} />
+        <Kpi label="Reportado pelo Meta" value={`${data.meta.purchases} · ${brl(data.meta.valueCents)}`} hint="Pixel, clique e visualização" />
         <Kpi
-          label="Encontradas na loja"
-          value={`${data.identified.countedByMeta}${coverage != null ? ` · ${coverage}%` : ""}`}
+          label="Pedidos pagos"
+          value={String(data.identified.orders)}
+          hint={unpaid ? `${unpaid} sem pagamento, fora da receita` : "Mesma conta do Geral"}
         />
         <Kpi
           label="Receita na loja"
           value={brl(data.identified.valueCents)}
-          hint={`${data.identified.orders} ${data.identified.orders === 1 ? "pedido" : "pedidos"}`}
+          hint={`${data.identified.orders} ${data.identified.orders === 1 ? "pedido pago" : "pedidos pagos"}`}
         />
       </div>
 
@@ -125,7 +127,8 @@ export function MetaVendasIdentificadas({ clienteId, query }: { clienteId: strin
                     )}
                     <span className="font-normal text-[var(--muted-foreground)]">
                       {" "}
-                      · Pedido #{o.externalId} · {new Date(o.occurredAt).toLocaleDateString("pt-BR")}
+                      · Pedido #{o.externalId} · {new Date(o.occurredAt).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}
+                      {o.status && !["completed", "processing", "paid", "approved"].includes(o.status) ? ` · ${orderStatusLabel(o.status)}` : ""}
                     </span>
                   </p>
                   <p className="truncate type-fine-print text-[var(--muted-foreground)]">{o.items.join(", ") || "Itens não informados"}</p>

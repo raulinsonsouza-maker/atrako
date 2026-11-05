@@ -12,6 +12,7 @@ import {
   MERCADO_LIVRE_PAID_STATUSES,
 } from "@/lib/integrations/mercadolivre/metrics";
 import type { Prisma } from "@/lib/generated/prisma";
+import { brtMonthRange, brtRange, isYmd } from "@/lib/commerce-attribution/period";
 
 const PROVIDER_MAP: Record<string, string> = {
   MERCADO_LIVRE: "MERCADO_LIVRE",
@@ -27,34 +28,22 @@ const PROVIDER_MAP: Record<string, string> = {
 
 function parseDate(value: string | null, endOfDay = false): Date | null {
   if (!value) return null;
-  const ymd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  const d = ymd ? new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3])) : new Date(value);
-  if (Number.isNaN(d.getTime())) return null;
-  if (endOfDay) {
-    d.setHours(23, 59, 59, 999);
-  } else {
-    d.setHours(0, 0, 0, 0);
+  if (isYmd(value)) {
+    const range = brtRange(value, value);
+    return endOfDay ? range.lte : range.gte;
   }
-  return d;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 function monthBounds(month: string): { gte: Date; lte: Date } | null {
-  const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(month);
-  if (day) {
-    const start = new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3]));
-    const end = new Date(start);
-    end.setHours(23, 59, 59, 999);
-    return { gte: start, lte: end };
-  }
+  if (isYmd(month)) return brtRange(month, month);
   const match = /^(\d{4})-(\d{2})$/.exec(month);
   if (!match) return null;
   const year = Number(match[1]);
   const mon = Number(match[2]);
   if (mon < 1 || mon > 12) return null;
-  return {
-    gte: new Date(year, mon - 1, 1),
-    lte: new Date(year, mon, 0, 23, 59, 59, 999),
-  };
+  return brtMonthRange(year, mon);
 }
 
 function shipWhere(key: string): Prisma.MarketplaceOrderWhereInput | null {

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireClienteAccess } from "@/lib/portalSession";
 import { isEcommerceCliente } from "@/lib/clientProfiles";
 import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
+import { brtRange, calendarRange, isYmd, ymdFromLocalDate } from "@/lib/commerce-attribution/period";
 import { CHANNEL_LABELS, orderOriginKey, type OrderChannel } from "@/lib/commerce-attribution/store-source";
 import { getCartRecoveryMetrics, getRepurchaseMetrics } from "@/lib/commerce/customer-metrics";
 import { agrupamentoPorDias, bucketYmd } from "@/lib/chart-bucket";
@@ -60,8 +61,10 @@ export async function GET(
     dataInicio.setDate(dataInicio.getDate() - dias);
     dataInicio.setHours(0, 0, 0, 0);
   }
-  dataFim.setHours(23, 59, 59, 999);
-  const range = { gte: dataInicio, lte: dataFim };
+  const inicioStr = isYmd(sp.get("dataInicio")) ? sp.get("dataInicio")! : ymdFromLocalDate(dataInicio);
+  const fimStr = isYmd(sp.get("dataFim")) ? sp.get("dataFim")! : ymdFromLocalDate(dataFim);
+  const fatoRange = calendarRange(inicioStr, fimStr);
+  const range = brtRange(inicioStr, fimStr);
   const origemParam = sp.get("origem")?.trim() ?? "";
   const origem = /^[A-Za-z0-9_]{1,40}$/.test(origemParam) ? origemParam : null;
 
@@ -72,7 +75,7 @@ export async function GET(
     }),
     prisma.fatoMidiaDiario.groupBy({
       by: ["canal"],
-      where: { clienteId: id, data: range },
+      where: { clienteId: id, data: fatoRange },
       _sum: {
         investimento: true,
         leads: true,

@@ -3,7 +3,9 @@ import { prisma } from "@/lib/db";
 import { requireClienteAccess } from "@/lib/portalSession";
 import { findClienteById } from "@/lib/repositories/clientesRepository";
 import { outcomeCountForFato } from "@/lib/metrics/fatoMidiaOutcome";
-import { isFlorien, isDor, isGranarolo, isKombucha, isBeBlueSchool, isAcademyAmericana, isClinicaESpa, isImobClient } from "@/lib/clientProfiles";
+import { isFlorien, isDor, isGranarolo, isKombucha, isBeBlueSchool, isAcademyAmericana, isClinicaESpa, isImobClient, isEcommerceCliente } from "@/lib/clientProfiles";
+import { calendarRange, isYmd } from "@/lib/commerce-attribution/period";
+import { loadStoreSales, salesForCanal, storeHasOrders, sumSales } from "@/lib/commerce-attribution/store-sales";
 
 export async function GET(
   request: NextRequest,
@@ -22,21 +24,10 @@ export async function GET(
   const dataInicio = new Date();
   dataInicio.setDate(dataInicio.getDate() - diasFallback);
 
-  const parseDateOnly = (value: string) => {
-    const [y, m, d] = value.split("-").map(Number);
-    if (!y || !m || !d) return null;
-    const parsed = new Date(y, m - 1, d);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  };
-
-  if (dataInicioParam && dataFimParam) {
-    const parsedInicio = parseDateOnly(dataInicioParam);
-    const parsedFim = parseDateOnly(dataFimParam);
-    if (parsedInicio && parsedFim && parsedInicio <= parsedFim) {
-      dataInicio.setTime(parsedInicio.getTime());
-      dataFim.setTime(parsedFim.getTime());
-      dataFim.setHours(23, 59, 59, 999);
-    }
+  if (isYmd(dataInicioParam) && isYmd(dataFimParam) && dataInicioParam <= dataFimParam) {
+    const span = calendarRange(dataInicioParam, dataFimParam);
+    dataInicio.setTime(span.gte.getTime());
+    dataFim.setTime(span.lte.getTime());
   }
 
   const cliente = await findClienteById(id);
@@ -132,6 +123,13 @@ export async function GET(
     totalCliques += r.cliques;
     totalPurchases += r.purchases ?? 0;
     totalValorConversao += Number(r.websitePurchasesConversionValue ?? 0);
+  }
+  // Loja conectada: compra e faturamento são os pedidos pagos, não o valor do Pixel.
+  if (isEcommerceCliente(cliente) && ["geral", "meta", "google"].includes(canal) && isYmd(dataInicioParam) && isYmd(dataFimParam) && (await storeHasOrders(id))) {
+    const paid = salesForCanal(await loadStoreSales(id, dataInicioParam, dataFimParam), canal);
+    const sum = sumSales(paid);
+    totalPurchases = sum.pedidos;
+    totalValorConversao = sum.receita;
   }
   // Use per-objective investment for all clients to avoid cross-campaign cost dilution
   const investimentoParaCpl = isConversasCliente

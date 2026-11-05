@@ -3,10 +3,18 @@ import { requireClienteAccess } from "@/lib/portalSession";
 import { findFatosByClienteAndPeriod } from "@/lib/repositories/fatosMidiaRepository";
 import { findClienteById } from "@/lib/repositories/clientesRepository";
 import { outcomeCountForFato } from "@/lib/metrics/fatoMidiaOutcome";
-import { isFlorien, isDor, isGranarolo, isKombucha, isBeBlueSchool } from "@/lib/clientProfiles";
+import { isFlorien, isDor, isGranarolo, isKombucha, isBeBlueSchool, isEcommerceCliente } from "@/lib/clientProfiles";
+import { calendarRange, isYmd } from "@/lib/commerce-attribution/period";
+import { applySeriesSales, loadStoreSales, salesForCanal, storeHasOrders } from "@/lib/commerce-attribution/store-sales";
 import { startOfWeek, endOfWeek, getISOWeek, getYear } from "date-fns";
 
 const MONTH_ABBR = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+/** Meio-dia UTC do dia gravado, para a semana não mudar com o fuso do servidor. */
+function fatoAnchor(data: Date) {
+  const iso = new Date(data).toISOString().slice(0, 10);
+  return new Date(`${iso}T12:00:00.000Z`);
+}
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -24,21 +32,10 @@ export async function GET(
   const dataInicio = new Date();
   dataInicio.setDate(dataInicio.getDate() - dias);
 
-  const parseDateOnly = (value: string) => {
-    const [y, m, d] = value.split("-").map(Number);
-    if (!y || !m || !d) return null;
-    const parsed = new Date(y, m - 1, d);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  };
-
-  if (dataInicioParam && dataFimParam) {
-    const parsedInicio = parseDateOnly(dataInicioParam);
-    const parsedFim = parseDateOnly(dataFimParam);
-    if (parsedInicio && parsedFim && parsedInicio <= parsedFim) {
-      dataInicio.setTime(parsedInicio.getTime());
-      dataFim.setTime(parsedFim.getTime());
-      dataFim.setHours(23, 59, 59, 999);
-    }
+  if (isYmd(dataInicioParam) && isYmd(dataFimParam) && dataInicioParam <= dataFimParam) {
+    const span = calendarRange(dataInicioParam, dataFimParam);
+    dataInicio.setTime(span.gte.getTime());
+    dataFim.setTime(span.lte.getTime());
   }
 
   const cliente = await findClienteById(id);
@@ -59,6 +56,15 @@ export async function GET(
   const isComprasCliente = isDor(cliente) || isGranarolo(cliente) || cliente.objetivoMidia === "ecommerce";
   const isKombuchaCliente = isKombucha(cliente);
   const isBeBlueCliente = isBeBlueSchool(cliente);
+  const storeSales =
+    isEcommerceCliente(cliente) &&
+    ["geral", "meta", "google"].includes(canal) &&
+    isYmd(dataInicioParam) &&
+    isYmd(dataFimParam) &&
+    (await storeHasOrders(id))
+      ? salesForCanal(await loadStoreSales(id, dataInicioParam, dataFimParam), canal)
+      : null;
+
   const getLeads = (f: (typeof fatos)[number]) =>
     usesProfileVisits && f.canal !== "GOOGLE"
       ? ((f as { profileVisits?: number }).profileVisits ?? 0)
@@ -84,7 +90,7 @@ export async function GET(
       }
     >();
     for (const f of fatos) {
-      const d = new Date(f.data);
+      const d = fatoAnchor(f.data);
       const inicio = startOfWeek(d, { weekStartsOn: 1 });
       const fim = endOfWeek(d, { weekStartsOn: 1 });
       const key = `${getYear(inicio)}-W${getISOWeek(inicio)}`;
@@ -119,6 +125,7 @@ export async function GET(
         });
       }
     }
+    if (storeSales) applySeriesSales([...byWeek.values()], storeSales, "semanal");
     const series = Array.from(byWeek.entries())
       .map(([k, v]) => ({ key: k, ...v }))
       .sort((a, b) => a.inicio.getTime() - b.inicio.getTime());
@@ -157,7 +164,7 @@ export async function GET(
       }
     >();
     for (const f of fatos) {
-      const d = new Date(f.data);
+      const d = fatoAnchor(f.data);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       const inicio = new Date(d.getFullYear(), d.getMonth(), 1);
       const label = `${MONTH_ABBR[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
@@ -189,6 +196,7 @@ export async function GET(
         });
       }
     }
+    if (storeSales) applySeriesSales([...byMonth.values()], storeSales, "mensal");
     const series = Array.from(byMonth.entries())
       .map(([k, v]) => ({ key: k, ...v }))
       .sort((a, b) => a.inicio.getTime() - b.inicio.getTime());
@@ -217,7 +225,7 @@ export async function GET(
     }
   >();
   for (const f of fatos) {
-    const d = new Date(f.data);
+    const d = fatoAnchor(f.data);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     const label = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
     const existing = byDay.get(key);
@@ -248,6 +256,7 @@ export async function GET(
       });
     }
   }
+  if (storeSales) applySeriesSales([...byDay.values()], storeSales, "diario");
   const series = Array.from(byDay.entries())
     .map(([k, v]) => ({ key: k, ...v }))
     .sort((a, b) => a.inicio.getTime() - b.inicio.getTime());

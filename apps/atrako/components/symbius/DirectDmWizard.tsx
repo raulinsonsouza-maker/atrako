@@ -7,6 +7,14 @@ import { BackLink } from "@/components/ui/back-link";
 import { PillSelect } from "@/components/ui/pill-select";
 import { ChatPhone } from "./phone/ChatPhone";
 import { DIRECT_LINK_THANKS } from "@/lib/instagram/directCopy";
+import {
+  conversationFromConfig,
+  conversationPreview,
+  conversationProblems,
+  defaultConversation,
+  type Conversation,
+} from "@/lib/instagram/conversation";
+import { ConversationEditor } from "./ConversationEditor";
 import { RadioOption, TagChip, WizardLayout, wizardInputCls, wizardTextareaCls } from "./wizard-ui";
 
 const SUGGESTED = ["preço", "orçamento", "catálogo"];
@@ -34,6 +42,7 @@ export type DirectDmInitial = {
   keywords?: string[];
   replyText?: string;
   buttons?: DirectButton[];
+  conversation?: Conversation;
 };
 
 function emptyButton(): DirectButton {
@@ -63,6 +72,11 @@ export function DirectDmWizard({
   const [replyText, setReplyText] = useState(initial?.replyText?.trim() || DEFAULT_REPLY);
   const [buttons, setButtons] = useState<DirectButton[]>(initial?.buttons?.slice(0, 3) ?? []);
   const [loading, setLoading] = useState(false);
+  const legacyDirect = Boolean(initial?.fluxoId) && !conversationFromConfig({ conversation: initial?.conversation });
+  const [conversation, setConversation] = useState<Conversation>(
+    () => conversationFromConfig({ conversation: initial?.conversation }) ?? defaultConversation(),
+  );
+  const [focusStepId, setFocusStepId] = useState<string | null>(null);
 
   const handle = username.replace(/^@/, "") || "seu_perfil";
   const previewInbound = anyKeyword ? "Olá" : keywords[0] || keywordInput.split(",")[0]?.trim() || "…";
@@ -89,7 +103,13 @@ export function DirectDmWizard({
       alert("Digite um nome");
       return;
     }
-    if (!replyText.trim()) {
+    if (!legacyDirect) {
+      const problem = conversationProblems(conversation);
+      if (problem) {
+        alert(problem);
+        return;
+      }
+    } else if (!replyText.trim()) {
       alert("Escreva a mensagem");
       return;
     }
@@ -97,20 +117,22 @@ export function DirectDmWizard({
       alert("Informe palavras-chave ou escolha qualquer mensagem");
       return;
     }
-    const ready = buttons
-      .map((button) => ({
-        label: button.label.trim().slice(0, 20),
-        action: button.action,
-        text: button.text.trim(),
-        url: button.url.trim(),
-        thanks: button.action === "link" ? button.thanks.trim() || DIRECT_LINK_THANKS : "",
-      }))
-      .filter((button) => button.label);
-    if (ready.some((button) => button.action === "link" && !button.url)) {
+    const ready = legacyDirect
+      ? buttons
+          .map((button) => ({
+            label: button.label.trim().slice(0, 20),
+            action: button.action,
+            text: button.text.trim(),
+            url: button.url.trim(),
+            thanks: button.action === "link" ? button.thanks.trim() || DIRECT_LINK_THANKS : "",
+          }))
+          .filter((button) => button.label)
+      : [];
+    if (legacyDirect && ready.some((button) => button.action === "link" && !button.url)) {
       alert("Informe o link do botão");
       return;
     }
-    if (ready.some((button) => button.action === "reply" && !button.text)) {
+    if (legacyDirect && ready.some((button) => button.action === "reply" && !button.text)) {
       alert("Escreva a mensagem do botão");
       return;
     }
@@ -124,8 +146,9 @@ export function DirectDmWizard({
         anyKeyword,
         keywords: anyKeyword ? [] : keywords,
         matchMode: "contains",
-        replyText: replyText.trim(),
+        replyText: legacyDirect ? replyText.trim() : "",
         buttons: ready,
+        ...(legacyDirect ? {} : { conversation }),
       };
       const res = await fetch(baseUrl, {
         method: initial?.fluxoId ? "PATCH" : "POST",
@@ -190,6 +213,7 @@ export function DirectDmWizard({
         </RadioOption>
       </div>
 
+      {legacyDirect ? (
       <div className="space-y-3">
         <p className="type-body-strong text-[var(--ink)]">A resposta no Direct</p>
         <textarea value={replyText} onChange={(e) => setReplyText(e.target.value.slice(0, 1000))} className={wizardTextareaCls} />
@@ -255,6 +279,9 @@ export function DirectDmWizard({
         ) : null}
         <p className="type-fine-print text-[var(--ink-muted-48)]">Até 3 botões. O texto de cada um tem no máximo 20 caracteres.</p>
       </div>
+      ) : (
+        <ConversationEditor value={conversation} onChange={setConversation} onFocusStep={setFocusStepId} />
+      )}
     </div>
   );
 
@@ -273,24 +300,28 @@ export function DirectDmWizard({
         <ChatPhone
           theme="instagram"
           header={{ name: handle, subtitle: "Direct" }}
-          items={[
-            { kind: "sent", text: previewInbound },
-            { kind: "received", text: replyText },
-            ...buttons
-              .filter((button) => button.label.trim())
-              .map((button) => ({
-                kind: "action" as const,
-                label: button.label.trim(),
-                variant: button.action === "link" ? ("link" as const) : ("action" as const),
-              })),
-            ...Array.from(
-              new Set(
-                buttons
-                  .filter((button) => button.action === "link" && button.label.trim())
-                  .map((button) => button.thanks.trim() || DIRECT_LINK_THANKS),
-              ),
-            ).map((text) => ({ kind: "received" as const, text })),
-          ]}
+          items={
+            legacyDirect
+              ? [
+                  { kind: "sent", text: previewInbound },
+                  { kind: "received", text: replyText },
+                  ...buttons
+                    .filter((button) => button.label.trim())
+                    .map((button) => ({
+                      kind: "action" as const,
+                      label: button.label.trim(),
+                      variant: button.action === "link" ? ("link" as const) : ("action" as const),
+                    })),
+                  ...Array.from(
+                    new Set(
+                      buttons
+                        .filter((button) => button.action === "link" && button.label.trim())
+                        .map((button) => button.thanks.trim() || DIRECT_LINK_THANKS),
+                    ),
+                  ).map((text) => ({ kind: "received" as const, text })),
+                ]
+              : [{ kind: "sent" as const, text: previewInbound }, ...conversationPreview(conversation, focusStepId)]
+          }
         />
       }
     />

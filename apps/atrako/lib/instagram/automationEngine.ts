@@ -21,6 +21,13 @@ import {
   tryAdvanceAwaitingFollow,
   tryHandleAwaitingEmailResponse,
 } from "./commentDmFlow";
+import { conversationFromConfig, parseConversationStepPayload } from "./conversation";
+import {
+  continueIgConversationAfterLink,
+  continueIgConversationButton,
+  continueIgConversationText,
+  startIgConversation,
+} from "./conversationRuntime";
 import { queueInstagramWorkspaceLead } from "./workspaceLead";
 import { DIRECT_LINK_THANKS } from "./directCopy";
 import { directLinkUrl, safeHttpUrl, type DmLinkPayload } from "./dmLinkToken";
@@ -954,6 +961,10 @@ async function sendDirectText(params: {
 }
 
 export async function acknowledgeDirectLinkClick(payload: DmLinkPayload): Promise<string> {
+  if (payload.s) {
+    await continueIgConversationAfterLink(payload);
+    return safeHttpUrl(payload.u) ?? payload.u;
+  }
   const fallback = safeHttpUrl(payload.u) ?? payload.u;
   const fluxo = await prisma.igFluxo.findFirst({
     where: { id: payload.f, status: "PUBLISHED" },
@@ -1158,6 +1169,19 @@ export async function processAutomationForContato(
     return;
   }
 
+  const conversationButton = parseConversationStepPayload(String(context.postbackPayload ?? ""));
+  if (conversationButton) {
+    await continueIgConversationButton({
+      organizationId,
+      igAccount: contato.igAccount,
+      contatoId: contato.id,
+      igsid: contato.igsid,
+      fluxoId: conversationButton.fluxoId,
+      stepId: conversationButton.stepId,
+    });
+    return;
+  }
+
   const waitingExec = await prisma.igFluxoExecucao.findFirst({
     where: {
       contatoId,
@@ -1166,6 +1190,27 @@ export async function processAutomationForContato(
     },
     orderBy: { updatedAt: "desc" },
   });
+
+  if (waitingExec) {
+    const early = waitingExec.context as Record<string, unknown>;
+    if (early.conversation === true) {
+      if (text) {
+        const wait = early.wait === "phone" || early.wait === "email" || early.wait === "button" || early.wait === "link" ? early.wait : null;
+        await continueIgConversationText({
+          organizationId,
+          igAccount: contato.igAccount,
+          contatoId,
+          igsid: contato.igsid,
+          fluxoId: waitingExec.fluxoId,
+          stepId: typeof early.stepId === "string" ? early.stepId : null,
+          wait,
+          text,
+          context: early,
+        });
+      }
+      return;
+    }
+  }
 
   if (waitingExec && text) {
     const wctx = waitingExec.context as Record<string, unknown>;
@@ -1336,7 +1381,40 @@ export async function processAutomationForContato(
     const cfg = fluxo.triggerConfig as Record<string, unknown>;
     if (!matchesTrigger(fluxo.triggerType, cfg, context)) continue;
 
-    if (
+    if (conversationFromConfig(cfg)) {
+      if (fluxo.triggerType === "story_reply" && cfg.reactLove === true) {
+        const messageId = String(context.messageId ?? "");
+        if (messageId) {
+          try {
+            const { reactToInstagramMessage } = await import("./messagingClient");
+            await reactToInstagramMessage({
+              igUserId: contato.igAccount.igUserId,
+              accessToken: contato.igAccount.accessToken,
+              scopes: contato.igAccount.scopes,
+              recipientIgsid: contato.igsid,
+              messageId,
+            });
+          } catch (e) {
+            console.warn("[instagram] reação no story falhou:", e instanceof Error ? e.message : e);
+          }
+        }
+      }
+      await startIgConversation({
+        fluxoId: fluxo.id,
+        organizationId,
+        igAccount: contato.igAccount,
+        contatoId: contato.id,
+        igsid: contato.igsid,
+        cfg,
+        commentId: context.commentId ? String(context.commentId) : undefined,
+        requireWindow: fluxo.triggerType === "keyword",
+        lastInteractionAt: contato.lastInteractionAt,
+      });
+      const mediaId = String(context.mediaId ?? "");
+      if (fluxo.triggerType === "comment_keyword" && mediaId && String(cfg.mediaFilter) === "next") {
+        await markNextPostConsumed(fluxo.id, mediaId);
+      }
+    } else if (
       fluxo.triggerType === "comment_keyword" &&
       (cfg.welcomeText || cfg.rewardText || cfg.welcomeButton)
     ) {

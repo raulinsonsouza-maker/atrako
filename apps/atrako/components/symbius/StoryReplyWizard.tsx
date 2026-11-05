@@ -3,6 +3,14 @@
 import { useEffect, useState } from "react";
 import { Button, Switch } from "@/components/ui";
 import { BackLink } from "@/components/ui/back-link";
+import {
+  conversationFromConfig,
+  conversationPreview,
+  conversationProblems,
+  defaultConversation,
+  type Conversation,
+} from "@/lib/instagram/conversation";
+import { ConversationEditor } from "./ConversationEditor";
 import { IgMediaPicker, type IgMediaItem } from "./IgMediaPicker";
 import { IgStoryPreview, type IgStoryScene } from "./IgStoryPreview";
 import {
@@ -45,6 +53,7 @@ export type StoryReplyInitial = {
   reminderText?: string;
   reminderMinutes?: number;
   reactLove?: boolean;
+  conversation?: Conversation;
 };
 
 type StoryReplyWizardProps = {
@@ -92,6 +101,11 @@ export function StoryReplyWizard({
   const [reactLove, setReactLove] = useState(initial?.reactLove ?? false);
   const [scene, setScene] = useState<IgStoryScene>("story");
   const [loading, setLoading] = useState(false);
+  const legacyStory = Boolean(initial?.fluxoId) && !conversationFromConfig({ conversation: initial?.conversation });
+  const [conversation, setConversation] = useState<Conversation>(
+    () => conversationFromConfig({ conversation: initial?.conversation }) ?? defaultConversation(),
+  );
+  const [focusStepId, setFocusStepId] = useState<string | null>(null);
 
   function reloadStories() {
     setLoadingStories(true);
@@ -145,7 +159,13 @@ export function StoryReplyWizard({
       alert("Escolha um story");
       return;
     }
-    if (!dmText.trim()) {
+    if (!legacyStory) {
+      const problem = conversationProblems(conversation);
+      if (problem) {
+        alert(problem);
+        return;
+      }
+    } else if (!dmText.trim()) {
       alert("Escreva a mensagem");
       return;
     }
@@ -177,9 +197,10 @@ export function StoryReplyWizard({
         followText: followText.trim(),
         emailEnabled,
         emailText: emailText.trim(),
-        reminderEnabled,
+        reminderEnabled: legacyStory ? reminderEnabled : false,
         reminderText: reminderText.trim(),
         reminderMinutes,
+        ...(legacyStory ? {} : { conversation }),
       };
       const res = await fetch(baseUrl, {
         method: initial?.fluxoId ? "PATCH" : "POST",
@@ -270,6 +291,8 @@ export function StoryReplyWizard({
         <RadioOption selected={anyKeyword} title="Qualquer palavra-chave ou reação" onClick={() => setAnyKeyword(true)} />
       </div>
 
+      {legacyStory ? (
+      <>
       <div className="space-y-3">
         <p className="type-body-strong text-[var(--ink)]">A DM com o link será enviada</p>
         <p className="type-caption text-[var(--ink-muted-48)]">Uma DM contendo um link</p>
@@ -325,6 +348,16 @@ export function StoryReplyWizard({
         </label>
         {emailEnabled ? <textarea value={emailText} onChange={(e) => setEmailText(e.target.value)} className={wizardTextareaCls} /> : null}
       </div>
+      </>
+      ) : (
+        <>
+          <ConversationEditor value={conversation} onChange={setConversation} onFocusStep={setFocusStepId} />
+          <label className="flex items-center justify-between gap-3">
+            <span className="type-caption text-[var(--ink)]">Responda às interações nos stories com ❤️</span>
+            <Switch checked={reactLove} onChange={setReactLove} aria-label="Responder às interações nos stories com coração" />
+          </label>
+        </>
+      )}
     </div>
   );
 
@@ -348,6 +381,7 @@ export function StoryReplyWizard({
           replyText={replyPreview}
           dmText={previewText}
           dmButton={previewButton}
+          dmItems={legacyStory ? undefined : conversationPreview(conversation, focusStepId)}
         />
       }
     />

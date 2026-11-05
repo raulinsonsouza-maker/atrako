@@ -3,6 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button, Switch } from "@/components/ui";
 import { BackLink } from "@/components/ui/back-link";
+import {
+  conversationFromConfig,
+  conversationPreview,
+  conversationProblems,
+  defaultConversation,
+  type Conversation,
+} from "@/lib/instagram/conversation";
+import { ConversationEditor } from "./ConversationEditor";
 import { IgCommentPreview, type IgPreviewScene } from "./IgCommentPreview";
 import { IgMediaPicker, type IgMediaItem } from "./IgMediaPicker";
 import {
@@ -38,6 +46,7 @@ export type CommentDmConfig = {
   reminderEnabled: boolean;
   reminderText: string;
   reminderMinutes: number;
+  conversation?: Conversation;
 };
 
 const SUGGESTED = ["Preço", "Link", "Comprar", "Eu quero"];
@@ -143,6 +152,11 @@ export function CommentDmWizard({
   );
   const [loading, setLoading] = useState(false);
   const [loadingMedia, setLoadingMedia] = useState(true);
+  const legacyComment = Boolean(initial?.fluxoId) && !conversationFromConfig({ conversation: initial?.conversation });
+  const [conversation, setConversation] = useState<Conversation>(
+    () => conversationFromConfig({ conversation: initial?.conversation }) ?? defaultConversation(),
+  );
+  const [focusStepId, setFocusStepId] = useState<string | null>(null);
 
   function reloadMedia() {
     setLoadingMedia(true);
@@ -225,11 +239,18 @@ export function CommentDmWizard({
       alert("Informe ao menos uma palavra-chave");
       return;
     }
-    if (welcomeEnabled && !welcomeText.trim()) {
+    if (!legacyComment) {
+      const problem = conversationProblems(conversation);
+      if (problem) {
+        alert(problem);
+        return;
+      }
+    }
+    if (legacyComment && welcomeEnabled && !welcomeText.trim()) {
       alert("Escreva a mensagem de boas-vindas");
       return;
     }
-    if (emailEnabled && !emailText.trim()) {
+    if (legacyComment && emailEnabled && !emailText.trim()) {
       alert("Escreva a mensagem pedindo o e-mail");
       return;
     }
@@ -238,15 +259,15 @@ export function CommentDmWizard({
       .map((item) => ({ label: item.label.trim() || "Acessar", url: item.url.trim() }))
       .filter((item) => item.url)
       .slice(0, 3);
-    if (!rewardText.trim() && links.length === 0) {
+    if (legacyComment && !rewardText.trim() && links.length === 0) {
       alert("Escreva a mensagem ou adicione um link");
       return;
     }
-    if (reminderEnabled && links.length === 0) {
+    if (legacyComment && reminderEnabled && links.length === 0) {
       alert("Adicione um link para usar o lembrete automático");
       return;
     }
-    if (reminderEnabled && !reminderText.trim()) {
+    if (legacyComment && reminderEnabled && !reminderText.trim()) {
       alert("Escreva a mensagem de lembrete");
       return;
     }
@@ -273,6 +294,7 @@ export function CommentDmWizard({
       reminderEnabled,
       reminderText: reminderText.trim(),
       reminderMinutes,
+      ...(legacyComment ? {} : { conversation }),
     };
 
     setLoading(true);
@@ -424,6 +446,7 @@ export function CommentDmWizard({
           </div>
         ) : null}
       </div>
+      {legacyComment ? (
       <div className="space-y-3">
         <p className="type-body-strong text-[var(--ink)]">Eles receberão</p>
         <label className="flex items-center justify-between gap-3">
@@ -460,7 +483,12 @@ export function CommentDmWizard({
           <textarea value={emailText} onChange={(e) => setEmailText(e.target.value)} className={wizardTextareaCls} />
         ) : null}
       </div>
-      <Button type="button" variant="outline" size="toolbar" onClick={() => setStep("message")}>Próximo</Button>
+      ) : (
+        <ConversationEditor value={conversation} onChange={setConversation} onFocusStep={setFocusStepId} />
+      )}
+      {legacyComment ? (
+        <Button type="button" variant="outline" size="toolbar" onClick={() => setStep("message")}>Próximo</Button>
+      ) : null}
     </div>
   );
 
@@ -486,6 +514,7 @@ export function CommentDmWizard({
           welcomeText={welcomeText}
           welcomeButton={welcomeButton}
           showWelcome={welcomeEnabled}
+          dmItems={legacyComment ? undefined : conversationPreview(conversation, focusStepId)}
         />
       }
     />

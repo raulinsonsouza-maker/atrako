@@ -12,6 +12,7 @@ export function IgStoryPreview({
   replyText,
   dmText,
   dmButton,
+  dmItems,
 }: {
   scene: IgStoryScene;
   onScene: (scene: IgStoryScene) => void;
@@ -20,6 +21,11 @@ export function IgStoryPreview({
   replyText: string;
   dmText: string;
   dmButton: string;
+  dmItems?: Array<
+    | { kind: "received"; text: string }
+    | { kind: "action"; label: string; variant: "action" | "link" }
+    | { kind: "sent"; text: string }
+  >;
 }) {
   const handle = username.replace(/^@/, "") || "seu_perfil";
   const tabs: Array<{ id: IgStoryScene; label: string }> = [
@@ -86,15 +92,19 @@ export function IgStoryPreview({
       theme="instagram"
       header={{ name: handle, subtitle: "Direct" }}
       below={below}
-      items={[
-        { kind: "sent", text: replyText || "…" },
-        ...(dmText.trim()
-          ? [
-              { kind: "received" as const, text: dmText },
-              ...(dmButton.trim() ? [{ kind: "action" as const, label: dmButton.trim(), variant: "link" as const }] : []),
+      items={
+        dmItems
+          ? [{ kind: "sent", text: replyText || "…" }, ...dmItems]
+          : [
+              { kind: "sent", text: replyText || "…" },
+              ...(dmText.trim()
+                ? [
+                    { kind: "received" as const, text: dmText },
+                    ...(dmButton.trim() ? [{ kind: "action" as const, label: dmButton.trim(), variant: "link" as const }] : []),
+                  ]
+                : []),
             ]
-          : []),
-      ]}
+      }
     />
   );
 }

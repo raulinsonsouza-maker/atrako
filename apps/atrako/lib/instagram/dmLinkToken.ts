@@ -3,7 +3,7 @@ import { getServerPublicOrigin } from "@/lib/http/public-origin";
 
 export const DM_LINK_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-export type DmLinkPayload = { c: string; f: string; i: number; u: string; exp: number };
+export type DmLinkPayload = { c: string; f: string; i: number; u: string; exp: number; s?: string };
 
 function secret(): string {
   const value =
@@ -25,7 +25,7 @@ function sign(body: string): string {
 }
 
 export function createDmLinkToken(
-  input: { fluxoId: string; contatoId: string; index: number; url: string },
+  input: { fluxoId: string; contatoId: string; index: number; url: string; stepId?: string },
   now = Date.now(),
 ): string {
   const payload: DmLinkPayload = {
@@ -34,6 +34,7 @@ export function createDmLinkToken(
     i: input.index,
     u: input.url,
     exp: now + DM_LINK_TTL_MS,
+    ...(input.stepId ? { s: input.stepId } : {}),
   };
   const body = b64(JSON.stringify(payload));
   return `${body}.${sign(body)}`;
@@ -50,6 +51,7 @@ export function verifyDmLinkToken(token: unknown, now = Date.now()): DmLinkPaylo
     const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as DmLinkPayload;
     if (!payload || typeof payload.c !== "string" || typeof payload.f !== "string") return null;
     if (!Number.isInteger(payload.i) || payload.i < 0 || payload.i > 2) return null;
+    if (payload.s != null && (typeof payload.s !== "string" || !payload.s || payload.s.length > 40)) return null;
     if (typeof payload.u !== "string" || typeof payload.exp !== "number" || payload.exp < now) return null;
     return payload;
   } catch {
@@ -58,7 +60,7 @@ export function verifyDmLinkToken(token: unknown, now = Date.now()): DmLinkPaylo
 }
 
 export function directLinkUrl(
-  input: { fluxoId: string; contatoId: string; index: number; url: string },
+  input: { fluxoId: string; contatoId: string; index: number; url: string; stepId?: string },
   now = Date.now(),
 ): string {
   const token = createDmLinkToken(input, now);

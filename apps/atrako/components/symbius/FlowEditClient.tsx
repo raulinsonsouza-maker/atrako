@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CommentDmWizard } from "@/components/symbius/CommentDmWizard";
+import { conversationFromConfig } from "@/lib/instagram/conversation";
 import { FlowEditor } from "@/components/symbius/FlowEditor";
 import { BackLink } from "@/components/ui/back-link";
 
@@ -47,10 +48,11 @@ export function FlowEditClient({ fluxoId }: { fluxoId: string }) {
   }
 
   const cfg = fluxo.triggerConfig ?? {};
+  const savedConversation = conversationFromConfig(cfg);
   const isCommentWizard =
     !forceBuilder &&
     fluxo.triggerType === "comment_keyword" &&
-    Boolean(cfg.welcomeText || cfg.rewardText || cfg.welcomeButton);
+    (Boolean(cfg.welcomeText || cfg.rewardText || cfg.welcomeButton) || Boolean(savedConversation));
 
   if (isCommentWizard) {
     return (
@@ -93,6 +95,7 @@ export function FlowEditClient({ fluxoId }: { fluxoId: string }) {
             reminderEnabled: Boolean(cfg.reminderEnabled),
             reminderText: String(cfg.reminderText ?? ""),
             reminderMinutes: Number(cfg.reminderMinutes ?? 30),
+            conversation: savedConversation ?? undefined,
           }}
           onCancel={() =>
             router.push(`/social/flows${workspaceId ? `?workspaceId=${encodeURIComponent(workspaceId)}` : ""}`)

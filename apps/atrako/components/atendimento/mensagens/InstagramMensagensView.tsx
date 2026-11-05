@@ -8,6 +8,7 @@ import { BackLink } from "@/components/ui/back-link";
 import { CommentDmWizard, type CommentDmConfig } from "@/components/symbius/CommentDmWizard";
 import { DirectDmWizard, type DirectButton, type DirectDmInitial } from "@/components/symbius/DirectDmWizard";
 import { StoryReplyWizard, type StoryReplyInitial } from "@/components/symbius/StoryReplyWizard";
+import { conversationFromConfig } from "@/lib/instagram/conversation";
 import { AutomationRow } from "./AutomationRow";
 import { useIgAutomations, type IgFluxo } from "./useIgAutomations";
 
@@ -63,6 +64,7 @@ function storyInitial(flow: IgFluxo): StoryReplyInitial {
     reminderText: typeof cfg.reminderText === "string" ? cfg.reminderText : undefined,
     reminderMinutes: typeof cfg.reminderMinutes === "number" ? cfg.reminderMinutes : undefined,
     reactLove: cfg.reactLove === true,
+    conversation: conversationFromConfig(cfg) ?? undefined,
   };
 }
 
@@ -88,6 +90,7 @@ function directInitial(flow: IgFluxo): DirectDmInitial {
     keywords: Array.isArray(cfg.keywords) ? cfg.keywords.map(String) : [],
     replyText: typeof cfg.replyText === "string" ? cfg.replyText : undefined,
     buttons,
+    conversation: conversationFromConfig(cfg) ?? undefined,
   };
 }
 

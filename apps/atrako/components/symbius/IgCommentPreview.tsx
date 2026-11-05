@@ -14,6 +14,7 @@ export function IgCommentPreview({
   welcomeText,
   welcomeButton,
   showWelcome,
+  dmItems,
 }: {
   scene: IgPreviewScene;
   onScene: (scene: IgPreviewScene) => void;
@@ -24,6 +25,11 @@ export function IgCommentPreview({
   welcomeText: string;
   welcomeButton: string;
   showWelcome: boolean;
+  dmItems?: Array<
+    | { kind: "received"; text: string }
+    | { kind: "action"; label: string; variant: "action" | "link" }
+    | { kind: "sent"; text: string }
+  >;
 }) {
   const handle = username.replace(/^@/, "") || "seu_perfil";
   const tabs: Array<{ id: IgPreviewScene; label: string }> = [
@@ -113,14 +119,15 @@ export function IgCommentPreview({
       header={{ name: handle, subtitle: "Direct" }}
       below={below}
       items={
-        showWelcome && welcomeText.trim()
+        dmItems ??
+        (showWelcome && welcomeText.trim()
           ? [
               { kind: "received", text: welcomeText },
               ...(welcomeButton.trim()
                 ? [{ kind: "sent" as const, text: welcomeButton.trim() }]
                 : []),
             ]
-          : []
+          : [])
       }
       empty={<p className="type-fine-print text-white/40">A DM aparece quando as boas-vindas estão ligadas.</p>}
     />

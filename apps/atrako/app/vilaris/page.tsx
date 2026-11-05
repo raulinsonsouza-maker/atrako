@@ -83,7 +83,7 @@ export default function VilarisPage() {
                 <p className="hero-intro">Construa com clareza o próximo movimento da sua vida profissional.</p>
                 <p className="hero-description">
                   Para mudar de área, se reposicionar ou acelerar seu crescimento no mundo corporativo. Uma
-                  mentoria estratégica para transformar possibilidades em direção.
+                  mentoria estratégica para transformar possibilidades em uma direção clara.
                 </p>
               </div>
               <div className="hero-action">
@@ -150,7 +150,7 @@ export default function VilarisPage() {
               <ArrowUpRight size={27} strokeWidth={1.2} aria-hidden="true" />
               <div>
                 <strong>4 + 2</strong>
-                <small>em grupo + individuais</small>
+                <small>em grupo e individuais</small>
               </div>
             </div>
           </div>
@@ -169,14 +169,14 @@ export default function VilarisPage() {
                   <br />
                   trabalhar mais.
                   <br />
-                  <em>Precise decidir melhor.</em>
+                  <em>Precisa decidir melhor.</em>
                 </h2>
               </div>
               <div className="reflection-copy">
                 <p>Chega um momento em que simplesmente continuar fazendo um bom trabalho não é suficiente.</p>
                 <p>
                   Você pode ter construído uma carreira e perceber que já não quer continuar no mesmo caminho. Ou
-                  estar pronto para assumir mais responsabilidade, mas sem clareza sobre como avançar.
+                  estar pronto para assumir mais responsabilidade, ainda sem clareza sobre como avançar.
                 </p>
                 <p className="strong-copy">Algumas perguntas merecem mais do que uma resposta no improviso.</p>
                 <div className="questions">
@@ -204,7 +204,7 @@ export default function VilarisPage() {
               <p>
                 Sua experiência é o ponto de partida.
                 <br />
-                O próximo movimento, a nossa construção.
+                O próximo movimento é a nossa construção.
               </p>
             </div>
             <div className="audience-grid">
@@ -277,8 +277,8 @@ export default function VilarisPage() {
               </article>
             </div>
             <p className="audience-note">
-              Especialmente aderente a profissionais de empresas estruturadas, instituições financeiras e
-              cooperativas de crédito — sem se limitar a esses setores.
+              A mentoria é especialmente indicada para profissionais de empresas estruturadas, instituições
+              financeiras e cooperativas de crédito — sem se limitar a esses setores.
             </p>
           </div>
         </section>
@@ -454,7 +454,7 @@ export default function VilarisPage() {
               Uma conversa para avaliar seu momento e descobrir se a mentoria é o caminho para seus objetivos.
             </p>
             <p className="price-meta">
-              ≈ 3 meses <span>·</span> 4 encontros em grupo <span>·</span> 2 individuais
+              ≈ 3 meses <span>·</span> 4 encontros em grupo <span>·</span> 2 encontros individuais
             </p>
             <CTA>Quero conversar sobre minha carreira</CTA>
           </div>

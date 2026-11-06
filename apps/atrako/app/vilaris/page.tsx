@@ -26,6 +26,21 @@ const topics = [
   ],
 ] as const;
 
+const mentors = [
+  {
+    name: "Ronaldo Carneiro de Souza",
+    role: "Consultor de RH · DISC e Eneagrama",
+    photo: `${ASSET}/ronaldo.jpg`,
+    bio: "Consultor de RH e mentor sênior com vasta experiência em desenvolvimento organizacional e gestão de pessoas. Possui passagem pelo Sicredi, onde coordenou a área de gestão de pessoas e formação como sargento de intendência do Exército Brasileiro. É especialista nas metodologias DISC e Eneagrama, entregando uma visão estratégica sobre comportamento humano, governança e formação de lideranças de alta performance.",
+  },
+  {
+    name: "Guilherme Vilanova Carneiro",
+    role: "Estratégia e finanças · sócio da Vilaris",
+    photo: `${ASSET}/guilherme.jpg`,
+    bio: "Especialista em estratégia corporativa e finanças, com 8 anos de mercado financeiro. Assumiu sua primeira gestão de equipes aos 24 anos, tendo atuado como Gerente de Agência em instituições como Sicredi e Cresol. É sócio da Vilaris Gestão & Estratégia, onde une sua vivência corporativa à mentoria para aceleração de carreira.",
+  },
+] as const;
+
 function CTA({ children = "Quero avaliar meu momento profissional" }: { children?: React.ReactNode }) {
   return (
     <a className="button" href="#conversa">
@@ -408,24 +423,35 @@ export default function VilarisPage() {
               </p>
             </div>
             <div className="mentor-names">
-              <article>
-                <span className="monogram">RC</span>
-                <div>
-                  <span>MENTOR</span>
-                  <h3>Ronaldo Carneiro</h3>
-                  <p>Vilaris · Mentoria de Carreira</p>
-                </div>
-                <ArrowUpRight size={21} />
-              </article>
-              <article>
-                <span className="monogram">GV</span>
-                <div>
-                  <span>MENTOR</span>
-                  <h3>Guilherme Vilanova Carneiro</h3>
-                  <p>Vilaris · Mentoria de Carreira</p>
-                </div>
-                <ArrowUpRight size={21} />
-              </article>
+              {mentors.map((mentor) => (
+                <article key={mentor.name}>
+                  <details>
+                    <summary>
+                      <img
+                        className="mentor-photo"
+                        src={mentor.photo}
+                        alt={mentor.name}
+                        width={1400}
+                        height={1120}
+                        loading="lazy"
+                      />
+                      <span className="mentor-toggle" aria-hidden="true">
+                        <ArrowUpRight size={16} />
+                      </span>
+                      <div>
+                        <span>MENTOR</span>
+                        <h3>{mentor.name}</h3>
+                        <p>{mentor.role}</p>
+                      </div>
+                    </summary>
+                    <div className="mentor-bio">
+                      <div>
+                        <p>{mentor.bio}</p>
+                      </div>
+                    </div>
+                  </details>
+                </article>
+              ))}
             </div>
           </div>
         </section>

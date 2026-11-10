@@ -76,7 +76,7 @@ export async function GET(
   const origemParam = sp.get("origem")?.trim() ?? "";
   const origem = /^[A-Za-z0-9_]{1,40}$/.test(origemParam) ? origemParam : null;
 
-  const [cliente, midia, reconcile, checkout, crmLeads, relConv, relCost] = await Promise.all([
+  const [cliente, midia, midiaDia, reconcile, checkout, crmLeads, relConv, relCost] = await Promise.all([
     prisma.cliente.findUnique({
       where: { id },
       select: { nome: true, slug: true, perfilPanel: true, objetivoMidia: true },
@@ -91,6 +91,11 @@ export async function GET(
         purchases: true,
         websitePurchasesConversionValue: true,
       },
+    }),
+    prisma.fatoMidiaDiario.groupBy({
+      by: ["data", "canal"],
+      where: { clienteId: id, data: fatoRange },
+      _sum: { investimento: true },
     }),
     loadConfirmedSales(id, inicioStr, fimStr),
     prisma.commerceOrder.findMany({
@@ -135,11 +140,11 @@ export async function GET(
     }
     return row;
   };
-  const vendasDia = new Map<string, { receitaCents: number; pedidos: number }>();
+  const vendasDia = new Map<string, { receitaCents: number; pedidos: number; investimento: number }>();
   const addDia = (at: Date | null, cents: number) => {
     if (!at) return;
     const key = brtDay(at);
-    const row = vendasDia.get(key) ?? { receitaCents: 0, pedidos: 0 };
+    const row = vendasDia.get(key) ?? { receitaCents: 0, pedidos: 0, investimento: 0 };
     row.receitaCents += cents;
     row.pedidos += 1;
     vendasDia.set(key, row);
@@ -237,6 +242,19 @@ export async function GET(
     : midiaDaOrigem
       ? canaisMidia.find((c) => c.id === midiaDaOrigem)?.investimento ?? 0
       : 0;
+  for (const m of midiaDia) {
+    if (midiaDaOrigem && m.canal !== midiaDaOrigem) continue;
+    if (filtro && !midiaDaOrigem) continue;
+    const key =
+      m.data instanceof Date
+        ? m.data.toISOString().slice(0, 10)
+        : String(m.data).slice(0, 10);
+    const inv = Math.round(Number(m._sum.investimento ?? 0) * 100) / 100;
+    if (inv <= 0) continue;
+    const row = vendasDia.get(key) ?? { receitaCents: 0, pedidos: 0, investimento: 0 };
+    row.investimento += inv;
+    vendasDia.set(key, row);
+  }
   const leadsMidia = canaisMidia.reduce((s, c) => s + c.leads, 0);
   const receita = receitaCents / 100;
 
@@ -282,10 +300,13 @@ export async function GET(
   const end = new Date(Date.UTC(dataFim.getFullYear(), dataFim.getMonth(), dataFim.getDate()));
   const agrupamento = agrupamentoPorDias((end.getTime() - start.getTime()) / DAY_MS);
   const bucketOf = (dayKey: string) => bucketYmd(dayKey, agrupamento);
-  const serieMap = new Map<string, { data: string; receitaCents: number; pedidos: number }>();
+  const serieMap = new Map<
+    string,
+    { data: string; receitaCents: number; pedidos: number; investimento: number }
+  >();
   for (let t = start.getTime(); t <= end.getTime(); t += DAY_MS) {
     const key = bucketOf(new Date(t).toISOString().slice(0, 10));
-    if (!serieMap.has(key)) serieMap.set(key, { data: key, receitaCents: 0, pedidos: 0 });
+    if (!serieMap.has(key)) serieMap.set(key, { data: key, receitaCents: 0, pedidos: 0, investimento: 0 });
   }
   const firstDay = start.toISOString().slice(0, 10);
   const lastDay = end.toISOString().slice(0, 10);
@@ -295,6 +316,7 @@ export async function GET(
     if (!row) continue;
     row.receitaCents += v.receitaCents;
     row.pedidos += v.pedidos;
+    row.investimento += v.investimento;
   }
 
   return NextResponse.json({

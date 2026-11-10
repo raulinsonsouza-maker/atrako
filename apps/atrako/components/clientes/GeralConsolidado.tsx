@@ -1,15 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import type { CartRecoveryMetrics, RepurchaseMetrics } from "@/lib/commerce/customer-metrics";
 import { channelColor } from "@/lib/commerce-attribution/channel-color";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { rotuloEixo, rotuloTooltip, type ChartAgrupamento } from "@/lib/chart-bucket";
-import { mobileTickInterval } from "@/lib/chart-mobile";
-import { MetricTile, PillSelect } from "@/components/ui";
+import { bucketYmd, rotuloEixo, rotuloTooltip, type ChartAgrupamento } from "@/lib/chart-bucket";
+import { formatCompactNumber, mobileTickInterval } from "@/lib/chart-mobile";
+import { MetricTile, PillSelect, SegmentedControl } from "@/components/ui";
 
 type Consolidado = {
   clientes?: RepurchaseMetrics | null;
@@ -21,7 +31,7 @@ type Consolidado = {
   origem?: string | null;
   /** Canal de mídia cujo investimento conta para a origem filtrada (META, GOOGLE). */
   midiaDaOrigem?: string | null;
-  serie?: Array<{ data: string; receitaCents: number; pedidos: number }>;
+  serie?: Array<{ data: string; receitaCents: number; pedidos: number; investimento?: number }>;
   serieAgrupamento?: ChartAgrupamento;
   totais: {
     receita: number;
@@ -494,28 +504,90 @@ const chartTooltip = {
 function VendasSerie({ data, origemLabel }: { data: Consolidado; origemLabel: string | null }) {
   const isMobile = useIsMobile();
   const serie = data.serie ?? [];
-  if (serie.length < 2) return null;
-  const agrupamento = data.serieAgrupamento ?? "dia";
-  const years = new Set(serie.map((row) => row.data.slice(0, 4)));
-  const multiYear = years.size > 1;
-  const rows = serie.map((row) => ({
-    periodo: rotuloEixo(row.data, agrupamento, multiYear),
-    rotulo: rotuloTooltip(row.data, agrupamento),
-    receita: row.receitaCents / 100,
-    pedidos: row.pedidos,
-  }));
-  const tickEvery = isMobile ? mobileTickInterval(rows.length) : rows.length > 16 ? Math.ceil(rows.length / 16) - 1 : 0;
-  const titulo = agrupamento === "mes" ? "Vendas por mês" : agrupamento === "semana" ? "Vendas por semana" : "Vendas por dia";
+  const serverAgrupamento = data.serieAgrupamento ?? "dia";
+  const canToggle = serverAgrupamento === "dia";
+  const [modo, setModo] = useState<"diario" | "semanal">("diario");
+  const agrupamento: ChartAgrupamento = canToggle && modo === "semanal" ? "semana" : serverAgrupamento;
+
+  const rows = useMemo(() => {
+    if (serie.length === 0) return [];
+    const buckets = new Map<
+      string,
+      { data: string; receitaCents: number; pedidos: number; investimento: number }
+    >();
+    for (const row of serie) {
+      const key = bucketYmd(row.data, agrupamento);
+      const cur = buckets.get(key) ?? { data: key, receitaCents: 0, pedidos: 0, investimento: 0 };
+      cur.receitaCents += row.receitaCents;
+      cur.pedidos += row.pedidos;
+      cur.investimento += row.investimento ?? 0;
+      buckets.set(key, cur);
+    }
+    const ordered = [...buckets.values()].sort((a, b) => a.data.localeCompare(b.data));
+    const years = new Set(ordered.map((row) => row.data.slice(0, 4)));
+    const multiYear = years.size > 1;
+    const isDiario = agrupamento === "dia";
+    return ordered.map((row) => {
+      const investimento = Math.round(row.investimento * 100) / 100;
+      const faturamento = row.receitaCents / 100;
+      const compras = row.pedidos;
+      return {
+        periodo:
+          agrupamento === "semana"
+            ? (() => {
+                const start = new Date(`${row.data}T00:00:00Z`);
+                const end = new Date(start.getTime() + 6 * 86_400_000);
+                const fmt = (d: Date) =>
+                  `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+                return `${fmt(start)}-${fmt(end)}`;
+              })()
+            : rotuloEixo(row.data, agrupamento, multiYear),
+        rotulo: rotuloTooltip(row.data, agrupamento),
+        Investimento: investimento,
+        Faturamento: faturamento,
+        Compras: compras,
+        "Custo/Compra": compras > 0 ? Math.round((investimento / compras) * 100) / 100 : 0,
+        angleDaily: isDiario && ordered.length > 14,
+      };
+    });
+  }, [serie, agrupamento]);
+
+  if (rows.length < 2) return null;
+
+  const isDiario = agrupamento === "dia";
+  const isMensal = agrupamento === "mes";
+  const periodoLabel = isMensal ? "mês" : isDiario ? "dia" : "semana";
+  const tickEvery = isMobile
+    ? mobileTickInterval(rows.length)
+    : isDiario && rows.length > 14
+      ? Math.ceil(rows.length / 14) - 1
+      : 0;
 
   return (
     <div className="rel-card p-5">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="type-caption-strong text-[var(--foreground)]">{titulo}</p>
-        <p className="type-fine-print text-[var(--muted-foreground)]">{origemLabel ?? "Todas as vendas"}</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="type-caption-strong text-[var(--foreground)]">Volume geral de performance</p>
+          <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
+            Investimento e compras por {periodoLabel}
+            {origemLabel ? ` · ${origemLabel}` : ""}
+          </p>
+        </div>
+        {canToggle ? (
+          <SegmentedControl
+            aria-label="Agrupamento"
+            value={modo}
+            onChange={setModo}
+            options={[
+              { value: "diario", label: "Diário" },
+              { value: "semanal", label: "Semanal" },
+            ]}
+          />
+        ) : null}
       </div>
-      <div className="mt-4 h-48">
+      <div className="mt-4 h-64 md:h-80">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={rows}>
+          <ComposedChart data={rows}>
             <CartesianGrid vertical={false} stroke="var(--divider-soft)" />
             <XAxis
               dataKey="periodo"
@@ -524,28 +596,65 @@ function VendasSerie({ data, origemLabel }: { data: Consolidado; origemLabel: st
               tickLine={false}
               axisLine={false}
               interval={tickEvery}
+              angle={!isMobile && isDiario && rows.length > 14 ? -45 : 0}
+              textAnchor={!isMobile && isDiario && rows.length > 14 ? "end" : "middle"}
+              height={!isMobile && isDiario && rows.length > 14 ? 50 : 30}
             />
             <YAxis
+              yAxisId="left"
               stroke="var(--muted-foreground)"
               fontSize={11}
               tickLine={false}
               axisLine={false}
-              width={56}
-              tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 1000)} mil` : String(v))}
+              width={isMobile ? 40 : 60}
+              tickFormatter={isMobile ? formatCompactNumber : (v: number) => (v >= 1000 ? `${Math.round(v / 1000)} mil` : String(v))}
             />
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              stroke="var(--muted-foreground)"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              width={isMobile ? 32 : 48}
+              allowDecimals={false}
+              tickFormatter={isMobile ? formatCompactNumber : undefined}
+            />
+            <YAxis yAxisId="cpl" hide />
             <Tooltip
               cursor={{ fill: "var(--divider-soft)" }}
               labelFormatter={(_label: string, payload: ReadonlyArray<{ payload?: { rotulo?: string } }>) =>
                 payload[0]?.payload?.rotulo ?? _label
               }
-              formatter={(value: number, _name: string, item: { payload?: { pedidos?: number } }) => [
-                `${brl(Number(value))} · ${item.payload?.pedidos ?? 0} pedidos`,
-                "Receita",
-              ]}
+              formatter={(value: number, name: string) => {
+                if (name === "Investimento" || name === "Faturamento" || name === "Custo/Compra") {
+                  return [brl(Number(value)), name];
+                }
+                return [Number(value).toLocaleString("pt-BR"), name];
+              }}
               {...chartTooltip}
             />
-            <Bar dataKey="receita" name="Receita" fill="var(--primary)" radius={[4, 4, 0, 0]} />
-          </BarChart>
+            <Legend iconType="circle" iconSize={8} wrapperStyle={{ paddingTop: 12, fontSize: 12 }} />
+            <Bar yAxisId="left" dataKey="Investimento" fill="var(--chart-spend)" radius={[6, 6, 0, 0]} />
+            <Bar yAxisId="left" dataKey="Faturamento" fill="var(--chart-plan)" radius={[6, 6, 0, 0]} />
+            <Line
+              yAxisId="right"
+              type="monotone"
+              dataKey="Compras"
+              stroke="var(--chart-result)"
+              strokeWidth={2.5}
+              dot={{ fill: "var(--chart-result)", r: 4, strokeWidth: 0 }}
+              activeDot={{ r: 6, strokeWidth: 0, fill: "var(--chart-result)" }}
+            />
+            <Line
+              yAxisId="cpl"
+              dataKey="Custo/Compra"
+              stroke="transparent"
+              dot={false}
+              activeDot={false}
+              legendType="none"
+            />
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
     </div>

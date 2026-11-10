@@ -12,6 +12,8 @@ type OlistResponse = {
     orders: number;
     gmvCents: number;
     matchedWoo: number;
+    matchedMl?: number;
+    erpOnly?: number;
     matchRate: number;
     avgTicketCents: number;
     totalListed?: number;
@@ -25,6 +27,8 @@ type OlistResponse = {
     buyerName: string | null;
     occurredAt: string | null;
     wooExternalId: string | null;
+    mlExternalId?: string | null;
+    matchedProvider?: string | null;
     numeroEcommerce: string | null;
     trackingCode: string | null;
     leadId: string | null;
@@ -106,9 +110,11 @@ export function OlistPanel({
         <MetricTile label="GMV" value={formatBrl(data.kpis.gmvCents)} />
         <MetricTile label="Ticket médio" value={formatBrl(data.kpis.avgTicketCents)} />
         <MetricTile
-          label="Casados com Woo"
-          value={`${data.kpis.matchedWoo}`}
-          detail={`${data.kpis.matchRate}% do período`}
+          label="Casados (Woo + ML)"
+          value={`${data.kpis.matchedWoo + (data.kpis.matchedMl ?? 0)}`}
+          detail={`${data.kpis.matchRate}% · Woo ${data.kpis.matchedWoo} · ML ${data.kpis.matchedMl ?? 0}${
+            data.kpis.erpOnly != null ? ` · só ERP ${data.kpis.erpOnly}` : ""
+          }`}
         />
       </MetricGrid>
 
@@ -176,7 +182,7 @@ export function OlistPanel({
                 <th className="px-4 py-2 font-medium">Pedido</th>
                 <th className="px-4 py-2 font-medium">Cliente</th>
                 <th className="px-4 py-2 font-medium">Status</th>
-                <th className="px-4 py-2 font-medium">Woo</th>
+                <th className="px-4 py-2 font-medium">Origem</th>
                 <th className="px-4 py-2 font-medium text-right">Valor</th>
               </tr>
             </thead>
@@ -207,9 +213,11 @@ export function OlistPanel({
                       {statusText(order.status)}
                     </td>
                     <td className="px-4 py-3 type-fine-print text-[var(--muted-foreground)]">
-                      {order.wooExternalId || order.numeroEcommerce
-                        ? `#${order.wooExternalId || order.numeroEcommerce}`
-                        : "só ERP"}
+                      {order.matchedProvider === "MERCADO_LIVRE" || order.mlExternalId
+                        ? `ML #${order.mlExternalId || order.numeroEcommerce || "—"}`
+                        : order.wooExternalId || order.numeroEcommerce
+                          ? `Woo #${order.wooExternalId || order.numeroEcommerce}`
+                          : "só ERP"}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums type-caption-strong text-[var(--foreground)]">
                       {formatBrl(order.totalCents ?? 0)}

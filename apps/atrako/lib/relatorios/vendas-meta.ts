@@ -21,42 +21,139 @@ export async function buildVendasMetaReport(opts: {
 }): Promise<VendasMetaReport> {
   const from = new Date(`${opts.dataInicio}T00:00:00-03:00`);
   const to = new Date(`${opts.dataFim}T23:59:59.999-03:00`);
+  const { isOlistConnected, loadConfirmedSales } = await import(
+    "@/lib/commerce-attribution/confirmed-sales"
+  );
+  const olistOn = await isOlistConnected(opts.clienteId);
+
   const [orders, metaPurchases] = await Promise.all([
-    prisma.marketplaceOrder.findMany({
-      where: {
-        clienteId: opts.clienteId,
-        occurredAt: { gte: from, lte: to },
-        source: { is: { channel: "meta_ads" } },
-      },
-      orderBy: { occurredAt: "asc" },
-      select: {
-        id: true,
-        externalId: true,
-        provider: true,
-        status: true,
-        totalCents: true,
-        buyerName: true,
-        cityName: true,
-        cityRaw: true,
-        stateUf: true,
-        occurredAt: true,
-        createdAt: true,
-        rawPayload: true,
-        items: { select: { title: true, sku: true, quantity: true, unitPriceCents: true, lineTotalCents: true } },
-        source: {
-          select: {
-            adMethod: true,
-            adWindow: true,
-            metaCampaignId: true,
-            metaCampaignName: true,
-            metaAdsetId: true,
-            metaAdsetName: true,
-            metaAdId: true,
-            metaAdName: true,
+    olistOn
+      ? (async () => {
+          const reconcile = await loadConfirmedSales(opts.clienteId, opts.dataInicio, opts.dataFim);
+          const metaSales = reconcile.confirmed.filter((s) => s.channel === "meta_ads");
+          const ids = metaSales.map((s) => s.olistOrderId);
+          if (!ids.length) return [];
+          return prisma.marketplaceOrder.findMany({
+            where: { id: { in: ids } },
+            orderBy: { occurredAt: "asc" },
+            select: {
+              id: true,
+              externalId: true,
+              provider: true,
+              status: true,
+              totalCents: true,
+              buyerName: true,
+              cityName: true,
+              cityRaw: true,
+              stateUf: true,
+              occurredAt: true,
+              createdAt: true,
+              rawPayload: true,
+              items: {
+                select: { title: true, sku: true, quantity: true, unitPriceCents: true, lineTotalCents: true },
+              },
+              source: {
+                select: {
+                  adMethod: true,
+                  adWindow: true,
+                  metaCampaignId: true,
+                  metaCampaignName: true,
+                  metaAdsetId: true,
+                  metaAdsetName: true,
+                  metaAdId: true,
+                  metaAdName: true,
+                },
+              },
+            },
+          }).then(async (rows) => {
+            // Atribuição Meta fica no Woo casado — copia source do canal quando Olist não tem.
+            const channelIds = metaSales
+              .map((s) => {
+                const raw =
+                  rows.find((r) => r.id === s.olistOrderId)?.rawPayload &&
+                  typeof rows.find((r) => r.id === s.olistOrderId)!.rawPayload === "object"
+                    ? (rows.find((r) => r.id === s.olistOrderId)!.rawPayload as Record<string, unknown>)
+                    : {};
+                return typeof raw.matchedOrderId === "string"
+                  ? raw.matchedOrderId
+                  : typeof raw.wooOrderId === "string"
+                    ? raw.wooOrderId
+                    : null;
+              })
+              .filter(Boolean) as string[];
+            const channelSources = channelIds.length
+              ? await prisma.marketplaceOrder.findMany({
+                  where: { id: { in: channelIds } },
+                  select: {
+                    id: true,
+                    source: {
+                      select: {
+                        adMethod: true,
+                        adWindow: true,
+                        metaCampaignId: true,
+                        metaCampaignName: true,
+                        metaAdsetId: true,
+                        metaAdsetName: true,
+                        metaAdId: true,
+                        metaAdName: true,
+                      },
+                    },
+                  },
+                })
+              : [];
+            const byChannel = new Map(channelSources.map((c) => [c.id, c.source]));
+            return rows.map((r) => {
+              const raw =
+                r.rawPayload && typeof r.rawPayload === "object" && !Array.isArray(r.rawPayload)
+                  ? (r.rawPayload as Record<string, unknown>)
+                  : {};
+              const chId =
+                (typeof raw.matchedOrderId === "string" && raw.matchedOrderId) ||
+                (typeof raw.wooOrderId === "string" && raw.wooOrderId) ||
+                null;
+              const chSource = chId ? byChannel.get(chId) : null;
+              return { ...r, source: r.source ?? chSource ?? null };
+            });
+          });
+        })()
+      : prisma.marketplaceOrder.findMany({
+          where: {
+            clienteId: opts.clienteId,
+            occurredAt: { gte: from, lte: to },
+            source: { is: { channel: "meta_ads" } },
+            NOT: { provider: "OLIST_ERP" },
           },
-        },
-      },
-    }),
+          orderBy: { occurredAt: "asc" },
+          select: {
+            id: true,
+            externalId: true,
+            provider: true,
+            status: true,
+            totalCents: true,
+            buyerName: true,
+            cityName: true,
+            cityRaw: true,
+            stateUf: true,
+            occurredAt: true,
+            createdAt: true,
+            rawPayload: true,
+            items: {
+              select: { title: true, sku: true, quantity: true, unitPriceCents: true, lineTotalCents: true },
+            },
+            source: {
+              select: {
+                adMethod: true,
+                adWindow: true,
+                metaCampaignId: true,
+                metaCampaignName: true,
+                metaAdsetId: true,
+                metaAdsetName: true,
+                metaAdId: true,
+                metaAdName: true,
+              },
+            },
+          },
+        }),
     prisma.metaAdPurchaseDaily.findMany({
       where: { clienteId: opts.clienteId, date: { gte: dayToDate(opts.dataInicio), lte: dayToDate(opts.dataFim) } },
       select: { clickPurchases: true, clickValueCents: true, viewPurchases: true, viewValueCents: true },

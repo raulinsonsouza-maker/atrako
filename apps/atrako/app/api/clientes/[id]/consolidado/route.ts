@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireClienteAccess } from "@/lib/portalSession";
 import { isEcommerceCliente } from "@/lib/clientProfiles";
-import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
+import {
+  confirmedOriginKey,
+  loadConfirmedSales,
+} from "@/lib/commerce-attribution/confirmed-sales";
 import { brtRange, calendarRange, isYmd, ymdFromLocalDate } from "@/lib/commerce-attribution/period";
-import { CHANNEL_LABELS, orderOriginKey, type OrderChannel } from "@/lib/commerce-attribution/store-source";
+import { CHANNEL_LABELS, type OrderChannel } from "@/lib/commerce-attribution/store-source";
 import { getCartRecoveryMetrics, getRepurchaseMetrics } from "@/lib/commerce/customer-metrics";
 import { agrupamentoPorDias, bucketYmd } from "@/lib/chart-bucket";
 
@@ -29,6 +32,9 @@ const PROVIDER_LABELS: Record<string, string> = {
   GOOGLE: "Google Ads",
   LINKEDIN: "LinkedIn Ads",
   TIKTOK: "TikTok Ads",
+  OLIST_ERP: "Só ERP",
+  erp_only: "Só ERP",
+  mercadolivre: "Mercado Livre",
 };
 
 /** Compradores importados de lojas/marketplaces já contam como pedidos, não como leads. */
@@ -68,7 +74,7 @@ export async function GET(
   const origemParam = sp.get("origem")?.trim() ?? "";
   const origem = /^[A-Za-z0-9_]{1,40}$/.test(origemParam) ? origemParam : null;
 
-  const [cliente, midia, pedidos, checkout, crmLeads, relConv, relCost] = await Promise.all([
+  const [cliente, midia, reconcile, checkout, crmLeads, relConv, relCost] = await Promise.all([
     prisma.cliente.findUnique({
       where: { id },
       select: { nome: true, slug: true, perfilPanel: true, objetivoMidia: true },
@@ -84,16 +90,7 @@ export async function GET(
         websitePurchasesConversionValue: true,
       },
     }),
-    prisma.marketplaceOrder.findMany({
-      where: { clienteId: id, occurredAt: range },
-      select: {
-        provider: true,
-        status: true,
-        totalCents: true,
-        occurredAt: true,
-        source: { select: { channel: true, adMethod: true } },
-      },
-    }),
+    loadConfirmedSales(id, inicioStr, fimStr),
     prisma.commerceOrder.findMany({
       where: { clienteId: id, status: "APPROVED", createdAt: range },
       select: { totalCents: true, createdAt: true },
@@ -145,29 +142,33 @@ export async function GET(
     row.pedidos += 1;
     vendasDia.set(key, row);
   };
-  let cancelados = 0;
+  const cancelados = 0;
   let metaIdentificadas = 0;
-  for (const o of pedidos) {
-    if (o.source?.adMethod === "meta_match" || o.source?.adMethod === "both") metaIdentificadas += 1;
-    if (!isRevenueOrder(o.status)) {
-      cancelados += 1;
-      continue;
-    }
-    const cents = o.totalCents ?? 0;
-    const lojaLabel = PROVIDER_LABELS[o.provider] ?? o.provider;
-    const key = orderOriginKey(o.provider, o.source?.channel);
-    const label = !SITE_PROVIDERS.has(o.provider)
-      ? lojaLabel
-      : key === "unknown"
-        ? "Sem origem"
-        : CHANNEL_LABELS[key as OrderChannel] ?? key;
+  for (const o of reconcile.confirmed) {
+    if (o.channel === "meta_ads") metaIdentificadas += 1;
+    const cents = o.totalCents;
+    const provider = o.originProvider;
+    const lojaLabel = PROVIDER_LABELS[provider] ?? provider;
+    const key = confirmedOriginKey(o);
+    const label =
+      key === "erp_only"
+        ? "Só ERP"
+        : key === "mercadolivre"
+          ? "Mercado Livre"
+          : !SITE_PROVIDERS.has(provider)
+            ? lojaLabel
+            : key === "unknown"
+              ? "Sem origem"
+              : CHANNEL_LABELS[key as OrderChannel] ?? PROVIDER_LABELS[key] ?? key;
     add(porOrigem, key, label, cents);
-    const canal = touchCanal(o.provider, lojaLabel);
+    const canal = touchCanal(provider, lojaLabel);
     canal.pedidos += 1;
     canal.receitaCents += cents;
-    if (SITE_PROVIDERS.has(o.provider)) add(canal.origens, key, label, cents);
+    if (SITE_PROVIDERS.has(provider) || provider === "MERCADO_LIVRE" || provider === "OLIST_ERP") {
+      add(canal.origens, key, label, cents);
+    }
     if (origem && key !== origem) continue;
-    add(porLoja, o.provider, lojaLabel, cents);
+    add(porLoja, provider, lojaLabel, cents);
     addDia(o.occurredAt, cents);
   }
 
@@ -324,6 +325,19 @@ export async function GET(
     canaisMidia,
     cancelados,
     origens,
+    conferencia: reconcile.olistConnected
+      ? {
+          olistConnected: true,
+          confirmed: reconcile.confirmedCount,
+          confirmedCents: reconcile.confirmedCents,
+          matchedWoo: reconcile.matchedWoo,
+          matchedMl: reconcile.matchedMl,
+          erpOnly: reconcile.erpOnly,
+          channelOnly: reconcile.channelOnlyCount,
+          channelOnlyCents: reconcile.channelOnlyCents,
+          matchRate: reconcile.matchRate,
+        }
+      : { olistConnected: false },
     meta: metaMidia
       ? {
           investimento: metaMidia.investimento,

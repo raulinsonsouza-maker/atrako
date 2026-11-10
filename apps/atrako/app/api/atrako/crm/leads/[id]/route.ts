@@ -187,7 +187,15 @@ export async function GET(request: NextRequest, ctx: Ctx) {
     const linkedWooExternalId =
       typeof raw.wooExternalId === "string"
         ? raw.wooExternalId
-        : wooFromRecoveredCart.get(cartOrderKey(o.provider, o.externalId).toUpperCase()) ?? null;
+        : typeof raw.matchedExternalId === "string" && raw.matchedProvider === "WOOCOMMERCE"
+          ? raw.matchedExternalId
+          : wooFromRecoveredCart.get(cartOrderKey(o.provider, o.externalId).toUpperCase()) ?? null;
+    const linkedMlExternalId =
+      typeof raw.mlExternalId === "string"
+        ? raw.mlExternalId
+        : typeof raw.matchedExternalId === "string" && raw.matchedProvider === "MERCADO_LIVRE"
+          ? raw.matchedExternalId
+          : null;
     const linkedOlistOrderId =
       typeof raw.olistOrderId === "string" ? raw.olistOrderId : null;
     return {
@@ -202,13 +210,16 @@ export async function GET(request: NextRequest, ctx: Ctx) {
     currency: o.currency ?? "BRL",
     occurredAt: (o.occurredAt ?? o.createdAt).toISOString(),
     linkedWooExternalId,
+    linkedMlExternalId,
     linkedOlistOrderId,
     crossLabel:
       o.provider === "OLIST_ERP" && linkedWooExternalId
         ? `Woo #${linkedWooExternalId}`
-        : o.provider === "WOOCOMMERCE" && linkedOlistOrderId
-          ? `Olist #${linkedOlistOrderId}`
-          : null,
+        : o.provider === "OLIST_ERP" && linkedMlExternalId
+          ? `ML #${linkedMlExternalId}`
+          : (o.provider === "WOOCOMMERCE" || o.provider === "MERCADO_LIVRE") && linkedOlistOrderId
+            ? `Olist #${linkedOlistOrderId}`
+            : null,
     details: orderDetails(o.provider, {
       ...raw,
       shippingMode: o.shippingMode,

@@ -105,12 +105,20 @@ export async function GET(
   let gmvCents = 0;
   let revenueOrders = 0;
   let matchedWoo = 0;
+  let matchedMl = 0;
+  let erpOnly = 0;
   for (const row of allForMatch) {
     const payload = payloadOf(row.rawPayload);
-    if (payload.wooExternalId || payload.wooOrderId) matchedWoo += 1;
+    const matchedProvider =
+      (typeof payload.matchedProvider === "string" && payload.matchedProvider) ||
+      (payload.wooExternalId || payload.wooOrderId ? "WOOCOMMERCE" : null) ||
+      (payload.mlExternalId || payload.mlOrderId ? "MERCADO_LIVRE" : null);
+    if (matchedProvider === "WOOCOMMERCE" || payload.wooExternalId || payload.wooOrderId) matchedWoo += 1;
+    else if (matchedProvider === "MERCADO_LIVRE" || payload.mlExternalId || payload.mlOrderId) matchedMl += 1;
     if (!isRevenueOrder(row.status)) continue;
     revenueOrders += 1;
     gmvCents += row.totalCents ?? 0;
+    if (!matchedProvider && !payload.wooExternalId && !payload.mlExternalId) erpOnly += 1;
   }
 
   const dualContactIds = [
@@ -118,7 +126,10 @@ export async function GET(
       allForMatch
         .filter((o) => {
           const p = payloadOf(o.rawPayload);
-          return Boolean(o.contactId && (p.wooExternalId || p.wooOrderId));
+          return Boolean(
+            o.contactId &&
+              (p.wooExternalId || p.wooOrderId || p.mlExternalId || p.mlOrderId || p.matchedProvider),
+          );
         })
         .map((o) => o.contactId as string),
     ),
@@ -151,7 +162,11 @@ export async function GET(
       orders: revenueOrders,
       gmvCents,
       matchedWoo,
-      matchRate: allForMatch.length ? Math.round((matchedWoo / allForMatch.length) * 100) : 0,
+      matchedMl,
+      erpOnly,
+      matchRate: allForMatch.length
+        ? Math.round(((matchedWoo + matchedMl) / allForMatch.length) * 100)
+        : 0,
       avgTicketCents: revenueOrders ? Math.round(gmvCents / revenueOrders) : 0,
       totalListed: allForMatch.length,
     },
@@ -180,6 +195,10 @@ export async function GET(
         trackingCode: o.shippingId,
         wooExternalId:
           typeof payload.wooExternalId === "string" ? payload.wooExternalId : null,
+        mlExternalId:
+          typeof payload.mlExternalId === "string" ? payload.mlExternalId : null,
+        matchedProvider:
+          typeof payload.matchedProvider === "string" ? payload.matchedProvider : null,
         numeroEcommerce:
           typeof payload.numeroEcommerce === "string" ? payload.numeroEcommerce : null,
       };

@@ -962,17 +962,23 @@ export async function getComportamento(
   range: { start: Date; end: Date; previousStart: Date; previousEnd: Date },
   filtro?: FiltroComportamento,
 ): Promise<ComportamentoResposta> {
+  const { isOlistConnected } = await import("@/lib/commerce-attribution/confirmed-sales");
+  const olistOnly = await isOlistConnected(clienteId);
+  const providerWhere = olistOnly
+    ? ({ provider: "OLIST_ERP" } as const)
+    : ({ NOT: { provider: "OLIST_ERP" } } as const);
+
   const [windowRows, priorRows, lifetimeRows] = await Promise.all([
     prisma.marketplaceOrder.findMany({
-      where: { clienteId, occurredAt: { gte: range.previousStart, lte: range.end } },
+      where: { clienteId, occurredAt: { gte: range.previousStart, lte: range.end }, ...providerWhere },
       select: orderSelect,
     }),
     prisma.marketplaceOrder.findMany({
-      where: { clienteId, occurredAt: { lt: range.previousStart } },
+      where: { clienteId, occurredAt: { lt: range.previousStart }, ...providerWhere },
       select: { contactId: true, buyerEmail: true, status: true },
     }),
     prisma.marketplaceOrder.findMany({
-      where: { clienteId },
+      where: { clienteId, ...providerWhere },
       select: { contactId: true, buyerEmail: true, status: true, totalCents: true },
     }),
   ]);

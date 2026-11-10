@@ -107,6 +107,7 @@ export async function GET(
         occurredAt: true,
         createdAt: true,
         provider: true,
+        rawPayload: true,
       },
     }),
     prisma.marketplaceOrder.groupBy({
@@ -284,10 +285,19 @@ export async function GET(
     byStatus,
     byStore,
     topProducts,
-    orders: orders.map((o) => ({
-      ...o,
-      occurredAt: o.occurredAt?.toISOString() ?? null,
-      createdAt: o.createdAt.toISOString(),
-    })),
+    orders: orders.map((o) => {
+      const raw =
+        o.rawPayload && typeof o.rawPayload === "object" && !Array.isArray(o.rawPayload)
+          ? (o.rawPayload as Record<string, unknown>)
+          : {};
+      return {
+        ...o,
+        occurredAt: o.occurredAt?.toISOString() ?? null,
+        createdAt: o.createdAt.toISOString(),
+        olistOrderId: typeof raw.olistOrderId === "string" ? raw.olistOrderId : null,
+        olistStatus: typeof raw.olistStatus === "string" ? raw.olistStatus : null,
+        confirmedOnOlist: Boolean(raw.olistOrderId),
+      };
+    }),
   });
 }

@@ -1,8 +1,7 @@
 /** Pedidos pagos da loja no período, a mesma base do Geral, do Meta e da comissão. */
 
 import { prisma } from "@/lib/db";
-import { brtDay, brtRange } from "./period";
-import { isRevenueOrder } from "./order-status";
+import { confirmedToStoreSales, loadConfirmedSales } from "./confirmed-sales";
 
 export type StoreSale = {
   day: string;
@@ -23,33 +22,10 @@ export async function storeHasOrders(clienteId: string) {
   return Boolean(row);
 }
 
+/** Com Olist conectada: 1× pedido ERP confirmado (atribuição do canal). Sem Olist: canais clássicos. */
 export async function loadStoreSales(clienteId: string, inicio: string, fim: string): Promise<StoreSale[]> {
-  const range = brtRange(inicio, fim);
-  const orders = await prisma.marketplaceOrder.findMany({
-    where: { clienteId, occurredAt: range },
-    select: {
-      status: true,
-      totalCents: true,
-      occurredAt: true,
-      createdAt: true,
-      source: {
-        select: { channel: true, metaCampaignName: true, metaAdsetId: true, metaAdId: true },
-      },
-    },
-  });
-  const out: StoreSale[] = [];
-  for (const o of orders) {
-    if (!isRevenueOrder(o.status)) continue;
-    out.push({
-      day: brtDay(o.occurredAt ?? o.createdAt),
-      channel: o.source?.channel ?? "unknown",
-      campaignName: o.source?.metaCampaignName ?? null,
-      adsetId: o.source?.metaAdsetId ?? null,
-      adId: o.source?.metaAdId ?? null,
-      totalCents: o.totalCents ?? 0,
-    });
-  }
-  return out;
+  const reconcile = await loadConfirmedSales(clienteId, inicio, fim);
+  return confirmedToStoreSales(reconcile.confirmed);
 }
 
 /** `geral` = todos os pedidos pagos. `meta` / `google` = só a origem daquele anúncio. */

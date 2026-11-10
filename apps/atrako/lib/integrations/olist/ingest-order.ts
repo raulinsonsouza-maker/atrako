@@ -1,12 +1,16 @@
 /**
- * Ingestão pedido Olist → MarketplaceOrder + CRM (+ match Woo).
- * Vendas fechadas no ERP (proposta/PDV) recuperam carrinho Woo e vão para Ganho.
+ * Ingestão pedido Olist → MarketplaceOrder + CRM (+ match Woo/ML).
+ * Vendas fechadas no ERP recuperam carrinho do canal e vão para Ganho.
  */
 
 import { prisma } from "@/lib/db";
 import { upsertPersonAndLead } from "@/lib/atrako/person";
 import { trackOrderPayment } from "@/lib/crm/abandoned-cart";
-import { linkOlistToWoo, resolveWooMatch } from "./match-woo";
+import {
+  linkOlistToChannel,
+  resolveChannelMatch,
+  resolveExistingPerson,
+} from "./match-channel";
 import { getOlistOrder, type OlistOrder } from "./orders";
 
 const OLIST_PAID = new Set([
@@ -18,7 +22,7 @@ const OLIST_PAID = new Set([
   "entregue",
 ]);
 
-function isOlistPaid(status: string) {
+export function isOlistPaid(status: string) {
   return OLIST_PAID.has((status || "").toLowerCase());
 }
 
@@ -93,7 +97,10 @@ export async function ingestOlistOrder(input: {
   if (!order?.id) throw new Error("pedido Olist inválido");
 
   const externalId = String(order.id);
-  const woo = await resolveWooMatch(input.workspaceId, order);
+  const channel = await resolveChannelMatch(input.workspaceId, order);
+  const existingPerson = channel
+    ? null
+    : await resolveExistingPerson(input.workspaceId, order);
 
   const existing = await prisma.marketplaceOrder.findUnique({
     where: {
@@ -105,8 +112,10 @@ export async function ingestOlistOrder(input: {
     },
   });
 
-  let contactId = woo?.contactId ?? existing?.contactId ?? null;
-  let leadId = woo?.leadId ?? existing?.leadId ?? null;
+  let contactId =
+    channel?.contactId ?? existingPerson?.contactId ?? existing?.contactId ?? null;
+  let leadId = channel?.leadId ?? existingPerson?.leadId ?? existing?.leadId ?? null;
+  let personIsNew = false;
 
   if (!contactId) {
     const person = await upsertPersonAndLead({
@@ -126,28 +135,41 @@ export async function ingestOlistOrder(input: {
     });
     contactId = person.contact.id;
     leadId = person.lead.id;
-  } else if (order.buyerEmail || order.buyerPhone || order.buyerName) {
-    await upsertPersonAndLead({
+    personIsNew = true;
+  } else {
+    const person = await upsertPersonAndLead({
       workspaceId: input.workspaceId,
       name: order.buyerName,
       email: order.buyerEmail,
       phone: order.buyerPhone,
-      source: "olist",
+      source: channel ? channel.provider.toLowerCase() : "olist",
       metadata: {
-        channel: "erp",
+        channel: channel ? "store" : "erp",
         provider: "OLIST_ERP",
         olistOrderId: externalId,
         enrichOnly: true,
+        matchedProvider: channel?.provider ?? null,
       },
     }).catch(() => null);
+    if (person) {
+      contactId = person.contact.id;
+      leadId = leadId ?? person.lead.id;
+    }
   }
 
   const payload = {
     order: order.raw,
     numeroEcommerce: order.numeroEcommerce,
-    wooExternalId: woo?.externalId ?? null,
-    wooOrderId: woo?.orderId ?? null,
-    matchedBy: woo?.matchedBy ?? null,
+    matchedProvider: channel?.provider ?? null,
+    matchedExternalId: channel?.externalId ?? null,
+    matchedOrderId: channel?.orderId ?? null,
+    matchedBy: channel?.matchedBy ?? null,
+    wooExternalId: channel?.provider === "WOOCOMMERCE" ? channel.externalId : null,
+    wooOrderId: channel?.provider === "WOOCOMMERCE" ? channel.orderId : null,
+    mlExternalId: channel?.provider === "MERCADO_LIVRE" ? channel.externalId : null,
+    mlOrderId: channel?.provider === "MERCADO_LIVRE" ? channel.orderId : null,
+    existingContact: Boolean(existingPerson) && !channel,
+    personIsNew,
   };
 
   const saved = existing
@@ -196,12 +218,11 @@ export async function ingestOlistOrder(input: {
     console.error("[olist-items]", err instanceof Error ? err.message : err),
   );
 
-  if (woo) {
-    await linkOlistToWoo({
-      workspaceId: input.workspaceId,
+  if (channel) {
+    await linkOlistToChannel({
       olistOrderId: saved.id,
       olist: order,
-      woo,
+      match: channel,
     }).catch((err) => console.error("[olist-match]", err instanceof Error ? err.message : err));
   }
 
@@ -215,6 +236,10 @@ export async function ingestOlistOrder(input: {
   return {
     order: saved,
     created: !existing,
-    matchedWoo: Boolean(woo),
+    matchedWoo: channel?.provider === "WOOCOMMERCE",
+    matchedMl: channel?.provider === "MERCADO_LIVRE",
+    matchedChannel: channel?.provider ?? null,
+    reusedContact: Boolean(existingPerson) && !channel,
+    personIsNew,
   };
 }

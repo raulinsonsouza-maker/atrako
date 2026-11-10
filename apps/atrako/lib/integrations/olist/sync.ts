@@ -8,6 +8,7 @@ import { ingestOlistOrder } from "./ingest-order";
 import { listOlistOrders } from "./orders";
 import { listOlistContacts } from "./contacts";
 import { upsertPersonAndLead } from "@/lib/atrako/person";
+import { sweepOlistOrphans } from "./orphan-sweep";
 
 export async function syncOlistWorkspace(
   workspaceId: string,
@@ -29,6 +30,7 @@ export async function syncOlistWorkspace(
 
   let processed = 0;
   let matchedWoo = 0;
+  let matchedMl = 0;
   let errors = 0;
 
   for (const summary of orders) {
@@ -41,6 +43,7 @@ export async function syncOlistWorkspace(
       });
       processed += 1;
       if (result.matchedWoo) matchedWoo += 1;
+      if (result.matchedMl) matchedMl += 1;
       // Tiny/Olist Token API: evita burst (≈1 req detalhe por pedido).
       await new Promise((r) => setTimeout(r, 120));
     } catch (err) {
@@ -80,15 +83,22 @@ export async function syncOlistWorkspace(
     }
   }
 
+  const orphans = await sweepOlistOrphans(workspaceId).catch((err) => {
+    console.error("[olist-orphan-sweep]", err instanceof Error ? err.message : err);
+    return { scanned: 0, cartsFixed: 0, leadsTouched: 0 };
+  });
+
   await touchOlistConnection(resolved.connectionId);
 
   return {
     processed,
     pages,
     matchedWoo,
+    matchedMl,
     errors,
     contactsProcessed,
     listed: orders.length,
+    orphans,
   };
 }
 
@@ -105,6 +115,7 @@ export async function syncOlistTodosClientes(options?: { daysBack?: number; maxP
   let workspaces = 0;
   let processed = 0;
   let matchedWoo = 0;
+  let matchedMl = 0;
   let errors = 0;
 
   for (const conn of connections) {
@@ -113,6 +124,7 @@ export async function syncOlistTodosClientes(options?: { daysBack?: number; maxP
       const result = await syncOlistWorkspace(conn.clienteId, { daysBack, maxPages });
       processed += result.processed;
       matchedWoo += result.matchedWoo;
+      matchedMl += result.matchedMl;
       errors += result.errors;
     } catch (err) {
       errors += 1;
@@ -120,5 +132,5 @@ export async function syncOlistTodosClientes(options?: { daysBack?: number; maxP
     }
   }
 
-  return { workspaces, processed, matchedWoo, errors };
+  return { workspaces, processed, matchedWoo, matchedMl, errors };
 }

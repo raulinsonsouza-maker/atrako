@@ -61,6 +61,18 @@ type Consolidado = {
   cancelados?: number;
   /** Receita por origem do pedido (anúncio, orgânico, direto, marketplace…). */
   origens?: Array<{ id: string; label: string; pedidos: number; receitaCents: number }>;
+  /** Conferência Woo/ML ↔ Olist quando ERP conectado. */
+  conferencia?: {
+    olistConnected: boolean;
+    confirmed?: number;
+    confirmedCents?: number;
+    matchedWoo?: number;
+    matchedMl?: number;
+    erpOnly?: number;
+    channelOnly?: number;
+    channelOnlyCents?: number;
+    matchRate?: number;
+  };
 };
 
 const pct = (part: number, total: number) => (total > 0 ? Math.round((part / total) * 100) : 0);
@@ -123,6 +135,8 @@ function EcommerceGeral({
 
       <VendasSerie data={data} origemLabel={origemLabel} />
 
+      {data.conferencia?.olistConnected ? <ConferenciaOlist conf={data.conferencia} /> : null}
+
       <VendasPorLugar
         canais={canais}
         totalCents={totalCents}
@@ -135,6 +149,59 @@ function EcommerceGeral({
         <ClientesERecuperacao clientes={data.clientes ?? null} recuperacao={data.recuperacao ?? null} />
       ) : null}
     </section>
+  );
+}
+
+function ConferenciaOlist({
+  conf,
+}: {
+  conf: NonNullable<Consolidado["conferencia"]>;
+}) {
+  const matched = (conf.matchedWoo ?? 0) + (conf.matchedMl ?? 0);
+  return (
+    <div className="rel-card p-5">
+      <p className="type-caption-strong text-[var(--foreground)]">Conferência do mês</p>
+      <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
+        Receita = pedidos confirmados na Olist (NF). Canais são origem.
+      </p>
+      <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <dt className="type-fine-print text-[var(--muted-foreground)]">Confirmados</dt>
+          <dd className="type-caption-strong tabular-nums">
+            {conf.confirmed ?? 0}
+            {conf.confirmedCents != null ? (
+              <span className="ml-1 type-fine-print font-normal text-[var(--muted-foreground)]">
+                · {brl(conf.confirmedCents / 100)}
+              </span>
+            ) : null}
+          </dd>
+        </div>
+        <div>
+          <dt className="type-fine-print text-[var(--muted-foreground)]">Casados</dt>
+          <dd className="type-caption-strong tabular-nums">
+            {matched}
+            <span className="ml-1 type-fine-print font-normal text-[var(--muted-foreground)]">
+              · {conf.matchRate ?? 0}% · Woo {conf.matchedWoo ?? 0} · ML {conf.matchedMl ?? 0}
+            </span>
+          </dd>
+        </div>
+        <div>
+          <dt className="type-fine-print text-[var(--muted-foreground)]">Só ERP</dt>
+          <dd className="type-caption-strong tabular-nums">{conf.erpOnly ?? 0}</dd>
+        </div>
+        <div>
+          <dt className="type-fine-print text-[var(--muted-foreground)]">Canal sem Olist</dt>
+          <dd className="type-caption-strong tabular-nums">
+            {conf.channelOnly ?? 0}
+            {conf.channelOnlyCents != null && conf.channelOnlyCents > 0 ? (
+              <span className="ml-1 type-fine-print font-normal text-[var(--muted-foreground)]">
+                · {brl(conf.channelOnlyCents / 100)}
+              </span>
+            ) : null}
+          </dd>
+        </div>
+      </dl>
+    </div>
   );
 }
 

@@ -47,7 +47,11 @@ Forms manuais só onde a plataforma exige chave (ex.: WooCommerce). WhatsApp e A
 | Mercado Pago | OAuth vendedor, pagamentos, webhooks | https://www.mercadopago.com.br/developers/pt/docs |
 | Mercado Livre | OAuth vendedor, pedidos → CRM + aba Marketplaces | https://developers.mercadolivre.com.br/pt_br/guia-para-produtos |
 | WooCommerce | REST keys, pedidos → CRM + aba E-commerce + atribuição | https://woocommerce.github.io/woocommerce-rest-api-docs/ |
-| Olist ERP | Token API (v2) por loja; pedidos → CRM + aba ERP + match Woo via numeroPedidoEcommerce | https://api-docs.erp.olist.com/ |
+| Olist ERP | Token API (v2) por loja; pedidos → CRM + aba ERP; **confirmação de receita (NF)**; match Woo/ML via `numeroPedidoEcommerce` (+ e-mail/telefone) | https://api-docs.erp.olist.com/ |
+
+### Receita confirmada (workspace com Olist)
+
+Quando `OLIST_ERP` está `ACTIVE`, a **Receita do Geral / Meta / Comportamento / recompra** conta **1×** o pedido Olist pago (`isRevenueOrder`). Origem e UTM vêm do canal casado (Woo/ML). Pedido só no canal (sem Olist) aparece na **conferência**, não na receita. Venda só-Olist (PDV/proposta) entra como “Só ERP” e cria/reusa card no CRM. Sem Olist conectada, o comportamento clássico (soma dos canais) permanece.
 | Shopify | OAuth Admin API, pedidos/clientes/produtos → CRM + E-commerce + financeiro | https://shopify.dev/docs/api/admin-graphql/latest |
 | Tray | OAuth Tray Commerce, pedidos → CRM + E-commerce + financeiro; webhook app-level | https://developers.tray.com.br/#tray-api-plugin |
 | Nuvemshop | OAuth Tiendanube, pedidos → CRM + E-commerce + financeiro | https://dev.nuvemshop.com.br/docs/erp-guide/authentication |

@@ -4,6 +4,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { isOlistConnected } from "@/lib/commerce-attribution/confirmed-sales";
 import { isRevenueOrder } from "@/lib/commerce-attribution/order-status";
 import { orderOriginKey } from "@/lib/commerce-attribution/store-source";
 
@@ -20,11 +21,21 @@ function chunks<T>(list: T[]) {
 }
 
 /** Datas dos pedidos pagos de cada contato antes de `before`, em ordem crescente. */
-async function paidHistory(clienteId: string, contactIds: string[], before: Date) {
+async function paidHistory(
+  clienteId: string,
+  contactIds: string[],
+  before: Date,
+  olistOnly: boolean,
+) {
   const byContact = new Map<string, Date[]>();
   for (const ids of chunks(contactIds)) {
     const rows = await prisma.marketplaceOrder.findMany({
-      where: { clienteId, contactId: { in: ids }, occurredAt: { lte: before } },
+      where: {
+        clienteId,
+        contactId: { in: ids },
+        occurredAt: { lte: before },
+        ...(olistOnly ? { provider: "OLIST_ERP" } : { NOT: { provider: "OLIST_ERP" } }),
+      },
       select: { contactId: true, status: true, occurredAt: true },
     });
     for (const r of rows) {
@@ -50,24 +61,41 @@ function lastBefore(dates: Date[] | undefined, at: Date) {
 
 /** `origem`: só pedidos dessa origem (`orderOriginKey`); o histórico de recompra segue com todos. */
 export async function getRepurchaseMetrics(clienteId: string, range: DateRange, origem?: string | null) {
+  const olistOnly = await isOlistConnected(clienteId);
   const orders = await prisma.marketplaceOrder.findMany({
-    where: { clienteId, occurredAt: range },
+    where: {
+      clienteId,
+      occurredAt: range,
+      ...(olistOnly ? { provider: "OLIST_ERP" } : { NOT: { provider: "OLIST_ERP" } }),
+    },
     select: {
       contactId: true,
       status: true,
       totalCents: true,
       occurredAt: true,
       provider: true,
+      rawPayload: true,
       source: { select: { channel: true } },
     },
     orderBy: { occurredAt: "asc" },
   });
-  const paid = orders.filter(
-    (o) =>
-      isRevenueOrder(o.status) &&
-      o.occurredAt &&
-      (!origem || orderOriginKey(o.provider, o.source?.channel) === origem),
-  );
+  const paid = orders.filter((o) => {
+    if (!isRevenueOrder(o.status) || !o.occurredAt) return false;
+    if (!origem) return true;
+    if (!olistOnly) return orderOriginKey(o.provider, o.source?.channel) === origem;
+    const raw =
+      o.rawPayload && typeof o.rawPayload === "object" && !Array.isArray(o.rawPayload)
+        ? (o.rawPayload as Record<string, unknown>)
+        : {};
+    const matched =
+      (typeof raw.matchedProvider === "string" && raw.matchedProvider) ||
+      (raw.wooOrderId ? "WOOCOMMERCE" : null) ||
+      (raw.mlOrderId ? "MERCADO_LIVRE" : null) ||
+      "OLIST_ERP";
+    if (origem === "erp_only") return matched === "OLIST_ERP";
+    if (origem === "mercadolivre") return matched === "MERCADO_LIVRE";
+    return orderOriginKey(matched, o.source?.channel) === origem;
+  });
   const paidCents = paid.reduce((s, o) => s + (o.totalCents ?? 0), 0);
 
   const unidentified: Money = { count: 0, cents: 0 };
@@ -79,7 +107,9 @@ export async function getRepurchaseMetrics(clienteId: string, range: DateRange, 
   let gapCount = 0;
 
   const contactIds = [...new Set(paid.map((o) => o.contactId).filter(Boolean) as string[])];
-  const history = contactIds.length ? await paidHistory(clienteId, contactIds, range.lte) : new Map<string, Date[]>();
+  const history = contactIds.length
+    ? await paidHistory(clienteId, contactIds, range.lte, olistOnly)
+    : new Map<string, Date[]>();
   const seen = new Set<string>();
 
   for (const o of paid) {
@@ -212,8 +242,9 @@ export async function getCartRecoveryMetrics(clienteId: string, range: DateRange
 
   const contactIds = [...new Set(recovered.map((c) => c.contactId).filter(Boolean) as string[])];
   const latestAbandon = recovered.reduce((m, c) => Math.max(m, c.abandonedAt.getTime()), 0);
+  const olistOnly = await isOlistConnected(clienteId);
   const history = contactIds.length
-    ? await paidHistory(clienteId, contactIds, new Date(latestAbandon))
+    ? await paidHistory(clienteId, contactIds, new Date(latestAbandon), olistOnly)
     : new Map<string, Date[]>();
 
   const total: Money = { count: 0, cents: 0 };

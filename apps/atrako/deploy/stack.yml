@@ -129,6 +129,14 @@ services:
         - traefik.http.routers.lp-regicenter-http.rule=Host(`lp.regicenter.com`)
         - traefik.http.routers.lp-regicenter-http.entrypoints=web
         - traefik.http.routers.lp-regicenter-http.middlewares=atrako-https
+        - traefik.http.routers.lp-vilaris.rule=Host(`vilarisgestao.com.br`) || Host(`www.vilarisgestao.com.br`)
+        - traefik.http.routers.lp-vilaris.entrypoints=websecure
+        - traefik.http.routers.lp-vilaris.tls=true
+        - traefik.http.routers.lp-vilaris.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.lp-vilaris.service=atrako-web
+        - traefik.http.routers.lp-vilaris-http.rule=Host(`vilarisgestao.com.br`) || Host(`www.vilarisgestao.com.br`)
+        - traefik.http.routers.lp-vilaris-http.entrypoints=web
+        - traefik.http.routers.lp-vilaris-http.middlewares=atrako-https
 
 networks:
   internal:

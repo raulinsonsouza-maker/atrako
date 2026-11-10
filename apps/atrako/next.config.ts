@@ -56,11 +56,13 @@ const nextConfig: NextConfig = {
           missing: [{ type: "query", key: "preview" }],
           destination: "/lp/regicenter-franquia/index.html",
         },
-        ...Object.entries(LP_DOMAINS).map(([host, { dir }]) => ({
-          source: "/",
-          has: [{ type: "host" as const, value: host }],
-          destination: `${dir}/index.html`,
-        })),
+        ...Object.entries(LP_DOMAINS)
+          .filter(([, domain]) => Boolean(domain.dir))
+          .map(([host, { dir }]) => ({
+            source: "/",
+            has: [{ type: "host" as const, value: host }],
+            destination: `${dir}/index.html`,
+          })),
       ],
     };
   },

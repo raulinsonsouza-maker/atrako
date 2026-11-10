@@ -1,9 +1,12 @@
 /**
- * Domínios de clientes que servem uma LP estática de `public/` na raiz e a área de atendimento em `/crm`.
+ * Domínios de clientes: LP na raiz (HTML em `public/` ou rota App) e área de atendimento em `/crm`.
  * Cada host também precisa de um router no Traefik (deploy/stack.yml) e do registro DNS apontando para a VPS.
  */
 export type LpDomain = {
-  dir: string;
+  /** Pasta em `public/` com `index.html` (LP estática). Ausente quando a home é rota App. */
+  dir?: string;
+  /** Rota App servida na raiz do domínio (ex. `/vilaris`). */
+  appHome?: string;
   name: string;
   icon: string;
   appleIcon: string;
@@ -13,11 +16,23 @@ export type LpDomain = {
   logoOnDark?: string;
   /** Guia público para IAs/buscadores (GeoSite). Ausente = domínio sem guia. */
   geoBasePath?: string;
-  /** Host de produção (igual à chave em produção; em dev aponta do `.localhost` para o real). */
+  /** Host de produção (apex quando há www). */
   canonicalHost: string;
 };
 
-const DOMAINS: Record<string, Omit<LpDomain, "canonicalHost">> = {
+type DomainSeed = Omit<LpDomain, "canonicalHost"> & { canonicalHost?: string };
+
+const VILARIS_DOMAIN: DomainSeed = {
+  appHome: "/vilaris",
+  name: "Vilaris",
+  icon: "/lp/vilaris/assets/favicon.svg",
+  appleIcon: "/lp/vilaris/assets/favicon.svg",
+  workspaceSlug: "vilaris",
+  logoOnDark: "/lp/vilaris/assets/vilaris-logo.png",
+  canonicalHost: "vilarisgestao.com.br",
+};
+
+const DOMAINS: Record<string, DomainSeed> = {
   "lp.regicenter.com": {
     dir: "/lp/regicenter-franquia",
     name: "Regicenter",
@@ -27,14 +42,23 @@ const DOMAINS: Record<string, Omit<LpDomain, "canonicalHost">> = {
     logoOnDark: "/lp/regicenter-franquia/assets/regicenter-logo-branco.png",
     geoBasePath: "/guia",
   },
+  "vilarisgestao.com.br": VILARIS_DOMAIN,
+  "www.vilarisgestao.com.br": VILARIS_DOMAIN,
 };
 
 const PROD_DOMAINS: Record<string, LpDomain> = Object.fromEntries(
-  Object.entries(DOMAINS).map(([host, domain]) => [host, { ...domain, canonicalHost: host }]),
+  Object.entries(DOMAINS).map(([host, domain]) => [
+    host,
+    { ...domain, canonicalHost: domain.canonicalHost ?? host },
+  ]),
 );
 
 export function lpDomainForWorkspace(slug: string | null | undefined): LpDomain | null {
   if (!slug) return null;
+  const apex = Object.entries(PROD_DOMAINS).find(
+    ([host, domain]) => domain.workspaceSlug === slug && host === domain.canonicalHost,
+  );
+  if (apex) return apex[1];
   return Object.values(PROD_DOMAINS).find((domain) => domain.workspaceSlug === slug) ?? null;
 }
 
@@ -89,3 +113,4 @@ export const LP_DOMAIN_NOINDEX_PREFIXES = ["/api/", "/sign-in", "/change-passwor
 
 /** Páginas públicas do domínio do cliente servidas pela rota do guia (fora do basePath). */
 export const LP_DOMAIN_SITE_PAGES = ["/privacidade", "/cof"];
+

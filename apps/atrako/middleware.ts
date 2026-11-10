@@ -115,7 +115,25 @@ export default function middleware(request: NextRequest) {
       target.pathname = internal;
       return NextResponse.rewrite(target);
     };
-    if (pathname === "/") return NextResponse.next();
+    // www → apex canônico
+    if (production && host !== lp.canonicalHost) {
+      const dest = new URL(pathname + request.nextUrl.search, `https://${lp.canonicalHost}`);
+      return NextResponse.redirect(dest, 308);
+    }
+    if (pathname === "/") {
+      if (lp.appHome) return rewriteTo(lp.appHome);
+      return NextResponse.next();
+    }
+    // Paths do Atrako no domínio do cliente → URLs canônicas da LP
+    if (lp.appHome && (pathname === lp.appHome || pathname === `${lp.appHome}/`)) {
+      const dest = new URL("/" + request.nextUrl.search, origin);
+      return NextResponse.redirect(dest, 308);
+    }
+    if (lp.appHome && (pathname === `${lp.appHome}/crm` || pathname.startsWith(`${lp.appHome}/crm/`))) {
+      const rest = pathname.slice(`${lp.appHome}/crm`.length);
+      const dest = new URL(`${LP_AREA_PATH}${rest}` + request.nextUrl.search, origin);
+      return noindex(NextResponse.redirect(dest, 308));
+    }
     if (qualifyForm) return NextResponse.next();
     if (lp.geoBasePath && (pathname === lp.geoBasePath || pathname.startsWith(`${lp.geoBasePath}/`))) {
       return rewriteTo(`${site}/g${pathname.slice(lp.geoBasePath.length)}`);
@@ -141,6 +159,12 @@ export default function middleware(request: NextRequest) {
     }
     // Endereço inexistente: 404 de verdade (redirecionar para a home vira "soft 404" no Google).
     return rewriteTo(`${site}/404`);
+  }
+
+  // LP Vilaris canônica no domínio do cliente; /vilaris/crm no Atrako permanece.
+  if (production && (pathname === "/vilaris" || pathname === "/vilaris/")) {
+    const dest = new URL("/" + request.nextUrl.search, "https://vilarisgestao.com.br");
+    return NextResponse.redirect(dest, 308);
   }
 
   if (pathname.startsWith(`${GEO_INTERNAL_PREFIX}/`) || APP_NOINDEX_PREFIXES.some((p) => pathname.startsWith(p))) {

@@ -46,7 +46,7 @@ export default function LeadForm() {
           slug: FORM_SLUG,
           answers,
           pageSlug: "vilaris",
-          pageUrl: typeof window !== "undefined" ? window.location.href : "https://atrako.com.br/vilaris",
+          pageUrl: typeof window !== "undefined" ? window.location.href : "https://vilarisgestao.com.br",
           requestId: requestId.current,
         }),
       });

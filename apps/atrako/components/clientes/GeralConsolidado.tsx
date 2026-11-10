@@ -19,7 +19,7 @@ import { channelColor } from "@/lib/commerce-attribution/channel-color";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { bucketYmd, rotuloEixo, rotuloTooltip, type ChartAgrupamento } from "@/lib/chart-bucket";
 import { formatCompactNumber, mobileTickInterval } from "@/lib/chart-mobile";
-import { MetricTile, PillSelect, SegmentedControl } from "@/components/ui";
+import { MetricTile, SegmentedControl } from "@/components/ui";
 
 type Consolidado = {
   clientes?: RepurchaseMetrics | null;
@@ -93,7 +93,7 @@ const MEDIA_LABELS: Record<string, string> = { META: "Meta Ads", GOOGLE: "Google
 
 type OrigemVenda = { id: string; label: string; pedidos: number; receitaCents: number };
 
-/** Geral de loja: resultado real + onde a venda entrou (loja, marketplace) e como o cliente chegou. */
+/** Geral de loja: KPIs → volume → canais/origens → clientes. Sem blocos duplicados. */
 function EcommerceGeral({
   data,
   origem,
@@ -109,15 +109,14 @@ function EcommerceGeral({
   const origens = data.origens ?? [];
   const canais = data.detalheCanais ?? [];
   const totalCents = canais.reduce((s, c) => s + c.receitaCents, 0) || origens.reduce((s, o) => s + o.receitaCents, 0);
-  const totalPedidosOrigens = origens.reduce((s, o) => s + o.pedidos, 0);
-  const semOrigem = origens.find((o) => o.id === "unknown");
-  const origemLabel = origem ? origens.find((o) => o.id === origem)?.label ?? "Origem selecionada" : null;
+  const origemLabel = origem ? origens.find((o) => o.id === origem)?.label ?? "Origem" : null;
   const midiaLabel = origem
     ? data.midiaDaOrigem
       ? MEDIA_LABELS[data.midiaDaOrigem] ?? data.midiaDaOrigem
       : null
-    : canaisMidia.map((c) => c.label).join(" + ");
+    : canaisMidia.map((c) => c.label).join(" + ") || undefined;
   const semMidia = Boolean(origem && !data.midiaDaOrigem);
+  const pendentes = data.conferencia?.channelOnly ?? 0;
 
   return (
     <section className={`space-y-4 transition-opacity ${fetching ? "opacity-60" : ""}`}>
@@ -125,20 +124,16 @@ function EcommerceGeral({
         <Kpi
           label="Receita"
           value={brl(totais.receita)}
-          hint={`${totais.pedidos.toLocaleString("pt-BR")} pedidos pagos${origemLabel ? ` · ${origemLabel}` : ""}`}
+          hint={`${totais.pedidos.toLocaleString("pt-BR")} pedidos`}
         />
         <Kpi
           label="Investimento"
           value={semMidia ? "—" : brl(totais.investimento)}
-          hint={semMidia ? "origem sem custo de mídia" : midiaLabel || undefined}
+          hint={semMidia ? undefined : midiaLabel}
         />
+        <Kpi label="Retorno" value={roasText(totais.roas)} tone={roasTone(totais.roas)} />
         <Kpi
-          label={origem ? "Retorno da origem" : "Retorno geral"}
-          value={roasText(totais.roas)}
-          tone={roasTone(totais.roas)}
-        />
-        <Kpi
-          label="Custo por pedido"
+          label="Custo / pedido"
           value={totais.pedidos > 0 && totais.investimento > 0 ? brl(totais.investimento / totais.pedidos) : "—"}
           hint={totais.pedidos > 0 ? `ticket ${brl(totais.ticketMedio)}` : undefined}
         />
@@ -146,15 +141,16 @@ function EcommerceGeral({
 
       <VendasSerie data={data} origemLabel={origemLabel} />
 
-      {data.conferencia?.olistConnected ? <ConferenciaOlist conf={data.conferencia} /> : null}
+      <CanaisEOrigens canais={canais} totalCents={totalCents} origem={origem} onOrigem={onOrigem} />
 
-      <VendasPorLugar
-        canais={canais}
-        totalCents={totalCents}
-        origem={origem}
-        onOrigem={onOrigem}
-        semOrigem={Boolean(semOrigem && semOrigem.pedidos === totalPedidosOrigens)}
-      />
+      {pendentes > 0 ? (
+        <p className="type-fine-print text-[var(--muted-foreground)]">
+          {pendentes} pedido{pendentes === 1 ? "" : "s"} na loja/ML ainda sem NF na Olist
+          {data.conferencia?.channelOnlyCents
+            ? ` · ${brl(data.conferencia.channelOnlyCents / 100)}`
+            : ""}
+        </p>
+      ) : null}
 
       {data.clientes || data.recuperacao ? (
         <ClientesERecuperacao clientes={data.clientes ?? null} recuperacao={data.recuperacao ?? null} />
@@ -163,65 +159,29 @@ function EcommerceGeral({
   );
 }
 
-function ConferenciaOlist({
-  conf,
-}: {
-  conf: NonNullable<Consolidado["conferencia"]>;
-}) {
-  const canais = conf.canais ?? [];
-  const totalCents = conf.confirmedCents ?? canais.reduce((s, c) => s + c.receitaCents, 0);
-  return (
-    <div className="rel-card p-5">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="type-caption-strong text-[var(--foreground)]">Por canal</p>
-        <p className="type-fine-print text-[var(--muted-foreground)]">
-          {(conf.confirmed ?? 0).toLocaleString("pt-BR")} pedidos · {brl((conf.confirmedCents ?? 0) / 100)}
-        </p>
-      </div>
-      {canais.length ? (
-        <ul className="mt-3 divide-y divide-[var(--hairline)]">
-          {canais.map((c) => {
-            const pct = totalCents > 0 ? Math.round((c.receitaCents / totalCents) * 100) : 0;
-            return (
-              <li key={c.id} className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
-                <div className="min-w-0">
-                  <p className="type-caption-strong text-[var(--foreground)]">{c.label}</p>
-                  <p className="type-fine-print text-[var(--muted-foreground)]">
-                    {c.pedidos.toLocaleString("pt-BR")} pedido{c.pedidos === 1 ? "" : "s"} · {pct}%
-                  </p>
-                </div>
-                <p className="shrink-0 tabular-nums type-caption-strong text-[var(--foreground)]">
-                  {brl(c.receitaCents / 100)}
-                </p>
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
-      {(conf.channelOnly ?? 0) > 0 ? (
-        <p className="mt-3 type-fine-print text-[var(--muted-foreground)]">
-          {conf.channelOnly} na loja/ML ainda sem confirmação
-          {conf.channelOnlyCents ? ` · ${brl(conf.channelOnlyCents / 100)}` : ""}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
 type CanalVenda = OrigemVenda & { origens: OrigemVenda[] };
 
-function VendasPorLugar({
+const CANAL_FALLBACK: Record<string, string> = {
+  loja: "var(--channel-direct)",
+  mercadolivre: "var(--channel-mercado-livre)",
+  pdv: "var(--channel-referral)",
+};
+
+function canalTone(id: string) {
+  return channelColor(id) ?? CANAL_FALLBACK[id] ?? "var(--primary)";
+}
+
+/** Um card: barra de canais + origens do canal ativo. */
+function CanaisEOrigens({
   canais,
   totalCents,
   origem,
   onOrigem,
-  semOrigem,
 }: {
   canais: CanalVenda[];
   totalCents: number;
   origem: string | null;
   onOrigem: (id: string | null) => void;
-  semOrigem: boolean;
 }) {
   const ids = canais.map((c) => c.id).join("|");
   const forced = origem && canais.some((c) => c.id === origem) ? origem : "";
@@ -233,101 +193,111 @@ function VendasPorLugar({
     setCanalId(forced || (canais.some((c) => c.id === canalId) ? canalId : canais[0]?.id ?? ""));
   }
   const ativo = canais.find((c) => c.id === canalId) ?? canais[0];
-  const varios = canais.length > 1;
-  const soLoja = canais.length === 1 && (canais[0]?.origens.length ?? 0) > 0;
-  const titulo = soLoja ? "Como chegaram" : "Onde vendeu";
-  const base = ativo && ativo.origens.length > 0 ? ativo.receitaCents : totalCents;
+  const origensAtivas =
+    ativo?.origens?.length && ativo.origens.length > 0
+      ? ativo.origens
+      : ativo
+        ? [{ id: ativo.id, label: ativo.label, pedidos: ativo.pedidos, receitaCents: ativo.receitaCents }]
+        : [];
+  const baseOrigem = origensAtivas.reduce((s, o) => s + o.receitaCents, 0) || totalCents;
+
+  if (canais.length === 0) {
+    return (
+      <div className="rel-card p-5">
+        <p className="type-caption-strong text-[var(--foreground)]">Vendas</p>
+        <p className="mt-2 type-fine-print text-[var(--muted-foreground)]">Nenhuma venda no período.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="rel-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="type-caption-strong text-[var(--foreground)]">{titulo}</p>
-        <div className="flex flex-wrap items-center gap-3">
-          {origem ? (
-            <button
-              type="button"
-              onClick={() => onOrigem(null)}
-              className="type-caption text-[var(--primary)] underline-offset-2 hover:underline"
-            >
-              Ver todas
-            </button>
-          ) : null}
-          {varios ? (
-            <PillSelect
-              size="toolbar"
-              align="right"
-              aria-label="Canal de venda"
-              value={ativo?.id ?? ""}
-              onChange={setCanalId}
-              options={canais.map((c) => ({ value: c.id, label: c.label, count: c.pedidos }))}
-            />
-          ) : soLoja ? (
-            <p className="type-fine-print text-[var(--muted-foreground)]">{canais[0].label}</p>
-          ) : null}
-        </div>
+        <p className="type-caption-strong text-[var(--foreground)]">Vendas</p>
+        {origem ? (
+          <button
+            type="button"
+            onClick={() => onOrigem(null)}
+            className="type-caption text-[var(--primary)] underline-offset-2 hover:underline"
+          >
+            Limpar filtro
+          </button>
+        ) : null}
       </div>
 
-      {canais.length === 0 || !ativo ? (
-        <p className="mt-3 type-fine-print text-[var(--muted-foreground)]">Nenhuma venda no período.</p>
-      ) : ativo.origens.length > 0 ? (
-        <div className="mt-4">
-          {varios ? (
-            <>
-              <div className="flex items-baseline justify-between gap-3 px-2">
-                <p className="type-caption-strong text-[var(--foreground)]">{ativo.label}</p>
-                <ValorOrigem
-                  cents={ativo.receitaCents}
-                  share={pct(ativo.receitaCents, totalCents)}
-                  pedidos={ativo.pedidos}
-                />
-              </div>
-              <p className="px-2 pb-1 pt-3 type-fine-print text-[var(--muted-foreground)]">Como o cliente chegou</p>
-            </>
-          ) : null}
-          <ul className="space-y-1">
-            {ativo.origens.map((o) => (
-              <OrigemButton
-                key={o.id}
-                row={o}
-                share={pct(o.receitaCents, base)}
-                selected={origem === o.id}
-                dimmed={Boolean(origem) && origem !== o.id}
-                nested={false}
-                onPick={() => onOrigem(origem === o.id ? null : o.id)}
-              />
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <div className="mt-4">
-          <p className="px-2 pb-1 type-fine-print text-[var(--muted-foreground)]">A venda já entra por este canal</p>
-          <ul className="space-y-1">
-            <OrigemButton
-              row={ativo}
-              share={pct(ativo.receitaCents, totalCents)}
-              selected={origem === ativo.id}
-              dimmed={Boolean(origem) && origem !== ativo.id}
-              nested={false}
-              onPick={() => onOrigem(origem === ativo.id ? null : ativo.id)}
+      {/* Barra visual dos canais */}
+      <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-[var(--divider-soft)]">
+        {canais.map((c) => {
+          const share = totalCents > 0 ? (c.receitaCents / totalCents) * 100 : 0;
+          if (share <= 0) return null;
+          return (
+            <button
+              key={c.id}
+              type="button"
+              title={`${c.label} · ${pct(c.receitaCents, totalCents)}%`}
+              aria-pressed={canalId === c.id}
+              onClick={() => setCanalId(c.id)}
+              className={`h-full transition-[filter] ${canalId === c.id ? "" : "opacity-70 hover:opacity-100"}`}
+              style={{ width: `${Math.max(share, 1.5)}%`, background: canalTone(c.id) }}
             />
-          </ul>
-        </div>
-      )}
+          );
+        })}
+      </div>
 
-      {semOrigem ? (
-        <p className="mt-4 type-fine-print text-[var(--muted-foreground)]">
-          A origem dos pedidos é calculada na próxima sincronização.
-        </p>
+      <div className={`mt-3 grid gap-2 ${canais.length >= 3 ? "sm:grid-cols-3" : canais.length === 2 ? "sm:grid-cols-2" : "grid-cols-1"}`}>
+        {canais.map((c) => {
+          const share = pct(c.receitaCents, totalCents);
+          const active = canalId === c.id;
+          return (
+            <button
+              key={c.id}
+              type="button"
+              aria-pressed={active}
+              onClick={() => setCanalId(c.id)}
+              className={`rounded-[var(--radius-xs)] border px-3 py-3 text-left transition active:scale-[0.99] ${
+                active
+                  ? "border-[var(--primary)] bg-[var(--divider-soft)]"
+                  : "border-[var(--hairline)] hover:bg-[var(--divider-soft)]"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: canalTone(c.id) }} />
+                <span className="type-caption-strong text-[var(--foreground)]">{c.label}</span>
+                <span className="ml-auto type-micro-legal tabular-nums text-[var(--muted-foreground)]">{share}%</span>
+              </span>
+              <span className="mt-1 block type-tagline tabular-nums text-[var(--foreground)]">
+                {brl(c.receitaCents / 100)}
+              </span>
+              <span className="type-micro-legal text-[var(--muted-foreground)]">
+                {c.pedidos.toLocaleString("pt-BR")} pedidos
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {origensAtivas.length > 0 ? (
+        <ul className="mt-5 space-y-1 border-t border-[var(--divider-soft)] pt-4">
+          {origensAtivas.map((o) => (
+            <OrigemButton
+              key={o.id}
+              row={o}
+              share={pct(o.receitaCents, baseOrigem)}
+              selected={origem === o.id}
+              dimmed={Boolean(origem) && origem !== o.id}
+              onPick={() => onOrigem(origem === o.id ? null : o.id)}
+            />
+          ))}
+        </ul>
       ) : null}
     </div>
   );
 }
 
-function ValorOrigem({ cents, share, pedidos }: { cents: number; share: number; pedidos?: number }) {
+function ValorOrigem({ cents, share }: { cents: number; share: number }) {
   return (
     <span className="shrink-0 type-caption tabular-nums text-[var(--foreground)]">
       {brl(cents / 100)}
-      {pedidos != null ? <span className="text-[var(--muted-foreground)]"> · {pedidos.toLocaleString("pt-BR")}</span> : null}
       <span className="text-[var(--muted-foreground)]"> · {share}%</span>
     </span>
   );
@@ -338,14 +308,12 @@ function OrigemButton({
   share,
   selected,
   dimmed,
-  nested,
   onPick,
 }: {
   row: OrigemVenda;
   share: number;
   selected: boolean;
   dimmed: boolean;
-  nested: boolean;
   onPick: () => void;
 }) {
   const color = channelColor(row.id) ?? "var(--border)";
@@ -356,10 +324,10 @@ function OrigemButton({
         type="button"
         aria-pressed={selected}
         onClick={onPick}
-        title={selected ? "Ver todas" : `Filtrar por ${row.label}`}
-        className={`w-full rounded-[var(--radius-xs)] py-1.5 text-left transition active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-focus)] ${
-          nested ? "pl-5 pr-2" : "px-2"
-        } ${selected ? "bg-[var(--divider-soft)]" : "hover:bg-[var(--divider-soft)]"} ${dimmed ? "opacity-50" : ""}`}
+        title={selected ? "Limpar filtro" : `Filtrar · ${row.label}`}
+        className={`w-full rounded-[var(--radius-xs)] px-2 py-2 text-left transition active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-focus)] ${
+          selected ? "bg-[var(--divider-soft)]" : "hover:bg-[var(--divider-soft)]"
+        } ${dimmed ? "opacity-45" : ""}`}
       >
         <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
           <span className="flex min-w-0 items-center gap-2">
@@ -371,8 +339,11 @@ function OrigemButton({
             >
               {row.label}
             </span>
+            <span className="type-micro-legal tabular-nums text-[var(--muted-foreground)]">
+              {row.pedidos.toLocaleString("pt-BR")}
+            </span>
           </span>
-          <ValorOrigem cents={row.receitaCents} share={share} pedidos={row.pedidos} />
+          <ValorOrigem cents={row.receitaCents} share={share} />
         </span>
         <span className="mt-1.5 flex h-1.5 overflow-hidden rounded-full bg-[var(--divider-soft)]">
           <span className="h-full rounded-full" style={{ width: `${Math.max(2, share)}%`, background: color }} />
@@ -395,74 +366,66 @@ function ClientesERecuperacao({
   recuperacao: CartRecoveryMetrics | null;
 }) {
   const ages = r?.byAge.filter((b) => b.cents > 0) ?? [];
-  const note =
-    c && c.unidentified.count > 0 ? `${num(c.unidentified.count)} pedidos sem contato ficam fora da recompra` : null;
+  const hasRecovery = Boolean(r && r.recovered.cents > 0);
   return (
     <div className="rel-card p-5">
-      <p className="type-caption-strong text-[var(--foreground)]">Clientes e recuperação</p>
-
+      <p className="type-caption-strong text-[var(--foreground)]">Clientes</p>
       <div className="rel-kpi-grid mt-4">
         {c ? (
           <>
+            <Kpi label="Recorrente" value={centsBrl(c.repeatOrders.cents)} hint={pctText(c.repeatShare)} />
+            <Kpi label="Novos" value={num(c.newBuyers)} hint={centsBrl(c.firstOrders.cents)} />
             <Kpi
-              label="Receita recorrente"
-              value={centsBrl(c.repeatOrders.cents)}
-              hint={`${pctText(c.repeatShare)} da receita`}
-            />
-            <Kpi label="Clientes novos" value={num(c.newBuyers)} hint={centsBrl(c.firstOrders.cents)} />
-            <Kpi
-              label="Recorrentes"
+              label="Que voltam"
               value={num(c.returningBuyers)}
-              hint={c.avgGapDays != null ? `voltam em ~${num(c.avgGapDays)} dias` : `${pctText(c.returningShare)} dos compradores`}
+              hint={c.avgGapDays != null ? `~${num(c.avgGapDays)} dias` : pctText(c.returningShare)}
             />
           </>
         ) : null}
         {r ? (
-          <Kpi
-            label="Carrinho recuperado"
-            value={centsBrl(r.recovered.cents)}
-            hint={`${num(r.recovered.count)} ${r.recovered.count === 1 ? "pedido" : "pedidos"}`}
-          />
+          <Kpi label="Recuperado" value={centsBrl(r.recovered.cents)} hint={`${num(r.recovered.count)} ped.`} />
         ) : null}
       </div>
 
-      {r && r.recovered.cents > 0 ? (
-        <div className="mt-4 grid gap-3 border-t border-[var(--divider-soft)] pt-4 sm:grid-cols-3">
+      {hasRecovery ? (
+        <div className="mt-4 grid gap-4 border-t border-[var(--divider-soft)] pt-4 sm:grid-cols-3">
           <SplitBar
-            title="Recuperação"
+            title="Como"
             parts={[
-              { label: "Mensagem", cents: r.byMessage.cents },
-              { label: "Sozinho", cents: r.alone.cents },
+              { label: "Msg", cents: r!.byMessage.cents },
+              { label: "Só", cents: r!.alone.cents },
             ]}
           />
           <SplitBar
-            title="Quem voltou"
+            title="Quem"
             parts={[
-              { label: "Cliente", cents: r.fromCustomers.cents },
-              { label: "Novo", cents: r.fromNew.cents },
+              { label: "Cliente", cents: r!.fromCustomers.cents },
+              { label: "Novo", cents: r!.fromNew.cents },
             ]}
           />
           {ages.length ? (
-            <SplitBar title="Pagou em" parts={ages.map((b) => ({ label: AGE_SHORT[b.key] ?? b.label, cents: b.cents }))} />
+            <SplitBar title="Quando" parts={ages.map((b) => ({ label: AGE_SHORT[b.key] ?? b.label, cents: b.cents }))} />
           ) : null}
         </div>
       ) : null}
-
-      {note ? <p className="mt-3 type-fine-print text-[var(--muted-foreground)]">{note}</p> : null}
     </div>
   );
 }
 
 const AGE_SHORT: Record<string, string> = { d30: "30d", d60: "60d", d90: "90d", d180: "6m" };
-const SPLIT_TONES = ["var(--primary)", "color-mix(in srgb, var(--primary) 45%, transparent)", "color-mix(in srgb, var(--primary) 22%, transparent)", "var(--border)"];
+const SPLIT_TONES = [
+  "var(--primary)",
+  "color-mix(in srgb, var(--primary) 45%, transparent)",
+  "color-mix(in srgb, var(--primary) 22%, transparent)",
+  "var(--border)",
+];
 
-/** Proporção em uma barra: título, barra segmentada e legenda com valores. */
 function SplitBar({ title, parts }: { title: string; parts: Array<{ label: string; cents: number }> }) {
   const total = parts.reduce((s, p) => s + p.cents, 0);
   return (
     <div>
-      <p className="type-fine-print uppercase text-[var(--muted-foreground)]">{title}</p>
-      <div className="mt-2 flex h-2 overflow-hidden rounded-full bg-[var(--divider-soft)]">
+      <p className="type-micro-legal uppercase tracking-wide text-[var(--muted-foreground)]">{title}</p>
+      <div className="mt-2 flex h-2.5 overflow-hidden rounded-full bg-[var(--divider-soft)]">
         {total > 0
           ? parts.map((p, i) =>
               p.cents > 0 ? (
@@ -473,7 +436,7 @@ function SplitBar({ title, parts }: { title: string; parts: Array<{ label: strin
       </div>
       <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
         {parts.map((p, i) => (
-          <span key={p.label} className="inline-flex items-center gap-1.5 type-fine-print text-[var(--muted-foreground)]">
+          <span key={p.label} className="inline-flex items-center gap-1.5 type-micro-legal text-[var(--muted-foreground)]">
             <span className="h-2 w-2 rounded-full" style={{ background: SPLIT_TONES[i] }} />
             {p.label}
             <span className="tabular-nums text-[var(--foreground)]">{centsBrl(p.cents)}</span>
@@ -565,14 +528,14 @@ function VendasSerie({ data, origemLabel }: { data: Consolidado; origemLabel: st
 
   return (
     <div className="rel-card p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="type-caption-strong text-[var(--foreground)]">Volume geral de performance</p>
-          <p className="mt-0.5 type-fine-print text-[var(--muted-foreground)]">
-            Investimento e compras por {periodoLabel}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="type-caption-strong text-[var(--foreground)]">
+          Volume
+          <span className="ml-2 type-fine-print font-normal text-[var(--muted-foreground)]">
+            por {periodoLabel}
             {origemLabel ? ` · ${origemLabel}` : ""}
-          </p>
-        </div>
+          </span>
+        </p>
         {canToggle ? (
           <SegmentedControl
             aria-label="Agrupamento"

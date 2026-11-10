@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import { findWorkspaceById } from "@/lib/atrako/workspace";
-import { syncWooCommerceWorkspace } from "@/lib/integrations/woocommerce/sync";
+import {
+  reconcileUnpaidWooOrders,
+  syncWooCommerceWorkspace,
+} from "@/lib/integrations/woocommerce/sync";
 
 export const maxDuration = 300;
 
@@ -21,12 +24,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
+  const mode = typeof body.mode === "string" ? body.mode.trim().toLowerCase() : "sync";
+
   try {
+    if (mode === "reconcile") {
+      const result = await reconcileUnpaidWooOrders({
+        workspaceId,
+        daysBack: typeof body.daysBack === "number" ? body.daysBack : 21,
+        limitPerWorkspace: typeof body.limit === "number" ? body.limit : 80,
+      });
+      return NextResponse.json({ ok: true, mode, ...result });
+    }
+
     const result = await syncWooCommerceWorkspace(workspaceId, {
       daysBack: typeof body.daysBack === "number" ? body.daysBack : 90,
       maxPages: typeof body.maxPages === "number" ? body.maxPages : 5,
     });
-    return NextResponse.json({ ok: true, ...result });
+    return NextResponse.json({ ok: true, mode: "sync", ...result });
   } catch (err) {
     const message = err instanceof Error ? err.message : "sync_failed";
     return NextResponse.json({ error: message }, { status: 500 });

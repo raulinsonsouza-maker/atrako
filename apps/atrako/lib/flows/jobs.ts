@@ -75,7 +75,10 @@ export async function runHourlyJob() {
     const health = await runHealthChecks().catch((e) => ({ error: String(e) }));
     const { refreshAllWaAccounts } = await import("@/lib/flows/wa-sync");
     const wa = await refreshAllWaAccounts().catch((e) => ({ error: String(e) }));
-    return { resend: Object.keys(resend).length, dates, seasonal, reminders, health, wa };
+    // Pedidos Woo que ficaram "pending" no CRM depois do Pix/boleto (webhook perdido).
+    const { reconcileUnpaidWooTodosClientes } = await import("@/lib/integrations/woocommerce/sync");
+    const woo = await reconcileUnpaidWooTodosClientes().catch((e) => ({ error: String(e) }));
+    return { resend: Object.keys(resend).length, dates, seasonal, reminders, health, wa, woo };
   });
 }
 

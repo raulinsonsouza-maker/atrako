@@ -592,9 +592,9 @@
 
 .food-sign-logo {
   display: block;
-  height: 36px;
+  height: 56px;
   width: auto;
-  max-width: 220px;
+  max-width: 320px;
   object-fit: contain;
   object-position: left center;
 }

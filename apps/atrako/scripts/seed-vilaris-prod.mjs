@@ -17,6 +17,7 @@ const LEGACY_EMAIL = "vilaris@atrako.com.br";
 const DEFAULT_PASSWORD = "Vilaris@2026";
 const SLUG = "vilaris";
 const LOGO = "/lp/vilaris/assets/vilaris-logo.png";
+const LOGO_ON_DARK = "/lp/vilaris/assets/vilaris-logo-branco.png";
 const PRIMARY = "#354a5c";
 
 const SCRYPT_N = 32768;
@@ -229,14 +230,14 @@ async function main() {
     create: {
       clienteId: cliente.id,
       primaryColor: PRIMARY,
-      logoOnDarkUrl: LOGO,
+      logoOnDarkUrl: LOGO_ON_DARK,
       edition: "inside_sales",
       modulesEnabled,
       messagingPrefs,
     },
     update: {
       primaryColor: PRIMARY,
-      logoOnDarkUrl: LOGO,
+      logoOnDarkUrl: LOGO_ON_DARK,
       edition: "inside_sales",
       modulesEnabled,
       messagingPrefs,

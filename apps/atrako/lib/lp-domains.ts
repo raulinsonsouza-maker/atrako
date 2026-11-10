@@ -28,7 +28,7 @@ const VILARIS_DOMAIN: DomainSeed = {
   icon: "/lp/vilaris/assets/favicon.svg",
   appleIcon: "/lp/vilaris/assets/favicon.svg",
   workspaceSlug: "vilaris",
-  logoOnDark: "/lp/vilaris/assets/vilaris-logo.png",
+  logoOnDark: "/lp/vilaris/assets/vilaris-logo-branco.png",
   canonicalHost: "vilarisgestao.com.br",
 };
 

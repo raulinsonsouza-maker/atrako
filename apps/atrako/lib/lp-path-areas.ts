@@ -17,7 +17,7 @@ export const LP_PATH_AREAS: LpPathArea[] = [
     prefix: "/vilaris/crm",
     workspaceSlug: "vilaris",
     name: "Vilaris",
-    logoOnDark: "/lp/vilaris/assets/vilaris-logo.png",
+    logoOnDark: "/lp/vilaris/assets/vilaris-logo-branco.png",
     icon: "/lp/vilaris/assets/favicon.svg",
   },
 ];

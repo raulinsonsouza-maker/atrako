@@ -54,6 +54,7 @@ export type AbandonedCartProvider =
   | "SHOPIFY"
   | "NUVEMSHOP"
   | "TRAY"
+  | "OLIST_ERP"
   | "COMMERCE";
 
 export type AbandonedCartItem = {

@@ -16,6 +16,7 @@ export const PLATFORM_APP_PROVIDERS = [
   "TIKTOK_SHOP",
   "TRAY",
   "NUVEMSHOP",
+  "OLIST_ERP",
   "RESEND",
   "AI_OPENROUTER",
   "AI_NVIDIA",

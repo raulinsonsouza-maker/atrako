@@ -81,6 +81,7 @@ const PROVIDER_ORDER = [
   "NUVEMSHOP",
   "TRAY",
   "WOOCOMMERCE",
+  "OLIST_ERP",
   "MERCADO_LIVRE",
   "SHOPEE",
   "TIKTOK_SHOP",
@@ -117,6 +118,7 @@ const SYNC_PATHS: Record<string, string> = {
   NUVEMSHOP: "/api/atrako/nuvemshop/sync",
   SHOPEE: "/api/atrako/shopee/sync",
   TIKTOK_SHOP: "/api/atrako/tiktok-shop/sync",
+  OLIST_ERP: "/api/atrako/olist/sync",
 };
 
 const smallPrimary = "!px-4 !py-1.5 type-button-utility";
@@ -293,6 +295,10 @@ function ConexoesHubInner() {
   const [wooWebhookSecret, setWooWebhookSecret] = useState("");
   const [wooSaving, setWooSaving] = useState(false);
   const [wooError, setWooError] = useState<string | null>(null);
+
+  const [olistToken, setOlistToken] = useState("");
+  const [olistSaving, setOlistSaving] = useState(false);
+  const [olistError, setOlistError] = useState<string | null>(null);
 
   const [shopifyShop, setShopifyShop] = useState("");
   const [trayStore, setTrayStore] = useState("");
@@ -475,6 +481,15 @@ function ConexoesHubInner() {
             action: "disconnect",
           }),
         }).catch(() => null);
+      } else if (provider === "OLIST_ERP") {
+        await fetch("/api/atrako/olist/connect", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            workspaceId: effectiveWorkspace,
+            action: "disconnect",
+          }),
+        }).catch(() => null);
       } else {
         await fetch("/api/atrako/connections", {
           method: "POST",
@@ -594,6 +609,42 @@ function ConexoesHubInner() {
       setWooError(err instanceof Error ? err.message : "Não foi possível conectar.");
     } finally {
       setWooSaving(false);
+    }
+  }
+
+  async function saveOlist(e: React.FormEvent) {
+    e.preventDefault();
+    if (!effectiveWorkspace || !olistToken.trim()) return;
+    setOlistSaving(true);
+    setOlistError(null);
+    try {
+      const r = await fetch("/api/atrako/olist/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          workspaceId: effectiveWorkspace,
+          credentials: { apiToken: olistToken.trim() },
+        }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || "Não foi possível conectar a Olist.");
+      const imported = Number(j.initialSync?.processed ?? 0);
+      const matched = Number(j.initialSync?.matchedWoo ?? 0);
+      const syncMessage = j.syncError
+        ? `Falha na carga inicial: ${j.syncError}`
+        : `${imported} pedidos importados${matched ? ` · ${matched} casados com Woo` : ""}.`;
+      setOauthFlash(
+        j.syncError
+          ? `Olist ERP conectado com pendências. ${syncMessage}`
+          : `Olist ERP conectado. ${syncMessage}`,
+      );
+      setOpenKey(null);
+      setOlistToken("");
+      qc.invalidateQueries({ queryKey: ["workspace-connections", effectiveWorkspace] });
+    } catch (err) {
+      setOlistError(err instanceof Error ? err.message : "Não foi possível conectar.");
+    } finally {
+      setOlistSaving(false);
     }
   }
 
@@ -891,6 +942,45 @@ function ConexoesHubInner() {
           </Button>
         </form>
       ),
+      disconnectable: true,
+    });
+  }
+
+  {
+    const row = byProvider.get("OLIST_ERP");
+    const meta = metaOf(row);
+    const state = rowState(row);
+    items.push({
+      provider: "OLIST_ERP",
+      title: "Olist ERP",
+      category: "loja",
+      hint: "Pedidos do ERP, cruzamento com a loja",
+      state,
+      detail:
+        [row?.label, str(meta.apiVersion) ? `API ${String(meta.apiVersion)}` : null]
+          .filter(Boolean)
+          .join(" · ") || null,
+      panel: (
+        <form onSubmit={saveOlist} className="space-y-3">
+          {state !== "off" ? (
+            <p className="type-caption-strong text-[var(--ink)]">Atualizar Token API</p>
+          ) : null}
+          <TextField
+            label="Token API"
+            type="password"
+            autoComplete="off"
+            placeholder="Token gerado no ERP (Configurações → Token API)"
+            value={olistToken}
+            onChange={(e) => setOlistToken(e.target.value)}
+            required
+          />
+          {olistError ? <p className="type-fine-print text-[var(--danger)]">{olistError}</p> : null}
+          <Button type="submit" variant="primary" className={smallPrimary} disabled={olistSaving}>
+            {olistSaving ? "Validando…" : state === "off" ? "Conectar Olist" : "Salvar"}
+          </Button>
+        </form>
+      ),
+      actions: state !== "off" ? syncButton("OLIST_ERP", "Olist ERP") : undefined,
       disconnectable: true,
     });
   }

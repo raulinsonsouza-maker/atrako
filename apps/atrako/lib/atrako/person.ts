@@ -371,6 +371,7 @@ const STORE_PROVIDER_LABELS: Record<string, string> = {
   TRAY: "Tray",
   SHOPEE: "Shopee",
   TIKTOK_SHOP: "TikTok Shop",
+  OLIST_ERP: "Olist ERP",
   COMMERCE: "Checkout próprio",
   FOOD: "Food",
 };
@@ -387,6 +388,8 @@ const LEAD_SOURCE_LABELS: Record<string, string> = {
   shopify: "Shopify",
   nuvemshop: "Nuvemshop",
   tray: "Tray",
+  olist: "Olist ERP",
+  olist_erp: "Olist ERP",
   magalu: "Magalu",
   instagram: "Instagram",
   whatsapp: "WhatsApp",

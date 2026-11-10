@@ -82,6 +82,9 @@ type LeadOrder = {
   occurredAt: string;
   fromCart: boolean;
   paid: boolean;
+  crossLabel?: string | null;
+  linkedWooExternalId?: string | null;
+  linkedOlistOrderId?: string | null;
   items: Array<{
     title: string;
     quantity: number;
@@ -461,7 +464,8 @@ function OrderBlock({ order, leadLocation }: { order: LeadOrder; leadLocation: s
           ) : null}
         </div>
         <p className="type-fine-print text-[var(--ink-muted-48)]">
-          {order.providerLabel} · {fmtRelative(d?.createdAt ?? order.occurredAt)}
+          {order.providerLabel}
+          {order.crossLabel ? ` · ${order.crossLabel}` : ""} · {fmtRelative(d?.createdAt ?? order.occurredAt)}
         </p>
       </div>
 

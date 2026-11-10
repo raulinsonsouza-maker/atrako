@@ -15,6 +15,7 @@ export const CONNECTION_PROVIDERS = [
   "TIKTOK_SHOP",
   "TRAY",
   "NUVEMSHOP",
+  "OLIST_ERP",
   "GOOGLE_CALENDAR",
   "RESEND",
   /** LLM do cliente (protocolo OpenAI: OpenAI ou compatível) — Config → IA. */

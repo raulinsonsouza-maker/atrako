@@ -7,6 +7,7 @@ const MONOGRAMS: Record<string, { label: string; bg: string; fg: string }> = {
   MERCADO_LIVRE: { label: "ML", bg: "#FFE600", fg: "#2D3277" },
   NUVEMSHOP: { label: "N", bg: "#2C3357", fg: "#ffffff" },
   TRAY: { label: "T", bg: "#1d1d1f", fg: "#ffffff" },
+  OLIST_ERP: { label: "O", bg: "#0B1F3A", fg: "#ffffff" },
 };
 
 /**

@@ -78,7 +78,12 @@ export async function runHourlyJob() {
     // Pedidos Woo que ficaram "pending" no CRM depois do Pix/boleto (webhook perdido).
     const { reconcileUnpaidWooTodosClientes } = await import("@/lib/integrations/woocommerce/sync");
     const woo = await reconcileUnpaidWooTodosClientes().catch((e) => ({ error: String(e) }));
-    return { resend: Object.keys(resend).length, dates, seasonal, reminders, health, wa, woo };
+    // Pedidos Olist ERP (fulfillment) + cruzamento com Woo.
+    const { syncOlistTodosClientes } = await import("@/lib/integrations/olist/sync");
+    const olist = await syncOlistTodosClientes({ daysBack: 3, maxPages: 5 }).catch((e) => ({
+      error: String(e),
+    }));
+    return { resend: Object.keys(resend).length, dates, seasonal, reminders, health, wa, woo, olist };
   });
 }
 

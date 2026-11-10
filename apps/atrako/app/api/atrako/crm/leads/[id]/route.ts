@@ -168,7 +168,16 @@ export async function GET(request: NextRequest, ctx: Ctx) {
       };
     });
 
-  const orders = orderRows.map((o) => ({
+  const orders = orderRows.map((o) => {
+    const raw =
+      o.rawPayload && typeof o.rawPayload === "object" && !Array.isArray(o.rawPayload)
+        ? (o.rawPayload as Record<string, unknown>)
+        : {};
+    const linkedWooExternalId =
+      typeof raw.wooExternalId === "string" ? raw.wooExternalId : null;
+    const linkedOlistOrderId =
+      typeof raw.olistOrderId === "string" ? raw.olistOrderId : null;
+    return {
     id: o.id,
     fromCart: cartOrderKeys.has(cartOrderKey(o.provider, o.externalId)),
     externalId: o.externalId,
@@ -179,8 +188,16 @@ export async function GET(request: NextRequest, ctx: Ctx) {
     totalCents: o.totalCents ?? 0,
     currency: o.currency ?? "BRL",
     occurredAt: (o.occurredAt ?? o.createdAt).toISOString(),
+    linkedWooExternalId,
+    linkedOlistOrderId,
+    crossLabel:
+      o.provider === "OLIST_ERP" && linkedWooExternalId
+        ? `Woo #${linkedWooExternalId}`
+        : o.provider === "WOOCOMMERCE" && linkedOlistOrderId
+          ? `Olist #${linkedOlistOrderId}`
+          : null,
     details: orderDetails(o.provider, {
-      ...(o.rawPayload && typeof o.rawPayload === "object" ? (o.rawPayload as Record<string, unknown>) : {}),
+      ...raw,
       shippingMode: o.shippingMode,
       logisticType: o.logisticType,
       shippingStatus: o.shippingStatus,
@@ -225,7 +242,8 @@ export async function GET(request: NextRequest, ctx: Ctx) {
           adId: o.source.metaAdId,
         }
       : null,
-  }));
+  };
+  });
 
   const location = contactLocation(lead.contact?.metadata) ?? orders.find((o) => o.details?.location)?.details?.location ?? null;
   const mlCard = orderRows

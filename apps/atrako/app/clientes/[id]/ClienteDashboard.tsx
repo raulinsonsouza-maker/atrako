@@ -19,6 +19,7 @@ import { CrmTab } from "@/components/clientes/CrmTab";
 import { CrmPipelineBoard } from "@/components/crm/CrmPipelineBoard";
 import { MarketplacePanel, type MarketplaceSub } from "@/components/clientes/MarketplacePanel";
 import { EcommercePanel } from "@/components/clientes/EcommercePanel";
+import { OlistPanel } from "@/components/clientes/OlistPanel";
 import { ChannelDisconnected } from "@/components/clientes/ChannelDisconnected";
 import { RelacionamentoPanel } from "@/components/clientes/RelacionamentoPanel";
 import { GeralConsolidado } from "@/components/clientes/GeralConsolidado";
@@ -61,7 +62,7 @@ function formatRelativeTime(value: string | Date): string {
   return `há ${days}d`;
 }
 
-type DashCanal = "geral" | "meta" | "google" | "linkedin" | "imoveis" | "crm" | "relacionamento" | "marketplaces" | "ecommerce";
+type DashCanal = "geral" | "meta" | "google" | "linkedin" | "imoveis" | "crm" | "relacionamento" | "marketplaces" | "ecommerce" | "erp";
 
 export type DateFilter = {
   periodo: string;
@@ -216,6 +217,7 @@ const COMMERCE_SYNC: Record<string, string> = {
   TRAY: "/api/atrako/tray/sync",
   NUVEMSHOP: "/api/atrako/nuvemshop/sync",
   WOOCOMMERCE: "/api/atrako/woocommerce/sync",
+  OLIST_ERP: "/api/atrako/olist/sync",
   MERCADO_LIVRE: "/api/atrako/mercadolivre/sync",
   SHOPEE: "/api/atrako/shopee/sync",
   TIKTOK_SHOP: "/api/atrako/tiktok-shop/sync",
@@ -817,6 +819,7 @@ function formatPercentage(value: number) {
     providerOn(key === "ml" ? "MERCADO_LIVRE" : key === "shopee" ? "SHOPEE" : "TIKTOK_SHOP"),
   );
   const ecommerceConnected = ["SHOPIFY", "TRAY", "NUVEMSHOP", "WOOCOMMERCE"].some(providerOn);
+  const olistConnected = providerOn("OLIST_ERP");
   const workspaceKnown = !portalMode && relConfig !== undefined;
   const clienteKnown = Boolean(cliente);
   const showDefaultChannel = (connected: boolean, known: boolean) => {
@@ -869,6 +872,8 @@ function formatPercentage(value: number) {
     showCommerceChannels && showDefaultChannel(marketplaceSubs.length > 0, workspaceKnown);
   const showEcommerce =
     showStoreChannels && showDefaultChannel(ecommerceConnected, workspaceKnown);
+  const showErp =
+    showStoreChannels && showDefaultChannel(olistConnected, workspaceKnown);
   const legacyCrm = hasCrm && isImobClient(cliente);
   /** Funil vive em /crm — não duplicar aba no dashboard. */
   const showCrm = false;
@@ -909,9 +914,10 @@ function formatPercentage(value: number) {
       (canal === "crm" && showCrm) ||
       (canal === "relacionamento" && showRelacionamento) ||
       (canal === "marketplaces" && showMarketplaces) ||
-      (canal === "ecommerce" && showEcommerce);
+      (canal === "ecommerce" && showEcommerce) ||
+      (canal === "erp" && showErp);
     if (!visible) setCanal("geral");
-  }, [canal, socialMediaOnly, showMeta, showGoogle, showCrm, showRelacionamento, showMarketplaces, showEcommerce]);
+  }, [canal, socialMediaOnly, showMeta, showGoogle, showCrm, showRelacionamento, showMarketplaces, showEcommerce, showErp]);
 
   React.useEffect(() => {
     if (!workspaceKnown || canConfigure || canal !== "marketplaces") return;
@@ -940,7 +946,9 @@ function formatPercentage(value: number) {
                     ? "Marketplaces"
                     : c === "ecommerce"
                       ? "E-commerce"
-                      : "Lead Scoring";
+                      : c === "erp"
+                        ? "ERP"
+                        : "Lead Scoring";
 
   const channelTabClass = (active: boolean) =>
     `inline-flex shrink-0 items-center gap-1.5 -mb-px border-b-2 px-1 pb-3 pt-2 type-nav-link ${
@@ -967,6 +975,7 @@ function formatPercentage(value: number) {
         ...(showRelacionamento ? ["relacionamento"] : []),
         ...(showMarketplaces ? ["marketplaces"] : []),
         ...(showEcommerce ? ["ecommerce"] : []),
+        ...(showErp ? ["erp"] : []),
       ] as const).map((c) => {
         const active = canal === c && !analystOpen;
         return (
@@ -1341,6 +1350,18 @@ function formatPercentage(value: number) {
       {/* ── E-commerce tab ── */}
       {!analystOpen && canal === "ecommerce" && id && (
         <EcommercePanel
+          clienteId={id}
+          dateRange={{
+            from: dateFilter.dataInicio ?? new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10),
+            to: dateFilter.dataFim ?? new Date().toISOString().slice(0, 10),
+          }}
+          canConfigure={canConfigure}
+        />
+      )}
+
+      {/* ── ERP (Olist) tab ── */}
+      {!analystOpen && canal === "erp" && id && (
+        <OlistPanel
           clienteId={id}
           dateRange={{
             from: dateFilter.dataInicio ?? new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10),

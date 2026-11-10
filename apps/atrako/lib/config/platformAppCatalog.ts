@@ -236,6 +236,31 @@ export const PLATFORM_APP_CATALOG: Record<PlatformAppProvider, PlatformAppCatalo
     description: "Sem app OAuth central — cada dealer informa a loja em Config → Conexões.",
     fields: [{ key: "label", label: "Nome de exibição" }],
   },
+  OLIST_ERP: {
+    provider: "OLIST_ERP",
+    title: "Olist ERP",
+    description:
+      "Token API por loja em Config → Conexões. Client id/secret OAuth (v3) opcional para o app Atrako.",
+    fields: [
+      { key: "label", label: "Nome de exibição" },
+      {
+        key: "clientId",
+        label: "Client ID (OAuth v3)",
+        hint: "ERP → Aplicativos — quando o app Atrako existir",
+      },
+      {
+        key: "clientSecret",
+        label: "Client Secret (OAuth v3)",
+        secret: true,
+        hint: "Reservado para OAuth; Sense usa Token API na conexão",
+      },
+      {
+        key: "redirectUri",
+        label: "Redirect URI",
+        hint: "https://atrako.com.br/api/atrako/oauth/olist/callback",
+      },
+    ],
+  },
   SHOPIFY: {
     provider: "SHOPIFY",
     title: "Shopify",

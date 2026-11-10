@@ -133,6 +133,14 @@ const ENV_SEED: Partial<
   WOOCOMMERCE: () => ({
     label: "WooCommerce",
   }),
+  OLIST_ERP: () => ({
+    label: "Olist ERP",
+    clientId: process.env.OLIST_CLIENT_ID?.trim() || undefined,
+    clientSecret: process.env.OLIST_CLIENT_SECRET?.trim() || undefined,
+    redirectUri:
+      process.env.OLIST_REDIRECT_URI?.trim() ||
+      "https://atrako.com.br/api/atrako/oauth/olist/callback",
+  }),
   SHOPIFY: () => ({
     label: "Shopify",
     clientId: process.env.SHOPIFY_API_KEY?.trim() || process.env.SHOPIFY_CLIENT_ID?.trim() || undefined,

@@ -34,6 +34,12 @@ const ORDER_STATUS_LABELS: Record<string, string> = {
   voided: "Cancelado",
   expired: "Expirado",
   abandoned: "Abandonado",
+  aprovada: "Aprovada",
+  preparando_envio: "Preparando envio",
+  faturada: "Faturada",
+  pronto_envio: "Pronto para envio",
+  enviada: "Enviada",
+  entregue: "Entregue",
 };
 
 /** Status da loja em português (Tray já vem em PT, só normaliza a caixa). */

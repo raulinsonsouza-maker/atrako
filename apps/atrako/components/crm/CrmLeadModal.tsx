@@ -65,6 +65,7 @@ type LeadCart = {
   recoveryUrl: string | null;
   abandonedAt: string;
   recoveredAt: string | null;
+  recoveredOrderId: string | null;
   recoveredCents: number | null;
   notifiedAt: string | null;
   orderExternalId: string | null;

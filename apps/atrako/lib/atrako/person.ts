@@ -910,9 +910,10 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
     flush();
   }
 
-  // --- Carrinhos: pedido não pago já aparece como pedido; aqui só checkout e recuperação ---
+  // --- Carrinhos: pedido não pago (mesmo provider) já aparece como pedido; checkout e recuperação cross-canal ficam aqui ---
   const shownOrderKeys = new Set(marketplaceOrders.map((mo) => orderKey(mo.provider, mo.externalId)));
-  const recoveredByOrder = new Map<string, true>();
+  const recoveredByOrder = new Map<string, "same" | "cross">();
+  const unpaidMirrorKeys = new Set<string>();
   const waSentTimes = [
     ...outboundTimes,
     ...shownDeliveries.filter((d) => d.channel === "WHATSAPP").map((d) => (d.sentAt ?? d.createdAt).getTime()),
@@ -920,10 +921,19 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
 
   for (const cart of carts) {
     const orderId = cart.kind === "order" ? cart.externalId.replace(/^order:/, "") : null;
-    const linkedShown = orderId ? shownOrderKeys.has(orderKey(cart.provider, orderId)) : false;
+    const cartOrderRef = orderId ? orderKey(cart.provider, orderId) : null;
+    const linkedOrder = cartOrderRef
+      ? marketplaceOrders.find((mo) => orderKey(mo.provider, mo.externalId) === cartOrderRef)
+      : null;
+    const linkedShown = Boolean(cartOrderRef && shownOrderKeys.has(cartOrderRef));
+    const linkedPaid = linkedOrder ? isRevenueOrder(linkedOrder.status) : false;
+    const recoveredRef = cart.recoveredOrderId?.toUpperCase() || null;
+    const recoveredElsewhere =
+      Boolean(recoveredRef) && recoveredRef !== cartOrderRef && shownOrderKeys.has(recoveredRef!);
     const cartItems = Array.isArray(cart.items) ? (cart.items as Array<{ title: string; quantity?: number }>) : [];
 
-    if (!linkedShown) {
+    // Mantém o abandono na jornada quando a venda veio de outro canal (Woo cancelado → Olist pago).
+    if (!linkedShown || (recoveredElsewhere && !linkedPaid)) {
       items.push({
         at: cart.abandonedAt.toISOString(),
         type: "cart.abandoned",
@@ -932,6 +942,7 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
           : `Abandonou o carrinho · ${brl(cart.totalCents)}`,
         detail: [storeProviderLabel(cart.provider), itemsSummary(cartItems)].filter(Boolean).join(" · ") || undefined,
       });
+      if (cartOrderRef && recoveredElsewhere && !linkedPaid) unpaidMirrorKeys.add(cartOrderRef);
     }
 
     if (cart.notifiedAt) {
@@ -946,9 +957,8 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
     }
 
     if (cart.status === "RECOVERED" && cart.recoveredAt) {
-      const ref = cart.recoveredOrderId?.toUpperCase();
-      if (ref && shownOrderKeys.has(ref)) {
-        recoveredByOrder.set(ref, true);
+      if (recoveredRef && shownOrderKeys.has(recoveredRef)) {
+        recoveredByOrder.set(recoveredRef, recoveredElsewhere ? "cross" : "same");
       } else {
         items.push({
           at: cart.recoveredAt.toISOString(),
@@ -995,6 +1005,8 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
   for (const mo of marketplaceOrders) {
     const cents = mo.totalCents ?? 0;
     const key = orderKey(mo.provider, mo.externalId);
+    // Pedido Woo cancelado já contado como abandono quando a venda veio no Olist — evita duplicar.
+    if (unpaidMirrorKeys.has(key) && !isRevenueOrder(mo.status)) continue;
     const at = mo.occurredAt ?? mo.createdAt;
     const details = orderDetails(mo.provider, {
       ...(mo.rawPayload && typeof mo.rawPayload === "object" ? (mo.rawPayload as Record<string, unknown>) : {}),
@@ -1056,7 +1068,11 @@ export async function getPersonJourney(workspaceId: string, contactId: string): 
           origin ? `Origem: ${origin.title}` : null,
           origin?.detail,
           isRevenueOrder(mo.status) ? conversionByOrder.get(key) ?? null : null,
-          recoveredByOrder.has(key) && isRevenueOrder(mo.status) ? "pago depois de ficar pendente" : null,
+          recoveredByOrder.get(key) === "cross" && isRevenueOrder(mo.status)
+            ? "recuperado após abandono na loja"
+            : recoveredByOrder.get(key) === "same" && isRevenueOrder(mo.status)
+              ? "pago depois de ficar pendente"
+              : null,
           origin ? null : leadAttrDetail,
         ]
           .filter(Boolean)

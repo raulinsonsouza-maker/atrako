@@ -124,11 +124,21 @@ export async function GET(request: NextRequest, ctx: Ctx) {
     ? await getPersonJourney(workspaceId, lead.contactId).catch(() => null)
     : null;
 
-  // Pedido não pago vira carrinho (`order:<id>`): o card mostra um só, com o status real do pedido.
+  // Pedido não pago vira carrinho (`order:<id>`): enquanto OPEN/PENDING o card mostra um só.
+  // Se o carrinho foi recuperado noutro canal (ex. Olist), o pedido Woo cancelado continua visível.
   const cartOrderKey = (provider: string, externalId: string) => `${provider}:${externalId}`;
-  const cartOrderKeys = new Set(
-    cartRows.filter((c) => c.kind === "order").map((c) => cartOrderKey(c.provider, c.externalId.replace(/^order:/, ""))),
+  const activeCartOrderKeys = new Set(
+    cartRows
+      .filter((c) => c.kind === "order" && (c.status === "OPEN" || c.status === "PENDING"))
+      .map((c) => cartOrderKey(c.provider, c.externalId.replace(/^order:/, ""))),
   );
+  const wooFromRecoveredCart = new Map<string, string>();
+  for (const c of cartRows) {
+    if (c.status !== "RECOVERED" || !c.recoveredOrderId) continue;
+    const wooId = c.kind === "order" ? c.externalId.replace(/^order:/, "") : null;
+    if (!wooId || c.provider !== "WOOCOMMERCE") continue;
+    wooFromRecoveredCart.set(c.recoveredOrderId.toUpperCase(), wooId);
+  }
   const statusOrder: Record<string, number> = { OPEN: 0, PENDING: 1, RECOVERED: 2, EXPIRED: 3 };
   const carts = cartRows
     .sort((a, b) => (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9))
@@ -163,6 +173,7 @@ export async function GET(request: NextRequest, ctx: Ctx) {
         recoveryUrl: c.recoveryUrl,
         abandonedAt: c.abandonedAt.toISOString(),
         recoveredAt: c.recoveredAt?.toISOString() ?? null,
+        recoveredOrderId: c.recoveredOrderId,
         recoveredCents: c.recoveredCents,
         notifiedAt: c.notifiedAt?.toISOString() ?? null,
       };
@@ -174,12 +185,14 @@ export async function GET(request: NextRequest, ctx: Ctx) {
         ? (o.rawPayload as Record<string, unknown>)
         : {};
     const linkedWooExternalId =
-      typeof raw.wooExternalId === "string" ? raw.wooExternalId : null;
+      typeof raw.wooExternalId === "string"
+        ? raw.wooExternalId
+        : wooFromRecoveredCart.get(cartOrderKey(o.provider, o.externalId).toUpperCase()) ?? null;
     const linkedOlistOrderId =
       typeof raw.olistOrderId === "string" ? raw.olistOrderId : null;
     return {
     id: o.id,
-    fromCart: cartOrderKeys.has(cartOrderKey(o.provider, o.externalId)),
+    fromCart: activeCartOrderKeys.has(cartOrderKey(o.provider, o.externalId)),
     externalId: o.externalId,
     provider: o.provider,
     providerLabel: storeProviderLabel(o.provider),

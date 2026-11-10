@@ -61,7 +61,7 @@ type Consolidado = {
   cancelados?: number;
   /** Receita por origem do pedido (anúncio, orgânico, direto, marketplace…). */
   origens?: Array<{ id: string; label: string; pedidos: number; receitaCents: number }>;
-  /** Conferência Woo/ML ↔ Olist quando ERP conectado. */
+  /** Conferência por canal quando Olist confirma a venda. */
   conferencia?: {
     olistConnected: boolean;
     confirmed?: number;
@@ -72,6 +72,7 @@ type Consolidado = {
     channelOnly?: number;
     channelOnlyCents?: number;
     matchRate?: number;
+    canais?: Array<{ id: string; label: string; pedidos: number; receitaCents: number }>;
   };
 };
 
@@ -157,50 +158,42 @@ function ConferenciaOlist({
 }: {
   conf: NonNullable<Consolidado["conferencia"]>;
 }) {
-  const matched = (conf.matchedWoo ?? 0) + (conf.matchedMl ?? 0);
+  const canais = conf.canais ?? [];
+  const totalCents = conf.confirmedCents ?? canais.reduce((s, c) => s + c.receitaCents, 0);
   return (
     <div className="rel-card p-5">
-      <p className="type-caption-strong text-[var(--foreground)]">Conferência do mês</p>
-      <p className="mt-1 type-fine-print text-[var(--muted-foreground)]">
-        Receita = pedidos confirmados na Olist (NF). Canais são origem.
-      </p>
-      <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <dt className="type-fine-print text-[var(--muted-foreground)]">Confirmados</dt>
-          <dd className="type-caption-strong tabular-nums">
-            {conf.confirmed ?? 0}
-            {conf.confirmedCents != null ? (
-              <span className="ml-1 type-fine-print font-normal text-[var(--muted-foreground)]">
-                · {brl(conf.confirmedCents / 100)}
-              </span>
-            ) : null}
-          </dd>
-        </div>
-        <div>
-          <dt className="type-fine-print text-[var(--muted-foreground)]">Casados</dt>
-          <dd className="type-caption-strong tabular-nums">
-            {matched}
-            <span className="ml-1 type-fine-print font-normal text-[var(--muted-foreground)]">
-              · {conf.matchRate ?? 0}% · Woo {conf.matchedWoo ?? 0} · ML {conf.matchedMl ?? 0}
-            </span>
-          </dd>
-        </div>
-        <div>
-          <dt className="type-fine-print text-[var(--muted-foreground)]">Só ERP</dt>
-          <dd className="type-caption-strong tabular-nums">{conf.erpOnly ?? 0}</dd>
-        </div>
-        <div>
-          <dt className="type-fine-print text-[var(--muted-foreground)]">Canal sem Olist</dt>
-          <dd className="type-caption-strong tabular-nums">
-            {conf.channelOnly ?? 0}
-            {conf.channelOnlyCents != null && conf.channelOnlyCents > 0 ? (
-              <span className="ml-1 type-fine-print font-normal text-[var(--muted-foreground)]">
-                · {brl(conf.channelOnlyCents / 100)}
-              </span>
-            ) : null}
-          </dd>
-        </div>
-      </dl>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="type-caption-strong text-[var(--foreground)]">Por canal</p>
+        <p className="type-fine-print text-[var(--muted-foreground)]">
+          {(conf.confirmed ?? 0).toLocaleString("pt-BR")} pedidos · {brl((conf.confirmedCents ?? 0) / 100)}
+        </p>
+      </div>
+      {canais.length ? (
+        <ul className="mt-3 divide-y divide-[var(--hairline)]">
+          {canais.map((c) => {
+            const pct = totalCents > 0 ? Math.round((c.receitaCents / totalCents) * 100) : 0;
+            return (
+              <li key={c.id} className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+                <div className="min-w-0">
+                  <p className="type-caption-strong text-[var(--foreground)]">{c.label}</p>
+                  <p className="type-fine-print text-[var(--muted-foreground)]">
+                    {c.pedidos.toLocaleString("pt-BR")} pedido{c.pedidos === 1 ? "" : "s"} · {pct}%
+                  </p>
+                </div>
+                <p className="shrink-0 tabular-nums type-caption-strong text-[var(--foreground)]">
+                  {brl(c.receitaCents / 100)}
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+      {(conf.channelOnly ?? 0) > 0 ? (
+        <p className="mt-3 type-fine-print text-[var(--muted-foreground)]">
+          {conf.channelOnly} na loja/ML ainda sem confirmação
+          {conf.channelOnlyCents ? ` · ${brl(conf.channelOnlyCents / 100)}` : ""}
+        </p>
+      ) : null}
     </div>
   );
 }

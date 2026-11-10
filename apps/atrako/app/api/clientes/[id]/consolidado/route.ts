@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireClienteAccess } from "@/lib/portalSession";
 import { isEcommerceCliente } from "@/lib/clientProfiles";
 import {
+  confirmedCanalLabel,
   confirmedOriginKey,
   loadConfirmedSales,
 } from "@/lib/commerce-attribution/confirmed-sales";
@@ -32,8 +33,9 @@ const PROVIDER_LABELS: Record<string, string> = {
   GOOGLE: "Google Ads",
   LINKEDIN: "LinkedIn Ads",
   TIKTOK: "TikTok Ads",
-  OLIST_ERP: "Só ERP",
-  erp_only: "Só ERP",
+  OLIST_ERP: "PDV",
+  pdv: "PDV",
+  loja: "Loja",
   mercadolivre: "Mercado Livre",
 };
 
@@ -148,27 +150,31 @@ export async function GET(
     if (o.channel === "meta_ads") metaIdentificadas += 1;
     const cents = o.totalCents;
     const provider = o.originProvider;
-    const lojaLabel = PROVIDER_LABELS[provider] ?? provider;
+    const canalId =
+      provider === "WOOCOMMERCE"
+        ? "loja"
+        : provider === "MERCADO_LIVRE"
+          ? "mercadolivre"
+          : "pdv";
+    const canalLabel = confirmedCanalLabel(provider);
     const key = confirmedOriginKey(o);
     const label =
-      key === "erp_only"
-        ? "Só ERP"
-        : key === "mercadolivre"
-          ? "Mercado Livre"
-          : !SITE_PROVIDERS.has(provider)
-            ? lojaLabel
+      key === "pdv"
+        ? "PDV"
+        : key === "loja"
+          ? "Loja"
+          : key === "mercadolivre"
+            ? "Mercado Livre"
             : key === "unknown"
-              ? "Sem origem"
+              ? "Sem origem de anúncio"
               : CHANNEL_LABELS[key as OrderChannel] ?? PROVIDER_LABELS[key] ?? key;
     add(porOrigem, key, label, cents);
-    const canal = touchCanal(provider, lojaLabel);
+    const canal = touchCanal(canalId, canalLabel);
     canal.pedidos += 1;
     canal.receitaCents += cents;
-    if (SITE_PROVIDERS.has(provider) || provider === "MERCADO_LIVRE" || provider === "OLIST_ERP") {
-      add(canal.origens, key, label, cents);
-    }
-    if (origem && key !== origem) continue;
-    add(porLoja, provider, lojaLabel, cents);
+    add(canal.origens, key, label, cents);
+    if (origem && key !== origem && origem !== canalId) continue;
+    add(porLoja, canalId, canalLabel, cents);
     addDia(o.occurredAt, cents);
   }
 
@@ -336,6 +342,32 @@ export async function GET(
           channelOnly: reconcile.channelOnlyCount,
           channelOnlyCents: reconcile.channelOnlyCents,
           matchRate: reconcile.matchRate,
+          canais: [
+            {
+              id: "loja",
+              label: "Loja",
+              pedidos: reconcile.confirmed.filter((c) => c.originProvider === "WOOCOMMERCE").length,
+              receitaCents: reconcile.confirmed
+                .filter((c) => c.originProvider === "WOOCOMMERCE")
+                .reduce((s, c) => s + c.totalCents, 0),
+            },
+            {
+              id: "mercadolivre",
+              label: "Mercado Livre",
+              pedidos: reconcile.confirmed.filter((c) => c.originProvider === "MERCADO_LIVRE").length,
+              receitaCents: reconcile.confirmed
+                .filter((c) => c.originProvider === "MERCADO_LIVRE")
+                .reduce((s, c) => s + c.totalCents, 0),
+            },
+            {
+              id: "pdv",
+              label: "PDV",
+              pedidos: reconcile.confirmed.filter((c) => c.originProvider === "OLIST_ERP").length,
+              receitaCents: reconcile.confirmed
+                .filter((c) => c.originProvider === "OLIST_ERP")
+                .reduce((s, c) => s + c.totalCents, 0),
+            },
+          ].filter((c) => c.pedidos > 0),
         }
       : { olistConnected: false },
     meta: metaMidia

@@ -112,8 +112,8 @@ export function OlistPanel({
         <MetricTile
           label="Casados (Woo + ML)"
           value={`${data.kpis.matchedWoo + (data.kpis.matchedMl ?? 0)}`}
-          detail={`${data.kpis.matchRate}% · Woo ${data.kpis.matchedWoo} · ML ${data.kpis.matchedMl ?? 0}${
-            data.kpis.erpOnly != null ? ` · só ERP ${data.kpis.erpOnly}` : ""
+          detail={`${data.kpis.matchRate}% · Loja ${data.kpis.matchedWoo} · ML ${data.kpis.matchedMl ?? 0}${
+            data.kpis.erpOnly != null ? ` · PDV ${data.kpis.erpOnly}` : ""
           }`}
         />
       </MetricGrid>
@@ -216,8 +216,8 @@ export function OlistPanel({
                       {order.matchedProvider === "MERCADO_LIVRE" || order.mlExternalId
                         ? `ML #${order.mlExternalId || order.numeroEcommerce || "—"}`
                         : order.wooExternalId || order.numeroEcommerce
-                          ? `Woo #${order.wooExternalId || order.numeroEcommerce}`
-                          : "só ERP"}
+                          ? `Loja #${order.wooExternalId || order.numeroEcommerce}`
+                          : "PDV"}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums type-caption-strong text-[var(--foreground)]">
                       {formatBrl(order.totalCents ?? 0)}

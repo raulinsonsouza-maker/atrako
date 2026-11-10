@@ -5,6 +5,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { isOlistPaid } from "@/lib/integrations/olist/ingest-order";
 import { brtDay, brtRange } from "./period";
 import { isRevenueOrder } from "./order-status";
 import { orderOriginKey, type OrderChannel } from "./store-source";
@@ -215,7 +216,8 @@ export async function loadConfirmedSales(
   let erpOnly = 0;
 
   for (const o of olistRows) {
-    if (!isRevenueOrder(o.status)) continue;
+    // Alinha ao funil de vendas da Olist (não conta orçamento/em aberto).
+    if (!isOlistPaid(o.status ?? "")) continue;
     const p = payloadOf(o.rawPayload);
     const matchedProvider =
       (typeof p.matchedProvider === "string" && p.matchedProvider) ||
@@ -304,9 +306,22 @@ export async function loadConfirmedSales(
 }
 
 export function confirmedOriginKey(sale: ConfirmedSale) {
-  if (sale.originProvider === "OLIST_ERP") return "erp_only";
+  if (sale.originProvider === "OLIST_ERP") return "pdv";
   if (sale.originProvider === "MERCADO_LIVRE") return "mercadolivre";
+  if (sale.originProvider === "WOOCOMMERCE") {
+    const key = orderOriginKey(sale.originProvider, sale.channel as OrderChannel | string | null);
+    // Sem UTM: ainda conta como Loja (não “Só ERP”).
+    return key === "unknown" ? "loja" : key;
+  }
   return orderOriginKey(sale.originProvider, sale.channel as OrderChannel | string | null);
+}
+
+/** Rótulos de canal na visão Geral (sem citar ERP). */
+export function confirmedCanalLabel(originProvider: string) {
+  if (originProvider === "WOOCOMMERCE") return "Loja";
+  if (originProvider === "MERCADO_LIVRE") return "Mercado Livre";
+  if (originProvider === "OLIST_ERP") return "PDV";
+  return originProvider;
 }
 
 export function confirmedToStoreSales(confirmed: ConfirmedSale[]) {

@@ -92,7 +92,8 @@ export async function getRepurchaseMetrics(clienteId: string, range: DateRange, 
       (raw.wooOrderId ? "WOOCOMMERCE" : null) ||
       (raw.mlOrderId ? "MERCADO_LIVRE" : null) ||
       "OLIST_ERP";
-    if (origem === "erp_only") return matched === "OLIST_ERP";
+    if (origem === "pdv" || origem === "erp_only") return matched === "OLIST_ERP";
+    if (origem === "loja") return matched === "WOOCOMMERCE";
     if (origem === "mercadolivre") return matched === "MERCADO_LIVRE";
     return orderOriginKey(matched, o.source?.channel) === origem;
   });

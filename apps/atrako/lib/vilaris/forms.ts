@@ -43,3 +43,22 @@ export const VILARIS_LP_FORM = {
     },
   ] satisfies FormStep[],
 };
+
+/** Spec do CaptureForm da LP de consultoria financeira PME. */
+export const VILARIS_CONSULTORIA_LP_FORM = {
+  name: "Vilaris — Consultoria Financeira",
+  slug: "vilaris-consultoria-lp",
+  source: "lp",
+  steps: [
+    {
+      id: "lead",
+      title: "Conversa",
+      fields: [
+        { id: "name", type: "text" as const, label: "Nome completo", required: true },
+        { id: "phone", type: "phone" as const, label: "WhatsApp", required: true },
+        { id: "email", type: "email" as const, label: "E-mail", required: true },
+        { id: "company", type: "text" as const, label: "Empresa", required: true },
+      ],
+    },
+  ] satisfies FormStep[],
+};

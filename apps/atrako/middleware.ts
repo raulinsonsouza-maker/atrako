@@ -53,6 +53,7 @@ function isPublicPath(pathname: string): boolean {
   if (pathname === "/") return true;
   // LP pública; painel /vilaris/crm exige sessão (igual Regicenter em /crm no host LP).
   if (pathname === "/vilaris" || pathname === "/vilaris/") return true;
+  if (pathname === "/vilaris/consultoria" || pathname.startsWith("/vilaris/consultoria/")) return true;
   if (pathname === "/vilaris/crm" || pathname.startsWith("/vilaris/crm/")) return false;
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p));
 }
@@ -124,6 +125,20 @@ export default function middleware(request: NextRequest) {
       if (lp.appHome) return rewriteTo(lp.appHome);
       return NextResponse.next();
     }
+    // Consultoria financeira (Vilaris): /consultoria → app /vilaris/consultoria
+    if (
+      lp.appHome === "/vilaris" &&
+      (pathname === "/consultoria" || pathname === "/consultoria/")
+    ) {
+      return rewriteTo("/vilaris/consultoria");
+    }
+    if (
+      lp.appHome === "/vilaris" &&
+      (pathname === "/vilaris/consultoria" || pathname.startsWith("/vilaris/consultoria/"))
+    ) {
+      const dest = new URL("/consultoria" + request.nextUrl.search, origin);
+      return NextResponse.redirect(dest, 308);
+    }
     // Paths do Atrako no domínio do cliente → URLs canônicas da LP
     if (lp.appHome && (pathname === lp.appHome || pathname === `${lp.appHome}/`)) {
       const dest = new URL("/" + request.nextUrl.search, origin);
@@ -164,6 +179,10 @@ export default function middleware(request: NextRequest) {
   // LP Vilaris canônica no domínio do cliente; /vilaris/crm no Atrako permanece.
   if (production && (pathname === "/vilaris" || pathname === "/vilaris/")) {
     const dest = new URL("/" + request.nextUrl.search, "https://vilarisgestao.com.br");
+    return NextResponse.redirect(dest, 308);
+  }
+  if (production && (pathname === "/vilaris/consultoria" || pathname.startsWith("/vilaris/consultoria/"))) {
+    const dest = new URL("/consultoria" + request.nextUrl.search, "https://vilarisgestao.com.br");
     return NextResponse.redirect(dest, 308);
   }
 

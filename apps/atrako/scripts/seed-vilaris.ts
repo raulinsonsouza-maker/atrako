@@ -9,7 +9,7 @@
 
 import { prisma } from "../lib/db";
 import { hashPassword } from "../lib/authSecurity";
-import { ensureVilarisLpForm } from "../lib/vilaris/ensure-forms";
+import { ensureVilarisForms } from "../lib/vilaris/ensure-forms";
 import { ensureDefaultPipeline } from "../lib/modules/crm";
 import { applyWorkspaceEdition } from "../lib/modules/apply-edition";
 import { Prisma } from "../lib/generated/prisma";
@@ -88,8 +88,8 @@ async function main() {
   const member = await upsertOwner(cliente.id, password);
   console.log("OWNER:", member.email);
 
-  const form = await ensureVilarisLpForm(cliente.id);
-  console.log("Form:", form);
+  const forms = await ensureVilarisForms(cliente.id);
+  console.log("Forms:", forms);
 
   await ensureDefaultPipeline(cliente.id);
   await applyWorkspaceEdition(cliente.id, "inside_sales");
@@ -130,8 +130,9 @@ async function main() {
   });
 
   console.log("OK — sem playbook de franquia/COF.");
-  console.log("LP:  https://atrako.com.br/vilaris");
-  console.log("CRM: https://atrako.com.br/vilaris/crm");
+  console.log("LP mentoria:     https://vilarisgestao.com.br/");
+  console.log("LP consultoria:  https://vilarisgestao.com.br/consultoria");
+  console.log("CRM:             https://atrako.com.br/vilaris/crm");
   console.log(`Login: ${EMAIL} / ${password}`);
 }
 

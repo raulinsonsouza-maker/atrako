@@ -588,4 +588,51 @@ html:has(.vilaris-lp){scroll-behavior:smooth;scroll-padding-top:95px}
   .visual-message{font-size:20px}
   .button{font-size:13px;gap:12px}
 }
+
+/* ── Consultoria financeira (/consultoria) ── */
+.consultoria-hero{padding-bottom:90px}
+.consultoria-hero .hero-bottom{border-bottom:0;padding-bottom:0}
+.consultoria-profiles{grid-template-columns:repeat(3,minmax(0,1fr));gap:0;align-items:stretch}
+.consultoria-profiles article{min-height:0}
+.consultoria-profiles .growth-card{margin-top:0}
+.consultoria-premises{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1px solid var(--line)}
+.consultoria-premises article{padding:36px 32px 36px 0;border-left:1px solid var(--line);padding-left:32px}
+.consultoria-premises article:first-child{border-left:0;padding-left:0}
+.consultoria-premises h3{font-size:22px;margin:18px 0 12px;letter-spacing:-.035em}
+.consultoria-premises p{font-size:13px;color:var(--muted);line-height:1.75;max-width:320px}
+.consultoria-plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid #ffffff25;border-bottom:1px solid #ffffff25}
+.consultoria-plans article{padding:40px 28px 40px 0;border-left:1px solid #ffffff25;padding-left:32px}
+.consultoria-plans article:first-child{border-left:0;padding-left:0}
+.consultoria-plans h3{font-size:28px;margin:18px 0 16px;line-height:1.2}
+.consultoria-plans h3 b{font-weight:400;font-size:36px;letter-spacing:-.05em}
+.consultoria-plans p{font-size:13px;color:#c7d3dd;line-height:1.75;margin-bottom:22px;max-width:280px}
+.consultoria-phases{display:grid;gap:28px}
+.consultoria-phase{border:1px solid var(--line);padding:32px 36px;background:var(--paper)}
+.consultoria-phase-head .step-label{color:var(--muted)}
+.consultoria-phase-head h3{font-size:28px;margin:12px 0 14px}
+.consultoria-phase-head>p{font-size:14px;color:var(--muted);max-width:640px;line-height:1.7}
+.consultoria-months{margin-top:22px;border-top:1px solid var(--line);padding-top:16px}
+.consultoria-months summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;font-size:12px;font-weight:500}
+.consultoria-months summary::-webkit-details-marker{display:none}
+.consultoria-months[open] summary svg{transform:rotate(45deg)}
+.consultoria-months summary svg{transition:transform .2s}
+.consultoria-months ul{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:14px}
+.consultoria-months li{display:grid;gap:4px}
+.consultoria-months li strong{font-size:13px;font-weight:500}
+.consultoria-months li span{font-size:12px;color:var(--muted);line-height:1.6}
+
+@media(max-width:1100px){
+  .consultoria-profiles{grid-template-columns:1fr}
+  .consultoria-premises{grid-template-columns:1fr}
+  .consultoria-premises article{border-left:0;padding:28px 0;border-top:1px solid var(--line)}
+  .consultoria-premises article:first-child{border-top:0;padding-top:0}
+  .consultoria-plans{grid-template-columns:1fr}
+  .consultoria-plans article{border-left:0;padding:28px 0;border-top:1px solid #ffffff25}
+  .consultoria-plans article:first-child{border-top:0;padding-top:0}
+}
+@media(max-width:760px){
+  .consultoria-hero{padding-bottom:48px}
+  .consultoria-phase{padding:24px 20px}
+  .consultoria-phase-head h3{font-size:24px}
+}
 }

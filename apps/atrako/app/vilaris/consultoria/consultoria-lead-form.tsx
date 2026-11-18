@@ -79,8 +79,8 @@ export default function ConsultoriaLeadForm() {
 
   return (
     <form className="lead-form" onSubmit={submit}>
-      <h3>Agende uma conversa.</h3>
-      <p className="form-subtitle">Sem compromisso. O valor entra na conversa.</p>
+      <h3>Fale com a Vilaris</h3>
+      <p className="form-subtitle">Resposta em horário comercial. Sem compromisso.</p>
       <div className="form-grid">
         <label className="full">
           Nome completo
@@ -139,7 +139,7 @@ export default function ConsultoriaLeadForm() {
         consultoria financeira.
       </p>
       <button type="submit" className="button" disabled={state === "sending"}>
-        {state === "sending" ? "Enviando..." : "Quero conversar"}
+        {state === "sending" ? "Enviando..." : "Quero conversar agora"}
         {state === "sending" ? <Loader2 className="spinning" size={18} /> : <ArrowUpRight size={18} />}
       </button>
       {state === "error" && (

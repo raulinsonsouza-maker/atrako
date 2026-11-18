@@ -1,154 +1,98 @@
 import type { Metadata } from "next";
-import { ArrowUpRight, Check, MessageCircle, Users, Workflow } from "lucide-react";
+import { ArrowDown, ArrowUpRight, Check } from "lucide-react";
 import ConsultoriaLeadForm from "./consultoria-lead-form";
 
 export const metadata: Metadata = {
   title: "Vilaris | Consultoria Financeira para PME",
   description:
-    "Consultoria financeira sob medida: saneamento de caixa, estruturação e governança. Diagnóstico, controles e rituais para a empresa ver a cor do dinheiro.",
+    "Pare de apagar incêndio no caixa. Consultoria financeira para PME: estancar sangrias, organizar margem e crescer com controle. Conversa sem compromisso.",
 };
 
 const ASSET = "/lp/vilaris/assets";
 
-const profiles = [
+const pains = [
+  "Fatura alto e o caixa continua apertado",
+  "Não sabe quanto sobra de verdade em cada produto",
+  "Dívida cara e renegociação sem dossiê",
+  "BPO/contabilidade lançam — mas sem plano gerencial",
+  "Sócio tira dinheiro sem regra e a operação sente",
+] as const;
+
+const results = [
+  "Visibilidade de caixa em semanas, não em meses",
+  "Margem clara por produto e por cliente",
+  "Controles que a equipe consegue seguir",
+  "Decisão de crédito e investimento com número",
+] as const;
+
+const plans = [
   {
-    horizon: "3 meses",
-    title: "Saneamento & Estancamento",
-    forWho: "Descontrole de caixa, dívida cara, margem invisível ou crise aguda.",
-    focus: "Diagnóstico, estancar sangrias, reestruturar dívidas e implantar controles básicos.",
+    months: "3",
+    name: "Saneamento",
+    hook: "Estancar o sangramento",
+    forWho: "Caixa descontrolado, dívida cara ou crise aguda.",
+    gets: ["Diagnóstico 360º", "Mapa de dívidas", "Fluxo e budget", "Primeira DRE gerencial"],
   },
   {
-    horizon: "6 meses",
-    title: "Estruturação & Eficiência",
-    forWho: "Fatura bem, mas não vê a cor do dinheiro — ou precisa organizar para crescer.",
-    focus: "Tudo do plano de 3 meses + precificação, margem, produtividade e capital de giro.",
+    months: "6",
+    name: "Estruturação",
+    hook: "Organizar para sobrar",
+    forWho: "Fatura bem, mas não vê a cor do dinheiro.",
+    gets: ["Tudo do plano 3 meses", "Precificação e markup", "Produtividade da equipe", "Capital de giro"],
+    featured: true,
   },
   {
-    horizon: "12 meses",
-    title: "Governança & Escala",
-    forWho: "Empresa madura ou em expansão que busca EBITDA, captação e caixa excedente.",
-    focus: "Tudo dos planos anteriores + orçamento, valuation/CAPEX e rituais de conselho.",
+    months: "12",
+    name: "Governança",
+    hook: "Escalar com método",
+    forWho: "Expansão, captação e caixa excedente.",
+    gets: ["Tudo dos planos anteriores", "Orçamento e CAPEX", "Valuation", "Rituais de conselho"],
   },
 ] as const;
 
-const premises = [
+const steps = [
+  { n: "01", title: "Conversa", text: "Você conta o momento da empresa. Sem pitch longo." },
+  { n: "02", title: "Diagnóstico", text: "Olhamos caixa, dívida e margem com os números reais." },
+  { n: "03", title: "Plano", text: "Combinamos o horizonte — 3, 6 ou 12 meses — e o ritmo de encontros." },
+] as const;
+
+const faq = [
   {
-    icon: Users,
-    title: "Ritmo de encontros",
-    text: "2 encontros/mês nos primeiros 3 meses (1h30–2h). Depois, 1 a 2 encontros focados em governança e fechamento (DRE/Fluxo).",
+    q: "Preciso trocar de contador ou BPO?",
+    a: "Não. Eles continuam lançando. A Vilaris define o plano de contas gerencial e as regras; o fornecedor executa.",
   },
   {
-    icon: MessageCircle,
-    title: "Acompanhamento assíncrono",
-    text: "Canal direto (WhatsApp/Slack) com SLA definido — validação de decisões, propostas bancárias e dúvidas da equipe financeira.",
+    q: "Quantos encontros por mês?",
+    a: "Nos primeiros 3 meses: 2 encontros (1h30–2h). Depois: 1 a 2, focados em governança e fechamento (DRE/fluxo). Canal assíncrono com SLA no dia a dia.",
   },
   {
-    icon: Workflow,
-    title: "BPO e contabilidade",
-    text: "Eles fornecem os insumos. Você define plano de contas gerencial e regras de categorização; eles executam os lançamentos.",
+    q: "Quanto custa?",
+    a: "O investimento depende do porte e do horizonte. Alinhamos na conversa — sem preço engessado na página.",
+  },
+  {
+    q: "Serve para qual tamanho de empresa?",
+    a: "PMEs que já faturam e precisam de controle, margem e caixa — do saneamento à governança.",
   },
 ] as const;
 
-const phases = [
-  {
-    id: "fase-1",
-    label: "Fase 1",
-    months: "Meses 1–3",
-    title: "Estancamento e visibilidade",
-    summary:
-      "Raio-X financeiro, plano de contas gerencial, mapa de dívidas, fluxo projetado, budget e primeira DRE gerencial com margem.",
-    monthsDetail: [
-      {
-        m: "Mês 1",
-        focus: "Imersão e diagnóstico 360º",
-        deliverables: ["Raio-X Financeiro", "Plano de Contas Gerencial", "Mapa de Dívidas (CET e prazos)"],
-      },
-      {
-        m: "Mês 2",
-        focus: "Orçamento, caixa e bancos",
-        deliverables: ["Fluxo de Caixa Projetado (90 dias / 12 meses)", "Budget por centro de custo", "Dossiê de renegociação/captação"],
-      },
-      {
-        m: "Mês 3",
-        focus: "Margem e capital de giro",
-        deliverables: ["DRE Gerencial", "Matriz de Rentabilidade", "Plano de otimização de capital de giro"],
-      },
-    ],
-  },
-  {
-    id: "fase-2",
-    label: "Fase 2",
-    months: "Meses 4–6",
-    title: "Eficiência e precificação",
-    summary:
-      "Calculadora de markup, política de descontos, painel de produtividade, corte de despesas e política de aplicações.",
-    monthsDetail: [
-      {
-        m: "Mês 4",
-        focus: "Engenharia de precificação",
-        deliverables: ["Calculadora dinâmica de markup", "Política comercial de descontos"],
-      },
-      {
-        m: "Mês 5",
-        focus: "Produtividade e despesas",
-        deliverables: ["Painel de produtividade", "Plano de corte/renegociação de fornecedores"],
-      },
-      {
-        m: "Mês 6",
-        focus: "Tesouraria e revisão",
-        deliverables: ["Política de aplicações financeiras", "Relatório Antes vs. Depois"],
-      },
-    ],
-  },
-  {
-    id: "fase-3",
-    label: "Fase 3",
-    months: "Meses 7–12",
-    title: "Governança e escala",
-    summary:
-      "Alinhamento contábil-fiscal, EVTE e captação, controles internos, orçamento do ano seguinte, valuation e board report.",
-    monthsDetail: [
-      {
-        m: "Mês 7",
-        focus: "Governança e fiscal",
-        deliverables: ["Ata de alinhamento contábil", "Política de pró-labore e dividendos"],
-      },
-      {
-        m: "Mês 8",
-        focus: "Expansão e captação",
-        deliverables: ["Estudo de viabilidade (VPL/TIR/Payback)", "Book de captação CAPEX"],
-      },
-      {
-        m: "Mês 9",
-        focus: "Controles internos",
-        deliverables: ["Checklist de riscos e fraudes", "Manual de rotinas financeiras (SOP)"],
-      },
-      {
-        m: "Meses 10–11",
-        focus: "Orçamento do ano seguinte",
-        deliverables: ["Premissas e cenários", "Orçamento anual consolidado", "Plano de remuneração variável"],
-      },
-      {
-        m: "Mês 12",
-        focus: "Fechamento e continuidade",
-        deliverables: ["Board report anual", "Estimativa de valuation", "Proposta de conselho consultivo"],
-      },
-    ],
-  },
-] as const;
-
-function CTA({ children = "Quero conversar sobre minha empresa" }: { children?: React.ReactNode }) {
+function CTA({
+  children = "Quero conversar agora",
+  className = "button",
+}: {
+  children?: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <a className="button" href="#conversa">
+    <a className={className} href="#conversa">
       {children}
-      <ArrowUpRight size={19} aria-hidden="true" />
+      <ArrowUpRight size={20} aria-hidden="true" />
     </a>
   );
 }
 
-function Brand() {
+function Brand({ href = "/" }: { href?: string }) {
   return (
-    <a href="/" className="brand" aria-label="Vilaris — início">
+    <a href={href} className="brand" aria-label="Vilaris — início">
       <img
         src={`${ASSET}/vilaris-logo.png`}
         alt="Vilaris — Gestão e Estratégia"
@@ -161,18 +105,17 @@ function Brand() {
 
 export default function VilarisConsultoriaPage() {
   return (
-    <>
+    <div className="consultoria-lp">
       <a href="#conteudo" className="skip-link">
         Pular para o conteúdo
       </a>
       <header className="header">
         <div className="container header-inner">
           <Brand />
-          <nav aria-label="Navegação principal">
+          <nav aria-label="Navegação">
             <a href="#planos">Planos</a>
-            <a href="#jornada">Jornada</a>
-            <a href="#como">Como trabalhamos</a>
-            <a href="/">Mentoria</a>
+            <a href="#como">Como funciona</a>
+            <a href="#faq">Dúvidas</a>
           </nav>
           <a href="#conversa" className="header-cta">
             Conversar <ArrowUpRight size={16} />
@@ -181,197 +124,182 @@ export default function VilarisConsultoriaPage() {
       </header>
 
       <main id="conteudo">
-        <section className="hero container consultoria-hero" id="inicio">
-          <div className="hero-copy">
-            <div className="eyebrow">
-              <span className="status-dot" />
-              CONSULTORIA FINANCEIRA · PME
-            </div>
-            <h1>
-              Sua empresa fatura.
-              <br className="hero-break" />
-              E o dinheiro <em>aparece?</em>
-            </h1>
-            <div className="hero-bottom">
-              <div className="hero-description-group">
-                <p className="hero-intro">
-                  Diagnóstico, controles e governança para estancar sangrias, organizar a margem e escalar com
-                  clareza.
-                </p>
-                <p className="hero-description">
-                  Três horizontes — 3, 6 ou 12 meses — conforme o momento do negócio. O valor entra na conversa;
-                  aqui você entende o caminho.
-                </p>
-              </div>
-              <div className="hero-action">
-                <CTA />
-                <p className="microcopy">Sem compromisso de contratação.</p>
-              </div>
-            </div>
+        {/* HERO */}
+        <section className="cv-hero container" id="inicio">
+          <p className="cv-eyebrow">
+            <span className="status-dot" />
+            CONSULTORIA FINANCEIRA PARA PME
+          </p>
+          <h1>
+            Sua empresa fatura.
+            <br />
+            E o dinheiro <em>some?</em>
+          </h1>
+          <p className="cv-lead">
+            Pare de apagar incêndio no caixa. A gente organiza margem, dívida e rotina financeira — para você
+            decidir com número, não com feeling.
+          </p>
+          <div className="cv-hero-actions">
+            <CTA>Quero conversar sobre meu caixa</CTA>
+            <a className="cv-secondary" href="#planos">
+              Ver os 3 caminhos <ArrowDown size={18} />
+            </a>
           </div>
+          <ul className="cv-trust">
+            <li>Sem compromisso</li>
+            <li>Valor só na conversa</li>
+            <li>3, 6 ou 12 meses</li>
+          </ul>
         </section>
 
-        <section className="audience section" id="para-quem">
+        {/* PROBLEM */}
+        <section className="cv-band cv-band-dark" id="dor">
           <div className="container">
-            <div className="section-heading">
-              <p>Para quem é</p>
-              <div>
-                <h2>
-                  Três momentos.
-                  <br />
-                  Um mesmo método.
-                </h2>
-              </div>
-            </div>
-            <div className="audience-grid consultoria-profiles">
-              {profiles.map((p, i) => (
-                <article key={p.horizon} className={i === 1 ? "growth-card" : undefined}>
-                  <div className="card-top">
-                    <span>{p.horizon.toUpperCase()}</span>
-                  </div>
-                  <h3>{p.title}</h3>
-                  <p>{p.forWho}</p>
-                  <ul>
-                    <li>
-                      <Check size={14} aria-hidden="true" />
-                      {p.focus}
-                    </li>
-                  </ul>
-                  <a href="#conversa">
-                    Quero esse caminho <ArrowUpRight size={16} />
-                  </a>
-                </article>
+            <p className="cv-eyebrow light">O problema</p>
+            <h2>
+              Se você se reconhece
+              <br />
+              em alguma destas frases…
+            </h2>
+            <ul className="cv-pain-list">
+              {pains.map((item) => (
+                <li key={item}>{item}</li>
               ))}
-            </div>
+            </ul>
+            <p className="cv-band-cta-line">
+              …é exatamente o tipo de empresa que a Vilaris atende.
+            </p>
+            <CTA className="button button-on-dark">Quero sair desse ciclo</CTA>
           </div>
         </section>
 
-        <section className="section container" id="como">
-          <div className="section-heading">
-            <p>Operação</p>
-            <div>
-              <h2>
-                Como
-                <br />
-                <em>trabalhamos</em>
-              </h2>
-            </div>
-          </div>
-          <div className="consultoria-premises">
-            {premises.map((item) => {
-              const Icon = item.icon;
-              return (
-                <article key={item.title}>
-                  <Icon size={22} strokeWidth={1.3} aria-hidden="true" />
-                  <h3>{item.title}</h3>
-                  <p>{item.text}</p>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="journey section" id="planos">
-          <div className="container">
-            <div className="section-heading">
-              <p>Arquitetura</p>
-              <div>
-                <h2>
-                  Três planos.
-                  <br />
-                  <em>Modular.</em>
-                </h2>
-              </div>
-            </div>
-            <div className="consultoria-plans">
-              {profiles.map((p, i) => (
-                <article key={p.horizon}>
-                  <span className="step-label">PLANO {i + 1}</span>
-                  <h3>
-                    {p.horizon}
-                    <br />
-                    <b>{p.title.split(" & ")[0]}</b>
-                  </h3>
-                  <p>{p.focus}</p>
-                  <a className="text-link" href="#conversa" style={{ color: "inherit", borderColor: "#ffffff60" }}>
-                    Quero esse caminho <ArrowUpRight size={14} />
-                  </a>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="section container" id="jornada">
-          <div className="section-heading">
-            <p>Jornada</p>
-            <div>
-              <h2>
-                O que acontece
-                <br />
-                mês a mês
-              </h2>
-            </div>
-          </div>
-          <div className="consultoria-phases">
-            {phases.map((phase) => (
-              <article key={phase.id} className="consultoria-phase">
-                <div className="consultoria-phase-head">
-                  <span className="step-label">
-                    {phase.label} · {phase.months}
-                  </span>
-                  <h3>{phase.title}</h3>
-                  <p>{phase.summary}</p>
-                </div>
-                <details className="consultoria-months">
-                  <summary>
-                    Ver detalhe mês a mês <ArrowUpRight size={14} />
-                  </summary>
-                  <ul>
-                    {phase.monthsDetail.map((row) => (
-                      <li key={row.m}>
-                        <strong>
-                          {row.m} — {row.focus}
-                        </strong>
-                        <span>{row.deliverables.join(" · ")}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
+        {/* RESULTS */}
+        <section className="cv-section container" id="resultado">
+          <p className="cv-eyebrow">O que muda</p>
+          <h2>
+            Clareza de caixa.
+            <br />
+            <em>Decisão com número.</em>
+          </h2>
+          <div className="cv-result-grid">
+            {results.map((item) => (
+              <article key={item}>
+                <Check size={22} strokeWidth={1.5} aria-hidden="true" />
+                <p>{item}</p>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="contact section" id="conversa">
+        {/* HOW */}
+        <section className="cv-section cv-section-soft" id="como">
+          <div className="container">
+            <p className="cv-eyebrow">Como funciona</p>
+            <h2>
+              Simples.
+              <br />
+              Direto ao ponto.
+            </h2>
+            <div className="cv-steps">
+              {steps.map((s) => (
+                <article key={s.n}>
+                  <span>{s.n}</span>
+                  <h3>{s.title}</h3>
+                  <p>{s.text}</p>
+                </article>
+              ))}
+            </div>
+            <div className="cv-how-note">
+              <p>
+                <strong>Encontros + canal direto.</strong> Nos primeiros 3 meses, 2 encontros por mês. Depois, 1 a
+                2 focados em fechamento. WhatsApp/Slack com resposta em horário comercial para decisões críticas.
+              </p>
+              <p>
+                <strong>BPO e contabilidade continuam.</strong> Eles lançam. Você (com a Vilaris) define as regras
+                gerenciais.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* PLANS */}
+        <section className="cv-section container" id="planos">
+          <p className="cv-eyebrow">Escolha o horizonte</p>
+          <h2>
+            Três caminhos.
+            <br />
+            Um método.
+          </h2>
+          <p className="cv-section-lead">
+            Começa no saneamento e sobe conforme a empresa precisa — sem preço na página.
+          </p>
+          <div className="cv-plans">
+            {plans.map((p) => (
+              <article key={p.months} className={p.featured ? "featured" : undefined}>
+                {p.featured ? <span className="cv-badge">Mais escolhido</span> : null}
+                <p className="cv-plan-months">
+                  <strong>{p.months}</strong> meses
+                </p>
+                <h3>{p.name}</h3>
+                <p className="cv-plan-hook">{p.hook}</p>
+                <p className="cv-plan-for">{p.forWho}</p>
+                <ul>
+                  {p.gets.map((g) => (
+                    <li key={g}>
+                      <Check size={16} aria-hidden="true" />
+                      {g}
+                    </li>
+                  ))}
+                </ul>
+                <CTA className={p.featured ? "button" : "button button-outline"}>Quero esse caminho</CTA>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="cv-section cv-section-soft" id="faq">
+          <div className="container cv-faq">
+            <p className="cv-eyebrow">Dúvidas</p>
+            <h2>Perguntas rápidas</h2>
+            <div className="cv-faq-list">
+              {faq.map((item) => (
+                <details key={item.q}>
+                  <summary>{item.q}</summary>
+                  <p>{item.a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* FORM */}
+        <section className="contact section cv-contact" id="conversa">
           <div className="container contact-grid">
             <div className="contact-copy">
-              <p className="eyebrow">
+              <p className="cv-eyebrow">
                 <span className="status-dot" />
                 PRÓXIMO PASSO
               </p>
               <h2>
                 Vamos olhar
                 <br />
-                <em>o caixa juntos?</em>
+                <em>seu caixa?</em>
               </h2>
-              <p>
-                Conte quem você é e qual é a empresa. Entramos em contato para entender o momento e indicar o
-                horizonte certo — 3, 6 ou 12 meses.
+              <p className="cv-form-copy">
+                Deixe nome e empresa. Entramos em contato para entender o momento e indicar o horizonte certo.
               </p>
-              <div className="contact-process">
-                <span>01</span>
-                <p>Você deixa nome e empresa.</p>
-                <span>02</span>
-                <p>Conversamos sobre o momento financeiro.</p>
-                <span>03</span>
-                <p>Alinhamos o plano e o investimento.</p>
-              </div>
-              <p className="contact-note">
-                Sem preço na página.
-                <br />
-                Valor na conversa — sem pressão.
-              </p>
+              <ul className="cv-form-bullets">
+                <li>
+                  <Check size={18} aria-hidden="true" /> Sem compromisso
+                </li>
+                <li>
+                  <Check size={18} aria-hidden="true" /> Valor só na conversa
+                </li>
+                <li>
+                  <Check size={18} aria-hidden="true" /> Resposta em horário comercial
+                </li>
+              </ul>
             </div>
             <ConsultoriaLeadForm />
           </div>
@@ -384,7 +312,7 @@ export default function VilarisConsultoriaPage() {
           <p>
             Gestão & estratégia
             <br />
-            para decisões que constroem caixa.
+            para o caixa aparecer.
           </p>
           <a href="/">
             Mentoria de carreira <ArrowUpRight size={17} />
@@ -395,6 +323,6 @@ export default function VilarisConsultoriaPage() {
           <span>Consultoria financeira para PME.</span>
         </div>
       </footer>
-    </>
+    </div>
   );
 }

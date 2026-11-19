@@ -79,8 +79,8 @@ export default function ConsultoriaLeadForm() {
 
   return (
     <form className="lead-form" onSubmit={submit}>
-      <h3>Fale com a Vilaris</h3>
-      <p className="form-subtitle">Resposta em horário comercial. Sem compromisso.</p>
+      <h3>Organize seu caixa</h3>
+      <p className="form-subtitle">Retorno em horário comercial. Sem compromisso.</p>
       <div className="form-grid">
         <label className="full">
           Nome completo

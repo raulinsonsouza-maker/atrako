@@ -1,28 +1,69 @@
 import type { Metadata } from "next";
-import { ArrowDown, ArrowUpRight, Check } from "lucide-react";
+import {
+  ArrowUpRight,
+  Banknote,
+  Check,
+  ClipboardList,
+  LineChart,
+  MessageSquare,
+  Search,
+  Shield,
+  TrendingUp,
+} from "lucide-react";
 import ConsultoriaLeadForm from "./consultoria-lead-form";
 
 export const metadata: Metadata = {
   title: "Vilaris | Consultoria Financeira para PME",
   description:
-    "Pare de apagar incêndio no caixa. Consultoria financeira para PME: estancar sangrias, organizar margem e crescer com controle. Conversa sem compromisso.",
+    "Fatura sobe e o caixa não acompanha? Consultoria financeira para PME: estancar sangrias, organizar margem e decidir com número. Conversa sem compromisso.",
 };
 
 const ASSET = "/lp/vilaris/assets";
 
 const pains = [
-  "Fatura alto e o caixa continua apertado",
-  "Não sabe quanto sobra de verdade em cada produto",
-  "Dívida cara e renegociação sem dossiê",
-  "BPO/contabilidade lançam — mas sem plano gerencial",
-  "Sócio tira dinheiro sem regra e a operação sente",
+  {
+    icon: Banknote,
+    title: "Fatura alto. Caixa apertado.",
+    text: "Entra dinheiro todo mês — e no fim sobra dúvida, não sobra caixa.",
+  },
+  {
+    icon: LineChart,
+    title: "Margem invisível",
+    text: "Você não sabe o que dá lucro de verdade: produto, cliente ou canal.",
+  },
+  {
+    icon: Shield,
+    title: "Dívida cara sem mapa",
+    text: "Renegocia no feeling, sem dossiê, CET nem prioridade clara.",
+  },
+  {
+    icon: ClipboardList,
+    title: "BPO lança. Ninguém governa.",
+    text: "Contabilidade executa — falta plano gerencial e regra de categorização.",
+  },
 ] as const;
 
 const results = [
-  "Visibilidade de caixa em semanas, não em meses",
-  "Margem clara por produto e por cliente",
-  "Controles que a equipe consegue seguir",
-  "Decisão de crédito e investimento com número",
+  {
+    num: "01",
+    title: "Caixa previsível",
+    text: "Fluxo semanal e mensal para ver o buraco antes de cair nele.",
+  },
+  {
+    num: "02",
+    title: "Margem por produto",
+    text: "Sabe o que paga a conta — e o que só ocupa a operação.",
+  },
+  {
+    num: "03",
+    title: "Rotina que a equipe segue",
+    text: "Fechamento, crédito e cobrança com regra, não com improviso.",
+  },
+  {
+    num: "04",
+    title: "Decisão com número",
+    text: "Crédito, investimento e retirada de sócio com lastro.",
+  },
 ] as const;
 
 const plans = [
@@ -51,9 +92,24 @@ const plans = [
 ] as const;
 
 const steps = [
-  { n: "01", title: "Conversa", text: "Você conta o momento da empresa. Sem pitch longo." },
-  { n: "02", title: "Diagnóstico", text: "Olhamos caixa, dívida e margem com os números reais." },
-  { n: "03", title: "Plano", text: "Combinamos o horizonte — 3, 6 ou 12 meses — e o ritmo de encontros." },
+  {
+    n: "1",
+    icon: MessageSquare,
+    title: "Conversa",
+    text: "Você conta o momento da empresa. Sem pitch de 40 minutos.",
+  },
+  {
+    n: "2",
+    icon: Search,
+    title: "Diagnóstico",
+    text: "Caixa, dívida e margem com os extratos e o ERP — não com achismo.",
+  },
+  {
+    n: "3",
+    icon: TrendingUp,
+    title: "Plano em ritmo",
+    text: "3, 6 ou 12 meses. Encontros + canal direto para decisões críticas.",
+  },
 ] as const;
 
 const faq = [
@@ -63,11 +119,11 @@ const faq = [
   },
   {
     q: "Quantos encontros por mês?",
-    a: "Nos primeiros 3 meses: 2 encontros (1h30–2h). Depois: 1 a 2, focados em governança e fechamento (DRE/fluxo). Canal assíncrono com SLA no dia a dia.",
+    a: "Nos primeiros 3 meses: 2 encontros (1h30–2h). Depois: 1 a 2, focados em governança e fechamento. Canal assíncrono no dia a dia.",
   },
   {
     q: "Quanto custa?",
-    a: "O investimento depende do porte e do horizonte. Alinhamos na conversa — sem preço engessado na página.",
+    a: "Depende do porte e do horizonte. Alinhamos na conversa — sem preço engessado na página.",
   },
   {
     q: "Serve para qual tamanho de empresa?",
@@ -90,9 +146,9 @@ function CTA({
   );
 }
 
-function Brand({ href = "/" }: { href?: string }) {
+function Brand() {
   return (
-    <a href={href} className="brand" aria-label="Vilaris — início">
+    <a href="/" className="brand" aria-label="Vilaris — início">
       <img
         src={`${ASSET}/vilaris-logo.png`}
         alt="Vilaris — Gestão e Estratégia"
@@ -112,11 +168,6 @@ export default function VilarisConsultoriaPage() {
       <header className="header">
         <div className="container header-inner">
           <Brand />
-          <nav aria-label="Navegação">
-            <a href="#planos">Planos</a>
-            <a href="#como">Como funciona</a>
-            <a href="#faq">Dúvidas</a>
-          </nav>
           <a href="#conversa" className="header-cta">
             Conversar <ArrowUpRight size={16} />
           </a>
@@ -124,115 +175,129 @@ export default function VilarisConsultoriaPage() {
       </header>
 
       <main id="conteudo">
-        {/* HERO */}
         <section className="cv-hero container" id="inicio">
           <p className="cv-eyebrow">
             <span className="status-dot" />
-            CONSULTORIA FINANCEIRA PARA PME
+            CONSULTORIA FINANCEIRA · PME
           </p>
           <h1>
-            Sua empresa fatura.
+            O faturamento sobe.
             <br />
-            E o dinheiro <em>some?</em>
+            O caixa <em>não acompanha.</em>
           </h1>
           <p className="cv-lead">
-            Pare de apagar incêndio no caixa. A gente organiza margem, dívida e rotina financeira — para você
-            decidir com número, não com feeling.
+            A Vilaris entra na operação financeira da sua empresa para estancar sangrias, deixar a margem
+            visível e transformar o caixa em rotina — não em susto no fim do mês.
           </p>
           <div className="cv-hero-actions">
-            <CTA>Quero conversar sobre meu caixa</CTA>
-            <a className="cv-secondary" href="#planos">
-              Ver os 3 caminhos <ArrowDown size={18} />
-            </a>
+            <CTA>Quero organizar meu caixa</CTA>
           </div>
-          <ul className="cv-trust">
-            <li>Sem compromisso</li>
-            <li>Valor só na conversa</li>
-            <li>3, 6 ou 12 meses</li>
-          </ul>
         </section>
 
-        {/* PROBLEM */}
-        <section className="cv-band cv-band-dark" id="dor">
+        <section className="cv-pain" id="dor">
           <div className="container">
-            <p className="cv-eyebrow light">O problema</p>
-            <h2>
-              Se você se reconhece
-              <br />
-              em alguma destas frases…
-            </h2>
-            <ul className="cv-pain-list">
-              {pains.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-            <p className="cv-band-cta-line">
-              …é exatamente o tipo de empresa que a Vilaris atende.
-            </p>
-            <CTA className="button button-on-dark">Quero sair desse ciclo</CTA>
+            <div className="cv-pain-intro">
+              <p className="cv-eyebrow">Sinal de alerta</p>
+              <h2>
+                Se o dinheiro entra
+                <br />
+                e some no caminho…
+              </h2>
+              <p>
+                Não é falta de esforço. É falta de sistema financeiro. Estes são os sintomas mais comuns das
+                PMEs que nos procuram:
+              </p>
+            </div>
+            <div className="cv-pain-grid">
+              {pains.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <article key={item.title}>
+                    <Icon size={26} strokeWidth={1.4} aria-hidden="true" />
+                    <h3>{item.title}</h3>
+                    <p>{item.text}</p>
+                  </article>
+                );
+              })}
+            </div>
+            <div className="cv-pain-foot">
+              <p>Se isso soa familiar, o próximo passo é uma conversa objetiva sobre o seu caixa.</p>
+              <CTA>Quero sair desse ciclo</CTA>
+            </div>
           </div>
         </section>
 
-        {/* RESULTS */}
-        <section className="cv-section container" id="resultado">
-          <p className="cv-eyebrow">O que muda</p>
-          <h2>
-            Clareza de caixa.
-            <br />
-            <em>Decisão com número.</em>
-          </h2>
-          <div className="cv-result-grid">
-            {results.map((item) => (
-              <article key={item}>
-                <Check size={22} strokeWidth={1.5} aria-hidden="true" />
-                <p>{item}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* HOW */}
-        <section className="cv-section cv-section-soft" id="como">
+        <section className="cv-results" id="resultado">
           <div className="container">
-            <p className="cv-eyebrow">Como funciona</p>
+            <p className="cv-eyebrow light">O que você passa a ter</p>
             <h2>
-              Simples.
+              Controle real.
               <br />
-              Direto ao ponto.
+              <em>Não relatório decorativo.</em>
             </h2>
-            <div className="cv-steps">
-              {steps.map((s) => (
-                <article key={s.n}>
-                  <span>{s.n}</span>
-                  <h3>{s.title}</h3>
-                  <p>{s.text}</p>
+            <div className="cv-results-grid">
+              {results.map((item) => (
+                <article key={item.num}>
+                  <span>{item.num}</span>
+                  <h3>{item.title}</h3>
+                  <p>{item.text}</p>
                 </article>
               ))}
             </div>
-            <div className="cv-how-note">
-              <p>
-                <strong>Encontros + canal direto.</strong> Nos primeiros 3 meses, 2 encontros por mês. Depois, 1 a
-                2 focados em fechamento. WhatsApp/Slack com resposta em horário comercial para decisões críticas.
-              </p>
-              <p>
-                <strong>BPO e contabilidade continuam.</strong> Eles lançam. Você (com a Vilaris) define as regras
-                gerenciais.
-              </p>
+          </div>
+        </section>
+
+        <section className="cv-how" id="como">
+          <div className="container">
+            <p className="cv-eyebrow">Como funciona</p>
+            <h2>
+              Três passos.
+              <br />
+              Sem teatro.
+            </h2>
+            <div className="cv-how-track">
+              {steps.map((s, i) => {
+                const Icon = s.icon;
+                return (
+                  <article key={s.n}>
+                    <div className="cv-how-icon">
+                      <Icon size={28} strokeWidth={1.35} aria-hidden="true" />
+                      <span>{s.n}</span>
+                    </div>
+                    <h3>{s.title}</h3>
+                    <p>{s.text}</p>
+                    {i < steps.length - 1 ? <div className="cv-how-line" aria-hidden="true" /> : null}
+                  </article>
+                );
+              })}
+            </div>
+            <div className="cv-how-cards">
+              <article>
+                <h3>Encontros + canal direto</h3>
+                <p>
+                  2 encontros/mês nos primeiros 3 meses. Depois, 1 a 2 focados em fechamento. WhatsApp/Slack
+                  para decisões críticas em horário comercial.
+                </p>
+              </article>
+              <article>
+                <h3>Seu BPO continua</h3>
+                <p>
+                  Contabilidade e BPO lançam. A Vilaris define plano de contas gerencial e as regras — para o
+                  número fazer sentido.
+                </p>
+              </article>
             </div>
           </div>
         </section>
 
-        {/* PLANS */}
         <section className="cv-section container" id="planos">
-          <p className="cv-eyebrow">Escolha o horizonte</p>
+          <p className="cv-eyebrow">Horizontes</p>
           <h2>
             Três caminhos.
             <br />
             Um método.
           </h2>
-          <p className="cv-section-lead">
-            Começa no saneamento e sobe conforme a empresa precisa — sem preço na página.
-          </p>
+          <p className="cv-section-lead">Do saneamento à governança. O valor entra na conversa.</p>
           <div className="cv-plans">
             {plans.map((p) => (
               <article key={p.months} className={p.featured ? "featured" : undefined}>
@@ -257,7 +322,6 @@ export default function VilarisConsultoriaPage() {
           </div>
         </section>
 
-        {/* FAQ */}
         <section className="cv-section cv-section-soft" id="faq">
           <div className="container cv-faq">
             <p className="cv-eyebrow">Dúvidas</p>
@@ -273,31 +337,31 @@ export default function VilarisConsultoriaPage() {
           </div>
         </section>
 
-        {/* FORM */}
-        <section className="contact section cv-contact" id="conversa">
-          <div className="container contact-grid">
-            <div className="contact-copy">
-              <p className="cv-eyebrow">
+        <section className="cv-form-band" id="conversa">
+          <div className="container cv-form-layout">
+            <div className="cv-form-copy-block">
+              <p className="cv-eyebrow light">
                 <span className="status-dot" />
-                PRÓXIMO PASSO
+                COMECE AQUI
               </p>
               <h2>
-                Vamos olhar
+                Pronto para
                 <br />
-                <em>seu caixa?</em>
+                <em>enxergar o caixa?</em>
               </h2>
-              <p className="cv-form-copy">
-                Deixe nome e empresa. Entramos em contato para entender o momento e indicar o horizonte certo.
+              <p>
+                Deixe nome e empresa. Em horário comercial, a Vilaris retorna para entender o momento e indicar
+                o horizonte certo — 3, 6 ou 12 meses.
               </p>
-              <ul className="cv-form-bullets">
+              <ul>
                 <li>
-                  <Check size={18} aria-hidden="true" /> Sem compromisso
+                  <Check size={18} aria-hidden="true" /> Conversa objetiva, sem compromisso
                 </li>
                 <li>
-                  <Check size={18} aria-hidden="true" /> Valor só na conversa
+                  <Check size={18} aria-hidden="true" /> Investimento alinhado na conversa
                 </li>
                 <li>
-                  <Check size={18} aria-hidden="true" /> Resposta em horário comercial
+                  <Check size={18} aria-hidden="true" /> Sem troca obrigatória de BPO
                 </li>
               </ul>
             </div>

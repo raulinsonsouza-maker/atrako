@@ -13,7 +13,7 @@ export const VILARIS_MOMENT_OPTIONS = [
 ] as const;
 
 export const VILARIS_LP_FORM = {
-  name: "Vilaris — Mentoria de Carreira",
+  name: "Institucional",
   slug: "vilaris-lp",
   source: "lp",
   steps: [
@@ -46,7 +46,7 @@ export const VILARIS_LP_FORM = {
 
 /** Spec do CaptureForm da LP de consultoria financeira PME. */
 export const VILARIS_CONSULTORIA_LP_FORM = {
-  name: "Vilaris — Consultoria Financeira",
+  name: "Consultoria",
   slug: "vilaris-consultoria-lp",
   source: "lp",
   steps: [

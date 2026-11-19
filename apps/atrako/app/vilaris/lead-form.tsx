@@ -51,7 +51,7 @@ export default function LeadForm() {
           answers,
           metaEventId,
           requestId: requestId.current,
-          ...collectClientAttribution({ formSlug: FORM_SLUG, pageSlug: "vilaris" }),
+          ...collectClientAttribution({ formSlug: FORM_SLUG, pageSlug: "vilaris-institucional" }),
         }),
       });
       const result = (await response.json().catch(() => ({}))) as { error?: string };

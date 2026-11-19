@@ -2,6 +2,23 @@
   --food-red: var(--primary);
 }
 
+/* Vilaris CRM — cor do mosaic-stat-secondary da LP (#435f76) + logo maior */
+.food-sign.atd-sign-vilaris {
+  --food-red: #435f76;
+}
+
+.food-sign.atd-sign-vilaris .food-sign-logo {
+  height: 88px;
+  max-width: 440px;
+}
+
+@media (max-width: 640px) {
+  .food-sign.atd-sign-vilaris .food-sign-logo {
+    height: 72px;
+    max-width: 360px;
+  }
+}
+
 .atd-shell {
   height: 100dvh;
   display: flex;

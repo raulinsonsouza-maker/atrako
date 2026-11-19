@@ -17,6 +17,7 @@ import {
   periodSentence,
   type InicioLead,
 } from "@/lib/atendimento/inicio-view";
+import { listWorkspaceLpOrigins } from "@/lib/atendimento/lp-origins";
 
 const CONTACT_KEYS = new Set(["name", "email", "phone", "wa_opt_in"]);
 const MEETING_STATES = new Set(["meeting_requested", "human_handoff"]);
@@ -45,7 +46,11 @@ async function loadLeads(workspaceId: string, p: Period, roleById: Map<string, s
       answered: Object.keys(q.answers).some((k) => !CONTACT_KEYS.has(k)),
       priority: q.priority === "A" || q.priority === "B" || q.priority === "C" ? q.priority : null,
       meeting: MEETING_STATES.has(q.currentState || ""),
-      originLabel: originLabel(row.source, text(meta.utm_source)),
+      originLabel: originLabel(row.source, text(meta.utm_source), {
+        pageSlug: text(meta.pageSlug),
+        formSlug: text(meta.formSlug),
+        formName: text(meta.formName),
+      }),
     };
     return lead;
   });
@@ -86,8 +91,20 @@ export async function getInicio(workspaceId: string, period: Period) {
   const wonStageIds = pipeline.stages.filter((s) => roleById.get(s.id) === "WON").map((s) => s.id);
   const now = new Date();
 
-  const [leads, prevLeads, wonNow, wonPrev, revNow, revPrev, spendNow, spendPrev, campaignSpend, overview, pending] =
-    await Promise.all([
+  const [
+    leads,
+    prevLeads,
+    wonNow,
+    wonPrev,
+    revNow,
+    revPrev,
+    spendNow,
+    spendPrev,
+    campaignSpend,
+    overview,
+    pending,
+    lpOrigins,
+  ] = await Promise.all([
       loadLeads(workspaceId, period, roleById),
       loadLeads(workspaceId, prev, roleById),
       wonCount(workspaceId, period, wonStageIds),
@@ -107,6 +124,7 @@ export async function getInicio(workspaceId: string, period: Period) {
         _sum: { amountCents: true },
         _count: true,
       }),
+      listWorkspaceLpOrigins(workspaceId),
     ]);
 
   const current = periodResult({ leads, revenue: revNow, spend: spendNow, won: wonNow });
@@ -136,7 +154,7 @@ export async function getInicio(workspaceId: string, period: Period) {
     summary: periodSentence(current),
     funnel,
     drop: biggestDrop(funnel),
-    origins: buildOrigins(leads, spendByCampaign),
+    origins: buildOrigins(leads, spendByCampaign, 8, lpOrigins),
   };
 }
 

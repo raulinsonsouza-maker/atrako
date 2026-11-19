@@ -1,5 +1,7 @@
 /** Cálculos puros do Início da área do cliente: funil de conversão, origens e resumo do período. */
 
+import { friendlyLpLabel } from "@/lib/atendimento/lp-origins";
+
 export type InicioLead = {
   status: string;
   stageRole: string | null;
@@ -75,8 +77,21 @@ export function biggestDrop(funnel: FunnelStep[]) {
   return worst;
 }
 
-export function originLabel(source: string | null, utmSource: string | null) {
+export function originLabel(
+  source: string | null,
+  utmSource: string | null,
+  extras?: { pageSlug?: string | null; formSlug?: string | null; formName?: string | null },
+) {
+  const lp = friendlyLpLabel({
+    source,
+    pageSlug: extras?.pageSlug,
+    formSlug: extras?.formSlug,
+    formName: extras?.formName,
+  });
+  // LP tem prioridade sobre utm_source genérico (facebook/instagram) — a tabela é “de onde veio o lead”.
+  if (lp && (source || "").toLowerCase().startsWith("lp:")) return lp;
   if (utmSource?.trim()) return utmSource.trim().toLowerCase();
+  if (lp) return lp;
   const s = (source || "").toLowerCase();
   if (s.endsWith("-lp")) return "Landing page";
   if (s.endsWith("-qualify")) return "Formulário passo a passo";
@@ -90,8 +105,24 @@ export function buildOrigins(
   leads: Array<InicioLead & { originLabel: string }>,
   spendByCampaign: Map<string, number>,
   limit = 8,
+  /** LPs do workspace (aparecem mesmo com 0 leads). */
+  seededOrigins: Array<{ key: string; label: string }> = [],
 ): OriginRow[] {
   const rows = new Map<string, OriginRow>();
+  for (const seed of seededOrigins) {
+    const key = seed.label.trim().toLowerCase();
+    if (!key || rows.has(key)) continue;
+    rows.set(key, {
+      key,
+      label: seed.label.trim(),
+      leads: 0,
+      hot: 0,
+      qualified: 0,
+      won: 0,
+      spend: null,
+      cpl: null,
+    });
+  }
   for (const lead of leads) {
     const label = lead.campaign?.trim() || lead.originLabel;
     const key = label.toLowerCase();
@@ -113,8 +144,8 @@ export function buildOrigins(
   }
   return [...rows.values()]
     .map((r) => ({ ...r, cpl: r.spend != null && r.leads > 0 ? Math.round((r.spend / r.leads) * 100) / 100 : null }))
-    .sort((a, b) => b.leads - a.leads || (b.spend ?? 0) - (a.spend ?? 0))
-    .slice(0, limit);
+    .sort((a, b) => b.leads - a.leads || (b.spend ?? 0) - (a.spend ?? 0) || a.label.localeCompare(b.label, "pt-BR"))
+    .slice(0, Math.max(limit, seededOrigins.length));
 }
 
 export function periodResult(input: {

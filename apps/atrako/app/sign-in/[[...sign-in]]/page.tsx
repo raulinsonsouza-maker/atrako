@@ -95,9 +95,12 @@ function SignInForm() {
 
   const foodEntry = nextParam === "/food" || nextParam?.startsWith("/food/") === true;
   const brandedEntry = foodEntry || areaEntry;
+  const isVilaris =
+    (lpBrand ?? "").toLowerCase() === "vilaris" ||
+    (lpLogo ?? "").includes("/lp/vilaris/");
   const branded = areaEntry
     ? {
-        className: "food-sign atd-sign",
+        className: `food-sign atd-sign${isVilaris ? " atd-sign-vilaris" : ""}`,
         brand: lpBrand ?? "Atendimento",
         kicker: "Área de atendimento",
         title: "Leads, conversas e o funil da equipe.",

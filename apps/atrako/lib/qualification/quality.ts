@@ -4,6 +4,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { friendlyLpLabel } from "@/lib/atendimento/lp-origins";
 import { CHOICE_MAP, resolveChoice } from "@/lib/qualification/choices";
 import { FIELD_DEFS, filledPercent, type QualifyFieldKey } from "@/lib/qualification/fields";
 import { parseLeadQualification } from "@/lib/qualification/store";
@@ -55,8 +56,14 @@ const MAX_LEADS = 5000;
 const TOP = 6;
 
 function originLabel(source: string | null, metadata: Record<string, unknown>) {
+  const pageSlug = typeof metadata.pageSlug === "string" ? metadata.pageSlug : null;
+  const formSlug = typeof metadata.formSlug === "string" ? metadata.formSlug : null;
+  const formName = typeof metadata.formName === "string" ? metadata.formName : null;
+  const lp = friendlyLpLabel({ source, pageSlug, formSlug, formName });
+  if (lp && (source || "").toLowerCase().startsWith("lp:")) return lp;
   const utm = typeof metadata.utm_source === "string" ? metadata.utm_source.trim() : "";
   if (utm) return utm.toLowerCase();
+  if (lp) return lp;
   const s = (source || "").toLowerCase();
   if (s.endsWith("-lp")) return "Landing page";
   if (s.endsWith("-qualify")) return "Formulário passo a passo";

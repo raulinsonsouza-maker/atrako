@@ -9,6 +9,7 @@ import { Prisma } from "@/lib/generated/prisma";
 import { loadEmailTheme, type EmailTone } from "@/lib/flows/theme";
 import type { EmailBlock, EmailContent, WhatsAppContent } from "@/lib/flows/types";
 import { FRANCHISE_PLAYBOOKS } from "@/lib/flows/playbooks-franchise";
+import { VILARIS_PLAYBOOKS } from "@/lib/flows/playbooks-vilaris";
 
 const H = 60;
 const D = 24 * H;
@@ -634,6 +635,7 @@ export function playbookByKey(key: string | null | undefined) {
     INSIDE_SALES_PLAYBOOKS.find((p) => p.key === key) ??
     STAY_PLAYBOOKS.find((p) => p.key === key) ??
     FRANCHISE_PLAYBOOKS.find((p) => p.key === key) ??
+    VILARIS_PLAYBOOKS.find((p) => p.key === key) ??
     null
   );
 }
@@ -865,14 +867,15 @@ export const STAY_PLAYBOOKS: PlaybookDef[] = [
 
 export function playbooksForEdition(edition: string | null | undefined): PlaybookDef[] {
   if (edition === "stay") return STAY_PLAYBOOKS;
-  if (edition === "inside_sales") return INSIDE_SALES_PLAYBOOKS;
+  if (edition === "inside_sales") return [...INSIDE_SALES_PLAYBOOKS, ...FRANCHISE_PLAYBOOKS, ...VILARIS_PLAYBOOKS];
   if (edition === "food" || edition === "ecommerce") return PLAYBOOKS;
   return [...PLAYBOOKS, ...INSIDE_SALES_PLAYBOOKS, ...STAY_PLAYBOOKS];
 }
 
 export function flowKeysForPack(pack: string | null | undefined): string[] | null {
   if (pack === "stay") return STAY_PLAYBOOKS.map((p) => p.key);
-  if (pack === "inside_sales") return [...INSIDE_SALES_PLAYBOOKS, ...FRANCHISE_PLAYBOOKS].map((p) => p.key);
+  if (pack === "inside_sales")
+    return [...INSIDE_SALES_PLAYBOOKS, ...FRANCHISE_PLAYBOOKS, ...VILARIS_PLAYBOOKS].map((p) => p.key);
   if (pack === "food" || pack === "ecommerce") return PLAYBOOKS.map((p) => p.key);
   return null;
 }

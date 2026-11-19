@@ -70,6 +70,37 @@ export async function listResendDomains(apiKey: string) {
   return r.data ?? [];
 }
 
+export type ResendDomainRecord = {
+  record: string;
+  name: string;
+  type: string;
+  value: string;
+  ttl?: string;
+  status?: string;
+  priority?: number;
+};
+
+export type ResendDomainDetail = ResendDomain & {
+  records?: ResendDomainRecord[];
+};
+
+export async function createResendDomain(apiKey: string, name: string) {
+  return resendFetch<ResendDomainDetail>(apiKey, "/domains", {
+    method: "POST",
+    body: JSON.stringify({ name }),
+  });
+}
+
+export async function getResendDomain(apiKey: string, domainId: string) {
+  return resendFetch<ResendDomainDetail>(apiKey, `/domains/${domainId}`);
+}
+
+export async function verifyResendDomain(apiKey: string, domainId: string) {
+  return resendFetch<ResendDomainDetail>(apiKey, `/domains/${domainId}/verify`, {
+    method: "POST",
+  });
+}
+
 /** Clique fica com o nosso /r/{token}; Resend só mede abertura e entrega. */
 export async function configureResendDomainTracking(apiKey: string, domainId: string) {
   return resendFetch(apiKey, `/domains/${domainId}`, {

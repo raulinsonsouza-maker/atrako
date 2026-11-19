@@ -301,5 +301,35 @@ export async function completeCaptureForm(input: {
     console.warn("[capture-form] team email", err instanceof Error ? err.message : err),
   );
 
+  // Nutrição 7 dias — LP consultoria Vilaris (substitui o welcome genérico).
+  if (lead.contactId && (form.slug === "vilaris-consultoria-lp" || pageSlug === "vilaris-consultoria")) {
+    try {
+      const { enrollContact, exitEnrollments } = await import("@/lib/flows/engine");
+      const {
+        ensureVilarisConsultoriaFlows,
+        VILARIS_CONSULTORIA_LP_URL,
+      } = await import("@/lib/flows/playbooks-vilaris");
+      await ensureVilarisConsultoriaFlows(form.clienteId);
+      await exitEnrollments({
+        clienteId: form.clienteId,
+        contactId: lead.contactId,
+        reason: "vilaris_consultoria_nurture",
+        triggers: ["lead_welcome"],
+      });
+      await enrollContact({
+        clienteId: form.clienteId,
+        trigger: "vilaris_consultoria_nurture",
+        contactId: lead.contactId,
+        leadId: lead.id,
+        refType: "lead",
+        refId: lead.id,
+        dedupeKey: `lead:${lead.id}`,
+        context: { destination: VILARIS_CONSULTORIA_LP_URL },
+      });
+    } catch (err) {
+      console.warn("[capture-form] vilaris nurture", err instanceof Error ? err.message : err);
+    }
+  }
+
   return { leadId: lead.id, formId: form.id };
 }

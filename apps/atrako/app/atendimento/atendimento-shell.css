@@ -71,6 +71,18 @@
   margin-bottom: 3px;
 }
 
+/* Vilaris — wordmark mais legível na sidebar */
+.atd-logo[src*="/lp/vilaris/"] {
+  height: 52px;
+  max-width: 200px;
+  margin-bottom: 0;
+}
+
+.atd-side-brand:has(.atd-logo[src*="/lp/vilaris/"]) {
+  height: 84px;
+  align-items: center;
+}
+
 .atd-mark {
   display: grid;
   place-items: center;
@@ -229,5 +241,9 @@
   .atd-mobile-bar .atd-logo {
     height: 22px;
     margin: 0;
+  }
+  .atd-mobile-bar .atd-logo[src*="/lp/vilaris/"] {
+    height: 36px;
+    max-width: 160px;
   }
 }

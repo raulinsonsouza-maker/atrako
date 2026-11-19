@@ -437,3 +437,129 @@ export async function ensureInstagramFromWorkspace(workspaceId: string) {
 
   return { connected: 1 };
 }
+
+/**
+ * Conexão manual via API (sem OAuth popup): Page Access Token + Page ID + IG User ID.
+ * Valida no Graph que o token enxerga a Página e o Instagram Business Account.
+ */
+export async function connectInstagramByPageToken(input: {
+  workspaceId: string;
+  pageAccessToken: string;
+  pageId: string;
+  igUserId: string;
+  workspaceName?: string;
+}): Promise<{ connected: number; igUsername: string | null; pageName: string | null }> {
+  const token = input.pageAccessToken.trim();
+  const pageId = input.pageId.trim();
+  const igUserId = input.igUserId.trim();
+  if (!token || !pageId || !igUserId) {
+    throw new Error("pageAccessToken, pageId e igUserId são obrigatórios");
+  }
+
+  const pageUrl = new URL(`${FB_GRAPH}/${pageId}`);
+  pageUrl.searchParams.set("fields", "id,name,access_token,instagram_business_account{id,username}");
+  pageUrl.searchParams.set("access_token", token);
+  const pageRes = await fetch(pageUrl.toString(), { cache: "no-store" });
+  const pageJson = (await pageRes.json().catch(() => ({}))) as {
+    id?: string;
+    name?: string;
+    access_token?: string;
+    instagram_business_account?: { id?: string; username?: string };
+    error?: { message?: string };
+  };
+  if (!pageRes.ok) {
+    throw new Error(pageJson.error?.message || "Token sem acesso à Página informada");
+  }
+
+  const linkedIg = pageJson.instagram_business_account?.id?.trim();
+  if (linkedIg && linkedIg !== igUserId) {
+    throw new Error(
+      `A Página está ligada ao Instagram ${linkedIg}, não ao ${igUserId}. Ajuste o igUserId ou a Página.`,
+    );
+  }
+
+  const pageToken = pageJson.access_token?.trim() || token;
+  const profile = await instagramProfile(igUserId, pageToken);
+  const igUsername = profile?.username ?? pageJson.instagram_business_account?.username ?? null;
+  const pageName = pageJson.name ?? null;
+
+  const { prisma } = await import("@/lib/db");
+  const existingConta = await prisma.conta.findFirst({
+    where: { clienteId: input.workspaceId, plataforma: "INSTAGRAM" },
+  });
+  if (existingConta) {
+    await prisma.conta.update({
+      where: { id: existingConta.id },
+      data: {
+        accountIdPlataforma: igUserId,
+        nomeConta: igUsername ? `@${igUsername}` : "Instagram",
+      },
+    });
+  } else {
+    await prisma.conta.create({
+      data: {
+        clienteId: input.workspaceId,
+        plataforma: "INSTAGRAM",
+        accountIdPlataforma: igUserId,
+        nomeConta: igUsername ? `@${igUsername}` : "Instagram",
+      },
+    });
+  }
+
+  await ensureInstagramAppWebhook();
+  const pageOk = await subscribeEdge(pageId, pageToken, PAGE_FIELDS);
+  const igOk = await subscribeEdge(igUserId, pageToken, IG_FIELDS);
+  const socialOrg = await ensureWorkspaceSocialOrg(input.workspaceId, input.workspaceName);
+
+  await upsertWorkspaceConnection({
+    clienteId: input.workspaceId,
+    provider: "INSTAGRAM",
+    label: igUsername ? `@${igUsername}` : "Instagram",
+    credentials: {
+      accessToken: pageToken,
+      pageId,
+      igUserId,
+      tokenType: "PAGE",
+      expiresAt: null,
+    },
+    metadata: {
+      connectedAt: new Date().toISOString(),
+      source: "API_TOKEN",
+      pageId,
+      pageName,
+      igUserId,
+      igUsername,
+    },
+    status: "ACTIVE",
+  });
+
+  await socialPrisma.igAccount.upsert({
+    where: {
+      organizationId_igUserId: { organizationId: socialOrg.id, igUserId },
+    },
+    create: {
+      organizationId: socialOrg.id,
+      pageId,
+      pageName,
+      accessToken: pageToken,
+      igUserId,
+      igUsername,
+      status: "CONNECTED",
+      messagesEnabled: true,
+      scopes: PAGE_SCOPES,
+      webhookSubscribedAt: webhookSubscribedAt(pageId, pageOk, igOk),
+    },
+    update: {
+      pageId,
+      pageName,
+      accessToken: pageToken,
+      igUsername,
+      status: "CONNECTED",
+      messagesEnabled: true,
+      scopes: PAGE_SCOPES,
+      webhookSubscribedAt: webhookSubscribedAt(pageId, pageOk, igOk),
+    },
+  });
+
+  return { connected: 1, igUsername, pageName };
+}

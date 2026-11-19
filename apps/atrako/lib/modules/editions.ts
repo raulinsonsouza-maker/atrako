@@ -43,7 +43,14 @@ const INSIDE_SALES_CHANNELS = ["geral", "meta", "google", "linkedin", "relaciona
 const FOOD_CHANNELS = ["geral", "meta", "google", "relacionamento"] as const;
 const STAY_CHANNELS = ["geral", "relacionamento"] as const;
 
-const INSIDE_SALES_CONNECTORS = ["META_ADS", "GOOGLE_ADS", "LINKEDIN_ADS", "WHATSAPP", "RESEND"] as const;
+const INSIDE_SALES_CONNECTORS = [
+  "META_ADS",
+  "INSTAGRAM",
+  "GOOGLE_ADS",
+  "LINKEDIN_ADS",
+  "WHATSAPP",
+  "RESEND",
+] as const;
 const FOOD_CONNECTORS = ["WHATSAPP", "MERCADO_PAGO", "META_ADS", "GOOGLE_ADS", "RESEND"] as const;
 const STAY_CONNECTORS = ["WHATSAPP", "MERCADO_PAGO", "RESEND"] as const;
 

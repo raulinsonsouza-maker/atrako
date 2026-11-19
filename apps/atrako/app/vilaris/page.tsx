@@ -76,6 +76,7 @@ export default function VilarisPage() {
             <a href="#mentoria">A mentoria</a>
             <a href="#jornada">Como funciona</a>
             <a href="#mentores">Os mentores</a>
+            <a href="#entregas">Entregas</a>
           </nav>
           <a href="#conversa" className="header-cta">
             Vamos conversar <ArrowUpRight size={16} />
@@ -456,6 +457,86 @@ export default function VilarisPage() {
           </div>
         </section>
 
+        <section className="offers section" id="entregas">
+          <div className="container">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">ENTREGAS VILARIS</p>
+                <h2>
+                  Pessoas e empresas.
+                  <br />
+                  <em>Dois caminhos. Um método.</em>
+                </h2>
+              </div>
+              <p>
+                Clareza para quem decide carreira.
+                <br />
+                Controle para quem decide o caixa.
+              </p>
+            </div>
+            <div className="offers-grid">
+              <article className="offer-card">
+                <span className="offer-tag">01 · PESSOAS</span>
+                <h3>
+                  Mentoria
+                  <br />
+                  de carreira
+                </h3>
+                <p>
+                  Direção profissional, reposicionamento e crescimento corporativo — com método, não no
+                  improviso.
+                </p>
+                <ul>
+                  <li>
+                    <Check size={16} />
+                    ≈ 3 meses · 6 encontros
+                  </li>
+                  <li>
+                    <Check size={16} />
+                    Grupo + individuais
+                  </li>
+                  <li>
+                    <Check size={16} />
+                    Decisão com estratégia
+                  </li>
+                </ul>
+                <a href="#conversa">
+                  Quero avaliar minha carreira <ArrowUpRight size={19} />
+                </a>
+              </article>
+              <article className="offer-card offer-card-alt">
+                <span className="offer-tag">02 · EMPRESAS</span>
+                <h3>
+                  Consultoria
+                  <br />
+                  financeira
+                </h3>
+                <p>
+                  Para PMEs que faturam e o caixa não acompanha: margem, dívida e rotina financeira com
+                  número — não com feeling.
+                </p>
+                <ul>
+                  <li>
+                    <Check size={16} />
+                    Horizontes 3, 6 ou 12 meses
+                  </li>
+                  <li>
+                    <Check size={16} />
+                    Caixa, margem e dívida
+                  </li>
+                  <li>
+                    <Check size={16} />
+                    Seu BPO continua
+                  </li>
+                </ul>
+                <a href="/consultoria">
+                  Quero organizar o caixa <ArrowUpRight size={19} />
+                </a>
+              </article>
+            </div>
+          </div>
+        </section>
+
         <section className="section container investment">
           <div>
             <p className="eyebrow">INVISTA NO SEU PRÓXIMO CAPÍTULO</p>
@@ -547,7 +628,11 @@ export default function VilarisPage() {
         </div>
         <div className="container footer-bottom">
           <span>© 2026 Vilaris. Todos os direitos reservados.</span>
-          <span>*Duração aproximada do programa: 3 meses.</span>
+          <span>
+            <a href="/consultoria">Consultoria financeira</a>
+            <span aria-hidden="true"> · </span>
+            *Duração aproximada da mentoria: 3 meses.
+          </span>
         </div>
       </footer>
     </>

@@ -589,6 +589,31 @@ html:has(.vilaris-lp){scroll-behavior:smooth;scroll-padding-top:95px}
   .button{font-size:13px;gap:12px}
 }
 
+/* ── Entregas (home: mentoria + consultoria) ── */
+.offers{background:#edf0f3;border-top:1px solid var(--line)}
+.offers .section-heading{align-items:start;margin-bottom:48px}
+.offers-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.offer-card{background:var(--paper);padding:40px 36px;min-height:420px;display:flex;flex-direction:column;border-right:1px solid var(--line)}
+.offer-card-alt{background:var(--brand);color:var(--paper);border-right:0}
+.offer-tag{font-size:10px;letter-spacing:.14em;color:var(--muted);margin-bottom:28px;display:block}
+.offer-card-alt .offer-tag{color:#c5d8e6}
+.offer-card h3{font-size:clamp(28px,3vw,38px);line-height:1.15;margin-bottom:18px}
+.offer-card>p{font-size:14px;line-height:1.7;color:var(--muted);max-width:420px}
+.offer-card-alt>p{color:#c7d3dd}
+.offer-card ul{list-style:none;margin:28px 0 32px;padding:0;display:grid;gap:12px;font-size:13px}
+.offer-card li{display:flex;align-items:center;gap:10px}
+.offer-card-alt li svg{color:#c9dfef}
+.offer-card>a{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:14px;font-size:13px;font-weight:500;border-top:1px solid var(--line);padding-top:22px}
+.offer-card-alt>a{border-color:#ffffff30}
+.footer-bottom a{text-decoration:underline;text-underline-offset:3px}
+@media(max-width:760px){
+  .offers-grid{grid-template-columns:1fr}
+  .offer-card{border-right:0;border-bottom:1px solid var(--line);min-height:0;padding:32px 24px}
+  .offer-card-alt{border-bottom:0}
+  .offer-card h3{font-size:30px}
+  .offer-card>p,.offer-card ul,.offer-card>a{font-size:14px}
+}
+
 /* ── Consultoria LP (conversão) ── */
 .consultoria-lp{font-size:17px;line-height:1.6}
 .consultoria-lp .header-inner{justify-content:space-between}

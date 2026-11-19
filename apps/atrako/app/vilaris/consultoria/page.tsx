@@ -148,7 +148,7 @@ function CTA({
 
 function Brand() {
   return (
-    <a href="/" className="brand" aria-label="Vilaris — início">
+    <a href="/consultoria" className="brand" aria-label="Vilaris Consultoria — início">
       <img
         src={`${ASSET}/vilaris-logo.png`}
         alt="Vilaris — Gestão e Estratégia"

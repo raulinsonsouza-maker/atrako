@@ -114,6 +114,18 @@ async function main() {
     },
   };
 
+  const PIXEL_ID = process.env.VILARIS_META_PIXEL_ID?.trim() || "1351991003606690";
+  const CAPI_TOKEN = process.env.VILARIS_META_CAPI_TOKEN?.trim() || "";
+  const existingTracking =
+    settings?.tracking && typeof settings.tracking === "object" && !Array.isArray(settings.tracking)
+      ? (settings.tracking as Record<string, unknown>)
+      : {};
+  const tracking: Record<string, unknown> = {
+    ...existingTracking,
+    pixelId: PIXEL_ID,
+  };
+  if (CAPI_TOKEN) tracking.capiToken = CAPI_TOKEN;
+
   await prisma.workspaceSettings.upsert({
     where: { clienteId: cliente.id },
     create: {
@@ -121,15 +133,18 @@ async function main() {
       primaryColor: PRIMARY,
       logoOnDarkUrl: LOGO_ON_DARK,
       messagingPrefs: messagingPrefs as Prisma.InputJsonValue,
+      tracking: tracking as Prisma.InputJsonValue,
     },
     update: {
       primaryColor: PRIMARY,
       logoOnDarkUrl: LOGO_ON_DARK,
       messagingPrefs: messagingPrefs as Prisma.InputJsonValue,
+      tracking: tracking as Prisma.InputJsonValue,
     },
   });
 
   console.log("OK — sem playbook de franquia/COF.");
+  console.log("Tracking pixel:", PIXEL_ID, CAPI_TOKEN ? "+ CAPI" : "(CAPI via VILARIS_META_CAPI_TOKEN)");
   console.log("LP mentoria:     https://vilarisgestao.com.br/");
   console.log("LP consultoria:  https://vilarisgestao.com.br/consultoria");
   console.log("CRM:             https://atrako.com.br/vilaris/crm");

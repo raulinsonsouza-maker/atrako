@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import { ArrowUpRight, CheckCircle2, Loader2 } from "lucide-react";
 import { VILARIS_MOMENT_OPTIONS } from "@/lib/vilaris/forms";
+import { collectClientAttribution } from "@/lib/criar/lp-attribution";
+import { newLeadEventId, trackFormLead } from "@/lib/criar/form-tracking";
 
 const FORM_SLUG = "vilaris-lp";
 
@@ -37,6 +39,8 @@ export default function LeadForm() {
       { fieldId: "challenge", value: (data.challenge ?? "").trim() },
     ];
 
+    const metaEventId = newLeadEventId();
+
     try {
       const response = await fetch("/api/atrako/forms", {
         method: "POST",
@@ -45,13 +49,14 @@ export default function LeadForm() {
           action: "complete",
           slug: FORM_SLUG,
           answers,
-          pageSlug: "vilaris",
-          pageUrl: typeof window !== "undefined" ? window.location.href : "https://vilarisgestao.com.br",
+          metaEventId,
           requestId: requestId.current,
+          ...collectClientAttribution({ formSlug: FORM_SLUG, pageSlug: "vilaris" }),
         }),
       });
       const result = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) throw new Error(result.error || "Não foi possível enviar. Tente novamente.");
+      trackFormLead(metaEventId, "Mentoria Vilaris", FORM_SLUG);
       setState("success");
     } catch (error) {
       setState("error");

@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react";
 import { ArrowUpRight, CheckCircle2, Loader2 } from "lucide-react";
+import { collectClientAttribution } from "@/lib/criar/lp-attribution";
+import { newLeadEventId, trackFormLead } from "@/lib/criar/form-tracking";
 
 const FORM_SLUG = "vilaris-consultoria-lp";
 
@@ -33,6 +35,8 @@ export default function ConsultoriaLeadForm() {
       { fieldId: "company", value: (data.company ?? "").trim() },
     ];
 
+    const metaEventId = newLeadEventId();
+
     try {
       const response = await fetch("/api/atrako/forms", {
         method: "POST",
@@ -41,16 +45,14 @@ export default function ConsultoriaLeadForm() {
           action: "complete",
           slug: FORM_SLUG,
           answers,
-          pageSlug: "vilaris-consultoria",
-          pageUrl:
-            typeof window !== "undefined"
-              ? window.location.href
-              : "https://vilarisgestao.com.br/consultoria",
+          metaEventId,
           requestId: requestId.current,
+          ...collectClientAttribution({ formSlug: FORM_SLUG, pageSlug: "vilaris-consultoria" }),
         }),
       });
       const result = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) throw new Error(result.error || "Não foi possível enviar. Tente novamente.");
+      trackFormLead(metaEventId, "Consultoria Vilaris", FORM_SLUG);
       setState("success");
     } catch (error) {
       setState("error");

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import VilarisTracking from "./vilaris-tracking";
 import "./vilaris.css";
 
 export const metadata: Metadata = {
@@ -13,5 +14,10 @@ export const metadata: Metadata = {
 };
 
 export default function VilarisLayout({ children }: { children: ReactNode }) {
-  return <div className="vilaris-lp">{children}</div>;
+  return (
+    <div className="vilaris-lp">
+      <VilarisTracking />
+      {children}
+    </div>
+  );
 }

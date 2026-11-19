@@ -56,7 +56,13 @@ export default function LeadForm() {
       });
       const result = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) throw new Error(result.error || "Não foi possível enviar. Tente novamente.");
-      trackFormLead(metaEventId, "Mentoria Vilaris", FORM_SLUG);
+      trackFormLead(metaEventId, "Mentoria Vilaris", FORM_SLUG, {
+        fullName: (data.name ?? "").trim(),
+        user: {
+          email: (data.email ?? "").trim(),
+          phone: (data.phone ?? "").trim(),
+        },
+      });
       setState("success");
     } catch (error) {
       setState("error");

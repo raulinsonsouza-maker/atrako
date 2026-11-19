@@ -52,7 +52,14 @@ export default function ConsultoriaLeadForm() {
       });
       const result = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) throw new Error(result.error || "Não foi possível enviar. Tente novamente.");
-      trackFormLead(metaEventId, "Consultoria Vilaris", FORM_SLUG);
+      trackFormLead(metaEventId, "Consultoria Vilaris", FORM_SLUG, {
+        fullName: (data.name ?? "").trim(),
+        company: (data.company ?? "").trim(),
+        user: {
+          email: (data.email ?? "").trim(),
+          phone: (data.phone ?? "").trim(),
+        },
+      });
       setState("success");
     } catch (error) {
       setState("error");

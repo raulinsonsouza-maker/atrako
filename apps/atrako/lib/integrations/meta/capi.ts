@@ -115,6 +115,57 @@ async function postEvents(workspaceId: string, events: Array<Record<string, unkn
   return { sent: true };
 }
 
+/** Evento genérico do site (PageView / ViewContent / Contact / Lead…) — espelho do pixel. */
+export async function sendWebsiteEvent(input: {
+  workspaceId: string;
+  eventName: string;
+  eventId: string;
+  eventSourceUrl?: string | null;
+  clientIp?: string | null;
+  userAgent?: string | null;
+  fbp?: string | null;
+  fbc?: string | null;
+  /** PII em texto — hasheado aqui. */
+  email?: string | null;
+  phone?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  externalId?: string | null;
+  customData?: Record<string, unknown> | null;
+}): Promise<SinkResult> {
+  const eventName = input.eventName.trim().slice(0, 50);
+  if (!eventName || !input.eventId.trim()) return { sent: false, reason: "bad_event" };
+  const name =
+    [input.firstName, input.lastName].filter(Boolean).join(" ").trim() ||
+    input.firstName ||
+    input.lastName ||
+    null;
+  return postEvents(input.workspaceId, [
+    {
+      event_name: eventName,
+      event_time: Math.floor(Date.now() / 1000),
+      event_id: input.eventId.trim().slice(0, 100),
+      action_source: "website",
+      event_source_url: input.eventSourceUrl || undefined,
+      user_data: buildUserData({
+        contactId: input.externalId ?? null,
+        name,
+        email: input.email ?? null,
+        phone: input.phone ?? null,
+        city: null,
+        state: null,
+        fbp: input.fbp ?? null,
+        fbc: input.fbc ?? null,
+        clientIp: input.clientIp,
+        userAgent: input.userAgent,
+      }),
+      ...(input.customData && Object.keys(input.customData).length
+        ? { custom_data: input.customData }
+        : {}),
+    },
+  ]);
+}
+
 /** Lead de formulário — par do `fbq('track','Lead', …, { eventID })` do navegador. */
 export async function sendFormLeadConversion(input: {
   workspaceId: string;
@@ -127,6 +178,11 @@ export async function sendFormLeadConversion(input: {
   const loaded = await loadLeadIdentity(input.workspaceId, input.leadId);
   if (!loaded) return { sent: false, reason: "no_lead" };
   const formName = str(loaded.meta.formName);
+  const formSlug = str(loaded.meta.formSlug);
+  const pageSlug = str(loaded.meta.pageSlug);
+  const company = answerValue(loaded.meta, "company") || str(asRecord(loaded.meta).company);
+  const answers = asRecord(asRecord(loaded.meta.qualification).answers);
+  const companyFromAnswers = str(asRecord(answers.company).value);
   return postEvents(input.workspaceId, [
     {
       event_name: "Lead",
@@ -136,8 +192,24 @@ export async function sendFormLeadConversion(input: {
       event_source_url: input.eventSourceUrl || undefined,
       user_data: buildUserData({ ...loaded.identity, clientIp: input.clientIp, userAgent: input.userAgent }),
       custom_data: {
-        ...(formName ? { content_name: formName } : {}),
+        content_name: formName || pageSlug || "Lead",
+        content_category: pageSlug?.includes("consultoria")
+          ? "consultoria"
+          : pageSlug?.includes("vilaris")
+            ? "mentoria"
+            : "lead",
+        content_type: "lead",
+        ...(formSlug ? { form_slug: formSlug } : {}),
+        ...(pageSlug ? { page_slug: pageSlug } : {}),
+        ...(company || companyFromAnswers
+          ? { company: (company || companyFromAnswers)!.slice(0, 120) }
+          : {}),
+        currency: "BRL",
+        status: true,
         lead_event_source: "Atrako",
+        ...(str(loaded.meta.utm_source) ? { utm_source: str(loaded.meta.utm_source) } : {}),
+        ...(str(loaded.meta.utm_campaign) ? { utm_campaign: str(loaded.meta.utm_campaign) } : {}),
+        ...(str(loaded.meta.utm_medium) ? { utm_medium: str(loaded.meta.utm_medium) } : {}),
       },
     },
   ]);

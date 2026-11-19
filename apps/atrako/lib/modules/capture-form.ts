@@ -220,6 +220,11 @@ export async function completeCaptureForm(input: {
       ? `lp:${pageSlug}`
       : form.source || "form";
 
+  const formFieldLabels: Record<string, string> = {};
+  for (const f of form.steps.flatMap((s) => s.fields ?? [])) {
+    if (f.id && f.label) formFieldLabels[f.id] = f.label;
+  }
+
   const metadata: Record<string, unknown> = {
     channel: pageSlug ? "lp" : form.steps.length > 1 ? "typeform" : "form",
     convertedAt: new Date().toISOString(),
@@ -227,6 +232,9 @@ export async function completeCaptureForm(input: {
     formId: form.id,
     formSlug: form.slug,
     formName: form.name,
+    /** Respostas do formulário para e-mail da equipe / CRM (sem depender do playbook). */
+    formAnswers: flat,
+    formFieldLabels,
   };
 
   const lead = await createNativeLead({

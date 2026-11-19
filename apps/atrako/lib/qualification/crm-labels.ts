@@ -23,6 +23,8 @@ export function franchiseSourceLabel(source: string): string | null {
 export function crmOriginDisplay(input: {
   source?: string | null;
   formName?: string | null;
+  formSlug?: string | null;
+  pageSlug?: string | null;
   campaignName?: string | null;
   sourceLabel?: string | null;
 }): string {

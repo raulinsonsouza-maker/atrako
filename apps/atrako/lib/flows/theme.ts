@@ -142,19 +142,33 @@ export function fontStack(font: EmailThemeConfig["font"]) {
   return EMAIL_SAFE_FONTS.find((f) => f.value === font)?.stack ?? EMAIL_SAFE_FONTS[0].stack;
 }
 
+/** Logo em e-mail precisa de URL absoluta (clientes de e-mail não resolvem path relativo). */
+function absoluteAssetUrl(url: string | null | undefined, publicOrigin: string): string | null {
+  const raw = typeof url === "string" ? url.trim() : "";
+  if (!raw) return null;
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (raw.startsWith("/")) return `${publicOrigin.replace(/\/$/, "")}${raw}`;
+  return null;
+}
+
 export async function loadBrandBase(workspaceId: string) {
   const [cliente, m] = await Promise.all([
-    prisma.cliente.findUnique({ where: { id: workspaceId }, select: { nome: true, logoUrl: true } }),
+    prisma.cliente.findUnique({ where: { id: workspaceId }, select: { nome: true, logoUrl: true, slug: true } }),
     loadMessagingPrefs(workspaceId),
   ]);
   const storeName = m.prefs.senderName || cliente?.nome || "Loja";
+  const { getServerPublicOrigin } = await import("@/lib/http/public-origin");
+  const { lpHostForWorkspace } = await import("@/lib/lp-domains");
+  const host = cliente?.slug ? lpHostForWorkspace(cliente.slug) : null;
+  const origin = host ? `https://${host}` : getServerPublicOrigin();
+  const storeUrl = typeof m.prefs.storeUrl === "string" && m.prefs.storeUrl.trim() ? m.prefs.storeUrl.trim().replace(/\/$/, "") : origin;
   return {
     storeName,
     prefs: m.prefs,
     timezone: m.timezone,
     currency: m.currency,
     base: defaultTheme({
-      logoUrl: cliente?.logoUrl ?? null,
+      logoUrl: absoluteAssetUrl(cliente?.logoUrl, storeUrl),
       primaryColor: m.primaryColor,
       storeName,
       prefs: m.prefs,

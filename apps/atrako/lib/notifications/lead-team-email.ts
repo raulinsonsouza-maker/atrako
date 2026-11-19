@@ -13,6 +13,7 @@ import { getServerPublicOrigin } from "@/lib/http/public-origin";
 import { lpHostForWorkspace } from "@/lib/lp-domains";
 import { FIELD_DEFS } from "@/lib/qualification/fields";
 import { parseLeadQualification } from "@/lib/qualification/store";
+import { friendlyLpLabel } from "@/lib/atendimento/lp-origins";
 import { crmOriginDisplay, priorityHumanLabel } from "@/lib/qualification/crm-labels";
 
 const EMAIL_RE = /^[^\s@<>]+@[^\s@<>]+\.[a-z]{2,}$/i;
@@ -86,11 +87,20 @@ export async function sendLeadTeamEmail(workspaceId: string, leadId: string) {
   const state = str(q.answers.state?.value);
   const place = [city, state].filter(Boolean).join("/");
   const priority = priorityHumanLabel(q.priority);
-  const origin = crmOriginDisplay({
-    source: lead.source,
-    formName: str(meta.formName) || null,
-    campaignName: str(meta.campaignName) || null,
-  });
+  const origin =
+    friendlyLpLabel({
+      source: lead.source,
+      formName: str(meta.formName) || null,
+      formSlug: str(meta.formSlug) || null,
+      pageSlug: str(meta.pageSlug) || null,
+    }) ||
+    crmOriginDisplay({
+      source: lead.source,
+      formName: str(meta.formName) || null,
+      formSlug: str(meta.formSlug) || null,
+      pageSlug: str(meta.pageSlug) || null,
+      campaignName: str(meta.campaignName) || null,
+    });
 
   const host = lpHostForWorkspace(lead.cliente.slug);
   const leadUrl = host
@@ -101,11 +111,28 @@ export async function sendLeadTeamEmail(workspaceId: string, leadId: string) {
   const when = lead.createdAt.toLocaleString("pt-BR", { timeZone: brand.timezone, dateStyle: "short", timeStyle: "short" });
 
   const answers: Array<[string, string]> = [];
+  const seenLabels = new Set<string>();
   for (const key of QUALIFY_KEYS) {
     const def = FIELD_DEFS.find((d) => d.key === key);
     const a = q.answers[key];
     const v = str(a?.label) || str(a?.value);
-    if (def && v) answers.push([def.crmLabel, v]);
+    if (def && v) {
+      answers.push([def.crmLabel, v]);
+      seenLabels.add(def.crmLabel.toLowerCase());
+    }
+  }
+  // Respostas brutas do CaptureForm (ex.: cargo, empresa, momento) — complementam o playbook.
+  const formAnswers = asRecord(meta.formAnswers);
+  const formLabels = asRecord(meta.formFieldLabels);
+  const skipFormIds = new Set(["name", "nome", "email", "phone", "whatsapp", "telefone", "consent", "wa_opt_in"]);
+  for (const [fieldId, raw] of Object.entries(formAnswers)) {
+    if (skipFormIds.has(fieldId.toLowerCase())) continue;
+    const value = str(raw);
+    if (!value) continue;
+    const label = str(formLabels[fieldId]) || fieldId;
+    if (seenLabels.has(label.toLowerCase())) continue;
+    seenLabels.add(label.toLowerCase());
+    answers.push([label, value]);
   }
   const contextLine = [origin !== "—" ? origin : "", when].filter(Boolean).join(" · ");
 

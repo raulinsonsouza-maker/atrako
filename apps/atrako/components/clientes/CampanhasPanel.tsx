@@ -733,7 +733,7 @@ function ConjuntosTable({ conjuntos, onSelect, parentCampType, mqlByAdsetId, cli
 }
 
 function VideoModal({ c, onClose }: { c: Criativo; onClose: () => void }) {
-  const thumb = c.videoPictureUrl ?? c.imageUrl;
+  const thumb = c.imageUrl ?? c.videoPictureUrl;
   const thumbUpgraded = thumb ? upgradeFbCdnImageUrl(thumb) : null;
   const hasLocalMedia = Boolean(c.videoSourceUrl || c.videoEmbedHtml || thumbUpgraded);
   const title = (c.title || "").trim();
@@ -906,7 +906,7 @@ function CriativosTable({ criativos, parentCampType, mqlByAdId }: { criativos: C
               const isVideo = c.mediaType === "VIDEO";
               const isActive = c.effectiveStatus === "ACTIVE";
               const bg = rowBg(isTop);
-              const thumb = c.videoPictureUrl ?? c.imageUrl;
+              const thumb = c.imageUrl ?? c.videoPictureUrl;
               const thumbUpgraded = thumb ? upgradeFbCdnImageUrl(thumb) : null;
               const hasAdCopy = c.title || c.body;
 
@@ -1067,7 +1067,7 @@ function CriativosTable({ criativos, parentCampType, mqlByAdId }: { criativos: C
 
 function CriativoCard({ c }: { c: Criativo }) {
   const [showModal, setShowModal] = React.useState(false);
-  const thumb = c.videoPictureUrl ?? c.imageUrl;
+  const thumb = c.imageUrl ?? c.videoPictureUrl;
   const thumbUpgraded = thumb ? upgradeFbCdnImageUrl(thumb) : null;
   const isVideo = c.mediaType === "VIDEO";
   const isActive = c.effectiveStatus === "ACTIVE";

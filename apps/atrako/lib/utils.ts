@@ -14,13 +14,17 @@ export function upgradeFbCdnImageUrl(url: string | null | undefined): string | n
   const trimmed = url.trim();
   if (!trimmed) return null;
   if (!/fbcdn\.net|facebook\.com/.test(trimmed)) return trimmed;
-  // Upgrade common small sizes to 1080x1080
+  // Upgrade common small sizes to 1080x1080 (incl. Meta thumbs 130/480)
   const result = trimmed
     .replace(/\b64x64\b/g, "1080x1080")
     .replace(/\b128x128\b/g, "1080x1080")
+    .replace(/\b130x130\b/g, "1080x1080")
     .replace(/\b256x256\b/g, "1080x1080")
+    .replace(/\b480x480\b/g, "1080x1080")
     .replace(/\/p64x64\//g, "/p1080x1080/")
     .replace(/\/p128x128\//g, "/p1080x1080/")
-    .replace(/\/p256x256\//g, "/p1080x1080/");
+    .replace(/\/p130x130\//g, "/p1080x1080/")
+    .replace(/\/p256x256\//g, "/p1080x1080/")
+    .replace(/\/p480x480\//g, "/p1080x1080/");
   return result;
 }

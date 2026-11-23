@@ -453,12 +453,18 @@ function upgradeFbCdnImageUrl(url: string | null | undefined): string | null {
   if (!url || typeof url !== "string") return null;
   const trimmed = url.trim();
   if (!trimmed) return null;
-  if (/fbcdn\.net|facebook\.com/.test(trimmed) && (/\b64x64\b|p64x64/.test(trimmed))) {
-    return trimmed
-      .replace(/\/p64x64\//g, "/p1080x1080/")
-      .replace(/\b64x64\b/g, "1080x1080");
-  }
-  return trimmed;
+  if (!/fbcdn\.net|facebook\.com/.test(trimmed)) return trimmed;
+  return trimmed
+    .replace(/\b64x64\b/g, "1080x1080")
+    .replace(/\b128x128\b/g, "1080x1080")
+    .replace(/\b130x130\b/g, "1080x1080")
+    .replace(/\b256x256\b/g, "1080x1080")
+    .replace(/\b480x480\b/g, "1080x1080")
+    .replace(/\/p64x64\//g, "/p1080x1080/")
+    .replace(/\/p128x128\//g, "/p1080x1080/")
+    .replace(/\/p130x130\//g, "/p1080x1080/")
+    .replace(/\/p256x256\//g, "/p1080x1080/")
+    .replace(/\/p480x480\//g, "/p1080x1080/");
 }
 
 export interface MetaAdAccount {
@@ -528,19 +534,31 @@ export interface MetaAdCreative {
       image_hash?: string;
       image_url?: string;
       picture?: string;
+      message?: string;
+      name?: string;
       child_attachments?: Array<{
         image_hash?: string;
         image_url?: string;
         picture?: string;
         video_id?: string;
+        name?: string;
+        description?: string;
       }>;
     };
-    photo_data?: { image_hash?: string; url?: string };
-    video_data?: { image_url?: string; thumbnail_url?: string; video_id?: string };
+    photo_data?: { image_hash?: string; url?: string; caption?: string };
+    video_data?: {
+      image_url?: string;
+      thumbnail_url?: string;
+      video_id?: string;
+      message?: string;
+      title?: string;
+    };
   };
   asset_feed_spec?: {
     videos?: Array<{ video_id?: string; thumbnail_url?: string; image_url?: string }>;
     images?: Array<{ hash?: string; url?: string }>;
+    bodies?: Array<{ text?: string }>;
+    titles?: Array<{ text?: string }>;
   };
 }
 
@@ -1055,6 +1073,9 @@ async function fetchAdImagesByHash(
   }
 }
 
+const ASSET_FEED_SPEC_FIELDS =
+  "asset_feed_spec{videos{video_id,thumbnail_url,image_url},images{hash,url},bodies{text},titles{text}}";
+
 /**
  * Fetch creative by ID with full fields. Used when nested ads response
  * returns incomplete object_story_spec/asset_feed_spec (common for video_id).
@@ -1064,7 +1085,7 @@ async function fetchCreativeDetails(
   token: string
 ): Promise<Partial<MetaAdCreative> | null> {
   try {
-    const url = `${GRAPH_BASE}/${creativeId}?access_token=${encodeURIComponent(token)}&fields=image_hash,thumbnail_url,object_story_spec,asset_feed_spec{videos{video_id,thumbnail_url},images{hash,url}}`;
+    const url = `${GRAPH_BASE}/${creativeId}?access_token=${encodeURIComponent(token)}&fields=image_hash,thumbnail_url,body,title,object_story_spec,${ASSET_FEED_SPEC_FIELDS}`;
     const res = await fetch(url);
     const data = (await res.json()) as Partial<MetaAdCreative> & { error?: { message: string } };
     if (data.error) return null;
@@ -1347,6 +1368,39 @@ function resolveCreativePosterUrl(creative: MetaAdCreative): string | null {
   );
 }
 
+/** Copy ASC / link / video ads: top-level body|title costuma vir vazio. */
+function firstNonEmpty(...values: Array<string | null | undefined>): string | null {
+  for (const v of values) {
+    const t = typeof v === "string" ? v.trim() : "";
+    if (t) return t;
+  }
+  return null;
+}
+
+export function resolveCreativeCopy(creative: MetaAdCreative): { body: string | null; title: string | null } {
+  const link = creative.object_story_spec?.link_data;
+  const video = creative.object_story_spec?.video_data;
+  const feed = creative.asset_feed_spec;
+  const child = link?.child_attachments?.[0];
+  return {
+    body: firstNonEmpty(
+      creative.body,
+      link?.message,
+      video?.message,
+      feed?.bodies?.[0]?.text,
+      creative.object_story_spec?.photo_data?.caption,
+      child?.description,
+    ),
+    title: firstNonEmpty(
+      creative.title,
+      link?.name,
+      video?.title,
+      feed?.titles?.[0]?.text,
+      child?.name,
+    ),
+  };
+}
+
 /**
  * Fetch all ads with creatives and insights, following paging.next.
  * Por padrão só anúncios em veiculação: ACTIVE (inclui em aprendizado e
@@ -1412,7 +1466,7 @@ export async function fetchAdsWithCreatives(
         })}).time_increment(1).limit(500){date_start,date_stop,spend,impressions,clicks,inline_link_clicks,ctr,cpc,frequency,actions,action_values,results,video_p100_watched_actions}`
       : "insights{date_start,date_stop,spend,impressions,clicks,inline_link_clicks,ctr,cpc,frequency,actions,action_values,results,video_p100_watched_actions}";
     const fields =
-      `id,name,effective_status,adset{id,name,campaign{id,name,objective}},adcreatives{id,object_story_id,thumbnail_url,image_hash,video_id,body,title,object_story_spec,asset_feed_spec{videos{video_id,thumbnail_url},images{hash,url}}},${insightsField}`;
+      `id,name,effective_status,adset{id,name,campaign{id,name,objective}},adcreatives{id,object_story_id,thumbnail_url,image_hash,video_id,body,title,object_story_spec,${ASSET_FEED_SPEC_FIELDS}},${insightsField}`;
     const filtering = JSON.stringify([
       { field: "effective_status", operator: "IN", value: [...DELIVERY_ACTIVE_STATUSES] },
     ]);
@@ -1544,6 +1598,13 @@ export async function fetchAdsWithCreatives(
       const fallbackPoster = resolveCreativePosterUrl(creative);
       if (fallbackPoster) (creative as MetaAdCreative).video_picture_url = fallbackPoster;
     }
+    if (creative.video_picture_url) {
+      const upgradedPoster = upgradeFbCdnImageUrl(creative.video_picture_url) || creative.video_picture_url;
+      (creative as MetaAdCreative).video_picture_url = upgradedPoster;
+    }
+    const copy = resolveCreativeCopy(creative);
+    if (copy.body) (creative as MetaAdCreative).body = copy.body;
+    if (copy.title) (creative as MetaAdCreative).title = copy.title;
   }
 
   return allAds;

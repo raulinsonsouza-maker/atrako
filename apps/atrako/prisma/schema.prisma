@@ -941,6 +941,8 @@ model WorkspaceSettings {
   messagingPrefs  Json     @default("{}")
   formsPrefs      Json     @default("{}")
   agendaPrefs     Json     @default("{}")
+  /// Preferências do CRM nativo (ex.: motivos manuais de perda).
+  crmPrefs        Json     @default("{}")
   onboardingStep  String   @default("empresa") @db.VarChar(40)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

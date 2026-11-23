@@ -704,6 +704,7 @@ function mapLead(l: {
   };
 }
 
+/** @deprecated Use getManualLostReasons / DEFAULT_MANUAL_LOST_REASONS de lib/crm/lost-reasons */
 export const MANUAL_LOST_REASONS = ["preco", "sem_fit", "concorrente", "sem_resposta"] as const;
 export type ManualLostReason = (typeof MANUAL_LOST_REASONS)[number];
 
@@ -729,6 +730,10 @@ export async function updateLeadStage(input: {
   dealValue?: number | null;
   lostReason?: string | null;
 }) {
+  const { isAllowedManualLostReason, resolveManualLostReasonLabel } = await import(
+    "@/lib/crm/lost-reasons"
+  );
+
   const stage =
     input.stageId === "_none"
       ? null
@@ -751,15 +756,23 @@ export async function updateLeadStage(input: {
     status === "WON" && typeof input.dealValue === "number" && Number.isFinite(input.dealValue) && input.dealValue >= 0
       ? input.dealValue
       : null;
-  const reason =
-    status === "LOST" && typeof input.lostReason === "string" && isManualLostReason(input.lostReason)
-      ? input.lostReason
-      : null;
+  const reasonCandidate =
+    status === "LOST" && typeof input.lostReason === "string" ? input.lostReason.trim() : "";
+  const reasonOk =
+    reasonCandidate && (await isAllowedManualLostReason(input.workspaceId, reasonCandidate));
+  const reason = reasonOk ? reasonCandidate : null;
+  const reasonLabel = reason
+    ? (await resolveManualLostReasonLabel(input.workspaceId, reason)) ??
+      MANUAL_LOST_LABELS[reason as ManualLostReason] ??
+      reason
+    : null;
   const now = new Date();
   const nextMeta = withStageHistory(
     {
       ...meta,
-      ...(reason ? { lostReason: reason, lostAt: now.toISOString() } : {}),
+      ...(reason
+        ? { lostReason: reason, lostReasonLabel: reasonLabel, lostAt: now.toISOString() }
+        : {}),
     },
     {
       stageId: nextStageId,
@@ -767,7 +780,7 @@ export async function updateLeadStage(input: {
       role: (stage as { role?: string | null } | null)?.role ?? null,
       at: now,
       by: "manual",
-      ...(reason ? { reason: MANUAL_LOST_LABELS[reason] } : {}),
+      ...(reasonLabel ? { reason: reasonLabel } : {}),
     },
   );
   const updated = await prisma.nativeLead.update({

@@ -9,7 +9,7 @@ import { CrmLeadCard, sourceLabel, type CrmBoardLead } from "./CrmLeadCard";
 import { channelColor } from "@/lib/commerce-attribution/channel-color";
 import { CrmLeadModal } from "./CrmLeadModal";
 import { CrmFunnelConfigModal } from "./CrmFunnelConfigModal";
-import { CrmCloseLeadDialog } from "./CrmCloseLeadDialog";
+import { CrmCloseLeadDialog, CRM_LOST_REASON_OPTIONS, type LostReasonOption } from "./CrmCloseLeadDialog";
 import { CrmStageHeader } from "./CrmStageHeader";
 import { PillSelect } from "@/components/ui/pill-select";
 import { SearchInput } from "@/components/ui/search-input";
@@ -104,8 +104,25 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
     role: "WON" | "LOST";
   } | null>(null);
   const [closeAmount, setCloseAmount] = useState("");
-  const [closeReason, setCloseReason] = useState("sem_resposta");
+  const [closeReason, setCloseReason] = useState(CRM_LOST_REASON_OPTIONS[0]?.value ?? "sem_resposta");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { data: lostReasonsData } = useQuery({
+    queryKey: ["crm-lost-reasons", workspaceId],
+    queryFn: async (): Promise<LostReasonOption[]> => {
+      const res = await fetch(
+        `/api/atrako/crm/lost-reasons?workspaceId=${encodeURIComponent(workspaceId)}`,
+      );
+      const json = (await res.json().catch(() => ({}))) as {
+        reasons?: Array<{ id: string; label: string }>;
+      };
+      if (!res.ok || !json.reasons?.length) return CRM_LOST_REASON_OPTIONS;
+      return json.reasons.map((r) => ({ value: r.id, label: r.label }));
+    },
+    staleTime: 60_000,
+  });
+  const lostReasonOptions = lostReasonsData ?? CRM_LOST_REASON_OPTIONS;
+  const defaultLostReason = lostReasonOptions[0]?.value ?? "sem_resposta";
 
   useEffect(() => {
     const fromUrl = searchParams.get("lead");
@@ -244,7 +261,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
       if (target?.role === "WON" || target?.role === "LOST") {
         setCloseAsk({ leadId, fromStageId, toStageId, role: target.role });
         setCloseAmount(lead.dealValue != null ? String(lead.dealValue).replace(".", ",") : "");
-        setCloseReason("sem_resposta");
+        setCloseReason(defaultLostReason);
         setMovingLeadId(null);
         setDragOverStage(null);
         return;
@@ -286,7 +303,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
         setMovingLeadId(null);
       }
     },
-    [data, qc, queryKey, workspaceId],
+    [data, defaultLostReason, qc, queryKey, workspaceId],
   );
 
   async function createLead(e: React.FormEvent) {
@@ -758,6 +775,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
           role={closeAsk.role}
           amount={closeAmount}
           reason={closeReason}
+          reasons={lostReasonOptions}
           busy={Boolean(movingLeadId)}
           onAmountChange={setCloseAmount}
           onReasonChange={setCloseReason}
@@ -783,6 +801,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
           onSaved={() => {
             void qc.invalidateQueries({ queryKey: ["crm-pipeline", workspaceId] });
             void qc.invalidateQueries({ queryKey: ["crm-lead", workspaceId] });
+            void qc.invalidateQueries({ queryKey: ["crm-lost-reasons", workspaceId] });
           }}
         />
       ) : null}

@@ -4,6 +4,7 @@ import { requireWorkspaceAccess } from "@/lib/tenancy/workspace";
 import {
   configurePipelineStages,
   createPipelineStage,
+  ensureLostStage,
   updatePipelineStage,
 } from "@/lib/modules/crm";
 
@@ -23,6 +24,24 @@ export async function POST(request: NextRequest) {
   if (!access.ok) return access.response;
   if (!(await findWorkspaceById(workspaceId))) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
+  }
+
+  if (b.action === "ensure-lost") {
+    try {
+      const stage = await ensureLostStage(workspaceId);
+      return NextResponse.json({
+        id: stage.id,
+        name: stage.name,
+        color: stage.color,
+        order: stage.order,
+        role: "LOST",
+      });
+    } catch (e) {
+      return NextResponse.json(
+        { error: e instanceof Error ? e.message : "Falha ao garantir Perdido" },
+        { status: 400 },
+      );
+    }
   }
 
   /** Salvar funil completo (modal configurar). */

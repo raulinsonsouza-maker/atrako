@@ -321,6 +321,8 @@ export async function GET(request: NextRequest, ctx: Ctx) {
       document: mlCard?.document ?? null,
       shipping: mlCard?.shipping ?? null,
       lostReason: leadMeta.lostReason ?? null,
+      lostReasonLabel:
+        typeof leadMeta.lostReasonLabel === "string" ? leadMeta.lostReasonLabel : null,
       lostAt: leadMeta.lostAt ?? null,
       notes,
       ownerMemberId: leadMeta.ownerMemberId ?? null,

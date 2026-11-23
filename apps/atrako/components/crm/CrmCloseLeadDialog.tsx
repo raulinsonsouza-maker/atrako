@@ -3,18 +3,22 @@
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { DEFAULT_MANUAL_LOST_REASONS } from "@/lib/crm/lost-reasons-shared";
 
-export const CRM_LOST_REASON_OPTIONS = [
-  { value: "preco", label: "Preço" },
-  { value: "sem_fit", label: "Sem fit" },
-  { value: "concorrente", label: "Concorrente" },
-  { value: "sem_resposta", label: "Sem resposta" },
-] as const;
+export type LostReasonOption = { value: string; label: string };
+
+/** Fallback estático (mesmos defaults do servidor). */
+export const CRM_LOST_REASON_OPTIONS: LostReasonOption[] = DEFAULT_MANUAL_LOST_REASONS.map((r) => ({
+  value: r.id,
+  label: r.label,
+}));
 
 type Props = {
   role: "WON" | "LOST";
   amount: string;
   reason: string;
+  /** Motivos do workspace; se omitido, usa o default. */
+  reasons?: LostReasonOption[];
   busy?: boolean;
   onAmountChange: (value: string) => void;
   onReasonChange: (value: string) => void;
@@ -27,12 +31,15 @@ export function CrmCloseLeadDialog({
   role,
   amount,
   reason,
+  reasons,
   busy,
   onAmountChange,
   onReasonChange,
   onCancel,
   onConfirm,
 }: Props) {
+  const options = reasons?.length ? reasons : CRM_LOST_REASON_OPTIONS;
+
   return (
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
@@ -73,8 +80,8 @@ export function CrmCloseLeadDialog({
               />
             </label>
           ) : (
-            <ul className="space-y-1.5" role="listbox" aria-label="Motivo da perda">
-              {CRM_LOST_REASON_OPTIONS.map((opt) => {
+            <ul className="max-h-[280px] space-y-1.5 overflow-y-auto" role="listbox" aria-label="Motivo da perda">
+              {options.map((opt) => {
                 const selected = reason === opt.value;
                 return (
                   <li key={opt.value}>

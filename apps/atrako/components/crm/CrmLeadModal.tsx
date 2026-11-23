@@ -32,7 +32,11 @@ import { PillSelect } from "@/components/ui/pill-select";
 import { cn } from "@/lib/utils";
 import { formatPhone } from "@/components/crm/CrmLeadCard";
 import { useCrmLinks } from "@/components/crm/CrmLinksContext";
-import { CrmCloseLeadDialog } from "@/components/crm/CrmCloseLeadDialog";
+import {
+  CrmCloseLeadDialog,
+  CRM_LOST_REASON_OPTIONS,
+  type LostReasonOption,
+} from "@/components/crm/CrmCloseLeadDialog";
 import { LeadCommunications, type LeadCommunicationsData } from "@/components/crm/LeadCommunications";
 import { LeadPaymentLinks } from "@/components/crm/LeadPaymentLinks";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
@@ -120,6 +124,7 @@ type LeadDetail = {
     document: string | null;
     shipping: string | null;
     lostReason: string | null;
+    lostReasonLabel?: string | null;
     lostAt: string | null;
     notes?: Array<{ id: string; text: string; at: string }>;
     ownerMemberId?: string | null;
@@ -613,7 +618,7 @@ export function CrmLeadModal({
     markAsLost?: boolean;
   } | null>(null);
   const [closeAmount, setCloseAmount] = useState("");
-  const [closeReason, setCloseReason] = useState("sem_resposta");
+  const [closeReason, setCloseReason] = useState(CRM_LOST_REASON_OPTIONS[0]?.value ?? "sem_resposta");
   const [closing, setClosing] = useState(false);
   const { data, isLoading, isError } = useQuery({
     queryKey: ["crm-lead", workspaceId, leadId],
@@ -625,6 +630,22 @@ export function CrmLeadModal({
       return r.json() as Promise<LeadDetail>;
     },
   });
+  const { data: lostReasonsData } = useQuery({
+    queryKey: ["crm-lost-reasons", workspaceId],
+    queryFn: async (): Promise<LostReasonOption[]> => {
+      const res = await fetch(
+        `/api/atrako/crm/lost-reasons?workspaceId=${encodeURIComponent(workspaceId)}`,
+      );
+      const json = (await res.json().catch(() => ({}))) as {
+        reasons?: Array<{ id: string; label: string }>;
+      };
+      if (!res.ok || !json.reasons?.length) return CRM_LOST_REASON_OPTIONS;
+      return json.reasons.map((r) => ({ value: r.id, label: r.label }));
+    },
+    staleTime: 60_000,
+  });
+  const lostReasonOptions = lostReasonsData ?? CRM_LOST_REASON_OPTIONS;
+  const defaultLostReason = lostReasonOptions[0]?.value ?? "sem_resposta";
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -654,7 +675,7 @@ export function CrmLeadModal({
     if (target?.role === "WON" || target?.role === "LOST") {
       setCloseAsk({ toStageId: stageId, role: target.role });
       setCloseAmount(data.lead.dealValue != null ? String(data.lead.dealValue).replace(".", ",") : "");
-      setCloseReason("sem_resposta");
+      setCloseReason(defaultLostReason);
       return;
     }
     const r = await fetch("/api/atrako/crm/leads", {
@@ -1117,7 +1138,10 @@ export function CrmLeadModal({
                     <div>
                       <p className="type-caption-strong text-[var(--ink)]">Motivo da perda</p>
                       <p className="mt-1 type-caption text-[var(--ink-muted-80)]">
-                        {LOST_REASON_LABELS[lead.lostReason] ?? lead.lostReason}
+                        {lead.lostReasonLabel ??
+                          lostReasonOptions.find((r) => r.value === lead.lostReason)?.label ??
+                          LOST_REASON_LABELS[lead.lostReason] ??
+                          lead.lostReason}
                       </p>
                       <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
                         Contato mantido na base para reativação.
@@ -1199,7 +1223,7 @@ export function CrmLeadModal({
                   role: "LOST",
                   markAsLost: !lost?.id,
                 });
-                setCloseReason("sem_resposta");
+                setCloseReason(defaultLostReason);
               }}
             >
               Marcar como perdido
@@ -1220,6 +1244,7 @@ export function CrmLeadModal({
           role={closeAsk.role}
           amount={closeAmount}
           reason={closeReason}
+          reasons={lostReasonOptions}
           busy={closing}
           onAmountChange={setCloseAmount}
           onReasonChange={setCloseReason}

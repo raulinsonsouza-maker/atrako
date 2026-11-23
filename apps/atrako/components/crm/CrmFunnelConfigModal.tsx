@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { GripVertical, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { GripVertical, Loader2, Pencil, Plus, Settings2, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { STAGE_COLOR_PRESETS } from "@/components/crm/CrmStageHeader";
+import { CrmLostReasonsEditor } from "@/components/crm/CrmLostReasonsEditor";
 
 type StageRole = "ENTRY" | "WON" | "ABANDONED" | "ABANDONED_30" | "ABANDONED_60" | "ABANDONED_90" | "LOST";
 
@@ -98,6 +100,7 @@ export function CrmFunnelConfigModal({
   const initial = useMemo(() => toDrafts(stages), [stages]);
   const [entry, setEntry] = useState(initial.entry);
   const [abandoned, setAbandoned] = useState(initial.abandoned);
+  const [reasonsOpen, setReasonsOpen] = useState(false);
   const [middle, setMiddle] = useState(initial.middle);
   const [won, setWon] = useState(initial.won);
   const [lost, setLost] = useState(initial.lost);
@@ -116,16 +119,49 @@ export function CrmFunnelConfigModal({
     setLost(next.lost);
   }, [stages]);
 
+  /** Garante coluna Perdido para a engrenagem de motivos sempre aparecer. */
+  useEffect(() => {
+    if (lost) return;
+    let cancelled = false;
+    void fetch("/api/atrako/crm/stages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workspaceId, action: "ensure-lost" }),
+    })
+      .then(async (res) => {
+        const data = (await res.json().catch(() => ({}))) as {
+          id?: string;
+          name?: string;
+          color?: string;
+        };
+        if (!res.ok || !data.id || cancelled) return;
+        setLost({
+          key: data.id,
+          id: data.id,
+          name: data.name ?? "Perdido",
+          color: data.color || "#FF3B30",
+          role: "LOST",
+        });
+      })
+      .catch(() => {
+        /* silencioso — seção some se falhar */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceId, lost]);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape" && !saving) {
-        if (editingKey) setEditingKey(null);
+        if (reasonsOpen) setReasonsOpen(false);
+        else if (editingKey) setEditingKey(null);
         else onClose();
       }
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose, saving, editingKey]);
+  }, [onClose, saving, editingKey, reasonsOpen]);
 
   function addStage() {
     const key = `new_${Math.random().toString(36).slice(2, 9)}`;
@@ -364,11 +400,23 @@ export function CrmFunnelConfigModal({
 
           {lost ? (
             <section className="funnel-config-section">
-              <p className="type-caption-strong text-[var(--ink)]">Perdido</p>
-              <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
-                6 meses sem compra depois do carrinho, e-mail e WhatsApp que não chegam ou reembolso.
-                O contato continua na base para campanhas de reativação.
-              </p>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="type-caption-strong text-[var(--ink)]">Perdido</p>
+                  <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
+                    6 meses sem compra depois do carrinho, e-mail e WhatsApp que não chegam ou reembolso.
+                    O contato continua na base para campanhas de reativação.
+                  </p>
+                </div>
+                <IconButton
+                  type="button"
+                  size="toolbar"
+                  aria-label="Configurar motivos da perda"
+                  onClick={() => setReasonsOpen(true)}
+                >
+                  <Settings2 className="h-4 w-4" strokeWidth={1.75} />
+                </IconButton>
+              </div>
               <StageRow
                 draft={lost}
                 editing={editingKey === lost.key}
@@ -385,6 +433,14 @@ export function CrmFunnelConfigModal({
           ) : null}
         </div>
       </div>
+
+      {reasonsOpen ? (
+        <CrmLostReasonsEditor
+          workspaceId={workspaceId}
+          onClose={() => setReasonsOpen(false)}
+          onSaved={onSaved}
+        />
+      ) : null}
     </div>
   );
 }

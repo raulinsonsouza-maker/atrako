@@ -31,8 +31,6 @@ type StageCol = {
 };
 
 const ABANDON_ROLES = new Set(["ABANDONED", "ABANDONED_30", "ABANDONED_60", "ABANDONED_90"]);
-const VALUE_ROLES = new Set([...ABANDON_ROLES, "WON", "LOST"]);
-
 
 type PipelineData = {
   preset?: "leads" | "ecommerce";
@@ -625,9 +623,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
                   color={stage.color}
                   count={stage.totalCount}
                   valueLabel={
-                    VALUE_ROLES.has(stage.role ?? "") && stage.totalValue > 0
-                      ? fmtCurrency(stage.totalValue)
-                      : undefined
+                    stage.totalValue > 0 ? fmtCurrency(stage.totalValue) : undefined
                   }
                   role={stage.role ?? null}
                   editable={canEdit}

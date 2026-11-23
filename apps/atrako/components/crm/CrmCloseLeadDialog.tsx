@@ -1,7 +1,8 @@
 "use client";
 
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PillSelect } from "@/components/ui";
+import { cn } from "@/lib/utils";
 
 export const CRM_LOST_REASON_OPTIONS = [
   { value: "preco", label: "Preço" },
@@ -21,7 +22,7 @@ type Props = {
   onConfirm: (e: React.FormEvent) => void;
 };
 
-/** Diálogo de fechamento: valor (ganho) ou motivo (perdido). Usado no board e no modal do lead. */
+/** Diálogo compacto de fechamento: valor (ganho) ou motivo (perdido). Sem dropdown — evita corte no overlay. */
 export function CrmCloseLeadDialog({
   role,
   amount,
@@ -33,19 +34,37 @@ export function CrmCloseLeadDialog({
   onConfirm,
 }: Props) {
   return (
-    <div className="funnel-config-backdrop" role="dialog" aria-modal="true" aria-labelledby="close-lead-title">
-      <form onSubmit={onConfirm} className="funnel-config-modal">
-        <header className="funnel-config-header">
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="close-lead-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !busy) onCancel();
+      }}
+    >
+      <form
+        onSubmit={onConfirm}
+        className="w-full max-w-[360px] rounded-[var(--radius-lg)] border border-[var(--hairline)] bg-[var(--canvas)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="border-b border-[var(--divider-soft)] px-5 py-4">
           <h2 id="close-lead-title" className="type-tagline text-[var(--ink)]">
             {role === "WON" ? "Valor do negócio" : "Motivo da perda"}
           </h2>
+          {role === "LOST" ? (
+            <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
+              Escolha o motivo e confirme.
+            </p>
+          ) : null}
         </header>
-        <div className="funnel-config-body">
+
+        <div className="space-y-3 px-5 py-4">
           {role === "WON" ? (
             <label className="block">
               <span className="type-micro-legal text-[var(--ink-muted-48)]">Valor em reais</span>
               <input
-                className="mt-1.5 h-11 w-full rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-4 type-caption text-[var(--ink)] outline-none"
+                className="mt-1.5 h-11 w-full rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-4 type-caption text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--primary-focus)]"
                 value={amount}
                 onChange={(e) => onAmountChange(e.target.value)}
                 inputMode="decimal"
@@ -54,16 +73,38 @@ export function CrmCloseLeadDialog({
               />
             </label>
           ) : (
-            <PillSelect
-              size="field"
-              value={reason}
-              onChange={onReasonChange}
-              options={[...CRM_LOST_REASON_OPTIONS]}
-              aria-label="Motivo da perda"
-            />
+            <ul className="space-y-1.5" role="listbox" aria-label="Motivo da perda">
+              {CRM_LOST_REASON_OPTIONS.map((opt) => {
+                const selected = reason === opt.value;
+                return (
+                  <li key={opt.value}>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={selected}
+                      onClick={() => onReasonChange(opt.value)}
+                      className={cn(
+                        "flex w-full items-center justify-between gap-3 rounded-[var(--radius-xs)] border px-3.5 py-2.5 text-left type-caption transition active:scale-[0.99]",
+                        selected
+                          ? "border-[var(--primary)] bg-[var(--primary-glow)] type-caption-strong text-[var(--ink)]"
+                          : "border-[var(--hairline)] bg-[var(--canvas)] text-[var(--ink)]",
+                      )}
+                    >
+                      {opt.label}
+                      {selected ? (
+                        <Check className="h-4 w-4 shrink-0 text-[var(--primary)]" strokeWidth={2.25} />
+                      ) : (
+                        <span className="h-4 w-4 shrink-0" aria-hidden />
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </div>
-        <div className="flex justify-end gap-2 px-5 pb-5">
+
+        <div className="flex justify-end gap-2 border-t border-[var(--divider-soft)] px-5 py-4">
           <Button type="button" variant="outline" size="toolbar" onClick={onCancel} disabled={busy}>
             Cancelar
           </Button>

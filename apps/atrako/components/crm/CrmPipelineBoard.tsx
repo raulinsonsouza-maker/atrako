@@ -9,6 +9,7 @@ import { CrmLeadCard, sourceLabel, type CrmBoardLead } from "./CrmLeadCard";
 import { channelColor } from "@/lib/commerce-attribution/channel-color";
 import { CrmLeadModal } from "./CrmLeadModal";
 import { CrmFunnelConfigModal } from "./CrmFunnelConfigModal";
+import { CrmCloseLeadDialog } from "./CrmCloseLeadDialog";
 import { CrmStageHeader } from "./CrmStageHeader";
 import { PillSelect } from "@/components/ui/pill-select";
 import { SearchInput } from "@/components/ui/search-input";
@@ -32,12 +33,6 @@ type StageCol = {
 const ABANDON_ROLES = new Set(["ABANDONED", "ABANDONED_30", "ABANDONED_60", "ABANDONED_90"]);
 const VALUE_ROLES = new Set([...ABANDON_ROLES, "WON", "LOST"]);
 
-const LOST_OPTIONS = [
-  { value: "preco", label: "Preço" },
-  { value: "sem_fit", label: "Sem fit" },
-  { value: "concorrente", label: "Concorrente" },
-  { value: "sem_resposta", label: "Sem resposta" },
-];
 
 type PipelineData = {
   preset?: "leads" | "ecommerce";
@@ -763,46 +758,16 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
       ) : null}
 
       {closeAsk ? (
-        <div className="funnel-config-backdrop" role="dialog" aria-modal="true" aria-labelledby="close-lead-title">
-          <form onSubmit={(e) => void confirmClose(e)} className="funnel-config-modal">
-            <header className="funnel-config-header">
-              <h2 id="close-lead-title" className="type-tagline text-[var(--ink)]">
-                {closeAsk.role === "WON" ? "Valor do negócio" : "Motivo da perda"}
-              </h2>
-            </header>
-            <div className="funnel-config-body">
-              {closeAsk.role === "WON" ? (
-                <label className="block">
-                  <span className="type-micro-legal text-[var(--ink-muted-48)]">Valor em reais</span>
-                  <input
-                    className="mt-1.5 h-11 w-full rounded-[var(--radius-xs)] border border-[var(--hairline)] bg-[var(--canvas)] px-4 type-caption text-[var(--ink)] outline-none"
-                    value={closeAmount}
-                    onChange={(e) => setCloseAmount(e.target.value)}
-                    inputMode="decimal"
-                    placeholder="0,00"
-                    autoFocus
-                  />
-                </label>
-              ) : (
-                <PillSelect
-                  size="field"
-                  value={closeReason}
-                  onChange={setCloseReason}
-                  options={LOST_OPTIONS}
-                  aria-label="Motivo da perda"
-                />
-              )}
-            </div>
-            <div className="flex justify-end gap-2 px-5 pb-5">
-              <Button type="button" variant="outline" size="toolbar" onClick={() => setCloseAsk(null)}>
-                Cancelar
-              </Button>
-              <Button type="submit" variant="primary" size="toolbar" disabled={Boolean(movingLeadId)}>
-                Confirmar
-              </Button>
-            </div>
-          </form>
-        </div>
+        <CrmCloseLeadDialog
+          role={closeAsk.role}
+          amount={closeAmount}
+          reason={closeReason}
+          busy={Boolean(movingLeadId)}
+          onAmountChange={setCloseAmount}
+          onReasonChange={setCloseReason}
+          onCancel={() => setCloseAsk(null)}
+          onConfirm={(e) => void confirmClose(e)}
+        />
       ) : null}
 
       {funnelConfigOpen ? (
@@ -816,6 +781,7 @@ export function CrmPipelineBoard({ workspaceId }: { workspaceId: string }) {
               name: s.name,
               color: s.color,
               role: s.role ?? null,
+              leadCount: s.totalCount,
             }))}
           onClose={() => setFunnelConfigOpen(false)}
           onSaved={() => {

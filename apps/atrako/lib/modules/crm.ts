@@ -237,11 +237,10 @@ async function ensureEssentialStages(pipeline: NonNullable<PipelineWithStages>) 
 
   if (pipeline.preset === "ecommerce") return normalizeStageOrder(pipeline.clienteId);
 
-  // Seed colunas intermediárias base (cria as que faltarem por nome)
+  // Seed intermediárias só se o meio estiver vazio — nunca recria colunas que o usuário removeu.
   stages = (await loadDefaultPipeline(pipeline.clienteId))?.stages ?? stages;
   const middle = stages.filter((s) => !isFixedRole(s.role));
   const baseMiddle = ATRAKO_BASE_STAGES.filter((s) => !s.role);
-  const existingNames = new Set(stages.map((s) => s.name.toLowerCase()));
 
   if (middle.length === 0) {
     for (const s of baseMiddle) {
@@ -252,30 +251,6 @@ async function ensureEssentialStages(pipeline: NonNullable<PipelineWithStages>) 
         color: s.color,
         role: null,
       });
-    }
-  } else {
-    for (const s of baseMiddle) {
-      if (existingNames.has(s.name.toLowerCase())) continue;
-      const current = await loadStages(pipeline.id);
-      const wonOrder =
-        current.find((row) => row.role === STAGE_ROLE_WON)?.order ?? current.length;
-      const toShift = current
-        .filter((row) => row.order >= wonOrder)
-        .sort((a, b) => b.order - a.order);
-      for (const row of toShift) {
-        await prisma.crmStage.update({
-          where: { id: row.id },
-          data: { order: row.order + 1 },
-        });
-      }
-      await createStageRow({
-        pipelineId: pipeline.id,
-        name: s.name,
-        order: wonOrder,
-        color: s.color,
-        role: null,
-      });
-      existingNames.add(s.name.toLowerCase());
     }
   }
 
@@ -842,7 +817,7 @@ export async function updateLeadStage(input: {
       clienteId: input.workspaceId,
       contactId: updated.contactId,
       reason: status === "WON" ? "lead_won" : "lead_lost",
-      triggers: ["franchise_nurture"],
+      triggers: ["franchise_nurture", "vilaris_consultoria_nurture"],
     }).catch((err) => console.warn("[crm] nurture exit", err instanceof Error ? err.message : err));
   }
 

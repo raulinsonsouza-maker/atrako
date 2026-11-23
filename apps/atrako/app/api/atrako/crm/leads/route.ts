@@ -108,11 +108,17 @@ export async function PATCH(request: NextRequest) {
   const b = body as Record<string, unknown>;
   const workspaceId = typeof b.workspaceId === "string" ? b.workspaceId : "";
   const leadId = typeof b.leadId === "string" ? b.leadId : "";
-  const stageId = typeof b.stageId === "string" ? b.stageId : "";
-  if (!workspaceId || !leadId || !stageId) {
+  let stageId = typeof b.stageId === "string" ? b.stageId : "";
+  const markAsLost = b.markAsLost === true;
+  if (!workspaceId || !leadId || (!stageId && !markAsLost)) {
     return NextResponse.json({ error: "workspaceId, leadId e stageId required" }, { status: 400 });
   }
   try {
+    if (markAsLost && !stageId) {
+      const { ensureLostStage } = await import("@/lib/modules/crm");
+      const lost = await ensureLostStage(workspaceId);
+      stageId = lost.id;
+    }
     const dealRaw = b.dealValue;
     const dealValue =
       typeof dealRaw === "number"

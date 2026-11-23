@@ -404,6 +404,7 @@ export async function GET(request: NextRequest, ctx: Ctx) {
       id: s.id,
       name: s.name,
       color: s.color,
+      role: (s as { role?: string | null }).role ?? null,
     })),
     journey: journey?.items ?? [],
   });

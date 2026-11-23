@@ -13,6 +13,7 @@ type StageDraft = {
   name: string;
   color: string;
   role: StageRole | null;
+  leadCount?: number;
 };
 
 type Props = {
@@ -22,6 +23,7 @@ type Props = {
     name: string;
     color: string;
     role?: StageRole | null;
+    leadCount?: number;
   }>;
   onClose: () => void;
   onSaved: () => void;
@@ -46,6 +48,7 @@ function toDrafts(stages: Props["stages"]): {
       name: s.name,
       color: s.color || STAGE_COLOR_PRESETS[0],
       role: null as null,
+      leadCount: s.leadCount ?? 0,
     }));
   return {
     entry: {
@@ -102,6 +105,7 @@ export function CrmFunnelConfigModal({
   const [error, setError] = useState<string | null>(null);
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [dirtyRemove, setDirtyRemove] = useState(false);
 
   useEffect(() => {
     const next = toDrafts(stages);
@@ -138,8 +142,17 @@ export function CrmFunnelConfigModal({
   }
 
   function removeStage(key: string) {
+    const row = middle.find((s) => s.key === key);
+    if (!row) return;
+    const n = row.leadCount ?? 0;
+    const msg =
+      n > 0
+        ? `Remover “${row.name || "esta etapa"}”? ${n} lead${n === 1 ? "" : "s"} vão para a Entrada. Depois clique em Salvar.`
+        : `Remover “${row.name || "esta etapa"}”? Depois clique em Salvar para aplicar.`;
+    if (!window.confirm(msg)) return;
     setMiddle((prev) => prev.filter((s) => s.key !== key));
     if (editingKey === key) setEditingKey(null);
+    setDirtyRemove(true);
   }
 
   function patchMiddle(key: string, patch: Partial<StageDraft>) {
@@ -203,6 +216,7 @@ export function CrmFunnelConfigModal({
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || "Falha ao salvar");
+      setDirtyRemove(false);
       onSaved();
       onClose();
     } catch (e) {
@@ -300,8 +314,13 @@ export function CrmFunnelConfigModal({
           <section className="funnel-config-section">
             <p className="type-caption-strong text-[var(--ink)]">No meio do caminho</p>
             <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
-              Suas etapas. Remover move os leads para a entrada.
+              Suas etapas. Remover move os leads para a Entrada — clique em Salvar para aplicar.
             </p>
+            {dirtyRemove ? (
+              <p className="mt-2 type-fine-print text-[var(--primary)]">
+                Há etapas removidas. Salve para gravar o funil.
+              </p>
+            ) : null}
             <ul className="mt-3 space-y-2">
               {middle.map((s) => (
                 <li key={s.key}>

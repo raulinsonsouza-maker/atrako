@@ -32,6 +32,7 @@ import { PillSelect } from "@/components/ui/pill-select";
 import { cn } from "@/lib/utils";
 import { formatPhone } from "@/components/crm/CrmLeadCard";
 import { useCrmLinks } from "@/components/crm/CrmLinksContext";
+import { CrmCloseLeadDialog } from "@/components/crm/CrmCloseLeadDialog";
 import { LeadCommunications, type LeadCommunicationsData } from "@/components/crm/LeadCommunications";
 import { LeadPaymentLinks } from "@/components/crm/LeadPaymentLinks";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
@@ -156,7 +157,12 @@ type LeadDetail = {
     createdAt: string;
   };
   members?: Array<{ id: string; name: string; email: string }>;
-  stages: Array<{ id: string; name: string; color: string }>;
+  stages: Array<{
+    id: string;
+    name: string;
+    color: string;
+    role?: "ENTRY" | "WON" | "ABANDONED" | "ABANDONED_30" | "ABANDONED_60" | "ABANDONED_90" | "LOST" | null;
+  }>;
   journey: JourneyItem[];
   carts: LeadCart[];
   orders?: LeadOrder[];
@@ -601,6 +607,14 @@ export function CrmLeadModal({
   const [savingNote, setSavingNote] = useState(false);
   const [sendingCof, setSendingCof] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [closeAsk, setCloseAsk] = useState<{
+    toStageId: string | null;
+    role: "WON" | "LOST";
+    markAsLost?: boolean;
+  } | null>(null);
+  const [closeAmount, setCloseAmount] = useState("");
+  const [closeReason, setCloseReason] = useState("sem_resposta");
+  const [closing, setClosing] = useState(false);
   const { data, isLoading, isError } = useQuery({
     queryKey: ["crm-lead", workspaceId, leadId],
     queryFn: async () => {
@@ -614,7 +628,10 @@ export function CrmLeadModal({
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        if (closeAsk) setCloseAsk(null);
+        else onClose();
+      }
     }
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
@@ -623,7 +640,7 @@ export function CrmLeadModal({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
-  }, [onClose]);
+  }, [onClose, closeAsk]);
 
   useEffect(() => {
     if (salesMode && (panelTab === "conversas" || panelTab === "pedidos")) {
@@ -633,6 +650,13 @@ export function CrmLeadModal({
 
   async function moveStage(stageId: string) {
     if (!data?.lead.stageId || stageId === data.lead.stageId) return;
+    const target = data.stages.find((s) => s.id === stageId);
+    if (target?.role === "WON" || target?.role === "LOST") {
+      setCloseAsk({ toStageId: stageId, role: target.role });
+      setCloseAmount(data.lead.dealValue != null ? String(data.lead.dealValue).replace(".", ",") : "");
+      setCloseReason("sem_resposta");
+      return;
+    }
     const r = await fetch("/api/atrako/crm/leads", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -641,6 +665,36 @@ export function CrmLeadModal({
     if (!r.ok) return;
     await qc.invalidateQueries({ queryKey: ["crm-lead", workspaceId, leadId] });
     await qc.invalidateQueries({ queryKey: ["crm-pipeline", workspaceId] });
+  }
+
+  async function confirmClose(e: React.FormEvent) {
+    e.preventDefault();
+    if (!closeAsk || closing) return;
+    const amount = Number(closeAmount.replace(/\./g, "").replace(",", "."));
+    if (closeAsk.role === "WON" && (!Number.isFinite(amount) || amount < 0)) return;
+    setClosing(true);
+    try {
+      const r = await fetch("/api/atrako/crm/leads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          workspaceId,
+          leadId,
+          ...(closeAsk.markAsLost
+            ? { markAsLost: true }
+            : { stageId: closeAsk.toStageId }),
+          ...(closeAsk.role === "WON" ? { dealValue: amount } : { lostReason: closeReason }),
+        }),
+      });
+      if (!r.ok) throw new Error("Falha ao atualizar");
+      setCloseAsk(null);
+      await qc.invalidateQueries({ queryKey: ["crm-lead", workspaceId, leadId] });
+      await qc.invalidateQueries({ queryKey: ["crm-pipeline", workspaceId] });
+    } catch (err) {
+      setSendError(err instanceof Error ? err.message : "Falha ao atualizar");
+    } finally {
+      setClosing(false);
+    }
   }
 
   const lead = data?.lead;
@@ -1133,6 +1187,24 @@ export function CrmLeadModal({
               Cobrar
             </Button>
           ) : null}
+          {lead?.status === "OPEN" ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="toolbar"
+              onClick={() => {
+                const lost = data?.stages.find((s) => s.role === "LOST");
+                setCloseAsk({
+                  toStageId: lost?.id ?? null,
+                  role: "LOST",
+                  markAsLost: !lost?.id,
+                });
+                setCloseReason("sem_resposta");
+              }}
+            >
+              Marcar como perdido
+            </Button>
+          ) : null}
           {lead?.phone ? (
             <Link
               href={links.conversationHref(lead.phone)}
@@ -1143,6 +1215,18 @@ export function CrmLeadModal({
           ) : null}
         </div>
       </aside>
+      {closeAsk ? (
+        <CrmCloseLeadDialog
+          role={closeAsk.role}
+          amount={closeAmount}
+          reason={closeReason}
+          busy={closing}
+          onAmountChange={setCloseAmount}
+          onReasonChange={setCloseReason}
+          onCancel={() => setCloseAsk(null)}
+          onConfirm={(e) => void confirmClose(e)}
+        />
+      ) : null}
     </div>
   );
 }

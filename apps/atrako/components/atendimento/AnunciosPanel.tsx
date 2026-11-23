@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CampanhasPanel } from "@/components/clientes/CampanhasPanel";
 import { DefaultPanel } from "@/components/clientes/DefaultPanel";
 import { PlanoRealCard, type PlanoRealData } from "@/components/clientes/PlanoRealCard";
@@ -85,6 +85,7 @@ export function AnunciosPanel({
   periodLabel?: string;
   preset?: string;
 }) {
+  const qc = useQueryClient();
   const range = dataInicio && dataFim ? `&dataInicio=${dataInicio}&dataFim=${dataFim}` : "";
   const longPeriod = preset === "ytd" || preset === "365d" || preset === "semestreAtual";
   const [chartAgrupamento, setChartAgrupamento] = useState<"diario" | "semanal">("semanal");
@@ -142,12 +143,12 @@ export function AnunciosPanel({
         <MetricTile
           label="Leads"
           value={resumo ? num(resumo.leads) : "—"}
-          detail={resumo?.leads ? `${brl(resumo.cpl)} por lead` : undefined}
+          detail="Meta Lead Ads"
         />
         <MetricTile
-          label="Conversas no WhatsApp"
-          value={resumo ? num(resumo.messagingConversationsStarted) : "—"}
-          detail={resumo?.messagingConversationsStarted ? `${brl(resumo.custoPorConversa)} por conversa` : undefined}
+          label="Custo por lead"
+          value={resumo && resumo.leads > 0 ? brl(resumo.cpl) : "—"}
+          detail={resumo?.leads ? `${num(resumo.leads)} leads no período` : undefined}
         />
         <MetricTile
           label="Cliques"
@@ -176,7 +177,16 @@ export function AnunciosPanel({
 
       <CampanhasPanel clienteId={workspaceId} dateFilter={{ periodo, dataInicio, dataFim }} canal="meta" allowCreate={false} />
 
-      {financeiro?.meses?.length ? <PlanoRealCard financeiro={financeiro} scope="meta" /> : null}
+      {financeiro?.meses?.length ? (
+        <PlanoRealCard
+          financeiro={financeiro}
+          scope="meta"
+          workspaceId={workspaceId}
+          onBudgetSaved={() => {
+            void qc.invalidateQueries({ queryKey: ["atendimento-financeiro", workspaceId, "meta"] });
+          }}
+        />
+      ) : null}
     </div>
   );
 }

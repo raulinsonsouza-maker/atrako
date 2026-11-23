@@ -733,46 +733,20 @@ function ConjuntosTable({ conjuntos, onSelect, parentCampType, mqlByAdsetId, cli
 }
 
 function VideoModal({ c, onClose }: { c: Criativo; onClose: () => void }) {
-  const [iframeBody, setIframeBody] = React.useState<string | null>(null);
-  const [iframeLoading, setIframeLoading] = React.useState(false);
-  const [iframeFailed, setIframeFailed] = React.useState(false);
-  const [metaPreview, setMetaPreview] = React.useState<{ src: string; w: number; h: number } | null>(null);
-
   const thumb = c.videoPictureUrl ?? c.imageUrl;
   const thumbUpgraded = thumb ? upgradeFbCdnImageUrl(thumb) : null;
-
-  const needsMetaPreview = !c.videoSourceUrl && !c.videoEmbedHtml;
+  const hasLocalMedia = Boolean(c.videoSourceUrl || c.videoEmbedHtml || thumbUpgraded);
+  const title = (c.title || "").trim();
+  const body = (c.body || "").trim();
+  const hasCopy = Boolean(title || body || c.adName);
 
   React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
-
-  React.useEffect(() => {
-    if (!needsMetaPreview) return;
-    setIframeLoading(true);
-    fetch(`/api/meta/preview?adId=${encodeURIComponent(c.adId)}&adFormat=MOBILE_FEED_STANDARD`)
-      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-      .then((data: { body?: string }) => {
-        if (data?.body) setIframeBody(data.body);
-        else setIframeFailed(true);
-      })
-      .catch(() => setIframeFailed(true))
-      .finally(() => setIframeLoading(false));
-  }, [needsMetaPreview, c.adId]);
-
-  React.useEffect(() => {
-    if (!iframeBody) return;
-    try {
-      const doc = new DOMParser().parseFromString(iframeBody, "text/html");
-      const iframe = doc.querySelector("iframe");
-      const src = iframe?.getAttribute("src") ?? "";
-      const w = parseInt(iframe?.getAttribute("width") ?? "0", 10) || 320;
-      const h = parseInt(iframe?.getAttribute("height") ?? "0", 10) || 560;
-      if (src) setMetaPreview({ src, w, h });
-    } catch { /* ignore */ }
-  }, [iframeBody]);
 
   return (
     <div
@@ -780,77 +754,77 @@ function VideoModal({ c, onClose }: { c: Criativo; onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-sm rounded-3xl bg-[var(--card)] border border-border overflow-hidden shadow-2xl"
-        onClick={e => e.stopPropagation()}
+        className="relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--hairline)] bg-[var(--canvas)]"
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
-          <Play className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />
-          <p className="type-caption-strong text-[var(--foreground)] flex-1 min-w-0 truncate">{c.adName}</p>
+        <div className="flex shrink-0 items-center gap-3 border-b border-[var(--divider-soft)] px-5 py-4">
+          <Play className="h-4 w-4 shrink-0 text-[var(--primary)]" strokeWidth={1.75} />
+          <p className="type-caption-strong min-w-0 flex-1 truncate text-[var(--ink)]">
+            {c.adName || "Anúncio"}
+          </p>
           <button
+            type="button"
             onClick={onClose}
-            className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors flex-shrink-0 p-1"
+            className="shrink-0 p-1 text-[var(--ink-muted-48)] active:scale-95"
             aria-label="Fechar"
           >
             ✕
           </button>
         </div>
 
-        {/* Video body */}
-        <div className="flex items-center justify-center bg-black min-h-[300px]">
-          {c.videoSourceUrl ? (
-            <video
-              src={c.videoSourceUrl}
-              poster={thumbUpgraded ?? undefined}
-              controls
-              autoPlay
-              playsInline
-              preload="metadata"
-              className="w-full max-h-[70vh] object-contain"
-            />
-          ) : c.videoEmbedHtml ? (
-            <div
-              className="w-full aspect-video"
-              dangerouslySetInnerHTML={{ __html: c.videoEmbedHtml }}
-            />
-          ) : iframeLoading ? (
-            <div className="flex flex-col items-center gap-3 py-12 text-[var(--muted-foreground)]">
-              <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
-              <p className="type-fine-print">Carregando prévia do Meta…</p>
-            </div>
-          ) : metaPreview ? (
-            (() => {
-              const scale = 320 / metaPreview.w;
-              const displayH = Math.round(metaPreview.h * scale);
-              return (
-                <div style={{ width: 320, height: displayH, overflow: "hidden", position: "relative" }}>
-                  <div style={{ transform: `scale(${scale})`, transformOrigin: "top left", width: metaPreview.w, height: metaPreview.h }}>
-                    <iframe
-                      title="Prévia do anúncio"
-                      src={metaPreview.src}
-                      scrolling="no"
-                      style={{ border: "none", display: "block", width: metaPreview.w, height: metaPreview.h }}
-                    />
-                  </div>
-                </div>
-              );
-            })()
-          ) : iframeFailed ? (
-            <div className="flex flex-col items-center gap-3 py-12 text-[var(--muted-foreground)]">
-              {thumbUpgraded
-                ? <img src={thumbUpgraded} alt={c.adName} className="w-full max-h-[50vh] object-contain" />
-                : <Play className="w-12 h-12 opacity-20" />
-              }
-              <p className="type-fine-print mt-2 opacity-60">Prévia não disponível</p>
-            </div>
-          ) : thumbUpgraded ? (
-            <img src={thumbUpgraded} alt={c.adName} className="w-full max-h-[70vh] object-contain" />
-          ) : (
-            <div className="flex flex-col items-center gap-3 py-12 text-[var(--muted-foreground)]">
-              <Play className="w-12 h-12 opacity-20" />
-              <p className="type-fine-print">Nenhuma prévia disponível</p>
-            </div>
-          )}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="flex min-h-[240px] items-center justify-center bg-black">
+            {c.videoSourceUrl ? (
+              <video
+                src={c.videoSourceUrl}
+                poster={thumbUpgraded ?? undefined}
+                controls
+                autoPlay
+                playsInline
+                preload="metadata"
+                className="w-full max-h-[70vh] object-contain"
+              />
+            ) : c.videoEmbedHtml ? (
+              <div
+                className="aspect-video w-full"
+                dangerouslySetInnerHTML={{ __html: c.videoEmbedHtml }}
+              />
+            ) : thumbUpgraded ? (
+              <img
+                src={thumbUpgraded}
+                alt={c.adName || title || "Criativo"}
+                className="w-full max-h-[70vh] object-contain"
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-3 py-12 text-[var(--ink-muted-48)]">
+                <Play className="h-12 w-12 opacity-20" strokeWidth={1.5} />
+                <p className="type-fine-print">Sem mídia sincronizada</p>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3 border-t border-[var(--divider-soft)] px-5 py-4">
+            {hasCopy ? (
+              <>
+                {c.adName ? (
+                  <p className="type-fine-print text-[var(--ink-muted-48)]">{c.adName}</p>
+                ) : null}
+                {title ? (
+                  <h3 className="type-body-strong text-[var(--ink)]">{title}</h3>
+                ) : null}
+                {body ? (
+                  <p className="type-caption whitespace-pre-wrap text-[var(--ink-muted-80)]">{body}</p>
+                ) : null}
+                {!title && !body ? (
+                  <p className="type-fine-print text-[var(--ink-muted-48)]">Sem copy sincronizada</p>
+                ) : null}
+              </>
+            ) : (
+              <p className="type-fine-print text-[var(--ink-muted-48)]">
+                {hasLocalMedia ? "Sem copy sincronizada" : "Sem prévia disponível para este criativo"}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>

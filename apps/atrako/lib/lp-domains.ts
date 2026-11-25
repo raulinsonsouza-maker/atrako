@@ -32,6 +32,16 @@ const VILARIS_DOMAIN: DomainSeed = {
   canonicalHost: "vilarisgestao.com.br",
 };
 
+const STRESSER_DOMAIN: DomainSeed = {
+  appHome: "/p/pikolin-mood",
+  name: "Stresser Colchões",
+  icon: "/lp/stresser/assets/favicon.webp",
+  appleIcon: "/lp/stresser/assets/apple-touch-icon.webp",
+  workspaceSlug: "stresser",
+  logoOnDark: "/lp/stresser/assets/logo.webp",
+  canonicalHost: "lp.stressercolchoes.com.br",
+};
+
 const DOMAINS: Record<string, DomainSeed> = {
   "lp.regicenter.com": {
     dir: "/lp/regicenter-franquia",
@@ -44,6 +54,7 @@ const DOMAINS: Record<string, DomainSeed> = {
   },
   "vilarisgestao.com.br": VILARIS_DOMAIN,
   "www.vilarisgestao.com.br": VILARIS_DOMAIN,
+  "lp.stressercolchoes.com.br": STRESSER_DOMAIN,
 };
 
 const PROD_DOMAINS: Record<string, LpDomain> = Object.fromEntries(
@@ -99,7 +110,19 @@ export function lpOAuthReturnTo(origin: string): string | null {
 export const REGICENTER_QUALIFY_FORM_PATH = "/f/franquia-regicenter-qualify";
 
 /** Prefixos do Atrako expostos no domínio do cliente. */
-export const LP_DOMAIN_ALLOWED_PREFIXES = ["/api/", "/sign-in", "/change-password", "/pagar/", "/social", "/config/conexoes"];
+export const LP_DOMAIN_ALLOWED_PREFIXES = [
+  "/api/",
+  "/sign-in",
+  "/change-password",
+  "/pagar/",
+  "/social",
+  "/config/conexoes",
+  "/p/",
+  "/checkout",
+  "/obrigado",
+  "/upsell",
+  "/loja/",
+];
 
 /** URL pública do formulário no domínio da LP, quando o workspace tem um. */
 export function workspaceFormUrl(workspaceSlug: string, formSlug: string): string | null {

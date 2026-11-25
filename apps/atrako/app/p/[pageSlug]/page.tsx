@@ -25,10 +25,15 @@ import { isLpSalesPageV3 } from "@/lib/criar/lp-v3";
 import { verifyPreviewToken } from "@/lib/criar/preview-token";
 import { flattenFields } from "@/lib/criar/form-test";
 import { SalesPageHtmlView } from "@/components/commerce/SalesPageHtmlView";
+import { LpHostTrackingBoot } from "@/components/commerce/LpHostTrackingBoot";
 
 type Props = {
   params: Promise<{ pageSlug: string }>;
   searchParams: Promise<{ embed?: string; preview?: string }>;
+};
+
+const productInclude = {
+  variants: { where: { active: true }, orderBy: { sortOrder: "asc" as const } },
 };
 
 /** Publicada pelo slug; com token de prévia válido, abre o rascunho pelo id. */
@@ -37,13 +42,33 @@ async function loadProduct(pageSlug: string, previewToken?: string) {
   if (preview) {
     const draft = await prisma.commerceProduct.findFirst({
       where: { id: preview.id, clienteId: preview.ws, active: true },
+      include: productInclude,
     });
     if (draft) return { product: draft, preview: true };
   }
   const product = await prisma.commerceProduct.findFirst({
     where: { slug: pageSlug, active: true, status: "PUBLISHED" },
+    include: productInclude,
   });
   return product ? { product, preview: false } : null;
+}
+
+function variantOptions(
+  variants: Array<{ id: string; options: unknown; priceCents: number | null }>,
+  fallbackPrice: number,
+) {
+  return variants.map((v) => {
+    const opts =
+      v.options && typeof v.options === "object" && !Array.isArray(v.options)
+        ? (v.options as Record<string, string>)
+        : {};
+    const label = Object.values(opts).filter(Boolean).join(" · ") || "Opção";
+    return {
+      id: v.id,
+      label,
+      priceCents: v.priceCents ?? fallbackPrice,
+    };
+  });
 }
 
 function firstHeading(html: string): string | null {
@@ -107,7 +132,10 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
     getMpPublicKey(product.clienteId),
   ]);
   const brand = config ? resolveBrand(config) : null;
-  const tracking = (config ? resolveTracking(config) : {}) as { pixelId?: string };
+  const tracking = (config ? resolveTracking(config) : {}) as {
+    pixelId?: string;
+    ga4MeasurementId?: string;
+  };
   const brandName = brand?.name || "Atrako";
   const productPayload: LpPuckProduct = {
     id: product.id,
@@ -118,6 +146,12 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
     clienteId: product.clienteId,
     type: product.type,
   };
+  const salesProduct = {
+    ...productPayload,
+    kind: product.kind,
+    maxInstallments: product.maxInstallments,
+  };
+  const checkoutVariants = variantOptions(product.variants ?? [], product.priceCents);
 
   const salesRaw = product.salesPage;
   if (isLpSalesPageV3(salesRaw)) {
@@ -251,12 +285,23 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
       primaryColor={brand?.primaryColor}
       className="min-h-screen bg-[var(--canvas)] text-[var(--ink)]"
     >
+      {!embed && !previewToken ? <LpHostTrackingBoot /> : null}
       {typeof tracking.pixelId === "string" && tracking.pixelId && !embed ? (
         <script
           dangerouslySetInnerHTML={{
             __html: `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${tracking.pixelId}');fbq('track','PageView');`,
           }}
         />
+      ) : null}
+      {typeof tracking.ga4MeasurementId === "string" && tracking.ga4MeasurementId && !embed ? (
+        <>
+          <script async src={`https://www.googletagmanager.com/gtag/js?id=${tracking.ga4MeasurementId}`} />
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${tracking.ga4MeasurementId}');`,
+            }}
+          />
+        </>
       ) : null}
 
       {!embed ? (
@@ -296,13 +341,14 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
           <div className="mx-auto max-w-2xl px-4 py-10 sm:py-14">
             <SalesPageView
               page={pageV1!}
-              product={productPayload}
+              product={salesProduct}
               brandName={brandName}
               currency={brand?.currency || "BRL"}
               mpPublicKey={mpPublicKey}
               formSlug={formSlug}
               checkoutProduct={checkoutProduct}
               bump={bump}
+              variants={checkoutVariants}
             />
           </div>
         )}

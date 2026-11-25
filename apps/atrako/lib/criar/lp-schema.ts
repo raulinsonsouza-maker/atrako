@@ -79,6 +79,8 @@ export type LpSalesPageV1 = {
   /** CommerceProduct vendido pelo checkout embutido. */
   checkoutProductId?: string;
   deliverable?: LpDeliverable;
+  /** Desconto percentual aplicado quando o pagamento é Pix (ex.: 15). */
+  pixDiscountPercent?: number;
 };
 
 /** LP v2 — Puck Data. */
@@ -129,7 +131,13 @@ export function normalizeSalesPage(
   raw: unknown,
   fallbackGoal: LpGoal = "sales",
 ): LpSalesPageV1 {
-  if (isLpSalesPageV1(raw)) return raw;
+  if (isLpSalesPageV1(raw)) {
+    const pct =
+      typeof (raw as LpSalesPageV1).pixDiscountPercent === "number"
+        ? (raw as LpSalesPageV1).pixDiscountPercent
+        : undefined;
+    return pct != null ? { ...raw, pixDiscountPercent: pct } : raw;
+  }
   if (isLpSalesPageV2(raw)) {
     return {
       goal: raw.goal,

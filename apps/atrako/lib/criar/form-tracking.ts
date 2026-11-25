@@ -58,7 +58,16 @@ export function resolveMetaPageContext(): MetaPageContext {
       page_path: path,
     };
   }
-  if (/vilaris/i.test(w?.location.hostname || "") || path === "/" || path === "") {
+  if (/stresser/i.test(w?.location.hostname || "") || /pikolin-mood/i.test(path)) {
+    return {
+      content_name: "Colchão Pikolin Mood",
+      content_category: "colchao",
+      content_ids: ["pikolin-mood"],
+      content_type: "product",
+      page_path: path || "/",
+    };
+  }
+  if (/vilaris/i.test(w?.location.hostname || "")) {
     return {
       content_name: "Mentoria de carreira Vilaris",
       content_category: "mentoria",

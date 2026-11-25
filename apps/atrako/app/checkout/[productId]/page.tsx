@@ -18,7 +18,10 @@ export default async function CheckoutPage({
 }) {
   const { productId } = await params;
   const sp = await searchParams;
-  const product = await prisma.commerceProduct.findUnique({ where: { id: productId } });
+  const product = await prisma.commerceProduct.findUnique({
+    where: { id: productId },
+    include: { variants: { where: { active: true }, orderBy: { sortOrder: "asc" } } },
+  });
   if (!product || !product.active || product.status !== "PUBLISHED") notFound();
   if (!(await isPublicModuleEnabled(product.clienteId, "commerce"))) {
     return <PublicUnavailable />;
@@ -39,6 +42,21 @@ export default async function CheckoutPage({
     }),
   ]);
   const brand = config ? resolveBrand(config) : null;
+  const sales =
+    product.salesPage && typeof product.salesPage === "object" && !Array.isArray(product.salesPage)
+      ? (product.salesPage as { pixDiscountPercent?: number })
+      : {};
+  const variants = product.variants.map((v) => {
+    const opts =
+      v.options && typeof v.options === "object" && !Array.isArray(v.options)
+        ? (v.options as Record<string, string>)
+        : {};
+    return {
+      id: v.id,
+      label: Object.values(opts).filter(Boolean).join(" · ") || "Opção",
+      priceCents: v.priceCents ?? product.priceCents,
+    };
+  });
 
   return (
     <BrandThemeScope
@@ -61,11 +79,16 @@ export default async function CheckoutPage({
               slug: product.slug,
               priceCents: product.priceCents,
               description: product.description,
+              type: product.type,
+              maxInstallments: product.maxInstallments,
             }}
             brandName={brand?.name || "Atrako"}
             currency={brand?.currency || "BRL"}
             mpPublicKey={publicKey}
             parentOrderId={sp.parentOrderId}
+            variants={variants}
+            pixDiscountPercent={typeof sales.pixDiscountPercent === "number" ? sales.pixDiscountPercent : 0}
+            requireAddress={(product.kind || product.type || "").toUpperCase() === "PHYSICAL"}
             bump={
               bumpOffer
                 ? {

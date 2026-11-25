@@ -1,0 +1,381 @@
+/**
+ * Workspace Stresser Colchões (ecommerce) + oferta Pikolin Mood.
+ *
+ *   npx tsx scripts/seed-stresser-store.ts
+ *
+ * Login: vendas@stressercolchoes.com.br / Stresser@2026
+ * LP:    https://lp.stressercolchoes.com.br/  (= /p/pikolin-mood)
+ * Painel: /commerce · /crm · dashboard
+ */
+
+import { prisma } from "../lib/db";
+import { hashPassword } from "../lib/authSecurity";
+import { ensureDefaultPipeline, applyPipelinePreset } from "../lib/modules/crm";
+import { applyWorkspaceEdition } from "../lib/modules/apply-edition";
+import { defaultShippingRules, type ShippingRules } from "../lib/commerce/shipping";
+import { Prisma } from "../lib/generated/prisma";
+import {
+  PLATAFORMA_GOOGLE_ADS,
+  PLATAFORMA_META,
+  PLATAFORMA_GOOGLE_ANALYTICS,
+} from "../lib/repositories/contasRepository";
+
+const EMAIL = process.env.STRESSER_OWNER_EMAIL?.trim() || "vendas@stressercolchoes.com.br";
+const PASSWORD = process.env.STRESSER_OWNER_PASSWORD?.trim() || "Stresser@2026";
+const SLUG = "stresser";
+const LOGO = "/lp/stresser/assets/logo.webp";
+/** Verde do emblema Stresser (lime/forest). */
+const PRIMARY = "#6B9E3D";
+const PRODUCT_SLUG = "pikolin-mood";
+const PIX_DISCOUNT_PERCENT = 15;
+
+const VARIANTS = [
+  { label: "Solteiro Padrão (0,88m x 1,88m)", sku: "MOOD-SOL", priceCents: 299900, stockQty: 20 },
+  { label: "Solteiro Americano (0,96m x 2,03m)", sku: "MOOD-SOL-AM", priceCents: 319900, stockQty: 20 },
+  { label: "Casal Padrão (1,38m x 1,88m)", sku: "MOOD-CAS", priceCents: 299900, stockQty: 30 },
+  { label: "Queen Size (1,58m x 1,98m)", sku: "MOOD-QUEEN", priceCents: 349900, stockQty: 20 },
+  { label: "King Size (1,93m x 2,03m)", sku: "MOOD-KING", priceCents: 399900, stockQty: 15 },
+] as const;
+
+function shippingFreeBrasil(): ShippingRules {
+  return {
+    ...defaultShippingRules(),
+    pickupEnabled: false,
+    shipEnabled: true,
+    freeShippingMinCents: 1,
+    defaultFeeCents: 0,
+    defaultDaysMin: 15,
+    defaultDaysMax: 25,
+    zones: [],
+  };
+}
+
+function moodSalesPage(): Prisma.InputJsonValue {
+  return {
+    goal: "sales",
+    version: 1,
+    pixDiscountPercent: PIX_DISCOUNT_PERCENT,
+    sections: [
+      {
+        id: "s_hero",
+        type: "hero",
+        headline: "Colchão Pikolin Mood — molas ensacadas firme",
+        subheadline:
+          "Frete grátis para todo o Brasil · 15% off no Pix · até 10x sem juros no cartão. Altura 28 cm, Cool Touch e High Support.",
+        mediaUrl: "https://images.tcdn.com.br/img/img_prod/1326584/colcho_pikolin_mood_molas_ensacadas_firme_1_20260809204941_aed1f7947fea.png",
+      },
+      {
+        id: "s_benefits",
+        type: "benefits",
+        items: [
+          "Molas ensacadas Cross System com individualidade de movimento",
+          "Espumas High Support e Cool Touch — firmeza com frescor",
+          "Tecido Cooper System: reflete o calor e reduz ácaros",
+          "Pillow top de um lado · suporte individual até 250 kg",
+          "Garantia de 1 ano · disponível em cerca de 20 dias úteis",
+          "Frete grátis Brasil · Pix com 15% de desconto ou 10x sem juros",
+        ],
+      },
+      {
+        id: "s_social",
+        type: "social_proof",
+        quotes: [
+          {
+            text: "O Mood é a melhor relação custo-benefício da linha Pikolin para quem busca firmeza sem abrir mão de tecnologia.",
+            author: "Equipe Stresser Colchões",
+          },
+        ],
+      },
+      {
+        id: "s_faq",
+        type: "faq",
+        items: [
+          {
+            q: "Quais medidas estão disponíveis?",
+            a: "Solteiro Padrão, Solteiro Americano, Casal Padrão, Queen e King. Escolha a medida no checkout.",
+          },
+          {
+            q: "Como funciona o frete?",
+            a: "Frete grátis para todo o Brasil. O prazo típico de disponibilidade é de cerca de 20 dias úteis.",
+          },
+          {
+            q: "Quais formas de pagamento?",
+            a: "Pix com 15% de desconto ou cartão de crédito em até 10x sem juros via Mercado Pago.",
+          },
+          {
+            q: "O colchão é firme?",
+            a: "Sim. O Mood é firme, com molas ensacadas e espumas High Support, indicado para quem prefere suporte firme.",
+          },
+        ],
+      },
+      { id: "s_checkout", type: "checkout" },
+    ],
+  };
+}
+
+async function upsertCliente() {
+  const existing = await prisma.cliente.findFirst({
+    where: {
+      OR: [{ slug: SLUG }, { nome: { contains: "stresser", mode: "insensitive" } }],
+    },
+  });
+  const data = {
+    nome: "Stresser Colchões",
+    slug: SLUG,
+    ativo: true,
+    logoUrl: LOGO,
+    segmento: "Colchões / e-commerce",
+    objetivoMidia: "ecommerce",
+    perfilPanel: "ecommerce",
+    produtoServico: "Colchões, camas box, travesseiros e sofás-cama — campanhas Google com LP de alta conversão.",
+    modeloNegocio: "Loja física/online (Tray) + páginas de oferta Atrako para mídia paga.",
+    publicoAlvo: "Quem busca colchão firme com boa relação custo-benefício, frete grátis e parcelamento.",
+    objetivoProjeto: "Vender o Pikolin Mood via LP com checkout Mercado Pago e medir conversão no Google Ads.",
+  };
+  if (existing) return prisma.cliente.update({ where: { id: existing.id }, data });
+  return prisma.cliente.create({ data });
+}
+
+async function upsertOwner(clienteId: string) {
+  const passwordHash = await hashPassword(PASSWORD);
+  const existing = await prisma.workspaceMember.findFirst({ where: { email: EMAIL } });
+  if (existing) {
+    return prisma.workspaceMember.update({
+      where: { id: existing.id },
+      data: {
+        clienteId,
+        passwordHash,
+        passwordUpdatedAt: new Date(),
+        role: "OWNER",
+        active: true,
+        name: "Stresser Colchões",
+      },
+    });
+  }
+  return prisma.workspaceMember.create({
+    data: {
+      clienteId,
+      email: EMAIL,
+      name: "Stresser Colchões",
+      role: "OWNER",
+      active: true,
+      passwordHash,
+      passwordUpdatedAt: new Date(),
+    },
+  });
+}
+
+async function ensureContas(clienteId: string) {
+  for (const plataforma of [PLATAFORMA_GOOGLE_ADS, PLATAFORMA_META, PLATAFORMA_GOOGLE_ANALYTICS]) {
+    const existing = await prisma.conta.findFirst({ where: { clienteId, plataforma } });
+    if (existing) {
+      await prisma.conta.update({
+        where: { id: existing.id },
+        data: { nomeConta: "Stresser Colchões" },
+      });
+      continue;
+    }
+    await prisma.conta.create({
+      data: {
+        clienteId,
+        plataforma,
+        nomeConta: "Stresser Colchões",
+        accountIdPlataforma: null,
+      },
+    });
+  }
+}
+
+async function seedStore(clienteId: string) {
+  const rules = shippingFreeBrasil();
+  const theme = {
+    logoUrl: LOGO,
+    announce: "Frete grátis Brasil · 15% off no Pix · 10x sem juros",
+    about: "Stresser Colchões — qualidade em colchões com entrega em todo o Brasil.",
+    whatsapp: "41999962142",
+    email: "vendas@stressercolchoes.com.br",
+    hours: "09:00 às 18:00",
+    instagram: "",
+    pixDiscountPercent: PIX_DISCOUNT_PERCENT,
+  };
+
+  let store = await prisma.commerceStore.findUnique({ where: { clienteId } });
+  if (!store) {
+    store = await prisma.commerceStore.create({
+      data: {
+        clienteId,
+        slug: SLUG,
+        name: "Stresser Colchões",
+        published: true,
+        acceptingOrders: true,
+        shipEnabled: true,
+        pickupEnabled: false,
+        minOrderCents: 0,
+        shippingRules: rules,
+        theme,
+      },
+    });
+  } else {
+    store = await prisma.commerceStore.update({
+      where: { id: store.id },
+      data: {
+        slug: SLUG,
+        name: "Stresser Colchões",
+        published: true,
+        acceptingOrders: true,
+        shipEnabled: true,
+        pickupEnabled: false,
+        shippingRules: rules,
+        theme,
+      },
+    });
+  }
+
+  const category = await prisma.commerceCategory.upsert({
+    where: { storeId_slug: { storeId: store.id, slug: "colchoes" } },
+    create: {
+      storeId: store.id,
+      name: "Colchões",
+      slug: "colchoes",
+      sortOrder: 0,
+      active: true,
+    },
+    update: { name: "Colchões", active: true, sortOrder: 0 },
+  });
+
+  const description =
+    "Colchão Pikolin Mood Molas Ensacadas Firme — linha Cooper System. Altura 28 cm, espumas High Support e Cool Touch, pillow top de um lado, suporte individual até 250 kg. Frete grátis Brasil.";
+
+  const product = await prisma.commerceProduct.upsert({
+    where: { clienteId_slug: { clienteId, slug: PRODUCT_SLUG } },
+    create: {
+      clienteId,
+      storeId: store.id,
+      categoryId: category.id,
+      name: "Colchão Pikolin Mood Molas Ensacadas Firme",
+      slug: PRODUCT_SLUG,
+      description,
+      kind: "PHYSICAL",
+      type: "PHYSICAL",
+      status: "PUBLISHED",
+      priceCents: 299900,
+      maxInstallments: 10,
+      coverUrl:
+        "https://images.tcdn.com.br/img/img_prod/1326584/colcho_pikolin_mood_molas_ensacadas_firme_1_20260809204941_aed1f7947fea.png",
+      images: [
+        {
+          src: "https://images.tcdn.com.br/img/img_prod/1326584/colcho_pikolin_mood_molas_ensacadas_firme_1_20260809204941_aed1f7947fea.png",
+          alt: "Colchão Pikolin Mood Molas Ensacadas Firme",
+        },
+      ],
+      salesPage: moodSalesPage(),
+      stockTracked: true,
+      active: true,
+      badges: { featured: true, launch: true },
+    },
+    update: {
+      storeId: store.id,
+      categoryId: category.id,
+      name: "Colchão Pikolin Mood Molas Ensacadas Firme",
+      description,
+      kind: "PHYSICAL",
+      type: "PHYSICAL",
+      status: "PUBLISHED",
+      priceCents: 299900,
+      maxInstallments: 10,
+      coverUrl:
+        "https://images.tcdn.com.br/img/img_prod/1326584/colcho_pikolin_mood_molas_ensacadas_firme_1_20260809204941_aed1f7947fea.png",
+      images: [
+        {
+          src: "https://images.tcdn.com.br/img/img_prod/1326584/colcho_pikolin_mood_molas_ensacadas_firme_1_20260809204941_aed1f7947fea.png",
+          alt: "Colchão Pikolin Mood Molas Ensacadas Firme",
+        },
+      ],
+      salesPage: moodSalesPage(),
+      stockTracked: true,
+      active: true,
+      badges: { featured: true, launch: true },
+    },
+  });
+
+  await prisma.commerceVariant.deleteMany({ where: { productId: product.id } });
+  let sort = 0;
+  for (const v of VARIANTS) {
+    await prisma.commerceVariant.create({
+      data: {
+        productId: product.id,
+        sku: v.sku,
+        options: { Medida: v.label },
+        priceCents: v.priceCents,
+        stockQty: v.stockQty,
+        active: true,
+        sortOrder: sort++,
+      },
+    });
+  }
+
+  return { store, product };
+}
+
+async function main() {
+  const cliente = await upsertCliente();
+  console.log("Cliente:", cliente.id, cliente.nome, cliente.slug);
+
+  const member = await upsertOwner(cliente.id);
+  console.log("OWNER:", member.email, `(senha ${PASSWORD})`);
+
+  await ensureContas(cliente.id);
+  console.log("Contas: GOOGLE_ADS, META, GOOGLE_ANALYTICS (IDs vazios)");
+
+  await ensureDefaultPipeline(cliente.id);
+  await applyPipelinePreset(cliente.id, "ecommerce").catch(() => null);
+  await applyWorkspaceEdition(cliente.id, "ecommerce");
+
+  await prisma.workspaceSettings.upsert({
+    where: { clienteId: cliente.id },
+    create: {
+      clienteId: cliente.id,
+      primaryColor: PRIMARY,
+      logoOnDarkUrl: LOGO,
+      messagingPrefs: {
+        attendance: {
+          about: "Stresser Colchões — colchões com frete grátis e parcelamento.",
+          sells: "Colchão Pikolin Mood e linha de colchões, box e acessórios.",
+          conditions: "Frete grátis Brasil. Pix 15% off. Até 10x sem juros.",
+          tone: "Claro, profissional e direto.",
+          handoffWhen: "Cliente pediu humano ou dúvida de medida/prazo.",
+          mode: "assist",
+          waEnabled: true,
+          hourPreset: "weekdays",
+          hourStart: "09:00",
+          hourEnd: "18:00",
+          offerKind: "none",
+        },
+      } as Prisma.InputJsonValue,
+    },
+    update: {
+      primaryColor: PRIMARY,
+      logoOnDarkUrl: LOGO,
+    },
+  });
+  console.log(`Edição: ecommerce · primary ${PRIMARY}`);
+
+  const { store, product } = await seedStore(cliente.id);
+  const variantCount = await prisma.commerceVariant.count({ where: { productId: product.id } });
+
+  console.log(`Loja: ${store.slug} · produto ${product.slug} · ${variantCount} medidas`);
+  console.log("");
+  console.log("Login:   http://localhost:5000/sign-in");
+  console.log(`         ${EMAIL} / ${PASSWORD}`);
+  console.log("Painel:  http://localhost:5000/commerce");
+  console.log("CRM:     http://localhost:5000/crm");
+  console.log(`LP:      http://localhost:5000/p/${PRODUCT_SLUG}`);
+  console.log("Host:    https://lp.stressercolchoes.com.br/  (após DNS + Traefik)");
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(() => prisma.$disconnect());

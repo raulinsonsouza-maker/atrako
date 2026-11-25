@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { CheckoutForm } from "@/components/commerce/CheckoutForm";
+import { CheckoutForm, type CheckoutVariantOption } from "@/components/commerce/CheckoutForm";
 import { LpLeadForm } from "@/components/commerce/LpLeadForm";
 import type { LpSalesPageV1, LpSection } from "@/lib/criar/lp-schema";
 import type { LpCheckoutBump, LpPuckProduct } from "@/lib/criar/puck/context";
@@ -14,6 +14,8 @@ export type SalesPageProduct = {
   description: string | null;
   clienteId: string;
   type?: string;
+  kind?: string;
+  maxInstallments?: number | null;
 };
 
 type Props = {
@@ -27,6 +29,7 @@ type Props = {
   bump?: LpCheckoutBump | null;
   /** Preview no editor — sem submit real */
   preview?: boolean;
+  variants?: CheckoutVariantOption[];
 };
 
 function SectionBlock({
@@ -40,6 +43,7 @@ function SectionBlock({
   preview,
   checkoutProduct,
   bump,
+  variants,
 }: {
   section: LpSection;
   product: SalesPageProduct;
@@ -51,6 +55,7 @@ function SectionBlock({
   preview?: boolean;
   checkoutProduct?: LpPuckProduct | null;
   bump?: LpCheckoutBump | null;
+  variants?: CheckoutVariantOption[];
 }) {
   switch (section.type) {
     case "hero":
@@ -172,17 +177,21 @@ function SectionBlock({
           </section>
         );
       }
-      return (
+      {
+        const sold = checkoutProduct ?? product;
+        const physical = (sold.type || product.kind || "").toUpperCase() === "PHYSICAL";
+        return (
         <section className="lp-section lp-section-convert">
           <Suspense fallback={<p className="type-caption text-[var(--ink-muted-48)]">…</p>}>
             <CheckoutForm
               product={{
-                id: (checkoutProduct ?? product).id,
-                name: (checkoutProduct ?? product).name,
-                slug: (checkoutProduct ?? product).slug,
-                priceCents: (checkoutProduct ?? product).priceCents,
-                description: (checkoutProduct ?? product).description,
-                type: (checkoutProduct ?? product).type,
+                id: sold.id,
+                name: sold.name,
+                slug: sold.slug,
+                priceCents: sold.priceCents,
+                description: sold.description,
+                type: sold.type,
+                maxInstallments: product.maxInstallments,
               }}
               brandName={brandName}
               currency={currency}
@@ -190,6 +199,9 @@ function SectionBlock({
               bump={bump}
               pageProductId={product.id}
               pageSlug={product.slug}
+              variants={variants}
+              pixDiscountPercent={page.pixDiscountPercent ?? 0}
+              requireAddress={physical}
             />
           </Suspense>
           {page.deliverable ? (
@@ -198,7 +210,8 @@ function SectionBlock({
             </p>
           ) : null}
         </section>
-      );
+        );
+      }
     case "cta":
       return (
         <section className="lp-section text-center">
@@ -226,6 +239,7 @@ export function SalesPageView({
   checkoutProduct = null,
   bump = null,
   preview,
+  variants = [],
 }: Props) {
   return (
     <div className="lp-page">
@@ -251,6 +265,7 @@ export function SalesPageView({
             preview={preview}
             checkoutProduct={checkoutProduct}
             bump={bump}
+            variants={variants}
           />
         </div>
       ))}

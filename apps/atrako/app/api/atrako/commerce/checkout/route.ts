@@ -12,6 +12,7 @@ import { resolveMercadoPago } from "@/lib/config/resolveConnection";
 import { upsertPersonAndLead } from "@/lib/atrako/person";
 import { isPublicModuleEnabled } from "@/lib/modules/resolve";
 import { createEvent, publishEventBatch } from "@atrako/events";
+import { Prisma } from "@/lib/generated/prisma";
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,7 +35,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "CPF inválido" }, { status: 400 });
     }
 
-    const product = await prisma.commerceProduct.findUnique({ where: { id: productId } });
+    const product = await prisma.commerceProduct.findUnique({
+      where: { id: productId },
+      include: { variants: { where: { active: true }, orderBy: { sortOrder: "asc" } } },
+    });
     if (
       !product ||
       !product.active ||
@@ -44,7 +48,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Produto indisponível" }, { status: 404 });
     }
 
-    let mainPriceCents = product.priceCents;
+    const variantId = typeof body.variantId === "string" ? body.variantId : "";
+    const variant =
+      variantId && product.variants.length
+        ? product.variants.find((v) => v.id === variantId) ?? null
+        : null;
+    if (product.variants.length > 0 && !variant) {
+      return NextResponse.json({ error: "Selecione a medida / variante" }, { status: 400 });
+    }
+
+    let mainPriceCents = variant?.priceCents ?? product.priceCents;
+    let itemName = product.name;
+    if (variant) {
+      const opts =
+        variant.options && typeof variant.options === "object" && !Array.isArray(variant.options)
+          ? (variant.options as Record<string, string>)
+          : {};
+      const label = Object.values(opts).filter(Boolean).join(" · ");
+      if (label) itemName = `${product.name} — ${label}`;
+    }
     if (parentOrderId) {
       const parent = await prisma.commerceOrder.findUnique({
         where: { id: parentOrderId },
@@ -61,12 +83,27 @@ export async function POST(request: NextRequest) {
         },
       });
       if (upsellOffer) {
-        mainPriceCents = Math.round(product.priceCents * (1 - upsellOffer.discountPercent / 100));
+        mainPriceCents = Math.round(mainPriceCents * (1 - upsellOffer.discountPercent / 100));
       }
     }
 
-    const items: Array<{ productId: string; name: string; priceCents: number }> = [
-      { productId: product.id, name: product.name, priceCents: mainPriceCents },
+    const items: Array<{
+      productId: string;
+      name: string;
+      priceCents: number;
+      variantId?: string;
+      options?: Record<string, string>;
+    }> = [
+      {
+        productId: product.id,
+        name: itemName,
+        priceCents: mainPriceCents,
+        variantId: variant?.id,
+        options:
+          variant?.options && typeof variant.options === "object" && !Array.isArray(variant.options)
+            ? (variant.options as Record<string, string>)
+            : undefined,
+      },
     ];
 
     if (bumpProductId) {
@@ -100,6 +137,44 @@ export async function POST(request: NextRequest) {
       discountCents = result.discountCents;
       couponId = result.coupon.id;
     }
+
+    // Desconto Pix: salesPage.pixDiscountPercent ou theme da loja.
+    let pixDiscountPercent = 0;
+    if (payment?.type === "pix") {
+      const sales =
+        product.salesPage && typeof product.salesPage === "object" && !Array.isArray(product.salesPage)
+          ? (product.salesPage as Record<string, unknown>)
+          : {};
+      if (typeof sales.pixDiscountPercent === "number" && sales.pixDiscountPercent > 0) {
+        pixDiscountPercent = Math.min(100, Math.round(sales.pixDiscountPercent));
+      } else if (product.storeId) {
+        const store = await prisma.commerceStore.findUnique({
+          where: { id: product.storeId },
+          select: { theme: true },
+        });
+        const theme =
+          store?.theme && typeof store.theme === "object" && !Array.isArray(store.theme)
+            ? (store.theme as Record<string, unknown>)
+            : {};
+        if (typeof theme.pixDiscountPercent === "number" && theme.pixDiscountPercent > 0) {
+          pixDiscountPercent = Math.min(100, Math.round(theme.pixDiscountPercent));
+        }
+      }
+      if (pixDiscountPercent > 0) {
+        discountCents += Math.round(((subtotalCents - discountCents) * pixDiscountPercent) / 100);
+      }
+    }
+
+    const shippingAddress =
+      body.shippingAddress && typeof body.shippingAddress === "object"
+        ? (body.shippingAddress as Record<string, unknown>)
+        : null;
+    const fulfillment =
+      typeof body.fulfillment === "string" && body.fulfillment.trim()
+        ? body.fulfillment.trim().toUpperCase()
+        : product.kind === "PHYSICAL"
+          ? "SHIP"
+          : "DIGITAL";
     const totalCents = Math.max(0, subtotalCents - discountCents);
     const eventId =
       typeof (body.attribution as { eventId?: string } | undefined)?.eventId === "string"
@@ -168,6 +243,7 @@ export async function POST(request: NextRequest) {
     const order = await prisma.commerceOrder.create({
       data: {
         clienteId: product.clienteId,
+        storeId: product.storeId ?? undefined,
         productId: product.id,
         contactId: contact.id,
         email,
@@ -177,7 +253,20 @@ export async function POST(request: NextRequest) {
         status: "PENDING",
         subtotalCents,
         discountCents,
+        shippingFeeCents: 0,
         totalCents,
+        fulfillment,
+        fulfillmentStatus: fulfillment === "SHIP" ? "NEW" : "NEW",
+        shippingAddress: shippingAddress
+          ? ({
+              street: String(shippingAddress.street ?? "").slice(0, 200),
+              number: String(shippingAddress.number ?? "").slice(0, 40),
+              complement: String(shippingAddress.complement ?? "").slice(0, 120) || undefined,
+              city: String(shippingAddress.city ?? "").slice(0, 120),
+              state: String(shippingAddress.state ?? "").slice(0, 2).toUpperCase(),
+              cep: onlyDigits(String(shippingAddress.cep ?? "")).slice(0, 8),
+            } as Prisma.InputJsonValue)
+          : undefined,
         couponId,
         eventId,
         fbp: attr.fbp,
@@ -193,6 +282,8 @@ export async function POST(request: NextRequest) {
         items: {
           create: items.map((item) => ({
             productId: item.productId,
+            variantId: item.variantId,
+            options: item.options,
             name: item.name,
             priceCents: item.priceCents,
             installments:
@@ -249,6 +340,7 @@ export async function POST(request: NextRequest) {
         orderId: order.id,
         eventId,
         status: "APPROVED",
+        totalCents,
         demoMode: !mp || isDemo,
         redirectTo: `/upsell/check?orderId=${order.id}`,
       });
@@ -298,6 +390,7 @@ export async function POST(request: NextRequest) {
         orderId: order.id,
         eventId,
         status: "APPROVED",
+        totalCents,
         redirectTo: `/upsell/check?orderId=${order.id}`,
       });
     }
@@ -307,6 +400,7 @@ export async function POST(request: NextRequest) {
         orderId: order.id,
         eventId,
         status: "PENDING",
+        totalCents,
         redirectTo: `/checkout/pix/${order.id}`,
         pixQrCode: pix?.qr_code,
         pixQrCodeBase64: pix?.qr_code_base64,
@@ -318,6 +412,7 @@ export async function POST(request: NextRequest) {
       orderId: order.id,
       eventId,
       status: "PENDING",
+      totalCents,
       redirectTo: `/obrigado?orderId=${order.id}`,
     });
   } catch (e) {

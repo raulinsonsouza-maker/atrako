@@ -22,6 +22,7 @@
     "scripts:setup-social-media-clients": "npx tsx scripts/setup-social-media-clients.ts",
     "demo:incorporadora": "tsx scripts/seed-incorporadora-demo.ts",
     "demo:draxx": "tsx scripts/seed-draxx-store.ts",
+    "seed:stresser": "tsx scripts/seed-stresser-store.ts",
     "sync:daily": "tsx scripts/daily-sync.ts",
     "atrako:outbox": "tsx scripts/process-atrako-outbox.ts"
   },

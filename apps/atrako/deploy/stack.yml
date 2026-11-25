@@ -137,6 +137,14 @@ services:
         - traefik.http.routers.lp-vilaris-http.rule=Host(`vilarisgestao.com.br`) || Host(`www.vilarisgestao.com.br`)
         - traefik.http.routers.lp-vilaris-http.entrypoints=web
         - traefik.http.routers.lp-vilaris-http.middlewares=atrako-https
+        - traefik.http.routers.lp-stresser.rule=Host(`lp.stressercolchoes.com.br`)
+        - traefik.http.routers.lp-stresser.entrypoints=websecure
+        - traefik.http.routers.lp-stresser.tls=true
+        - traefik.http.routers.lp-stresser.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.lp-stresser.service=atrako-web
+        - traefik.http.routers.lp-stresser-http.rule=Host(`lp.stressercolchoes.com.br`)
+        - traefik.http.routers.lp-stresser-http.entrypoints=web
+        - traefik.http.routers.lp-stresser-http.middlewares=atrako-https
 
 networks:
   internal:

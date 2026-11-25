@@ -46,7 +46,7 @@ function normalizeBenefit(item: string | { title: string; body?: string; icon?: 
   return item;
 }
 
-function OfferStrip({
+function HeroOffer({
   product,
   page,
   currency,
@@ -58,26 +58,31 @@ function OfferStrip({
   const pixPct = Math.min(100, Math.max(0, Math.round(page.pixDiscountPercent ?? 0)));
   const base = product.priceCents;
   const pixCents = pixPct > 0 ? Math.max(0, base - Math.round((base * pixPct) / 100)) : base;
+  const saveCents = Math.max(0, base - pixCents);
   const maxInst = product.maxInstallments && product.maxInstallments > 0 ? product.maxInstallments : 10;
+  const installment = Math.round(base / maxInst);
+
   return (
-    <div className="lp-offer-strip">
-      <div className="lp-offer-strip__price">
-        <p className="lp-offer-strip__pix type-body-strong">{brl(pixCents, currency)}</p>
-        <p className="type-fine-print text-[var(--ink-muted-80)]">
-          no Pix{pixPct > 0 ? ` · −${pixPct}%` : ""}
-        </p>
+    <div className="lp-hero-price">
+      <div className="lp-hero-price__row">
+        {pixPct > 0 ? <span className="lp-price-was type-fine-print">{brl(base, currency)}</span> : null}
+        {pixPct > 0 ? <span className="lp-chip lp-chip--pix">{pixPct}% OFF NO PIX</span> : null}
       </div>
-      <div className="lp-offer-strip__chips">
-        <span className="lp-chip lp-chip--pix">Pix −{pixPct || 0}%</span>
-        <span className="lp-chip">{maxInst}x sem juros</span>
-        <span className="lp-chip">Frete grátis</span>
-      </div>
-      <p className="type-fine-print text-[var(--ink-muted-48)]">
-        ou {brl(base, currency)} no cartão
+      <p className="lp-hero-price__pix">{brl(pixCents, currency)}</p>
+      <p className="type-fine-print text-[var(--ink-muted-80)]">
+        à vista no Pix
+        {saveCents > 0 ? ` (você economiza ${brl(saveCents, currency)})` : ""}
+      </p>
+      <p className="type-caption text-[var(--ink)]">
+        ou <strong className="type-caption-strong">{maxInst}x de {brl(installment, currency)}</strong> sem juros no
+        cartão
       </p>
       <a href="#checkout" className="lp-offer-strip__cta">
-        Escolher medida e comprar
+        Comprar com frete grátis
       </a>
+      <p className="type-fine-print text-[var(--ink-muted-48)]">
+        Entrega gratuita para todo o Brasil · 1 ano de garantia
+      </p>
     </div>
   );
 }
@@ -94,8 +99,10 @@ function BenefitsVisual({
   const cards = items.map(normalizeBenefit);
   return (
     <section className="lp-benefits-visual">
-      <h2 className="type-caption-strong text-[var(--ink)]">{title || "Por que o Mood"}</h2>
-      {lead ? <p className="mt-2 type-body text-[var(--ink-muted-80)]">{lead}</p> : null}
+      <h2 className="type-caption-strong text-[var(--ink)] text-center">{title || "Por que o Mood"}</h2>
+      {lead ? (
+        <p className="mt-2 text-center type-body text-[var(--ink-muted-80)]">{lead}</p>
+      ) : null}
       <div className="lp-benefits-grid">
         {cards.map((card, i) => (
           <article key={`${i}-${card.title}`} className="lp-benefit-tile">
@@ -140,11 +147,15 @@ function SectionBlock({
     case "hero":
       return (
         <section className="lp-section lp-section-hero lp-section-hero--tight">
-          <h1 className="type-tagline text-[var(--ink)]">{section.headline}</h1>
+          <p className="type-fine-print uppercase tracking-wide text-[var(--ink-muted-48)]">PIKOLIN MOOD</p>
+          <h1 className="mt-2 type-tagline text-[var(--ink)]">{section.headline}</h1>
           {section.subheadline ? (
             <p className="mt-3 max-w-prose mx-auto type-body text-[var(--ink-muted-80)]">
               {section.subheadline}
             </p>
+          ) : null}
+          {page.goal === "sales" ? (
+            <HeroOffer product={product} page={page} currency={currency} />
           ) : null}
         </section>
       );
@@ -152,7 +163,6 @@ function SectionBlock({
       return (
         <section className="lp-section lp-section-gallery">
           <ProductGallery title={undefined} images={section.images} />
-          {page.goal === "sales" ? <OfferStrip product={product} page={page} currency={currency} /> : null}
         </section>
       );
     case "video":
@@ -270,7 +280,11 @@ function SectionBlock({
     case "mattress_layers":
       return (
         <section className="lp-section lp-section-layers">
-          <MattressLayersBlock title={section.title} layers={section.layers} />
+          <MattressLayersBlock
+            title={section.title}
+            hint="Toque na camada para ver como ela melhora seu sono"
+            layers={section.layers}
+          />
         </section>
       );
     case "cta":

@@ -102,7 +102,6 @@ export function ProductGallery({ title, images }: Props) {
             </button>
           </>
         ) : null}
-        {showingVideo ? <span className="product-gallery__badge type-fine-print">Reel</span> : null}
       </div>
       {list.length > 1 ? (
         <div className="product-gallery__dots" role="tablist" aria-label="Mídia">

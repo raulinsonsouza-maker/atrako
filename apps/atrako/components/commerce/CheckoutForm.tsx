@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { BackLink } from "@/components/ui/back-link";
 import { PillSelect } from "@/components/ui/pill-select";
 import { FloatingStickyBar } from "@/components/ui/floating-sticky-bar";
 import { Switch } from "@/components/ui/switch";
@@ -191,9 +190,14 @@ export function CheckoutForm({
   const savingsLabel =
     pixPct > 0 && payType === "pix" ? brl(cardTotalCents - pixTotalCents, currency) : null;
 
-  const backHref = pageSlug ? `/p/${pageSlug}` : `/p/${product.slug}`;
   const paymentStep: Step = requireAddress ? 3 : 2;
   const visibleStep = step;
+  const installmentPreview = Math.round(cardTotalCents / maxInstallments);
+  const selectedPixCents =
+    pixPct > 0
+      ? Math.max(0, (selectedVariant?.priceCents ?? product.priceCents) - Math.round(((selectedVariant?.priceCents ?? product.priceCents) * pixPct) / 100))
+      : selectedVariant?.priceCents ?? product.priceCents;
+  const selectedInstallment = Math.round((selectedVariant?.priceCents ?? product.priceCents) / maxInstallments);
 
   useEffect(() => {
     if (!variants.length) return;
@@ -532,19 +536,23 @@ export function CheckoutForm({
         ) : null}
 
         <div className="checkout-flow__head">
-          <h2 className="type-tagline text-[var(--ink)]">Finalize seu Mood</h2>
-          <div className="checkout-price-hero">
+          <h2 className="type-tagline text-[var(--ink)]">Garanta o seu Pikolin Mood</h2>
+          <div className="checkout-price-hero lp-hero-price">
+            <div className="lp-hero-price__row">
+              {pixPct > 0 ? (
+                <span className="lp-price-was type-fine-print">{brl(cardTotalCents, currency)}</span>
+              ) : null}
+              {pixPct > 0 ? <span className="lp-chip lp-chip--pix">{pixPct}% OFF NO PIX</span> : null}
+            </div>
             <p className="checkout-price-hero__pix">{brl(pixTotalCents, currency)}</p>
             <p className="type-fine-print text-[var(--ink-muted-80)]">
-              no Pix{pixPct > 0 ? ` · você economiza ${brl(pixDiscountCents, currency)}` : ""}
+              à vista no Pix
+              {pixDiscountCents > 0 ? ` (economia de ${brl(pixDiscountCents, currency)})` : ""}
             </p>
-            <div className="lp-offer-strip__chips mt-3">
-              <span className="lp-chip lp-chip--pix">Pix −{pixPct || 0}%</span>
-              <span className="lp-chip">{maxInstallments}x sem juros</span>
-              {requireAddress ? <span className="lp-chip">Frete grátis</span> : null}
-            </div>
-            <p className="mt-2 type-fine-print text-[var(--ink-muted-48)]">
-              ou {brl(cardTotalCents, currency)} no cartão
+            <p className="type-caption text-[var(--ink)]">
+              ou <strong className="type-caption-strong">{maxInstallments}x de {brl(installmentPreview, currency)}</strong>{" "}
+              sem juros
+              {requireAddress ? " · Frete grátis" : ""}
             </p>
           </div>
           {!mpPublicKey && !previewToken ? (
@@ -574,17 +582,33 @@ export function CheckoutForm({
           <div className="space-y-3">
             {variants.length > 0 ? (
               <div>
-                <p className="mb-2 type-caption-strong text-[var(--ink-muted-80)]">Medida</p>
+                <p className="mb-2 type-caption-strong text-[var(--ink)]">Escolha o tamanho</p>
                 <PillSelect
                   size="field"
                   value={variantId}
                   onChange={setVariantId}
-                  aria-label="Medida"
-                  options={variants.map((v) => ({
-                    value: v.id,
-                    label: `${v.label} · ${brl(v.priceCents, currency)}`,
-                  }))}
+                  aria-label="Tamanho"
+                  options={variants.map((v) => {
+                    const vPix =
+                      pixPct > 0
+                        ? Math.max(0, v.priceCents - Math.round((v.priceCents * pixPct) / 100))
+                        : v.priceCents;
+                    const vInst = Math.round(v.priceCents / maxInstallments);
+                    return {
+                      value: v.id,
+                      label: `${v.label} · ${brl(vPix, currency)} no Pix (ou ${maxInstallments}x de ${brl(vInst, currency)})`,
+                    };
+                  })}
                 />
+                {selectedVariant ? (
+                  <p className="mt-2 type-fine-print text-[var(--ink-muted-80)]">
+                    {selectedVariant.label} ·{" "}
+                    <span className="type-caption-strong text-[var(--primary)]">
+                      {brl(selectedPixCents, currency)} no Pix
+                    </span>{" "}
+                    (ou {maxInstallments}x de {brl(selectedInstallment, currency)})
+                  </p>
+                ) : null}
               </div>
             ) : null}
             <input
@@ -807,7 +831,7 @@ export function CheckoutForm({
 
         {error ? <p className="type-caption text-[var(--danger)]">{error}</p> : null}
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className={`flex flex-col gap-3 ${visibleStep > 1 ? "sm:flex-row sm:items-center sm:justify-between" : ""}`}>
           {visibleStep > 1 ? (
             <button
               type="button"
@@ -816,13 +840,15 @@ export function CheckoutForm({
             >
               Voltar
             </button>
-          ) : (
-            <BackLink href={backHref}>Oferta</BackLink>
-          )}
+          ) : null}
 
           {!onPaymentStep ? (
-            <Button type="submit" variant="primary" className="w-full sm:w-auto">
-              Continuar
+            <Button type="submit" variant="primary" className="w-full">
+              {visibleStep === 1 && requireAddress
+                ? "Continuar para entrega →"
+                : visibleStep === 1
+                  ? "Continuar para pagamento →"
+                  : "Continuar para pagamento →"}
             </Button>
           ) : (
             <Button type="submit" variant="primary" disabled={loading} className="hidden w-full md:inline-flex">

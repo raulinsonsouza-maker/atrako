@@ -11,11 +11,16 @@ export type MattressLayer = {
 
 type Props = {
   title?: string;
+  hint?: string;
   layers: MattressLayer[];
 };
 
 /** Diagrama interativo de camadas (Pikolin) — sem badges numéricos. */
-export function MattressLayersBlock({ title, layers }: Props) {
+export function MattressLayersBlock({
+  title,
+  hint = "Toque em uma camada para ver o detalhe",
+  layers,
+}: Props) {
   const sorted = [...layers].sort((a, b) => a.id - b.id);
   const [activeId, setActiveId] = useState(sorted[0]?.id ?? 1);
   const [viewed, setViewed] = useState(false);
@@ -52,7 +57,7 @@ export function MattressLayersBlock({ title, layers }: Props) {
   return (
     <section className="mattress-layers" aria-label={title || "Camadas do colchão"}>
       {title ? <h2 className="mattress-layers__title type-caption-strong text-[var(--ink)]">{title}</h2> : null}
-      <p className="mattress-layers__hint type-fine-print text-[var(--ink-muted-48)]">Toque em uma camada para ver o detalhe</p>
+      <p className="mattress-layers__hint type-fine-print text-[var(--ink-muted-48)]">{hint}</p>
       <div className="mattress-layers__row">
         <div className="mattress-layers__diagram">
           <ul

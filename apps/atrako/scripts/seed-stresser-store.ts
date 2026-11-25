@@ -24,8 +24,8 @@ const EMAIL = process.env.STRESSER_OWNER_EMAIL?.trim() || "vendas@stressercolcho
 const PASSWORD = process.env.STRESSER_OWNER_PASSWORD?.trim() || "Stresser@2026";
 const SLUG = "stresser";
 const LOGO = "/lp/stresser/assets/logo.webp";
-/** Verde vivo do emblema Stresser (lime). */
-const PRIMARY = "#8BC34A";
+/** Verde sóbrio do emblema Stresser (accent CTA/preço). */
+const PRIMARY = "#6B9E3D";
 const PRODUCT_SLUG = "pikolin-mood";
 const PIX_DISCOUNT_PERCENT = 15;
 const GALLERY_MAIN = "/lp/stresser/assets/gallery/colchao-pikolin-mood.webp";
@@ -64,8 +64,9 @@ function moodSalesPage(): Prisma.InputJsonValue {
       {
         id: "s_hero",
         type: "hero",
-        headline: "Pikolin Mood — firmeza que segura a noite inteira",
-        subheadline: "Molas ensacadas Cross System · Cool Touch · altura 28 cm",
+        headline:
+          "Conforto que você sente na primeira noite, qualidade que dura anos e um valor que vale cada centavo.",
+        subheadline: "28 cm de altura · Não balança a dois · Firme, fresco e suporta até 250 kg",
       },
       {
         id: "s_gallery",
@@ -85,103 +86,111 @@ function moodSalesPage(): Prisma.InputJsonValue {
       {
         id: "s_layers",
         type: "mattress_layers",
-        title: "Do que o nosso colchão é composto",
+        title: "Por dentro do seu conforto",
         layers: [
           {
             id: 1,
-            title: "Tecido Copper Fabric",
+            title: "Tecido fresco com fios de cobre",
             imageUrl: "/lp/stresser/assets/layers/01-tampo-mood.png",
-            body: "Tecido altamente tecnológico, com fios especiais que captam a temperatura do ambiente e refletem o calor, sem absorvê-lo. A sensação de frescor é permanente, dissipando a transpiração. O resultado é um colchão sempre fresco e seco, livre de ácaros e muito confortável. Também adquire as propriedades curativas e medicinais do cobre, proporcionando renovação celular e capacidades antibacterianas e antifúngicas, já comprovadas cientificamente em laboratório.",
+            body: "Não retém calor nem suor. Mantém a cama seca e fresca até nas noites mais quentes, com proteção natural contra ácaros e alergias.",
           },
           {
             id: 2,
-            title: "Fibra Siliconada",
+            title: "Fibra siliconada",
             imageUrl: "/lp/stresser/assets/layers/02-fibra-siliconada.png",
+            body: "Camada leve que dá maciez inicial ao pillow top. Ajuda a acolher o corpo sem afundar o suporte das molas.",
           },
           {
             id: 3,
             title: "Espuma Cool Touch",
             imageUrl: "/lp/stresser/assets/layers/03-cool-touch.png",
+            body: "Toque fresco que libera o calor do corpo. Ideal para quem sua ou sofre com noites quentes.",
           },
           {
             id: 4,
-            title: "Tecido Retentor",
+            title: "Tecido retentor",
             imageUrl: "/lp/stresser/assets/layers/04-tecido-retentor.png",
+            body: "Segura as camadas no lugar e estabiliza o conforto. Evita que o colchão “caminhe” ou deforme com o uso.",
           },
           {
             id: 5,
             title: "Espuma High Support",
             imageUrl: "/lp/stresser/assets/layers/05-high-support.png",
-            body: "Espuma de alta resiliência e expansão controlada, oferece conforto e suporte ao mesmo tempo. Suas características mantêm os músculos relaxados e a coluna alinhada, evitando dores nas costas e articulações e promovendo um sono regenerador.",
+            body: "Espuma firme que alinha a coluna e reduz pontos de pressão. Sustenta sem criar buracos com o tempo.",
           },
           {
             id: 6,
             title: "Non-woven",
             imageUrl: "/lp/stresser/assets/layers/06-non-woven.png",
+            body: "Proteção entre espuma e molas. Isola o atrito, reduz ruídos e prolonga a vida útil do molejo.",
           },
           {
             id: 7,
             title: "Molas Cross System",
             imageUrl: "/lp/stresser/assets/layers/07-molas-cross-system.png",
-            body: "O molejo Cross System possui o terço central reforçado, criando três zonas distintas que permitem uma melhor adaptação do colchão à sua coluna vertebral. Todo esse reforço é combinado com as vantagens de um sistema de molas ensacadas – facilidade de movimento sobre o colchão, diminuição de ruídos e maciez. Cross System proporciona mais suporte para a região lombar do corpo em um total de 250kg — o maior suporte comprovado em molas ensacadas do mercado. A sensação de alívio de pressão versus a sensação de suporte é progressiva, reduzindo uma enquanto aumenta a outra, de produto para produto. Testado pelo Centro Tecnológico de Controle de Qualidade Falcão Bauer. Teste de ciclo garante o uso pleno para biotipo de até 250 quilos.*",
+            body: "Molas ensacadas com reforço na lombar. Não balança a dois e sustenta até 250 kg com individualidade de movimento.",
           },
           {
             id: 8,
             title: "Non-woven",
             imageUrl: "/lp/stresser/assets/layers/08-non-woven.png",
+            body: "Base de isolamento sob as molas. Mantém a estrutura estável e o conforto uniforme noite após noite.",
           },
           {
             id: 9,
             title: "Borda Air Flow Support",
             imageUrl: "/lp/stresser/assets/layers/09-borda-air-flow.png",
+            body: "Laterais ventiladas que não cedem na ponta. Deixam o colchão arejado e firmes para sentar na beira.",
           },
           {
             id: 10,
-            title: "Espuma de Suporte",
+            title: "Espuma de suporte",
             imageUrl: "/lp/stresser/assets/layers/10-suporte.png",
+            body: "Base de espuma que completa o suporte inferior. Distribui o peso e reforça a durabilidade do conjunto.",
           },
           {
             id: 11,
-            title: "Tecido Antiderrapante",
+            title: "Tecido antiderrapante",
             imageUrl: "/lp/stresser/assets/layers/11-tecido-antiderrapante.png",
+            body: "Base que segura o colchão na cama ou box. Evita deslizar e mantém o alinhamento durante o sono.",
           },
         ],
       },
       {
         id: "s_benefits",
         type: "benefits",
-        title: "Tecnologia que você sente",
-        lead: "Suporte ortopédico, frescor e durabilidade — sem enrolação.",
+        title: "Por que escolher o Pikolin Mood",
+        lead: "Suporte real para sua coluna, noites mais frescas e estrutura feita para durar.",
         items: [
           {
             icon: "◎",
-            title: "Cross System",
-            body: "Molas ensacadas com reforço lombar. Sem transferência de movimento. Até 250 kg.",
+            title: "Não balança a dois",
+            body: "Molas individuais com reforço na lombar. Suporta até 250 kg sem ceder.",
           },
           {
             icon: "❄",
-            title: "Cool Touch",
-            body: "Toque fresco que dissipa calor — ideal para noites quentes.",
+            title: "Não esquenta à noite",
+            body: "Toque fresco que libera o calor do corpo, perfeito para noites quentes.",
           },
           {
             icon: "◈",
-            title: "Copper Fabric",
-            body: "Fios de cobre: antiácaro, antimicrobiano e sensação térmica agradável.",
+            title: "Sempre seco e antiácaro",
+            body: "Fios de cobre no tecido que afastam o suor, fungos e alergias.",
           },
           {
             icon: "△",
-            title: "High Support",
-            body: "Espuma de alta resiliência: coluna alinhada e firmeza real.",
+            title: "Firme sem ser duro",
+            body: "Espuma resistente que alinha a coluna e não cria buracos com o tempo.",
           },
           {
             icon: "⇄",
-            title: "Air Flow",
-            body: "Borda ventilada que mantém o colchão arejado e estável.",
+            title: "Bordas que não cedem",
+            body: "Laterais ventiladas que deixam o colchão arejado e firme até na ponta.",
           },
           {
             icon: "✓",
-            title: "Frete + garantia",
-            body: "Frete grátis Brasil · 1 ano de garantia · ~20 dias úteis.",
+            title: "Frete grátis e garantia",
+            body: "Entrega gratuita para todo o Brasil e 1 ano de garantia de fábrica.",
           },
         ],
       },
@@ -191,20 +200,20 @@ function moodSalesPage(): Prisma.InputJsonValue {
         title: "Dúvidas rápidas",
         items: [
           {
-            q: "Quais medidas?",
-            a: "Solteiro Padrão, Solteiro Americano, Casal, Queen e King — escolha no checkout.",
+            q: "Quais tamanhos têm?",
+            a: "Solteiro Padrão, Solteiro Americano, Casal, Queen e King. Selecione o seu abaixo.",
           },
           {
-            q: "Frete é grátis?",
-            a: "Sim, para todo o Brasil. Disponibilidade típica em cerca de 20 dias úteis.",
+            q: "O frete é grátis mesmo?",
+            a: "Sim. Entrega gratuita para todo o Brasil. Prazo típico cerca de 20 dias úteis.",
           },
           {
-            q: "Pix ou cartão?",
-            a: "Pix com 15% off ou cartão em até 10x sem juros.",
+            q: "Posso parcelar sem juros?",
+            a: "Sim. Cartão em até 10x sem juros, ou Pix com 15% de desconto à vista.",
           },
           {
-            q: "É firme mesmo?",
-            a: "Sim. Mood é firme: molas ensacadas + High Support para quem quer suporte forte.",
+            q: "Ele é duro demais ou confortável?",
+            a: "É firme sem ser duro: suporte High Support com acolhimento no pillow top — coluna alinhada e conforto real.",
           },
         ],
       },

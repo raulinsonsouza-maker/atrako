@@ -65,6 +65,71 @@ function moodSalesPage(): Prisma.InputJsonValue {
         mediaUrl: "https://images.tcdn.com.br/img/img_prod/1326584/colcho_pikolin_mood_molas_ensacadas_firme_1_20260809204941_aed1f7947fea.png",
       },
       {
+        id: "s_layers",
+        type: "mattress_layers",
+        title: "11 camadas · a estrutura do Mood",
+        layers: [
+          {
+            id: 1,
+            title: "Tecido Copper Fabric",
+            imageUrl: "/lp/stresser/assets/layers/01-tampo-mood.png",
+            body: "Tecido altamente tecnológico, com fios especiais que captam a temperatura do ambiente e refletem o calor, sem absorvê-lo. A sensação de frescor é permanente, dissipando a transpiração. O resultado é um colchão sempre fresco e seco, livre de ácaros e muito confortável. Também adquire as propriedades curativas e medicinais do cobre, proporcionando renovação celular e capacidades antibacterianas e antifúngicas, já comprovadas cientificamente em laboratório.",
+          },
+          {
+            id: 2,
+            title: "Fibra Siliconada",
+            imageUrl: "/lp/stresser/assets/layers/02-fibra-siliconada.png",
+          },
+          {
+            id: 3,
+            title: "Espuma Cool Touch",
+            imageUrl: "/lp/stresser/assets/layers/03-cool-touch.png",
+          },
+          {
+            id: 4,
+            title: "Tecido Retentor",
+            imageUrl: "/lp/stresser/assets/layers/04-tecido-retentor.png",
+          },
+          {
+            id: 5,
+            title: "Espuma High Support",
+            imageUrl: "/lp/stresser/assets/layers/05-high-support.png",
+            body: "Espuma de alta resiliência e expansão controlada, oferece conforto e suporte ao mesmo tempo. Suas características mantêm os músculos relaxados e a coluna alinhada, evitando dores nas costas e articulações e promovendo um sono regenerador.",
+          },
+          {
+            id: 6,
+            title: "Non-woven",
+            imageUrl: "/lp/stresser/assets/layers/06-non-woven.png",
+          },
+          {
+            id: 7,
+            title: "Molas Cross System",
+            imageUrl: "/lp/stresser/assets/layers/07-molas-cross-system.png",
+            body: "O molejo Cross System possui o terço central reforçado, criando três zonas distintas que permitem uma melhor adaptação do colchão à sua coluna vertebral. Todo esse reforço é combinado com as vantagens de um sistema de molas ensacadas – facilidade de movimento sobre o colchão, diminuição de ruídos e maciez. Cross System proporciona mais suporte para a região lombar do corpo em um total de 250kg — o maior suporte comprovado em molas ensacadas do mercado. A sensação de alívio de pressão versus a sensação de suporte é progressiva, reduzindo uma enquanto aumenta a outra, de produto para produto. Testado pelo Centro Tecnológico de Controle de Qualidade Falcão Bauer. Teste de ciclo garante o uso pleno para biotipo de até 250 quilos.*",
+          },
+          {
+            id: 8,
+            title: "Non-woven",
+            imageUrl: "/lp/stresser/assets/layers/08-non-woven.png",
+          },
+          {
+            id: 9,
+            title: "Borda Air Flow Support",
+            imageUrl: "/lp/stresser/assets/layers/09-borda-air-flow.png",
+          },
+          {
+            id: 10,
+            title: "Espuma de Suporte",
+            imageUrl: "/lp/stresser/assets/layers/10-suporte.png",
+          },
+          {
+            id: 11,
+            title: "Tecido Antiderrapante",
+            imageUrl: "/lp/stresser/assets/layers/11-tecido-antiderrapante.png",
+          },
+        ],
+      },
+      {
         id: "s_benefits",
         type: "benefits",
         items: [

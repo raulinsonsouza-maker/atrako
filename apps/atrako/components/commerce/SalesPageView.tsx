@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { CheckoutForm, type CheckoutVariantOption } from "@/components/commerce/CheckoutForm";
 import { LpLeadForm } from "@/components/commerce/LpLeadForm";
+import { MattressLayersBlock } from "@/components/commerce/MattressLayersBlock";
 import type { LpSalesPageV1, LpSection } from "@/lib/criar/lp-schema";
 import type { LpCheckoutBump, LpPuckProduct } from "@/lib/criar/puck/context";
 
@@ -212,6 +213,12 @@ function SectionBlock({
         </section>
         );
       }
+    case "mattress_layers":
+      return (
+        <section className="lp-section lp-section-layers">
+          <MattressLayersBlock title={section.title} layers={section.layers} />
+        </section>
+      );
     case "cta":
       return (
         <section className="lp-section text-center">

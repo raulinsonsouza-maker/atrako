@@ -39,6 +39,12 @@ export type LpSection =
       type: "cta";
       label: string;
       href?: string;
+    }
+  | {
+      id: string;
+      type: "mattress_layers";
+      title?: string;
+      layers: Array<{ id: number; title: string; body?: string; imageUrl: string }>;
     };
 
 export type LpDeliverable = {

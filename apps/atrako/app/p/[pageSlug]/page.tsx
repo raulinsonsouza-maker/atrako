@@ -338,7 +338,7 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
             bumpByProductId={bumpByProductId}
           />
         ) : (
-          <div className="mx-auto max-w-2xl px-4 py-10 sm:py-14">
+          <div className="mx-auto max-w-5xl px-4 py-10 sm:py-14">
             <SalesPageView
               page={pageV1!}
               product={salesProduct}

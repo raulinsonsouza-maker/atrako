@@ -9625,3 +9625,157 @@ nav.channel-tabs::-webkit-scrollbar {
   gap: 10px;
   margin-top: 8px;
 }
+
+/* —— Mattress layers (port Pikolin block-layers) —— */
+.mattress-layers {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 0 8px;
+}
+
+.mattress-layers__title {
+  margin: 0 0 20px;
+  text-align: center;
+}
+
+.mattress-layers__row {
+  display: grid;
+  gap: 28px;
+  align-items: center;
+}
+
+@media (min-width: 834px) {
+  .mattress-layers__row {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 40px;
+  }
+}
+
+.mattress-layers__diagram {
+  padding-left: 72px;
+  min-height: 320px;
+}
+
+.mattress-layers__group {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 40px;
+  position: relative;
+}
+
+.mattress-layers__item {
+  position: relative;
+  z-index: var(--item-index, 1);
+  height: 88px;
+  margin: 0 0 -68px;
+  border-radius: 4px;
+  background-image: var(--item-bg);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: pointer;
+  transition: filter 0.25s ease, height 0.35s ease, margin-bottom 0.35s ease;
+  filter: none;
+}
+
+.mattress-layers__group.is-viewed .mattress-layers__item {
+  height: 105px;
+  margin-bottom: -80px;
+}
+
+.mattress-layers__group:hover > .mattress-layers__item {
+  filter: grayscale(50%) brightness(0.7);
+}
+
+.mattress-layers__group:hover > .mattress-layers__item:hover,
+.mattress-layers__item.is-out {
+  filter: none;
+}
+
+.mattress-layers__count {
+  position: absolute;
+  left: -72px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-primary, #fff);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  animation: mattress-layers-pulse 2s ease-in-out infinite;
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+.mattress-layers__item.is-out .mattress-layers__count {
+  animation: none;
+  transform: translateY(-50%) scale(1.08);
+}
+
+@keyframes mattress-layers-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 45%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 12px color-mix(in srgb, var(--primary) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 0%, transparent);
+  }
+}
+
+.mattress-layers__content {
+  min-height: 180px;
+}
+
+.mattress-layers__panel {
+  display: none;
+  padding: 28px 24px;
+  border: 2px solid var(--primary);
+  border-radius: 2.5rem;
+  background: var(--canvas);
+}
+
+.mattress-layers__panel.is-visible {
+  display: block;
+}
+
+.mattress-layers__panel h3 {
+  margin: 0 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.mattress-layers__panel p {
+  margin: 0;
+}
+
+@media (max-width: 833px) {
+  .mattress-layers__diagram {
+    padding-left: 56px;
+  }
+
+  .mattress-layers__item {
+    height: 72px;
+    margin-bottom: -54px;
+  }
+
+  .mattress-layers__group.is-viewed .mattress-layers__item {
+    height: 84px;
+    margin-bottom: -62px;
+  }
+
+  .mattress-layers__count {
+    left: -52px;
+    width: 34px;
+    height: 34px;
+    font-size: 13px;
+  }
+}
+

@@ -45,6 +45,19 @@ export type LpSection =
       type: "mattress_layers";
       title?: string;
       layers: Array<{ id: number; title: string; body?: string; imageUrl: string }>;
+    }
+  | {
+      id: string;
+      type: "gallery";
+      title?: string;
+      images: Array<{ src: string; alt: string }>;
+    }
+  | {
+      id: string;
+      type: "video";
+      src: string;
+      poster?: string;
+      title?: string;
     };
 
 export type LpDeliverable = {

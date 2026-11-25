@@ -2182,20 +2182,223 @@
 }
 
 .lp-section {
-  padding: 40px 20px;
+  padding: 32px 16px;
   max-width: 40rem;
   margin: 0 auto;
   width: 100%;
 }
 
+@media (min-width: 640px) {
+  .lp-section {
+    padding: 40px 20px;
+  }
+}
+
 .lp-section-hero {
   text-align: center;
-  padding-top: 56px;
-  padding-bottom: 48px;
+  padding-top: 40px;
+  padding-bottom: 32px;
+}
+
+@media (min-width: 640px) {
+  .lp-section-hero {
+    padding-top: 56px;
+    padding-bottom: 48px;
+  }
 }
 
 .lp-section-convert {
   max-width: 28rem;
+}
+
+.lp-section-layers,
+.lp-section-gallery,
+.lp-section-video {
+  max-width: 42rem;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+@media (min-width: 834px) {
+  .lp-section-layers,
+  .lp-section-gallery {
+    max-width: 68rem;
+  }
+}
+
+/* —— Product gallery (LP) —— */
+.product-gallery {
+  width: 100%;
+}
+
+.product-gallery__title {
+  margin: 0 0 12px;
+  text-align: center;
+}
+
+.product-gallery__main {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--parchment, #f5f5f7);
+  aspect-ratio: 4 / 3;
+}
+
+.product-gallery__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-gallery__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-xs);
+  border: none;
+  background: color-mix(in srgb, var(--canvas) 88%, transparent);
+  color: var(--ink);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: none;
+}
+
+@media (min-width: 834px) {
+  .product-gallery__nav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.product-gallery__nav--prev {
+  left: 10px;
+}
+
+.product-gallery__nav--next {
+  right: 10px;
+}
+
+.product-gallery__dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (min-width: 834px) {
+  .product-gallery__dots {
+    display: none;
+  }
+}
+
+.product-gallery__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: none;
+  padding: 0;
+  background: var(--ink-muted-24, rgba(0, 0, 0, 0.2));
+  cursor: pointer;
+}
+
+.product-gallery__dot.is-on {
+  background: var(--primary);
+  width: 18px;
+}
+
+.product-gallery__thumbs {
+  display: none;
+  gap: 8px;
+  margin-top: 12px;
+  justify-content: center;
+}
+
+@media (min-width: 834px) {
+  .product-gallery__thumbs {
+    display: flex;
+  }
+}
+
+.product-gallery__thumb {
+  width: 64px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  background: var(--canvas);
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.product-gallery__thumb.is-on {
+  opacity: 1;
+  border-color: var(--primary);
+}
+
+.product-gallery__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* —— LP video —— */
+.lp-video {
+  width: 100%;
+}
+
+.lp-video__title {
+  margin: 0 0 12px;
+  text-align: center;
+}
+
+.lp-video__frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: #111;
+}
+
+.lp-video__frame video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* —— Checkout stepper —— */
+.checkout-stepper {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.checkout-stepper__item {
+  flex: 1;
+  text-align: center;
+  padding: 8px 4px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--hairline);
+  color: var(--ink-muted-48);
+  background: var(--canvas);
+}
+
+.checkout-stepper__item.is-on {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, var(--canvas));
+}
+
+.checkout-stepper__item.is-done {
+  color: var(--ink-muted-80);
 }
 
 .lp-editor {
@@ -9626,49 +9829,55 @@ nav.channel-tabs::-webkit-scrollbar {
   margin-top: 8px;
 }
 
-/* —— Mattress layers (port Pikolin block-layers) —— */
+/* —— Mattress layers (port Pikolin block-layers, sem badges) —— */
 .mattress-layers {
   width: 100%;
   max-width: 1100px;
   margin: 0 auto;
-  padding: 24px 0 8px;
+  padding: 8px 0;
 }
 
 .mattress-layers__title {
-  margin: 0 0 20px;
+  margin: 0 0 8px;
+  text-align: center;
+}
+
+.mattress-layers__hint {
+  margin: 0 0 16px;
   text-align: center;
 }
 
 .mattress-layers__row {
   display: grid;
-  gap: 28px;
-  align-items: center;
+  gap: 20px;
+  align-items: start;
 }
 
 @media (min-width: 834px) {
   .mattress-layers__row {
     grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-    gap: 40px;
+    gap: 32px;
+    align-items: center;
   }
 }
 
 .mattress-layers__diagram {
-  padding-left: 72px;
-  min-height: 320px;
+  padding-left: 0;
+  min-height: 280px;
 }
 
 .mattress-layers__group {
   list-style: none;
   margin: 0;
-  padding: 0 0 40px;
+  padding: 0 0 36px;
   position: relative;
 }
 
 .mattress-layers__item {
   position: relative;
   z-index: var(--item-index, 1);
-  height: 88px;
-  margin: 0 0 -68px;
+  height: 72px;
+  margin: 0 0 -54px;
   border-radius: 4px;
   background-image: var(--item-bg);
   background-size: 100% 100%;
@@ -9680,8 +9889,8 @@ nav.channel-tabs::-webkit-scrollbar {
 }
 
 .mattress-layers__group.is-viewed .mattress-layers__item {
-  height: 105px;
-  margin-bottom: -80px;
+  height: 88px;
+  margin-bottom: -66px;
 }
 
 .mattress-layers__group:hover > .mattress-layers__item {
@@ -9693,53 +9902,20 @@ nav.channel-tabs::-webkit-scrollbar {
   filter: none;
 }
 
-.mattress-layers__count {
-  position: absolute;
-  left: -72px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  background: var(--primary);
-  color: var(--on-primary, #fff);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1;
-  animation: mattress-layers-pulse 2s ease-in-out infinite;
-  box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 45%, transparent);
-}
-
-.mattress-layers__item.is-out .mattress-layers__count {
-  animation: none;
-  transform: translateY(-50%) scale(1.08);
-}
-
-@keyframes mattress-layers-pulse {
-  0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 45%, transparent);
-  }
-  70% {
-    box-shadow: 0 0 0 12px color-mix(in srgb, var(--primary) 0%, transparent);
-  }
-  100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 0%, transparent);
-  }
-}
-
 .mattress-layers__content {
-  min-height: 180px;
+  width: 100%;
+  min-height: 0;
 }
 
 .mattress-layers__panel {
   display: none;
-  padding: 28px 24px;
-  border: 2px solid var(--primary);
-  border-radius: 2.5rem;
+  padding: 16px 14px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-lg);
   background: var(--canvas);
+  max-height: 220px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mattress-layers__panel.is-visible {
@@ -9747,35 +9923,47 @@ nav.channel-tabs::-webkit-scrollbar {
 }
 
 .mattress-layers__panel h3 {
-  margin: 0 0 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  margin: 0 0 8px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .mattress-layers__panel p {
   margin: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (min-width: 834px) {
+  .mattress-layers__item {
+    height: 88px;
+    margin-bottom: -68px;
+  }
+
+  .mattress-layers__group.is-viewed .mattress-layers__item {
+    height: 105px;
+    margin-bottom: -80px;
+  }
+
+  .mattress-layers__panel {
+    max-height: 320px;
+    padding: 20px 18px;
+  }
 }
 
 @media (max-width: 833px) {
   .mattress-layers__diagram {
-    padding-left: 56px;
+    padding-left: 0;
   }
 
   .mattress-layers__item {
-    height: 72px;
-    margin-bottom: -54px;
+    height: 64px;
+    margin-bottom: -48px;
   }
 
   .mattress-layers__group.is-viewed .mattress-layers__item {
-    height: 84px;
-    margin-bottom: -62px;
-  }
-
-  .mattress-layers__count {
-    left: -52px;
-    width: 34px;
-    height: 34px;
-    font-size: 13px;
+    height: 76px;
+    margin-bottom: -56px;
   }
 }
 

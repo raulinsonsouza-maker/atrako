@@ -28,6 +28,11 @@ const LOGO = "/lp/stresser/assets/logo.webp";
 const PRIMARY = "#6B9E3D";
 const PRODUCT_SLUG = "pikolin-mood";
 const PIX_DISCOUNT_PERCENT = 15;
+const GALLERY_MAIN = "/lp/stresser/assets/gallery/colchao-pikolin-mood.webp";
+const GALLERY_TAMPO = "/lp/stresser/assets/gallery/colchao-pikolin-mood-tampo.webp";
+const VIDEO_SRC = "/lp/stresser/assets/Pikolin_mood.mp4";
+const TRAY_COVER =
+  "https://images.tcdn.com.br/img/img_prod/1326584/colcho_pikolin_mood_molas_ensacadas_firme_1_20260809204941_aed1f7947fea.png";
 
 const VARIANTS = [
   { label: "Solteiro Padrão (0,88m x 1,88m)", sku: "MOOD-SOL", priceCents: 299900, stockQty: 20 },
@@ -59,15 +64,30 @@ function moodSalesPage(): Prisma.InputJsonValue {
       {
         id: "s_hero",
         type: "hero",
-        headline: "Colchão Pikolin Mood — molas ensacadas firme",
-        subheadline:
-          "Frete grátis para todo o Brasil · 15% off no Pix · até 10x sem juros no cartão. Altura 28 cm, Cool Touch e High Support.",
-        mediaUrl: "https://images.tcdn.com.br/img/img_prod/1326584/colcho_pikolin_mood_molas_ensacadas_firme_1_20260809204941_aed1f7947fea.png",
+        headline: "Mood firme · frete grátis",
+        subheadline: "Molas ensacadas · Cool Touch · 15% off no Pix ou 10x sem juros",
+      },
+      {
+        id: "s_gallery",
+        type: "gallery",
+        title: "Pikolin Mood",
+        images: [
+          { src: GALLERY_MAIN, alt: "Colchão Pikolin Mood — vista principal" },
+          { src: GALLERY_TAMPO, alt: "Colchão Pikolin Mood — tampo Copper Fabric" },
+          { src: TRAY_COVER, alt: "Colchão Pikolin Mood Molas Ensacadas Firme" },
+        ],
+      },
+      {
+        id: "s_video",
+        type: "video",
+        title: "Mood em movimento",
+        src: VIDEO_SRC,
+        poster: GALLERY_TAMPO,
       },
       {
         id: "s_layers",
         type: "mattress_layers",
-        title: "11 camadas · a estrutura do Mood",
+        title: "A estrutura do Mood",
         layers: [
           {
             id: 1,
@@ -325,13 +345,11 @@ async function seedStore(clienteId: string) {
       status: "PUBLISHED",
       priceCents: 299900,
       maxInstallments: 10,
-      coverUrl:
-        "https://images.tcdn.com.br/img/img_prod/1326584/colcho_pikolin_mood_molas_ensacadas_firme_1_20260809204941_aed1f7947fea.png",
+      coverUrl: GALLERY_MAIN,
       images: [
-        {
-          src: "https://images.tcdn.com.br/img/img_prod/1326584/colcho_pikolin_mood_molas_ensacadas_firme_1_20260809204941_aed1f7947fea.png",
-          alt: "Colchão Pikolin Mood Molas Ensacadas Firme",
-        },
+        { src: GALLERY_MAIN, alt: "Colchão Pikolin Mood — vista principal" },
+        { src: GALLERY_TAMPO, alt: "Colchão Pikolin Mood — tampo Copper Fabric" },
+        { src: TRAY_COVER, alt: "Colchão Pikolin Mood Molas Ensacadas Firme" },
       ],
       salesPage: moodSalesPage(),
       stockTracked: true,
@@ -348,13 +366,11 @@ async function seedStore(clienteId: string) {
       status: "PUBLISHED",
       priceCents: 299900,
       maxInstallments: 10,
-      coverUrl:
-        "https://images.tcdn.com.br/img/img_prod/1326584/colcho_pikolin_mood_molas_ensacadas_firme_1_20260809204941_aed1f7947fea.png",
+      coverUrl: GALLERY_MAIN,
       images: [
-        {
-          src: "https://images.tcdn.com.br/img/img_prod/1326584/colcho_pikolin_mood_molas_ensacadas_firme_1_20260809204941_aed1f7947fea.png",
-          alt: "Colchão Pikolin Mood Molas Ensacadas Firme",
-        },
+        { src: GALLERY_MAIN, alt: "Colchão Pikolin Mood — vista principal" },
+        { src: GALLERY_TAMPO, alt: "Colchão Pikolin Mood — tampo Copper Fabric" },
+        { src: TRAY_COVER, alt: "Colchão Pikolin Mood Molas Ensacadas Firme" },
       ],
       salesPage: moodSalesPage(),
       stockTracked: true,

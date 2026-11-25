@@ -14,7 +14,7 @@ type Props = {
   layers: MattressLayer[];
 };
 
-/** Diagrama interativo de camadas (port fiel do bloco Pikolin `block-layers`). */
+/** Diagrama interativo de camadas (Pikolin) — sem badges numéricos. */
 export function MattressLayersBlock({ title, layers }: Props) {
   const sorted = [...layers].sort((a, b) => a.id - b.id);
   const [activeId, setActiveId] = useState(sorted[0]?.id ?? 1);
@@ -52,6 +52,7 @@ export function MattressLayersBlock({ title, layers }: Props) {
   return (
     <section className="mattress-layers" aria-label={title || "Camadas do colchão"}>
       {title ? <h2 className="mattress-layers__title type-caption-strong text-[var(--ink)]">{title}</h2> : null}
+      <p className="mattress-layers__hint type-fine-print text-[var(--ink-muted-48)]">Toque em uma camada para ver o detalhe</p>
       <div className="mattress-layers__row">
         <div className="mattress-layers__diagram">
           <ul
@@ -61,11 +62,11 @@ export function MattressLayersBlock({ title, layers }: Props) {
           >
             {sorted.map((layer, index) => {
               const zIndex = count - index;
-              const active = layer.id === activeId;
+              const isActive = layer.id === activeId;
               return (
                 <li
                   key={layer.id}
-                  className={`mattress-layers__item${active ? " is-out" : ""}`}
+                  className={`mattress-layers__item${isActive ? " is-out" : ""}`}
                   data-id={layer.id}
                   style={
                     {
@@ -82,11 +83,9 @@ export function MattressLayersBlock({ title, layers }: Props) {
                   }}
                   role="button"
                   tabIndex={0}
-                  aria-pressed={active}
-                  aria-label={`Camada ${layer.id}: ${layer.title}`}
-                >
-                  <span className="mattress-layers__count">{layer.id}</span>
-                </li>
+                  aria-pressed={isActive}
+                  aria-label={layer.title}
+                />
               );
             })}
           </ul>
@@ -98,8 +97,8 @@ export function MattressLayersBlock({ title, layers }: Props) {
               className={`mattress-layers__panel${layer.id === active.id ? " is-visible" : ""}`}
               hidden={layer.id !== active.id}
             >
-              <h3 className="type-body-strong text-[var(--ink)]">{layer.title}</h3>
-              {layer.body ? <p className="type-body text-[var(--ink-muted-80)]">{layer.body}</p> : null}
+              <h3 className="type-caption-strong text-[var(--ink)]">{layer.title}</h3>
+              {layer.body ? <p className="type-fine-print text-[var(--ink-muted-80)]">{layer.body}</p> : null}
             </div>
           ))}
         </div>

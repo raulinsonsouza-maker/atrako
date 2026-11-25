@@ -262,6 +262,7 @@ export async function POST(request: NextRequest) {
               street: String(shippingAddress.street ?? "").slice(0, 200),
               number: String(shippingAddress.number ?? "").slice(0, 40),
               complement: String(shippingAddress.complement ?? "").slice(0, 120) || undefined,
+              neighborhood: String(shippingAddress.neighborhood ?? "").slice(0, 120) || undefined,
               city: String(shippingAddress.city ?? "").slice(0, 120),
               state: String(shippingAddress.state ?? "").slice(0, 2).toUpperCase(),
               cep: onlyDigits(String(shippingAddress.cep ?? "")).slice(0, 8),

@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { CheckoutForm, type CheckoutVariantOption } from "@/components/commerce/CheckoutForm";
 import { LpLeadForm } from "@/components/commerce/LpLeadForm";
 import { MattressLayersBlock } from "@/components/commerce/MattressLayersBlock";
+import { ProductGallery } from "@/components/commerce/ProductGallery";
 import type { LpSalesPageV1, LpSection } from "@/lib/criar/lp-schema";
 import type { LpCheckoutBump, LpPuckProduct } from "@/lib/criar/puck/context";
 
@@ -33,6 +34,10 @@ type Props = {
   variants?: CheckoutVariantOption[];
 };
 
+function brl(cents: number, currency: string) {
+  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency });
+}
+
 function SectionBlock({
   section,
   product,
@@ -59,28 +64,75 @@ function SectionBlock({
   variants?: CheckoutVariantOption[];
 }) {
   switch (section.type) {
-    case "hero":
+    case "hero": {
+      const pixPct = Math.min(100, Math.max(0, Math.round(page.pixDiscountPercent ?? 0)));
+      const base = product.priceCents;
+      const pixCents = pixPct > 0 ? Math.max(0, base - Math.round((base * pixPct) / 100)) : base;
+      const maxInst = product.maxInstallments && product.maxInstallments > 0 ? product.maxInstallments : 10;
       return (
         <section className="lp-section lp-section-hero">
-          <p className="type-fine-print uppercase text-[var(--ink-muted-48)]">
-            {brandName}
-          </p>
-          <h1 className="mt-3 type-tagline text-[var(--ink)] type-lead sm:leading-tight">
-            {section.headline}
-          </h1>
+          <p className="type-fine-print uppercase text-[var(--ink-muted-48)]">{brandName}</p>
+          <h1 className="mt-3 type-tagline text-[var(--ink)]">{section.headline}</h1>
           {section.subheadline ? (
-            <p className="mt-3 max-w-prose type-body text-[var(--ink-muted-80)]">
+            <p className="mt-3 max-w-prose mx-auto type-body text-[var(--ink-muted-80)]">
               {section.subheadline}
             </p>
+          ) : null}
+          {page.goal === "sales" ? (
+            <div className="mt-5 space-y-1">
+              <p className="type-body-strong text-[var(--ink)]">
+                {brl(pixCents, currency)}
+                {pixPct > 0 ? ` no Pix (−${pixPct}%)` : ""}
+              </p>
+              <p className="type-fine-print text-[var(--ink-muted-48)]">
+                ou {brl(base, currency)} em até {maxInst}x sem juros
+              </p>
+            </div>
           ) : null}
           {section.mediaUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={section.mediaUrl}
               alt=""
-              className="mt-6 max-h-72 w-full max-w-lg rounded-[var(--radius-lg)] object-cover shadow-product"
+              className="mt-6 max-h-72 w-full max-w-lg mx-auto rounded-[var(--radius-lg)] object-cover shadow-product"
             />
           ) : null}
+          {page.goal === "sales" ? (
+            <a
+              href="#checkout"
+              className="mt-6 inline-flex items-center justify-center rounded-[var(--radius-xs)] bg-[var(--primary)] px-[22px] py-3 type-button-utility text-[var(--on-primary)] active:scale-95"
+            >
+              Comprar agora
+            </a>
+          ) : null}
+        </section>
+      );
+    }
+    case "gallery":
+      return (
+        <section className="lp-section lp-section-gallery">
+          <ProductGallery title={section.title} images={section.images} />
+        </section>
+      );
+    case "video":
+      return (
+        <section className="lp-section lp-section-video">
+          <div className="lp-video">
+            {section.title ? (
+              <h2 className="lp-video__title type-caption-strong text-[var(--ink)]">{section.title}</h2>
+            ) : null}
+            <div className="lp-video__frame">
+              <video
+                src={section.src}
+                poster={section.poster}
+                controls
+                playsInline
+                muted
+                loop
+                preload="metadata"
+              />
+            </div>
+          </div>
         </section>
       );
     case "benefits":
@@ -182,35 +234,35 @@ function SectionBlock({
         const sold = checkoutProduct ?? product;
         const physical = (sold.type || product.kind || "").toUpperCase() === "PHYSICAL";
         return (
-        <section className="lp-section lp-section-convert">
-          <Suspense fallback={<p className="type-caption text-[var(--ink-muted-48)]">…</p>}>
-            <CheckoutForm
-              product={{
-                id: sold.id,
-                name: sold.name,
-                slug: sold.slug,
-                priceCents: sold.priceCents,
-                description: sold.description,
-                type: sold.type,
-                maxInstallments: product.maxInstallments,
-              }}
-              brandName={brandName}
-              currency={currency}
-              mpPublicKey={mpPublicKey}
-              bump={bump}
-              pageProductId={product.id}
-              pageSlug={product.slug}
-              variants={variants}
-              pixDiscountPercent={page.pixDiscountPercent ?? 0}
-              requireAddress={physical}
-            />
-          </Suspense>
-          {page.deliverable ? (
-            <p className="mt-3 text-center type-fine-print text-[var(--ink-muted-48)]">
-              Após o pagamento: {page.deliverable.label}
-            </p>
-          ) : null}
-        </section>
+          <section className="lp-section lp-section-convert">
+            <Suspense fallback={<p className="type-caption text-[var(--ink-muted-48)]">…</p>}>
+              <CheckoutForm
+                product={{
+                  id: sold.id,
+                  name: sold.name,
+                  slug: sold.slug,
+                  priceCents: sold.priceCents,
+                  description: sold.description,
+                  type: sold.type,
+                  maxInstallments: product.maxInstallments,
+                }}
+                brandName={brandName}
+                currency={currency}
+                mpPublicKey={mpPublicKey}
+                bump={bump}
+                pageProductId={product.id}
+                pageSlug={product.slug}
+                variants={variants}
+                pixDiscountPercent={page.pixDiscountPercent ?? 0}
+                requireAddress={physical}
+              />
+            </Suspense>
+            {page.deliverable ? (
+              <p className="mt-3 text-center type-fine-print text-[var(--ink-muted-48)]">
+                Após o pagamento: {page.deliverable.label}
+              </p>
+            ) : null}
+          </section>
         );
       }
     case "mattress_layers":

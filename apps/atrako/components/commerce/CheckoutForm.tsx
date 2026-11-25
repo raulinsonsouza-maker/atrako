@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { BackLink } from "@/components/ui/back-link";
-import { OptionChip } from "@/components/ui/option-chip";
 import { PillSelect } from "@/components/ui/pill-select";
 import { FloatingStickyBar } from "@/components/ui/floating-sticky-bar";
 import { Switch } from "@/components/ui/switch";
@@ -131,7 +130,7 @@ function trackGa4(event: string, params: Record<string, unknown>) {
 
 export function CheckoutForm({
   product,
-  brandName,
+  brandName: _brandName,
   currency,
   mpPublicKey,
   bump,
@@ -526,25 +525,33 @@ export function CheckoutForm({
           if (onPaymentStep) void submit();
           else goNext();
         }}
-        className={`utility-card space-y-4 ${onPaymentStep ? "mb-24" : "mb-6"}`}
+        className={`checkout-flow space-y-4 ${onPaymentStep ? "mb-24" : "mb-6"}`}
       >
         {previewToken ? (
           <p className="type-fine-print text-[var(--ink-muted-48)]">Modo teste — o pagamento é simulado.</p>
         ) : null}
 
-        <div>
-          <p className="type-caption-strong text-[var(--ink-muted-48)]">{brandName}</p>
-          <h1 className="type-tagline text-[var(--ink)]">{product.name}</h1>
-          <p className="mt-1 type-body-strong text-[var(--ink)]">{brl(pixTotalCents, currency)} no Pix</p>
-          <p className="mt-1 type-fine-print text-[var(--ink-muted-48)]">
-            ou {brl(cardTotalCents, currency)} em até {maxInstallments}x sem juros
-            {pixPct > 0 ? ` · economia de ${brl(pixDiscountCents, currency)} no Pix` : ""}
-          </p>
+        <div className="checkout-flow__head">
+          <h2 className="type-tagline text-[var(--ink)]">Finalize seu Mood</h2>
+          <div className="checkout-price-hero">
+            <p className="checkout-price-hero__pix">{brl(pixTotalCents, currency)}</p>
+            <p className="type-fine-print text-[var(--ink-muted-80)]">
+              no Pix{pixPct > 0 ? ` · você economiza ${brl(pixDiscountCents, currency)}` : ""}
+            </p>
+            <div className="lp-offer-strip__chips mt-3">
+              <span className="lp-chip lp-chip--pix">Pix −{pixPct || 0}%</span>
+              <span className="lp-chip">{maxInstallments}x sem juros</span>
+              {requireAddress ? <span className="lp-chip">Frete grátis</span> : null}
+            </div>
+            <p className="mt-2 type-fine-print text-[var(--ink-muted-48)]">
+              ou {brl(cardTotalCents, currency)} no cartão
+            </p>
+          </div>
           {!mpPublicKey && !previewToken ? (
             <p className="mt-2 type-caption text-amber-800">
-              Mercado Pago não conectado — o pagamento pode não ser processado.{" "}
+              Mercado Pago não conectado.{" "}
               <Link href="/config/conexoes" className="text-[var(--primary)] underline">
-                Configurações
+                Conectar
               </Link>
             </p>
           ) : null}
@@ -686,30 +693,34 @@ export function CheckoutForm({
 
         {onPaymentStep ? (
           <div className="space-y-4">
-            <div className="rounded-[var(--radius-lg)] border border-[var(--hairline)] bg-[var(--canvas)] p-4">
-              <p className="type-caption-strong text-[var(--ink)]">Resumo</p>
-              <p className="mt-1 type-body text-[var(--ink-muted-80)]">
-                {selectedVariant?.label || product.name}
+            <div className="checkout-summary">
+              <p className="type-caption-strong text-[var(--ink)]">{selectedVariant?.label || product.name}</p>
+              <p className="mt-2 checkout-summary__pix">
+                {brl(pixTotalCents, currency)}
+                <span className="type-fine-print"> no Pix</span>
               </p>
-              <p className="mt-2 type-body-strong text-[var(--primary)]">
-                Pix: {brl(pixTotalCents, currency)}
-                {savingsLabel ? ` · você economiza ${savingsLabel}` : ""}
-              </p>
-              <p className="type-fine-print text-[var(--ink-muted-48)]">
-                Cartão: {brl(cardTotalCents, currency)} em até {maxInstallments}x
-              </p>
-              {requireAddress ? (
-                <p className="mt-2 type-fine-print text-[var(--ink-muted-48)]">Frete grátis · Brasil</p>
+              {savingsLabel ? (
+                <p className="type-fine-print text-[var(--primary)]">Economia de {savingsLabel}</p>
               ) : null}
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <OptionChip selected={payType === "pix"} onClick={() => setPayType("pix")}>
-                PIX{pixPct > 0 ? ` (−${pixPct}%)` : ""}
-              </OptionChip>
-              <OptionChip selected={payType === "credit_card"} onClick={() => setPayType("credit_card")}>
-                Cartão até {maxInstallments}x
-              </OptionChip>
+            <div className="checkout-pay-tiles">
+              <button
+                type="button"
+                className={`checkout-pay-tile${payType === "pix" ? " is-on" : ""}`}
+                onClick={() => setPayType("pix")}
+              >
+                <span className="type-caption-strong">Pix</span>
+                <span className="type-fine-print">{pixPct > 0 ? `−${pixPct}%` : "À vista"}</span>
+              </button>
+              <button
+                type="button"
+                className={`checkout-pay-tile${payType === "credit_card" ? " is-on" : ""}`}
+                onClick={() => setPayType("credit_card")}
+              >
+                <span className="type-caption-strong">Cartão</span>
+                <span className="type-fine-print">até {maxInstallments}x</span>
+              </button>
             </div>
 
             {payType === "credit_card" ? (

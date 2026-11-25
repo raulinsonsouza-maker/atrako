@@ -4,7 +4,6 @@ import { getMpPublicKey } from "@/lib/integrations/mercadopago/payments";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { SubNavFrosted } from "@/components/ui/sub-nav-frosted";
-import { SiteFooter } from "@/components/ui/site-footer";
 import { BrandThemeScope } from "@/components/brand/BrandThemeScope";
 import { PublicUnavailable } from "@/components/modules/PublicUnavailable";
 import { isPublicModuleEnabled } from "@/lib/modules/resolve";
@@ -216,9 +215,6 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
   if (goal !== "leads" && !(await isPublicModuleEnabled(product.clienteId, "commerce"))) {
     return <PublicUnavailable brandName={brandName} />;
   }
-  const ctaHref = goal === "leads" ? "#form" : "#checkout";
-  const ctaLabel = goal === "leads" ? "Quero receber" : "Comprar";
-
   const linkedFormId = pageV2?.formId || pageV1?.formId;
   let formSlug: string | null = null;
   if (linkedFormId) {
@@ -276,10 +272,6 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
     checkoutProduct = productPayload;
   }
 
-  const footerCheckoutHref = checkoutProduct
-    ? `/checkout/${checkoutProduct.id}`
-    : `/checkout/${product.id}`;
-
   return (
     <BrandThemeScope
       primaryColor={brand?.primaryColor}
@@ -307,22 +299,12 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
       {!embed ? (
         <SubNavFrosted
           title={brandName}
-          links={[{ href: `/p/${product.slug}`, label: "Oferta" }]}
-          ctaHref={ctaHref}
-          ctaLabel={ctaLabel}
+          logoUrl={brand?.logoUrl}
+          links={[]}
         />
       ) : null}
 
       <div className="w-full">
-        {brand?.logoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={brand.logoUrl}
-            alt={brandName}
-            className="mx-auto mb-2 mt-6 h-10 object-contain"
-          />
-        ) : null}
-
         {pageV2 ? (
           <SalesPagePuckView
             page={pageV2}
@@ -338,7 +320,7 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
             bumpByProductId={bumpByProductId}
           />
         ) : (
-          <div className="mx-auto w-full max-w-xl px-4 py-8 sm:max-w-2xl sm:py-12 lg:max-w-5xl">
+          <div className="mx-auto w-full max-w-xl px-4 pb-10 pt-4 sm:max-w-2xl sm:pb-14 lg:max-w-5xl">
             <SalesPageView
               page={pageV1!}
               product={salesProduct}
@@ -353,22 +335,6 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
           </div>
         )}
       </div>
-
-      {!embed ? (
-        <SiteFooter
-          columns={[
-            {
-              title: brandName,
-              links: [
-                { href: `/p/${product.slug}`, label: "Oferta" },
-                ...(goal === "sales"
-                  ? [{ href: footerCheckoutHref, label: "Checkout" }]
-                  : [{ href: `#form`, label: "Formulário" }]),
-              ],
-            },
-          ]}
-        />
-      ) : null}
     </BrandThemeScope>
   );
 }

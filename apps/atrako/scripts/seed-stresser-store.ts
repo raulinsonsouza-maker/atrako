@@ -24,8 +24,8 @@ const EMAIL = process.env.STRESSER_OWNER_EMAIL?.trim() || "vendas@stressercolcho
 const PASSWORD = process.env.STRESSER_OWNER_PASSWORD?.trim() || "Stresser@2026";
 const SLUG = "stresser";
 const LOGO = "/lp/stresser/assets/logo.webp";
-/** Verde do emblema Stresser (lime/forest). */
-const PRIMARY = "#6B9E3D";
+/** Verde vivo do emblema Stresser (lime). */
+const PRIMARY = "#8BC34A";
 const PRODUCT_SLUG = "pikolin-mood";
 const PIX_DISCOUNT_PERCENT = 15;
 const GALLERY_MAIN = "/lp/stresser/assets/gallery/colchao-pikolin-mood.webp";
@@ -64,30 +64,28 @@ function moodSalesPage(): Prisma.InputJsonValue {
       {
         id: "s_hero",
         type: "hero",
-        headline: "Mood firme · frete grátis",
-        subheadline: "Molas ensacadas · Cool Touch · 15% off no Pix ou 10x sem juros",
+        headline: "Pikolin Mood — firmeza que segura a noite inteira",
+        subheadline: "Molas ensacadas Cross System · Cool Touch · altura 28 cm",
       },
       {
         id: "s_gallery",
         type: "gallery",
-        title: "Pikolin Mood",
         images: [
-          { src: GALLERY_MAIN, alt: "Colchão Pikolin Mood — vista principal" },
-          { src: GALLERY_TAMPO, alt: "Colchão Pikolin Mood — tampo Copper Fabric" },
-          { src: TRAY_COVER, alt: "Colchão Pikolin Mood Molas Ensacadas Firme" },
+          {
+            src: VIDEO_SRC,
+            alt: "Vídeo Pikolin Mood",
+            kind: "video",
+            poster: GALLERY_TAMPO,
+          },
+          { src: GALLERY_MAIN, alt: "Colchão Pikolin Mood — vista principal", kind: "image" },
+          { src: GALLERY_TAMPO, alt: "Colchão Pikolin Mood — tampo Copper Fabric", kind: "image" },
+          { src: TRAY_COVER, alt: "Colchão Pikolin Mood Molas Ensacadas Firme", kind: "image" },
         ],
-      },
-      {
-        id: "s_video",
-        type: "video",
-        title: "Mood em movimento",
-        src: VIDEO_SRC,
-        poster: GALLERY_TAMPO,
       },
       {
         id: "s_layers",
         type: "mattress_layers",
-        title: "A estrutura do Mood",
+        title: "Do que o nosso colchão é composto",
         layers: [
           {
             id: 1,
@@ -152,44 +150,61 @@ function moodSalesPage(): Prisma.InputJsonValue {
       {
         id: "s_benefits",
         type: "benefits",
+        title: "Tecnologia que você sente",
+        lead: "Suporte ortopédico, frescor e durabilidade — sem enrolação.",
         items: [
-          "Molas ensacadas Cross System com individualidade de movimento",
-          "Espumas High Support e Cool Touch — firmeza com frescor",
-          "Tecido Cooper System: reflete o calor e reduz ácaros",
-          "Pillow top de um lado · suporte individual até 250 kg",
-          "Garantia de 1 ano · disponível em cerca de 20 dias úteis",
-          "Frete grátis Brasil · Pix com 15% de desconto ou 10x sem juros",
-        ],
-      },
-      {
-        id: "s_social",
-        type: "social_proof",
-        quotes: [
           {
-            text: "O Mood é a melhor relação custo-benefício da linha Pikolin para quem busca firmeza sem abrir mão de tecnologia.",
-            author: "Equipe Stresser Colchões",
+            icon: "◎",
+            title: "Cross System",
+            body: "Molas ensacadas com reforço lombar. Sem transferência de movimento. Até 250 kg.",
+          },
+          {
+            icon: "❄",
+            title: "Cool Touch",
+            body: "Toque fresco que dissipa calor — ideal para noites quentes.",
+          },
+          {
+            icon: "◈",
+            title: "Copper Fabric",
+            body: "Fios de cobre: antiácaro, antimicrobiano e sensação térmica agradável.",
+          },
+          {
+            icon: "△",
+            title: "High Support",
+            body: "Espuma de alta resiliência: coluna alinhada e firmeza real.",
+          },
+          {
+            icon: "⇄",
+            title: "Air Flow",
+            body: "Borda ventilada que mantém o colchão arejado e estável.",
+          },
+          {
+            icon: "✓",
+            title: "Frete + garantia",
+            body: "Frete grátis Brasil · 1 ano de garantia · ~20 dias úteis.",
           },
         ],
       },
       {
         id: "s_faq",
         type: "faq",
+        title: "Dúvidas rápidas",
         items: [
           {
-            q: "Quais medidas estão disponíveis?",
-            a: "Solteiro Padrão, Solteiro Americano, Casal Padrão, Queen e King. Escolha a medida no checkout.",
+            q: "Quais medidas?",
+            a: "Solteiro Padrão, Solteiro Americano, Casal, Queen e King — escolha no checkout.",
           },
           {
-            q: "Como funciona o frete?",
-            a: "Frete grátis para todo o Brasil. O prazo típico de disponibilidade é de cerca de 20 dias úteis.",
+            q: "Frete é grátis?",
+            a: "Sim, para todo o Brasil. Disponibilidade típica em cerca de 20 dias úteis.",
           },
           {
-            q: "Quais formas de pagamento?",
-            a: "Pix com 15% de desconto ou cartão de crédito em até 10x sem juros via Mercado Pago.",
+            q: "Pix ou cartão?",
+            a: "Pix com 15% off ou cartão em até 10x sem juros.",
           },
           {
-            q: "O colchão é firme?",
-            a: "Sim. O Mood é firme, com molas ensacadas e espumas High Support, indicado para quem prefere suporte firme.",
+            q: "É firme mesmo?",
+            a: "Sim. Mood é firme: molas ensacadas + High Support para quem quer suporte forte.",
           },
         ],
       },

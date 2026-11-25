@@ -13,7 +13,9 @@ export type LpSection =
   | {
       id: string;
       type: "benefits";
-      items: string[];
+      title?: string;
+      lead?: string;
+      items: Array<string | { title: string; body?: string; icon?: string }>;
     }
   | {
       id: string;
@@ -23,6 +25,7 @@ export type LpSection =
   | {
       id: string;
       type: "faq";
+      title?: string;
       items: Array<{ q: string; a: string }>;
     }
   | {
@@ -50,7 +53,13 @@ export type LpSection =
       id: string;
       type: "gallery";
       title?: string;
-      images: Array<{ src: string; alt: string }>;
+      /** Imagens e/ou vídeo (reels). Vídeo: kind "video". */
+      images: Array<{
+        src: string;
+        alt: string;
+        kind?: "image" | "video";
+        poster?: string;
+      }>;
     }
   | {
       id: string;

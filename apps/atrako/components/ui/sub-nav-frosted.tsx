@@ -7,6 +7,8 @@ export type SubNavLink = { href: string; label: string };
 
 export interface SubNavFrostedProps extends React.HTMLAttributes<HTMLElement> {
   title: string;
+  /** Se definido, substitui o texto do título. */
+  logoUrl?: string | null;
   links?: SubNavLink[];
   ctaHref?: string;
   ctaLabel?: string;
@@ -14,6 +16,7 @@ export interface SubNavFrostedProps extends React.HTMLAttributes<HTMLElement> {
 
 export function SubNavFrosted({
   title,
+  logoUrl,
   links = [],
   ctaHref,
   ctaLabel = "Comprar",
@@ -28,7 +31,12 @@ export function SubNavFrosted({
       )}
       {...props}
     >
-      <p className="type-tagline truncate text-[var(--ink)]">{title}</p>
+      {logoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={logoUrl} alt={title} className="h-8 w-auto max-w-[180px] object-contain object-left" />
+      ) : (
+        <p className="type-tagline truncate text-[var(--ink)]">{title}</p>
+      )}
       <div className="flex items-center gap-4">
         <div className="hidden items-center gap-4 md:flex">
           {links.map((link) => (

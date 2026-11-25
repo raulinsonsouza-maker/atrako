@@ -1,28 +1,48 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-export type GalleryImage = { src: string; alt: string };
+export type GalleryMedia = {
+  src: string;
+  alt: string;
+  kind?: "image" | "video";
+  poster?: string;
+};
 
 type Props = {
   title?: string;
-  images: GalleryImage[];
+  images: GalleryMedia[];
 };
 
-/** Galeria mobile-first: foto principal + dots / thumbs. */
+function isVideoItem(item: GalleryMedia) {
+  return (item.kind ?? (item.src.endsWith(".mp4") ? "video" : "image")) === "video";
+}
+
+/** Galeria estilo reels: swipe horizontal, vídeo muted autoplay como 1º item. */
 export function ProductGallery({ title, images }: Props) {
   const list = images.filter((img) => img.src);
   const [index, setIndex] = useState(0);
   const touchX = useRef<number | null>(null);
-  if (!list.length) return null;
-  const current = list[Math.min(index, list.length - 1)]!;
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const safeIndex = list.length ? Math.min(index, list.length - 1) : 0;
+  const current = list[safeIndex];
+  const showingVideo = current ? isVideoItem(current) : false;
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (showingVideo) void v.play().catch(() => null);
+    else v.pause();
+  }, [safeIndex, showingVideo]);
+
+  if (!list.length || !current) return null;
 
   function go(delta: number) {
     setIndex((i) => (i + delta + list.length) % list.length);
   }
 
   return (
-    <section className="product-gallery" aria-label={title || "Fotos do produto"}>
+    <section className="product-gallery product-gallery--reels" aria-label={title || "Mídia do produto"}>
       {title ? <h2 className="product-gallery__title type-caption-strong text-[var(--ink)]">{title}</h2> : null}
       <div
         className="product-gallery__main"
@@ -39,47 +59,86 @@ export function ProductGallery({ title, images }: Props) {
           go(dx < 0 ? 1 : -1);
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={current.src} alt={current.alt} className="product-gallery__img shadow-product" draggable={false} />
+        {showingVideo ? (
+          <video
+            key={current.src}
+            ref={videoRef}
+            className="product-gallery__media"
+            src={current.src}
+            poster={current.poster}
+            muted
+            playsInline
+            loop
+            autoPlay
+            preload="metadata"
+            controls={false}
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={current.src}
+            alt={current.alt}
+            className="product-gallery__media shadow-product"
+            draggable={false}
+          />
+        )}
         {list.length > 1 ? (
           <>
-            <button type="button" className="product-gallery__nav product-gallery__nav--prev" onClick={() => go(-1)} aria-label="Foto anterior">
+            <button
+              type="button"
+              className="product-gallery__nav product-gallery__nav--prev"
+              onClick={() => go(-1)}
+              aria-label="Anterior"
+            >
               ‹
             </button>
-            <button type="button" className="product-gallery__nav product-gallery__nav--next" onClick={() => go(1)} aria-label="Próxima foto">
+            <button
+              type="button"
+              className="product-gallery__nav product-gallery__nav--next"
+              onClick={() => go(1)}
+              aria-label="Próximo"
+            >
               ›
             </button>
           </>
         ) : null}
+        {showingVideo ? <span className="product-gallery__badge type-fine-print">Reel</span> : null}
       </div>
       {list.length > 1 ? (
-        <div className="product-gallery__dots" role="tablist" aria-label="Fotos">
+        <div className="product-gallery__dots" role="tablist" aria-label="Mídia">
           {list.map((img, i) => (
             <button
               key={`${img.src}-${i}`}
               type="button"
               role="tab"
-              aria-selected={i === index}
-              className={`product-gallery__dot${i === index ? " is-on" : ""}`}
+              aria-selected={i === safeIndex}
+              className={`product-gallery__dot${i === safeIndex ? " is-on" : ""}`}
               onClick={() => setIndex(i)}
-              aria-label={`Foto ${i + 1}`}
+              aria-label={`Item ${i + 1}`}
             />
           ))}
         </div>
       ) : null}
       {list.length > 1 ? (
         <div className="product-gallery__thumbs">
-          {list.map((img, i) => (
-            <button
-              key={`thumb-${img.src}-${i}`}
-              type="button"
-              className={`product-gallery__thumb${i === index ? " is-on" : ""}`}
-              onClick={() => setIndex(i)}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.src} alt="" />
-            </button>
-          ))}
+          {list.map((img, i) => {
+            const vid = isVideoItem(img);
+            return (
+              <button
+                key={`thumb-${img.src}-${i}`}
+                type="button"
+                className={`product-gallery__thumb${i === safeIndex ? " is-on" : ""}`}
+                onClick={() => setIndex(i)}
+              >
+                {vid ? (
+                  <span className="product-gallery__thumb-video type-fine-print">▶</span>
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={img.poster || img.src} alt="" />
+                )}
+              </button>
+            );
+          })}
         </div>
       ) : null}
     </section>

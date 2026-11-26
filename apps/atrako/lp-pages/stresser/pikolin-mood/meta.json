@@ -6,10 +6,10 @@
   "theme": { "accent": "#6B9E3D", "accentInk": "#ffffff", "surface": "light" },
   "brief": "LP Pikolin Mood. Stresser Colchões. Frete grátis, 15% Pix, 10x.",
   "pixDiscountPercent": 15,
-  "videoUrls": ["/lp/stresser/assets/Pikolin_mood.mp4"],
+  "videoUrls": ["assets/Pikolin_mood_correto.mp4"],
   "gallery": [
     {
-      "src": "/lp/stresser/assets/Pikolin_mood.mp4",
+      "src": "assets/Pikolin_mood_correto.mp4",
       "alt": "Vídeo do Colchão Pikolin Mood Molas Ensacadas Firme",
       "kind": "video",
       "poster": "/lp/stresser/assets/gallery/colchao-pikolin-mood-tampo.webp"

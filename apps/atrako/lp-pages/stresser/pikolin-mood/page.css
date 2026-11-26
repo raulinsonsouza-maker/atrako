@@ -238,9 +238,19 @@ body {
   color: var(--muted);
 }
 .mood-offer {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 56px max(20px, calc((100% - 28rem) / 2)) 120px;
+  box-sizing: border-box;
+  background: #ffffff;
+  border-top: 1px solid rgba(22, 37, 56, 0.08);
+}
+.mood-offer-intro,
+.mood-offer [data-atrako-slot="checkout"] {
   max-width: 28rem;
-  margin: 0 auto;
-  padding: 56px 20px 28px;
+  margin-left: auto;
+  margin-right: auto;
 }
 .mood-offer-intro {
   margin-bottom: 28px;

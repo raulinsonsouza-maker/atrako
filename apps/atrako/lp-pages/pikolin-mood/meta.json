@@ -1,0 +1,98 @@
+{
+  "productSlug": "pikolin-mood",
+  "workspaceSlug": "stresser",
+  "goal": "sales",
+  "fonts": ["Playfair Display:ital,wght@0,500;1,500", "DM Sans:wght@400;500;600;700"],
+  "theme": { "accent": "#6B9E3D", "accentInk": "#ffffff", "surface": "light" },
+  "brief": "LP Pikolin Mood — Stresser Colchões. Frete grátis, 15% Pix, 10x.",
+  "pixDiscountPercent": 15,
+  "videoUrls": ["/lp/stresser/assets/Pikolin_mood.mp4"],
+  "gallery": [
+    {
+      "src": "/lp/stresser/assets/Pikolin_mood.mp4",
+      "alt": "Vídeo Pikolin Mood",
+      "kind": "video",
+      "poster": "/lp/stresser/assets/gallery/colchao-pikolin-mood-tampo.webp"
+    },
+    {
+      "src": "/lp/stresser/assets/gallery/colchao-pikolin-mood.webp",
+      "alt": "Colchão Pikolin Mood — vista principal",
+      "kind": "image"
+    },
+    {
+      "src": "/lp/stresser/assets/gallery/colchao-pikolin-mood-tampo.webp",
+      "alt": "Colchão Pikolin Mood — tampo Copper Fabric",
+      "kind": "image"
+    }
+  ],
+  "layersTitle": "Por dentro do seu conforto",
+  "layersHint": "Toque na camada para ver como ela melhora seu sono",
+  "layers": [
+    {
+      "id": 1,
+      "title": "Tecido fresco com fios de cobre",
+      "imageUrl": "/lp/stresser/assets/layers/01-tampo-mood.png",
+      "body": "Não retém calor nem suor. Mantém a cama seca e fresca até nas noites mais quentes, com proteção natural contra ácaros e alergias."
+    },
+    {
+      "id": 2,
+      "title": "Fibra siliconada",
+      "imageUrl": "/lp/stresser/assets/layers/02-fibra-siliconada.png",
+      "body": "Camada leve que dá maciez inicial ao pillow top. Ajuda a acolher o corpo sem afundar o suporte das molas."
+    },
+    {
+      "id": 3,
+      "title": "Espuma Cool Touch",
+      "imageUrl": "/lp/stresser/assets/layers/03-cool-touch.png",
+      "body": "Toque fresco que libera o calor do corpo. Ideal para quem sua ou sofre com noites quentes."
+    },
+    {
+      "id": 4,
+      "title": "Tecido retentor",
+      "imageUrl": "/lp/stresser/assets/layers/04-tecido-retentor.png",
+      "body": "Segura as camadas no lugar e estabiliza o conforto. Evita que o colchão “caminhe” ou deforme com o uso."
+    },
+    {
+      "id": 5,
+      "title": "Espuma High Support",
+      "imageUrl": "/lp/stresser/assets/layers/05-high-support.png",
+      "body": "Espuma firme que alinha a coluna e reduz pontos de pressão. Sustenta sem criar buracos com o tempo."
+    },
+    {
+      "id": 6,
+      "title": "Non-woven",
+      "imageUrl": "/lp/stresser/assets/layers/06-non-woven.png",
+      "body": "Proteção entre espuma e molas. Isola o atrito, reduz ruídos e prolonga a vida útil do molejo."
+    },
+    {
+      "id": 7,
+      "title": "Molas Cross System",
+      "imageUrl": "/lp/stresser/assets/layers/07-molas-cross-system.png",
+      "body": "Molas ensacadas com reforço na lombar. Não balança a dois e sustenta até 250 kg com individualidade de movimento."
+    },
+    {
+      "id": 8,
+      "title": "Non-woven",
+      "imageUrl": "/lp/stresser/assets/layers/08-non-woven.png",
+      "body": "Base de isolamento sob as molas. Mantém a estrutura estável e o conforto uniforme noite após noite."
+    },
+    {
+      "id": 9,
+      "title": "Borda Air Flow Support",
+      "imageUrl": "/lp/stresser/assets/layers/09-borda-air-flow.png",
+      "body": "Laterais ventiladas que não cedem na ponta. Deixam o colchão arejado e firmes para sentar na beira."
+    },
+    {
+      "id": 10,
+      "title": "Espuma de suporte",
+      "imageUrl": "/lp/stresser/assets/layers/10-suporte.png",
+      "body": "Base de espuma que completa o suporte inferior. Distribui o peso e reforça a durabilidade do conjunto."
+    },
+    {
+      "id": 11,
+      "title": "Tecido antiderrapante",
+      "imageUrl": "/lp/stresser/assets/layers/11-tecido-antiderrapante.png",
+      "body": "Base que segura o colchão na cama ou box. Evita deslizar e mantém o alinhamento durante o sono."
+    }
+  ]
+}

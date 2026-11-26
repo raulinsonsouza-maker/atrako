@@ -505,6 +505,18 @@ async function main() {
   const variantCount = await prisma.commerceVariant.count({ where: { productId: product.id } });
 
   console.log(`Loja: ${store.slug} · produto ${product.slug} · ${variantCount} medidas`);
+
+  // Pages: sobrescreve salesPage v1 pelo pacote HTML/CSS (sem rebuild em publishes seguintes).
+  try {
+    const { publishLpPackage } = await import("../lib/lp-pages/publish");
+    const published = await publishLpPackage(PRODUCT_SLUG, { skipAssets: true });
+    console.log(
+      `Pages v3: ${published.packageSlug} · html ${published.htmlBytes}B · css ${published.cssBytes}B`,
+    );
+  } catch (err) {
+    console.warn("Pages publish pulado (mantém salesPage v1 do seed):", err);
+  }
+
   console.log("");
   console.log("Login:   http://localhost:5000/sign-in");
   console.log(`         ${EMAIL} / ${PASSWORD}`);
@@ -512,6 +524,7 @@ async function main() {
   console.log("CRM:     http://localhost:5000/crm");
   console.log(`LP:      http://localhost:5000/p/${PRODUCT_SLUG}`);
   console.log("Host:    https://lp.stressercolchoes.com.br/  (após DNS + Traefik)");
+  console.log("Publish: npx tsx scripts/publish-lp.ts pikolin-mood  (docs/LP_PAGES.md)");
 }
 
 main()

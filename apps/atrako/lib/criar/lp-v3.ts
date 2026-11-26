@@ -22,6 +22,20 @@ export type LpStockCredit = {
   tracked: boolean;
 };
 
+export type LpV3GalleryItem = {
+  src: string;
+  alt: string;
+  kind?: "image" | "video";
+  poster?: string;
+};
+
+export type LpV3Layer = {
+  id: number;
+  title: string;
+  body?: string;
+  imageUrl: string;
+};
+
 export type LpSalesPageV3 = {
   version: 3;
   goal: LpGoal;
@@ -39,6 +53,14 @@ export type LpSalesPageV3 = {
   generatedBy?: string;
   images?: LpStockCredit[];
   updatedAt?: string;
+  /** Desconto Pix (Pages / Mood). */
+  pixDiscountPercent?: number;
+  /** Widget `<atrako-gallery>`. */
+  gallery?: LpV3GalleryItem[];
+  /** Widget `<atrako-layers>`. */
+  layers?: LpV3Layer[];
+  layersTitle?: string;
+  layersHint?: string;
   /** Versão anterior à última edição pela IA (para desfazer). */
   previous?: { html: string; css: string; cssSource?: string; updatedAt?: string };
 };
@@ -63,20 +85,32 @@ export function hasCheckoutSlot(html: string) {
   return /<atrako-checkout\b/i.test(html);
 }
 
+export type LpSlotKind = "form" | "checkout" | "gallery" | "layers";
+
 /**
  * Troca os marcadores por divs-âncora onde o React monta os componentes nativos (portal).
  * Só o primeiro de cada é usado; âncora `#form` / `#checkout` se o HTML não tiver uma.
  */
 export function renderSlots(html: string): string {
-  const slot = (kind: "form" | "checkout") => {
-    const id = new RegExp(`\\sid="${kind}"`, "i").test(html) ? "" : ` id="${kind}"`;
+  const slot = (kind: LpSlotKind) => {
+    const id =
+      (kind === "form" || kind === "checkout") && !new RegExp(`\\sid="${kind}"`, "i").test(html)
+        ? ` id="${kind}"`
+        : kind === "gallery" || kind === "layers"
+          ? ` id="${kind}"`
+          : "";
     return `<div class="${LP_SLOT_CLASS}" data-atrako-slot="${kind}"${id}></div>`;
   };
-  let seenForm = false;
-  let seenCheckout = false;
+  const seen: Record<LpSlotKind, boolean> = {
+    form: false,
+    checkout: false,
+    gallery: false,
+    layers: false,
+  };
+  const once = (kind: LpSlotKind) => () => (seen[kind] ? "" : ((seen[kind] = true), slot(kind)));
   return html
-    .replace(/<atrako-form>\s*<\/atrako-form>|<atrako-form\s*\/?>/gi, () => (seenForm ? "" : ((seenForm = true), slot("form"))))
-    .replace(/<atrako-checkout>\s*<\/atrako-checkout>|<atrako-checkout\s*\/?>/gi, () =>
-      seenCheckout ? "" : ((seenCheckout = true), slot("checkout")),
-    );
+    .replace(/<atrako-form>\s*<\/atrako-form>|<atrako-form\s*\/?>/gi, once("form"))
+    .replace(/<atrako-checkout>\s*<\/atrako-checkout>|<atrako-checkout\s*\/?>/gi, once("checkout"))
+    .replace(/<atrako-gallery>\s*<\/atrako-gallery>|<atrako-gallery\s*\/?>/gi, once("gallery"))
+    .replace(/<atrako-layers>\s*<\/atrako-layers>|<atrako-layers\s*\/?>/gi, once("layers"));
 }

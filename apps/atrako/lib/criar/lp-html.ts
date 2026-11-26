@@ -13,7 +13,8 @@ export * from "./lp-v3";
  */
 
 export const MAX_LP_HTML = 120_000;
-export const MAX_LP_CSS = 60_000;
+/** Pages editoriais (Mood) podem passar de 60KB; sanitize ainda aplica. */
+export const MAX_LP_CSS = 100_000;
 const MAX_FONTS = 3;
 
 // ── HTML ──
@@ -36,7 +37,7 @@ const ALLOWED_TAGS = [
   "img", "picture", "source", "video", "figure", "figcaption", "blockquote", "cite", "q", "time",
   "details", "summary", "table", "thead", "tbody", "tfoot", "tr", "th", "td", "caption",
   "button", "address", "abbr",
-  "atrako-form", "atrako-checkout",
+  "atrako-form", "atrako-checkout", "atrako-gallery", "atrako-layers",
   ...SVG_TAGS,
 ];
 
@@ -86,7 +87,12 @@ export function sanitizeLpHtml(raw: string): string {
       ...Object.fromEntries(SVG_TAGS.map((t) => [t, SVG_ATTRS])),
     },
     allowedSchemes: ["https", "http", "mailto", "tel"],
-    allowedSchemesByTag: { img: ["https", "data"], source: ["https"], video: ["https"] },
+    allowedSchemesByTag: {
+      img: ["https", "http", "data"],
+      source: ["https", "http"],
+      video: ["https", "http"],
+      a: ["https", "http", "mailto", "tel"],
+    },
     allowedSchemesAppliedToAttributes: ["href", "src", "srcset"],
     allowProtocolRelative: false,
     parseStyleAttributes: false,
@@ -104,6 +110,8 @@ export function sanitizeLpHtml(raw: string): string {
       button: (tagName, attribs) => ({ tagName, attribs: { ...attribs, type: "button" } }),
       "atrako-form": () => ({ tagName: "atrako-form", attribs: {} }),
       "atrako-checkout": () => ({ tagName: "atrako-checkout", attribs: {} }),
+      "atrako-gallery": () => ({ tagName: "atrako-gallery", attribs: {} }),
+      "atrako-layers": () => ({ tagName: "atrako-layers", attribs: {} }),
     },
   });
   return stripUnknownFx(out).replace(/\sstyle="([^"]*)"/gi, (_m, value: string) => {

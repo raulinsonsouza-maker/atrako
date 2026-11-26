@@ -171,6 +171,7 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
             priceCents: { gt: 0 },
             ...(previewToken ? {} : { status: "PUBLISHED" as const }),
           },
+          include: { variants: { where: { active: true }, orderBy: { sortOrder: "asc" } } },
         })
       : null;
     const checkoutV3: LpPuckProduct | null = checkoutRow
@@ -184,18 +185,40 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
           type: checkoutRow.type,
         }
       : null;
+    const v3Variants = checkoutRow
+      ? variantOptions(checkoutRow.variants ?? [], checkoutRow.priceCents)
+      : checkoutVariants;
+    const pagesShell = salesRaw.generatedBy === "lp-pages-publish";
     return (
-      <BrandThemeScope primaryColor={brand?.primaryColor} className="min-h-screen bg-[var(--canvas)] text-[var(--ink)]">
-        {typeof tracking.pixelId === "string" && tracking.pixelId && !embed && !previewToken ? (
+      <BrandThemeScope
+        primaryColor={brand?.primaryColor}
+        className={
+          pagesShell
+            ? "min-h-screen bg-[#fbfaf7] text-[#162538]"
+            : "min-h-screen bg-[var(--canvas)] text-[var(--ink)]"
+        }
+      >
+        {!embed && !previewToken ? <LpHostTrackingBoot /> : null}
+        {typeof tracking.pixelId === "string" && tracking.pixelId && !embed ? (
           <script
             dangerouslySetInnerHTML={{
               __html: `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${tracking.pixelId}');fbq('track','PageView');`,
             }}
           />
         ) : null}
+        {typeof tracking.ga4MeasurementId === "string" && tracking.ga4MeasurementId && !embed ? (
+          <>
+            <script async src={`https://www.googletagmanager.com/gtag/js?id=${tracking.ga4MeasurementId}`} />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${tracking.ga4MeasurementId}');`,
+              }}
+            />
+          </>
+        ) : null}
         <SalesPageHtmlView
           page={salesRaw}
-          product={productPayload}
+          product={salesProduct}
           brandName={brandName}
           currency={brand?.currency || "BRL"}
           mpPublicKey={mpPublicKey}
@@ -206,6 +229,7 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
           }
           checkoutProduct={checkoutV3}
           previewToken={previewToken}
+          variants={v3Variants}
         />
       </BrandThemeScope>
     );

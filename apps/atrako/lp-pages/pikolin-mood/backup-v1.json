@@ -1,0 +1,7 @@
+{
+  "_comment": "Rollback: regravar CommerceProduct.salesPage com o JSON de moodSalesPage() em scripts/seed-stresser-store.ts (version:1) e redeploy seed. Não apagar CSS Mood do monólito até checklist de paridade.",
+  "version": 1,
+  "goal": "sales",
+  "pixDiscountPercent": 15,
+  "restore": "npx tsx scripts/seed-stresser-store.ts --v1-only  OR  publicar pacote e depois reverter previous do v3"
+}

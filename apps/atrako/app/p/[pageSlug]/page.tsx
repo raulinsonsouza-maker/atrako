@@ -108,8 +108,9 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
   const page = normalizeSalesPage(product.salesPage);
   const hero = page.sections.find((s) => s.type === "hero");
-  const headline =
+  const headlineRaw =
     hero && hero.type === "hero" ? hero.headline : product.name;
+  const headline = headlineRaw.replace(/\s*\|\s*/g, " ").trim();
   const sub =
     hero && hero.type === "hero" ? hero.subheadline : product.description;
   return {

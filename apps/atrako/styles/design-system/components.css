@@ -2821,8 +2821,8 @@
   background: transparent;
   text-align: left;
   cursor: pointer;
-  font-family: var(--mood-sans);
-  color: var(--mood-navy);
+  font-family: "DM Sans", system-ui, sans-serif;
+  color: #162538;
 }
 
 .size-option span:first-child {
@@ -2838,19 +2838,22 @@
 .size-check {
   width: 20px;
   height: 20px;
-  border-radius: 999px;
+  border-radius: 0;
   border: 1.5px solid #c8c4bc;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 11px;
-  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  color: transparent;
 }
 
 .size-option.is-selected .size-check {
-  background: var(--mood-navy);
-  border-color: var(--mood-navy);
+  background: #162538;
+  border-color: #162538;
+  color: #fff;
 }
 
 .offer-card-price {
@@ -3230,12 +3233,18 @@
   aspect-ratio: 4 / 3;
 }
 
-/* Pages (v3): cantos retos — alinhado ao visual editorial */
+/* Pages (v3): cantos retos + fundo claro no vídeo (sem pillarbox preto) */
 .atrako-lp-v3 .product-gallery__main,
 .atrako-lp-v3 .product-gallery__thumb,
 .atrako-lp-v3 .product-gallery__badge,
 .atrako-lp-v3 .product-gallery__nav {
   border-radius: 0;
+}
+
+.atrako-lp-v3 .product-gallery__main,
+.atrako-lp-v3 .product-gallery--hero .product-gallery__main,
+.atrako-lp-v3 .product-gallery--hero .product-gallery__main.is-video {
+  background: #fff;
 }
 
 .product-gallery--reels .product-gallery__main {

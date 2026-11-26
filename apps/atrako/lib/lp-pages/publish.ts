@@ -39,6 +39,7 @@ function attachWidgets(page: LpSalesPageV3, meta: LpPageMeta): LpSalesPageV3 {
   if (meta.layers?.length) next.layers = meta.layers;
   if (meta.layersTitle) next.layersTitle = meta.layersTitle;
   if (meta.layersHint) next.layersHint = meta.layersHint;
+  if (meta.checkout && typeof meta.checkout === "object") next.checkout = meta.checkout;
   return next;
 }
 

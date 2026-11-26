@@ -26,6 +26,7 @@ Toda LP de **qualquer** workspace é **Pages**: `salesPage` version **3** (HTML/
 - Publicar com `npx tsx scripts/publish-lp.ts …` (sem rebuild)
 - Slots: `<atrako-checkout>`, `<atrako-form>`, `<atrako-gallery>`, `<atrako-layers>`
 - Skin de slots no `page.css` via `@atrako-slots { … }` (não em `components.css`)
+- Copy/flags do checkout em `meta.checkout` (publish-lp); não hardcode por cliente no `CheckoutForm`
 - Preço ao vivo: `data-atrako-live-price="pix|card"` no HTML (hook já no shell)
 - Rebuild **só** quando o runtime da plataforma mudar (React/API). Hooks novos = uma vez; LPs seguintes = publish
 - Doc: `apps/atrako/docs/LP_PAGES.md`

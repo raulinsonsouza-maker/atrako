@@ -186,6 +186,7 @@ export function SalesPageHtmlView({
                 variants={variants}
                 pixDiscountPercent={pixPct}
                 requireAddress={physical}
+                ui={page.checkout ?? null}
                 onTotalsChange={onCheckoutTotals}
               />
             </Suspense>,

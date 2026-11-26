@@ -6,6 +6,15 @@
   "theme": { "accent": "#6B9E3D", "accentInk": "#ffffff", "surface": "light" },
   "brief": "Oferta do cliente — substitua copy, cores e assets.",
   "pixDiscountPercent": 0,
+  "checkout": {
+    "offerTitle": "Escolha sua opção",
+    "offerCta": "Continuar",
+    "perks": false,
+    "summaryMode": "compact",
+    "termsMode": "onContinue",
+    "draftLocalStorage": true,
+    "lockAddressFromCep": true
+  },
   "videoUrls": [],
   "gallery": [],
   "layers": []

@@ -94,10 +94,18 @@ services:
       retries: 8
       start_period: 120s
     deploy:
-      replicas: 1
+      replicas: 2
       placement:
         constraints:
           - node.role == manager
+      update_config:
+        parallelism: 1
+        order: start-first
+        failure_action: rollback
+        delay: 10s
+      rollback_config:
+        parallelism: 1
+        order: stop-first
       resources:
         limits:
           memory: 1536M

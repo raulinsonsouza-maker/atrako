@@ -36,6 +36,29 @@ export type LpV3Layer = {
   imageUrl: string;
 };
 
+/**
+ * UX do slot `<atrako-checkout>` via Pages (publish-lp).
+ * Defaults no CheckoutForm = comportamento atual se omitido.
+ */
+export type LpCheckoutUiConfig = {
+  offerTitle?: string;
+  offerCta?: string;
+  /** Lista de benefícios na oferta; `false` esconde. */
+  perks?: string[] | false;
+  summaryMode?: "compact" | "detailed";
+  termsMode?: "onContinue" | "switch";
+  termsShort?: string;
+  privacyShort?: string;
+  draftLocalStorage?: boolean;
+  lockAddressFromCep?: boolean;
+  payLabels?: {
+    pix?: string;
+    card?: string;
+    finalizePix?: string;
+    finalizeCard?: string;
+  };
+};
+
 export type LpSalesPageV3 = {
   version: 3;
   goal: LpGoal;
@@ -61,6 +84,8 @@ export type LpSalesPageV3 = {
   layers?: LpV3Layer[];
   layersTitle?: string;
   layersHint?: string;
+  /** Copy/flags do checkout (publish-lp, sem rebuild). */
+  checkout?: LpCheckoutUiConfig;
   /** Versão anterior à última edição pela IA (para desfazer). */
   previous?: { html: string; css: string; cssSource?: string; updatedAt?: string };
 };

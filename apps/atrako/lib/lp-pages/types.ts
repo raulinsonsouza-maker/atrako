@@ -1,5 +1,7 @@
 import type { LpGoal } from "@/lib/criar/lp-schema";
-import type { LpV3Theme } from "@/lib/criar/lp-v3";
+import type { LpCheckoutUiConfig, LpV3Theme } from "@/lib/criar/lp-v3";
+
+export type { LpCheckoutUiConfig };
 
 export type LpPageGalleryItem = {
   src: string;
@@ -32,6 +34,8 @@ export type LpPageMeta = {
   layersHint?: string;
   checkoutProductId?: string | null;
   formId?: string | null;
+  /** UX do slot checkout (labels/perks/flags) — publish-lp. */
+  checkout?: LpCheckoutUiConfig;
 };
 
 export type LpPagePackage = {

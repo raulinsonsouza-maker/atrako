@@ -7,17 +7,21 @@ Isso vale para Stresser, Vilaris, Regicenter e **qualquer workspace novo**. Não
 | Camada | Onde vive | Rebuild Docker? |
 |--------|-----------|-----------------|
 | Copy, layout, CSS, FAQ, sticky, `@atrako-slots` | `salesPage` v3 (DB) / `lp-pages/` → `publish-lp` | **Não** |
+| Labels/perks/textos/flags do checkout (`meta.checkout`) | `salesPage.checkout` via `publish-lp` | **Não** |
 | Preço espelhado (`data-atrako-live-price`) | HTML do pacote + hook já no shell | **Não** |
 | Imagens / vídeo da LP | `/lp-media` (volume) | **Não** |
-| Novo comportamento de plataforma (React/API/slots) | `atrako-web` | **Sim** (uma vez) |
+| Campos do lead form | Form no DB (`formId`) | **Não** |
+| Novo comportamento React/API (Pix, MP, CEP, slots) | `atrako-web` rebuild rolling | **Sim** (todos, rolling) |
 | Domínio (`lp.cliente.com`) | Traefik + `lp-domains.ts` (uma vez) | Stack |
+| Novo workspace | seed + pacote Pages | **Não** |
 
 ### Regra de deploy (obrigatória)
 
 1. Mudou só `lp-pages/**` (html/css/meta/assets)? → **apenas** `publish-lp`. Sem `docker build`.
 2. Mudou React/API/`components.css` do shell? → aí sim rebuild — e **não** misturar com copy de LP no mesmo “deploy mental”.
 3. PR misto: **primeiro** `publish-lp` (conteúdo no ar), **depois** rebuild só se o runtime novo for necessário.
-4. Preferir hooks declarativos (`data-atrako-*`, `@atrako-slots`) a código React por cliente — o hook nasce uma vez no shell; o resto é pacote.
+4. Preferir hooks declarativos (`data-atrako-*`, `@atrako-slots`, `meta.checkout`) a código React por cliente — o hook nasce uma vez no shell; o resto é pacote.
+5. Rebuild do shell: preferir `docker stack deploy` com `replicas: 2` + `update_config.order: start-first` (rolling) para não derrubar todos os clientes de uma vez.
 
 ## Formatos
 
@@ -86,6 +90,30 @@ No HTML do pacote, marque o elemento que deve acompanhar o checkout:
 ```
 
 O runtime atualiza ao trocar tamanho/variante. É wiring de plataforma (não CSS de cliente).
+
+### Checkout config (`meta.checkout`, sem rebuild)
+
+Copy e flags do slot `<atrako-checkout>` vão no `meta.json` (não em `CheckoutForm.tsx`):
+
+```json
+"checkout": {
+  "offerTitle": "Escolha o tamanho…",
+  "offerCta": "Escolher este tamanho",
+  "perks": ["Frete grátis", "10x sem juros", "15% OFF no Pix"],
+  "summaryMode": "detailed",
+  "termsMode": "onContinue",
+  "draftLocalStorage": true,
+  "lockAddressFromCep": true,
+  "payLabels": {
+    "pix": "Pix",
+    "card": "Cartão",
+    "finalizePix": "Gerar Pix",
+    "finalizeCard": "Finalizar no cartão"
+  }
+}
+```
+
+Omitir um campo = default do shell. Mudar só texto/perks/flags → `publish-lp`. Novo comportamento (ex.: outro gateway) → rebuild uma vez.
 
 ### Skin dos slots (sem rebuild)
 

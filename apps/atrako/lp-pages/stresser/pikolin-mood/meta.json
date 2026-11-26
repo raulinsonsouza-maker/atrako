@@ -7,13 +7,14 @@
   "brief": "LP Pikolin Mood. Stresser Colchões. Frete grátis, 15% Pix, 10x.",
   "pixDiscountPercent": 15,
   "checkout": {
-    "offerTitle": "Escolha o tamanho da sua nova cama",
-    "offerCta": "Quero este tamanho",
+    "offerTitle": "Escolha o tamanho",
+    "offerCta": "Continuar",
     "perks": false,
     "summaryMode": "compact",
     "termsMode": "onContinue",
     "draftLocalStorage": true,
     "lockAddressFromCep": true,
+    "showCoupon": false,
     "payLabels": {
       "pix": "Pix",
       "card": "Cartão",

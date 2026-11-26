@@ -120,6 +120,7 @@ const DEFAULT_CHECKOUT_UI = {
   termsMode: "onContinue" as const,
   draftLocalStorage: true,
   lockAddressFromCep: true,
+  showCoupon: true,
   payLabels: {
     pix: "Pix",
     card: "Cartão",
@@ -1120,12 +1121,14 @@ export function CheckoutForm({
               </div>
             ) : null}
 
-            <input
-              className={inputClass}
-              placeholder="Cupom (opcional)"
-              value={couponCode}
-              onChange={(e) => setCouponCode(e.target.value)}
-            />
+            {cfg.showCoupon !== false ? (
+              <input
+                className={inputClass}
+                placeholder="Cupom (opcional)"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+              />
+            ) : null}
 
             {bump ? (
               <label className="flex items-start gap-2 rounded-lg border border-[var(--hairline)] p-3 type-body">

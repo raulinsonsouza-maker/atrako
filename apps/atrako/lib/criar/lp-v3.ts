@@ -51,6 +51,8 @@ export type LpCheckoutUiConfig = {
   privacyShort?: string;
   draftLocalStorage?: boolean;
   lockAddressFromCep?: boolean;
+  /** Default true. `false` esconde o campo cupom. */
+  showCoupon?: boolean;
   payLabels?: {
     pix?: string;
     card?: string;

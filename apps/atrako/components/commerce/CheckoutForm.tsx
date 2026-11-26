@@ -732,6 +732,25 @@ export function CheckoutForm({
     return () => document.documentElement.classList.remove("atrako-checkout-paying");
   }, [onPaymentStep]);
 
+  /** Quando a seção do checkout entra na viewport, a LP pode esconder sticky/nav (sem distração). */
+  useEffect(() => {
+    const section =
+      document.getElementById("oferta") ??
+      document.querySelector<HTMLElement>('[data-atrako-slot="checkout"]')?.closest("section");
+    if (!section) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        section.classList.toggle("is-checkout-focus", Boolean(entry?.isIntersecting));
+      },
+      { threshold: 0.18, rootMargin: "0px 0px -12% 0px" },
+    );
+    io.observe(section);
+    return () => {
+      io.disconnect();
+      section.classList.remove("is-checkout-focus");
+    };
+  }, []);
+
   const legalModal =
     legalOpen ? (
       <div className="checkout-legal-modal" role="dialog" aria-modal="true" aria-labelledby="checkout-legal-title">

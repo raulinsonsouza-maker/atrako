@@ -518,12 +518,19 @@ body {
   display: flex;
   line-height: 0;
 }
-/* Escopo v3 reescreve html.* → .atrako-lp-v3.*; classe fica no <html>. Usar :has. */
-.mood-offer:has(.checkout-pay-tiles) ~ .mood-sticky {
+/* Checkout em foco (IO no shell → .is-checkout-focus): some sticky + CTA da nav */
+.mood-offer.is-checkout-focus ~ .mood-sticky {
   display: none !important;
 }
-.mood-offer:has(.checkout-pay-tiles) ~ .mood-wa {
+.mood-offer.is-checkout-focus ~ .mood-wa {
   bottom: 24px;
+}
+/* body:has → .atrako-lp-v3:has após o escopo */
+body:has(.mood-offer.is-checkout-focus) .mood-btn-nav {
+  display: none !important;
+}
+body:has(.mood-offer.is-checkout-focus) .mood-nav {
+  justify-content: flex-start;
 }
 @media (min-width: 834px) {
   .mood-hero {

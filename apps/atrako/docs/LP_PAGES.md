@@ -6,10 +6,18 @@ Isso vale para Stresser, Vilaris, Regicenter e **qualquer workspace novo**. Não
 
 | Camada | Onde vive | Rebuild Docker? |
 |--------|-----------|-----------------|
-| Copy, layout, CSS, FAQ, sticky | `salesPage` v3 (DB) ou pacote `lp-pages/` | **Não** |
+| Copy, layout, CSS, FAQ, sticky, `@atrako-slots` | `salesPage` v3 (DB) / `lp-pages/` → `publish-lp` | **Não** |
+| Preço espelhado (`data-atrako-live-price`) | HTML do pacote + hook já no shell | **Não** |
 | Imagens / vídeo da LP | `/lp-media` (volume) | **Não** |
-| Checkout, form, gallery/layers slots, API MP | `atrako-web` | **Sim** |
+| Novo comportamento de plataforma (React/API/slots) | `atrako-web` | **Sim** (uma vez) |
 | Domínio (`lp.cliente.com`) | Traefik + `lp-domains.ts` (uma vez) | Stack |
+
+### Regra de deploy (obrigatória)
+
+1. Mudou só `lp-pages/**` (html/css/meta/assets)? → **apenas** `publish-lp`. Sem `docker build`.
+2. Mudou React/API/`components.css` do shell? → aí sim rebuild — e **não** misturar com copy de LP no mesmo “deploy mental”.
+3. PR misto: **primeiro** `publish-lp` (conteúdo no ar), **depois** rebuild só se o runtime novo for necessário.
+4. Preferir hooks declarativos (`data-atrako-*`, `@atrako-slots`) a código React por cliente — o hook nasce uma vez no shell; o resto é pacote.
 
 ## Formatos
 

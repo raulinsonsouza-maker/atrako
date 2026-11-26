@@ -404,9 +404,12 @@ body {
   line-height: 1.1;
 }
 .mood-sticky-price strong {
-  font-family: var(--serif);
+  font-family: var(--sans);
+  font-style: normal;
   font-size: clamp(22px, 5vw, 32px);
   font-weight: 500;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 .mood-sticky-price small {
   font-size: 11px;
@@ -436,10 +439,29 @@ body {
     font-family: var(--sans);
   }
 
-  [data-atrako-slot] .offer-card h3,
-  [data-atrako-slot] .offer-card-price,
-  [data-atrako-slot] .offer-card-price * {
+  [data-atrako-slot] .offer-card h3 {
     font-family: var(--serif);
+  }
+
+  /* Preços: sans + sem itálico (leitura mais clara) */
+  .offer-card-price,
+  .offer-card-price *,
+  .checkout-price-hero__pix,
+  .checkout-summary__pix,
+  .lp-hero-price__row,
+  .lp-hero-price__row *,
+  .lp-price-was,
+  .lp-chip,
+  .lp-chip--pix {
+    font-family: var(--sans) !important;
+    font-style: normal !important;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .checkout-price-hero__pix,
+  .checkout-summary__pix {
+    font-weight: 500;
+    letter-spacing: -0.02em;
   }
 
   [data-atrako-slot] button,

@@ -78,3 +78,11 @@ details p {
 .sec-cta-final {
   text-align: center;
 }
+
+/* Opcional: skin dos widgets React (gallery/layers/checkout) — só publish-lp */
+@atrako-slots {
+  .product-gallery__main {
+    border-radius: 0;
+    background: #fff;
+  }
+}

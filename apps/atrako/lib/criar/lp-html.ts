@@ -217,7 +217,16 @@ function splitSelectors(sel: string): string[] {
 /* A âncora e o conteúdo dela (form/checkout nativos) ficam fora do CSS da página. */
 const NOT_SLOT = `:not(.${LP_SLOT_CLASS}, .${LP_SLOT_CLASS} *)`;
 
-export function scopeSelector(sel: string, scope = `.${LP_V3_SCOPE}`): string {
+/**
+ * Skin de slots (gallery/layers/checkout) no pacote da LP — sem rebuild do shell.
+ * Uso em page.css:
+ *   @atrako-slots {
+ *     .product-gallery__main { border-radius: 0; }
+ *   }
+ */
+const SLOT_SKIN_AT = /^@atrako-slots\b/i;
+
+export function scopeSelector(sel: string, scope = `.${LP_V3_SCOPE}`, allowSlots = false): string {
   const s = sel.replace(/\s+/g, " ").trim();
   const root = s.match(/^(?:(?::root|html|body)(?![\w-]))(?:\s*(?::root|html|body)(?![\w-]))*/i);
   if (root) {
@@ -228,7 +237,8 @@ export function scopeSelector(sel: string, scope = `.${LP_V3_SCOPE}`): string {
   }
   const pseudo = s.match(/(::?(?:before|after|placeholder|selection|marker|first-line|first-letter|backdrop))$/i);
   const base = pseudo ? s.slice(0, -pseudo[1].length) : s;
-  return `${scope} ${base || "*"}${NOT_SLOT}${pseudo ? pseudo[1] : ""}`;
+  const slotGuard = allowSlots ? "" : NOT_SLOT;
+  return `${scope} ${base || "*"}${slotGuard}${pseudo ? pseudo[1] : ""}`;
 }
 
 const KEEP_AT = /^@(keyframes|-webkit-keyframes|font-face|property|counter-style|page)\b/i;
@@ -243,7 +253,7 @@ function cleanDeclarations(body: string): string {
   );
 }
 
-export function scopeCss(input: string, scope = `.${LP_V3_SCOPE}`): string {
+export function scopeCss(input: string, scope = `.${LP_V3_SCOPE}`, allowSlots = false): string {
   const css = input.replace(/\/\*[\s\S]*?\*\//g, "").replace(/<\/?\s*style[^>]*>/gi, "");
   let out = "";
   let i = 0;
@@ -262,11 +272,16 @@ export function scopeCss(input: string, scope = `.${LP_V3_SCOPE}`): string {
     i = close + 1;
     if (!prelude) continue;
     if (prelude.startsWith("@")) {
-      if (NEST_AT.test(prelude)) out += `${prelude}{${scopeCss(body, scope)}}\n`;
+      // Skin de widgets React (gallery/layers/checkout) — só prefixa o scope, sem excluir .atrako-slot.
+      if (SLOT_SKIN_AT.test(prelude)) {
+        out += scopeCss(body, scope, true);
+        continue;
+      }
+      if (NEST_AT.test(prelude)) out += `${prelude}{${scopeCss(body, scope, allowSlots)}}\n`;
       else if (KEEP_AT.test(prelude)) out += `${prelude}{${/^@font-face/i.test(prelude) ? cleanDeclarations(body) : cleanUrls(body)}}\n`;
       continue;
     }
-    const selectors = splitSelectors(prelude).map((sel) => scopeSelector(sel, scope));
+    const selectors = splitSelectors(prelude).map((sel) => scopeSelector(sel, scope, allowSlots));
     if (selectors.length) out += `${selectors.join(",")}{${cleanDeclarations(body)}}\n`;
   }
   return out;

@@ -449,3 +449,87 @@ body {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+/* Widgets React (gallery / layers / checkout) — publish-lp, sem rebuild do shell */
+@atrako-slots {
+  [data-atrako-slot],
+  [data-atrako-slot] * {
+    font-family: var(--sans);
+  }
+
+  [data-atrako-slot] .offer-card h3,
+  [data-atrako-slot] .offer-card-price,
+  [data-atrako-slot] .offer-card-price * {
+    font-family: var(--serif);
+  }
+
+  [data-atrako-slot] button,
+  [data-atrako-slot] .btn,
+  [data-atrako-slot] [class*="rounded"] {
+    border-radius: 0 !important;
+  }
+
+  [data-atrako-slot] button {
+    box-shadow: none;
+  }
+
+  .product-gallery__main,
+  .product-gallery__thumb,
+  .product-gallery__badge,
+  .product-gallery__nav {
+    border-radius: 0;
+  }
+
+  .product-gallery__main,
+  .product-gallery--hero .product-gallery__main,
+  .product-gallery--hero .product-gallery__main.is-video {
+    background: #fff;
+  }
+
+  .mattress-layers__title,
+  .mattress-layers__hint {
+    text-align: left;
+    font-family: var(--sans);
+    color: var(--muted);
+  }
+
+  .mattress-layers__item {
+    border-radius: 0;
+  }
+
+  .mattress-layers__panel {
+    border-radius: 0;
+    border: 1px solid #ebe8e2;
+    background: #fff;
+    padding: 18px 16px;
+  }
+
+  .mattress-layers__panel h3 {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--navy);
+  }
+
+  .mattress-layers__panel p {
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--muted);
+  }
+
+  .offer-stock-dot,
+  .size-option.is-selected .size-check {
+    background: var(--green);
+    border-color: var(--green);
+  }
+
+  .size-option.is-selected .size-check {
+    color: #fff;
+  }
+
+  .offer-label {
+    background: var(--navy);
+    border-radius: 0;
+  }
+}

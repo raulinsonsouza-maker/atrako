@@ -96,6 +96,20 @@ test("scopeCss: @media recursivo, @import fora, keyframes intactos, declaraçõe
   assert.match(css, /@keyframes fade\{from\{opacity:0\}to\{opacity:1\}\}/);
 });
 
+test("scopeCss @atrako-slots estiliza widgets sem excluir .atrako-slot", () => {
+  const css = scopeCss(`
+    .title{color:red}
+    @atrako-slots {
+      .product-gallery__main{border-radius:0;background:#fff}
+      .size-option.is-selected .size-check{background:green}
+    }
+  `);
+  assert.match(css, /\.atrako-lp-v3 \.title:not\(\.atrako-slot, \.atrako-slot \*\)\{color:red\}/);
+  assert.match(css, /\.atrako-lp-v3 \.product-gallery__main\{border-radius:0;background:#fff\}/);
+  assert.doesNotMatch(css, /\.product-gallery__main:not\(\.atrako-slot/);
+  assert.match(css, /\.atrako-lp-v3 \.size-option\.is-selected \.size-check\{background:green\}/);
+});
+
 // ── LP v3: fontes, tema, marcadores, montagem ──
 
 test("sanitizeFonts só aceita famílias simples (sem injeção na URL)", () => {

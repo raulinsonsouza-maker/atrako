@@ -66,6 +66,21 @@ lp-pages/
 - `<atrako-checkout>` / `<atrako-form>`
 - `<atrako-gallery>` / `<atrako-layers>` (dados em `meta.json`)
 
+### Skin dos slots (sem rebuild)
+
+O CSS normal do pacote **não** entra nos widgets (proteção `:not(.atrako-slot *)`).
+Para estilizar gallery / layers / checkout / form, use no `page.css`:
+
+```css
+@atrako-slots {
+  .product-gallery__main { border-radius: 0; background: #fff; }
+  .mattress-layers__panel { border-radius: 0; }
+  .size-option.is-selected .size-check { background: var(--accent); }
+}
+```
+
+Isso é prefixado com `.atrako-lp-v3` e **não** exclui `.atrako-slot`. Continua só `publish-lp` — **proibido** colocar tema de cliente em `components.css`.
+
 ## Limites
 
 - `MAX_LP_HTML` = 120 000  

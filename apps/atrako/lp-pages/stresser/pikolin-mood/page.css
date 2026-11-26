@@ -515,10 +515,11 @@ body {
   display: flex;
   line-height: 0;
 }
-html.atrako-checkout-paying .mood-sticky {
-  display: none;
+/* Escopo v3 reescreve html.* → .atrako-lp-v3.*; classe fica no <html>. Usar :has. */
+.mood-offer:has(.checkout-pay-tiles) ~ .mood-sticky {
+  display: none !important;
 }
-html.atrako-checkout-paying .mood-wa {
+.mood-offer:has(.checkout-pay-tiles) ~ .mood-wa {
   bottom: 24px;
 }
 @media (min-width: 834px) {
@@ -657,17 +658,26 @@ html.atrako-checkout-paying .mood-wa {
   }
 
   [data-atrako-slot="checkout"] .checkout-flow__head {
-    padding-bottom: 4px;
+    padding-bottom: 12px;
     border-bottom: 1px solid rgba(22, 37, 56, 0.08);
   }
 
   [data-atrako-slot="checkout"] .checkout-flow__head h2 {
-    margin: 0 0 6px;
+    margin: 0;
     font-family: var(--serif);
     font-size: 22px;
     font-weight: 500;
     letter-spacing: -0.02em;
     color: var(--navy);
+  }
+
+  /* No pagamento o preço já está no summary — some a linha duplicada do head */
+  [data-atrako-slot="checkout"] .checkout-flow:has(.checkout-pay-tiles) .checkout-flow__head p {
+    display: none;
+  }
+
+  [data-atrako-slot="checkout"] .checkout-flow.mb-24 {
+    margin-bottom: 2rem;
   }
 
   [data-atrako-slot="checkout"] .checkout-stepper {

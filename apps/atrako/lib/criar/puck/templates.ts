@@ -980,6 +980,10 @@ export function buildPuckTemplate(
   };
 }
 
+/**
+ * @deprecated Prefer Pages v3 (`seedPagesFromBrief` / Criar HTML).
+ * Editor Puck é legado — LP nova de cliente deve ser Pages.
+ */
 export function seedPuckFromBrief(
   goal: LpGoal,
   brief: string,

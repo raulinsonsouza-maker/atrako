@@ -797,16 +797,28 @@ body {
 
   [data-atrako-slot="checkout"] .size-list {
     margin: 0;
+    background: transparent;
   }
 
+  /* size-option é <button> — não herdar o verde do CTA */
   [data-atrako-slot="checkout"] .size-option {
     padding: 15px 2px;
-    color: #162538;
+    min-height: 0 !important;
+    width: 100%;
+    background: transparent !important;
+    color: #162538 !important;
+    border: 0 !important;
+    border-bottom: 1px solid #ebe8e2 !important;
+    box-shadow: none !important;
+  }
+
+  [data-atrako-slot="checkout"] .size-option.is-selected {
+    background: transparent !important;
   }
 
   [data-atrako-slot="checkout"] .size-option small,
   [data-atrako-slot="checkout"] .size-option .type-fine-print {
-    color: #4a5563;
+    color: #4a5563 !important;
   }
 
   [data-atrako-slot="checkout"] .offer-card-price {
@@ -874,7 +886,7 @@ body {
   }
 
   [data-atrako-slot="checkout"] button[type="submit"],
-  [data-atrako-slot="checkout"] .offer-card button[type="button"] {
+  [data-atrako-slot="checkout"] .offer-card > button[type="button"]:not(.size-option) {
     order: 1;
     width: 100%;
     min-height: 52px;

@@ -104,6 +104,7 @@ body {
   padding: 14px 22px;
   background: var(--green);
   color: #fff;
+  font-family: var(--sans);
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
@@ -116,28 +117,11 @@ body {
   box-shadow: none;
   white-space: nowrap;
 }
-.mood-btn-gold {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 14px;
-  background: var(--gold);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  text-decoration: none;
-  border-radius: 0;
-}
-.mood-secure {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 12px 0 0;
+.mood-btn-sticky {
+  padding: 12px 16px;
   font-size: 12px;
-  color: var(--muted);
-}
-.mood-secure span {
-  color: var(--gold);
+  box-shadow: none;
+  white-space: nowrap;
 }
 .mood-hero {
   display: grid;
@@ -171,7 +155,7 @@ body {
   font-weight: 500;
 }
 .mood-check {
-  color: var(--gold);
+  color: var(--green);
   font-weight: 600;
 }
 .mood-trust {
@@ -371,7 +355,7 @@ body {
 }
 .mood-faq-item summary::after {
   content: "∨";
-  color: var(--gold);
+  color: var(--green);
   font-size: 14px;
 }
 .mood-faq-item[open] summary::after {
@@ -417,7 +401,7 @@ body {
   content: "✓";
   position: absolute;
   left: 0;
-  color: var(--gold);
+  color: var(--green);
   font-weight: 700;
 }
 .mood-sticky {

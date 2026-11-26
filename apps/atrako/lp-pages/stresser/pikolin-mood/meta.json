@@ -25,8 +25,8 @@
       "kind": "image"
     }
   ],
-  "layersTitle": "Por dentro do seu conforto",
-  "layersHint": "Toque na camada para ver como ela melhora seu sono",
+  "layersTitle": "",
+  "layersHint": "Toque na camada para ver o detalhe",
   "layers": [
     {
       "id": 1,

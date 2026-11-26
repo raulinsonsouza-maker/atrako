@@ -25,6 +25,7 @@ import { verifyPreviewToken } from "@/lib/criar/preview-token";
 import { flattenFields } from "@/lib/criar/form-test";
 import { SalesPageHtmlView } from "@/components/commerce/SalesPageHtmlView";
 import { LpHostTrackingBoot } from "@/components/commerce/LpHostTrackingBoot";
+import { lpDomainForWorkspace } from "@/lib/lp-domains";
 
 type Props = {
   params: Promise<{ pageSlug: string }>;
@@ -84,12 +85,31 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const loaded = await loadProduct(pageSlug, sp.preview);
   if (!loaded) return { title: "Oferta" };
   const { product } = loaded;
-  if (loaded.preview) return { title: `Prévia — ${product.name}`, robots: { index: false, follow: false } };
+
+  const cliente = await prisma.cliente.findUnique({
+    where: { id: product.clienteId },
+    select: { slug: true },
+  });
+  const domain = lpDomainForWorkspace(cliente?.slug);
+  const brandIcons = domain
+    ? { icons: { icon: domain.icon, apple: domain.appleIcon } }
+    : {};
+  /** Stresser: aba do browser = marca (não o H1 da oferta). */
+  const brandTitle = domain?.workspaceSlug === "stresser" ? domain.name : null;
+
+  if (loaded.preview) {
+    return {
+      title: brandTitle ? `Prévia — ${brandTitle}` : `Prévia — ${product.name}`,
+      robots: { index: false, follow: false },
+      ...brandIcons,
+    };
+  }
 
   if (isLpSalesPageV3(product.salesPage)) {
     return {
-      title: firstHeading(product.salesPage.html) ?? product.name,
+      title: brandTitle ?? firstHeading(product.salesPage.html) ?? product.name,
       description: product.description ?? undefined,
+      ...brandIcons,
     };
   }
 
@@ -98,12 +118,13 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       (c) => c.type === "Hero" || c.type === "Heading",
     );
     const title =
-      hero && typeof hero.props?.title === "string"
+      brandTitle ??
+      (hero && typeof hero.props?.title === "string"
         ? hero.props.title
         : hero && typeof hero.props?.text === "string"
           ? hero.props.text
-          : product.name;
-    return { title };
+          : product.name);
+    return { title, ...brandIcons };
   }
 
   const page = normalizeSalesPage(product.salesPage);
@@ -114,8 +135,9 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const sub =
     hero && hero.type === "hero" ? hero.subheadline : product.description;
   return {
-    title: headline,
+    title: brandTitle ?? headline,
     description: sub ?? undefined,
+    ...brandIcons,
   };
 }
 

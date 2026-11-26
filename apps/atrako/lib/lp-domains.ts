@@ -34,9 +34,9 @@ const VILARIS_DOMAIN: DomainSeed = {
 
 const STRESSER_DOMAIN: DomainSeed = {
   appHome: "/p/pikolin-mood",
-  name: "Stresser Colchões",
-  icon: "/lp/stresser/assets/favicon.webp",
-  appleIcon: "/lp/stresser/assets/apple-touch-icon.webp",
+  name: "Stresser",
+  icon: "/lp/stresser/assets/favicon.png",
+  appleIcon: "/lp/stresser/assets/apple-touch-icon.png",
   workspaceSlug: "stresser",
   logoOnDark: "/lp/stresser/assets/logo.webp",
   canonicalHost: "lp.stressercolchoes.com.br",

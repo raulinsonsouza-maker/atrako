@@ -169,6 +169,7 @@ export function CheckoutForm({
   const [city, setCity] = useState("");
   const [stateUf, setStateUf] = useState("");
   const [cepLoading, setCepLoading] = useState(false);
+  const [addressFromCep, setAddressFromCep] = useState(false);
   const [cardNumber, setCardNumber] = useState("");
   const [cardName, setCardName] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
@@ -261,9 +262,13 @@ export function CheckoutForm({
 
   useEffect(() => {
     const d = digits(cep);
-    if (d.length !== 8) return;
+    if (d.length !== 8) {
+      setAddressFromCep(false);
+      return;
+    }
     let cancelled = false;
     setCepLoading(true);
+    setAddressFromCep(false);
     fetch(`https://viacep.com.br/ws/${d}/json/`)
       .then(async (res) => {
         const data = (await res.json()) as {
@@ -278,6 +283,7 @@ export function CheckoutForm({
         if (data.bairro) setNeighborhood(data.bairro);
         if (data.localidade) setCity(data.localidade);
         if (data.uf) setStateUf(data.uf);
+        if (data.localidade && data.uf) setAddressFromCep(true);
       })
       .catch(() => null)
       .finally(() => {
@@ -526,6 +532,7 @@ export function CheckoutForm({
 
   const inputClass =
     "h-11 w-full rounded-[var(--radius-xs)] border border-[rgba(0,0,0,0.08)] bg-[var(--canvas)] px-5 type-body text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-[var(--primary-focus)]";
+  const lockedInputClass = `${inputClass} bg-[rgba(0,0,0,0.03)] text-[var(--ink-muted-80)] cursor-default`;
 
   const stepLabels = requireAddress
     ? [
@@ -691,7 +698,7 @@ export function CheckoutForm({
 
         {visibleStep === 2 && requireAddress ? (
           <div className="space-y-3">
-            <p className="type-caption-strong text-[var(--ink)]">Entrega — frete grátis</p>
+            <p className="type-caption-strong text-[var(--ink)]">Entrega · frete grátis</p>
             <input
               className={inputClass}
               placeholder="CEP"
@@ -703,14 +710,17 @@ export function CheckoutForm({
             />
             {cepLoading ? (
               <p className="type-fine-print text-[var(--ink-muted-48)]">Buscando endereço…</p>
+            ) : addressFromCep ? (
+              <p className="type-fine-print text-[var(--ink-muted-48)]">Endereço preenchido pelo CEP. Informe número e complemento.</p>
             ) : null}
             <input
-              className={inputClass}
+              className={addressFromCep && street ? lockedInputClass : inputClass}
               placeholder="Rua"
               value={street}
               onChange={(e) => setStreet(e.target.value)}
               autoComplete="address-line1"
               required
+              readOnly={addressFromCep && Boolean(street)}
             />
             <div className="grid grid-cols-2 gap-3">
               <input
@@ -728,28 +738,31 @@ export function CheckoutForm({
               />
             </div>
             <input
-              className={inputClass}
+              className={addressFromCep && neighborhood ? lockedInputClass : inputClass}
               placeholder="Bairro"
               value={neighborhood}
               onChange={(e) => setNeighborhood(e.target.value)}
+              readOnly={addressFromCep && Boolean(neighborhood)}
             />
             <div className="grid grid-cols-2 gap-3">
               <input
-                className={inputClass}
+                className={addressFromCep && city ? lockedInputClass : inputClass}
                 placeholder="Cidade"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 autoComplete="address-level2"
                 required
+                readOnly={addressFromCep && Boolean(city)}
               />
               <input
-                className={inputClass}
+                className={addressFromCep && stateUf ? lockedInputClass : inputClass}
                 placeholder="UF"
                 value={stateUf}
                 onChange={(e) => setStateUf(e.target.value.toUpperCase().slice(0, 2))}
                 autoComplete="address-level1"
                 required
                 maxLength={2}
+                readOnly={addressFromCep && Boolean(stateUf)}
               />
             </div>
           </div>

@@ -72,13 +72,17 @@ export async function POST(request: NextRequest) {
               prisma.cliente.findUnique({ where: { id: homeWs }, select: { slug: true } }),
             ])
           : [null, null];
+        const edition = settings?.edition ?? null;
+        const redirect =
+          edition === "inside_sales"
+            ? insideSalesHome(homeWs, cliente?.slug)
+            : edition === "ecommerce"
+              ? "/commerce"
+              : "/assistente";
         const res = NextResponse.json({
           ok: true,
           kind: "member" as const,
-          redirect:
-            settings?.edition === "inside_sales"
-              ? insideSalesHome(homeWs, cliente?.slug)
-              : "/assistente",
+          redirect,
           email: member.email,
           workspaces,
         });

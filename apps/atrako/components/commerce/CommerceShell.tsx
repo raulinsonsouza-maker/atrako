@@ -17,6 +17,7 @@ import {
   Tag,
   Ticket,
   Truck,
+  Users,
 } from "lucide-react";
 import { useActiveWorkspace } from "@/hooks/useActiveWorkspace";
 import { logoutEverywhere } from "@/lib/auth/logoutClient";
@@ -26,6 +27,7 @@ const COLLAPSED_KEY = "atrako-commerce-nav-collapsed";
 
 const LINKS = [
   { href: "/commerce", label: "Início", exact: true, icon: LayoutDashboard },
+  { href: "/commerce/leads", label: "Leads", icon: Users },
   { href: "/commerce/produtos", label: "Produtos", icon: Package },
   { href: "/commerce/categorias", label: "Categorias", icon: Tag },
   { href: "/commerce/banners", label: "Banners", icon: ImageIcon },

@@ -58,6 +58,10 @@ export async function resolveCartLines(storeId: string, items: CartItemInput[]):
     }
 
     const options = variant ? formatOptions(variant.options) : null;
+    const optionsWithSku =
+      options || variant?.sku
+        ? { ...(options ?? {}), ...(variant?.sku ? { sku: variant.sku } : {}) }
+        : null;
     const priceCents = variant?.priceCents ?? product.priceCents;
     // Estoque só quando há variante; produto sem SKU não bloqueia por qty.
     const stockTracked = Boolean(product.stockTracked && variant);
@@ -68,7 +72,7 @@ export async function resolveCartLines(storeId: string, items: CartItemInput[]):
       productId: product.id,
       variantId: variant?.id ?? null,
       name,
-      options,
+      options: optionsWithSku,
       priceCents,
       quantity: item.quantity,
       stockQty,

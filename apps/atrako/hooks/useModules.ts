@@ -32,8 +32,13 @@ export function useModules() {
     [modules],
   );
 
-  /** Enquanto carrega aponta para /assistente; o layout de lá redireciona se estiver desligado. */
-  const homeHref = modules && !modules.assistente?.enabled ? homeFallback(workspaceId) : "/assistente";
+  /** Ecommerce: home = loja. Sem assistente: fallback do workspace. Senão /assistente. */
+  const homeHref =
+    edition === "ecommerce"
+      ? "/commerce"
+      : modules && !modules.assistente?.enabled
+        ? homeFallback(workspaceId)
+        : "/assistente";
 
   return { modules, edition, isEnabled, isLoading, isReady: isFetched && Boolean(modules), homeHref };
 }

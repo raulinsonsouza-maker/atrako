@@ -87,6 +87,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const variantOptions =
+      variant?.options && typeof variant.options === "object" && !Array.isArray(variant.options)
+        ? (variant.options as Record<string, string>)
+        : {};
+    const mainOptions: Record<string, string> = { ...variantOptions };
+    if (variant?.sku) mainOptions.sku = variant.sku;
+
     const items: Array<{
       productId: string;
       name: string;
@@ -99,10 +106,7 @@ export async function POST(request: NextRequest) {
         name: itemName,
         priceCents: mainPriceCents,
         variantId: variant?.id,
-        options:
-          variant?.options && typeof variant.options === "object" && !Array.isArray(variant.options)
-            ? (variant.options as Record<string, string>)
-            : undefined,
+        options: Object.keys(mainOptions).length ? mainOptions : undefined,
       },
     ];
 

@@ -1149,24 +1149,13 @@ export function CheckoutForm({
               </label>
             ) : null}
 
-            {cfg.termsMode === "onContinue" ? (
-              <p className="checkout-terms-note type-fine-print text-[var(--ink-muted-80)]">
-                * Termos aceitos ao continuar.{" "}
-                <button type="button" className="checkout-legal-link" onClick={() => setLegalOpen("terms")}>
-                  Termos de compra
-                </button>{" "}
-                e{" "}
-                <button type="button" className="checkout-legal-link" onClick={() => setLegalOpen("privacy")}>
-                  Privacidade
-                </button>
-                .
-              </p>
-            ) : (
+            {/* Termos já aceitos ao sair de Dados (onContinue) — não repetir no pagamento. */}
+            {cfg.termsMode === "switch" ? (
               <div className="flex items-center justify-between gap-3">
                 <span className="type-caption-strong text-[var(--ink-muted-80)]">Aceito os termos de compra</span>
                 <Switch checked={terms} onChange={setTerms} aria-label="Aceito os termos de compra" />
               </div>
-            )}
+            ) : null}
           </div>
         ) : null}
 

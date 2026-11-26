@@ -68,6 +68,7 @@ export function PillSelect({
     setOpen(next);
     if (!next) setQuery("");
   }, rootRef);
+  useLockBodyScroll(open);
 
   useEffect(() => {
     if (!open) return;
@@ -204,7 +205,15 @@ export function PillSelect({
               />
             </div>
           ) : null}
-          <ul id={listId} role="listbox" aria-label={ariaLabel} className="max-h-[min(16rem,50vh)] overflow-y-auto">
+          <ul
+            id={listId}
+            role="listbox"
+            aria-label={ariaLabel}
+            className={cn(
+              /* Painel com busca: scroll só na lista. Menu simples: scroll no .pill-select-menu. */
+              (searchable || inlineSearch) && "min-h-0 flex-1 overflow-y-auto",
+            )}
+          >
             {visible.length === 0 ? (
               <li className="px-3 py-2 type-caption text-[var(--ink-muted-48)]">Nenhum resultado</li>
             ) : (
@@ -258,6 +267,18 @@ function useDismiss(open: boolean, setOpen: (v: boolean) => void, rootRef: React
       document.removeEventListener("keydown", onKey);
     };
   }, [open, setOpen, rootRef]);
+}
+
+/** Evita barra da página + barra do menu ao mesmo tempo (mobile checkout). */
+function useLockBodyScroll(locked: boolean) {
+  useEffect(() => {
+    if (!locked) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [locked]);
 }
 
 function OptionCount({ count }: { count?: number }) {

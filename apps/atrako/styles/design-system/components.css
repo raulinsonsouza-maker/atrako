@@ -2427,24 +2427,138 @@
   width: 100%;
 }
 
+.checkout-panel {
+  border: 2px solid #162538;
+  background: #fff;
+  padding: 22px 18px 20px;
+  box-shadow: 0 16px 40px rgba(22, 37, 56, 0.1);
+}
+
+.offer-card.checkout-panel {
+  border-color: #162538;
+  box-shadow: 0 16px 40px rgba(22, 37, 56, 0.1);
+}
+
 .checkout-flow__head {
   text-align: center;
 }
 
 .checkout-price-hero__pix,
 .checkout-summary__pix {
-  font-size: 26px;
-  font-weight: 500;
+  font-size: 28px;
+  font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--primary);
   line-height: 1.15;
+  font-variant-numeric: tabular-nums;
 }
 
 .checkout-summary {
-  padding: 12px 0;
-  border-top: 1px solid var(--hairline);
-  border-bottom: 1px solid var(--hairline);
+  padding: 14px 12px;
+  border: 1px solid #ebe8e2;
+  background: #fbfaf7;
   text-align: center;
+}
+
+.checkout-summary--hero {
+  margin-bottom: 4px;
+}
+
+.checkout-savings {
+  margin: 8px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.checkout-perks {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  text-align: left;
+}
+
+.checkout-perks li {
+  position: relative;
+  padding-left: 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #162538;
+}
+
+.checkout-perks li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #6b9e3d;
+  font-weight: 700;
+}
+
+.checkout-terms-note {
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+
+.checkout-legal-link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.checkout-legal-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: end center;
+  padding: 16px;
+}
+
+@media (min-width: 640px) {
+  .checkout-legal-modal {
+    place-items: center;
+  }
+}
+
+.checkout-legal-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(22, 37, 56, 0.45);
+  cursor: pointer;
+}
+
+.checkout-legal-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 420px);
+  max-height: min(78vh, 560px);
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #ebe8e2;
+  padding: 18px 16px 20px;
+}
+
+.checkout-legal-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.checkout-legal-modal__body {
+  display: grid;
+  gap: 12px;
+  line-height: 1.65;
 }
 
 .checkout-pay-tiles {

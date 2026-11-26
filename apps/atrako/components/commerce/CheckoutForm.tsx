@@ -6,9 +6,60 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { PillSelect } from "@/components/ui/pill-select";
 import { FloatingStickyBar } from "@/components/ui/floating-sticky-bar";
-import { Switch } from "@/components/ui/switch";
 import { collectClientAttribution } from "@/lib/criar/lp-attribution";
 import { newEventId } from "@/lib/criar/form-tracking";
+
+type CheckoutDraft = {
+  phase?: "offer" | "form";
+  step?: 1 | 2 | 3;
+  variantId?: string;
+  email?: string;
+  name?: string;
+  cpf?: string;
+  phone?: string;
+  couponCode?: string;
+  terms?: boolean;
+  withBump?: boolean;
+  payType?: "pix" | "credit_card";
+  cep?: string;
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  stateUf?: string;
+  updatedAt?: string;
+};
+
+type LegalDoc = "terms" | "privacy";
+
+function draftKey(productId: string) {
+  return `atrako.checkout.draft.${productId}`;
+}
+
+function readCheckoutDraft(productId: string): CheckoutDraft | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(draftKey(productId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CheckoutDraft;
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCheckoutDraft(productId: string, draft: CheckoutDraft) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      draftKey(productId),
+      JSON.stringify({ ...draft, updatedAt: new Date().toISOString() }),
+    );
+  } catch {
+    // quota / private mode
+  }
+}
 
 export type CheckoutVariantOption = {
   id: string;
@@ -170,6 +221,8 @@ export function CheckoutForm({
   const [stateUf, setStateUf] = useState("");
   const [cepLoading, setCepLoading] = useState(false);
   const [addressFromCep, setAddressFromCep] = useState(false);
+  const [draftReady, setDraftReady] = useState(false);
+  const [legalOpen, setLegalOpen] = useState<LegalDoc | null>(null);
   const [cardNumber, setCardNumber] = useState("");
   const [cardName, setCardName] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
@@ -215,6 +268,81 @@ export function CheckoutForm({
   useEffect(() => {
     onTotalsChange?.({ pixCents: pixTotalCents, cardCents: cardTotalCents, currency });
   }, [onTotalsChange, pixTotalCents, cardTotalCents, currency]);
+
+  useEffect(() => {
+    const draft = readCheckoutDraft(product.id);
+    if (draft) {
+      if (draft.phase === "offer" || draft.phase === "form") setPhase(draft.phase);
+      if (draft.step === 1 || draft.step === 2 || draft.step === 3) setStep(draft.step);
+      if (typeof draft.variantId === "string") setVariantId(draft.variantId);
+      if (typeof draft.email === "string") setEmail(draft.email);
+      if (typeof draft.name === "string") setName(draft.name);
+      if (typeof draft.cpf === "string") setCpf(draft.cpf);
+      if (typeof draft.phone === "string") setPhone(draft.phone);
+      if (typeof draft.couponCode === "string") setCouponCode(draft.couponCode);
+      if (typeof draft.terms === "boolean") setTerms(draft.terms);
+      if (typeof draft.withBump === "boolean") setWithBump(draft.withBump);
+      if (draft.payType === "pix" || draft.payType === "credit_card") setPayType(draft.payType);
+      if (typeof draft.cep === "string") setCep(draft.cep);
+      if (typeof draft.street === "string") setStreet(draft.street);
+      if (typeof draft.number === "string") setNumber(draft.number);
+      if (typeof draft.complement === "string") setComplement(draft.complement);
+      if (typeof draft.neighborhood === "string") setNeighborhood(draft.neighborhood);
+      if (typeof draft.city === "string") setCity(draft.city);
+      if (typeof draft.stateUf === "string") setStateUf(draft.stateUf);
+      if (draft.cep && digits(draft.cep).length === 8 && draft.city && draft.stateUf) {
+        setAddressFromCep(true);
+      }
+    }
+    setDraftReady(true);
+  }, [product.id]);
+
+  useEffect(() => {
+    if (!draftReady) return;
+    // Só persiste quando há sinal de intenção (nome ou medida escolhida).
+    if (!name.trim() && !email.trim() && !variantId) return;
+    writeCheckoutDraft(product.id, {
+      phase,
+      step,
+      variantId,
+      email,
+      name,
+      cpf,
+      phone,
+      couponCode,
+      terms,
+      withBump,
+      payType,
+      cep,
+      street,
+      number,
+      complement,
+      neighborhood,
+      city,
+      stateUf,
+    });
+  }, [
+    draftReady,
+    product.id,
+    phase,
+    step,
+    variantId,
+    email,
+    name,
+    cpf,
+    phone,
+    couponCode,
+    terms,
+    withBump,
+    payType,
+    cep,
+    street,
+    number,
+    complement,
+    neighborhood,
+    city,
+    stateUf,
+  ]);
 
   useEffect(() => {
     trackGa4("begin_checkout", {
@@ -343,6 +471,8 @@ export function CheckoutForm({
         setError(err);
         return;
       }
+      // Prosseguir = aceite dos termos (links abrem o modal sem sair da página).
+      setTerms(true);
       setStep(2);
       return;
     }
@@ -352,6 +482,7 @@ export function CheckoutForm({
         setError(err);
         return;
       }
+      setTerms(true);
       setStep(3);
     }
   }
@@ -396,6 +527,11 @@ export function CheckoutForm({
       return;
     }
     if (previewToken) {
+      try {
+        window.localStorage.removeItem(draftKey(product.id));
+      } catch {
+        /* ignore */
+      }
       setTestApproved(true);
       return;
     }
@@ -508,6 +644,11 @@ export function CheckoutForm({
         items: [{ item_id: product.id, item_name: product.name, price: unitCents / 100 }],
       });
 
+      try {
+        window.localStorage.removeItem(draftKey(product.id));
+      } catch {
+        /* ignore */
+      }
       if (data.redirectTo) router.push(data.redirectTo);
       else router.push(`/obrigado?orderId=${data.orderId}`);
     } catch (err) {
@@ -547,74 +688,114 @@ export function CheckoutForm({
 
   const onPaymentStep = phase === "form" && visibleStep === paymentStep;
 
+  const legalModal =
+    legalOpen ? (
+      <div className="checkout-legal-modal" role="dialog" aria-modal="true" aria-labelledby="checkout-legal-title">
+        <button type="button" className="checkout-legal-modal__backdrop" aria-label="Fechar" onClick={() => setLegalOpen(null)} />
+        <div className="checkout-legal-modal__panel">
+          <div className="checkout-legal-modal__head">
+            <h3 id="checkout-legal-title" className="type-tagline text-[var(--ink)]">
+              {legalOpen === "terms" ? "Termos de compra" : "Política de privacidade"}
+            </h3>
+            <button type="button" className="type-caption-strong text-[var(--primary)]" onClick={() => setLegalOpen(null)}>
+              Fechar
+            </button>
+          </div>
+          <div className="checkout-legal-modal__body type-body text-[var(--ink-muted-80)]">
+            {legalOpen === "terms" ? (
+              <>
+                <p>Ao finalizar a compra, você confirma que os dados informados são verdadeiros e autoriza o processamento do pagamento e o envio do pedido para o endereço indicado.</p>
+                <p>O frete grátis e as condições de parcelamento ou desconto no Pix seguem a oferta exibida no checkout. Em caso de indisponibilidade, entraremos em contato para remarcar ou estornar.</p>
+                <p>Trocas e garantia seguem a política do fabricante e o Código de Defesa do Consumidor.</p>
+              </>
+            ) : (
+              <>
+                <p>Usamos seus dados (nome, e-mail, telefone, CPF e endereço) apenas para processar o pedido, emitir documentos fiscais, entregar o produto e falar com você sobre esta compra.</p>
+                <p>O pagamento é processado pelo Mercado Pago. Não armazenamos o número completo do cartão neste site.</p>
+                <p>Você pode solicitar acesso ou exclusão dos dados pelos canais de atendimento da loja.</p>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    ) : null;
+
   if (phase === "offer") {
     return (
-      <div className="offer-card" data-testid="offer-card">
-        <div className="offer-card-top">
-          <span className="offer-label">OFERTA ESPECIAL</span>
-          <span className="offer-stock">
-            <i className="offer-stock-dot" aria-hidden /> disponível
-          </span>
-        </div>
-        <h3 className="type-tagline text-[var(--ink)]">Escolha o tamanho da sua nova cama</h3>
-        <div className="size-list" role="listbox" aria-label="Tamanhos">
-          {variants.map((v) => {
-            const selected = v.id === variantId;
-            return (
-              <button
-                key={v.id}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                className={`size-option${selected ? " is-selected" : ""}`}
-                onClick={() => setVariantId(v.id)}
-              >
-                <span>
-                  <b className="type-caption-strong text-[var(--ink)]">{v.label}</b>
-                  {v.dim ? <small className="type-fine-print text-[var(--ink-muted-48)]">{v.dim}</small> : null}
-                </span>
-                <span className="size-check" aria-hidden>
-                  {selected ? "✓" : ""}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        <div className="offer-card-price">
-          <div className="lp-hero-price__row">
-            {pixPct > 0 ? (
-              <span className="lp-price-was type-fine-print">de {brl(cardTotalCents, currency)}</span>
-            ) : null}
-            {pixPct > 0 ? <span className="lp-chip lp-chip--pix">{pixPct}% OFF no Pix</span> : null}
+      <>
+        <div className="offer-card checkout-panel" data-testid="offer-card">
+          <div className="offer-card-top">
+            <span className="offer-label">OFERTA ESPECIAL</span>
+            <span className="offer-stock">
+              <i className="offer-stock-dot" aria-hidden /> disponível
+            </span>
           </div>
-          <p className="checkout-price-hero__pix">{brl(pixTotalCents, currency)}</p>
-          <p className="type-fine-print text-[var(--ink-muted-80)]">
-            à vista no Pix
-            {pixDiscountCents > 0 ? ` · economize ${brl(pixDiscountCents, currency)}` : ""}
+          <h3 className="type-tagline text-[var(--ink)]">Escolha o tamanho da sua nova cama</h3>
+          <div className="size-list" role="listbox" aria-label="Tamanhos">
+            {variants.map((v) => {
+              const selected = v.id === variantId;
+              return (
+                <button
+                  key={v.id}
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  className={`size-option${selected ? " is-selected" : ""}`}
+                  onClick={() => setVariantId(v.id)}
+                >
+                  <span>
+                    <b className="type-caption-strong text-[var(--ink)]">{v.label}</b>
+                    {v.dim ? <small className="type-fine-print text-[var(--ink-muted-48)]">{v.dim}</small> : null}
+                  </span>
+                  <span className="size-check" aria-hidden>
+                    {selected ? "✓" : ""}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="offer-card-price">
+            <div className="lp-hero-price__row">
+              {pixPct > 0 ? (
+                <span className="lp-price-was type-fine-print">de {brl(cardTotalCents, currency)}</span>
+              ) : null}
+              {pixPct > 0 ? <span className="lp-chip lp-chip--pix">{pixPct}% OFF no Pix</span> : null}
+            </div>
+            <p className="checkout-price-hero__pix">{brl(pixTotalCents, currency)}</p>
+            <p className="type-fine-print text-[var(--ink-muted-80)]">à vista no Pix</p>
+            {pixDiscountCents > 0 ? (
+              <p className="checkout-savings">Você economiza {brl(pixDiscountCents, currency)} no Pix</p>
+            ) : null}
+            <p className="type-caption text-[var(--ink)]">
+              <strong className="type-caption-strong">
+                {maxInstallments}x de {brl(installmentPreview, currency)}
+              </strong>{" "}
+              sem juros no cartão
+            </p>
+          </div>
+          <ul className="checkout-perks" aria-label="Benefícios da compra">
+            <li>Frete grátis para todo o Brasil</li>
+            <li>{maxInstallments}x sem juros no cartão</li>
+            {pixPct > 0 ? <li>{pixPct}% OFF à vista no Pix</li> : null}
+          </ul>
+          {error ? <p className="type-caption text-[var(--danger)]">{error}</p> : null}
+          <Button type="button" variant="primary" className="w-full" onClick={startFromOffer}>
+            Comprar com frete grátis
+          </Button>
+          <p className="mt-3 text-center type-fine-print text-[var(--ink-muted-48)]">
+            Pagamento protegido · entrega garantida
           </p>
-          <p className="type-caption text-[var(--ink)]">
-            <strong className="type-caption-strong">
-              {maxInstallments}x de {brl(installmentPreview, currency)}
-            </strong>{" "}
-            sem juros no cartão
-          </p>
+          {!mpPublicKey && !previewToken ? (
+            <p className="mt-2 type-caption text-amber-800">
+              Mercado Pago não conectado.{" "}
+              <Link href="/config/conexoes" className="text-[var(--primary)] underline">
+                Conectar
+              </Link>
+            </p>
+          ) : null}
         </div>
-        {error ? <p className="type-caption text-[var(--danger)]">{error}</p> : null}
-        <Button type="button" variant="primary" className="w-full" onClick={startFromOffer}>
-          Comprar com frete grátis
-        </Button>
-        <p className="mt-3 text-center type-fine-print text-[var(--ink-muted-48)]">
-          Pagamento protegido · entrega garantida
-        </p>
-        {!mpPublicKey && !previewToken ? (
-          <p className="mt-2 type-caption text-amber-800">
-            Mercado Pago não conectado.{" "}
-            <Link href="/config/conexoes" className="text-[var(--primary)] underline">
-              Conectar
-            </Link>
-          </p>
-        ) : null}
-      </div>
+        {legalModal}
+      </>
     );
   }
 
@@ -627,10 +808,10 @@ export function CheckoutForm({
           if (onPaymentStep) void submit();
           else goNext();
         }}
-        className={`checkout-flow space-y-4 ${onPaymentStep ? "mb-24" : "mb-6"}`}
+        className={`checkout-flow checkout-panel space-y-4 ${onPaymentStep ? "mb-24" : "mb-6"}`}
       >
         {previewToken ? (
-          <p className="type-fine-print text-[var(--ink-muted-48)]">Modo teste — o pagamento é simulado.</p>
+          <p className="type-fine-print text-[var(--ink-muted-48)]">Modo teste: o pagamento é simulado.</p>
         ) : null}
 
         <div className="checkout-flow__head">
@@ -693,6 +874,17 @@ export function CheckoutForm({
               autoComplete="tel"
               required
             />
+            <p className="checkout-terms-note type-fine-print text-[var(--ink-muted-80)]">
+              * Ao continuar, você aceita os{" "}
+              <button type="button" className="checkout-legal-link" onClick={() => setLegalOpen("terms")}>
+                Termos de compra
+              </button>{" "}
+              e a{" "}
+              <button type="button" className="checkout-legal-link" onClick={() => setLegalOpen("privacy")}>
+                Política de privacidade
+              </button>
+              .
+            </p>
           </div>
         ) : null}
 
@@ -770,15 +962,25 @@ export function CheckoutForm({
 
         {onPaymentStep ? (
           <div className="space-y-4">
-            <div className="checkout-summary">
+            <div className="checkout-summary checkout-summary--hero">
               <p className="type-caption-strong text-[var(--ink)]">{selectedVariant?.label || product.name}</p>
-              <p className="mt-2 checkout-summary__pix">
+              {pixPct > 0 ? (
+                <p className="mt-2 type-fine-print text-[var(--ink-muted-48)]">
+                  de <span className="line-through">{brl(cardTotalCents, currency)}</span>
+                </p>
+              ) : null}
+              <p className="mt-1 checkout-summary__pix">
                 {brl(pixTotalCents, currency)}
                 <span className="type-fine-print"> no Pix</span>
               </p>
               {savingsLabel ? (
-                <p className="type-fine-print text-[var(--primary)]">Economia de {savingsLabel}</p>
+                <p className="checkout-savings">Você economiza {savingsLabel} à vista no Pix</p>
               ) : null}
+              <ul className="checkout-perks" aria-label="Benefícios da compra">
+                <li>Frete grátis para todo o Brasil</li>
+                <li>{maxInstallments}x sem juros no cartão</li>
+                {pixPct > 0 ? <li>{pixPct}% OFF à vista no Pix</li> : null}
+              </ul>
             </div>
 
             <div className="checkout-pay-tiles">
@@ -796,7 +998,7 @@ export function CheckoutForm({
                 onClick={() => setPayType("credit_card")}
               >
                 <span className="type-caption-strong">Cartão</span>
-                <span className="type-fine-print">até {maxInstallments}x</span>
+                <span className="type-fine-print">até {maxInstallments}x sem juros</span>
               </button>
             </div>
 
@@ -875,10 +1077,17 @@ export function CheckoutForm({
               </label>
             ) : null}
 
-            <div className="flex items-center justify-between gap-3">
-              <span className="type-caption-strong text-[var(--ink-muted-80)]">Aceito os termos de compra</span>
-              <Switch checked={terms} onChange={setTerms} aria-label="Aceito os termos de compra" />
-            </div>
+            <p className="checkout-terms-note type-fine-print text-[var(--ink-muted-80)]">
+              * Termos aceitos ao continuar.{" "}
+              <button type="button" className="checkout-legal-link" onClick={() => setLegalOpen("terms")}>
+                Termos de compra
+              </button>{" "}
+              e{" "}
+              <button type="button" className="checkout-legal-link" onClick={() => setLegalOpen("privacy")}>
+                Privacidade
+              </button>
+              .
+            </p>
           </div>
         ) : null}
 
@@ -922,6 +1131,7 @@ export function CheckoutForm({
           }}
         />
       ) : null}
+      {legalModal}
     </>
   );
 }

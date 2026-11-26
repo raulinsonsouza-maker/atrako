@@ -509,7 +509,7 @@ async function main() {
   // Pages: sobrescreve salesPage v1 pelo pacote HTML/CSS (sem rebuild em publishes seguintes).
   try {
     const { publishLpPackage } = await import("../lib/lp-pages/publish");
-    const published = await publishLpPackage(PRODUCT_SLUG, { skipAssets: true });
+    const published = await publishLpPackage(`stresser/${PRODUCT_SLUG}`, { skipAssets: true });
     console.log(
       `Pages v3: ${published.packageSlug} · html ${published.htmlBytes}B · css ${published.cssBytes}B`,
     );
@@ -524,7 +524,7 @@ async function main() {
   console.log("CRM:     http://localhost:5000/crm");
   console.log(`LP:      http://localhost:5000/p/${PRODUCT_SLUG}`);
   console.log("Host:    https://lp.stressercolchoes.com.br/  (após DNS + Traefik)");
-  console.log("Publish: npx tsx scripts/publish-lp.ts pikolin-mood  (docs/LP_PAGES.md)");
+  console.log("Publish: npx tsx scripts/publish-lp.ts stresser/pikolin-mood  (docs/LP_PAGES.md)");
 }
 
 main()

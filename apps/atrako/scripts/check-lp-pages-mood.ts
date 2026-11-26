@@ -2,7 +2,7 @@ import { loadLpPagePackage, rewriteAssetUrls } from "../lib/lp-pages/load-packag
 import { buildSalesPageV3, MAX_LP_CSS, MAX_LP_HTML } from "../lib/criar/lp-html";
 import { renderSlots } from "../lib/criar/lp-v3";
 
-const pkg = loadLpPagePackage("pikolin-mood");
+const pkg = loadLpPagePackage("stresser/pikolin-mood");
 const r = rewriteAssetUrls(pkg, pkg.html, pkg.css);
 const page = buildSalesPageV3({
   goal: pkg.meta.goal,

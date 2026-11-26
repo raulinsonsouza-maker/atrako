@@ -2,8 +2,10 @@
  * Publica pacote `lp-pages/{slug}` no DB (salesPage v3) + assets em lp-media.
  * Sem rebuild Docker.
  *
- *   npx tsx scripts/publish-lp.ts pikolin-mood
+ *   npx tsx scripts/publish-lp.ts stresser/pikolin-mood
  *   npx tsx scripts/publish-lp.ts --list
+ *
+ * Padrão da plataforma: toda LP de cliente é Pages (v3). Ver docs/LP_PAGES.md
  */
 import { listLpPageSlugs } from "../lib/lp-pages/load-package";
 import { publishLpPackage } from "../lib/lp-pages/publish";

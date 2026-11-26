@@ -1,0 +1,27 @@
+---
+description: LPs de cliente = Atrako Pages (v3), nunca skin no monólito
+globs:
+  - apps/atrako/lp-pages/**
+  - apps/atrako/lib/lp-pages/**
+  - apps/atrako/app/p/**
+  - apps/atrako/components/commerce/SalesPage*
+  - apps/atrako/scripts/publish-lp.ts
+---
+
+# Atrako Pages (todos os clientes)
+
+Toda LP de **qualquer** workspace é **Pages**: `salesPage` version **3** (HTML/CSS no DB) + `/lp-media`.
+
+## Proibido
+
+- CSS/tema de um cliente em `styles/design-system/components.css`
+- Ramos `if (slug === "…")` em `app/p/[pageSlug]/page.tsx` para visual de marca
+- Nova LP em v1 (seções) ou v2 (Puck) — só manter legado existente
+- Exigir `docker build` para mudar copy/HTML/CSS de oferta
+
+## Do
+
+- Conteúdo em `lp-pages/{workspace}/{slug}/` ou Criar (assistente → `buildSalesPageV3`)
+- Publicar com `npx tsx scripts/publish-lp.ts …` (sem rebuild)
+- Slots: `<atrako-checkout>`, `<atrako-form>`, `<atrako-gallery>`, `<atrako-layers>`
+- Doc: `apps/atrako/docs/LP_PAGES.md`

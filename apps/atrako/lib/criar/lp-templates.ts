@@ -4,51 +4,25 @@ import {
   type LpSalesPageV1,
   type LpSection,
 } from "@/lib/criar/lp-schema";
+import type { LpSalesPageV3 } from "@/lib/criar/lp-v3";
+import { seedPagesFromBrief } from "@/lib/lp-pages/canonical";
 
 export {
   buildPuckTemplate,
   seedPuckFromBrief,
 } from "@/lib/criar/puck/templates";
 
-/** @deprecated Prefer seedPuckFromBrief — mantido para v1 legado. */
+export { seedPagesFromBrief } from "@/lib/lp-pages/canonical";
+
+/**
+ * Canônico: LP Pages (v3 HTML/CSS) para qualquer cliente.
+ * Puck v2 permanece só via `seedPuckFromBrief` (editor legado).
+ */
 export function seedLpFromBrief(
   goal: LpGoal,
   brief: string,
-): { name: string; priceCents: number; salesPage: LpSalesPageV1 } {
-  const text = brief.trim();
-  const firstLine = (text.split(/\n/)[0] || "Nova oferta").slice(0, 80);
-  const bullets =
-    text
-      .split(/[.\n]/)
-      .map((s) => s.trim())
-      .filter((s) => s.length > 12)
-      .slice(0, 4) || [];
-  const priceMatch =
-    text.match(/R\$\s*([\d.]+,\d{2})/i) || text.match(/R\$\s*([\d.,]+)/i);
-  let priceCents = goal === "sales" ? 9700 : 0;
-  if (priceMatch) {
-    const raw = priceMatch[1];
-    const n = raw.includes(",")
-      ? Number(raw.replace(/\./g, "").replace(",", "."))
-      : Number(raw.replace(/,/g, ""));
-    if (Number.isFinite(n) && n > 0) {
-      priceCents =
-        n >= 1000 && !raw.includes(",") ? Math.round(n) : Math.round(n * 100);
-    }
-  }
-
-  return {
-    name: firstLine,
-    priceCents,
-    salesPage: buildTemplate(goal, {
-      headline: firstLine,
-      subheadline: text.slice(0, 180) || undefined,
-      bullets:
-        bullets.length > 0
-          ? bullets
-          : ["Resultado claro", "Passo a passo", "Suporte incluso"],
-    }),
-  };
+): { name: string; priceCents: number; salesPage: LpSalesPageV3 } {
+  return seedPagesFromBrief(goal, brief);
 }
 
 /** Template seções v1 (legado / SalesPageView). */

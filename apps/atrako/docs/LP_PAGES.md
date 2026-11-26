@@ -1,30 +1,41 @@
-# Atrako Pages — publish de LP sem rebuild
+# Atrako Pages — padrão de LP para **todos** os clientes
 
-Landing pages de cliente (HTML/CSS) publicam no **banco** (`CommerceProduct.salesPage` v3) + mídia em **`/lp-media`**. O `atrako-web` só faz rebuild quando muda runtime (checkout, slots, API, auth).
+Toda landing page de cliente no Atrako é **Pages** (`salesPage` **v3**: HTML + CSS no banco + mídia em `/lp-media`).
 
-## Quando usar o quê
+Isso vale para Stresser, Vilaris, Regicenter e **qualquer workspace novo**. Não criamos skin de cliente em `components.css` / React do monólito.
 
-| Mudança | Comando | Rebuild Docker? |
-|---------|---------|-----------------|
-| Copy, HTML, CSS, FAQ, sticky, cores da LP | `npx tsx scripts/publish-lp.ts {slug}` | **Não** |
-| Imagens/vídeo novos no pacote `assets/` | mesmo publish (copia para `lp-media`) | **Não** |
-| Checkout, `CheckoutForm`, novos slots React, API MP | `git push` + deploy VPS (`DEPLOY.md`) | **Sim** |
-| Domínio novo do cliente | Traefik + `lp-domains.ts` (uma vez) | Sim (stack) |
+| Camada | Onde vive | Rebuild Docker? |
+|--------|-----------|-----------------|
+| Copy, layout, CSS, FAQ, sticky | `salesPage` v3 (DB) ou pacote `lp-pages/` | **Não** |
+| Imagens / vídeo da LP | `/lp-media` (volume) | **Não** |
+| Checkout, form, gallery/layers slots, API MP | `atrako-web` | **Sim** |
+| Domínio (`lp.cliente.com`) | Traefik + `lp-domains.ts` (uma vez) | Stack |
 
-## Pacote
+## Formatos
 
-```
-apps/atrako/lp-pages/{slug}/
-  meta.json      # productSlug, goal, fonts, gallery, layers, pixDiscountPercent
-  page.html      # markup + <atrako-checkout|gallery|layers|form>
-  page.css       # CSS sem escopo (buildSalesPageV3 aplica .atrako-lp-v3)
-  assets/        # opcional; flatten → /lp-media/{slug}-…
-  backup-v1.json # notas de rollback (Mood)
-```
+| Formato | Uso |
+|--------|-----|
+| **v3 Pages** | **Canônico** — Criar (assistente), `publish-lp`, `seedPagesFromBrief` |
+| v2 Puck | Legado (editor visual antigo) — só manter páginas já existentes |
+| v1 seções | Legado — não usar em cliente novo |
 
-## Publish (VPS, sem rebuild)
+## Novo cliente (onboarding)
 
-Com o código em `/opt/apps/atrako/src` e o serviço no ar:
+1. Copiar template:
+   ```bash
+   cp -r apps/atrako/lp-pages/_template apps/atrako/lp-pages/{workspace}/{productSlug}
+   ```
+   Ou criar a página pelo **Criar** (assistente HTML) — já grava v3.
+2. Ajustar `meta.json` (`productSlug`, `workspaceSlug`, fonts, gallery…).
+3. Editar `page.html` / `page.css`.
+4. Publicar **sem rebuild**:
+   ```bash
+   npx tsx scripts/publish-lp.ts {workspace}/{productSlug}
+   # ou: npx tsx scripts/publish-lp.ts {productSlug}
+   ```
+5. Domínio (se houver): DNS + entrada em `lp-domains.ts` + router Traefik **uma vez**.
+
+## Publish na VPS
 
 ```bash
 WEB=$(docker ps -q -f name=atrako_web | head -n1)
@@ -34,26 +45,34 @@ docker run --rm --network "container:${WEB}" \
   -v /opt/apps/atrako/src/apps/atrako:/work \
   -v atrako_uploads:/data/uploads \
   -w /work --entrypoint "" atrako-web:latest \
-  npx tsx scripts/publish-lp.ts pikolin-mood
+  npx tsx scripts/publish-lp.ts stresser/pikolin-mood
 ```
 
-Local (com DB acessível):
+## Pacote
 
-```bash
-cd apps/atrako
-npx tsx scripts/publish-lp.ts pikolin-mood
-npx tsx scripts/publish-lp.ts --list
+```
+lp-pages/
+  _template/                 # modelo (não publica)
+  {workspace}/{productSlug}/ # preferido (multi-cliente)
+    meta.json
+    page.html                # + <atrako-checkout|form|gallery|layers>
+    page.css
+    assets/                  # → /lp-media/{workspace}-{slug}-…
+  pikolin-mood/              # legado flat (ainda suportado)
 ```
 
-## Aceite Mood
+## Slots React (iguais para todos)
 
-- Alterar `page.html` / `page.css` + publish → live em &lt; 1 min sem `docker build`
-- Checkout com variantes + Pix 15%
-- Rollback: `salesPage.previous` (v3) ou re-seed v1 (`backup-v1.json` / `seed-stresser-store`)
+- `<atrako-checkout>` / `<atrako-form>`
+- `<atrako-gallery>` / `<atrako-layers>` (dados em `meta.json`)
 
 ## Limites
 
-- `MAX_LP_HTML` = 120 000 bytes  
-- `MAX_LP_CSS` = 100 000 bytes  
+- `MAX_LP_HTML` = 120 000  
+- `MAX_LP_CSS` = 100 000  
 
-O script reporta `underLimits` após o publish.
+## Política de engenharia
+
+- **Proibido** adicionar CSS/tema de um cliente em `styles/design-system/components.css` ou ramificar `page.tsx` por `slug` de produto (exceto migração temporária).
+- **Obrigatório** conteúdo de LP em v3 / `lp-pages` + `publish-lp` ou Criar HTML.
+- Runtime compartilhado (checkout, uploads, tracking) permanece no shell Atrako.

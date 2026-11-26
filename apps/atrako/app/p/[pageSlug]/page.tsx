@@ -188,16 +188,17 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
     const v3Variants = checkoutRow
       ? variantOptions(checkoutRow.variants ?? [], checkoutRow.priceCents)
       : checkoutVariants;
-    const pagesShell = salesRaw.generatedBy === "lp-pages-publish";
+    const pagesShell =
+      typeof salesRaw.generatedBy === "string" &&
+      (salesRaw.generatedBy.startsWith("lp-pages") || salesRaw.generatedBy === "atrako-agent");
+    const surface =
+      salesRaw.theme?.surface === "dark"
+        ? "min-h-screen bg-[#162538] text-[#fbfaf7]"
+        : pagesShell
+          ? "min-h-screen bg-[#fbfaf7] text-[#162538]"
+          : "min-h-screen bg-[var(--canvas)] text-[var(--ink)]";
     return (
-      <BrandThemeScope
-        primaryColor={brand?.primaryColor}
-        className={
-          pagesShell
-            ? "min-h-screen bg-[#fbfaf7] text-[#162538]"
-            : "min-h-screen bg-[var(--canvas)] text-[var(--ink)]"
-        }
-      >
+      <BrandThemeScope primaryColor={brand?.primaryColor} className={surface}>
         {!embed && !previewToken ? <LpHostTrackingBoot /> : null}
         {typeof tracking.pixelId === "string" && tracking.pixelId && !embed ? (
           <script

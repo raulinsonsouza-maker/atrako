@@ -1,0 +1,12 @@
+{
+  "productSlug": "minha-oferta",
+  "workspaceSlug": "meu-workspace",
+  "goal": "sales",
+  "fonts": ["DM Sans:wght@400;500;600;700"],
+  "theme": { "accent": "#6B9E3D", "accentInk": "#ffffff", "surface": "light" },
+  "brief": "Oferta do cliente — substitua copy, cores e assets.",
+  "pixDiscountPercent": 0,
+  "videoUrls": [],
+  "gallery": [],
+  "layers": []
+}

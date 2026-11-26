@@ -1,0 +1,80 @@
+:root {
+  --ink: #162538;
+  --muted: #6f7780;
+  --accent: #6b9e3d;
+  --cream: #fbfaf7;
+  --sans: "DM Sans", system-ui, sans-serif;
+}
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--sans);
+}
+.sec-hero,
+.sec-beneficios,
+.sec-checkout,
+.sec-faq,
+.sec-cta-final {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem;
+}
+.kicker {
+  margin: 0 0 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+h1 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  font-weight: 500;
+  line-height: 1.15;
+}
+h1 em {
+  font-style: italic;
+  color: var(--accent);
+}
+h2 {
+  margin: 0 0 1rem;
+  font-size: 1.35rem;
+  font-weight: 500;
+}
+.lead {
+  margin: 0 0 1.25rem;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.btn {
+  display: inline-flex;
+  padding: 0.85rem 1.25rem;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+}
+ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  line-height: 1.7;
+  color: var(--muted);
+}
+details {
+  border-top: 1px solid rgba(22, 37, 56, 0.12);
+  padding: 0.85rem 0;
+}
+summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+details p {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.sec-cta-final {
+  text-align: center;
+}

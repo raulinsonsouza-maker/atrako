@@ -2,8 +2,6 @@ import fs from "fs";
 import path from "path";
 import type { LpPageMeta, LpPagePackage } from "./types";
 
-const ROOT = path.join(process.cwd(), "lp-pages");
-
 function isSafeFlatName(name: string) {
   return /^[A-Za-z0-9_-]{1,160}\.(png|jpe?g|webp|gif|svg|mp4|webm)$/i.test(name);
 }
@@ -32,41 +30,76 @@ export function lpPagesRoot(cwd = process.cwd()) {
   return path.join(cwd, "lp-pages");
 }
 
+/**
+ * Resolve pasta do pacote.
+ * Aceita: `pikolin-mood` | `stresser/pikolin-mood` | path relativo sob lp-pages/
+ * Ignora `_template` como pacote publicável (é só modelo).
+ */
+export function resolveLpPageDir(packageId: string, cwd = process.cwd()): string {
+  const root = lpPagesRoot(cwd);
+  const id = packageId.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  if (!id || id.includes("..") || id.startsWith("_")) {
+    throw new Error(`Pacote inválido: ${packageId}`);
+  }
+  const candidates = [
+    path.join(root, id),
+    path.join(root, id.split("/").pop()!),
+  ];
+  for (const dir of candidates) {
+    if (fs.existsSync(path.join(dir, "meta.json")) && fs.existsSync(path.join(dir, "page.html"))) {
+      return dir;
+    }
+  }
+  throw new Error(`Pacote LP não encontrado: ${packageId} (em ${root})`);
+}
+
+/** Lista ids publicáveis: `slug` ou `workspace/slug`. */
 export function listLpPageSlugs(cwd = process.cwd()): string[] {
   const root = lpPagesRoot(cwd);
   if (!fs.existsSync(root)) return [];
-  return fs
-    .readdirSync(root, { withFileTypes: true })
-    .filter((d) => d.isDirectory() && !d.name.startsWith("."))
-    .map((d) => d.name)
-    .filter((slug) => fs.existsSync(path.join(root, slug, "meta.json")));
+  const out: string[] = [];
+
+  for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+    if (!entry.isDirectory() || entry.name.startsWith("_") || entry.name.startsWith(".")) continue;
+    const abs = path.join(root, entry.name);
+    if (fs.existsSync(path.join(abs, "meta.json"))) {
+      out.push(entry.name);
+      continue;
+    }
+    // workspace/slug
+    for (const child of fs.readdirSync(abs, { withFileTypes: true })) {
+      if (!child.isDirectory() || child.name.startsWith("_") || child.name.startsWith(".")) continue;
+      const childAbs = path.join(abs, child.name);
+      if (fs.existsSync(path.join(childAbs, "meta.json"))) {
+        out.push(`${entry.name}/${child.name}`);
+      }
+    }
+  }
+  return out.sort();
 }
 
-/** Lê `lp-pages/{slug}/` (page.html, page.css, meta.json, assets/). */
-export function loadLpPagePackage(slug: string, cwd = process.cwd()): LpPagePackage {
-  const dir = path.join(lpPagesRoot(cwd), slug);
-  if (!fs.existsSync(dir)) throw new Error(`Pacote LP não encontrado: ${dir}`);
-
+/** Lê pacote Pages (qualquer cliente). */
+export function loadLpPagePackage(packageId: string, cwd = process.cwd()): LpPagePackage {
+  const dir = resolveLpPageDir(packageId, cwd);
   const metaPath = path.join(dir, "meta.json");
   const htmlPath = path.join(dir, "page.html");
   const cssPath = path.join(dir, "page.css");
-  if (!fs.existsSync(metaPath) || !fs.existsSync(htmlPath)) {
-    throw new Error(`Pacote ${slug} precisa de meta.json e page.html`);
-  }
 
   const meta = JSON.parse(fs.readFileSync(metaPath, "utf8")) as LpPageMeta;
   if (!meta.productSlug || (meta.goal !== "sales" && meta.goal !== "leads")) {
-    throw new Error(`meta.json inválido em ${slug}`);
+    throw new Error(`meta.json inválido em ${packageId}`);
   }
 
   const html = fs.readFileSync(htmlPath, "utf8");
   const css = fs.existsSync(cssPath) ? fs.readFileSync(cssPath, "utf8") : "";
   const assetsDir = path.join(dir, "assets");
+  const flatSlug = (meta.workspaceSlug ? `${meta.workspaceSlug}-` : "") + meta.productSlug;
   const assetFiles = walkFiles(assetsDir).map((rel) => ({
     absPath: path.join(assetsDir, rel),
-    destName: flattenAssetName(slug, `assets/${rel.replace(/\\/g, "/")}`),
+    destName: flattenAssetName(flatSlug, `assets/${rel.replace(/\\/g, "/")}`),
   }));
 
+  const slug = path.relative(lpPagesRoot(cwd), dir).replace(/\\/g, "/");
   return { slug, dir, meta, html, css, assetFiles };
 }
 
@@ -92,5 +125,3 @@ export function rewriteAssetUrls(pkg: LpPagePackage, html: string, css: string) 
   }
   return { html: nextHtml, css: nextCss };
 }
-
-export { ROOT as LP_PAGES_ROOT_DEFAULT };

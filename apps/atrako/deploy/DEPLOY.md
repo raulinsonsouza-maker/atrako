@@ -2,6 +2,8 @@
 
 Com o código no GitHub, o fluxo padrão é **build na VPS** (sem Docker Desktop no PC).
 
+**LPs de clientes:** não usam este rebuild. Ver [LP_PAGES.md](../docs/LP_PAGES.md) — HTML/CSS via `publish-lp` (todos os workspaces).
+
 ## Pré-requisitos (já feitos)
 
 - Repo: https://github.com/raulinsonsouza-maker/atrako

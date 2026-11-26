@@ -56,6 +56,8 @@ docker run --rm --network "container:${WEB}" \
   npx tsx scripts/publish-lp.ts stresser/pikolin-mood
 ```
 
+**Uploads:** o serviço `atrako_web` precisa de `UPLOADS_DIR=/data/uploads` + volume `atrako_uploads`. Sem isso, `/lp-media/*` dá 404 mesmo com `publish-lp` ok. Preferir `docker stack deploy -c apps/atrako/deploy/stack.yml …` em vez de só `--image` (que pode dropar o mount).
+
 ## Pacote
 
 ```

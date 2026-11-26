@@ -66,6 +66,15 @@ body {
   content: "● ";
   font-size: 0.7em;
 }
+.mood-product-name {
+  margin: 0 0 14px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  color: var(--navy);
+}
 .mood-display {
   margin: 0 0 20px;
   font-family: var(--serif);

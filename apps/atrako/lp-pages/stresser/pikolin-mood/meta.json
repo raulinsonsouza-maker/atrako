@@ -10,18 +10,18 @@
   "gallery": [
     {
       "src": "/lp/stresser/assets/Pikolin_mood.mp4",
-      "alt": "Vídeo Pikolin Mood",
+      "alt": "Vídeo do Colchão Pikolin Mood Molas Ensacadas Firme",
       "kind": "video",
       "poster": "/lp/stresser/assets/gallery/colchao-pikolin-mood-tampo.webp"
     },
     {
       "src": "/lp/stresser/assets/gallery/colchao-pikolin-mood.webp",
-      "alt": "Colchão Pikolin Mood — vista principal",
+      "alt": "Colchão Pikolin Mood Molas Ensacadas Firme — vista principal",
       "kind": "image"
     },
     {
       "src": "/lp/stresser/assets/gallery/colchao-pikolin-mood-tampo.webp",
-      "alt": "Colchão Pikolin Mood — tampo Copper Fabric",
+      "alt": "Colchão Pikolin Mood Molas Ensacadas Firme — tampo Copper Fabric",
       "kind": "image"
     }
   ],

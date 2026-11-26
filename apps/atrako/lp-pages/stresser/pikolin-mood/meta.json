@@ -9,12 +9,8 @@
   "checkout": {
     "offerTitle": "Escolha o tamanho da sua nova cama",
     "offerCta": "Quero este tamanho",
-    "perks": [
-      "Frete grátis para todo o Brasil",
-      "10x sem juros no cartão",
-      "15% OFF à vista no Pix"
-    ],
-    "summaryMode": "detailed",
+    "perks": false,
+    "summaryMode": "compact",
     "termsMode": "onContinue",
     "draftLocalStorage": true,
     "lockAddressFromCep": true,

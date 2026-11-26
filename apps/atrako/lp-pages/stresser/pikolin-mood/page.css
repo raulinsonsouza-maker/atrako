@@ -241,19 +241,19 @@ body {
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 56px max(20px, calc((100% - 28rem) / 2)) 120px;
+  padding: 64px max(20px, calc((100% - 26rem) / 2)) 140px;
   box-sizing: border-box;
   background: #ffffff;
   border-top: 1px solid rgba(22, 37, 56, 0.08);
 }
 .mood-offer-intro,
 .mood-offer [data-atrako-slot="checkout"] {
-  max-width: 28rem;
+  max-width: 26rem;
   margin-left: auto;
   margin-right: auto;
 }
 .mood-offer-intro {
-  margin-bottom: 28px;
+  margin-bottom: 36px;
   text-align: center;
 }
 .mood-offer-intro .mood-lead {
@@ -639,5 +639,150 @@ html.atrako-checkout-paying .mood-wa {
   .offer-label {
     background: var(--navy);
     border-radius: 0;
+  }
+
+  /* Checkout: respiro entre blocos (não amontoar) */
+  [data-atrako-slot="checkout"] .checkout-flow,
+  [data-atrako-slot="checkout"] .offer-card.checkout-panel {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  [data-atrako-slot="checkout"] .checkout-flow.space-y-4 > :not([hidden]) ~ :not([hidden]),
+  [data-atrako-slot="checkout"] .space-y-4 > :not([hidden]) ~ :not([hidden]),
+  [data-atrako-slot="checkout"] .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0;
+  }
+
+  [data-atrako-slot="checkout"] .checkout-flow__head {
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(22, 37, 56, 0.08);
+  }
+
+  [data-atrako-slot="checkout"] .checkout-flow__head h2 {
+    margin: 0 0 6px;
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--navy);
+  }
+
+  [data-atrako-slot="checkout"] .checkout-stepper {
+    gap: 10px;
+    margin: 0;
+  }
+
+  [data-atrako-slot="checkout"] .checkout-stepper__item {
+    border-radius: 0;
+    padding: 10px 6px;
+    background: #f7f5f1;
+    border-color: transparent;
+  }
+
+  [data-atrako-slot="checkout"] .checkout-stepper__item.is-on {
+    background: color-mix(in srgb, var(--green) 12%, #fff);
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  [data-atrako-slot="checkout"] .checkout-pay-tiles {
+    gap: 12px;
+    margin: 0;
+  }
+
+  [data-atrako-slot="checkout"] .checkout-pay-tile {
+    border-radius: 0;
+    padding: 16px 14px;
+    background: #f7f5f1;
+    border: 1px solid transparent;
+    min-height: 72px;
+  }
+
+  [data-atrako-slot="checkout"] .checkout-pay-tile.is-on {
+    background: color-mix(in srgb, var(--green) 10%, #fff);
+    border-color: var(--green);
+  }
+
+  [data-atrako-slot="checkout"] .checkout-summary,
+  [data-atrako-slot="checkout"] .checkout-summary--hero {
+    margin: 0;
+    padding: 18px 0;
+    border-top: 1px solid rgba(22, 37, 56, 0.08);
+    border-bottom: 1px solid rgba(22, 37, 56, 0.08);
+    display: grid;
+    gap: 6px;
+  }
+
+  [data-atrako-slot="checkout"] .checkout-summary__pix {
+    margin: 2px 0 0;
+    font-size: 30px;
+    color: var(--green);
+  }
+
+  [data-atrako-slot="checkout"] .checkout-savings {
+    margin: 4px 0 0;
+    color: var(--green);
+    font-weight: 500;
+  }
+
+  [data-atrako-slot="checkout"] .offer-card {
+    border: 0;
+    padding: 0;
+    background: transparent;
+  }
+
+  [data-atrako-slot="checkout"] .offer-card-top {
+    margin-bottom: 18px;
+  }
+
+  [data-atrako-slot="checkout"] .offer-card h3 {
+    margin: 0 0 18px;
+    font-size: 24px;
+    line-height: 1.25;
+  }
+
+  [data-atrako-slot="checkout"] .size-list {
+    margin: 0 0 8px;
+  }
+
+  [data-atrako-slot="checkout"] .size-option {
+    padding: 16px 2px;
+  }
+
+  [data-atrako-slot="checkout"] .offer-card-price {
+    margin: 22px 0 8px;
+    display: grid;
+    gap: 6px;
+  }
+
+  [data-atrako-slot="checkout"] .checkout-price-hero__pix {
+    font-size: 32px;
+    color: var(--green);
+  }
+
+  [data-atrako-slot="checkout"] .checkout-terms-note {
+    margin: 4px 0 0;
+    line-height: 1.55;
+  }
+
+  [data-atrako-slot="checkout"] input,
+  [data-atrako-slot="checkout"] .pill-select-trigger {
+    border-radius: 0 !important;
+    min-height: 48px;
+  }
+
+  [data-atrako-slot="checkout"] .flex.flex-col.gap-3 {
+    gap: 14px;
+    margin-top: 4px;
+    padding-top: 8px;
+  }
+
+  [data-atrako-slot="checkout"] button[type="submit"],
+  [data-atrako-slot="checkout"] .offer-card button {
+    min-height: 52px;
+    margin-top: 4px;
   }
 }

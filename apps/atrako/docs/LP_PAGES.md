@@ -97,13 +97,21 @@ Copy e flags do slot `<atrako-checkout>` vão no `meta.json` (não em `CheckoutF
 
 ```json
 "checkout": {
-  "offerTitle": "Escolha o tamanho…",
-  "offerCta": "Escolher este tamanho",
-  "perks": ["Frete grátis", "10x sem juros", "15% OFF no Pix"],
-  "summaryMode": "detailed",
+  "offerTitle": "Escolha o tamanho",
+  "offerCta": "Continuar",
+  "formTitle": "Finalize sua compra",
+  "showHeadSubtitle": false,
+  "showStepper": true,
+  "perks": false,
+  "summaryMode": "compact",
   "termsMode": "onContinue",
+  "showTermsOnPayment": false,
+  "showCoupon": false,
   "draftLocalStorage": true,
   "lockAddressFromCep": true,
+  "backLabel": "Voltar",
+  "continueToAddressLabel": "Continuar para entrega →",
+  "continueToPaymentLabel": "Continuar para pagamento →",
   "payLabels": {
     "pix": "Pix",
     "card": "Cartão",
@@ -113,7 +121,8 @@ Copy e flags do slot `<atrako-checkout>` vão no `meta.json` (não em `CheckoutF
 }
 ```
 
-Omitir um campo = default do shell. Mudar só texto/perks/flags → `publish-lp`. Novo comportamento (ex.: outro gateway) → rebuild uma vez.
+Omitir um campo = default do shell. Mudar só texto/flags → `publish-lp`.  
+`formTitle: ""` esconde o head. Novo comportamento React/API → rebuild **uma vez** para instalar o leitor; LPs seguintes = publish.
 
 ### Skin dos slots (sem rebuild)
 

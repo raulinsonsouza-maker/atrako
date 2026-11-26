@@ -43,16 +43,27 @@ export type LpV3Layer = {
 export type LpCheckoutUiConfig = {
   offerTitle?: string;
   offerCta?: string;
+  /** Título do form (ex.: "Finalize sua compra"). */
+  formTitle?: string;
+  /** Linha sob o título (tamanho · preço). Default true. */
+  showHeadSubtitle?: boolean;
+  /** Stepper 1/2/3. Default true. */
+  showStepper?: boolean;
   /** Lista de benefícios na oferta; `false` esconde. */
   perks?: string[] | false;
   summaryMode?: "compact" | "detailed";
   termsMode?: "onContinue" | "switch";
+  /** Repetir nota de termos no passo pagamento (onContinue). Default false. */
+  showTermsOnPayment?: boolean;
   termsShort?: string;
   privacyShort?: string;
   draftLocalStorage?: boolean;
   lockAddressFromCep?: boolean;
   /** Default true. `false` esconde o campo cupom. */
   showCoupon?: boolean;
+  backLabel?: string;
+  continueToAddressLabel?: string;
+  continueToPaymentLabel?: string;
   payLabels?: {
     pix?: string;
     card?: string;

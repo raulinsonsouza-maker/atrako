@@ -116,11 +116,18 @@ type Props = {
 const DEFAULT_CHECKOUT_UI = {
   offerTitle: "Escolha o tamanho da sua nova cama",
   offerCta: "Escolher este tamanho",
+  formTitle: "Finalize sua compra",
+  showHeadSubtitle: true,
+  showStepper: true,
   summaryMode: "detailed" as const,
   termsMode: "onContinue" as const,
+  showTermsOnPayment: false,
   draftLocalStorage: true,
   lockAddressFromCep: true,
   showCoupon: true,
+  backLabel: "Voltar",
+  continueToAddressLabel: "Continuar para entrega →",
+  continueToPaymentLabel: "Continuar para pagamento →",
   payLabels: {
     pix: "Pix",
     card: "Cartão",
@@ -853,28 +860,32 @@ export function CheckoutForm({
           <p className="type-fine-print text-[var(--ink-muted-48)]">Modo teste: o pagamento é simulado.</p>
         ) : null}
 
-        <div className="checkout-flow__head">
-          <h2 className="type-tagline text-[var(--ink)]">Finalize sua compra</h2>
-          {selectedVariant ? (
-            <p className="mt-1 type-fine-print text-[var(--ink-muted-80)]">
-              {selectedVariant.label}
-              {selectedVariant.dim ? ` · ${selectedVariant.dim}` : ""} · {brl(selectedPixCents, currency)} no Pix
-            </p>
-          ) : null}
-        </div>
+        {cfg.formTitle !== "" ? (
+          <div className="checkout-flow__head">
+            <h2 className="type-tagline text-[var(--ink)]">{cfg.formTitle}</h2>
+            {cfg.showHeadSubtitle !== false && selectedVariant ? (
+              <p className="mt-1 type-fine-print text-[var(--ink-muted-80)]">
+                {selectedVariant.label}
+                {selectedVariant.dim ? ` · ${selectedVariant.dim}` : ""} · {brl(selectedPixCents, currency)} no Pix
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
-        <div className="checkout-stepper" aria-label="Passos do checkout">
-          {stepLabels.map((s) => (
-            <div
-              key={s.n}
-              className={`checkout-stepper__item type-fine-print${
-                visibleStep === s.n ? " is-on" : visibleStep > s.n ? " is-done" : ""
-              }`}
-            >
-              {s.n}. {s.label}
-            </div>
-          ))}
-        </div>
+        {cfg.showStepper !== false ? (
+          <div className="checkout-stepper" aria-label="Passos do checkout">
+            {stepLabels.map((s) => (
+              <div
+                key={s.n}
+                className={`checkout-stepper__item type-fine-print${
+                  visibleStep === s.n ? " is-on" : visibleStep > s.n ? " is-done" : ""
+                }`}
+              >
+                {s.n}. {s.label}
+              </div>
+            ))}
+          </div>
+        ) : null}
 
         {visibleStep === 1 ? (
           <div className="space-y-3">
@@ -1149,12 +1160,25 @@ export function CheckoutForm({
               </label>
             ) : null}
 
-            {/* Termos já aceitos ao sair de Dados (onContinue) — não repetir no pagamento. */}
-            {cfg.termsMode === "switch" ? (
-              <div className="flex items-center justify-between gap-3">
-                <span className="type-caption-strong text-[var(--ink-muted-80)]">Aceito os termos de compra</span>
-                <Switch checked={terms} onChange={setTerms} aria-label="Aceito os termos de compra" />
-              </div>
+            {cfg.termsMode === "switch" || cfg.showTermsOnPayment ? (
+              cfg.termsMode === "switch" ? (
+                <div className="flex items-center justify-between gap-3">
+                  <span className="type-caption-strong text-[var(--ink-muted-80)]">Aceito os termos de compra</span>
+                  <Switch checked={terms} onChange={setTerms} aria-label="Aceito os termos de compra" />
+                </div>
+              ) : (
+                <p className="checkout-terms-note type-fine-print text-[var(--ink-muted-80)]">
+                  * Termos aceitos ao continuar.{" "}
+                  <button type="button" className="checkout-legal-link" onClick={() => setLegalOpen("terms")}>
+                    Termos de compra
+                  </button>{" "}
+                  e{" "}
+                  <button type="button" className="checkout-legal-link" onClick={() => setLegalOpen("privacy")}>
+                    Privacidade
+                  </button>
+                  .
+                </p>
+              )
             ) : null}
           </div>
         ) : null}
@@ -1167,14 +1191,14 @@ export function CheckoutForm({
             onClick={goBack}
             className="type-caption-strong text-[var(--primary)] active:scale-95"
           >
-            Voltar
+            {cfg.backLabel}
           </button>
 
           {!onPaymentStep ? (
             <Button type="submit" variant="primary" className="w-full">
               {visibleStep === 1 && requireAddress
-                ? "Continuar para entrega →"
-                : "Continuar para pagamento →"}
+                ? cfg.continueToAddressLabel
+                : cfg.continueToPaymentLabel}
             </Button>
           ) : (
             <Button type="submit" variant="primary" disabled={loading} className="w-full">

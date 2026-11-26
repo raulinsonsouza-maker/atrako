@@ -240,62 +240,151 @@ export async function POST(request: NextRequest) {
       fbp: attrRaw.fbp,
       fbc: attrRaw.fbc,
     };
-    const order = await prisma.commerceOrder.create({
-      data: {
-        clienteId: product.clienteId,
-        storeId: product.storeId ?? undefined,
-        productId: product.id,
-        contactId: contact.id,
-        email,
-        name,
-        cpf: onlyDigits(cpf),
-        phone: phone ? onlyDigits(phone) : null,
-        status: "PENDING",
-        subtotalCents,
-        discountCents,
-        shippingFeeCents: 0,
-        totalCents,
-        fulfillment,
-        fulfillmentStatus: fulfillment === "SHIP" ? "NEW" : "NEW",
-        shippingAddress: shippingAddress
-          ? ({
-              street: String(shippingAddress.street ?? "").slice(0, 200),
-              number: String(shippingAddress.number ?? "").slice(0, 40),
-              complement: String(shippingAddress.complement ?? "").slice(0, 120) || undefined,
-              neighborhood: String(shippingAddress.neighborhood ?? "").slice(0, 120) || undefined,
-              city: String(shippingAddress.city ?? "").slice(0, 120),
-              state: String(shippingAddress.state ?? "").slice(0, 2).toUpperCase(),
-              cep: onlyDigits(String(shippingAddress.cep ?? "")).slice(0, 8),
-            } as Prisma.InputJsonValue)
-          : undefined,
-        couponId,
-        eventId,
-        fbp: attr.fbp,
-        fbc: attr.fbc,
-        fbclid: attr.fbclid,
-        utmSource: attr.utmSource,
-        utmMedium: attr.utmMedium,
-        utmCampaign: attr.utmCampaign,
-        utmContent: attr.utmContent,
-        utmTerm: attr.utmTerm,
-        parentOrderId,
-        termsAcceptedAt: new Date(),
-        items: {
-          create: items.map((item) => ({
-            productId: item.productId,
-            variantId: item.variantId,
-            options: item.options,
-            name: item.name,
-            priceCents: item.priceCents,
-            installments:
-              payment.type === "credit_card" && typeof payment.installments === "number"
-                ? payment.installments
-                : undefined,
-          })),
+
+    const draftOrderId =
+      typeof body.draftOrderId === "string" && body.draftOrderId.trim()
+        ? body.draftOrderId.trim()
+        : "";
+    const clientRequestId =
+      typeof body.clientRequestId === "string" && body.clientRequestId.trim()
+        ? body.clientRequestId.trim().slice(0, 80)
+        : undefined;
+
+    const shippingJson = shippingAddress
+      ? ({
+          street: String(shippingAddress.street ?? "").slice(0, 200),
+          number: String(shippingAddress.number ?? "").slice(0, 40),
+          complement: String(shippingAddress.complement ?? "").slice(0, 120) || undefined,
+          neighborhood: String(shippingAddress.neighborhood ?? "").slice(0, 120) || undefined,
+          city: String(shippingAddress.city ?? "").slice(0, 120),
+          state: String(shippingAddress.state ?? "").slice(0, 2).toUpperCase(),
+          cep: onlyDigits(String(shippingAddress.cep ?? "")).slice(0, 8),
+        } as Prisma.InputJsonValue)
+      : undefined;
+
+    const draftExisting = draftOrderId
+      ? await prisma.commerceOrder.findFirst({
+          where: {
+            id: draftOrderId,
+            clienteId: product.clienteId,
+            status: { in: ["DRAFT", "PENDING"] },
+            mpOrderId: null,
+          },
+          include: { items: true },
+        })
+      : clientRequestId
+        ? await prisma.commerceOrder.findFirst({
+            where: {
+              clienteId: product.clienteId,
+              clientRequestId,
+              status: { in: ["DRAFT", "PENDING"] },
+              mpOrderId: null,
+            },
+            include: { items: true },
+            orderBy: { createdAt: "desc" },
+          })
+        : null;
+
+    let order;
+    if (draftExisting) {
+      await prisma.commerceOrderItem.deleteMany({ where: { orderId: draftExisting.id } });
+      order = await prisma.commerceOrder.update({
+        where: { id: draftExisting.id },
+        data: {
+          storeId: product.storeId ?? undefined,
+          productId: product.id,
+          contactId: contact.id,
+          email,
+          name,
+          cpf: onlyDigits(cpf),
+          phone: phone ? onlyDigits(phone) : null,
+          status: "PENDING",
+          subtotalCents,
+          discountCents,
+          shippingFeeCents: 0,
+          totalCents,
+          fulfillment,
+          fulfillmentStatus: "NEW",
+          shippingAddress: shippingJson,
+          shippingQuote: Prisma.DbNull,
+          couponId,
+          eventId,
+          clientRequestId: clientRequestId ?? draftExisting.clientRequestId,
+          fbp: attr.fbp,
+          fbc: attr.fbc,
+          fbclid: attr.fbclid,
+          utmSource: attr.utmSource,
+          utmMedium: attr.utmMedium,
+          utmCampaign: attr.utmCampaign,
+          utmContent: attr.utmContent,
+          utmTerm: attr.utmTerm,
+          parentOrderId,
+          termsAcceptedAt: new Date(),
+          items: {
+            create: items.map((item) => ({
+              productId: item.productId,
+              variantId: item.variantId,
+              options: item.options,
+              name: item.name,
+              priceCents: item.priceCents,
+              installments:
+                payment.type === "credit_card" && typeof payment.installments === "number"
+                  ? payment.installments
+                  : undefined,
+            })),
+          },
         },
-      },
-      include: { items: true },
-    });
+        include: { items: true },
+      });
+    } else {
+      order = await prisma.commerceOrder.create({
+        data: {
+          clienteId: product.clienteId,
+          storeId: product.storeId ?? undefined,
+          productId: product.id,
+          contactId: contact.id,
+          email,
+          name,
+          cpf: onlyDigits(cpf),
+          phone: phone ? onlyDigits(phone) : null,
+          status: "PENDING",
+          subtotalCents,
+          discountCents,
+          shippingFeeCents: 0,
+          totalCents,
+          fulfillment,
+          fulfillmentStatus: fulfillment === "SHIP" ? "NEW" : "NEW",
+          shippingAddress: shippingJson,
+          couponId,
+          eventId,
+          clientRequestId,
+          fbp: attr.fbp,
+          fbc: attr.fbc,
+          fbclid: attr.fbclid,
+          utmSource: attr.utmSource,
+          utmMedium: attr.utmMedium,
+          utmCampaign: attr.utmCampaign,
+          utmContent: attr.utmContent,
+          utmTerm: attr.utmTerm,
+          parentOrderId,
+          termsAcceptedAt: new Date(),
+          items: {
+            create: items.map((item) => ({
+              productId: item.productId,
+              variantId: item.variantId,
+              options: item.options,
+              name: item.name,
+              priceCents: item.priceCents,
+              installments:
+                payment.type === "credit_card" && typeof payment.installments === "number"
+                  ? payment.installments
+                  : undefined,
+            })),
+          },
+        },
+        include: { items: true },
+      });
+    }
 
     await publishEventBatch([
       createEvent({

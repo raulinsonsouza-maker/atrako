@@ -287,15 +287,15 @@ export const PLAYBOOKS: PlaybookDef[] = [
   {
     key: "order_paid",
     name: "Pós-compra",
-    description: "Agradecimento (desligado) · 7 dias avaliação · 10 dias pergunta o aniversário (WhatsApp) · 15 dias cross-sell",
+    description: "Agradecimento · 7 dias avaliação · 10 dias pergunta o aniversário (WhatsApp) · 15 dias cross-sell",
     trigger: "order_paid",
     priority: 20,
     steps: [
       {
         copyKey: "paid.thanks",
-        delayMinutes: 30,
+        delayMinutes: 0,
         channel: "EMAIL",
-        enabled: false,
+        enabled: true,
         email: (t) =>
           recEmail(
             "Obrigado pela compra, {{primeiro_nome}}!",
@@ -913,6 +913,15 @@ export async function ensureDefaultFlows(
       flow: { clienteId: workspaceId, key: "stay_unpaid" },
     },
     data: { delayMinutes: 8 },
+  });
+  // Ativa confirmação de pedido (paid.thanks) em workspaces que ainda tinham o passo desligado.
+  await prisma.messageFlowStep.updateMany({
+    where: {
+      copyKey: "paid.thanks",
+      customized: false,
+      flow: { clienteId: workspaceId, key: "order_paid" },
+    },
+    data: { enabled: true, delayMinutes: 0 },
   });
   return { created };
 }

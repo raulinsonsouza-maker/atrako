@@ -29,13 +29,37 @@ type CheckoutDraft = {
   neighborhood?: string;
   city?: string;
   stateUf?: string;
+  clientRequestId?: string;
+  draftOrderId?: string;
   updatedAt?: string;
 };
+
+type PayPhase = "form" | "pix" | "done";
 
 type LegalDoc = "terms" | "privacy";
 
 function draftKey(productId: string) {
   return `atrako.checkout.draft.${productId}`;
+}
+
+function requestKey(productId: string) {
+  return `atrako.checkout.req.${productId}`;
+}
+
+function ensureClientRequestId(productId: string): string {
+  if (typeof window === "undefined") return "";
+  try {
+    const existing = window.localStorage.getItem(requestKey(productId));
+    if (existing && existing.length >= 8) return existing.slice(0, 80);
+    const id =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `req-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    window.localStorage.setItem(requestKey(productId), id.slice(0, 80));
+    return id.slice(0, 80);
+  } catch {
+    return `req-${Date.now()}`;
+  }
 }
 
 function readCheckoutDraft(productId: string): CheckoutDraft | null {
@@ -233,6 +257,7 @@ export function CheckoutForm({
   const [testApproved, setTestApproved] = useState(false);
   const [phase, setPhase] = useState<"offer" | "form">(variants.length > 0 ? "offer" : "form");
   const [step, setStep] = useState<Step>(1);
+  const [payPhase, setPayPhase] = useState<PayPhase>("form");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [cpf, setCpf] = useState("");
@@ -242,6 +267,7 @@ export function CheckoutForm({
   const [withBump, setWithBump] = useState(false);
   const [payType, setPayType] = useState<"pix" | "credit_card">("pix");
   const [loading, setLoading] = useState(false);
+  const [progressSaving, setProgressSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [variantId, setVariantId] = useState(variants[0]?.id ?? "");
   const [cep, setCep] = useState("");
@@ -254,6 +280,13 @@ export function CheckoutForm({
   const [cepLoading, setCepLoading] = useState(false);
   const [addressFromCep, setAddressFromCep] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
+  const [clientRequestId, setClientRequestId] = useState("");
+  const [draftOrderId, setDraftOrderId] = useState<string | null>(null);
+  const [paidOrderId, setPaidOrderId] = useState<string | null>(null);
+  const [pixQrBase64, setPixQrBase64] = useState<string | null>(null);
+  const [pixCopyPaste, setPixCopyPaste] = useState<string | null>(null);
+  const [orderPaidTotalCents, setOrderPaidTotalCents] = useState<number | null>(null);
+  const [pixCopied, setPixCopied] = useState(false);
   const [legalOpen, setLegalOpen] = useState<LegalDoc | null>(null);
   const [cardNumber, setCardNumber] = useState("");
   const [cardName, setCardName] = useState("");
@@ -306,6 +339,8 @@ export function CheckoutForm({
       setDraftReady(true);
       return;
     }
+    const reqId = ensureClientRequestId(product.id);
+    setClientRequestId(reqId);
     const draft = readCheckoutDraft(product.id);
     if (draft) {
       if (draft.phase === "offer" || draft.phase === "form") setPhase(draft.phase);
@@ -326,6 +361,12 @@ export function CheckoutForm({
       if (typeof draft.neighborhood === "string") setNeighborhood(draft.neighborhood);
       if (typeof draft.city === "string") setCity(draft.city);
       if (typeof draft.stateUf === "string") setStateUf(draft.stateUf);
+      if (typeof draft.clientRequestId === "string" && draft.clientRequestId) {
+        setClientRequestId(draft.clientRequestId);
+      }
+      if (typeof draft.draftOrderId === "string" && draft.draftOrderId) {
+        setDraftOrderId(draft.draftOrderId);
+      }
       if (draft.cep && digits(draft.cep).length === 8 && draft.city && draft.stateUf) {
         setAddressFromCep(true);
       }
@@ -356,6 +397,8 @@ export function CheckoutForm({
       neighborhood,
       city,
       stateUf,
+      clientRequestId: clientRequestId || undefined,
+      draftOrderId: draftOrderId || undefined,
     });
   }, [
     draftReady,
@@ -367,6 +410,8 @@ export function CheckoutForm({
     name,
     cpf,
     phone,
+    clientRequestId,
+    draftOrderId,
     couponCode,
     terms,
     withBump,
@@ -499,7 +544,69 @@ export function CheckoutForm({
     return null;
   }
 
-  function goNext() {
+  async function saveProgress(progressStep: 1 | 2) {
+    if (previewToken) return;
+    const reqId = clientRequestId || ensureClientRequestId(product.id);
+    if (!clientRequestId) setClientRequestId(reqId);
+    const clientAttr = collectClientAttribution({
+      productId: product.id,
+      pageSlug: pageSlug || product.slug,
+    });
+    setProgressSaving(true);
+    try {
+      const res = await fetch("/api/atrako/commerce/public/checkout-progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: product.id,
+          pageProductId: pageProductId || product.id,
+          pageSlug: pageSlug || undefined,
+          step: progressStep,
+          name,
+          email,
+          phone,
+          cpf: cpf || undefined,
+          variantId: variantId || undefined,
+          clientRequestId: reqId,
+          draftOrderId: draftOrderId || undefined,
+          shippingAddress:
+            progressStep >= 2 && requireAddress
+              ? {
+                  street: street.trim(),
+                  number: number.trim(),
+                  complement: complement.trim() || undefined,
+                  neighborhood: neighborhood.trim() || undefined,
+                  city: city.trim(),
+                  state: stateUf.trim().toUpperCase().slice(0, 2),
+                  cep: digits(cep),
+                }
+              : undefined,
+          attribution: {
+            utmSource: clientAttr.utm_source || search.get("utm_source") || undefined,
+            utmMedium: clientAttr.utm_medium || search.get("utm_medium") || undefined,
+            utmCampaign: clientAttr.utm_campaign || search.get("utm_campaign") || undefined,
+            utmContent: clientAttr.utm_content || search.get("utm_content") || undefined,
+            utmTerm: clientAttr.utm_term || search.get("utm_term") || undefined,
+            pageUrl: clientAttr.pageUrl,
+            referrer: clientAttr.referrer,
+            gclid: clientAttr.gclid,
+            fbclid: clientAttr.fbclid,
+          },
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && typeof data.orderId === "string") {
+        setDraftOrderId(data.orderId);
+        if (typeof data.clientRequestId === "string") setClientRequestId(data.clientRequestId);
+      }
+    } catch {
+      // progresso é best-effort — não bloqueia o checkout
+    } finally {
+      setProgressSaving(false);
+    }
+  }
+
+  async function goNext() {
     setError(null);
     if (step === 1) {
       const err = validateStep1();
@@ -512,6 +619,7 @@ export function CheckoutForm({
         setError("Aceite os termos de compra.");
         return;
       }
+      void saveProgress(1);
       setStep(2);
       return;
     }
@@ -522,6 +630,7 @@ export function CheckoutForm({
         return;
       }
       if (cfg.termsMode === "onContinue") setTerms(true);
+      void saveProgress(2);
       setStep(3);
     }
   }
@@ -631,6 +740,8 @@ export function CheckoutForm({
           variantId: variantId || undefined,
           bumpProductId: withBump && bump ? bump.id : undefined,
           parentOrderId: parentOrderId || search.get("parentOrderId") || undefined,
+          draftOrderId: draftOrderId || undefined,
+          clientRequestId: clientRequestId || ensureClientRequestId(product.id) || undefined,
           email,
           name,
           cpf,
@@ -676,13 +787,45 @@ export function CheckoutForm({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Não foi possível concluir a compra.");
 
-      trackGa4("purchase", {
-        transaction_id: data.orderId,
-        currency,
-        value: (typeof data.totalCents === "number" ? data.totalCents : displayCents) / 100,
-        items: [{ item_id: product.id, item_name: product.name, price: unitCents / 100 }],
-      });
+      const total =
+        typeof data.totalCents === "number" ? data.totalCents : displayCents;
+      setOrderPaidTotalCents(total);
+      setPaidOrderId(typeof data.orderId === "string" ? data.orderId : null);
 
+      if (data.status === "APPROVED") {
+        trackGa4("purchase", {
+          transaction_id: data.orderId,
+          currency,
+          value: total / 100,
+          items: [{ item_id: product.id, item_name: product.name, price: unitCents / 100 }],
+        });
+        try {
+          window.localStorage.removeItem(draftKey(product.id));
+          window.localStorage.removeItem(requestKey(product.id));
+        } catch {
+          /* ignore */
+        }
+        setPayPhase("done");
+        return;
+      }
+
+      if (payType === "pix" && data.status === "PENDING") {
+        setPixQrBase64(
+          typeof data.pixQrCodeBase64 === "string" ? data.pixQrCodeBase64 : null,
+        );
+        setPixCopyPaste(
+          typeof data.pixCopyPaste === "string"
+            ? data.pixCopyPaste
+            : typeof data.pixQrCode === "string"
+              ? data.pixQrCode
+              : null,
+        );
+        setDraftOrderId(typeof data.orderId === "string" ? data.orderId : draftOrderId);
+        setPayPhase("pix");
+        return;
+      }
+
+      // Fallback (cartão pendente / fora da LP): mantém redirect legado
       try {
         window.localStorage.removeItem(draftKey(product.id));
       } catch {
@@ -697,19 +840,55 @@ export function CheckoutForm({
     }
   }
 
-  if (testApproved) {
-    return (
-      <div className="utility-card space-y-2 text-center">
-        <p className="type-caption-strong text-[var(--ink)]">Compra de teste aprovada</p>
-        <p className="type-body-strong text-[var(--ink)]">{totalLabel}</p>
-        <p className="type-fine-print text-[var(--ink-muted-48)]">
-          Modo teste: nenhum pedido foi criado e nada foi cobrado. Pagamento via{" "}
-          {payType === "pix" ? "Pix" : "cartão"}.
-        </p>
-      </div>
-    );
+  async function pollCheckoutStatus(orderId: string) {
+    try {
+      const res = await fetch(
+        `/api/atrako/commerce/public/checkout-status?orderId=${encodeURIComponent(orderId)}`,
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return;
+      if (typeof data.pixQrCodeBase64 === "string" && data.pixQrCodeBase64) {
+        setPixQrBase64(data.pixQrCodeBase64);
+      }
+      if (typeof data.pixCopyPaste === "string" && data.pixCopyPaste) {
+        setPixCopyPaste(data.pixCopyPaste);
+      }
+      if (typeof data.totalCents === "number") setOrderPaidTotalCents(data.totalCents);
+      if (data.status === "APPROVED") {
+        trackGa4("purchase", {
+          transaction_id: orderId,
+          currency,
+          value: (typeof data.totalCents === "number" ? data.totalCents : displayCents) / 100,
+          items: [{ item_id: product.id, item_name: product.name, price: unitCents / 100 }],
+        });
+        try {
+          window.localStorage.removeItem(draftKey(product.id));
+          window.localStorage.removeItem(requestKey(product.id));
+        } catch {
+          /* ignore */
+        }
+        setPaidOrderId(orderId);
+        setPayPhase("done");
+      }
+    } catch {
+      /* poll silencioso */
+    }
   }
 
+  useEffect(() => {
+    if (payPhase !== "pix") return;
+    const orderId = paidOrderId || draftOrderId;
+    if (!orderId) return;
+    void pollCheckoutStatus(orderId);
+    const t = window.setInterval(() => void pollCheckoutStatus(orderId), 3000);
+    return () => window.clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- poll só enquanto Pix inline
+  }, [payPhase, paidOrderId, draftOrderId]);
+
+  const paidLabel = brl(orderPaidTotalCents ?? displayCents, currency);
+  const continueAfterPayHref = paidOrderId
+    ? `/upsell/check?orderId=${paidOrderId}`
+    : "/obrigado";
   const inputClass =
     "h-11 w-full rounded-[var(--radius-xs)] border border-[rgba(0,0,0,0.08)] bg-[var(--canvas)] px-5 type-body text-[var(--ink)] outline-none focus:outline focus:outline-2 focus:outline-[var(--primary-focus)]";
   const lockedInputClass = `${inputClass} bg-[rgba(0,0,0,0.03)] text-[var(--ink-muted-80)] cursor-default`;
@@ -725,7 +904,9 @@ export function CheckoutForm({
         { n: 2 as Step, label: "Pagamento" },
       ];
 
-  const onPaymentStep = phase === "form" && visibleStep === paymentStep;
+  const onPaymentStep =
+    phase === "form" &&
+    (visibleStep === paymentStep || payPhase === "pix" || payPhase === "done");
 
   useEffect(() => {
     document.documentElement.classList.toggle("atrako-checkout-paying", onPaymentStep);
@@ -788,6 +969,95 @@ export function CheckoutForm({
         </div>
       </div>
     ) : null;
+
+  if (testApproved) {
+    return (
+      <div className="utility-card space-y-2 text-center">
+        <p className="type-caption-strong text-[var(--ink)]">Compra de teste aprovada</p>
+        <p className="type-body-strong text-[var(--ink)]">{totalLabel}</p>
+        <p className="type-fine-print text-[var(--ink-muted-48)]">
+          Modo teste: nenhum pedido foi criado e nada foi cobrado. Pagamento via{" "}
+          {payType === "pix" ? "Pix" : "cartão"}.
+        </p>
+      </div>
+    );
+  }
+
+  if (payPhase === "pix") {
+    const orderId = paidOrderId || draftOrderId;
+    return (
+      <div className="checkout-pix-panel offer-card checkout-panel space-y-4 text-center" data-testid="checkout-pix">
+        <h2 className="type-tagline text-[var(--ink)]">Pague com Pix</h2>
+        <p className="type-body-strong text-[var(--ink)]">{paidLabel}</p>
+        <p className="type-fine-print text-[var(--ink-muted-80)]">
+          Escaneie o QR Code ou copie o código. Confirmamos automaticamente.
+        </p>
+        {pixQrBase64 ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={`data:image/png;base64,${pixQrBase64}`}
+            alt="QR Code Pix"
+            className="checkout-pix-panel__qr mx-auto h-56 w-56"
+          />
+        ) : (
+          <p className="type-caption text-[var(--ink-muted-80)]">Gerando QR Code…</p>
+        )}
+        {pixCopyPaste ? (
+          <div className="space-y-2 text-left">
+            <textarea
+              readOnly
+              className={`${inputClass} h-24 resize-none type-fine-print`}
+              value={pixCopyPaste}
+              aria-label="Código Pix copia e cola"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="checkout-pix-panel__copy w-full"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(pixCopyPaste);
+                  setPixCopied(true);
+                  window.setTimeout(() => setPixCopied(false), 2000);
+                } catch {
+                  setError("Não foi possível copiar. Selecione o código e copie manualmente.");
+                }
+              }}
+            >
+              {pixCopied ? "Copiado" : "Copiar código Pix"}
+            </Button>
+          </div>
+        ) : null}
+        {error ? <p className="type-caption text-[var(--danger)]">{error}</p> : null}
+        <Button
+          type="button"
+          className="w-full"
+          disabled={!orderId || loading}
+          onClick={() => orderId && void pollCheckoutStatus(orderId)}
+        >
+          Já paguei — verificar
+        </Button>
+        <p className="type-fine-print text-[var(--ink-muted-48)]">
+          Aguardando confirmação do pagamento…
+        </p>
+      </div>
+    );
+  }
+
+  if (payPhase === "done") {
+    return (
+      <div className="checkout-pix-panel offer-card checkout-panel space-y-4 text-center" data-testid="checkout-done">
+        <h2 className="type-tagline text-[var(--ink)]">Pagamento confirmado</h2>
+        <p className="type-body-strong text-[var(--ink)]">{paidLabel}</p>
+        <p className="type-fine-print text-[var(--ink-muted-80)]">
+          Recebemos seu pedido. Enviamos a confirmação para {email || "seu e-mail"}.
+        </p>
+        <Button type="button" className="w-full" onClick={() => router.push(continueAfterPayHref)}>
+          Continuar
+        </Button>
+      </div>
+    );
+  }
 
   if (phase === "offer") {
     return (
@@ -1219,10 +1489,12 @@ export function CheckoutForm({
           </button>
 
           {!onPaymentStep ? (
-            <Button type="submit" variant="primary" className="w-full">
-              {visibleStep === 1 && requireAddress
-                ? cfg.continueToAddressLabel
-                : cfg.continueToPaymentLabel}
+            <Button type="submit" variant="primary" disabled={progressSaving} className="w-full">
+              {progressSaving
+                ? "Salvando…"
+                : visibleStep === 1 && requireAddress
+                  ? cfg.continueToAddressLabel
+                  : cfg.continueToPaymentLabel}
             </Button>
           ) : (
             <Button type="submit" variant="primary" disabled={loading} className="w-full">

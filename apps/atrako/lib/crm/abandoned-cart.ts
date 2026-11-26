@@ -696,12 +696,15 @@ async function emitCheckoutAbandoned(cart: {
   }).catch((err) => console.warn("[abandoned-cart] whatsapp failed", err));
 }
 
-/** Pedidos PENDING do checkout próprio entram no mesmo ciclo. */
+/** Pedidos PENDING/DRAFT do checkout próprio entram no mesmo ciclo (incl. mid-checkout). */
 async function trackPendingCommerceOrders() {
   const since = new Date(Date.now() - RECOVERY_WINDOW_DAYS * DAY);
   const orders = await prisma.commerceOrder.findMany({
-    where: { status: "PENDING", createdAt: { gte: since } },
-    include: { items: true },
+    where: { status: { in: ["PENDING", "DRAFT"] }, createdAt: { gte: since } },
+    include: {
+      items: true,
+      product: { select: { slug: true } },
+    },
     orderBy: { createdAt: "asc" },
     take: 500,
   });
@@ -711,6 +714,19 @@ async function trackPendingCommerceOrders() {
     "http://localhost:5000"
   ).replace(/\/$/, "");
   for (const order of orders) {
+    const quote =
+      order.shippingQuote && typeof order.shippingQuote === "object" && !Array.isArray(order.shippingQuote)
+        ? (order.shippingQuote as Record<string, unknown>)
+        : {};
+    const pageSlug =
+      typeof quote.pageSlug === "string" && quote.pageSlug.trim()
+        ? quote.pageSlug.trim()
+        : order.product?.slug || null;
+    const recoveryUrl = pageSlug
+      ? `${base}/p/${pageSlug}#checkout`
+      : order.productId
+        ? `${base}/checkout/${order.productId}`
+        : null;
     await trackOrderPayment({
       workspaceId: order.clienteId,
       provider: "COMMERCE",
@@ -727,7 +743,7 @@ async function trackPendingCommerceOrders() {
         quantity: i.quantity,
         unitPriceCents: i.priceCents,
       })),
-      recoveryUrl: order.productId ? `${base}/checkout/${order.productId}` : null,
+      recoveryUrl,
     });
   }
   return orders.length;

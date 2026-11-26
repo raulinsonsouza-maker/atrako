@@ -129,6 +129,7 @@ body {
   padding: 32px 20px 20px;
   max-width: 72rem;
   margin: 0 auto;
+  background: #fff;
 }
 .mood-hero-copy {
   display: flex;

@@ -10,12 +10,12 @@ type Props = {
 };
 
 /** FAQ interativo — um item aberto por vez. */
-export function LpFaqAccordion({ title = "Perguntas frequentes", items }: Props) {
+export function LpFaqAccordion({ title, items }: Props) {
   const [open, setOpen] = useState(0);
 
   return (
-    <section className="lp-faq" aria-label={title}>
-      <h2 className="lp-faq__title type-caption-strong text-[var(--ink)]">{title}</h2>
+    <section className="lp-faq" aria-label={title || "Perguntas frequentes"}>
+      {title ? <h2 className="lp-faq__title">{title}</h2> : null}
       <div className="lp-faq__list">
         {items.map((item, i) => {
           const isOpen = open === i;
@@ -27,12 +27,12 @@ export function LpFaqAccordion({ title = "Perguntas frequentes", items }: Props)
                 aria-expanded={isOpen}
                 onClick={() => setOpen(isOpen ? -1 : i)}
               >
-                <span className="type-caption-strong text-[var(--ink)]">{item.q}</span>
+                <span>{item.q}</span>
                 <span className="lp-faq__icon" aria-hidden>
-                  {isOpen ? "−" : "+"}
+                  {isOpen ? "∧" : "∨"}
                 </span>
               </button>
-              {isOpen ? <p className="lp-faq__a type-caption text-[var(--ink-muted-80)]">{item.a}</p> : null}
+              {isOpen ? <p className="lp-faq__a">{item.a}</p> : null}
             </div>
           );
         })}

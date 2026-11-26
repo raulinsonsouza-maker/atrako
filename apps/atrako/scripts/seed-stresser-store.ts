@@ -134,7 +134,7 @@ function moodSalesPage(): Prisma.InputJsonValue {
         id: "s_hero",
         type: "hero",
         kicker: "SEU SONO MERECE ESSE UPGRADE",
-        headline: "Durma bem hoje. Acorde melhor amanhã.",
+        headline: "Durma bem hoje.|Acorde melhor amanhã.",
         subheadline:
           "Chega de acordar cansado, com calor ou sentindo cada movimento na cama. O Pikolin Mood transforma suas noites desde a primeira.",
         checks: ["28 cm de altura", "Suporta até 250 kg", "Não balança a dois"],
@@ -168,7 +168,8 @@ function moodSalesPage(): Prisma.InputJsonValue {
       {
         id: "s_checkout",
         type: "checkout",
-        introTitle: "Seu corpo pede uma cama melhor.",
+        introKicker: "A ESCOLHA INTELIGENTE PARA SUAS NOITES",
+        introTitle: "Seu corpo pede|uma cama melhor.",
         introLead:
           "Mais conforto, menos interrupções e aquela sensação gostosa de acordar pronto para o dia.",
         introStat: "250kg",
@@ -178,7 +179,7 @@ function moodSalesPage(): Prisma.InputJsonValue {
         id: "s_benefits",
         type: "benefits",
         kicker: "O QUE MUDA NA SUA NOITE",
-        title: "Pequenas diferenças. Um sono muito melhor.",
+        title: "Pequenas diferenças.|Um sono muito melhor.",
         lead:
           "O Mood resolve os três maiores inimigos de uma noite bem dormida: calor, movimento e falta de suporte.",
         items: [
@@ -216,14 +217,14 @@ function moodSalesPage(): Prisma.InputJsonValue {
       {
         id: "s_quote",
         type: "quote",
-        text: "O melhor investimento não é no colchão. É em como você vive depois de dormir bem.",
+        text: "O melhor investimento não é no colchão.|É em como você vive depois de dormir bem.",
         attribution: "PIKOLIN · DESDE 1918",
       },
       {
         id: "s_faq",
         type: "faq",
         kicker: "ANTES DE DECIDIR",
-        title: "Suas dúvidas, respondidas.",
+        title: "Suas dúvidas,|respondidas.",
         lead: "Se ainda ficou alguma pergunta, a resposta provavelmente está aqui.",
         items: [
           {
@@ -248,7 +249,7 @@ function moodSalesPage(): Prisma.InputJsonValue {
         id: "s_final",
         type: "cta",
         kicker: "SEU PRÓXIMO DIA COMEÇA HOJE",
-        title: "A cama que você vai agradecer toda manhã.",
+        title: "A cama que você vai|agradecer toda manhã.",
         lead: "Escolha seu tamanho e aproveite a condição especial enquanto ela está disponível.",
         label: "Quero dormir melhor",
         href: "#checkout",
@@ -334,7 +335,7 @@ async function seedStore(clienteId: string) {
   const rules = shippingFreeBrasil();
   const theme = {
     logoUrl: LOGO,
-    announce: "Frete grátis Brasil · 15% off no Pix · 10x sem juros",
+    announce: "Frete grátis para todo o Brasil · 1 ano de garantia de fábrica",
     about: "Stresser Colchões — qualidade em colchões com entrega em todo o Brasil.",
     whatsapp: "41999962142",
     email: "vendas@stressercolchoes.com.br",

@@ -5,6 +5,7 @@ import { CheckoutForm, type CheckoutVariantOption } from "@/components/commerce/
 import { LpFaqAccordion } from "@/components/commerce/LpFaqAccordion";
 import { LpLeadForm } from "@/components/commerce/LpLeadForm";
 import { MattressLayersBlock } from "@/components/commerce/MattressLayersBlock";
+import { MoodTitle } from "@/components/commerce/MoodTitle";
 import { ProductGallery, type GalleryMedia } from "@/components/commerce/ProductGallery";
 import { FloatingStickyBar } from "@/components/ui/floating-sticky-bar";
 import type { LpSalesPageV1, LpSection } from "@/lib/criar/lp-schema";
@@ -79,17 +80,13 @@ function SectionBlock({
       return (
         <section className="lp-mood-hero" id="top">
           <div className="lp-mood-hero__copy">
-            {section.kicker ? (
-              <p className="lp-kicker type-fine-print">{section.kicker}</p>
-            ) : null}
-            <h1 className="type-tagline text-[var(--ink)]">{section.headline}</h1>
-            {section.subheadline ? (
-              <p className="mt-3 type-body text-[var(--ink-muted-80)]">{section.subheadline}</p>
-            ) : null}
+            {section.kicker ? <p className="lp-kicker">{section.kicker}</p> : null}
+            <MoodTitle text={section.headline} as="h1" className="mood-display" />
+            {section.subheadline ? <p className="lp-mood-lead">{section.subheadline}</p> : null}
             {section.checks?.length ? (
               <ul className="lp-mood-hero__checks">
                 {section.checks.map((c) => (
-                  <li key={c} className="type-fine-print text-[var(--ink-muted-80)]">
+                  <li key={c}>
                     <span className="lp-check" aria-hidden>
                       ✓
                     </span>
@@ -98,10 +95,15 @@ function SectionBlock({
                 ))}
               </ul>
             ) : null}
-            <a href="#checkout" className="lp-offer-strip__cta mt-4">
+            <a href="#checkout" className="mood-btn-green">
               {section.ctaLabel || "Quero dormir melhor"} →
             </a>
-            <p className="mt-2 type-fine-print text-[var(--ink-muted-48)]">Compra segura</p>
+            <p className="lp-mood-secure">
+              <span className="lp-mood-secure__icon" aria-hidden>
+                ◆
+              </span>
+              Compra segura
+            </p>
           </div>
           {galleryImages?.length ? (
             <div className="lp-mood-hero__visual">
@@ -109,78 +111,74 @@ function SectionBlock({
             </div>
           ) : section.mediaUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={section.mediaUrl}
-              alt=""
-              className="mt-6 w-full rounded-[var(--radius-lg)] object-cover shadow-product"
-            />
+            <img src={section.mediaUrl} alt="" className="lp-mood-hero__fallback-img" />
           ) : null}
         </section>
       );
     case "gallery":
-      // Rendered inside hero when present after hero in page order
       return null;
     case "trust":
       return (
         <section className="lp-trust-bar" aria-label="Vantagens">
           {section.items.map((item) => (
             <div key={item.title} className="lp-trust-bar__item">
-              <p className="type-caption-strong text-[var(--ink)]">{item.title}</p>
-              <p className="type-fine-print text-[var(--ink-muted-48)]">{item.body}</p>
+              <p className="lp-trust-bar__title">{item.title}</p>
+              <p className="lp-trust-bar__body">{item.body}</p>
             </div>
           ))}
         </section>
       );
     case "benefits":
       return (
-        <section className="lp-section lp-section-benefits" id="beneficios">
-          {section.kicker ? <p className="lp-kicker type-fine-print text-center">{section.kicker}</p> : null}
-          <h2 className="type-tagline text-center text-[var(--ink)]">
-            {section.title || "Benefícios"}
-          </h2>
-          {section.lead ? (
-            <p className="mt-2 text-center type-body text-[var(--ink-muted-80)]">{section.lead}</p>
-          ) : null}
-          <div className="lp-benefit-grid-lg">
-            {section.items.map(normalizeBenefit).map((card, i) => (
-              <article key={`${i}-${card.title}`} className="lp-benefit-tile-lg">
-                {card.icon ? (
-                  <span className="lp-benefit-num type-fine-print" aria-hidden>
-                    {card.icon}
+        <section className="lp-mood-benefits" id="beneficios">
+          <div className="lp-mood-benefits__inner">
+            {section.kicker ? <p className="lp-kicker lp-kicker--on-dark">{section.kicker}</p> : null}
+            {section.title ? (
+              <MoodTitle text={section.title} as="h2" className="mood-display mood-display--on-dark" />
+            ) : null}
+            {section.lead ? <p className="lp-mood-lead lp-mood-lead--on-dark">{section.lead}</p> : null}
+            <div className="lp-benefit-stack">
+              {section.items.map(normalizeBenefit).map((card, i) => (
+                <article
+                  key={`${i}-${card.title}`}
+                  className={`lp-benefit-card${i === 0 ? " is-featured" : ""}`}
+                >
+                  <div className="lp-benefit-card__body">
+                    <h3>{card.title}</h3>
+                    {card.body ? <p>{card.body}</p> : null}
+                  </div>
+                  <span className="lp-benefit-card__num" aria-hidden>
+                    {card.icon || String(i + 1).padStart(2, "0")}
                   </span>
-                ) : null}
-                <h3 className="type-caption-strong text-[var(--ink)]">{card.title}</h3>
-                {card.body ? <p className="type-fine-print text-[var(--ink-muted-80)]">{card.body}</p> : null}
-              </article>
-            ))}
+                </article>
+              ))}
+            </div>
           </div>
         </section>
       );
     case "mattress_layers":
       return (
-        <section className="lp-section lp-section-story" id="tecnologia">
+        <section className="lp-section-story" id="tecnologia">
           <div className="lp-story-copy">
-            {section.kicker ? <p className="lp-kicker type-fine-print">{section.kicker}</p> : null}
-            {section.title ? <h2 className="type-tagline text-[var(--ink)]">{section.title}</h2> : null}
-            {section.lead ? (
-              <p className="mt-3 type-body text-[var(--ink-muted-80)]">{section.lead}</p>
-            ) : null}
+            {section.kicker ? <p className="lp-kicker">{section.kicker}</p> : null}
+            {section.title ? <MoodTitle text={section.title} as="h2" className="mood-display" /> : null}
+            {section.lead ? <p className="lp-mood-lead">{section.lead}</p> : null}
             {section.highlights?.length ? (
               <ol className="lp-story-highlights">
                 {section.highlights.map((h, i) => (
                   <li key={h.title}>
-                    <span className="lp-benefit-num type-fine-print" aria-hidden>
+                    <span className="lp-story-n" aria-hidden>
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     <div>
-                      <p className="type-caption-strong text-[var(--ink)]">{h.title}</p>
-                      <p className="type-fine-print text-[var(--ink-muted-80)]">{h.body}</p>
+                      <p className="lp-story-h">{h.title}</p>
+                      <p className="lp-story-b">{h.body}</p>
                     </div>
                   </li>
                 ))}
               </ol>
             ) : null}
-            <a href="#checkout" className="lp-text-cta type-caption-strong">
+            <a href="#checkout" className="lp-text-cta">
               Quero esse conforto em casa →
             </a>
           </div>
@@ -196,38 +194,34 @@ function SectionBlock({
     case "quote":
       return (
         <section className="lp-quote-break">
+          <span className="lp-quote-mark" aria-hidden>
+            “
+          </span>
           <blockquote>
-            <p className="type-tagline text-[var(--ink)]">“{section.text}”</p>
-            {section.attribution ? (
-              <footer className="mt-4 type-fine-print text-[var(--ink-muted-48)]">
-                {section.attribution}
-              </footer>
-            ) : null}
+            <MoodTitle text={section.text} as="p" className="mood-display mood-display--quote" />
+            {section.attribution ? <footer>{section.attribution}</footer> : null}
           </blockquote>
         </section>
       );
     case "faq":
       return (
-        <section className="lp-section" id="duvidas">
-          {section.kicker ? <p className="lp-kicker type-fine-print text-center">{section.kicker}</p> : null}
-          {section.lead ? (
-            <p className="mb-3 text-center type-body text-[var(--ink-muted-80)]">{section.lead}</p>
-          ) : null}
-          <LpFaqAccordion title={section.title} items={section.items} />
+        <section className="lp-mood-faq" id="duvidas">
+          {section.kicker ? <p className="lp-kicker">{section.kicker}</p> : null}
+          {section.title ? <MoodTitle text={section.title} as="h2" className="mood-display" /> : null}
+          {section.lead ? <p className="lp-mood-lead">{section.lead}</p> : null}
+          <LpFaqAccordion title={undefined} items={section.items} />
         </section>
       );
     case "form":
       if (preview) {
         return (
-          <section className="lp-section">
-            <div className="rounded-[var(--radius-lg)] border border-dashed border-[var(--primary)]/40 bg-[var(--canvas)] p-5 text-center">
-              <p className="type-caption-strong text-[var(--primary)]">Formulário Atrako</p>
-            </div>
+          <section className="lp-mood-pad">
+            <p className="type-caption-strong text-[var(--primary)]">Formulário Atrako</p>
           </section>
         );
       }
       return (
-        <section className="lp-section lp-section-convert">
+        <section className="lp-mood-pad lp-section-convert">
           <LpLeadForm
             title={section.title || "Deixe seus dados"}
             formSlug={formSlug}
@@ -240,10 +234,8 @@ function SectionBlock({
     case "checkout":
       if (preview) {
         return (
-          <section className="lp-section">
-            <div className="rounded-[var(--radius-lg)] border border-dashed border-[var(--primary)]/40 p-5 text-center">
-              <p className="type-caption-strong text-[var(--primary)]">Checkout Atrako</p>
-            </div>
+          <section className="lp-mood-pad">
+            <p className="type-caption-strong text-[var(--primary)]">Checkout Atrako</p>
           </section>
         );
       }
@@ -251,26 +243,25 @@ function SectionBlock({
         const sold = checkoutProduct ?? product;
         const physical = (sold.type || product.kind || "").toUpperCase() === "PHYSICAL";
         return (
-          <section className="lp-section lp-section-offer" id="checkout">
-            {(section.introTitle || section.introLead) && (
+          <section className="lp-section-offer" id="checkout">
+            {(section.introTitle || section.introLead || section.introKicker) && (
               <div className="offer-intro">
+                {section.introKicker ? <p className="lp-kicker">{section.introKicker}</p> : null}
                 {section.introTitle ? (
-                  <h2 className="type-tagline text-[var(--ink)]">{section.introTitle}</h2>
+                  <MoodTitle text={section.introTitle} as="h2" className="mood-display" />
                 ) : null}
-                {section.introLead ? (
-                  <p className="mt-3 type-body text-[var(--ink-muted-80)]">{section.introLead}</p>
-                ) : null}
+                {section.introLead ? <p className="lp-mood-lead">{section.introLead}</p> : null}
                 {section.introStat ? (
                   <div className="offer-intro__stat">
                     <p className="offer-intro__stat-num">{section.introStat}</p>
                     {section.introStatLabel ? (
-                      <p className="type-fine-print text-[var(--ink-muted-48)]">{section.introStatLabel}</p>
+                      <p className="offer-intro__stat-label">{section.introStatLabel}</p>
                     ) : null}
                   </div>
                 ) : null}
               </div>
             )}
-            <Suspense fallback={<p className="type-caption text-[var(--ink-muted-48)]">…</p>}>
+            <Suspense fallback={<p className="type-caption">…</p>}>
               <CheckoutForm
                 product={{
                   id: sold.id,
@@ -298,35 +289,35 @@ function SectionBlock({
     case "cta":
       return (
         <section className="lp-final-cta">
-          {section.kicker ? <p className="lp-kicker type-fine-print">{section.kicker}</p> : null}
-          {section.title ? <h2 className="type-tagline text-[var(--ink)]">{section.title}</h2> : null}
-          {section.lead ? (
-            <p className="mt-3 type-body text-[var(--ink-muted-80)]">{section.lead}</p>
-          ) : null}
-          <a
-            href={section.href || (page.goal === "sales" ? "#checkout" : "#form")}
-            className="lp-offer-strip__cta mt-5"
-          >
-            {section.label} →
-          </a>
+          <div className="lp-final-cta__inner">
+            {section.kicker ? <p className="lp-kicker lp-kicker--on-dark">{section.kicker}</p> : null}
+            {section.title ? (
+              <MoodTitle text={section.title} as="h2" className="mood-display mood-display--on-dark" />
+            ) : null}
+            {section.lead ? <p className="lp-mood-lead lp-mood-lead--on-dark">{section.lead}</p> : null}
+            <a
+              href={section.href || (page.goal === "sales" ? "#checkout" : "#form")}
+              className="mood-btn-green"
+            >
+              {section.label} →
+            </a>
+            <ul className="lp-final-cta__perks">
+              <li>15% OFF no Pix</li>
+              <li>10x sem juros</li>
+              <li>Frete grátis</li>
+            </ul>
+          </div>
         </section>
       );
     case "social_proof":
       return (
-        <section className="lp-section">
-          <div className="space-y-3">
-            {section.quotes.map((q, i) => (
-              <blockquote
-                key={`${q.text}-${i}`}
-                className="rounded-[var(--radius-lg)] border border-[var(--hairline)] p-4"
-              >
-                <p className="type-caption text-[var(--ink)]">“{q.text}”</p>
-                {q.author ? (
-                  <footer className="mt-2 type-fine-print text-[var(--ink-muted-48)]">— {q.author}</footer>
-                ) : null}
-              </blockquote>
-            ))}
-          </div>
+        <section className="lp-mood-pad">
+          {section.quotes.map((q, i) => (
+            <blockquote key={`${q.text}-${i}`} className="lp-quote-simple">
+              <p>“{q.text}”</p>
+              {q.author ? <footer>— {q.author}</footer> : null}
+            </blockquote>
+          ))}
         </section>
       );
     case "video":
@@ -336,7 +327,7 @@ function SectionBlock({
   }
 }
 
-/** LP pública / preview — seções DS + Form/Checkout Atrako. */
+/** LP pública Mood — visual alinhado à preview de conversão. */
 export function SalesPageView({
   page,
   product,
@@ -361,16 +352,7 @@ export function SalesPageView({
   return (
     <div className="lp-page lp-page--mood">
       {page.sections.map((section) => (
-        <div
-          key={section.id}
-          id={
-            section.type === "checkout"
-              ? undefined
-              : section.type === "form"
-                ? "form"
-                : undefined
-          }
-        >
+        <div key={section.id} id={section.type === "form" ? "form" : undefined}>
           <SectionBlock
             section={section}
             product={product}
@@ -392,9 +374,9 @@ export function SalesPageView({
         <FloatingStickyBar
           className="lp-mood-sticky"
           label={
-            <span>
-              <strong className="type-caption-strong">{brl(pixCents, currency)}</strong>
-              <span className="type-fine-print text-[var(--ink-muted-48)]"> à vista no Pix</span>
+            <span className="lp-mood-sticky__price">
+              <strong>{brl(pixCents, currency)}</strong>
+              <small>à vista no Pix</small>
             </span>
           }
           ctaLabel="Comprar agora →"

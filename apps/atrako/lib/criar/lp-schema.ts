@@ -42,6 +42,7 @@ export type LpSection =
   | {
       id: string;
       type: "checkout";
+      introKicker?: string;
       introTitle?: string;
       introLead?: string;
       introStat?: string;

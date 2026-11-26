@@ -274,11 +274,27 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
     checkoutProduct = productPayload;
   }
 
+  const isMoodLp = !pageV2 && product.slug === "pikolin-mood";
+
   return (
     <BrandThemeScope
       primaryColor={brand?.primaryColor}
-      className="min-h-screen bg-[var(--canvas)] text-[var(--ink)]"
+      className={
+        isMoodLp
+          ? "lp-mood-shell min-h-screen bg-[#fbfaf7] text-[#162538]"
+          : "min-h-screen bg-[var(--canvas)] text-[var(--ink)]"
+      }
     >
+      {isMoodLp ? (
+        <>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+          <link
+            href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap"
+            rel="stylesheet"
+          />
+        </>
+      ) : null}
       {!embed && !previewToken ? <LpHostTrackingBoot /> : null}
       {typeof tracking.pixelId === "string" && tracking.pixelId && !embed ? (
         <script
@@ -298,11 +314,21 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
         </>
       ) : null}
 
+      {isMoodLp && !embed ? (
+        <div className="lp-mood-announce" role="note">
+          <span>Frete grátis para todo o Brasil</span>
+          <span>1 ano de garantia de fábrica</span>
+        </div>
+      ) : null}
+
       {!embed ? (
         <SubNavFrosted
           title={brandName}
           logoUrl={brand?.logoUrl}
           links={[]}
+          ctaHref={isMoodLp ? "#checkout" : undefined}
+          ctaLabel={isMoodLp ? "Escolher meu tamanho →" : undefined}
+          className={isMoodLp ? "lp-mood-nav" : undefined}
         />
       ) : null}
 
@@ -320,6 +346,18 @@ export default async function PublicLpPage({ params, searchParams }: Props) {
             bump={bump}
             checkoutCatalog={checkoutCatalog}
             bumpByProductId={bumpByProductId}
+          />
+        ) : isMoodLp ? (
+          <SalesPageView
+            page={pageV1!}
+            product={salesProduct}
+            brandName={brandName}
+            currency={brand?.currency || "BRL"}
+            mpPublicKey={mpPublicKey}
+            formSlug={formSlug}
+            checkoutProduct={checkoutProduct}
+            bump={bump}
+            variants={checkoutVariants}
           />
         ) : (
           <div className="mx-auto w-full max-w-xl px-4 pb-10 pt-4 sm:max-w-2xl sm:pb-14 lg:max-w-5xl">

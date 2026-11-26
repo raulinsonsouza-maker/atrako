@@ -76,7 +76,7 @@ export function ProductGallery({ title, images, mode = "reels" }: Props) {
             playsInline
             loop
             autoPlay
-            preload="metadata"
+            preload={isHero ? "auto" : "metadata"}
             controls={false}
           />
         ) : (

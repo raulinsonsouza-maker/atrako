@@ -12,14 +12,16 @@ export type GalleryMedia = {
 type Props = {
   title?: string;
   images: GalleryMedia[];
+  /** Vídeo sem crop (contain) — uso no hero. */
+  mode?: "reels" | "hero";
 };
 
 function isVideoItem(item: GalleryMedia) {
   return (item.kind ?? (item.src.endsWith(".mp4") ? "video" : "image")) === "video";
 }
 
-/** Galeria estilo reels: swipe horizontal, vídeo muted autoplay como 1º item. */
-export function ProductGallery({ title, images }: Props) {
+/** Galeria: swipe; no hero o vídeo fica contain (sem cortar). */
+export function ProductGallery({ title, images, mode = "reels" }: Props) {
   const list = images.filter((img) => img.src);
   const [index, setIndex] = useState(0);
   const touchX = useRef<number | null>(null);
@@ -27,6 +29,7 @@ export function ProductGallery({ title, images }: Props) {
   const safeIndex = list.length ? Math.min(index, list.length - 1) : 0;
   const current = list[safeIndex];
   const showingVideo = current ? isVideoItem(current) : false;
+  const isHero = mode === "hero";
 
   useEffect(() => {
     const v = videoRef.current;
@@ -42,10 +45,13 @@ export function ProductGallery({ title, images }: Props) {
   }
 
   return (
-    <section className="product-gallery product-gallery--reels" aria-label={title || "Mídia do produto"}>
+    <section
+      className={`product-gallery${isHero ? " product-gallery--hero" : " product-gallery--reels"}`}
+      aria-label={title || "Mídia do produto"}
+    >
       {title ? <h2 className="product-gallery__title type-caption-strong text-[var(--ink)]">{title}</h2> : null}
       <div
-        className="product-gallery__main"
+        className={`product-gallery__main${showingVideo && isHero ? " is-video" : ""}`}
         onTouchStart={(e) => {
           touchX.current = e.changedTouches[0]?.clientX ?? null;
         }}
@@ -63,7 +69,7 @@ export function ProductGallery({ title, images }: Props) {
           <video
             key={current.src}
             ref={videoRef}
-            className="product-gallery__media"
+            className={`product-gallery__media${isHero ? " product-gallery__media--contain" : ""}`}
             src={current.src}
             poster={current.poster}
             muted
@@ -116,28 +122,6 @@ export function ProductGallery({ title, images }: Props) {
               aria-label={`Item ${i + 1}`}
             />
           ))}
-        </div>
-      ) : null}
-      {list.length > 1 ? (
-        <div className="product-gallery__thumbs">
-          {list.map((img, i) => {
-            const vid = isVideoItem(img);
-            return (
-              <button
-                key={`thumb-${img.src}-${i}`}
-                type="button"
-                className={`product-gallery__thumb${i === safeIndex ? " is-on" : ""}`}
-                onClick={() => setIndex(i)}
-              >
-                {vid ? (
-                  <span className="product-gallery__thumb-video type-fine-print">▶</span>
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={img.poster || img.src} alt="" />
-                )}
-              </button>
-            );
-          })}
         </div>
       ) : null}
     </section>

@@ -61,10 +61,12 @@ function variantOptions(
       v.options && typeof v.options === "object" && !Array.isArray(v.options)
         ? (v.options as Record<string, string>)
         : {};
-    const label = Object.values(opts).filter(Boolean).join(" · ") || "Opção";
+    const label = opts.Medida || Object.values(opts).filter(Boolean)[0] || "Opção";
+    const dim = opts.Dimensao || undefined;
     return {
       id: v.id,
       label,
+      dim,
       priceCents: v.priceCents ?? fallbackPrice,
     };
   });

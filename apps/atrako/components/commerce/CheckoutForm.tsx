@@ -13,6 +13,7 @@ import { newEventId } from "@/lib/criar/form-tracking";
 export type CheckoutVariantOption = {
   id: string;
   label: string;
+  dim?: string;
   priceCents: number;
 };
 
@@ -144,6 +145,7 @@ export function CheckoutForm({
   const router = useRouter();
   const [testApproved, setTestApproved] = useState(false);
   const search = useSearchParams();
+  const [phase, setPhase] = useState<"offer" | "form">(variants.length > 0 ? "offer" : "form");
   const [step, setStep] = useState<Step>(1);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -345,6 +347,17 @@ export function CheckoutForm({
     setError(null);
     if (step === 3) setStep(2);
     else if (step === 2) setStep(1);
+    else if (step === 1 && variants.length) setPhase("offer");
+  }
+
+  function startFromOffer() {
+    setError(null);
+    if (variants.length && !variantId) {
+      setError("Escolha o tamanho da sua nova cama.");
+      return;
+    }
+    setPhase("form");
+    setStep(1);
   }
 
   async function submit(e?: React.FormEvent) {
@@ -518,7 +531,78 @@ export function CheckoutForm({
         { n: 2 as Step, label: "Pagamento" },
       ];
 
-  const onPaymentStep = visibleStep === paymentStep;
+  const onPaymentStep = phase === "form" && visibleStep === paymentStep;
+
+  if (phase === "offer") {
+    return (
+      <div className="offer-card" data-testid="offer-card">
+        <div className="offer-card-top">
+          <span className="offer-label">OFERTA ESPECIAL</span>
+          <span className="offer-stock">
+            <i className="offer-stock-dot" aria-hidden /> disponível
+          </span>
+        </div>
+        <h3 className="type-tagline text-[var(--ink)]">Escolha o tamanho da sua nova cama</h3>
+        <div className="size-list" role="listbox" aria-label="Tamanhos">
+          {variants.map((v) => {
+            const selected = v.id === variantId;
+            return (
+              <button
+                key={v.id}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                className={`size-option${selected ? " is-selected" : ""}`}
+                onClick={() => setVariantId(v.id)}
+              >
+                <span>
+                  <b className="type-caption-strong text-[var(--ink)]">{v.label}</b>
+                  {v.dim ? <small className="type-fine-print text-[var(--ink-muted-48)]">{v.dim}</small> : null}
+                </span>
+                <span className="size-check" aria-hidden>
+                  {selected ? "✓" : ""}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="offer-card-price">
+          <div className="lp-hero-price__row">
+            {pixPct > 0 ? (
+              <span className="lp-price-was type-fine-print">de {brl(cardTotalCents, currency)}</span>
+            ) : null}
+            {pixPct > 0 ? <span className="lp-chip lp-chip--pix">{pixPct}% OFF no Pix</span> : null}
+          </div>
+          <p className="checkout-price-hero__pix">{brl(pixTotalCents, currency)}</p>
+          <p className="type-fine-print text-[var(--ink-muted-80)]">
+            à vista no Pix
+            {pixDiscountCents > 0 ? ` · economize ${brl(pixDiscountCents, currency)}` : ""}
+          </p>
+          <p className="type-caption text-[var(--ink)]">
+            <strong className="type-caption-strong">
+              {maxInstallments}x de {brl(installmentPreview, currency)}
+            </strong>{" "}
+            sem juros no cartão
+          </p>
+        </div>
+        {error ? <p className="type-caption text-[var(--danger)]">{error}</p> : null}
+        <Button type="button" variant="primary" className="w-full" onClick={startFromOffer}>
+          Comprar com frete grátis
+        </Button>
+        <p className="mt-3 text-center type-fine-print text-[var(--ink-muted-48)]">
+          Pagamento protegido · entrega garantida
+        </p>
+        {!mpPublicKey && !previewToken ? (
+          <p className="mt-2 type-caption text-amber-800">
+            Mercado Pago não conectado.{" "}
+            <Link href="/config/conexoes" className="text-[var(--primary)] underline">
+              Conectar
+            </Link>
+          </p>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -536,31 +620,11 @@ export function CheckoutForm({
         ) : null}
 
         <div className="checkout-flow__head">
-          <h2 className="type-tagline text-[var(--ink)]">Garanta o seu Pikolin Mood</h2>
-          <div className="checkout-price-hero lp-hero-price">
-            <div className="lp-hero-price__row">
-              {pixPct > 0 ? (
-                <span className="lp-price-was type-fine-print">{brl(cardTotalCents, currency)}</span>
-              ) : null}
-              {pixPct > 0 ? <span className="lp-chip lp-chip--pix">{pixPct}% OFF NO PIX</span> : null}
-            </div>
-            <p className="checkout-price-hero__pix">{brl(pixTotalCents, currency)}</p>
-            <p className="type-fine-print text-[var(--ink-muted-80)]">
-              à vista no Pix
-              {pixDiscountCents > 0 ? ` (economia de ${brl(pixDiscountCents, currency)})` : ""}
-            </p>
-            <p className="type-caption text-[var(--ink)]">
-              ou <strong className="type-caption-strong">{maxInstallments}x de {brl(installmentPreview, currency)}</strong>{" "}
-              sem juros
-              {requireAddress ? " · Frete grátis" : ""}
-            </p>
-          </div>
-          {!mpPublicKey && !previewToken ? (
-            <p className="mt-2 type-caption text-amber-800">
-              Mercado Pago não conectado.{" "}
-              <Link href="/config/conexoes" className="text-[var(--primary)] underline">
-                Conectar
-              </Link>
+          <h2 className="type-tagline text-[var(--ink)]">Finalize sua compra</h2>
+          {selectedVariant ? (
+            <p className="mt-1 type-fine-print text-[var(--ink-muted-80)]">
+              {selectedVariant.label}
+              {selectedVariant.dim ? ` · ${selectedVariant.dim}` : ""} · {brl(selectedPixCents, currency)} no Pix
             </p>
           ) : null}
         </div>
@@ -580,37 +644,6 @@ export function CheckoutForm({
 
         {visibleStep === 1 ? (
           <div className="space-y-3">
-            {variants.length > 0 ? (
-              <div>
-                <p className="mb-2 type-caption-strong text-[var(--ink)]">Escolha o tamanho</p>
-                <PillSelect
-                  size="field"
-                  value={variantId}
-                  onChange={setVariantId}
-                  aria-label="Tamanho"
-                  options={variants.map((v) => {
-                    const vPix =
-                      pixPct > 0
-                        ? Math.max(0, v.priceCents - Math.round((v.priceCents * pixPct) / 100))
-                        : v.priceCents;
-                    const vInst = Math.round(v.priceCents / maxInstallments);
-                    return {
-                      value: v.id,
-                      label: `${v.label} · ${brl(vPix, currency)} no Pix (ou ${maxInstallments}x de ${brl(vInst, currency)})`,
-                    };
-                  })}
-                />
-                {selectedVariant ? (
-                  <p className="mt-2 type-fine-print text-[var(--ink-muted-80)]">
-                    {selectedVariant.label} ·{" "}
-                    <span className="type-caption-strong text-[var(--primary)]">
-                      {brl(selectedPixCents, currency)} no Pix
-                    </span>{" "}
-                    (ou {maxInstallments}x de {brl(selectedInstallment, currency)})
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
             <input
               className={inputClass}
               placeholder="Nome completo"
@@ -831,16 +864,14 @@ export function CheckoutForm({
 
         {error ? <p className="type-caption text-[var(--danger)]">{error}</p> : null}
 
-        <div className={`flex flex-col gap-3 ${visibleStep > 1 ? "sm:flex-row sm:items-center sm:justify-between" : ""}`}>
-          {visibleStep > 1 ? (
-            <button
-              type="button"
-              onClick={goBack}
-              className="type-caption-strong text-[var(--primary)] active:scale-95"
-            >
-              Voltar
-            </button>
-          ) : null}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            type="button"
+            onClick={goBack}
+            className="type-caption-strong text-[var(--primary)] active:scale-95"
+          >
+            Voltar
+          </button>
 
           {!onPaymentStep ? (
             <Button type="submit" variant="primary" className="w-full">

@@ -9,11 +9,15 @@ export type LpSection =
       headline: string;
       subheadline?: string;
       mediaUrl?: string;
+      kicker?: string;
+      checks?: string[];
+      ctaLabel?: string;
     }
   | {
       id: string;
       type: "benefits";
       title?: string;
+      kicker?: string;
       lead?: string;
       items: Array<string | { title: string; body?: string; icon?: string }>;
     }
@@ -26,6 +30,8 @@ export type LpSection =
       id: string;
       type: "faq";
       title?: string;
+      kicker?: string;
+      lead?: string;
       items: Array<{ q: string; a: string }>;
     }
   | {
@@ -36,24 +42,34 @@ export type LpSection =
   | {
       id: string;
       type: "checkout";
+      introTitle?: string;
+      introLead?: string;
+      introStat?: string;
+      introStatLabel?: string;
     }
   | {
       id: string;
       type: "cta";
       label: string;
       href?: string;
+      kicker?: string;
+      title?: string;
+      lead?: string;
     }
   | {
       id: string;
       type: "mattress_layers";
       title?: string;
+      kicker?: string;
+      lead?: string;
+      highlights?: Array<{ title: string; body: string }>;
       layers: Array<{ id: number; title: string; body?: string; imageUrl: string }>;
     }
   | {
       id: string;
       type: "gallery";
       title?: string;
-      /** Imagens e/ou vídeo (reels). Vídeo: kind "video". */
+      /** Imagens e/ou vídeo. Vídeo: kind "video". */
       images: Array<{
         src: string;
         alt: string;
@@ -67,6 +83,17 @@ export type LpSection =
       src: string;
       poster?: string;
       title?: string;
+    }
+  | {
+      id: string;
+      type: "trust";
+      items: Array<{ title: string; body: string }>;
+    }
+  | {
+      id: string;
+      type: "quote";
+      text: string;
+      attribution?: string;
     };
 
 export type LpDeliverable = {

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { PillSelect } from "@/components/ui/pill-select";
-import { FloatingStickyBar } from "@/components/ui/floating-sticky-bar";
 import { collectClientAttribution } from "@/lib/criar/lp-attribution";
 import { newEventId } from "@/lib/criar/form-tracking";
 
@@ -688,6 +687,11 @@ export function CheckoutForm({
 
   const onPaymentStep = phase === "form" && visibleStep === paymentStep;
 
+  useEffect(() => {
+    document.documentElement.classList.toggle("atrako-checkout-paying", onPaymentStep);
+    return () => document.documentElement.classList.remove("atrako-checkout-paying");
+  }, [onPaymentStep]);
+
   const legalModal =
     legalOpen ? (
       <div className="checkout-legal-modal" role="dialog" aria-modal="true" aria-labelledby="checkout-legal-title">
@@ -762,29 +766,18 @@ export function CheckoutForm({
               {pixPct > 0 ? <span className="lp-chip lp-chip--pix">{pixPct}% OFF no Pix</span> : null}
             </div>
             <p className="checkout-price-hero__pix">{brl(pixTotalCents, currency)}</p>
-            <p className="type-fine-print text-[var(--ink-muted-80)]">à vista no Pix</p>
-            {pixDiscountCents > 0 ? (
-              <p className="checkout-savings">Você economiza {brl(pixDiscountCents, currency)} no Pix</p>
-            ) : null}
-            <p className="type-caption text-[var(--ink)]">
-              <strong className="type-caption-strong">
-                {maxInstallments}x de {brl(installmentPreview, currency)}
-              </strong>{" "}
-              sem juros no cartão
+            <p className="type-fine-print text-[var(--ink-muted-80)]">
+              à vista no Pix
+              {pixDiscountCents > 0 ? ` · economize ${brl(pixDiscountCents, currency)}` : ""}
+            </p>
+            <p className="mt-2 type-caption text-[var(--ink)]">
+              ou {maxInstallments}x de {brl(installmentPreview, currency)} sem juros · frete grátis
             </p>
           </div>
-          <ul className="checkout-perks" aria-label="Benefícios da compra">
-            <li>Frete grátis para todo o Brasil</li>
-            <li>{maxInstallments}x sem juros no cartão</li>
-            {pixPct > 0 ? <li>{pixPct}% OFF à vista no Pix</li> : null}
-          </ul>
           {error ? <p className="type-caption text-[var(--danger)]">{error}</p> : null}
           <Button type="button" variant="primary" className="w-full" onClick={startFromOffer}>
-            Comprar com frete grátis
+            Escolher este tamanho
           </Button>
-          <p className="mt-3 text-center type-fine-print text-[var(--ink-muted-48)]">
-            Pagamento protegido · entrega garantida
-          </p>
           {!mpPublicKey && !previewToken ? (
             <p className="mt-2 type-caption text-amber-800">
               Mercado Pago não conectado.{" "}
@@ -962,27 +955,6 @@ export function CheckoutForm({
 
         {onPaymentStep ? (
           <div className="space-y-4">
-            <div className="checkout-summary checkout-summary--hero">
-              <p className="type-caption-strong text-[var(--ink)]">{selectedVariant?.label || product.name}</p>
-              {pixPct > 0 ? (
-                <p className="mt-2 type-fine-print text-[var(--ink-muted-48)]">
-                  de <span className="line-through">{brl(cardTotalCents, currency)}</span>
-                </p>
-              ) : null}
-              <p className="mt-1 checkout-summary__pix">
-                {brl(pixTotalCents, currency)}
-                <span className="type-fine-print"> no Pix</span>
-              </p>
-              {savingsLabel ? (
-                <p className="checkout-savings">Você economiza {savingsLabel} à vista no Pix</p>
-              ) : null}
-              <ul className="checkout-perks" aria-label="Benefícios da compra">
-                <li>Frete grátis para todo o Brasil</li>
-                <li>{maxInstallments}x sem juros no cartão</li>
-                {pixPct > 0 ? <li>{pixPct}% OFF à vista no Pix</li> : null}
-              </ul>
-            </div>
-
             <div className="checkout-pay-tiles">
               <button
                 type="button"
@@ -998,8 +970,40 @@ export function CheckoutForm({
                 onClick={() => setPayType("credit_card")}
               >
                 <span className="type-caption-strong">Cartão</span>
-                <span className="type-fine-print">até {maxInstallments}x sem juros</span>
+                <span className="type-fine-print">até {maxInstallments}x</span>
               </button>
+            </div>
+
+            <div className="checkout-summary checkout-summary--hero">
+              <p className="type-caption-strong text-[var(--ink)]">{selectedVariant?.label || product.name}</p>
+              {payType === "pix" ? (
+                <>
+                  {pixPct > 0 ? (
+                    <p className="mt-2 type-fine-print text-[var(--ink-muted-48)]">
+                      de <span className="line-through">{brl(cardTotalCents, currency)}</span>
+                    </p>
+                  ) : null}
+                  <p className="mt-1 checkout-summary__pix">{brl(pixTotalCents, currency)}</p>
+                  <p className="type-fine-print text-[var(--ink-muted-80)]">Total à vista no Pix</p>
+                  {savingsLabel ? (
+                    <p className="checkout-savings">Economia de {savingsLabel} vs cartão</p>
+                  ) : null}
+                  <p className="mt-3 type-caption text-[var(--ink-muted-80)]">
+                    Frete grátis. Ao finalizar, geramos o QR Code Pix para pagamento.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="mt-2 type-fine-print text-[var(--ink-muted-48)]">Total no cartão</p>
+                  <p className="mt-1 checkout-summary__pix">{brl(cardTotalCents, currency)}</p>
+                  <p className="type-caption text-[var(--ink)]">
+                    em até {maxInstallments}x de {brl(installmentPreview, currency)} sem juros
+                  </p>
+                  <p className="mt-3 type-caption text-[var(--ink-muted-80)]">
+                    Frete grátis. Preencha os dados do cartão e finalize a compra abaixo.
+                  </p>
+                </>
+              )}
             </div>
 
             {payType === "credit_card" ? (
@@ -1106,31 +1110,19 @@ export function CheckoutForm({
             <Button type="submit" variant="primary" className="w-full">
               {visibleStep === 1 && requireAddress
                 ? "Continuar para entrega →"
-                : visibleStep === 1
-                  ? "Continuar para pagamento →"
-                  : "Continuar para pagamento →"}
+                : "Continuar para pagamento →"}
             </Button>
           ) : (
-            <Button type="submit" variant="primary" disabled={loading} className="hidden w-full md:inline-flex">
-              {loading ? "Processando…" : `Finalizar · ${totalLabel}`}
+            <Button type="submit" variant="primary" disabled={loading} className="w-full">
+              {loading
+                ? "Processando…"
+                : payType === "pix"
+                  ? `Gerar Pix · ${totalLabel}`
+                  : `Finalizar no cartão · ${totalLabel}`}
             </Button>
           )}
         </div>
       </form>
-
-      {onPaymentStep ? (
-        <FloatingStickyBar
-          className="md:hidden"
-          label={totalLabel}
-          ctaLabel={loading ? "Processando…" : "Finalizar compra"}
-          ctaDisabled={loading}
-          ctaType="submit"
-          onCta={() => {
-            const form = document.getElementById("checkout-form") as HTMLFormElement | null;
-            form?.requestSubmit();
-          }}
-        />
-      ) : null}
       {legalModal}
     </>
   );

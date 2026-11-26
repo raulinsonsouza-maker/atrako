@@ -2428,15 +2428,17 @@
 }
 
 .checkout-panel {
-  border: 2px solid #162538;
+  border: 0;
   background: #fff;
-  padding: 22px 18px 20px;
-  box-shadow: 0 16px 40px rgba(22, 37, 56, 0.1);
+  padding: 8px 0 4px;
+  box-shadow: none;
 }
 
 .offer-card.checkout-panel {
-  border-color: #162538;
-  box-shadow: 0 16px 40px rgba(22, 37, 56, 0.1);
+  border: 0;
+  box-shadow: none;
+  padding: 8px 0 4px;
+  background: transparent;
 }
 
 .checkout-flow__head {
@@ -2454,10 +2456,11 @@
 }
 
 .checkout-summary {
-  padding: 14px 12px;
-  border: 1px solid #ebe8e2;
-  background: #fbfaf7;
-  text-align: center;
+  padding: 12px 0;
+  border: 0;
+  border-top: 1px solid rgba(22, 37, 56, 0.08);
+  background: transparent;
+  text-align: left;
 }
 
 .checkout-summary--hero {

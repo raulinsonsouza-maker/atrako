@@ -37,16 +37,22 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  height: 52px;
-  padding: 0 16px;
+  gap: 16px;
+  min-height: 60px;
+  height: auto;
+  padding: 10px 16px;
   background: #fff;
   border-bottom: 1px solid rgba(22, 37, 56, 0.08);
+  box-sizing: border-box;
 }
 .mood-logo {
-  height: 32px;
+  display: block;
+  height: 40px;
   width: auto;
+  max-width: min(46vw, 168px);
   object-fit: contain;
+  object-position: left center;
+  flex-shrink: 0;
 }
 .mood-kicker {
   margin: 0 0 12px;
@@ -112,10 +118,43 @@ body {
   box-shadow: 0 8px 20px rgba(107, 158, 61, 0.28);
 }
 .mood-btn-nav {
-  padding: 11px 12px;
-  font-size: 10px;
+  flex-shrink: 0;
+  align-self: center;
+  padding: 12px 16px;
+  min-height: 40px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
   box-shadow: none;
   white-space: nowrap;
+  text-align: center;
+}
+.mood-btn-nav__short {
+  display: none;
+}
+.mood-btn-nav__full {
+  display: inline;
+}
+@media (max-width: 480px) {
+  .mood-nav {
+    gap: 10px;
+    padding: 10px 12px;
+  }
+  .mood-logo {
+    height: 34px;
+    max-width: 42vw;
+  }
+  .mood-btn-nav {
+    padding: 11px 12px;
+    font-size: 12px;
+  }
+  .mood-btn-nav__full {
+    display: none;
+  }
+  .mood-btn-nav__short {
+    display: inline;
+  }
 }
 .mood-btn-sticky {
   padding: 12px 16px;

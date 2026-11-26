@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useLayoutEffect, useMemo, useState, type CSSProperties } from "react";
+import { Suspense, useCallback, useLayoutEffect, useMemo, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import type { FormField } from "@atrako/forms";
 import { CheckoutForm, type CheckoutVariantOption } from "@/components/commerce/CheckoutForm";
@@ -12,6 +12,16 @@ import { withUtm } from "@/lib/atrako-agent/images-core";
 import { LpFxRuntime } from "@/components/commerce/lp-fx/LpFxRuntime";
 import "@/styles/lp-fx/fx.css";
 import type { LpCheckoutBump, LpPuckProduct } from "@/lib/criar/puck/context";
+
+function formatLivePrice(cents: number, currency: string) {
+  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency });
+}
+
+function writeLivePrices(root: HTMLElement, kind: "pix" | "card", label: string) {
+  root.querySelectorAll(`[data-atrako-live-price="${kind}"]`).forEach((el) => {
+    el.textContent = label;
+  });
+}
 
 type Props = {
   page: LpSalesPageV3;
@@ -72,6 +82,24 @@ export function SalesPageHtmlView({
   const buyable = checkoutProduct ?? (page.goal === "sales" && product.priceCents > 0 ? product : null);
   const physical = (buyable?.type || product.type || "").toUpperCase() === "PHYSICAL";
   const pixPct = page.pixDiscountPercent ?? 0;
+
+  const onCheckoutTotals = useCallback(
+    (totals: { pixCents: number; cardCents: number; currency: string }) => {
+      if (!root) return;
+      writeLivePrices(root, "pix", formatLivePrice(totals.pixCents, totals.currency));
+      writeLivePrices(root, "card", formatLivePrice(totals.cardCents, totals.currency));
+    },
+    [root],
+  );
+
+  useLayoutEffect(() => {
+    if (!root || !buyable) return;
+    const base = variants[0]?.priceCents ?? buyable.priceCents;
+    const pct = Math.min(100, Math.max(0, Math.round(pixPct)));
+    const pix = pct > 0 ? Math.max(0, base - Math.round((base * pct) / 100)) : base;
+    writeLivePrices(root, "pix", formatLivePrice(pix, currency));
+    writeLivePrices(root, "card", formatLivePrice(base, currency));
+  }, [root, buyable, variants, pixPct, currency]);
 
   return (
     <>
@@ -158,6 +186,7 @@ export function SalesPageHtmlView({
                 variants={variants}
                 pixDiscountPercent={pixPct}
                 requireAddress={physical}
+                onTotalsChange={onCheckoutTotals}
               />
             </Suspense>,
             slots.checkout,

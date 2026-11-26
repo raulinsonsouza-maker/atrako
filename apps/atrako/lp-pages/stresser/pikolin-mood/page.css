@@ -382,28 +382,6 @@ body {
 .mood-final .mood-btn-green {
   margin-top: 20px;
 }
-.mood-perks {
-  list-style: none;
-  margin: 24px auto 0;
-  padding: 0;
-  display: grid;
-  gap: 10px;
-  justify-items: center;
-  max-width: 14rem;
-}
-.mood-perks li {
-  position: relative;
-  padding-left: 18px;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.85);
-}
-.mood-perks li::before {
-  content: "✓";
-  position: absolute;
-  left: 0;
-  color: var(--green);
-  font-weight: 700;
-}
 .mood-sticky {
   position: fixed;
   left: 0;

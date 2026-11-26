@@ -66,6 +66,17 @@ lp-pages/
 - `<atrako-checkout>` / `<atrako-form>`
 - `<atrako-gallery>` / `<atrako-layers>` (dados em `meta.json`)
 
+### Preço ao vivo (sticky / espelhos)
+
+No HTML do pacote, marque o elemento que deve acompanhar o checkout:
+
+```html
+<strong data-atrako-live-price="pix">R$ 0,00</strong>
+<!-- opcional: data-atrako-live-price="card" -->
+```
+
+O runtime atualiza ao trocar tamanho/variante. É wiring de plataforma (não CSS de cliente).
+
 ### Skin dos slots (sem rebuild)
 
 O CSS normal do pacote **não** entra nos widgets (proteção `:not(.atrako-slot *)`).

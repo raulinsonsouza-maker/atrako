@@ -55,6 +55,8 @@ type Props = {
   variants?: CheckoutVariantOption[];
   pixDiscountPercent?: number;
   requireAddress?: boolean;
+  /** Notifica totais (Pix / cartão) para sticky e outros espelhos na LP. */
+  onTotalsChange?: (totals: { pixCents: number; cardCents: number; currency: string }) => void;
 };
 
 type Step = 1 | 2 | 3;
@@ -141,6 +143,7 @@ export function CheckoutForm({
   variants = [],
   pixDiscountPercent = 0,
   requireAddress = false,
+  onTotalsChange,
 }: Props) {
   const router = useRouter();
   const [testApproved, setTestApproved] = useState(false);
@@ -207,6 +210,10 @@ export function CheckoutForm({
       setVariantId(variants[0].id);
     }
   }, [variants, variantId]);
+
+  useEffect(() => {
+    onTotalsChange?.({ pixCents: pixTotalCents, cardCents: cardTotalCents, currency });
+  }, [onTotalsChange, pixTotalCents, cardTotalCents, currency]);
 
   useEffect(() => {
     trackGa4("begin_checkout", {

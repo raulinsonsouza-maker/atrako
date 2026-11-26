@@ -1054,7 +1054,10 @@ export function CheckoutForm({
                 onClick={() => setPayType("pix")}
               >
                 <span className="type-caption-strong">{cfg.payLabels.pix}</span>
-                <span className="type-fine-print">{pixPct > 0 ? `−${pixPct}%` : "À vista"}</span>
+                <span className="type-fine-print">
+                  {cfg.payLabels.pixHint ??
+                    (pixPct > 0 ? `${pixPct}% de desconto` : "À vista")}
+                </span>
               </button>
               <button
                 type="button"
@@ -1062,7 +1065,9 @@ export function CheckoutForm({
                 onClick={() => setPayType("credit_card")}
               >
                 <span className="type-caption-strong">{cfg.payLabels.card}</span>
-                <span className="type-fine-print">até {maxInstallments}x</span>
+                <span className="type-fine-print">
+                  {cfg.payLabels.cardHint ?? `até ${maxInstallments}x sem juros`}
+                </span>
               </button>
             </div>
 

@@ -67,6 +67,10 @@ export type LpCheckoutUiConfig = {
   payLabels?: {
     pix?: string;
     card?: string;
+    /** Subtítulo do tile Pix (ex.: "15% de desconto"). */
+    pixHint?: string;
+    /** Subtítulo do tile cartão (ex.: "até 10x sem juros"). */
+    cardHint?: string;
     finalizePix?: string;
     finalizeCard?: string;
   };

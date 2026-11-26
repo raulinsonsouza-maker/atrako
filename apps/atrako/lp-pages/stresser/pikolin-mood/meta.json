@@ -25,6 +25,8 @@
     "payLabels": {
       "pix": "Pix",
       "card": "Cartão",
+      "pixHint": "15% de desconto",
+      "cardHint": "até 10x sem juros",
       "finalizePix": "Gerar Pix",
       "finalizeCard": "Finalizar no cartão"
     }

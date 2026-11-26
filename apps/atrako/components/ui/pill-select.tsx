@@ -56,6 +56,7 @@ export function PillSelect({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [dropUp, setDropUp] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -69,6 +70,18 @@ export function PillSelect({
     if (!next) setQuery("");
   }, rootRef);
   useLockBodyScroll(open);
+
+  useEffect(() => {
+    if (!open || !rootRef.current) {
+      setDropUp(false);
+      return;
+    }
+    const rect = rootRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const need = Math.min(16 * 16, window.innerHeight * 0.45);
+    setDropUp(spaceBelow < need && spaceAbove > spaceBelow);
+  }, [open, options.length]);
 
   useEffect(() => {
     if (!open) return;
@@ -189,6 +202,7 @@ export function PillSelect({
             "pill-select-menu",
             inlineSearch ? "pill-select-menu-panel" : searchable && "pill-select-menu-panel",
             align === "right" ? "pill-select-menu-right" : "pill-select-menu-left",
+            dropUp && "pill-select-menu-up",
           )}
         >
           {searchable && !inlineSearch ? (

@@ -667,6 +667,12 @@
   right: 0;
 }
 
+/* Abre para cima quando não cabe abaixo (checkout mobile). */
+.pill-select-menu-up {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
 .pill-select-option {
   display: flex;
   width: 100%;

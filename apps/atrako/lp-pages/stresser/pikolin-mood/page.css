@@ -144,6 +144,10 @@ body {
   max-width: 72rem;
   margin: 0 auto;
 }
+.mood-hero-visual {
+  border-radius: 0;
+  overflow: hidden;
+}
 .mood-checks {
   list-style: none;
   margin: 0 0 20px;
@@ -171,7 +175,7 @@ body {
   margin: 12px auto;
   max-width: 42rem;
   background: var(--quote);
-  border-radius: 12px;
+  border-radius: 0;
 }
 .mood-trust-title {
   margin: 0;

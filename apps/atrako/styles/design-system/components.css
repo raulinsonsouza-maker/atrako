@@ -3230,6 +3230,14 @@
   aspect-ratio: 4 / 3;
 }
 
+/* Pages (v3): cantos retos — alinhado ao visual editorial */
+.atrako-lp-v3 .product-gallery__main,
+.atrako-lp-v3 .product-gallery__thumb,
+.atrako-lp-v3 .product-gallery__badge,
+.atrako-lp-v3 .product-gallery__nav {
+  border-radius: 0;
+}
+
 .product-gallery--reels .product-gallery__main {
   aspect-ratio: 4 / 5;
   max-height: none;

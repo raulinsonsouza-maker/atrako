@@ -1040,6 +1040,24 @@ export function CheckoutForm({
         <p className="type-fine-print text-[var(--ink-muted-48)]">
           Aguardando confirmação do pagamento…
         </p>
+        <button
+          type="button"
+          className="checkout-pix-panel__change type-caption-strong text-[var(--primary)] underline underline-offset-2 active:scale-95"
+          onClick={() => {
+            setError(null);
+            setPixQrBase64(null);
+            setPixCopyPaste(null);
+            setPixCopied(false);
+            setPaidOrderId(null);
+            setOrderPaidTotalCents(null);
+            setPayPhase("form");
+            setPhase("form");
+            setStep(paymentStep);
+            setPayType("credit_card");
+          }}
+        >
+          Trocar forma de pagamento
+        </button>
       </div>
     );
   }

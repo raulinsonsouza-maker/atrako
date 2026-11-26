@@ -945,4 +945,19 @@ body:has(.mood-offer.is-checkout-focus) .mood-nav {
     color: #162538 !important;
     border: 1px solid rgba(22, 37, 56, 0.14) !important;
   }
+
+  [data-atrako-slot="checkout"] .checkout-pix-panel button.checkout-pix-panel__change {
+    order: unset;
+    align-self: center;
+    width: auto;
+    min-height: 0;
+    margin-top: 4px;
+    padding: 0;
+    background: transparent !important;
+    color: var(--navy, #162538) !important;
+    border: 0 !important;
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
 }

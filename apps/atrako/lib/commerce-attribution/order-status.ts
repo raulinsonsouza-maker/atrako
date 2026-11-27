@@ -6,7 +6,28 @@ export function isRevenueOrder(status: string | null | undefined): boolean {
   return !NOT_REVENUE.test((status ?? "").toLowerCase());
 }
 
-export const PAID_STATUSES = new Set(["processing", "completed", "paid", "approved", "authorized", "pago", "aprovado"]);
+/**
+ * Status de pedido pago / concretizado por provider.
+ * Woo: processing/completed · genérico: paid/approved · Olist ERP: aprovada→entregue
+ * (não usar só "aprovado" — a Olist grava "aprovada").
+ */
+export const PAID_STATUSES = new Set([
+  // Woo / genérico
+  "processing",
+  "completed",
+  "paid",
+  "approved",
+  "authorized",
+  "pago",
+  "aprovado",
+  // Olist ERP (isOlistPaid)
+  "aprovada",
+  "preparando_envio",
+  "faturada",
+  "pronto_envio",
+  "enviada",
+  "entregue",
+]);
 
 /** Venda concretizada (pagamento confirmado). Mais restrito que `isRevenueOrder`: `on-hold` não conta. */
 export function isPaidOrderStatus(status: string | null | undefined): boolean {

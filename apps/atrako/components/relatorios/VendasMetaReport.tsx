@@ -14,6 +14,11 @@ export type CicloResumoView = {
   status: CicloStatus;
   comissaoPercent: number;
   fechadoEm: string | null;
+  resumo?: {
+    pedidos: number;
+    faturamentoCents: number;
+    comissaoCents: number;
+  } | null;
 };
 
 const STATUS_TONE: Record<CicloStatus, "ok" | "warn"> = {
@@ -95,8 +100,90 @@ export function VendasMetaReportPanel({
 
   const csvHref = (tipo?: "itens") => `${apiBase}/${cicloId}/csv${tipo ? `?tipo=${tipo}` : ""}`;
 
+  const fechamentoTotais = useMemo(() => {
+    let pedidos = 0;
+    let faturamentoCents = 0;
+    let comissaoCents = 0;
+    let comSnapshot = 0;
+    for (const c of ciclos) {
+      if (!c.resumo) continue;
+      comSnapshot += 1;
+      pedidos += c.resumo.pedidos;
+      faturamentoCents += c.resumo.faturamentoCents;
+      comissaoCents += c.resumo.comissaoCents;
+    }
+    return { pedidos, faturamentoCents, comissaoCents, comSnapshot };
+  }, [ciclos]);
+
   return (
     <div className="report-print-area flex flex-col gap-4">
+      <SectionCard title="Fechamento geral" subtitle="Últimos ciclos de comissão">
+        <div className="overflow-x-auto">
+          <table className="rel-table min-w-[640px] type-caption">
+            <thead>
+              <tr className="type-fine-print">
+                <th>Ciclo</th>
+                <th>Status</th>
+                <th className="text-right">Vendas</th>
+                <th className="text-right">Faturado</th>
+                <th className="text-right">Comissão</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ciclos.map((c) => {
+                const active = c.id === cicloId;
+                return (
+                  <tr
+                    key={c.id}
+                    className={active ? "bg-[var(--surface-2)]" : undefined}
+                  >
+                    <td>
+                      <button
+                        type="button"
+                        className="text-left type-caption-strong text-[var(--ink)] active:scale-[0.99]"
+                        onClick={() => setCicloId(c.id)}
+                      >
+                        {formatCicloLabel(c)}
+                      </button>
+                    </td>
+                    <td>
+                      <span className="rel-badge type-micro-legal" data-tone={STATUS_TONE[c.status]}>
+                        {CICLO_STATUS_LABELS[c.status]}
+                      </span>
+                    </td>
+                    <td className="text-right tabular-nums">
+                      {c.resumo ? c.resumo.pedidos : "—"}
+                    </td>
+                    <td className="text-right tabular-nums">
+                      {c.resumo ? formatBRL(c.resumo.faturamentoCents) : "—"}
+                    </td>
+                    <td className="text-right tabular-nums text-[var(--primary)]">
+                      {c.resumo ? formatBRL(c.resumo.comissaoCents) : "—"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            {fechamentoTotais.comSnapshot > 0 ? (
+              <tfoot>
+                <tr className="type-caption-strong">
+                  <td colSpan={2}>Total ({fechamentoTotais.comSnapshot} ciclos fechados)</td>
+                  <td className="text-right tabular-nums">{fechamentoTotais.pedidos}</td>
+                  <td className="text-right tabular-nums">{formatBRL(fechamentoTotais.faturamentoCents)}</td>
+                  <td className="text-right tabular-nums text-[var(--primary)]">
+                    {formatBRL(fechamentoTotais.comissaoCents)}
+                  </td>
+                </tr>
+              </tfoot>
+            ) : null}
+          </table>
+        </div>
+        <p className="mt-3 type-fine-print text-[var(--ink-muted-48)]">
+          Cobrança: pedidos Woo pagos com atribuição Meta. Ciclos 08–09: snapshot histórico (método
+          anterior com Olist).
+        </p>
+      </SectionCard>
+
       <div className="report-print-hide flex flex-wrap items-center gap-2">
         <PillSelect value={cicloId} onChange={setCicloId} options={options} aria-label="Ciclo" />
         <div className="ml-auto flex flex-wrap items-center gap-2">

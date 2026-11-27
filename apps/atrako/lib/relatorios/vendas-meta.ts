@@ -13,6 +13,41 @@ import {
 } from "./ciclos";
 import { aggregateVendasMetaReport, apresentarRelatorioCobranca, type VendasMetaReport } from "./vendas-meta-core";
 
+const ORDER_SELECT = {
+  id: true,
+  externalId: true,
+  provider: true,
+  status: true,
+  totalCents: true,
+  buyerName: true,
+  cityName: true,
+  cityRaw: true,
+  stateUf: true,
+  occurredAt: true,
+  createdAt: true,
+  rawPayload: true,
+  items: {
+    select: { title: true, sku: true, quantity: true, unitPriceCents: true, lineTotalCents: true },
+  },
+  source: {
+    select: {
+      adMethod: true,
+      adWindow: true,
+      metaCampaignId: true,
+      metaCampaignName: true,
+      metaAdsetId: true,
+      metaAdsetName: true,
+      metaAdId: true,
+      metaAdName: true,
+    },
+  },
+} as const;
+
+/**
+ * Cobrança = pedidos Woo pagos com channel meta_ads.
+ * Olist não entra (ERP/casamento fica no dashboard Geral).
+ * metaAdPurchaseDaily só alimenta o bloco de referência `meta`.
+ */
 export async function buildVendasMetaReport(opts: {
   clienteId: string;
   dataInicio: string;
@@ -21,139 +56,18 @@ export async function buildVendasMetaReport(opts: {
 }): Promise<VendasMetaReport> {
   const from = new Date(`${opts.dataInicio}T00:00:00-03:00`);
   const to = new Date(`${opts.dataFim}T23:59:59.999-03:00`);
-  const { isOlistConnected, loadConfirmedSales } = await import(
-    "@/lib/commerce-attribution/confirmed-sales"
-  );
-  const olistOn = await isOlistConnected(opts.clienteId);
 
   const [orders, metaPurchases] = await Promise.all([
-    olistOn
-      ? (async () => {
-          const reconcile = await loadConfirmedSales(opts.clienteId, opts.dataInicio, opts.dataFim);
-          const metaSales = reconcile.confirmed.filter((s) => s.channel === "meta_ads");
-          const ids = metaSales.map((s) => s.olistOrderId);
-          if (!ids.length) return [];
-          return prisma.marketplaceOrder.findMany({
-            where: { id: { in: ids } },
-            orderBy: { occurredAt: "asc" },
-            select: {
-              id: true,
-              externalId: true,
-              provider: true,
-              status: true,
-              totalCents: true,
-              buyerName: true,
-              cityName: true,
-              cityRaw: true,
-              stateUf: true,
-              occurredAt: true,
-              createdAt: true,
-              rawPayload: true,
-              items: {
-                select: { title: true, sku: true, quantity: true, unitPriceCents: true, lineTotalCents: true },
-              },
-              source: {
-                select: {
-                  adMethod: true,
-                  adWindow: true,
-                  metaCampaignId: true,
-                  metaCampaignName: true,
-                  metaAdsetId: true,
-                  metaAdsetName: true,
-                  metaAdId: true,
-                  metaAdName: true,
-                },
-              },
-            },
-          }).then(async (rows) => {
-            // Atribuição Meta fica no Woo casado — copia source do canal quando Olist não tem.
-            const channelIds = metaSales
-              .map((s) => {
-                const raw =
-                  rows.find((r) => r.id === s.olistOrderId)?.rawPayload &&
-                  typeof rows.find((r) => r.id === s.olistOrderId)!.rawPayload === "object"
-                    ? (rows.find((r) => r.id === s.olistOrderId)!.rawPayload as Record<string, unknown>)
-                    : {};
-                return typeof raw.matchedOrderId === "string"
-                  ? raw.matchedOrderId
-                  : typeof raw.wooOrderId === "string"
-                    ? raw.wooOrderId
-                    : null;
-              })
-              .filter(Boolean) as string[];
-            const channelSources = channelIds.length
-              ? await prisma.marketplaceOrder.findMany({
-                  where: { id: { in: channelIds } },
-                  select: {
-                    id: true,
-                    source: {
-                      select: {
-                        adMethod: true,
-                        adWindow: true,
-                        metaCampaignId: true,
-                        metaCampaignName: true,
-                        metaAdsetId: true,
-                        metaAdsetName: true,
-                        metaAdId: true,
-                        metaAdName: true,
-                      },
-                    },
-                  },
-                })
-              : [];
-            const byChannel = new Map(channelSources.map((c) => [c.id, c.source]));
-            return rows.map((r) => {
-              const raw =
-                r.rawPayload && typeof r.rawPayload === "object" && !Array.isArray(r.rawPayload)
-                  ? (r.rawPayload as Record<string, unknown>)
-                  : {};
-              const chId =
-                (typeof raw.matchedOrderId === "string" && raw.matchedOrderId) ||
-                (typeof raw.wooOrderId === "string" && raw.wooOrderId) ||
-                null;
-              const chSource = chId ? byChannel.get(chId) : null;
-              return { ...r, source: r.source ?? chSource ?? null };
-            });
-          });
-        })()
-      : prisma.marketplaceOrder.findMany({
-          where: {
-            clienteId: opts.clienteId,
-            occurredAt: { gte: from, lte: to },
-            source: { is: { channel: "meta_ads" } },
-            NOT: { provider: "OLIST_ERP" },
-          },
-          orderBy: { occurredAt: "asc" },
-          select: {
-            id: true,
-            externalId: true,
-            provider: true,
-            status: true,
-            totalCents: true,
-            buyerName: true,
-            cityName: true,
-            cityRaw: true,
-            stateUf: true,
-            occurredAt: true,
-            createdAt: true,
-            rawPayload: true,
-            items: {
-              select: { title: true, sku: true, quantity: true, unitPriceCents: true, lineTotalCents: true },
-            },
-            source: {
-              select: {
-                adMethod: true,
-                adWindow: true,
-                metaCampaignId: true,
-                metaCampaignName: true,
-                metaAdsetId: true,
-                metaAdsetName: true,
-                metaAdId: true,
-                metaAdName: true,
-              },
-            },
-          },
-        }),
+    prisma.marketplaceOrder.findMany({
+      where: {
+        clienteId: opts.clienteId,
+        provider: "WOOCOMMERCE",
+        occurredAt: { gte: from, lte: to },
+        source: { is: { channel: "meta_ads" } },
+      },
+      orderBy: { occurredAt: "asc" },
+      select: ORDER_SELECT,
+    }),
     prisma.metaAdPurchaseDaily.findMany({
       where: { clienteId: opts.clienteId, date: { gte: dayToDate(opts.dataInicio), lte: dayToDate(opts.dataFim) } },
       select: { clickPurchases: true, clickValueCents: true, viewPurchases: true, viewValueCents: true },
@@ -295,6 +209,12 @@ export async function syncComissaoCiclosTodosClientes(): Promise<Array<{ cliente
   return out;
 }
 
+export type CicloResumoTotais = {
+  pedidos: number;
+  faturamentoCents: number;
+  comissaoCents: number;
+};
+
 export type CicloResumo = {
   id: string;
   dataInicio: string;
@@ -302,13 +222,34 @@ export type CicloResumo = {
   status: CicloStatus;
   comissaoPercent: number;
   fechadoEm: string | null;
+  /** Presente quando há snapshot (ciclo FECHADO). */
+  resumo: CicloResumoTotais | null;
 };
+
+function resumoFromSnapshot(snapshot: unknown): CicloResumoTotais | null {
+  if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) return null;
+  const r = (snapshot as { resumo?: Record<string, unknown> }).resumo;
+  if (!r) return null;
+  const pedidos = typeof r.pedidos === "number" ? r.pedidos : null;
+  const faturamentoCents = typeof r.faturamentoCents === "number" ? r.faturamentoCents : null;
+  const comissaoCents = typeof r.comissaoCents === "number" ? r.comissaoCents : null;
+  if (pedidos == null || faturamentoCents == null || comissaoCents == null) return null;
+  return { pedidos, faturamentoCents, comissaoCents };
+}
 
 export async function listCiclosResumo(clienteId: string): Promise<CicloResumo[]> {
   const rows = await prisma.comissaoVendasMetaCiclo.findMany({
     where: { clienteId },
     orderBy: { dataInicio: "desc" },
-    select: { id: true, dataInicio: true, dataFim: true, status: true, comissaoPercent: true, fechadoEm: true },
+    select: {
+      id: true,
+      dataInicio: true,
+      dataFim: true,
+      status: true,
+      comissaoPercent: true,
+      fechadoEm: true,
+      snapshot: true,
+    },
   });
   return rows.map((r) => ({
     id: r.id,
@@ -317,6 +258,7 @@ export async function listCiclosResumo(clienteId: string): Promise<CicloResumo[]
     status: r.status as CicloStatus,
     comissaoPercent: Number(r.comissaoPercent.toString()),
     fechadoEm: r.fechadoEm?.toISOString() ?? null,
+    resumo: resumoFromSnapshot(r.snapshot),
   }));
 }
 
@@ -324,6 +266,16 @@ export async function listCiclosResumo(clienteId: string): Promise<CicloResumo[]
 export async function getCicloReport(clienteId: string, cicloId: string) {
   const row = await prisma.comissaoVendasMetaCiclo.findFirst({ where: { id: cicloId, clienteId } });
   if (!row) return null;
+  const bruto =
+    row.status === "FECHADO" && row.snapshot
+      ? (row.snapshot as unknown as VendasMetaReport)
+      : await buildVendasMetaReport({
+          clienteId,
+          dataInicio: dateToDay(row.dataInicio),
+          dataFim: dateToDay(row.dataFim),
+          comissaoPercent: Number(row.comissaoPercent.toString()),
+        });
+  const report = apresentarRelatorioCobranca(bruto);
   const ciclo: CicloResumo = {
     id: row.id,
     dataInicio: dateToDay(row.dataInicio),
@@ -331,17 +283,13 @@ export async function getCicloReport(clienteId: string, cicloId: string) {
     status: row.status as CicloStatus,
     comissaoPercent: Number(row.comissaoPercent.toString()),
     fechadoEm: row.fechadoEm?.toISOString() ?? null,
+    resumo: {
+      pedidos: report.resumo.pedidos,
+      faturamentoCents: report.resumo.faturamentoCents,
+      comissaoCents: report.resumo.comissaoCents,
+    },
   };
-  const bruto =
-    row.status === "FECHADO" && row.snapshot
-      ? (row.snapshot as unknown as VendasMetaReport)
-      : await buildVendasMetaReport({
-          clienteId,
-          dataInicio: ciclo.dataInicio,
-          dataFim: ciclo.dataFim,
-          comissaoPercent: ciclo.comissaoPercent,
-        });
-  return { ciclo, report: apresentarRelatorioCobranca(bruto) };
+  return { ciclo, report };
 }
 
 export function vendasMetaFileName(slug: string, ciclo: { dataInicio: string; dataFim: string }, ext: string, sufixo = "") {
@@ -358,14 +306,15 @@ export function csvResponse(csv: string, fileName: string) {
   });
 }
 
-/** Refaz o snapshot de um ciclo fechado (correção de atribuição ou de status). */
-export async function refecharCiclo(clienteId: string, cicloId: string) {
+/**
+ * Fecha (ou refecha) um ciclo com snapshot atual, ignorando carência.
+ * Idempotente: pode rodar de novo no mesmo ciclo (ex.: mês 11 após 23/12).
+ */
+export async function fecharCicloSnapshot(clienteId: string, cicloId: string) {
   const row = await prisma.comissaoVendasMetaCiclo.findFirst({ where: { id: cicloId, clienteId } });
   if (!row) return null;
   const dataInicio = dateToDay(row.dataInicio);
   const dataFim = dateToDay(row.dataFim);
-  const status = cicloStatus(dataFim, todayBRT());
-  if (status !== "FECHADO") return { ciclo: row, refeito: false };
   const report = await buildVendasMetaReport({
     clienteId,
     dataInicio,
@@ -374,7 +323,23 @@ export async function refecharCiclo(clienteId: string, cicloId: string) {
   });
   const ciclo = await prisma.comissaoVendasMetaCiclo.update({
     where: { id: row.id },
-    data: { status, snapshot: report as unknown as Prisma.InputJsonValue, fechadoEm: new Date() },
+    data: {
+      status: "FECHADO",
+      snapshot: report as unknown as Prisma.InputJsonValue,
+      fechadoEm: new Date(),
+    },
   });
-  return { ciclo, refeito: true };
+  return { ciclo, report };
+}
+
+/** Refaz o snapshot de um ciclo já elegível a FECHADO pelo calendário (pós-carência). */
+export async function refecharCiclo(clienteId: string, cicloId: string) {
+  const row = await prisma.comissaoVendasMetaCiclo.findFirst({ where: { id: cicloId, clienteId } });
+  if (!row) return null;
+  const dataFim = dateToDay(row.dataFim);
+  const status = cicloStatus(dataFim, todayBRT());
+  if (status !== "FECHADO") return { ciclo: row, refeito: false };
+  const closed = await fecharCicloSnapshot(clienteId, cicloId);
+  if (!closed) return null;
+  return { ciclo: closed.ciclo, refeito: true };
 }

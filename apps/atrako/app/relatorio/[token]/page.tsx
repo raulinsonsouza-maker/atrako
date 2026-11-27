@@ -62,7 +62,6 @@ function RelatorioPublicoPage() {
           initialCicloId={search.get("ciclo")}
           autoPrint={search.get("imprimir") === "1"}
         />
-        <p className="report-print-hide type-micro-legal text-[var(--ink-muted-48)]">Relatório gerado pela Atrako.</p>
       </div>
     </div>
   );

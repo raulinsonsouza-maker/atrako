@@ -4,7 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Download, FileText, Loader2 } from "lucide-react";
 import { Button, MetricGrid, MetricTile, PillSelect, SectionCard, buttonClass } from "@/components/ui";
-import { CICLO_STATUS_LABELS, formatCicloLabel, formatDayBR, type CicloStatus } from "@/lib/relatorios/ciclos";
+import {
+  CICLO_STATUS_LABELS,
+  formatCicloLabel,
+  formatDayBR,
+  todayBRT,
+  type CicloStatus,
+} from "@/lib/relatorios/ciclos";
 import { formatBRL, formatDateTimeBR, formatPercent, type VendasMetaReport } from "@/lib/relatorios/vendas-meta-core";
 
 export type CicloResumoView = {
@@ -100,74 +106,78 @@ export function VendasMetaReportPanel({
 
   const csvHref = (tipo?: "itens") => `${apiBase}/${cicloId}/csv${tipo ? `?tipo=${tipo}` : ""}`;
 
+  /** Só ciclos FECHADO cujo período já acabou (não inclui mês corrente forçado). */
+  const ciclosFechados = useMemo(() => {
+    const hoje = todayBRT();
+    return ciclos.filter((c) => c.status === "FECHADO" && c.dataFim < hoje);
+  }, [ciclos]);
+
   const fechamentoTotais = useMemo(() => {
     let pedidos = 0;
     let faturamentoCents = 0;
     let comissaoCents = 0;
-    let comSnapshot = 0;
-    for (const c of ciclos) {
+    for (const c of ciclosFechados) {
       if (!c.resumo) continue;
-      comSnapshot += 1;
       pedidos += c.resumo.pedidos;
       faturamentoCents += c.resumo.faturamentoCents;
       comissaoCents += c.resumo.comissaoCents;
     }
-    return { pedidos, faturamentoCents, comissaoCents, comSnapshot };
-  }, [ciclos]);
+    return { pedidos, faturamentoCents, comissaoCents, n: ciclosFechados.length };
+  }, [ciclosFechados]);
 
   return (
     <div className="report-print-area flex flex-col gap-4">
-      <SectionCard title="Fechamento geral" subtitle="Últimos ciclos de comissão">
-        <div className="overflow-x-auto">
-          <table className="rel-table min-w-[640px] type-caption">
-            <thead>
-              <tr className="type-fine-print">
-                <th>Ciclo</th>
-                <th>Status</th>
-                <th className="text-right">Vendas</th>
-                <th className="text-right">Faturado</th>
-                <th className="text-right">Comissão</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ciclos.map((c) => {
-                const active = c.id === cicloId;
-                return (
-                  <tr
-                    key={c.id}
-                    className={active ? "bg-[var(--surface-2)]" : undefined}
-                  >
-                    <td>
-                      <button
-                        type="button"
-                        className="text-left type-caption-strong text-[var(--ink)] active:scale-[0.99]"
-                        onClick={() => setCicloId(c.id)}
-                      >
-                        {formatCicloLabel(c)}
-                      </button>
-                    </td>
-                    <td>
-                      <span className="rel-badge type-micro-legal" data-tone={STATUS_TONE[c.status]}>
-                        {CICLO_STATUS_LABELS[c.status]}
-                      </span>
-                    </td>
-                    <td className="text-right tabular-nums">
-                      {c.resumo ? c.resumo.pedidos : "—"}
-                    </td>
-                    <td className="text-right tabular-nums">
-                      {c.resumo ? formatBRL(c.resumo.faturamentoCents) : "—"}
-                    </td>
-                    <td className="text-right tabular-nums text-[var(--primary)]">
-                      {c.resumo ? formatBRL(c.resumo.comissaoCents) : "—"}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-            {fechamentoTotais.comSnapshot > 0 ? (
+      {ciclosFechados.length > 0 ? (
+        <SectionCard title="Fechamento geral">
+          <div className="overflow-x-auto">
+            <table className="rel-table min-w-[640px] type-caption">
+              <thead>
+                <tr className="type-fine-print">
+                  <th>Ciclo</th>
+                  <th>Status</th>
+                  <th className="text-right">Vendas</th>
+                  <th className="text-right">Faturado</th>
+                  <th className="text-right">Comissão</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ciclosFechados.map((c) => {
+                  const active = c.id === cicloId;
+                  return (
+                    <tr
+                      key={c.id}
+                      className={active ? "bg-[var(--surface-2)]" : undefined}
+                    >
+                      <td>
+                        <button
+                          type="button"
+                          className="text-left type-caption-strong text-[var(--ink)] active:scale-[0.99]"
+                          onClick={() => setCicloId(c.id)}
+                        >
+                          {formatCicloLabel(c)}
+                        </button>
+                      </td>
+                      <td>
+                        <span className="rel-badge type-micro-legal" data-tone={STATUS_TONE[c.status]}>
+                          {CICLO_STATUS_LABELS[c.status]}
+                        </span>
+                      </td>
+                      <td className="text-right tabular-nums">
+                        {c.resumo ? c.resumo.pedidos : "—"}
+                      </td>
+                      <td className="text-right tabular-nums">
+                        {c.resumo ? formatBRL(c.resumo.faturamentoCents) : "—"}
+                      </td>
+                      <td className="text-right tabular-nums text-[var(--primary)]">
+                        {c.resumo ? formatBRL(c.resumo.comissaoCents) : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
               <tfoot>
                 <tr className="type-caption-strong">
-                  <td colSpan={2}>Total ({fechamentoTotais.comSnapshot} ciclos fechados)</td>
+                  <td colSpan={2}>Total ({fechamentoTotais.n} ciclos)</td>
                   <td className="text-right tabular-nums">{fechamentoTotais.pedidos}</td>
                   <td className="text-right tabular-nums">{formatBRL(fechamentoTotais.faturamentoCents)}</td>
                   <td className="text-right tabular-nums text-[var(--primary)]">
@@ -175,14 +185,10 @@ export function VendasMetaReportPanel({
                   </td>
                 </tr>
               </tfoot>
-            ) : null}
-          </table>
-        </div>
-        <p className="mt-3 type-fine-print text-[var(--ink-muted-48)]">
-          Cobrança: pedidos Woo pagos com atribuição Meta. Ciclos 08–09: snapshot histórico (método
-          anterior com Olist).
-        </p>
-      </SectionCard>
+            </table>
+          </div>
+        </SectionCard>
+      ) : null}
 
       <div className="report-print-hide flex flex-wrap items-center gap-2">
         <PillSelect value={cicloId} onChange={setCicloId} options={options} aria-label="Ciclo" />
@@ -413,9 +419,6 @@ export function VendasMetaReportView({
         )}
       </SectionCard>
 
-      <p className="type-fine-print text-[var(--ink-muted-48)]">
-        Comissão de {pct} sobre {formatBRL(r.faturamentoCents)}, soma dos pedidos pagos neste ciclo.
-      </p>
     </div>
   );
 }
